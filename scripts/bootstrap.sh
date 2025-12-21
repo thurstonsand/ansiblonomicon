@@ -49,7 +49,7 @@ if [[ "$PLATFORM" == "darwin" ]]; then
     if ! command -v brew &>/dev/null; then
         echo "==> Installing Homebrew..."
         /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-        
+
         # Add to PATH for this session
         eval "$(/opt/homebrew/bin/brew shellenv)"
     else
@@ -78,7 +78,11 @@ fi
 # Run the playbook
 echo "==> Running Ansible playbook..."
 cd "$REPO_DIR/ansible"
-ansible-playbook main.yml --ask-become-pass
+ansible-playbook main.yml -K
 
 echo "==> Bootstrap complete!"
-echo "    Run 'anup' to apply future changes"
+echo ""
+echo "Next steps:"
+echo "  1. Set up 1Password CLI: op signin"
+echo "  2. Ensure 'Apple Macbook Login' item exists in Private vault"
+echo "  3. Future runs: just run 'anup' (no password prompt needed)"

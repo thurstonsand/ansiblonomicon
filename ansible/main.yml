@@ -12,32 +12,64 @@
     - name: Load Darwin-specific config
       ansible.builtin.include_vars: darwin.config.yml
       when: ansible_facts['os_family'] == "Darwin"
+      tags: ["always"]
 
     - name: Load Arch Linux-specific config
       ansible.builtin.include_vars: archlinux.config.yml
       when: ansible_facts['os_family'] == "Archlinux"
+      tags: ["always"]
+
+    - name: Retrieve become password from 1Password (once)
+      when: onepassword_become_item is defined
+      block:
+        - name: Try 1Password lookup
+          ansible.builtin.set_fact:
+            ansible_become_pass: "{{ lookup('community.general.onepassword', onepassword_become_item, vault='Private') }}"
+          no_log: true
+      rescue:
+        - name: 1Password unavailable - will prompt for password
+          ansible.builtin.debug:
+            msg: "1Password lookup failed. Run with -K to provide sudo password interactively."
 
     - name: Display system info
       ansible.builtin.debug:
         msg: "Configuring {{ ansible_facts['os_family'] }} ({{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }})"
       tags: ["always"]
 
-  roles:
-    []
-    # Roles will be added here as we migrate:
-    # - role: geerlingguy.mac.homebrew
-    #   when: ansible_facts['os_family'] == "Darwin"
-    #   tags: ['homebrew']
-
   tasks:
-    - name: Placeholder - macOS tasks
+    - name: Install packages with brew bundle
+      when: ansible_facts['os_family'] == "Darwin" and configure_homebrew
+      tags: ["homebrew", "mas"]
+      block:
+        - name: Check brew bundle (dry run)
+          when: ansible_check_mode
+          check_mode: false
+          ansible.builtin.command:
+            cmd: brew bundle check --file={{ playbook_dir }}/Brewfile --verbose
+          register: brew_result
+          changed_when: brew_result.rc != 0
+          failed_when: false
+
+        - name: Run brew bundle
+          when: not ansible_check_mode
+          ansible.builtin.command:
+            cmd: brew bundle --file={{ playbook_dir }}/Brewfile --cleanup
+          register: brew_result
+          changed_when: "'Installing' in brew_result.stdout or 'Upgrading' in brew_result.stdout or 'Uninstalling' in brew_result.stdout"
+
+        - name: Show brew bundle output
+          ansible.builtin.debug:
+            msg: "{{ brew_result.stdout_lines + (brew_result.stderr_lines | default([])) }}"
+          when: brew_result.stdout_lines is defined and (brew_result.stdout_lines | length > 0 or (brew_result.stderr_lines | default([])) | length > 0)
+
+    - name: MacOS configuration complete
       ansible.builtin.debug:
-        msg: "Ready for macOS configuration (homebrew: {{ configure_homebrew }})"
+        msg: "macOS configuration applied successfully"
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["always"]
 
     - name: Placeholder - Arch Linux tasks
       ansible.builtin.debug:
-        msg: "Ready for Arch Linux configuration (pacman: {{ configure_pacman }})"
+        msg: "Ready for Arch Linux configuration (pacman: {{ configure_pacman | default(false) }})"
       when: ansible_facts['os_family'] == "Archlinux"
       tags: ["always"]

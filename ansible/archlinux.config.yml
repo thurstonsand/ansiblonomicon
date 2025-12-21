@@ -1,6 +1,9 @@
 ---
 # Arch Linux (omarchy) configuration
 
+# 1Password item for become password
+onepassword_become_item: "Arch Linux Login"
+
 # Feature flags
 configure_pacman: true
 
