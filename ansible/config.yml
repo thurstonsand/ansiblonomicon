@@ -1,0 +1,8 @@
+---
+# Shared configuration variables
+
+# User configuration
+configure_user: thurstonsand
+
+# Feature flags (all platforms)
+configure_dotfiles: true

@@ -1,0 +1,9 @@
+---
+# Arch Linux (omarchy) configuration
+
+# Feature flags
+configure_pacman: true
+
+# Packages
+pacman_packages: []
+aur_packages: []

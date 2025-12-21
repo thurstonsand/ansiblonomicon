@@ -1,0 +1,9 @@
+# Ansible
+*.retry
+.ansible/
+
+# macOS
+.DS_Store
+
+# direnv
+.direnv/

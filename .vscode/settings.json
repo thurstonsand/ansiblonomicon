@@ -1,0 +1,8 @@
+{
+  "files.associations": {
+    "**/ansible/**/*.yml": "ansible",
+    "**/ansible/**/*.yaml": "ansible",
+    "inventory": "ini"
+  },
+  "ansible.validation.lint.enabled": true
+}
