@@ -1,0 +1,11 @@
+---
+# Menu bar settings
+
+- name: Configure menu bar clock - 24 hour format
+  community.general.osx_defaults:
+    domain: com.apple.menuextra.clock
+    key: Show24Hour
+    type: bool
+    value: true
+    state: present
+  notify: Restart SystemUIServer

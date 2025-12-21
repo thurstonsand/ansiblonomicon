@@ -21,10 +21,11 @@
 
     - name: Retrieve become password from 1Password (once)
       when: onepassword_become_item is defined
+      tags: ["always"]
       block:
         - name: Try 1Password lookup
           ansible.builtin.set_fact:
-            ansible_become_pass: "{{ lookup('community.general.onepassword', onepassword_become_item, vault='Private') }}"
+            ansible_become_pass: "{{ lookup('community.general.onepassword', onepassword_become_item, vault=onepassword_vault) }}"
           no_log: true
       rescue:
         - name: 1Password unavailable - will prompt for password
@@ -61,6 +62,21 @@
           ansible.builtin.debug:
             msg: "{{ brew_result.stdout_lines + (brew_result.stderr_lines | default([])) }}"
           when: brew_result.stdout_lines is defined and (brew_result.stdout_lines | length > 0 or (brew_result.stderr_lines | default([])) | length > 0)
+
+    - name: Apply macOS system defaults
+      ansible.builtin.include_role:
+        name: macos_defaults
+      when: ansible_facts['os_family'] == "Darwin" and configure_macos_defaults | default(true)
+      tags:
+        [
+          "dock",
+          "finder",
+          "nsglobaldomain",
+          "menubar",
+          "desktop-services",
+          "pam",
+          "touchid",
+        ]
 
     - name: MacOS configuration complete
       ansible.builtin.debug:

@@ -5,11 +5,8 @@
     "inventory": "ini"
   },
   "ansible.validation.lint.enabled": true,
-  "python-envs.pythonProjects": [
-    {
-      "path": "",
-      "envManager": "ms-python.python:system",
-      "packageManager": "ms-python.python:pip"
-    }
-  ]
+  "ansible.python.interpreterPath": ".venv/bin/python",
+  "ansible.ansible.path": ".venv/bin/ansible",
+  "ansible.validation.lint.path": ".venv/bin/ansible-lint",
+  "python.defaultInterpreterPath": ".venv/bin/python"
 }

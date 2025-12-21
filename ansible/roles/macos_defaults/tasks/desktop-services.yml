@@ -1,0 +1,20 @@
+---
+# Desktop services settings
+
+- name: Configure desktop services - don't write .DS_Store on network volumes
+  community.general.osx_defaults:
+    domain: com.apple.desktopservices
+    key: DSDontWriteNetworkStores
+    type: bool
+    value: true
+    state: present
+  notify: Restart Finder
+
+- name: Configure desktop services - don't write .DS_Store on USB volumes
+  community.general.osx_defaults:
+    domain: com.apple.desktopservices
+    key: DSDontWriteUSBStores
+    type: bool
+    value: true
+    state: present
+  notify: Restart Finder

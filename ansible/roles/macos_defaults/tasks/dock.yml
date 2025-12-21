@@ -1,0 +1,47 @@
+---
+# Dock settings
+
+- name: Configure dock - autohide
+  community.general.osx_defaults:
+    domain: com.apple.dock
+    key: autohide
+    type: bool
+    value: true
+    state: present
+  notify: Restart Dock
+
+- name: Configure dock - orientation left
+  community.general.osx_defaults:
+    domain: com.apple.dock
+    key: orientation
+    type: string
+    value: left
+    state: present
+  notify: Restart Dock
+
+- name: Configure dock - show process indicators
+  community.general.osx_defaults:
+    domain: com.apple.dock
+    key: show-process-indicators
+    type: bool
+    value: true
+    state: present
+  notify: Restart Dock
+
+- name: Configure dock - hide recent apps
+  community.general.osx_defaults:
+    domain: com.apple.dock
+    key: show-recents
+    type: bool
+    value: false
+    state: present
+  notify: Restart Dock
+
+- name: Configure dock - disable MRU spaces
+  community.general.osx_defaults:
+    domain: com.apple.dock
+    key: mru-spaces
+    type: bool
+    value: false
+    state: present
+  notify: Restart Dock

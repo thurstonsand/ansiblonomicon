@@ -1,0 +1,75 @@
+---
+# Finder settings
+
+- name: Configure Finder - show POSIX path in title
+  community.general.osx_defaults:
+    domain: com.apple.finder
+    key: _FXShowPosixPathInTitle
+    type: bool
+    value: true
+    state: present
+  notify: Restart Finder
+
+# View styles: icnv=icon, Nlsv=list, clmv=column, glyv=gallery
+- name: Configure Finder - preferred view style (list view)
+  community.general.osx_defaults:
+    domain: com.apple.finder
+    key: FXPreferredViewStyle
+    type: string
+    value: Nlsv
+    state: present
+  notify: Restart Finder
+
+- name: Configure Finder - show hidden files
+  community.general.osx_defaults:
+    domain: com.apple.finder
+    key: AppleShowAllFiles
+    type: bool
+    value: true
+    state: present
+  notify: Restart Finder
+
+- name: Configure Finder - show all extensions
+  community.general.osx_defaults:
+    domain: com.apple.finder
+    key: AppleShowAllExtensions
+    type: bool
+    value: true
+    state: present
+  notify: Restart Finder
+
+- name: Configure Finder - disable extension change warning
+  community.general.osx_defaults:
+    domain: com.apple.finder
+    key: FXEnableExtensionChangeWarning
+    type: bool
+    value: false
+    state: present
+  notify: Restart Finder
+
+- name: Configure Finder - enable quit menu item
+  community.general.osx_defaults:
+    domain: com.apple.finder
+    key: QuitMenuItem
+    type: bool
+    value: true
+    state: present
+  notify: Restart Finder
+
+- name: Configure Finder - show path bar
+  community.general.osx_defaults:
+    domain: com.apple.finder
+    key: ShowPathbar
+    type: bool
+    value: true
+    state: present
+  notify: Restart Finder
+
+- name: Configure Finder - show status bar
+  community.general.osx_defaults:
+    domain: com.apple.finder
+    key: ShowStatusBar
+    type: bool
+    value: true
+    state: present
+  notify: Restart Finder

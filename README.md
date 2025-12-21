@@ -35,7 +35,7 @@ If 1Password is unavailable, run with `-K` to provide the password interactively
 │   ├── archlinux.config.yml # Arch Linux-specific config
 │   ├── Brewfile             # Homebrew packages, casks, and MAS apps
 │   ├── requirements.yml     # Ansible Galaxy dependencies
-│   ├── roles/               # Ansible Galaxy roles
+│   ├── roles/               # Custom and Galaxy roles
 │   ├── tasks/               # Task files by category
 │   └── main.yml             # Entry point playbook
 ├── chezmoi/                  # Dotfiles (coming soon)

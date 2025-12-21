@@ -1,7 +1,8 @@
 ---
 # Arch Linux (omarchy) configuration
 
-# 1Password item for become password
+# 1Password configuration
+onepassword_vault: "Private"
 onepassword_become_item: "Arch Linux Login"
 
 # Feature flags

@@ -3,4 +3,5 @@
 # Install with: ansible-galaxy install -r requirements.yml
 
 collections:
+  - name: community.general
   - name: geerlingguy.mac

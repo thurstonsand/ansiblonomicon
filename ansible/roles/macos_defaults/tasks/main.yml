@@ -1,0 +1,44 @@
+---
+# macOS system defaults configuration
+
+- name: Include dock settings
+  ansible.builtin.include_tasks:
+    file: dock.yml
+    apply:
+      tags: ["dock"]
+  tags: ["dock"]
+
+- name: Include finder settings
+  ansible.builtin.include_tasks:
+    file: finder.yml
+    apply:
+      tags: ["finder"]
+  tags: ["finder"]
+
+- name: Include NSGlobalDomain settings
+  ansible.builtin.include_tasks:
+    file: nsglobaldomain.yml
+    apply:
+      tags: ["nsglobaldomain"]
+  tags: ["nsglobaldomain"]
+
+- name: Include menu bar settings
+  ansible.builtin.include_tasks:
+    file: menubar.yml
+    apply:
+      tags: ["menubar"]
+  tags: ["menubar"]
+
+- name: Include desktop services settings
+  ansible.builtin.include_tasks:
+    file: desktop-services.yml
+    apply:
+      tags: ["desktop-services"]
+  tags: ["desktop-services"]
+
+- name: Include PAM TouchID settings
+  ansible.builtin.include_tasks:
+    file: pam-touchid.yml
+    apply:
+      tags: ["pam", "touchid"]
+  tags: ["pam", "touchid"]

@@ -10,9 +10,6 @@ tap "sst/tap"
 tap "steipete/tap"
 
 # Brews (formulae)
-brew "ansible"
-brew "ansible-lint"
-brew "pre-commit"
 brew "cliproxyapi"
 brew "gemini-cli"
 brew "llm"
@@ -25,6 +22,7 @@ brew "mas"
 brew "tart"
 
 # Casks
+# cask "aerospace"
 cask "1password"
 cask "1password-cli"
 cask "aqua-voice"
@@ -32,6 +30,7 @@ cask "bazecor"
 cask "beeper"
 cask "bloom"
 cask "chatgpt"
+# cask "choosy"
 cask "claude"
 cask "clay"
 cask "cloudflare-warp"
@@ -44,14 +43,17 @@ cask "elgato-control-center"
 cask "fantastical"
 cask "ghostty"
 cask "google-chrome"
+# cask "google-drive"
 cask "gcloud-cli"
 cask "iina"
 cask "legcord"
 cask "localsend"
 cask "mac-mouse-fix"
+# cask "macwhisper"
 cask "mimestream"
 cask "monodraw"
 cask "moonlight"
+# cask "mqtt-explorer"
 cask "obsidian"
 cask "orbstack"
 cask "orion"
@@ -59,9 +61,11 @@ cask "prusaslicer"
 cask "qlmarkdown"
 cask "raycast"
 cask "rectangle-pro"
+# cask "reflect"
 cask "setapp"
 cask "slack"
 cask "steam"
+# cask "tabtab"
 cask "visual-studio-code"
 cask "visual-studio-code@insiders"
 cask "warp"
@@ -88,7 +92,9 @@ mas "Play: Save Videos Watch Later", id: 1596506190
 mas "Poolsuite FM", id: 1514817810
 mas "Raycast Companion", id: 6738274497
 mas "Remind Me Faster", id: 985555908
+# mas "Save to Reader", id: 1640236961
 mas "SponsorBlock for Safari", id: 1573461917
+# mas "Spokenly: Voice to Text AI", id: 6740315592
 mas "Tailscale", id: 1475387142
 mas "Telegram", id: 747648890
 mas "TestFlight", id: 899247664
