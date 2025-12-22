@@ -1,0 +1,8 @@
+[storj]
+type = s3
+provider = Storj
+access_key_id = {{ onepasswordRead "op://Private/rclone storj/access key id" }}
+secret_access_key = {{ onepasswordRead "op://Private/rclone storj/secret access key" }}
+endpoint = gateway.storjshare.io
+chunk_size = 64Mi
+disable_checksum = true

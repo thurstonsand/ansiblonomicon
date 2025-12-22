@@ -81,6 +81,33 @@ else
     echo "==> chezmoi already installed"
 fi
 
+# Install 1Password CLI (required for secrets in Ansible and Chezmoi)
+if ! command -v op &>/dev/null; then
+    echo "==> Installing 1Password CLI..."
+    if [[ "$PLATFORM" == "darwin" ]]; then
+        brew install --cask 1password-cli
+    elif [[ "$PLATFORM" == "archlinux" ]]; then
+        # AUR package: 1password-cli
+        echo "    Install 1password-cli from AUR manually"
+    fi
+else
+    echo "==> 1Password CLI already installed"
+fi
+
+# Verify 1Password is signed in (required for secrets)
+# op account list returns 0 even when not signed in, so we test an actual read
+if ! op account get &>/dev/null; then
+    echo ""
+    echo "ERROR: 1Password CLI is not signed in."
+    echo ""
+    echo "To sign in, run:"
+    echo "    op signin"
+    echo ""
+    echo "Then re-run this script."
+    exit 1
+fi
+echo "==> 1Password CLI signed in"
+
 # Install Ansible Galaxy requirements (if requirements.yml exists)
 if [[ -f "$REPO_DIR/ansible/requirements.yml" ]]; then
     echo "==> Installing Ansible Galaxy requirements..."
@@ -94,7 +121,4 @@ ansible-playbook main.yml -K
 
 echo "==> Bootstrap complete!"
 echo ""
-echo "Next steps:"
-echo "  1. Set up 1Password CLI: op signin"
-echo "  2. Ensure 'Apple Macbook Login' item exists in Private vault"
-echo "  3. Future runs: just run 'anup' (no password prompt needed)"
+echo "Future runs: just run 'anup'"

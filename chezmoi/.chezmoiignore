@@ -4,6 +4,7 @@
 # macOS-only files - ignore on non-Darwin
 {{ if ne .chezmoi.os "darwin" }}
 .config/nextdns.conf
+Library/
 {{ end }}
 
 # Linux-only files - ignore on non-Linux

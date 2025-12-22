@@ -4,6 +4,7 @@
 # Required by bootstrap
 brew "ansible"
 brew "chezmoi"
+cask "1password-cli"
 
 # Brew formula
 brew "tree"

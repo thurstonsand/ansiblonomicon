@@ -183,25 +183,47 @@ main() {
         cp "$REPO_DIR/ansible/Brewfile.test" "$REPO_DIR/ansible/Brewfile"
     fi
     
-    # Run bootstrap
+    # Run bootstrap (expect it to fail at 1Password signin check)
     log "Running bootstrap script..."
     echo ""
     
-    if vm_ssh "cd '/Volumes/My Shared Files/ansiblonomicon' && ./scripts/bootstrap.sh"; then
-        echo ""
-        log "Bootstrap completed successfully!"
-        
-        # Verify key components
-        log "Verifying installation..."
-        echo -n "    Homebrew: "
-        vm_ssh "command -v brew" && echo "OK" || echo "MISSING"
-        echo -n "    Ansible: "
-        vm_ssh "command -v ansible-playbook" && echo "OK" || echo "MISSING"
-        echo -n "    Xcode CLI: "
-        vm_ssh "xcode-select -p" 2>/dev/null && echo "OK" || echo "MISSING"
+    local bootstrap_exit=0
+    vm_ssh "cd '/Volumes/My Shared Files/ansiblonomicon' && ./scripts/bootstrap.sh" || bootstrap_exit=$?
+    echo ""
+    
+    # Verify key components were installed before 1Password check
+    log "Verifying installation..."
+    local all_ok=true
+    
+    # Need to source brew shellenv for PATH
+    local brew_env='eval "$(/opt/homebrew/bin/brew shellenv)" 2>/dev/null || true'
+    
+    echo -n "    Xcode CLI: "
+    if vm_ssh "xcode-select -p" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
+    
+    echo -n "    Homebrew: "
+    if vm_ssh "test -x /opt/homebrew/bin/brew" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
+    
+    echo -n "    Ansible: "
+    if vm_ssh "$brew_env && command -v ansible-playbook" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
+    
+    echo -n "    chezmoi: "
+    if vm_ssh "$brew_env && command -v chezmoi" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
+    
+    echo -n "    1Password CLI: "
+    if vm_ssh "$brew_env && command -v op" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
+    
+    echo ""
+    
+    if [[ "$all_ok" == "true" ]]; then
+        if [[ $bootstrap_exit -ne 0 ]]; then
+            log "Bootstrap stopped at 1Password signin (expected in test)"
+        else
+            log "Bootstrap completed fully"
+        fi
+        log "All dependencies installed successfully!"
     else
-        echo ""
-        error "Bootstrap failed!"
+        error "Some dependencies failed to install"
         exit 1
     fi
     

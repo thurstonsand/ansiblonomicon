@@ -1,0 +1,49 @@
+[aliases]
+bottom = ["edit", "roots(::@ & ~::main)"]
+preview = ["log", "-r", "::@", "--git"]
+stack = ["log", "-r", "::@ & ~::main"]
+
+[git]
+auto-local-bookmark = true
+private-commits = "description(glob:'wip:*') | description(glob:'private:*')"
+sign-on-push = true
+
+[merge-tools.code]
+edit-args = ["--wait", "--diff", "$left", "$right"]
+merge-args = [
+    "--wait",
+    "--merge",
+    "$left",
+    "$right",
+    "$base",
+    "$output",
+]
+program = "code"
+
+[signing]
+backend = "ssh"
+behavior = "drop"
+key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
+
+{{ if eq .chezmoi.os "darwin" -}}
+[signing.backends.ssh]
+program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+
+{{ end -}}
+[templates]
+log_node = "coalesce(\n  if(!self, label(\"elided\", \"~\")),\n  label(if(current_working_copy, \"working_copy\"),\n    if(conflict, label(\"conflict\", \"×\"), \"◉\")\n  ),\n)\n"
+
+[ui]
+diff-editor = "code"
+editor = "code --wait"
+merge-editor = "code"
+
+[ui.graph]
+style = "curved"
+
+[ui.movement]
+edit = true
+
+[user]
+email = "thurstonsand@gmail.com"
+name = "Thurston Sandberg"

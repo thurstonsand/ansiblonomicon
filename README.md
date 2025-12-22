@@ -5,7 +5,7 @@ System configuration via Ansible + Chezmoi, replacing nix-darwin + home-manager.
 ## Quick Start
 
 ```bash
-# First time setup (installs Homebrew, Ansible, runs playbook)
+# First time setup (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI, runs playbook)
 ./scripts/bootstrap.sh
 
 # After changes
