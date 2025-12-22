@@ -40,5 +40,5 @@
   ansible.builtin.include_tasks:
     file: pam-touchid.yml
     apply:
-      tags: ["pam", "touchid"]
-  tags: ["pam", "touchid"]
+      tags: ["permissions"]
+  tags: ["permissions"]

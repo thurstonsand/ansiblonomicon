@@ -7,7 +7,10 @@ dependencies = ["ansible>=12.3.0"]
 
 [tool.poe.tasks]
 lint = "ansible-lint ansible/"
-play = "ansible-playbook -i ansible/inventory ansible/main.yml"
+
+[tool.poe.tasks.play]
+cmd = "ansible-playbook -i inventory main.yml"
+cwd = "ansible"
 
 [dependency-groups]
 dev = ["ansible-lint>=25.12.1", "poethepoet>=0.38.0", "pre-commit>=4.5.1"]

@@ -19,19 +19,6 @@
       when: ansible_facts['os_family'] == "Archlinux"
       tags: ["always"]
 
-    - name: Retrieve become password from 1Password (once)
-      when: onepassword_become_item is defined
-      tags: ["always"]
-      block:
-        - name: Try 1Password lookup
-          ansible.builtin.set_fact:
-            ansible_become_pass: "{{ lookup('community.general.onepassword', onepassword_become_item, vault=onepassword_vault) }}"
-          no_log: true
-      rescue:
-        - name: 1Password unavailable - will prompt for password
-          ansible.builtin.debug:
-            msg: "1Password lookup failed. Run with -K to provide sudo password interactively."
-
     - name: Display system info
       ansible.builtin.debug:
         msg: "Configuring {{ ansible_facts['os_family'] }} ({{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }})"
@@ -74,8 +61,7 @@
           "nsglobaldomain",
           "menubar",
           "desktop-services",
-          "pam",
-          "touchid",
+          "permissions",
         ]
 
     - name: MacOS configuration complete

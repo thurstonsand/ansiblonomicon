@@ -1,40 +1,15 @@
 ---
 # PAM TouchID configuration
-# Order matters: password first (for automation), TouchID second (for interactive)
-#
-# NOTE: We use a temp file + shell approach instead of ansible.builtin.copy because
-# macOS SIP protects /etc/pam.d/ - the copy module's atomic rename fails with
-# "Operation not permitted" even with become: true. Direct cp works with sudo.
+# Uses sudo_local which is included by /etc/pam.d/sudo and survives macOS updates
+# Password fallback is already in /etc/pam.d/sudo via pam_opendirectory.so
 
-- name: Read current sudo_local content
-  ansible.builtin.slurp:
-    src: /etc/pam.d/sudo_local
-  register: macos_defaults_sudo_local_content
-  failed_when: false
-
-- name: Set expected sudo_local content
-  ansible.builtin.set_fact:
-    macos_defaults_expected_sudo_local: |
-      # Managed by Ansible - password first (for automation), then TouchID (for interactive)
-      auth       sufficient     pam_opendirectory.so
-      auth       sufficient     pam_tid.so
-
-- name: Write sudo_local to temp file
-  ansible.builtin.copy:
-    dest: /tmp/sudo_local.tmp
-    content: "{{ macos_defaults_expected_sudo_local }}"
-    mode: "0444"
-  when: >
-    macos_defaults_sudo_local_content.content is not defined or
-    (macos_defaults_sudo_local_content.content | b64decode) != macos_defaults_expected_sudo_local
-  register: macos_defaults_sudo_local_tmp
-
-- name: Install sudo_local with correct permissions # noqa: no-handler
+- name: Enable TouchID for sudo
   become: true
-  ansible.builtin.shell: |
-    cp /tmp/sudo_local.tmp /etc/pam.d/sudo_local
-    chown root:wheel /etc/pam.d/sudo_local
-    chmod 444 /etc/pam.d/sudo_local
-    rm /tmp/sudo_local.tmp
-  changed_when: true
-  when: macos_defaults_sudo_local_tmp is changed
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sudo_local
+    line: "auth       sufficient     pam_tid.so"
+    regexp: "^#?auth\\s+sufficient\\s+pam_tid.so"
+    create: true
+    mode: "0444"
+    owner: root
+    group: wheel

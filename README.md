@@ -12,17 +12,12 @@ System configuration via Ansible + Chezmoi, replacing nix-darwin + home-manager.
 anup
 ```
 
-### 1Password Integration
+### Sudo Access
 
-For passwordless sudo after initial setup:
+Ansible uses `become_password_file` to get the sudo password from 1Password automatically.
+Just run `poe play` — no manual password entry needed.
 
-1. Sign in to 1Password CLI: `op signin`
-2. Ensure the appropriate login item exists in your Private vault:
-   - **macOS**: "Apple Macbook Login"
-   - **Arch Linux**: "Arch Linux Login"
-3. Future runs will automatically retrieve the sudo password from 1Password
-
-If 1Password is unavailable, run with `-K` to provide the password interactively.
+Interactive sudo still uses TouchID as normal.
 
 ## Structure
 
