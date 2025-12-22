@@ -1,0 +1,12 @@
+# Minimal test Brewfile for CI/testing
+# Skip MAS - requires Apple ID sign-in
+
+# Required by bootstrap
+brew "ansible"
+brew "chezmoi"
+
+# Brew formula
+brew "tree"
+
+# Cask
+cask "qlmarkdown"

@@ -69,6 +69,18 @@ else
     echo "==> Ansible already installed"
 fi
 
+# Install chezmoi
+if ! command -v chezmoi &>/dev/null; then
+    echo "==> Installing chezmoi..."
+    if [[ "$PLATFORM" == "darwin" ]]; then
+        brew install chezmoi
+    elif [[ "$PLATFORM" == "archlinux" ]]; then
+        sudo pacman -S --noconfirm chezmoi
+    fi
+else
+    echo "==> chezmoi already installed"
+fi
+
 # Install Ansible Galaxy requirements (if requirements.yml exists)
 if [[ -f "$REPO_DIR/ansible/requirements.yml" ]]; then
     echo "==> Installing Ansible Galaxy requirements..."

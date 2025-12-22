@@ -1,0 +1,41 @@
+# .zshenv - Loaded for ALL shells (login, interactive, scripts)
+# Keep this minimal - avoid side effects that could break scripts
+
+# Only source once per shell
+# TODO: After nix is fully uninstalled, switch back to __ZSHENV_SOURCED
+if [[ -n "$__CHEZMOI_ZSHENV_SOURCED" ]]; then return; fi
+export __CHEZMOI_ZSHENV_SOURCED=1
+
+# Cache directory and evalcache function
+# Used by .zprofile and .zshrc for lazy initialization
+ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
+
+_evalcache() {
+  local cmd=$1
+  shift
+  local cache_file="$ZSH_CACHE_DIR/${cmd##*/}_init.zsh"
+  local binary=$(command -v "$cmd" 2>/dev/null)
+
+  if [[ ! -f "$cache_file" ]] || \
+     [[ -n "$binary" && "$binary" -nt "$cache_file" ]] || \
+     [[ "$cmd $*" != "$(head -1 "$cache_file" 2>/dev/null | sed 's/^# //')" ]]; then
+    mkdir -p "$ZSH_CACHE_DIR"
+    echo "# $cmd $*" > "$cache_file"
+    "$cmd" "$@" >> "$cache_file" 2>/dev/null
+    zcompile "$cache_file" 2>/dev/null || true
+  fi
+  source "$cache_file"
+}
+
+# Environment variables
+export EDITOR="code --wait"
+
+# PATH additions (available to all shells including scripts)
+typeset -U path
+path=(
+  "$HOME/.npm-global/bin"
+  "$HOME/.opencode/bin"
+  "$HOME/.cargo/bin"
+  "$HOME/.local/bin"
+  $path
+)

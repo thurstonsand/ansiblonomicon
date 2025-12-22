@@ -6,11 +6,40 @@ requires-python = ">=3.14"
 dependencies = ["ansible>=12.3.0"]
 
 [tool.poe.tasks]
-lint = "ansible-lint ansible/"
+lint = { cmd = "ansible-lint ansible/", help = "Lint ansible playbooks and roles" }
 
 [tool.poe.tasks.play]
+help = "Run the main ansible playbook"
 cmd = "ansible-playbook -i inventory main.yml"
 cwd = "ansible"
+
+# Chezmoi tasks
+[tool.poe.tasks.cz-diff]
+help = "Show what chezmoi would change (source → home)"
+cmd = "chezmoi diff"
+
+[tool.poe.tasks.cz-status]
+help = "Show files that differ between source and home"
+cmd = "chezmoi status"
+
+[tool.poe.tasks.cz-re-add]
+help = "Update source from local changes (dry-run unless --apply)"
+shell = "if [ \"$apply\" = \"true\" ]; then chezmoi re-add; else chezmoi re-add --dry-run; fi"
+
+[[tool.poe.tasks.cz-re-add.args]]
+name = "apply"
+type = "boolean"
+options = ["--apply", "-a"]
+help = "Actually apply changes (default: dry-run)"
+
+[tool.poe.tasks.cz-managed]
+help = "List all files managed by chezmoi"
+cmd = "chezmoi managed"
+
+[tool.poe.tasks.cz-edit]
+help = "Edit a managed file in source dir"
+cmd = "chezmoi edit"
+args = [{ name = "file", positional = true, required = true }]
 
 [dependency-groups]
 dev = ["ansible-lint>=25.12.1", "poethepoet>=0.38.0", "pre-commit>=4.5.1"]

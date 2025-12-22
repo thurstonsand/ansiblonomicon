@@ -33,16 +33,20 @@ Interactive sudo still uses TouchID as normal.
 │   ├── roles/               # Custom and Galaxy roles
 │   ├── tasks/               # Task files by category
 │   └── main.yml             # Entry point playbook
-├── chezmoi/                  # Dotfiles (coming soon)
+├── chezmoi/                  # Dotfiles managed by chezmoi
 └── scripts/
-    └── bootstrap.sh          # One-liner bootstrap for new machines
+    ├── bootstrap.sh          # One-liner bootstrap for new machines
+    └── test-bootstrap.sh     # Test bootstrap in a clean macOS VM (requires tart)
 ```
 
 ## Commands
 
 - `anup` — Apply Ansible configuration (alias set up by this playbook)
-- `chezmoi apply` — Apply dotfile changes
-- `chezmoi diff` — Preview dotfile changes
+- `poe cz-diff` — Preview dotfile changes (source → home)
+- `poe cz-status` — Show files that differ between source and home
+- `poe cz-re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)
+- `poe cz-managed` — List all files managed by chezmoi
+- `poe cz-edit <file>` — Edit a managed file in source dir
 
 ## Design
 

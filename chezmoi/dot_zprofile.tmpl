@@ -1,0 +1,12 @@
+# .zprofile - Login shell configuration
+# Loaded once per login shell (before .zshrc)
+# Note: _evalcache and PATH are defined in .zshenv
+
+{{- if eq .chezmoi.os "darwin" }}
+
+# Homebrew shell environment
+_evalcache /opt/homebrew/bin/brew shellenv
+
+# OrbStack shell integration
+source ~/.orbstack/shell/init.zsh 2>/dev/null || :
+{{- end }}

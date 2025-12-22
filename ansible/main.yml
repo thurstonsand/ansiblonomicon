@@ -33,7 +33,12 @@
           when: ansible_check_mode
           check_mode: false
           ansible.builtin.command:
-            cmd: brew bundle check --file={{ playbook_dir }}/Brewfile --verbose
+            argv:
+              - brew
+              - bundle
+              - check
+              - "--file={{ playbook_dir }}/Brewfile"
+              - --verbose
           register: brew_result
           changed_when: brew_result.rc != 0
           failed_when: false
@@ -41,7 +46,11 @@
         - name: Run brew bundle
           when: not ansible_check_mode
           ansible.builtin.command:
-            cmd: brew bundle --file={{ playbook_dir }}/Brewfile --cleanup
+            argv:
+              - brew
+              - bundle
+              - "--file={{ playbook_dir }}/Brewfile"
+              - --cleanup
           register: brew_result
           changed_when: "'Installing' in brew_result.stdout or 'Upgrading' in brew_result.stdout or 'Uninstalling' in brew_result.stdout"
 
@@ -69,6 +78,14 @@
         msg: "macOS configuration applied successfully"
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["always"]
+
+    - name: Apply chezmoi dotfiles
+      ansible.builtin.include_role:
+        name: chezmoi
+        apply:
+          tags: ["chezmoi", "dotfiles"]
+      when: configure_chezmoi | default(true)
+      tags: ["chezmoi", "dotfiles"]
 
     - name: Placeholder - Arch Linux tasks
       ansible.builtin.debug:

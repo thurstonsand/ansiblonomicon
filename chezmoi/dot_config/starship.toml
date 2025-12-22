@@ -1,0 +1,26 @@
+# Starship prompt configuration
+# https://starship.rs/config/
+
+[hostname]
+disabled = true
+
+[username]
+disabled = true
+
+[directory]
+truncation_length = 0                                                                                 # Show full path
+truncate_to_repo = false                                                                              # Don't truncate to repo root
+style = "bold yellow"                                                                                 # Style for non-repo path
+repo_root_style = "bold yellow"                                                                       # Style for repo path
+before_repo_root_style = "dimmed cyan"                                                                # Style for path before repo
+format = "[$before_root_path]($before_repo_root_style)[$repo_root]($repo_root_style)[$path]($style) "
+
+[nix_shell]
+format = "env [$symbol$state]($style) "
+symbol = "❄️ "
+pure_msg = "pure"
+impure_msg = "dev"
+style = "bold blue"
+
+[gcloud]
+disabled = true

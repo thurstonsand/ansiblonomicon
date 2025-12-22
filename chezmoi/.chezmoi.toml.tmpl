@@ -1,0 +1,19 @@
+# Chezmoi configuration
+# This file is a template that generates ~/.config/chezmoi/chezmoi.toml
+
+sourceDir = {{ .chezmoi.sourceDir | quote }}
+
+[edit]
+  command = "code"
+  args = ["--wait"]
+
+[diff]
+  pager = "delta"
+
+[data]
+  # Custom variables available in all templates as .variableName
+{{- if eq .chezmoi.os "darwin" }}
+  developDir = "Develop"
+{{- else if eq .chezmoi.os "linux" }}
+  developDir = "code"
+{{- end }}

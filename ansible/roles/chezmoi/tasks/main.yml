@@ -1,0 +1,32 @@
+---
+# Chezmoi dotfile management
+# This role initializes chezmoi and applies dotfiles from the local source
+
+- name: Initialize chezmoi from local source
+  ansible.builtin.command:
+    argv:
+      - chezmoi
+      - init
+      - "--source={{ chezmoi_source_dir }}"
+  register: chezmoi_init
+  changed_when: chezmoi_init.rc == 0
+
+- name: Check what chezmoi would change
+  ansible.builtin.command:
+    cmd: chezmoi diff
+  register: chezmoi_diff
+  changed_when: chezmoi_diff.stdout | length > 0
+  failed_when: false
+  check_mode: false
+
+- name: Display pending chezmoi changes
+  ansible.builtin.debug:
+    msg: "{{ chezmoi_diff.stdout }}"
+  when: chezmoi_diff.stdout | length > 0
+
+- name: Apply chezmoi dotfiles
+  ansible.builtin.command:
+    cmd: chezmoi apply --force
+  register: chezmoi_apply
+  changed_when: true
+  when: not ansible_check_mode

@@ -6,3 +6,7 @@ configure_user: thurstonsand
 
 # Feature flags (all platforms)
 configure_dotfiles: true
+configure_chezmoi: true
+
+# Chezmoi configuration
+chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"

@@ -1,0 +1,20 @@
+os:
+  editPreset: "vscode"
+
+gui:
+  nerdFontsVersion: "3"
+  showFileTree: true
+  expandFocusedSidePanel: true
+  filterMode: fuzzy
+
+git:
+  log:
+    order: "topo-order"
+    showGraph: always
+  pagers:
+    - pager: delta --paging=never
+      colorArg: always
+  autoFetch: false
+  overrideGpg: true
+
+promptToReturnFromSubprocess: false

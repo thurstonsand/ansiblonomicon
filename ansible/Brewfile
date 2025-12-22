@@ -10,6 +10,7 @@ tap "sst/tap"
 tap "steipete/tap"
 
 # Brews (formulae)
+brew "chezmoi"
 brew "cliproxyapi"
 brew "gemini-cli"
 brew "llm"
@@ -18,6 +19,7 @@ brew "python"
 # brew "proxmark3", args: ["with-generic", "HEAD"]
 brew "rustup-init"
 brew "softnet"
+brew "sshpass"
 brew "mas"
 brew "tart"
 

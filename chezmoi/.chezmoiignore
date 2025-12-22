@@ -1,0 +1,12 @@
+# Files to ignore based on platform
+# Syntax: Go template conditionals around glob patterns
+
+# macOS-only files - ignore on non-Darwin
+{{ if ne .chezmoi.os "darwin" }}
+.config/nextdns.conf
+{{ end }}
+
+# Linux-only files - ignore on non-Linux
+{{ if ne .chezmoi.os "linux" }}
+# (none yet)
+{{ end }}

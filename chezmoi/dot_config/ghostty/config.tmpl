@@ -1,0 +1,30 @@
+font-family = Mononoki Nerd Font
+# also change the window title at the top
+window-title-font-family = Mononoki Nerd Font Bold
+font-size = 14
+
+# if not inheriting from a previous window
+working-directory = {{ .chezmoi.homeDir }}/{{ .developDir }}
+# may cause kernel panics with some external displays
+window-vsync = false
+window-save-state = always
+
+confirm-close-surface = false
+
+quick-terminal-position = bottom
+quick-terminal-animation-duration = 0.08
+
+shell-integration-features = true
+
+macos-non-native-fullscreen = visible-menu
+# background-blur = macos-glass-regular # still in tip
+
+auto-update = download
+auto-update-channel = stable
+
+theme = dark:Catppuccin Mocha,light:Catppuccin Latte
+
+keybind = global:control+option+.=toggle_quick_terminal
+keybind = cmd+enter=ignore
+keybind = shift+enter=text:\n
+keybind = cmd+shift+p=toggle_command_palette
