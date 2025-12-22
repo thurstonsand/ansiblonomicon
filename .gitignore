@@ -7,3 +7,6 @@
 
 # direnv
 .direnv/
+
+# ai
+/.claude/settings.local.json

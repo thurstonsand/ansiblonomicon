@@ -1,0 +1,30 @@
+#!/bin/bash
+# Set default applications for code file types using duti
+# Triggered when codeEditor changes: {{ .codeEditor }}
+
+{{- $bundleIds := dict
+  "code" "com.microsoft.VSCode"
+  "code-insiders" "com.microsoft.VSCodeInsiders"
+  "cursor" "com.todesktop.230313mzl4w4u92"
+  "windsurf" "com.exafunction.windsurf"
+  "zed" "dev.zed.Zed"
+}}
+
+{{- $bundleId := index $bundleIds .codeEditor }}
+{{- if not $bundleId }}
+echo "Unknown editor: {{ .codeEditor }}"
+exit 1
+{{- end }}
+
+echo "Setting {{ $bundleId }} as default for code files..."
+
+# File extensions
+for ext in .txt .md .json .js .ts .tsx .jsx .py .rb .go .rs .toml .yaml .yml .xml .css .sh .bash .zsh .nix; do
+  duti -s {{ $bundleId }} "$ext" all
+done
+
+# UTI types
+duti -s {{ $bundleId }} public.plain-text all
+duti -s {{ $bundleId }} public.source-code all
+
+echo "Done."

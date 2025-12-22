@@ -19,7 +19,7 @@
 
 - name: Check what chezmoi would change
   ansible.builtin.command:
-    cmd: chezmoi diff
+    cmd: chezmoi diff --no-pager --color=false
   register: chezmoi_diff
   changed_when: false
   failed_when: false

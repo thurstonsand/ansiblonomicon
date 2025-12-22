@@ -1,15 +1,15 @@
 # .zshenv - Loaded for ALL shells (login, interactive, scripts)
 # Keep this minimal - avoid side effects that could break scripts
 
-# Only source once per shell
-# TODO: After nix is fully uninstalled, switch back to __ZSHENV_SOURCED
-if [[ -n "$__CHEZMOI_ZSHENV_SOURCED" ]]; then return; fi
-export __CHEZMOI_ZSHENV_SOURCED=1
+# =============================================================================
+# SECTION 1: Runs at EVERY shell level (functions don't inherit)
+# =============================================================================
 
-# Cache directory and evalcache function
-# Used by .zprofile and .zshrc for lazy initialization
+# Cache directory for evalcache
 ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 
+# Evalcache function - caches slow shell init commands
+# Used by .zprofile and .zshrc for lazy initialization
 _evalcache() {
   local cmd=$1
   shift
@@ -27,15 +27,28 @@ _evalcache() {
   source "$cache_file"
 }
 
+# =============================================================================
+# SECTION 2: Runs ONCE per shell tree (env vars inherit to children)
+# =============================================================================
+
+# TODO: After nix is fully uninstalled, switch back to __ZSHENV_ENV_CONFIGURED
+[[ -n "$__CHEZMOI_ZSHENV_ENV_CONFIGURED" ]] && return
+export __CHEZMOI_ZSHENV_ENV_CONFIGURED=1
+
 # Environment variables
 export EDITOR="code --wait"
 
 # PATH additions (available to all shells including scripts)
+{{- if eq .chezmoi.os "darwin" }}
+# Note: .local/bin is added in .zprofile after brew shellenv
+{{- end }}
 typeset -U path
 path=(
   "$HOME/.npm-global/bin"
   "$HOME/.opencode/bin"
   "$HOME/.cargo/bin"
+{{- if ne .chezmoi.os "darwin" }}
   "$HOME/.local/bin"
+{{- end }}
   $path
 )

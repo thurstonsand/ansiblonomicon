@@ -12,6 +12,19 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 
 [data]
   # Custom variables available in all templates as .variableName
+  #
+  # Code editor configuration - change codeEditor to switch editors
+  # This controls both ~/.local/bin/code symlink and duti file associations
+  #
+  # | Editor       | Command        |
+  # |--------------|----------------|
+  # | VS Code      | code           |
+  # | VS Code Ins. | code-insiders  |
+  # | Cursor       | cursor         |
+  # | Windsurf     | windsurf       |
+  # | Zed          | zed            |
+  #
+  codeEditor = "code-insiders"
 {{- if eq .chezmoi.os "darwin" }}
   developDir = "Develop"
 {{- else if eq .chezmoi.os "linux" }}
