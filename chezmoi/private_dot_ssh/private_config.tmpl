@@ -1,0 +1,35 @@
+Include ~/.ssh/1Password/config
+
+Host haos
+  ForwardAgent yes
+  User root
+  HostName 192.168.1.89
+  SetEnv TERM="xterm-256color"
+
+Host nix
+  ForwardAgent yes
+  User thurstonsand
+  HostName nix.thurstons.house
+
+Host truenas
+  ForwardAgent yes
+  User admin
+  HostName truenas.thurstons.house
+
+Host truenas-dev
+  Port 2222
+  ForwardAgent yes
+  User admin
+  HostName 192.168.6.227
+  SetEnv TERM="xterm-256color"
+
+Host *
+  ServerAliveInterval 60
+  ServerAliveCountMax 3
+  AddKeysToAgent no
+  HashKnownHosts no
+{{- if eq .chezmoi.os "darwin" }}
+  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+{{- else }}
+  IdentityAgent ~/.1password/agent.sock
+{{- end }}

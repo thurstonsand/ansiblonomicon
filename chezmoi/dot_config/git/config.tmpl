@@ -1,0 +1,60 @@
+[alias]
+	pushf = "push --force-with-lease"
+
+[color]
+	ui = "auto"
+
+[commit]
+	gpgSign = true
+
+[credential]
+	helper = "git-credential-manager"
+
+[credential "https://gist.github.com"]
+	helper = ""
+	helper = "gh auth git-credential"
+
+[credential "https://github.com"]
+	helper = ""
+	helper = "gh auth git-credential"
+
+[diff "lockb"]
+	binary = true
+	textconv = "bun"
+
+[filter "lfs"]
+	clean = "git-lfs clean -- %f"
+	process = "git-lfs filter-process"
+	required = true
+	smudge = "git-lfs smudge -- %f"
+
+[gpg]
+	format = "ssh"
+
+[gpg "ssh"]
+{{- if eq .chezmoi.os "darwin" }}
+	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+{{- else }}
+	program = "op-ssh-sign"
+{{- end }}
+
+[init]
+	defaultBranch = "main"
+
+[pull]
+	rebase = true
+
+[push]
+	autoSetupRemote = true
+	default = "simple"
+
+[rebase]
+	autoStash = true
+
+[tag]
+	gpgSign = true
+
+[user]
+	email = "thurstonsand@gmail.com"
+	name = "Thurston Sandberg"
+	signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
