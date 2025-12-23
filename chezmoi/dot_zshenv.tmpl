@@ -31,11 +31,11 @@ _evalcache() {
 # SECTION 2: Runs ONCE per shell tree (env vars inherit to children)
 # =============================================================================
 
-# TODO: After nix is fully uninstalled, switch back to __ZSHENV_ENV_CONFIGURED
-[[ -n "$__CHEZMOI_ZSHENV_ENV_CONFIGURED" ]] && return
-export __CHEZMOI_ZSHENV_ENV_CONFIGURED=1
+[[ -n "$__ZSHENV_ENV_CONFIGURED" ]] && return
+export __ZSHENV_ENV_CONFIGURED=1
 
 # Environment variables
+export XDG_CONFIG_HOME="$HOME/.config"
 export EDITOR="code --wait"
 
 # PATH additions (available to all shells including scripts)

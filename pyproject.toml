@@ -10,8 +10,9 @@ lint = { cmd = "ansible-lint ansible/", help = "Lint ansible playbooks and roles
 
 [tool.poe.tasks.play]
 help = "Run the main ansible playbook"
-cmd = "ansible-playbook -i inventory main.yml"
+cmd = "op run --env-file=.env.op -- ansible-playbook -i inventory main.yml"
 cwd = "ansible"
+env = { SUDO_ASKPASS = "./sudo-askpass.sh" }
 
 # Chezmoi tasks
 [tool.poe.tasks.cz-diff]

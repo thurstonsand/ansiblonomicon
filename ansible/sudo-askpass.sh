@@ -1,5 +1,3 @@
 #!/bin/bash
-# Retrieves sudo password from 1Password
-# Used by Ansible's become_password_file setting
-
-op read "op://Private/Apple Macbook Login/password" 2>/dev/null
+# Echoes the password from env var (set by op run)
+echo "$SUDO_ASKPASS_PASS"

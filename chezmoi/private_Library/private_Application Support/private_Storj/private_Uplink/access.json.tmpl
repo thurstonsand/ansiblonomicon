@@ -1,6 +1,6 @@
 {
 	"Default": "cli",
 	"Accesses": {
-		"cli": "{{ onepasswordRead "op://Private/storj uplink cli/credential" }}"
+		"cli": "{{ template "storj-uplink-credential" . }}"
 	}
 }

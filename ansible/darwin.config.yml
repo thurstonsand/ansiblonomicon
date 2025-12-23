@@ -1,6 +1,9 @@
 ---
 # macOS-specific configuration
 
+# System settings
+hostname: "Thurstons-MacBook-Pro"
+
 # 1Password configuration
 onepassword_vault: "Private"
 onepassword_become_item: "Apple Macbook Login"

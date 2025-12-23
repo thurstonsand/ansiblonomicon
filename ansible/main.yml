@@ -59,12 +59,21 @@
             msg: "{{ brew_result.stdout_lines + (brew_result.stderr_lines | default([])) }}"
           when: brew_result.stdout_lines is defined and (brew_result.stdout_lines | length > 0 or (brew_result.stderr_lines | default([])) | length > 0)
 
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: "{{ hostname }}"
+        use: darwin
+      when: ansible_facts['os_family'] == "Darwin" and hostname is defined
+      become: true
+      tags: ["sysconfig", "hostname"]
+
     - name: Apply macOS system defaults
       ansible.builtin.include_role:
         name: macos_defaults
       when: ansible_facts['os_family'] == "Darwin" and configure_macos_defaults | default(true)
       tags:
         [
+          "sysconfig",
           "dock",
           "finder",
           "nsglobaldomain",

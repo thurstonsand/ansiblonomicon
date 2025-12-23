@@ -27,4 +27,40 @@
 - System info: `{{ .chezmoi.os }}`, `{{ .chezmoi.arch }}`, etc.
 - Platform conditionals: `{{ if eq .chezmoi.os "darwin" }}` in templates
 - Use `.chezmoiignore` for entire platform-specific files
-- Secrets via 1Password: `{{ onepasswordRead "op://Vault/Item/field" }}`
+
+# Adding Secrets
+
+Secrets are stored in 1Password and accessed via the `op` CLI.
+
+## Chezmoi Secrets
+
+For secrets in dotfiles, use the `op-secret` template with a named wrapper:
+
+1. Create a wrapper template in `.chezmoitemplates/`:
+
+   ```gotemplate
+   {{- template "op-secret" list "ENV_VAR_NAME" "op://Vault/Item/field" -}}
+   ```
+
+2. Use the wrapper in your dotfile:
+
+   ```gotemplate
+   api_key = {{ template "my-api-key" . }}
+   ```
+
+3. Add the env var to `ansible/.env.op`:
+   ```sh
+   ENV_VAR_NAME=op://Vault/Item/field
+   ```
+
+This pattern allows `chezmoi apply` to use pre-resolved env vars (fast) when run via `poe play`, while still working standalone via `onepasswordRead` (slower, prompts for auth).
+
+## Ansible Secrets
+
+Add secret references to `ansible/.env.op` — they're resolved once by `op run` at playbook start:
+
+```sh
+MY_SECRET=op://Vault/Item/field
+```
+
+Access in playbooks via `{{ lookup('env', 'MY_SECRET') }}`.

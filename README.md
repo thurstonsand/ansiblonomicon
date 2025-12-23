@@ -14,7 +14,7 @@ anup
 
 ### Sudo Access
 
-Ansible uses `become_password_file` to get the sudo password from 1Password automatically.
+Ansible uses `op run` with `SUDO_ASKPASS` to get the sudo password from 1Password automatically.
 Just run `poe play` — no manual password entry needed.
 
 Interactive sudo still uses TouchID as normal.
