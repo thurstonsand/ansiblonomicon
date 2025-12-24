@@ -12,3 +12,6 @@ Library/
 {{ if ne .chezmoi.os "linux" }}
 # (none yet)
 {{ end }}
+
+# App caches and generated files
+Library/Application Support/PrusaSlicer/cache/

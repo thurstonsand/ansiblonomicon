@@ -2,7 +2,8 @@
   "files.associations": {
     "**/ansible/**/*.yml": "ansible",
     "**/ansible/**/*.yaml": "ansible",
-    "inventory": "ini"
+    "inventory": "ini",
+    "chezmoi/.chezmoitemplates/**/*": "gotmpl"
   },
   "ansible.validation.lint.enabled": true,
   "ansible.python.interpreterPath": ".venv/bin/python",

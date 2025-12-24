@@ -1,0 +1,37 @@
+{{- /* Shared model definitions for CLI proxy */ -}}
+{{- /* Each model: id, name, thinking, maxInput, maxOutput, vision */ -}}
+
+{{- /* Individual model definitions for direct reference */ -}}
+{{- $claudeHaiku := dict "id" "claude-haiku-4-5-20251001" "name" "Claude Haiku 4.5" "thinking" false "maxInput" 200000 "maxOutput" 64000 "vision" true -}}
+{{- $claudeSonnet := dict "id" "claude-sonnet-4-5-20250929" "name" "Claude Sonnet 4.5" "thinking" true "maxInput" 200000 "maxOutput" 64000 "vision" true -}}
+{{- $claudeOpus := dict "id" "claude-opus-4-5-20251101" "name" "Claude Opus 4.5" "thinking" true "maxInput" 200000 "maxOutput" 32000 "vision" true -}}
+
+{{- $gpt52 := dict "id" "gpt-5.2" "name" "GPT 5.2" "thinking" false "maxInput" 400000 "maxOutput" 128000 "vision" true -}}
+{{- $gpt52Medium := dict "id" "gpt-5.2(medium)" "name" "GPT 5.2 Medium" "thinking" true "maxInput" 400000 "maxOutput" 128000 "vision" true -}}
+{{- $gpt52High := dict "id" "gpt-5.2(high)" "name" "GPT 5.2 High" "thinking" true "maxInput" 400000 "maxOutput" 128000 "vision" true -}}
+{{- $gpt52XHigh := dict "id" "gpt-5.2(xhigh)" "name" "GPT 5.2 XHigh" "thinking" true "maxInput" 400000 "maxOutput" 128000 "vision" true -}}
+
+{{- $gpt52CodexMedium := dict "id" "gpt-5.2-codex(medium)" "name" "GPT 5.2 Codex Medium" "thinking" true "maxInput" 400000 "maxOutput" 128000 "vision" true -}}
+{{- $gpt52CodexHigh := dict "id" "gpt-5.2-codex(high)" "name" "GPT 5.2 Codex High" "thinking" true "maxInput" 400000 "maxOutput" 128000 "vision" true -}}
+{{- $gpt52CodexXHigh := dict "id" "gpt-5.2-codex(xhigh)" "name" "GPT 5.2 Codex XHigh" "thinking" true "maxInput" 400000 "maxOutput" 128000 "vision" true -}}
+
+{{- $geminiFlash := dict "id" "gemini-3-flash-preview" "name" "Gemini 3 Flash" "thinking" true "maxInput" 1000000 "maxOutput" 65536 "vision" true -}}
+{{- $geminiPro := dict "id" "gemini-3-pro-preview" "name" "Gemini 3 Pro" "thinking" true "maxInput" 1000000 "maxOutput" 65536 "vision" true -}}
+
+{{- /* Combined list of all models */ -}}
+{{- $models := list $claudeHaiku $claudeSonnet $claudeOpus $gpt52 $gpt52Medium $gpt52High $gpt52XHigh $gpt52CodexMedium $gpt52CodexHigh $gpt52CodexXHigh $geminiFlash $geminiPro -}}
+
+{{- /* Export to calling template */ -}}
+{{- $_ := set $ "models" $models -}}
+{{- $_ := set $ "claudeHaiku" $claudeHaiku -}}
+{{- $_ := set $ "claudeSonnet" $claudeSonnet -}}
+{{- $_ := set $ "claudeOpus" $claudeOpus -}}
+{{- $_ := set $ "gpt52" $gpt52 -}}
+{{- $_ := set $ "gpt52Medium" $gpt52Medium -}}
+{{- $_ := set $ "gpt52High" $gpt52High -}}
+{{- $_ := set $ "gpt52XHigh" $gpt52XHigh -}}
+{{- $_ := set $ "gpt52CodexMedium" $gpt52CodexMedium -}}
+{{- $_ := set $ "gpt52CodexHigh" $gpt52CodexHigh -}}
+{{- $_ := set $ "gpt52CodexXHigh" $gpt52CodexXHigh -}}
+{{- $_ := set $ "geminiFlash" $geminiFlash -}}
+{{- $_ := set $ "geminiPro" $geminiPro -}}

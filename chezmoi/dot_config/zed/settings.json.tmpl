@@ -1,0 +1,258 @@
+{{- template "cli-proxy-models" . -}}
+// Zed settings
+//
+// For information on how to configure Zed, see the Zed
+// documentation: https://zed.dev/docs/configuring-zed
+//
+// To see all of Zed's default settings without changing your
+// custom settings, run `zed: open default settings` from the
+// command palette (cmd-shift-p / ctrl-shift-p)
+{
+  "context_servers": {
+    "Parallel Search": {
+      "settings": {},
+
+      "enabled": true,
+      "url": "https://search-mcp.parallel.ai/mcp",
+      "headers": { "Authorization": "Bearer {{ template "parallel-search-key" . }}" }
+    }
+  },
+  "colorize_brackets": true,
+  "audio": {
+    "experimental.rodio_audio": true
+  },
+  "git": {
+    "inline_blame": {
+      "show_commit_summary": true
+    }
+  },
+  "language_models": {
+    "openai": {
+      "available_models": [
+        {
+          "name": "{{ .gpt52.id }}",
+          "display_name": "{{ .gpt52.name }}",
+          "max_tokens": {{ .gpt52.maxInput }},
+          "max_output_tokens": {{ .gpt52.maxOutput }},
+          "max_completion_tokens": {{ .gpt52.maxOutput }}
+        },
+        {
+          "name": "{{ .gpt52High.id }}",
+          "display_name": "{{ .gpt52High.name }}",
+          "reasoning_effort": "high",
+          "max_tokens": {{ .gpt52High.maxInput }},
+          "max_output_tokens": {{ .gpt52High.maxOutput }},
+          "max_completion_tokens": {{ .gpt52High.maxOutput }}
+        }
+      ],
+      "api_url": "https://cli-proxy-api.thurstons.house/v1"
+    },
+    "google": {
+      "api_url": "https://cli-proxy-api.thurstons.house"
+    },
+    "anthropic": {
+      "api_url": "https://cli-proxy-api.thurstons.house"
+    },
+    "openai_compatible": {
+      "Cerebras": {
+        "api_url": "https://api.cerebras.ai/v1",
+        "available_models": [
+          {
+            "name": "qwen-3-coder-480b",
+            "max_tokens": 64000,
+            "max_output_tokens": 8000,
+            "max_completion_tokens": 8000,
+            "capabilities": {
+              "tools": true,
+              "images": false,
+              "parallel_tool_calls": true,
+              "prompt_cache_key": true
+            }
+          }
+        ]
+      }
+    }
+  },
+  "collaboration_panel": {
+    "button": true
+  },
+  "debugger": {
+    "stepping_granularity": "statement",
+    "dock": "bottom"
+  },
+  "git_panel": {
+    "collapse_untracked_diff": true,
+    "sort_by_path": true,
+    "button": true
+  },
+  "outline_panel": {
+    "indent_size": 13.0,
+    "dock": "left"
+  },
+  "terminal": {
+    "toolbar": {
+      "breadcrumbs": true
+    },
+    "keep_selection_on_copy": true,
+    "dock": "bottom"
+  },
+  "project_panel": {
+    "entry_spacing": "standard"
+  },
+  "use_system_window_tabs": true,
+  "bottom_dock_layout": "contained",
+  "title_bar": {
+    "show_branch_icon": true
+  },
+  "preferred_line_length": 88,
+  "scroll_beyond_last_line": "off",
+  "redact_private_values": true,
+  "agent_servers": {
+    "codex": {
+      "default_mode": "full-access"
+    }
+  },
+  "ssh_connections": [
+    {
+      "host": "truenas",
+      "projects": [
+        {
+          "paths": ["/mnt/performance/home/admin/Develop/nixonomicon/./"]
+        }
+      ]
+    }
+  ],
+  "theme": {
+    "mode": "system",
+    "light": "Catppuccin Latte",
+    "dark": "Catppuccin Mocha"
+  },
+  "icon_theme": {
+    "mode": "system",
+    "light": "Catppuccin Latte",
+    "dark": "Catppuccin Mocha"
+  },
+  "base_keymap": "VSCode",
+  "buffer_font_family": "Mononoki Nerd Font Mono",
+  "buffer_font_size": 14.0,
+  "buffer_line_height": "standard",
+  "ui_font_family": "Mononoki Nerd Font",
+  "ui_font_size": 16,
+  "active_pane_modifiers": {
+    "inactive_opacity": 0.85
+  },
+  // "bottom_dock_layout": "contained",
+  "hover_popover_delay": 200,
+  "drop_target_size": 0.4,
+  "use_system_path_prompts": false,
+  "use_system_prompts": false,
+  "auto_signature_help": true,
+  "drag_and_drop_selection": {
+    "enabled": false
+  },
+  "wrap_guides": [88],
+  "always_treat_brackets_as_autoclosed": true,
+  "toolbar": {
+    "quick_actions": true,
+    "selections_menu": false,
+    "code_actions": true
+  },
+  "agent": {
+    "always_allow_tool_actions": true,
+    "default_model": {
+      "provider": "openai",
+      "model": "gpt-5.2"
+    },
+    "inline_assistant_model": {
+      "provider": "anthropic",
+      "model": "claude-opus-4-5-latest"
+    },
+    "commit_message_model": {
+      "provider": "anthropic",
+      "model": "claude-opus-4-5-latest"
+    },
+    "thread_summary_model": {
+      "provider": "anthropic",
+      "model": "claude-opus-4-5-latest"
+    },
+    "model_parameters": []
+  },
+  "inlay_hints": {
+    "enabled": true,
+    "show_value_hints": true,
+    "show_type_hints": true,
+    "show_parameter_hints": true,
+    "show_other_hints": true,
+    "show_background": true,
+    "edit_debounce_ms": 700,
+    "scroll_debounce_ms": 50,
+    "toggle_on_modifiers_press": {
+      "control": false,
+      "alt": false,
+      "shift": false,
+      "platform": false,
+      "function": false
+    }
+  },
+  "autosave": "on_focus_change",
+  "multi_cursor_modifier": "alt",
+  "minimap": {
+    "show": "auto"
+  },
+  "auto_indent_on_paste": true,
+  "soft_wrap": "editor_width",
+  "tabs": {
+    "show_diagnostics": "all",
+    "git_status": true
+  },
+
+  "languages": {
+    "Python": {
+      "language_servers": ["pylsp", "ruff", "pyright"],
+      "format_on_save": "on",
+      "formatter": [
+        { "code_action": "source.organizeImports.ruff" },
+        { "code_action": "source.fixAll.ruff" },
+        {
+          "language_server": {
+            "name": "ruff"
+          }
+        }
+      ]
+    }
+  },
+  "lsp": {
+    "pylsp": {
+      "binary": {
+        "path": "uv",
+        "arguments": ["run", "--with", "python-lsp-server[all],pylsp-rope", "pylsp"]
+      },
+      "settings": {
+        "plugins": {
+          "pycodestyle": { "enabled": false },
+          "pyflakes": { "enabled": false },
+          "mccabe": { "enabled": false },
+          "pylint": { "enabled": false },
+          "flake8": { "enabled": false },
+          "pydocstyle": { "enabled": false },
+          "yapf": { "enabled": false },
+          "autopep8": { "enabled": false },
+          "rope_autoimport": {
+            "enabled": true,
+            "completions": { "enabled": true },
+            "code_actions": { "enabled": true },
+            "memory": false
+          },
+          "rope_completion": {
+            "enabled": true,
+            "eager": false
+          }
+        },
+        "rope": {
+          "extensionModules": null,
+          "ropeFolder": null
+        }
+      }
+    }
+  }
+}

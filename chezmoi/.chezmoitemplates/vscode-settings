@@ -1,0 +1,492 @@
+{{- /* Template for VSCode-alike settings.json files */ -}}
+{{- /* Usage: {{ template "vscode-settings" (dict "editor" "vscode" "models" .models "claudeHaiku" .claudeHaiku) }} */ -}}
+{{- /* Valid editors: vscode, insiders, cursor, windsurf, antigravity */ -}}
+{{- $editor := .editor -}}
+{{- $isVSCode := or (eq $editor "vscode") (eq $editor "insiders") -}}
+{{- $isCursor := eq $editor "cursor" -}}
+{{- $models := .models -}}
+{{- $claudeHaiku := index . "claudeHaiku" -}}
+{
+{{- if $isCursor }}
+  // ============================================================================
+  // CURSOR SETTINGS
+  // ============================================================================
+  "cursor.composer.cmdPFilePicker2": true,
+  "cursor.diffs.useCharacterLevelDiffs": true,
+  "cursor.general.enableShadowWorkspace": true,
+  "cursor.general.gitGraphIndexing": "enabled",
+  "cursor.composer.shouldChimeAfterChatFinishes": true,
+  "update.releaseTrack": "prerelease",
+  "cursorStats.progressBarWarningThreshold": 80,
+  "window.newWindowProfile": "Default",
+  "window.commandCenter": true,
+
+{{- end }}
+{{- if $isVSCode }}
+  // ============================================================================
+  // GEMINI CODE ASSIST
+  // ============================================================================
+  "geminicodeassist.project": "seraphic-orb-99jrc",
+  "geminicodeassist.inlineSuggestions.enableAuto": false,
+  "geminicodeassist.displayInlineContextHint": false,
+
+  // ============================================================================
+  // CLAUDE CODE
+  // ============================================================================
+  "claudeCode.selectedModel": "opus",
+  "claudeCode.useTerminal": true,
+  "claudeCode.preferredLocation": "sidebar",
+
+  // ============================================================================
+  // CODEX
+  // ============================================================================
+  "chatgpt.commentCodeLensEnabled": false,
+
+  // ============================================================================
+  // AI ANALYTICS
+  // ============================================================================
+  "editor.aiStats.enabled": true,
+
+  // ============================================================================
+  // GITHUB COPILOT
+  // ============================================================================
+  "github.copilot.enable": {
+    "*": false,
+    "python": false
+  },
+  "github.copilot.nextEditSuggestions.enabled": false,
+  "chat.agent.thinkingStyle": "collapsedPreview",
+  "chat.agent.maxRequests": 2500,
+  "chat.checkpoints.showFileChanges": true,
+  "chat.edits2.enabled": true,
+  "chat.promptFilesLocations": {
+    ".claude/commands": true
+  },
+  "chat.tools.terminal.blockDetectedFileWrites": "never",
+  "chat.useNestedAgentsMdFiles": true,
+  "inlineChat.enableV2": true,
+  "inlineChat.holdToSpeech": false,
+  "inlineChat.notebookAgent": true,
+  "chat.useAgentsMdFile": true,
+  "github.copilot.chat.copilotDebugCommand.enabled": false,
+  "github.copilot.chat.byok.ollamaEndpoint": "",
+  "github.copilot.chat.tools.memory.enabled": true,
+  "chat.extensionUnification.enabled": true,
+  "github.copilot.chat.anthropic.tools.websearch.userLocation": {
+    "city": "Atlanta",
+    "region": "Georgia",
+    "country": "US",
+    "timezone": "America/New York"
+  },
+  "github.copilot.chat.customOAIModels": {
+{{- range $i, $m := $models }}
+    "{{ $m.id }}": {
+      "name": "{{ $m.name }}",
+      "url": "https://cli-proxy-api.thurstons.house/v1",
+      "toolCalling": true,
+      "vision": {{ $m.vision }},
+      "thinking": {{ $m.thinking }},
+      "maxInputTokens": {{ $m.maxInput }},
+      "maxOutputTokens": {{ $m.maxOutput }},
+      "requiresAPIKey": true
+    }{{ if lt $i (sub (len $models) 1) }},{{ end }}
+{{- end }}
+  },
+
+  // ============================================================================
+  // AMP SETTINGS
+  // ============================================================================
+  "amp.url": "https://cli-proxy-api.thurstons.house",
+  "amp.tab.enabled": true,
+  "amp.tab.experimental.showHotStreakProgress": true,
+  "amp.tab.hoverDiagnosticSuggestions": true,
+  "amp.git.commit.ampThread.enabled": false,
+  "amp.git.commit.coauthor.enabled": false,
+  "amp.mcpServers": {},
+  "amp.guardedFiles.allowlist": [
+    "/Users/thurstonsand/.config/amp/skills/amp-skill-creator/SKILL.md"
+  ],
+  "amp.tools.disable": [
+    "evaluate_script",
+    "get_console_message",
+    "get_network_request",
+    "handle_dialog",
+    "list_console_messages",
+    "list_network_requests",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__click",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__close_page",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__drag",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__emulate",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__fill",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__fill_form",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__hover",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__list_pages",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__new_page",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__press_key",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__resize_page",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__select_page",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__upload_file",
+    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__wait_for",
+    "navigate_page",
+    "performance_analyze_insight",
+    "performance_start_trace",
+    "performance_stop_trace",
+    "take_screenshot",
+    "take_snapshot",
+    "mcp__parallel_search__web_fetch",
+    "mcp__parallel_search__web_search_preview",
+    "builtin:skill",
+    "sa__code-reviewer",
+    "mcp__skills__skill"
+  ],
+
+  // ============================================================================
+  // PERMISSIONS (AMP)
+  // ============================================================================
+  "amp.permissions": [
+    {
+      "tool": "Bash",
+      "matches": {
+        "cmd": [
+          "git stash",
+          "git stash *",
+          "git add -A",
+          "git add -A *",
+          "git commit *"
+        ]
+      },
+      "action": "ask"
+    },
+    {
+      "tool": "Bash",
+      "matches": {
+        "cmd": "/^rm\\s+.*(-[rf].*-[rf]|-[rf]{2,}|--recursive.*--force|--force.*--recursive).*$/"
+      },
+      "action": "ask"
+    },
+    {
+      "tool": "Bash",
+      "matches": {
+        "cmd": "/^find.*(-delete|-exec|-execdir).*$/"
+      },
+      "action": "ask"
+    },
+    {
+      "tool": "Bash",
+      "action": "allow"
+    },
+    {
+      "tool": "skill",
+      "action": "allow"
+    },
+    {
+      "tool": "mcp__*",
+      "action": "allow"
+    },
+    {
+      "tool": "tb__*",
+      "action": "allow"
+    },
+    {
+      "tool": "Glob",
+      "action": "allow"
+    },
+    {
+      "tool": "Task",
+      "action": "allow"
+    },
+    {
+      "tool": "finder",
+      "action": "allow"
+    },
+    {
+      "tool": "get_diagnostics",
+      "action": "allow"
+    },
+    {
+      "tool": "oracle",
+      "action": "allow"
+    },
+    {
+      "tool": "mermaid",
+      "action": "allow"
+    },
+    {
+      "tool": "todo_read",
+      "action": "allow"
+    },
+    {
+      "tool": "todo_write",
+      "action": "allow"
+    },
+    {
+      "tool": "read_web_page",
+      "action": "allow"
+    },
+    {
+      "tool": "create_file",
+      "action": "allow"
+    },
+    {
+      "tool": "glob",
+      "action": "allow"
+    },
+    {
+      "tool": "Glob",
+      "action": "allow"
+    },
+    {
+      "tool": "Read",
+      "action": "allow"
+    },
+    {
+      "tool": "edit_file",
+      "action": "allow"
+    },
+    {
+      "tool": "format_file",
+      "action": "allow"
+    },
+    {
+      "tool": "web_search",
+      "action": "allow"
+    },
+    {
+      "tool": "Grep",
+      "action": "allow"
+    },
+    {
+      "tool": "code_review",
+      "action": "allow"
+    },
+    {
+      "tool": "kraken",
+      "action": "allow"
+    },
+    {
+      "tool": "librarian",
+      "action": "allow"
+    },
+    {
+      "tool": "read_thread",
+      "action": "allow"
+    }
+  ],
+
+{{- end }}
+  // ============================================================================
+  // CORE UI & APPEARANCE
+  // ============================================================================
+  "update.mode": "default",
+  "window.autoDetectColorScheme": true,
+  "workbench.preferredDarkColorTheme": "Everforest Dark",
+  "workbench.preferredLightColorTheme": "Everforest Light",
+  "workbench.startupEditor": "none",
+  "editor.fontFamily": "Mononoki Nerd Font Propo",
+  "editor.fontSize": 13,
+  "terminal.integrated.fontFamily": "Mononoki Nerd Font Mono",
+  "terminal.integrated.fontSize": 13,
+  "workbench.list.smoothScrolling": true,
+  "terminal.integrated.smoothScrolling": true,
+  "editor.cursorSmoothCaretAnimation": "on",
+  "workbench.commandPalette.experimental.suggestCommands": true,
+  "window.titleSeparator": " // ",
+  "window.title": "${dirty}${activeEditorShort}${separator}${rootName}${separator}${profileName}",
+
+  // ============================================================================
+  // AUTO-SAVE & FILE HANDLING
+  // ============================================================================
+  "files.autoSave": "onFocusChange",
+  "files.trimFinalNewlines": true,
+  "files.trimTrailingWhitespace": true,
+  "editor.formatOnSave": true,
+  "editor.formatOnPaste": true,
+  "editor.formatOnType": true,
+  "editor.autoIndentOnPaste": true,
+
+  // ============================================================================
+  // EDITOR BEHAVIOR & INTERACTION
+  // ============================================================================
+  "editor.tabSize": 2,
+  "editor.wordWrap": "on",
+  "workbench.editor.wrapTabs": true,
+  "editor.multiCursorModifier": "alt",
+  "editor.mouseWheelZoom": true,
+  "editor.codeActions.triggerOnFocusChange": true,
+  "editor.accessibilitySupport": "off",
+  "editor.wordBasedSuggestions": "off",
+  "diffEditor.codeLens": true,
+  "editor.minimap.enabled": true,
+  "editor.minimap.autohide": "scroll",
+  "editor.bracketPairColorization.independentColorPoolPerBracketType": true,
+
+  // ============================================================================
+  // EXPLORER & FILE MANAGEMENT
+  // ============================================================================
+  "explorer.confirmDelete": false,
+  "explorer.confirmDragAndDrop": false,
+  "explorer.confirmPasteNative": false,
+
+  // ============================================================================
+  // TERMINAL & SHELL
+  // ============================================================================
+  "terminal.integrated.allowChords": false,
+  "direnv.watchForChanges": false,
+
+  // ============================================================================
+  // GIT & VERSION CONTROL
+  // ============================================================================
+  "diffEditor.ignoreTrimWhitespace": false,
+  "git.allowForcePush": true,
+  "git.autofetch": "all",
+  "git.autoStash": true,
+  "git.branchProtection": ["main", "master"],
+  "git.branchProtectionPrompt": "alwaysCommit",
+  "git.confirmForcePush": true,
+  "git.confirmSync": false,
+  "git.terminalAuthentication": false,
+  "git.terminalGitEditor": true,
+  "git.openRepositoryInParentFolders": "never",
+  "git.suggestSmartCommit": false,
+  "github.gitProtocol": "ssh",
+  "merge-conflict.autoNavigateNextConflict.enabled": true,
+  "githubPullRequests.pullBranch": "never",
+
+  // ============================================================================
+  // GITLENS
+  // ============================================================================
+  "gitlens.mode.active": "zen",
+{{- if $isVSCode }}
+  "gitlens.ai.model": "vscode",
+  "gitlens.ai.vscode.model": "customOAIModels:{{ $claudeHaiku.id }}",
+  "gitlens.ai.experimental.composer.enabled": true,
+{{- end }}
+
+  // ============================================================================
+  // REMOTE & PORT FORWARDING
+  // ============================================================================
+  "remote.autoForwardPorts": false,
+
+  // ============================================================================
+  // SECURITY & CLOUD
+  // ============================================================================
+  "security.workspace.trust.untrustedFiles": "open",
+  "workbench.experimental.share.enabled": true,
+  "workbench.experimental.cloudChanges.autoStore": "onShutdown",
+  "workbench.experimental.cloudChanges.partialMatches.enabled": true,
+
+  // ============================================================================
+  // LANGUAGE-SPECIFIC SETTINGS
+  // ============================================================================
+
+  // --- PYTHON ---
+  "python.terminal.activateEnvironment": false,
+  "python.defaultInterpreterPath": "/opt/homebrew/bin/python3",
+  "ruff.configurationPreference": "filesystemFirst",
+  "[python]": {
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.ruff": "explicit",
+      "source.fixAll": "explicit"
+    },
+    "diffEditor.ignoreTrimWhitespace": false,
+    "gitlens.codeLens.symbolScopes": ["!Module"],
+    "editor.formatOnType": true,
+    "editor.wordBasedSuggestions": "off"
+  },
+
+  // --- PYRIGHT ---
+{{- if $isCursor }}
+  "cursorpyright.analysis.inlayHints.functionReturnTypes": true,
+  "cursorpyright.analysis.inlayHints.variableTypes": true,
+  "cursorpyright.analysis.diagnosticMode": "workspace",
+  "cursorpyright.analysis.inlayHints.callArgumentNames": true,
+  "cursorpyright.analysis.typeCheckingMode": "strict",
+{{- else }}
+  "basedpyright.analysis.inlayHints.functionReturnTypes": true,
+  "basedpyright.analysis.inlayHints.variableTypes": true,
+  "basedpyright.analysis.diagnosticMode": "workspace",
+  "basedpyright.analysis.inlayHints.callArgumentNames": true,
+  "basedpyright.analysis.inlayHints.callArgumentNamesMatching": false,
+  "basedpyright.analysis.typeCheckingMode": "strict",
+{{- end }}
+
+  // --- YAML ---
+  "redhat.telemetry.enabled": false,
+  "[yaml]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "keep",
+    "diffEditor.ignoreTrimWhitespace": false,
+    "editor.quickSuggestions": {
+      "other": true,
+      "comments": false,
+      "strings": true
+    },
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // --- JSON ---
+  "[json]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "[jsonc]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+  "json.schemaDownload.enable": true,
+
+  // --- MARKDOWN ---
+  "[markdown]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode"
+  },
+
+  // --- CSV ---
+  "rainbow_csv.highlight_rows": true,
+  "rainbow_csv.virtual_alignment_mode": "always",
+  "rainbow_csv.csv_lint_detect_trailing_spaces": true,
+  "rainbow_csv.rbql_with_headers_by_default": true,
+  "[csv]": {
+    "editor.inlayHints.maximumLength": 0
+  },
+
+  // --- DOCKER & DOCKER COMPOSE ---
+  "docker.extension.enableComposeLanguageServer": true,
+  "[dockercompose]": {
+    "editor.insertSpaces": true,
+    "editor.tabSize": 2,
+    "editor.autoIndent": "advanced",
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+
+  // --- GITHUB ACTIONS ---
+  "[github-actions-workflow]": {
+    "editor.defaultFormatter": "redhat.vscode-yaml"
+  },
+
+  // --- NIX ---
+  "nix.formatterPath": ["nix", "fmt"],
+  "nix.enableLanguageServer": true,
+  "nix.serverPath": "nil",
+  "nix.serverSettings": {
+    "nil": {
+      "formatting": {
+        "command": ["nix", "fmt", "--", "--"]
+      }
+    }
+  },
+
+  // --- SVELTE ---
+  "svelte.enable-ts-plugin": true,
+
+  // --- JAVASCRIPT / TYPESCRIPT ---
+  "biome.suggestInstallingGlobally": false,
+
+  // --- GO ---
+  "go.toolsManagement.autoUpdate": true,
+
+  // ============================================================================
+  // CODERABBIT
+  // ============================================================================
+  "coderabbit.autoReviewMode": "disabled"
+}

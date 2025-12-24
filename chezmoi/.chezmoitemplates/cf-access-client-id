@@ -1,0 +1,1 @@
+{{- template "op-secret" list "CF_ACCESS_CLIENT_ID" "op://Private/Cloudflare Service Token/client id" -}}

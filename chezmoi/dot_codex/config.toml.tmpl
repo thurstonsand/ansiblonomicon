@@ -1,0 +1,40 @@
+model = "gpt-5.2-codex"
+model_reasoning_effort = "high"
+model_reasoning_summary = "auto"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+
+[features]
+unified_exec = true
+streamable_shell = true
+web_search_request = true
+apply_patch_freeform = true
+experimental_sandbox_command_assessment = true
+ghost_commit = true
+rmcp_client = true
+
+[history]
+persistence = "save-all"
+
+[tui]
+notifications = true
+
+[projects."{{ .chezmoi.homeDir }}/Develop/nixonomicon"]
+trust_level = "trusted"
+
+[projects."{{ .chezmoi.homeDir }}/Develop/anypod"]
+trust_level = "trusted"
+
+[mcp_servers.skills]
+command = "npx"
+args = [
+    "-y",
+    "universal-skills",
+    "mcp",
+    "--skill-dir",
+    "{{ .chezmoi.homeDir }}/.claude/plugins/marketplaces/thurstons-skills",
+]
+
+[notice]
+hide_gpt5_1_migration_prompt = true
+"hide_gpt-5.1-codex-max_migration_prompt" = true

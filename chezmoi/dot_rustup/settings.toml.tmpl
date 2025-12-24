@@ -1,0 +1,15 @@
+version = "12"
+{{ if eq .chezmoi.os "darwin" -}}
+{{ if eq .chezmoi.arch "arm64" -}}
+default_toolchain = "stable-aarch64-apple-darwin"
+{{ else -}}
+default_toolchain = "stable-x86_64-apple-darwin"
+{{ end -}}
+{{ else if eq .chezmoi.os "linux" -}}
+{{ if eq .chezmoi.arch "arm64" -}}
+default_toolchain = "stable-aarch64-unknown-linux-gnu"
+{{ else -}}
+default_toolchain = "stable-x86_64-unknown-linux-gnu"
+{{ end -}}
+{{ end }}
+[overrides]

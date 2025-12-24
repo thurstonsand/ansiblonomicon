@@ -1,0 +1,38 @@
+{
+  "ide": {
+    "hasSeenNudge": true
+  },
+  "general": {
+    "preferredEditor": "cursor",
+    "previewFeatures": true,
+    "enablePromptCompletion": true
+  },
+  "security": {
+    "auth": {
+      "selectedType": "oauth-personal"
+    },
+    "folderTrust": {
+      "enabled": true
+    }
+  },
+  "ui": {
+    "theme": "ANSI",
+    "showStatusInTitle": true,
+    "footer": {
+      "hideContextPercentage": false
+    }
+  },
+  "output": {
+    "format": "text"
+  },
+  "tools": {
+    "shell": {
+      "showColor": true
+    }
+  },
+  "context": {
+    "fileFiltering": {
+      "respectGitIgnore": false
+    }
+  }
+}

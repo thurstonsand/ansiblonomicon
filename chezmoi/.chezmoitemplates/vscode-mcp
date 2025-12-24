@@ -1,0 +1,34 @@
+{
+  "servers": {
+    "io.github.ChromeDevTools/chrome-devtools-mcp": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["chrome-devtools-mcp@0.10.2"],
+      "gallery": "https://api.mcp.github.com",
+      "version": "0.10.2"
+    },
+    "parallel search": {
+      "type": "http",
+      "url": "https://search-mcp.parallel.ai/mcp"
+    },
+    "skills": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "universal-skills",
+        "mcp",
+        "--skill-dir",
+        "/Users/thurstonsand/.claude/plugins/marketplaces/thurstons-skills/homelab",
+        "--skill-dir",
+        "/Users/thurstonsand/.claude/plugins/marketplaces/thurstons-skills/project-management",
+        "--skill-dir",
+        "/Users/thurstonsand/.claude/plugins/marketplaces/claude-code-plugins/plugins/frontend-design",
+        "--skill-dir",
+        "/Users/thurstonsand/.claude/plugins/marketplaces/agent-skill-creator"
+      ],
+      "env": {}
+    }
+  },
+  "inputs": []
+}

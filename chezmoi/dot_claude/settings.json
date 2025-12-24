@@ -1,0 +1,26 @@
+{
+  "cleanupPeriodDays": 99999,
+  "includeCoAuthoredBy": false,
+  "permissions": {
+    "allow": [
+      "mcp__parallel-search__web_search_preview",
+      "mcp__parallel-search__web_fetch",
+      "Project-management:updating-documentation-for-changes",
+      "Skill(project-management:updating-documentation-for-changes)",
+      "Skill(project-management:git-commit-helper)"
+    ],
+    "deny": []
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bunx -y ccstatusline@latest",
+    "padding": 0
+  },
+  "enabledPlugins": {
+    "project-management@thurstons-skills": true,
+    "homelab@thurstons-skills": true,
+    "frontend-design@claude-code-plugins": false,
+    "agent-skill-creator-plugin@agent-skill-creator": true
+  },
+  "alwaysThinkingEnabled": true
+}
