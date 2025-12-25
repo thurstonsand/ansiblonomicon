@@ -3,7 +3,8 @@
     "**/ansible/**/*.yml": "ansible",
     "**/ansible/**/*.yaml": "ansible",
     "inventory": "ini",
-    "chezmoi/.chezmoitemplates/**/*": "gotmpl"
+    "**/chezmoi/.chezmoitemplates/*": "gotmpl",
+    "**/chezmoi/**/modify_*": "shellscript"
   },
   "ansible.validation.lint.enabled": true,
   "ansible.python.interpreterPath": ".venv/bin/python",

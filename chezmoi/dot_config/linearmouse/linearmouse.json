@@ -1,0 +1,22 @@
+{
+  "schemes" : [
+    {
+      "if" : {
+        "device" : {
+          "productID" : "0x138",
+          "productName" : "Wireless Mouse",
+          "vendorID" : "0x258a",
+          "category" : "mouse"
+        }
+      },
+      "pointer" : {
+        "acceleration" : 1.3324,
+        "speed" : 0.4534
+      },
+      "buttons" : {
+        "universalBackForward" : false
+      }
+    }
+  ],
+  "$schema" : "https:\/\/schema.linearmouse.app\/0.10.0"
+}

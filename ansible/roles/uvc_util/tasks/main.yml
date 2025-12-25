@@ -1,0 +1,46 @@
+---
+# Clone uvc-util for UVC camera control on macOS
+# Build step TBD - investigate Xcode project after first run
+
+- name: Ensure ~/.local/opt directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/opt"
+    state: directory
+    mode: "0755"
+
+- name: Clone uvc-util repository
+  ansible.builtin.git:
+    repo: https://github.com/jtfrey/uvc-util.git
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/opt/uvc-util"
+    version: master
+    update: true
+  register: uvc_util_clone
+
+- name: Check if uvc-util binary exists
+  ansible.builtin.stat:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/opt/uvc-util/src/uvc-util"
+  register: uvc_util_binary
+
+- name: Copy AGENTS.md to uvc-util repo
+  ansible.builtin.copy:
+    src: AGENTS.md
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/opt/uvc-util/AGENTS.md"
+    mode: "0644"
+
+- name: Build uvc-util with gcc
+  ansible.builtin.command:
+    argv:
+      - gcc
+      - -o
+      - uvc-util
+      - -framework
+      - IOKit
+      - -framework
+      - Foundation
+      - uvc-util.m
+      - UVCController.m
+      - UVCType.m
+      - UVCValue.m
+    chdir: "{{ ansible_facts['env']['HOME'] }}/.local/opt/uvc-util/src"
+  when: uvc_util_clone.changed or not uvc_util_binary.stat.exists
+  changed_when: true
