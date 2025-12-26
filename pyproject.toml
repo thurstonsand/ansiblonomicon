@@ -41,5 +41,21 @@ help = "Edit a managed file in source dir"
 cmd = "chezmoi edit"
 args = [{ name = "file", positional = true, required = true }]
 
+# Terraform tasks
+[tool.poe.tasks.tfi]
+help = "Terraform init"
+cmd = "op run --env-file=.env.op -- tofu init"
+cwd = "terraform/cloudflare"
+
+[tool.poe.tasks.tfp]
+help = "Terraform plan"
+cmd = "op run --env-file=.env.op -- tofu plan"
+cwd = "terraform/cloudflare"
+
+[tool.poe.tasks.tfa]
+help = "Terraform apply"
+cmd = "op run --env-file=.env.op -- tofu apply"
+cwd = "terraform/cloudflare"
+
 [dependency-groups]
 dev = ["ansible-lint>=25.12.1", "poethepoet>=0.38.0", "pre-commit>=4.5.1"]

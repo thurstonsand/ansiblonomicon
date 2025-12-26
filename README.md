@@ -34,6 +34,7 @@ Interactive sudo still uses TouchID as normal.
 │   ├── tasks/               # Task files by category
 │   └── main.yml             # Entry point playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
+├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 └── scripts/
     ├── bootstrap.sh          # One-liner bootstrap for new machines
     └── test-bootstrap.sh     # Test bootstrap in a clean macOS VM (requires tart)
@@ -47,6 +48,9 @@ Interactive sudo still uses TouchID as normal.
 - `poe cz-re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)
 - `poe cz-managed` — List all files managed by chezmoi
 - `poe cz-edit <file>` — Edit a managed file in source dir
+- `poe tfi` — Terraform init (Cloudflare)
+- `poe tfp` — Terraform plan (Cloudflare)
+- `poe tfa` — Terraform apply (Cloudflare)
 
 ## Design
 

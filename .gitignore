@@ -10,3 +10,9 @@
 
 # ai
 /.claude/settings.local.json
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.backup
+*.tfplan

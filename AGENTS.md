@@ -6,6 +6,7 @@
 - `uv run poe play` — Apply Ansible playbook (uses 1Password for sudo)
 - `uv run poe lint` — Lint with ansible-lint (production profile, strict)
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
+- `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
 
 # Architecture
 
@@ -13,6 +14,7 @@
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `archlinux.config.yml` for OS-specific
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps
+- `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 
 # Code Style
 
@@ -64,3 +66,13 @@ MY_SECRET=op://Vault/Item/field
 ```
 
 Access in playbooks via `{{ lookup('env', 'MY_SECRET') }}`.
+
+## Terraform Secrets
+
+Add secret references to `terraform/cloudflare/.env.op` — they're resolved by `op run` when running `poe tfi/tfp/tfa`:
+
+```sh
+TF_VAR_my_secret=op://Vault/Item/field
+```
+
+Access in Terraform via `var.my_secret` (define the variable in `variables.tf`).

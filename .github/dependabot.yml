@@ -1,0 +1,10 @@
+version: 2
+updates:
+  - package-ecosystem: "opentofu"
+    directory: "/terraform/cloudflare"
+    schedule:
+      interval: "weekly"
+    ignore:
+      # Stay on v4.x until v5 stabilizes (see terraform/cloudflare/UPGRADE_TO_V5.md)
+      - dependency-name: "cloudflare/cloudflare"
+        versions: [">=5.0.0"]
