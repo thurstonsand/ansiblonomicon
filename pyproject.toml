@@ -5,21 +5,51 @@ description = "Ansible configuration for macOS systems"
 requires-python = ">=3.14"
 dependencies = ["ansible>=12.3.0"]
 
-[tool.poe.tasks]
-lint = { cmd = "ansible-lint ansible/", help = "Lint ansible playbooks and roles" }
+[tool.poe.tasks.lint]
+help = "Lint all code (ansible + python)"
+sequence = ["lint:ansible", "lint:python"]
 
-[tool.poe.tasks.play]
-help = "Run the main ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "op run --env-file=.env.op -- ansible-playbook -i inventory main.yml ${check:+--check} ${tags:+--tags ${tags}}"
+[tool.poe.tasks."lint:ansible"]
+cmd = "ansible-lint"
 cwd = "ansible"
 
-[[tool.poe.tasks.play.args]]
+[tool.poe.tasks."lint:python"]
+sequence = ["lint:ruff", "lint:types"]
+
+[tool.poe.tasks."lint:ruff"]
+cmd = "ruff check ansible/collections/"
+
+[tool.poe.tasks."lint:types"]
+cmd = "basedpyright"
+
+[tool.poe.tasks.local]
+help = "Run the local ansible playbook (pass --check for dry-run, --tags for specific tags)"
+cmd = "op run --env-file=.env.op -- ansible-playbook -i inventory playbooks/local.yml ${check:+--check} ${tags:+--tags ${tags}}"
+cwd = "ansible"
+
+[[tool.poe.tasks.local.args]]
 name = "check"
 type = "boolean"
 options = ["--check", "-c"]
 help = "Dry-run mode (no changes made)"
 
-[[tool.poe.tasks.play.args]]
+[[tool.poe.tasks.local.args]]
+name = "tags"
+options = ["--tags", "-t"]
+help = "Only run tasks with these tags (comma-separated)"
+
+[tool.poe.tasks.truenas]
+help = "Run the TrueNAS ansible playbook (pass --check for dry-run, --tags for specific tags)"
+cmd = "op run --env-file=.env.op -- ansible-playbook -i inventory playbooks/truenas.yml ${check:+--check} ${tags:+--tags ${tags}}"
+cwd = "ansible"
+
+[[tool.poe.tasks.truenas.args]]
+name = "check"
+type = "boolean"
+options = ["--check", "-c"]
+help = "Dry-run mode (no changes made)"
+
+[[tool.poe.tasks.truenas.args]]
 name = "tags"
 options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"
@@ -74,4 +104,57 @@ help = "Deploy Cloudflare Pages (tesla)"
 cmd = "op run --env-file=terraform/cloudflare/.env.op -- npx -y wrangler pages deploy cloudflare-pages/tesla --project-name=tesla --branch=main"
 
 [dependency-groups]
-dev = ["ansible-lint>=25.12.1", "poethepoet>=0.38.0", "pre-commit>=4.5.1"]
+dev = [
+  "ansible-lint>=25.12.1",
+  "poethepoet>=0.38.0",
+  "pre-commit>=4.5.1",
+  "ruff>=0.11.7",
+  "basedpyright>=1.31.7",
+  "mypy>=1.19.1",
+]
+
+# Ruff configuration
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+extend-exclude = [".venv", ".git", "build", "stubs"]
+
+[tool.ruff.lint]
+select = [
+  "E",   # pycodestyle errors
+  "F",   # pyflakes
+  "I",   # isort
+  "UP",  # pyupgrade
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "SIM", # flake8-simplify
+  "RUF", # ruff-specific rules
+]
+ignore = [
+  "E501", # line too long (handled by line-length)
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Ansible modules have DOCUMENTATION before imports (required structure)
+"ansible/collections/**/modules/*.py" = ["E402"]
+
+[tool.ruff.lint.isort]
+combine-as-imports = true
+force-sort-within-sections = true
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+
+# Basedpyright configuration
+[tool.basedpyright]
+include = ["ansible/collections/ansible_collections/local"]
+exclude = ["**/node_modules", "**/__pycache__", ".venv", "build", "dist"]
+stubPath = "stubs"
+typeCheckingMode = "strict"
+pythonVersion = "3.12"
+pythonPlatform = "Linux"
+reportMissingImports = "error"
+reportMissingTypeStubs = "error"
+reportUnusedImport = "warning"
+reportUnusedVariable = "warning"

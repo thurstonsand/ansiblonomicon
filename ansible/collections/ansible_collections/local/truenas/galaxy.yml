@@ -1,0 +1,14 @@
+---
+namespace: local
+name: truenas
+version: 0.1.0
+readme: README.md
+authors:
+  - Thurston Sandberg
+description: Thin midclt wrappers for TrueNAS SCALE management
+license_file: LICENSE
+tags:
+  - truenas
+  - nas
+  - storage
+repository: https://github.com/thurstonsand/ansiblonomicon

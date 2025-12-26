@@ -15,7 +15,7 @@ anup
 ### Sudo Access
 
 Ansible uses `op run` with `SUDO_ASKPASS` to get the sudo password from 1Password automatically.
-Just run `poe play` — no manual password entry needed.
+Just run `poe local` — no manual password entry needed.
 
 Interactive sudo still uses TouchID as normal.
 
@@ -24,7 +24,7 @@ Interactive sudo still uses TouchID as normal.
 ```
 ├── ansible/
 │   ├── ansible.cfg          # Ansible configuration
-│   ├── inventory            # Host definitions (localhost)
+│   ├── inventory/           # Host definitions (localhost, truenas)
 │   ├── config.yml           # Shared configuration variables
 │   ├── darwin.config.yml    # macOS-specific config
 │   ├── archlinux.config.yml # Arch Linux-specific config
@@ -32,7 +32,10 @@ Interactive sudo still uses TouchID as normal.
 │   ├── requirements.yml     # Ansible Galaxy dependencies
 │   ├── roles/               # Custom and Galaxy roles
 │   ├── tasks/               # Task files by category
-│   └── main.yml             # Entry point playbook
+│   ├── collections/         # Local Ansible collections (local.truenas)
+│   └── playbooks/
+│       ├── local.yml        # Local machine playbook
+│       └── truenas.yml      # TrueNAS playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
 ├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
@@ -43,8 +46,9 @@ Interactive sudo still uses TouchID as normal.
 
 ## Commands
 
-- `anup` — Apply Ansible configuration (alias set up by this playbook)
+- `anup` — Apply local Ansible playbook (alias set up by this playbook)
 - `anup --check` — Dry-run mode (shows what would change without applying)
+- `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe cz-diff` — Preview dotfile changes (source → home)
 - `poe cz-status` — Show files that differ between source and home
 - `poe cz-re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)

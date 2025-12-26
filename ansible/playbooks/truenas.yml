@@ -1,0 +1,18 @@
+---
+# TrueNAS configuration playbook
+# Run with: uv run poe truenas
+- name: Configure TrueNAS
+  hosts: truenas
+  become: true
+  environment:
+    middleware_method: midclt
+  tasks:
+    - name: Enable Wake-on-LAN at boot
+      local.truenas.initshutdownscript:
+        comment: "enable WOL"
+        type: COMMAND
+        command: "ethtool -s enp3s0 wol g"
+        when: POSTINIT
+        enabled: true
+        timeout: 20
+        state: present

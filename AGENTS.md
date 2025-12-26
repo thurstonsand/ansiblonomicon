@@ -3,9 +3,10 @@
 - `./scripts/bootstrap.sh` — First-time setup (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI, runs playbook)
 - `./scripts/test-bootstrap.sh` — Test bootstrap in clean macOS VM via Tart
   - `--reuse` reuses existing VM; `--uninstall-xcode` tests fresh Xcode install; `--full-brew-bundle` uses real Brewfile
-- `uv run poe play` — Apply Ansible playbook (uses 1Password for sudo)
+- `uv run poe local` — Apply local Ansible playbook (uses 1Password for sudo)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
+- `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as local)
 - `uv run poe lint` — Lint with ansible-lint (production profile, strict)
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
@@ -13,7 +14,8 @@
 
 # Architecture
 
-- `ansible/main.yml` — Entry playbook; `ansible/roles/` for custom roles
+- `ansible/playbooks/local.yml` — Local machine playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook
+- `ansible/roles/` — Custom roles
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `archlinux.config.yml` for OS-specific
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps
@@ -59,7 +61,7 @@ For secrets in dotfiles, use the `op-secret` template with a named wrapper:
    ENV_VAR_NAME=op://Vault/Item/field
    ```
 
-This pattern allows `chezmoi apply` to use pre-resolved env vars (fast) when run via `poe play`, while still working standalone via `onepasswordRead` (slower, prompts for auth).
+This pattern allows `chezmoi apply` to use pre-resolved env vars (fast) when run via `poe local`, while still working standalone via `onepasswordRead` (slower, prompts for auth).
 
 ## Ansible Secrets
 

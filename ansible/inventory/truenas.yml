@@ -1,0 +1,9 @@
+---
+all:
+  children:
+    truenas:
+      hosts:
+        truenas.thurstons.house:
+          ansible_user: admin
+          ansible_python_interpreter: /usr/bin/python3
+          ansible_become_password: "{{ lookup('env', 'TRUENAS_BECOME_PASSWORD') }}"

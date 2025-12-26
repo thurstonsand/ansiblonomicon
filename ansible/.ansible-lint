@@ -9,12 +9,12 @@ strict: true
 
 # Enable opt-in rules for maximum strictness
 enable_list:
-  - args                    # Validate module arguments (experimental)
-  - empty-string-compare    # Don't compare to empty string
+  - args # Validate module arguments (experimental)
+  - empty-string-compare # Don't compare to empty string
   - galaxy-version-incorrect # Collection version > 1.0.0
-  - no-log-password         # Password should not be logged
-  - no-prompting            # Disallow prompting
-  - no-same-owner           # Don't preserve owner/group across hosts
+  - no-log-password # Password should not be logged
+  - no-prompting # Disallow prompting
+  - no-same-owner # Don't preserve owner/group across hosts
 
 # Paths to exclude from linting
 exclude_paths:

@@ -1,6 +1,6 @@
 ---
-# Main entry point for system configuration
-# Run with: ansible-playbook main.yml
+# Local machine configuration playbook
+# Run with: uv run poe local
 
 - name: Configure host
   hosts: all
