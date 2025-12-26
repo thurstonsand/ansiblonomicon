@@ -29,6 +29,7 @@
       when: ansible_facts['os_family'] == "Darwin" and configure_homebrew
       tags: ["homebrew", "mas"]
       block:
+        # --- Check mode: determine what would change ---
         - name: Check brew bundle (dry run)
           when: ansible_check_mode
           check_mode: false
@@ -39,10 +40,30 @@
               - check
               - "--file={{ playbook_dir }}/Brewfile"
               - --verbose
-          register: brew_result
-          changed_when: brew_result.rc != 0
+          register: brew_bundle_check
+          changed_when: brew_bundle_check.rc != 0
           failed_when: false
 
+        - name: Check outdated packages (dry run)
+          when: ansible_check_mode
+          check_mode: false
+          ansible.builtin.command:
+            argv:
+              - brew
+              - outdated
+          register: brew_outdated_check
+          changed_when: brew_outdated_check.stdout | length > 0
+
+        - name: Set check mode results
+          when: ansible_check_mode
+          vars:
+            stdout: "{{ brew_bundle_check.stdout_lines | default([]) }}"
+            stderr: "{{ brew_bundle_check.stderr_lines | default([]) }}"
+          ansible.builtin.set_fact:
+            brew_bundle_changes: "{{ (stdout + stderr) | select('search', 'needs to be') | list }}"
+            brew_dep_changes: "{{ brew_outdated_check.stdout_lines | default([]) }}"
+
+        # --- Real mode: apply changes ---
         - name: Run brew bundle
           when: not ansible_check_mode
           ansible.builtin.command:
@@ -51,13 +72,35 @@
               - bundle
               - "--file={{ playbook_dir }}/Brewfile"
               - --cleanup
+              - --upgrade
           register: brew_result
           changed_when: "'Installing' in brew_result.stdout or 'Upgrading' in brew_result.stdout or 'Uninstalling' in brew_result.stdout"
 
-        - name: Show brew bundle output
+        - name: Upgrade transitive dependencies
+          when: not ansible_check_mode
+          community.general.homebrew:
+            upgrade_all: true
+          register: brew_deps_result
+
+        - name: Set real mode results
+          when: not ansible_check_mode
+          vars:
+            stdout: "{{ brew_result.stdout_lines | default([]) }}"
+            stderr: "{{ brew_result.stderr_lines | default([]) }}"
+            noise: '^==>|^Adjust how often|^Hide these hints|^Updated |^You have \d+ outdated'
+          ansible.builtin.set_fact:
+            brew_bundle_changes: >-
+              {{ (stdout | select('search', 'Installing|Upgrading|Uninstalling|Skipping') | list)
+                 + (stderr | reject('search', noise) | list) }}
+            brew_dep_changes: "{{ brew_deps_result.changed_pkgs | default([]) }}"
+
+        # --- Unified output ---
+        - name: Show brew changes
           ansible.builtin.debug:
-            msg: "{{ brew_result.stdout_lines + (brew_result.stderr_lines | default([])) }}"
-          when: brew_result.stdout_lines is defined and (brew_result.stdout_lines | length > 0 or (brew_result.stderr_lines | default([])) | length > 0)
+            msg:
+              brewfile: "{{ brew_bundle_changes if brew_bundle_changes | length > 0 else 'Up to date' }}"
+              transitive_deps: "{{ brew_dep_changes if brew_dep_changes | length > 0 else 'Up to date' }}"
+          when: (brew_bundle_changes | length > 0) or (brew_dep_changes | length > 0)
 
     - name: Set hostname
       ansible.builtin.hostname:

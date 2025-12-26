@@ -4,7 +4,19 @@ import os
 import re
 import subprocess
 import sys
-from typing import Any
+from typing import NotRequired, TypedDict
+
+# Control values can be scalars or multi-component dicts like {pan: -7200, tilt: 0}
+ControlValue = bool | int | str | dict[str, bool | int | str]
+
+
+class CameraConfig(TypedDict):
+    controls: dict[str, ControlValue]
+
+
+class Settings(TypedDict):
+    cameras: dict[str, CameraConfig]
+    keep_running: NotRequired[bool]
 
 
 def run_command(args: list[str]) -> tuple[int, str, str]:
@@ -55,7 +67,7 @@ def set_control(uvc_util: str, selector: list[str], control: str, value: str) ->
         raise RuntimeError(f"Failed setting {control} to {value}: {err or out}")
 
 
-def value_to_uvc(value: Any) -> str:
+def value_to_uvc(value: ControlValue) -> str:
     """Convert Python value to uvc-util CLI value string.
 
     - bool -> "true"/"false"
@@ -66,7 +78,7 @@ def value_to_uvc(value: Any) -> str:
     if isinstance(value, bool):
         return "true" if value else "false"
     if isinstance(value, dict):
-        parts = []
+        parts: list[str] = []
         for k, v in value.items():
             if isinstance(v, bool):
                 v_str = "true" if v else "false"
@@ -77,26 +89,19 @@ def value_to_uvc(value: Any) -> str:
     return str(value)
 
 
-def load_settings(settings_path: str) -> dict[str, Any]:
+def load_settings(settings_path: str) -> Settings:
     with open(settings_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-    if not isinstance(data, dict) or "cameras" not in data:
-        raise ValueError("Invalid settings file: missing 'cameras' root key")
+        data: Settings = json.load(f)
     return data
 
 
 def apply_camera_settings(
-    uvc_util: str, vendor_product: str, camera_cfg: dict[str, Any], keep_running: bool
+    uvc_util: str, vendor_product: str, camera_cfg: CameraConfig, keep_running: bool
 ) -> None:
     selector = ["-V", vendor_product]
     controls = camera_cfg.get("controls", {})
-    if not isinstance(controls, dict):
-        raise ValueError(
-            "camera 'controls' must be an object mapping control name to value"
-        )
 
     for control_name, control_value in controls.items():
-        control_name = str(control_name).strip()
         value_str = value_to_uvc(control_value)
         try:
             set_control(uvc_util, selector, control_name, value_str)
@@ -126,8 +131,8 @@ def main() -> int:
         print(f"Error loading settings from {settings_path}: {exc}", file=sys.stderr)
         return 1
 
-    keep_running = bool(settings.get("keep_running", True))
-    camera_map: dict[str, Any] = settings.get("cameras", {})
+    keep_running = settings.get("keep_running", True)
+    camera_map = settings["cameras"]
 
     devices = list_devices(uvc_util)
     if not devices:

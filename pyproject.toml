@@ -9,9 +9,20 @@ dependencies = ["ansible>=12.3.0"]
 lint = { cmd = "ansible-lint ansible/", help = "Lint ansible playbooks and roles" }
 
 [tool.poe.tasks.play]
-help = "Run the main ansible playbook"
-cmd = "op run --env-file=.env.op -- ansible-playbook -i inventory main.yml"
+help = "Run the main ansible playbook (pass --check for dry-run, --tags for specific tags)"
+cmd = "op run --env-file=.env.op -- ansible-playbook -i inventory main.yml ${check:+--check} ${tags:+--tags ${tags}}"
 cwd = "ansible"
+
+[[tool.poe.tasks.play.args]]
+name = "check"
+type = "boolean"
+options = ["--check", "-c"]
+help = "Dry-run mode (no changes made)"
+
+[[tool.poe.tasks.play.args]]
+name = "tags"
+options = ["--tags", "-t"]
+help = "Only run tasks with these tags (comma-separated)"
 
 # Chezmoi tasks
 [tool.poe.tasks.cz-diff]
@@ -56,6 +67,11 @@ cwd = "terraform/cloudflare"
 help = "Terraform apply"
 cmd = "op run --env-file=.env.op -- tofu apply"
 cwd = "terraform/cloudflare"
+
+# Cloudflare Pages deployment
+[tool.poe.tasks.pages-deploy]
+help = "Deploy Cloudflare Pages (tesla)"
+cmd = "op run --env-file=terraform/cloudflare/.env.op -- npx -y wrangler pages deploy cloudflare-pages/tesla --project-name=tesla --branch=main"
 
 [dependency-groups]
 dev = ["ansible-lint>=25.12.1", "poethepoet>=0.38.0", "pre-commit>=4.5.1"]

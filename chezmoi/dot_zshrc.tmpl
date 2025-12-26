@@ -73,5 +73,7 @@ alias lg='lazygit'
 alias bd='brew desc'
 alias bh='brew home'
 alias opencode='$HOME/.opencode/bin/opencode'
-alias anup='(cd ~/{{ .developDir }}/ansiblonomicon && poe play)'
+anup() {
+  (cd ~/{{ .developDir }}/ansiblonomicon && poe play "$@")
+}
 {{- end }}

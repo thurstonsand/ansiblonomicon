@@ -34,6 +34,7 @@ Interactive sudo still uses TouchID as normal.
 │   ├── tasks/               # Task files by category
 │   └── main.yml             # Entry point playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
+├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
 ├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 └── scripts/
     ├── bootstrap.sh          # One-liner bootstrap for new machines
@@ -43,6 +44,7 @@ Interactive sudo still uses TouchID as normal.
 ## Commands
 
 - `anup` — Apply Ansible configuration (alias set up by this playbook)
+- `anup --check` — Dry-run mode (shows what would change without applying)
 - `poe cz-diff` — Preview dotfile changes (source → home)
 - `poe cz-status` — Show files that differ between source and home
 - `poe cz-re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)
@@ -51,6 +53,7 @@ Interactive sudo still uses TouchID as normal.
 - `poe tfi` — Terraform init (Cloudflare)
 - `poe tfp` — Terraform plan (Cloudflare)
 - `poe tfa` — Terraform apply (Cloudflare)
+- `poe pages-deploy` — Deploy Cloudflare Pages (tesla)
 
 ## Design
 

@@ -8,6 +8,24 @@
 [commit]
 	gpgSign = true
 
+{{- if lookPath "delta" }}
+
+[core]
+	pager = delta
+
+[interactive]
+	diffFilter = delta --color-only
+
+[delta]
+	navigate = true
+	side-by-side = true
+	line-numbers = true
+	hyperlinks = true
+{{- end }}
+
+[merge]
+	conflictStyle = zdiff3
+
 [credential]
 	helper = "git-credential-manager"
 

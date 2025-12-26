@@ -9,7 +9,9 @@
   "amp.git.commit.coauthor.enabled": false,
   "amp.mcpServers": {},
   "amp.guardedFiles.allowlist": [
-    "/Users/thurstonsand/.config/amp/skills/amp-skill-creator/SKILL.md"
+    "~/.config/amp/skills/amp-skill-creator/SKILL.md",
+    "~/Develop/ansiblonomicon/ansible/.env.op",
+    "~/Develop/ansiblonomicon/terraform/cloudflare/.env.op"
   ],
   "amp.tools.disable": [
 {{- if eq . "ide" }}
@@ -49,11 +51,7 @@
     {
       "tool": "Bash",
       "matches": {
-        "cmd": [
-          "*git stash*",
-          "*git add -A*",
-          "*git commit*"
-        ]
+        "cmd": ["*git stash*", "*git add -A*", "*git commit*"]
       },
       "action": "ask"
     },

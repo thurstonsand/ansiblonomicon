@@ -4,9 +4,12 @@
 - `./scripts/test-bootstrap.sh` — Test bootstrap in clean macOS VM via Tart
   - `--reuse` reuses existing VM; `--uninstall-xcode` tests fresh Xcode install; `--full-brew-bundle` uses real Brewfile
 - `uv run poe play` — Apply Ansible playbook (uses 1Password for sudo)
+  - `--check` / `-c` — Dry-run mode (no changes made)
+  - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
 - `uv run poe lint` — Lint with ansible-lint (production profile, strict)
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
+- `uv run poe pages-deploy` — Deploy Cloudflare Pages (tesla)
 
 # Architecture
 
@@ -15,6 +18,7 @@
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps
 - `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
+- `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
 
 # Code Style
 

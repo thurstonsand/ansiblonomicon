@@ -51,15 +51,6 @@ resource "cloudflare_record" "sig1_domainkey" {
   ttl     = 3600
 }
 
-resource "cloudflare_record" "tesla" {
-  zone_id = local.zone_id
-  name    = "tesla"
-  type    = "CNAME"
-  content = "nixonomicon-tesla.pages.dev"
-  proxied = true
-  ttl     = 1
-}
-
 resource "cloudflare_record" "root" {
   zone_id = local.zone_id
   name    = local.zone_name
