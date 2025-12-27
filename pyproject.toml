@@ -101,7 +101,14 @@ cwd = "terraform/cloudflare"
 # Cloudflare Pages deployment
 [tool.poe.tasks.pages-deploy]
 help = "Deploy Cloudflare Pages (tesla)"
-cmd = "op run --env-file=terraform/cloudflare/.env.op -- npx -y wrangler pages deploy cloudflare-pages/tesla --project-name=tesla --branch=main"
+cmd = "op run --env-file=../../terraform/cloudflare/.env.op -- npx -y wrangler pages deploy"
+cwd = "cloudflare-pages/tesla"
+
+# Cloudflare Workers
+[tool.poe.tasks.worker-secret]
+help = "Set the API_KEY secret for cli-proxy-api Worker (run after tfa)"
+shell = "op run --env-file=../.env.op -- sh -c 'echo $CLI_PROXY_API_KEY | npx -y wrangler secret put API_KEY'"
+cwd = "terraform/cloudflare/workers/cli-proxy-api"
 
 [dependency-groups]
 dev = [

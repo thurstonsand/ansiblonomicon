@@ -40,9 +40,9 @@ resource "cloudflare_ruleset" "firewall_custom" {
       products = ["zoneLockdown", "uaBlock", "bic", "hot", "securityLevel", "rateLimit", "waf"]
       ruleset  = "current"
     }
-    description = "allow openai sdk on cli-proxy-api"
+    description = "allow openai sdk on llms api"
     enabled     = true
-    expression  = "(http.host eq \"cli-proxy-api.thurstons.house\") and (http.user_agent contains \"OpenAI\")"
+    expression  = "(http.host eq \"llms.thurstons.house\") and (http.user_agent contains \"OpenAI\")"
     logging {
       enabled = true
     }

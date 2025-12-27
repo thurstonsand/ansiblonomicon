@@ -1,4 +1,4 @@
-  "amp.url": "https://cli-proxy-api.thurstons.house",
+  "amp.url": "https://llms.thurstons.house",
 {{- if eq . "ide" }}
   "amp.tab.enabled": true,
   "amp.tab.experimental.showHotStreakProgress": true,

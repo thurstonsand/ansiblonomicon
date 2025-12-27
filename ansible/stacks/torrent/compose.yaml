@@ -46,6 +46,21 @@ services:
     depends_on:
       - gluetun
     restart: unless-stopped
+  mam-updater:
+    build:
+      context: .
+      dockerfile: Dockerfile.mam-updater
+    container_name: mam-updater
+    user: "950:544"
+    network_mode: service:gluetun
+    volumes:
+      - /mnt/performance/docker/torrent/mam-updater:/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - MAM_ID=${TORRENT_MAM_ID}
+    depends_on:
+      - gluetun
+    restart: unless-stopped
 
 networks:
   personal:

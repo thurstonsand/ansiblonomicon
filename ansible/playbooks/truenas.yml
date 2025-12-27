@@ -389,6 +389,8 @@
       community.docker.docker_compose_v2:
         project_src: /mnt/performance/docker/stacks/torrent
         state: present
+        build: always
         pull: always
       environment:
         TORRENT_OPENVPN_USER: "{{ lookup('env', 'TORRENT_OPENVPN_USER') }}"
+        TORRENT_MAM_ID: "{{ lookup('env', 'TORRENT_MAM_ID') }}"

@@ -11,6 +11,7 @@
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
 - `uv run poe pages-deploy` — Deploy Cloudflare Pages (tesla)
+- `uv run poe worker-secret` — Set API_KEY secret for llms Worker (run after tfa)
 
 # Architecture
 
@@ -20,7 +21,8 @@
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `archlinux.config.yml` for OS-specific
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps
-- `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
+- `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2, Workers)
+- `terraform/cloudflare/workers/` — Cloudflare Worker source code (deployed via Terraform, secrets via wrangler)
 - `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
 
 # Code Style

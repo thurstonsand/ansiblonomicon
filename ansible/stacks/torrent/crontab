@@ -1,0 +1,2 @@
+# Run MAM updater every 5 minutes
+*/5 * * * * /mam_updater.py

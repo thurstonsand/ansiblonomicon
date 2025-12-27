@@ -1,0 +1,7 @@
+FROM python:alpine
+RUN apk add --no-cache supercronic
+COPY mam_updater.py /mam_updater.py
+COPY crontab /crontab
+RUN chmod +x /mam_updater.py
+VOLUME /data
+CMD ["supercronic", "/crontab"]
