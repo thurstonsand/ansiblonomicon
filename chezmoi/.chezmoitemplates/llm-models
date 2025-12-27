@@ -1,4 +1,4 @@
-{{- /* Shared model definitions for CLI proxy */ -}}
+{{- /* Shared model definitions for llms proxy */ -}}
 {{- /* Each model: id, name, thinking, maxInput, maxOutput, vision */ -}}
 
 {{- /* Individual model definitions for direct reference */ -}}

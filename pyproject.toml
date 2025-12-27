@@ -107,8 +107,8 @@ cwd = "cloudflare-pages/tesla"
 # Cloudflare Workers
 [tool.poe.tasks.worker-secret]
 help = "Set the API_KEY secret for cli-proxy-api Worker (run after tfa)"
-shell = "op run --env-file=../.env.op -- sh -c 'echo $CLI_PROXY_API_KEY | npx -y wrangler secret put API_KEY'"
-cwd = "terraform/cloudflare/workers/cli-proxy-api"
+shell = "op run --env-file=../.env.op -- sh -c 'echo $LLM_API_KEY | npx -y wrangler secret put API_KEY'"
+cwd = "terraform/cloudflare/workers/llms"
 
 [dependency-groups]
 dev = [

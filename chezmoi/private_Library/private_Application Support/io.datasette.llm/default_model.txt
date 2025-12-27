@@ -1,1 +1,1 @@
-claude-opus-latest
+Claude Opus 4.5

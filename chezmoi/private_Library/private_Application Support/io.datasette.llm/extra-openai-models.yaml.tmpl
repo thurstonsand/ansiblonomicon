@@ -1,10 +1,10 @@
 # CLI Proxy models - routes through https://llms.thurstons.house
-{{- template "cli-proxy-models" . }}
+{{- template "llm-models" . }}
 {{ range .models }}
-- model_id: {{ .id }}
-  model_name: {{ .name }}
+- model_id: {{ .name }}
+  model_name: {{ .id }}
   api_base: https://llms.thurstons.house/v1
-  api_key_name: cli-proxy-api-key
+  api_key_name: llm-api-key
   headers:
     CF-Access-Client-Id: {{ template "cf-access-client-id" $ }}
     CF-Access-Client-Secret: {{ template "cf-access-client-secret" $ }}
