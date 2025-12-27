@@ -1,0 +1,111 @@
+services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    # mac_address: aa:aa:ba:eb:4c:fc
+    networks:
+      personal:
+        ipv4_address: 192.168.6.228
+    ports:
+      - "8191:8191"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    # mac_address: aa:bb:ba:ba:8f:f1
+    networks:
+      personal:
+        ipv4_address: 192.168.6.229
+    ports:
+      - "9696:9696"
+    volumes:
+      - /mnt/performance/docker/arr-apps/prowlarr/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - PUID=950
+      - PGID=544
+    restart: unless-stopped
+
+  sonarr:
+    image: linuxserver/sonarr:develop
+    container_name: sonarr
+    # mac_address: aa:88:44:f4:6a:d3
+    networks:
+      personal:
+        ipv4_address: 192.168.6.230
+    ports:
+      - "8989:8989"
+    volumes:
+      - /mnt/capacity/watch:/watch
+      - /mnt/performance/docker/arr-apps/sonarr/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - PUID=950
+      - PGID=544
+    restart: unless-stopped
+
+  radarr:
+    image: linuxserver/radarr
+    container_name: radarr
+    # mac_address: aa:fc:67:fd:fb:e8
+    networks:
+      personal:
+        ipv4_address: 192.168.6.231
+    ports:
+      - "7878:7878"
+    volumes:
+      - /mnt/capacity/watch:/watch
+      - /mnt/performance/docker/arr-apps/radarr/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - PUID=950
+      - PGID=544
+    restart: unless-stopped
+
+  huntarr:
+    image: huntarr/huntarr:latest
+    container_name: huntarr
+    networks:
+      personal:
+        ipv4_address: 192.168.6.237
+    ports:
+      - "9705:9705"
+    volumes:
+      - /mnt/performance/docker/arr-apps/huntarr/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr
+    container_name: recyclarr
+    user: "950:544"
+    volumes:
+      - /mnt/performance/docker/arr-apps/recyclarr/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    restart: unless-stopped
+
+  overseerr:
+    image: lscr.io/linuxserver/overseerr:latest
+    container_name: overseerr
+    # mac_address: aa:06:ca:89:9e:df
+    networks:
+      external:
+        ipv4_address: 192.168.5.227
+    ports:
+      - "5055:5055"
+    volumes:
+      - /mnt/performance/docker/arr-apps/overseerr/config:/config
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - PUID=950
+      - PGID=544
+    restart: unless-stopped
+
+networks:
+  personal:
+    external: true
+  external:
+    external: true

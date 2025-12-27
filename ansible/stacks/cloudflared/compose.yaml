@@ -1,0 +1,13 @@
+services:
+  cloudflared:
+    image: cloudflare/cloudflared
+    container_name: cloudflared
+    # mac_address: aa:ac:db:0f:4f:d5
+    networks:
+      external:
+        ipv4_address: 192.168.5.225
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
+    restart: unless-stopped
+networks:
+  external:
+    external: true

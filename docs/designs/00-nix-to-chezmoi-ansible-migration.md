@@ -585,6 +585,33 @@ ansible/
 - [ ] Delete nas/stacks/ from nixonomicon after migration
 - [ ] Document upgrade procedure (re-run Ansible post-TrueNAS upgrade)
 
+### Phase 18: VM Configuration Capture
+
+TrueNAS VMs (HomeAssistant, Z-Wave JS UI) are currently configured manually via the TrueNAS UI. Capture VM definitions in Ansible for reproducibility.
+
+**Scope:**
+
+- VM definitions (CPU, memory, disk, network)
+- Boot order and device passthrough (USB Z-Wave stick)
+- Cloud-init or first-boot configuration where applicable
+
+**Out of scope:**
+
+- VM internal configuration (managed by the VM's own config management)
+- Live migration or snapshot automation
+
+**Investigation needed:**
+
+- [ ] Determine if TrueNAS middleware exposes VM CRUD via midclt
+- [ ] Audit current VM configs via UI or `midclt call vm.query`
+- [ ] Evaluate complexity vs benefit (VMs rarely change)
+
+**Implementation:**
+
+- [ ] Add `vm` module to `local.truenas` collection (if middleware supports it)
+- [ ] Create VM definitions in `truenas.yml` playbook or group_vars
+- [ ] Test: VM can be recreated from Ansible definition
+
 ## Testing Strategy
 
 1. **Incremental testing**: After each phase, verify the specific functionality

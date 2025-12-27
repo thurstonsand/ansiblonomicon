@@ -1,0 +1,52 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun
+    container_name: gluetun
+    cap_add:
+      - NET_ADMIN
+    mac_address: aa:be:8f:17:f7:f9
+    networks:
+      personal:
+        ipv4_address: 192.168.6.226
+    ports:
+      - "8000:8000/tcp" # gluetun control server
+      - "8888:8888/tcp" # HTTP proxy
+      - "8388:8388/tcp" # Shadowsocks
+      - "8388:8388/udp" # Shadowsocks
+      - "80:80" # qbittorrent web ui
+      - "6881:6881" # qbittorrent
+      - "6881:6881/udp" # qbittorrent
+    volumes:
+      - /mnt/performance/docker/torrent/gluetun/gluetun:/gluetun
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - VPN_TYPE=openvpn
+      - VPN_SERVICE_PROVIDER=mullvad
+      - OPENVPN_USER=${TORRENT_OPENVPN_USER}
+      - SERVER_COUNTRIES=USA
+      - SERVER_CITIES=Atlanta GA
+      - FIREWALL_OUTBOUND_SUBNETS=192.168.6.0/24
+      - UPDATER_PERIOD=24h
+      - PUID=950 # admin
+      - PGID=544 # builtin_administrators
+    restart: unless-stopped
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    user: "950:544"
+    network_mode: service:gluetun
+    volumes:
+      - /mnt/performance/docker/torrent/qbittorrent/config:/config
+      - /mnt/capacity/watch:/watch
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - WEBUI_PORT=80
+      - PUID=950 # admin
+      - PGID=544 # builtin_administrators
+    depends_on:
+      - gluetun
+    restart: unless-stopped
+
+networks:
+  personal:
+    external: true

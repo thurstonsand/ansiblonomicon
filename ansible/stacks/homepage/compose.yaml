@@ -1,0 +1,45 @@
+services:
+  homepage-docker-socket-proxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    container_name: homepage-docker-socket-proxy
+    privileged: true
+    # mac_address: aa:5f:e6:ed:91:31
+    networks:
+      personal:
+        ipv4_address: 192.168.6.234
+    ports:
+      - 2375:2375
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      CONTAINERS: 1
+      POST: 0
+    restart: unless-stopped
+
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    # mac_address: aa:3d:4a:69:04:ca
+    networks:
+      personal:
+        ipv4_address: 192.168.6.225
+    ports:
+      - 80:80
+    volumes:
+      - /mnt/performance/docker/homepage/app/config:/app/config
+      - /mnt/performance/docker/homepage/app/public/images:/app/public/images
+      - /etc/localtime:/etc/localtime:ro
+      - /mnt/performance/docker:/apps
+      - /mnt/capacity/watch:/watch
+    environment:
+      PUID: 950
+      PGID: 544
+      PORT: 80
+      HOMEPAGE_ALLOWED_HOSTS: dash.thurstons.house,dash.thurstons.house:80
+    user: 950:544
+    depends_on:
+      - homepage-docker-socket-proxy
+    restart: unless-stopped
+networks:
+  personal:
+    external: true

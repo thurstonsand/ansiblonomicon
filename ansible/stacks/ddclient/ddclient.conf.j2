@@ -1,0 +1,14 @@
+daemon=300
+syslog=yes
+pid=/var/run/ddclient.pid
+ssl=yes
+use=web
+web='https://cloudflare.com/cdn-cgi/trace'
+web-skip='ip='
+postscript=/config/trigger-tofu-apply.sh
+
+protocol=cloudflare,                              \
+zone=thurstons.house,                             \
+login=token,                                      \
+password={{ lookup('env', 'DDCLIENT_CF_API_TOKEN') }} \
+storj.thurstons.house

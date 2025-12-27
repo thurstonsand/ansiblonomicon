@@ -3,19 +3,19 @@
 # Run with: uv run poe local
 
 - name: Configure host
-  hosts: all
+  hosts: 127.0.0.1
 
   vars_files:
-    - config.yml
+    - ../config.yml
 
   pre_tasks:
     - name: Load Darwin-specific config
-      ansible.builtin.include_vars: darwin.config.yml
+      ansible.builtin.include_vars: ../darwin.config.yml
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["always"]
 
     - name: Load Arch Linux-specific config
-      ansible.builtin.include_vars: archlinux.config.yml
+      ansible.builtin.include_vars: ../archlinux.config.yml
       when: ansible_facts['os_family'] == "Archlinux"
       tags: ["always"]
 
@@ -38,7 +38,7 @@
               - brew
               - bundle
               - check
-              - "--file={{ playbook_dir }}/Brewfile"
+              - "--file={{ playbook_dir }}/../Brewfile"
               - --verbose
           register: brew_bundle_check
           changed_when: brew_bundle_check.rc != 0
@@ -70,7 +70,7 @@
             argv:
               - brew
               - bundle
-              - "--file={{ playbook_dir }}/Brewfile"
+              - "--file={{ playbook_dir }}/../Brewfile"
               - --cleanup
               - --upgrade
           register: brew_result

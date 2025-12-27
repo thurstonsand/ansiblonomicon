@@ -16,6 +16,7 @@
 
 - `ansible/playbooks/local.yml` — Local machine playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook
 - `ansible/roles/` — Custom roles
+- `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `archlinux.config.yml` for OS-specific
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps

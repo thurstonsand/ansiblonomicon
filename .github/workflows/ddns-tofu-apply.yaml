@@ -1,0 +1,41 @@
+name: DDNS IP Change - Tofu Apply
+
+on:
+  repository_dispatch:
+    types: [ddns-ip-changed]
+  workflow_dispatch:
+  schedule:
+    # Daily safety net at 6 AM UTC
+    - cron: "0 6 * * *"
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: terraform/cloudflare
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup OpenTofu
+        uses: opentofu/setup-opentofu@v1
+        with:
+          tofu_version: 1.8.0
+
+      - name: Tofu Init
+        run: tofu init
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+
+      - name: Tofu Apply (targeted)
+        run: |
+          tofu apply -auto-approve \
+            -target=cloudflare_record.storj \
+            -target=cloudflare_zero_trust_access_policy.home_network_bypass
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          TF_VAR_cloudflare_api_token: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          TF_VAR_parent_home_ip: ${{ secrets.PARENT_HOME_IP }}

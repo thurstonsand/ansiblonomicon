@@ -1,0 +1,35 @@
+services:
+  frigate:
+    container_name: frigate
+    privileged: true
+    restart: unless-stopped
+    image: ghcr.io/blakeblackshear/frigate:stable
+    shm_size: "675mb" # Shared memory for 6 cameras at 2K resolution
+    networks:
+      iot:
+        ipv4_address: 192.168.3.227
+    volumes:
+      - /mnt/capacity/docker/frigate/config:/config
+      - /mnt/capacity/docker/frigate/media/frigate:/media/frigate
+      - /etc/localtime:/etc/localtime:ro
+      - type: tmpfs # RAM cache for detection
+        target: /tmp/cache
+        tmpfs:
+          size: 1000000000 # 1GB cache for detection
+    ports:
+      - "5000:5000" # Web UI
+      - "8554:8554" # RTSP feed
+      - "8555:8555" # WebRTC
+      - "8555:8555/udp" # WebRTC
+    environment:
+      FRIGATE_RTSP_PASSWORD: "${FRIGATE_RTSP_PASSWORD}"
+    # depends_on:
+    #   - ollama
+    devices:
+      - /dev/dri:/dev/dri # Intel iGPU acceleration
+    # devices:
+    #   - /dev/bus/usb:/dev/bus/usb # Ready for Coral USB when added
+
+networks:
+  iot:
+    external: true

@@ -33,6 +33,7 @@ Interactive sudo still uses TouchID as normal.
 │   ├── roles/               # Custom and Galaxy roles
 │   ├── tasks/               # Task files by category
 │   ├── collections/         # Local Ansible collections (local.truenas)
+│   ├── stacks/              # Docker Compose stacks for TrueNAS
 │   └── playbooks/
 │       ├── local.yml        # Local machine playbook
 │       └── truenas.yml      # TrueNAS playbook

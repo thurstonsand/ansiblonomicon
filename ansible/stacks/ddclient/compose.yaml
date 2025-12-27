@@ -1,0 +1,15 @@
+services:
+  ddclient:
+    image: lscr.io/linuxserver/ddclient:latest
+    container_name: ddclient
+    volumes:
+      - /mnt/performance/docker/ddclient/config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - ./ddclient.conf:/config/ddclient.conf
+      - ./trigger-tofu-apply.sh:/config/trigger-tofu-apply.sh
+    environment:
+      - PUID=950
+      - PGID=544
+      - TZ=US/Eastern
+      - GITHUB_PAT=${DDCLIENT_GITHUB_PAT}
+    restart: unless-stopped

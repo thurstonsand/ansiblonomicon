@@ -214,3 +214,181 @@
         maproot_group: appsvm
         enabled: true
         state: present
+
+    # ===================
+    # Docker Networks
+    # ===================
+    - name: Create trusted macvlan network
+      tags: [docker, docker-networks]
+      community.docker.docker_network:
+        name: trusted
+        driver: macvlan
+        driver_options:
+          parent: br0.1
+        ipam_config:
+          - subnet: 192.168.1.0/24
+            iprange: 192.168.1.224/27
+        state: present
+
+    - name: Create iot macvlan network
+      tags: [docker, docker-networks]
+      community.docker.docker_network:
+        name: iot
+        driver: macvlan
+        driver_options:
+          parent: br0.2
+        ipam_config:
+          - subnet: 192.168.3.0/24
+            iprange: 192.168.3.224/27
+        state: present
+
+    - name: Create external macvlan network
+      tags: [docker, docker-networks]
+      community.docker.docker_network:
+        name: external
+        driver: macvlan
+        driver_options:
+          parent: br0.3
+        ipam_config:
+          - subnet: 192.168.5.0/24
+            iprange: 192.168.5.224/27
+        state: present
+
+    - name: Create personal macvlan network
+      tags: [docker, docker-networks]
+      community.docker.docker_network:
+        name: personal
+        driver: macvlan
+        driver_options:
+          parent: br0.4
+        ipam_config:
+          - subnet: 192.168.6.0/24
+            iprange: 192.168.6.224/27
+        state: present
+
+    # ===================
+    # Docker Stacks
+    # ===================
+    - name: Sync docker stacks to TrueNAS
+      tags: [docker, docker-stacks]
+      become: false
+      ansible.posix.synchronize:
+        src: "{{ playbook_dir }}/../stacks/"
+        dest: /mnt/performance/docker/stacks/
+        recursive: true
+        delete: false
+        rsync_opts:
+          - "--exclude=.DS_Store"
+
+    - name: Template ddclient.conf with secrets
+      tags: [docker, docker-stacks]
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../stacks/ddclient/ddclient.conf.j2"
+        dest: /mnt/performance/docker/stacks/ddclient/ddclient.conf
+        mode: "0600"
+
+    # - name: Deploy arcane stack
+    #   tags: [docker, docker-stacks]
+    #   community.docker.docker_compose_v2:
+    #     project_src: /mnt/performance/docker/stacks/arcane
+    #     state: present
+    #     pull: always
+    #   environment:
+    #     ARCANE_ENCRYPTION_KEY: "{{ lookup('env', 'ARCANE_ENCRYPTION_KEY') }}"
+    #     ARCANE_JWT_SECRET: "{{ lookup('env', 'ARCANE_JWT_SECRET') }}"
+
+    - name: Deploy anypod stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/anypod
+        state: present
+        pull: always
+
+    - name: Deploy arr-apps stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/arr-apps
+        state: present
+        pull: always
+
+    - name: Deploy cli-proxy-api stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/cli-proxy-api
+        state: present
+        pull: always
+
+    - name: Deploy cloudflared stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/cloudflared
+        state: present
+        pull: always
+      environment:
+        CLOUDFLARE_TOKEN: "{{ lookup('env', 'CLOUDFLARE_TOKEN') }}"
+
+    - name: Deploy ddclient stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/ddclient
+        state: present
+        pull: always
+      environment:
+        DDCLIENT_GITHUB_PAT: "{{ lookup('env', 'DDCLIENT_GITHUB_PAT') }}"
+
+    - name: Deploy frigate stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/frigate
+        state: present
+        pull: always
+      environment:
+        FRIGATE_RTSP_PASSWORD: "{{ lookup('env', 'FRIGATE_RTSP_PASSWORD') }}"
+
+    - name: Deploy ghost stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/ghost
+        state: present
+        pull: always
+      environment:
+        GHOST_DB_PASSWORD: "{{ lookup('env', 'GHOST_DB_PASSWORD') }}"
+        GHOST_MYSQL_ROOT_PASSWORD: "{{ lookup('env', 'GHOST_MYSQL_ROOT_PASSWORD') }}"
+        GHOST_MAIL_AUTH_PASS: "{{ lookup('env', 'GHOST_MAIL_AUTH_PASS') }}"
+
+    - name: Deploy homepage stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/homepage
+        state: present
+        pull: always
+
+    - name: Deploy isponsorblocktv stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/isponsorblocktv
+        state: present
+        pull: always
+
+    - name: Deploy mosquitto stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/mosquitto
+        state: present
+        pull: always
+
+    - name: Deploy scrypted stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/scrypted
+        state: present
+        pull: always
+
+    - name: Deploy torrent stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/torrent
+        state: present
+        pull: always
+      environment:
+        TORRENT_OPENVPN_USER: "{{ lookup('env', 'TORRENT_OPENVPN_USER') }}"

@@ -13,8 +13,8 @@
     "~/Develop/ansiblonomicon/ansible/.env.op",
     "~/Develop/ansiblonomicon/terraform/cloudflare/.env.op"
   ],
-  "amp.tools.disable": [
 {{- if eq . "ide" }}
+  "amp.tools.disable": [
     "evaluate_script",
     "get_console_message",
     "get_network_request",
@@ -45,13 +45,19 @@
     "mcp__parallel_search__web_search_preview",
     "sa__code-reviewer",
     "mcp__skills__skill"
-{{- end }}
   ],
+{{- else }}
+  "amp.tools.disable": [],
+{{- end }}
   "amp.permissions": [
     {
       "tool": "Bash",
       "matches": {
-        "cmd": ["*git stash*", "*git add -A*", "*git commit*"]
+        "cmd": [
+          "*git stash*",
+          "*git add -A*",
+          "*git commit*"
+        ]
       },
       "action": "ask"
     },
