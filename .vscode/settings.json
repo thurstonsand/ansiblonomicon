@@ -6,9 +6,6 @@
     "**/chezmoi/.chezmoitemplates/*": "gotmpl",
     "**/chezmoi/**/modify_*": "shellscript"
   },
-  "ansible.validation.lint.enabled": true,
-  "ansible.python.interpreterPath": ".venv/bin/python",
-  "ansible.ansible.path": ".venv/bin/ansible",
-  "ansible.validation.lint.path": ".venv/bin/ansible-lint",
-  "python.defaultInterpreterPath": ".venv/bin/python"
+  "python.defaultInterpreterPath": ".venv/bin/python",
+  "basedpyright.analysis.ignore": ["**/.venv/**"]
 }

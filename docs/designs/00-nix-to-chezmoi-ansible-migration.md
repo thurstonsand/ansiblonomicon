@@ -424,7 +424,7 @@ Replace the nix `switch` alias with `anup` for Ansible.
 
 ### Phase 17: TrueNAS Management via Ansible
 
-Full "NAS as Code" management of TrueNAS SCALE via Ansible over SSH, using the `arensb.truenas` collection for middleware API access plus custom tasks for container lifecycle.
+Full "NAS as Code" management of TrueNAS SCALE via Ansible over SSH, using a custom `local.truenas` collection for middleware API access plus custom tasks for container lifecycle.
 
 **Platform notes:**
 
@@ -433,20 +433,19 @@ Full "NAS as Code" management of TrueNAS SCALE via Ansible over SSH, using the `
 - Middleware/midclt-driven automation is more stable long-term than REST (deprecated in 25.04+)
 - OS-level package installs not supported; may enable Developer Mode for minimal CLI tools (git-crypt, jq, ripgrep) and re-apply post-upgrade
 
-**Ansible Collection:** `arensb.truenas` (install via `ansible-galaxy collection install arensb.truenas`)
+**Ansible Collection:** `local.truenas` (in-repo at `ansible/collections/ansible_collections/local/truenas/`)
 
-Communicates with TrueNAS middleware daemon via SSH. Modules available:
+Thin wrappers around TrueNAS SCALE's `midclt` CLI, executed via SSH. Action plugins run on controller with full Python 3.12+ features; only raw `midclt call` commands execute on TrueNAS. Modules available:
 
-| Category  | Modules                                 | Notes                                                         |
-| --------- | --------------------------------------- | ------------------------------------------------------------- |
-| Storage   | `filesystem`                            | ZFS datasets/zvols with compression, quotas, recordsize, etc. |
-| Storage   | `pool_scrub_task`, `pool_snapshot_task` | Periodic scrub and snapshot scheduling                        |
-| Access    | `user`, `group`                         | User/group management                                         |
-| Shares    | `sharing_smb`, `sharing_nfs`, `nfs`     | SMB/NFS shares and NFS service config                         |
-| Services  | `service`, `smart`, `smart_test_task`   | Service management, SMART config/scheduling                   |
-| System    | `hostname`, `systemdataset`, `mail`     | System basics, system dataset, email alerts                   |
-| Security  | `certificate`, `certificate_authority`  | TLS cert and CA management                                    |
-| Lifecycle | `initscript`                            | Init/shutdown scripts (useful for dotfile symlinks)           |
+| Category  | Modules              | Notes                        |
+| --------- | -------------------- | ---------------------------- |
+| Storage   | `pool_scrub`         | Pool scrub tasks             |
+| Storage   | `pool_snapshottask`  | Periodic snapshot scheduling |
+| Shares    | `sharing_smb`        | SMB shares                   |
+| Shares    | `sharing_nfs`        | NFS shares                   |
+| Services  | `service`            | Service enable/start/stop    |
+| Services  | `smart_test`         | SMART test schedules         |
+| Lifecycle | `initshutdownscript` | Init/shutdown scripts        |
 
 **Scope:**
 

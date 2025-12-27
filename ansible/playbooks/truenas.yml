@@ -7,6 +7,65 @@
   environment:
     middleware_method: midclt
   tasks:
+    # ===================
+    # Services
+    # ===================
+    - name: Enable SMB service
+      local.truenas.service:
+        name: cifs
+        enabled: true
+        state: started
+
+    - name: Enable NFS service
+      local.truenas.service:
+        name: nfs
+        enabled: true
+        state: started
+
+    - name: Enable SSH service
+      local.truenas.service:
+        name: ssh
+        enabled: true
+        state: started
+
+    - name: Enable UPS service
+      local.truenas.service:
+        name: ups
+        enabled: true
+        state: started
+
+    - name: Enable SMART service
+      local.truenas.service:
+        name: smartd
+        enabled: true
+        state: started
+
+    # ===================
+    # SMART Tests
+    # ===================
+    - name: Daily short SMART test
+      local.truenas.smart_test:
+        type: SHORT
+        all_disks: true
+        schedule:
+          hour: "0"
+          dom: "*"
+          month: "*"
+          dow: "*"
+
+    - name: Monthly long SMART test
+      local.truenas.smart_test:
+        type: LONG
+        all_disks: true
+        schedule:
+          hour: "1"
+          dom: "1"
+          month: "*"
+          dow: "*"
+
+    # ===================
+    # Init/Shutdown Scripts
+    # ===================
     - name: Enable Wake-on-LAN at boot
       local.truenas.initshutdownscript:
         comment: "enable WOL"
@@ -15,4 +74,143 @@
         when: POSTINIT
         enabled: true
         timeout: 20
+        state: present
+
+    # ===================
+    # Snapshot Tasks
+    # ===================
+    - name: Create 6-hourly snapshots of performance pool
+      local.truenas.pool_snapshottask:
+        dataset: performance
+        naming_schema: "auto-%Y-%m-%d_%H-%M"
+        recursive: true
+        lifetime_value: 3
+        lifetime_unit: DAY
+        allow_empty: true
+        vmware_sync: false
+        schedule:
+          minute: "0"
+          hour: "*/6"
+          dom: "*"
+          month: "*"
+          dow: "*"
+          begin: "00:00"
+          end: "23:59"
+        enabled: true
+        state: present
+
+    - name: Create monthly snapshots of performance pool
+      local.truenas.pool_snapshottask:
+        dataset: performance
+        naming_schema: "auto-%Y-%m-%d_%H-%M"
+        recursive: true
+        lifetime_value: 1
+        lifetime_unit: MONTH
+        allow_empty: true
+        vmware_sync: false
+        schedule:
+          minute: "0"
+          hour: "0"
+          dom: "*"
+          month: "*"
+          dow: "*"
+          begin: "00:00"
+          end: "23:59"
+        enabled: true
+        state: present
+
+    # ===================
+    # Scrub Tasks
+    # ===================
+    - name: Weekly scrub of performance pool
+      local.truenas.pool_scrub:
+        pool_name: performance
+        threshold: 35
+        schedule:
+          minute: "0"
+          hour: "4"
+          dom: "*"
+          month: "*"
+          dow: "tue"
+        enabled: true
+        state: present
+
+    - name: Weekly scrub of capacity pool
+      local.truenas.pool_scrub:
+        pool_name: capacity
+        threshold: 35
+        schedule:
+          minute: "00"
+          hour: "04"
+          dom: "*"
+          month: "*"
+          dow: "tue"
+        enabled: true
+        state: present
+
+    # ===================
+    # SMB Shares
+    # ===================
+    - name: Windows backup SMB share
+      local.truenas.sharing_smb:
+        name: windows
+        path: /mnt/capacity/backup/windows
+        purpose: DEFAULT_SHARE
+        browsable: true
+        acl: true
+        durablehandle: true
+        streams: true
+        shadowcopy: true
+        enabled: true
+        state: present
+
+    - name: Time Machine SMB share
+      local.truenas.sharing_smb:
+        name: thurston-personal-mbp
+        path: /mnt/capacity/backup/timemachine/thurston-personal-mbp
+        path_suffix: "%U"
+        purpose: ENHANCED_TIMEMACHINE
+        browsable: true
+        acl: true
+        durablehandle: true
+        streams: true
+        timemachine: true
+        shadowcopy: true
+        enabled: true
+        state: present
+
+    - name: Watch folder SMB share
+      local.truenas.sharing_smb:
+        name: watch
+        path: /mnt/capacity/watch
+        purpose: DEFAULT_SHARE
+        browsable: true
+        acl: true
+        durablehandle: true
+        streams: true
+        shadowcopy: true
+        enabled: true
+        state: present
+
+    # ===================
+    # NFS Shares
+    # ===================
+    - name: Docker NFS share
+      local.truenas.sharing_nfs:
+        path: /mnt/performance/docker
+        networks:
+          - 192.168.1.0/24
+        maproot_user: appsvm
+        maproot_group: appsvm
+        enabled: true
+        state: present
+
+    - name: Watch folder NFS share
+      local.truenas.sharing_nfs:
+        path: /mnt/capacity/watch
+        networks:
+          - 192.168.1.0/24
+        maproot_user: appsvm
+        maproot_group: appsvm
+        enabled: true
         state: present
