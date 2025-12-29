@@ -4,17 +4,17 @@ services:
     container_name: arcane
     networks:
       personal:
-        ipv4_address: 192.168.6.236
+        ipv4_address: {{ lan.personal.arcane.ip }}
     ports:
-      - "3552:3552"
+      - "{{ lan.personal.arcane.ports.web }}:{{ lan.personal.arcane.ports.web }}" # web
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-      - /mnt/performance/docker/arcane/data:/app/data
+      - /mnt/performance/docker/arcane/app/data:/app/data
       - /mnt/performance/docker/stacks:/mnt/performance/docker/stacks
     environment:
-      APP_URL: https://arcane.thurstons.house
-      PUID: 950
-      PGID: 544
+      APP_URL: http://{{ lan.personal.arcane.domain }}
+      PUID: {{ user.puid }}
+      PGID: {{ user.pgid }}
       ENCRYPTION_KEY: ${ARCANE_ENCRYPTION_KEY}
       JWT_SECRET: ${ARCANE_JWT_SECRET}
     restart: unless-stopped

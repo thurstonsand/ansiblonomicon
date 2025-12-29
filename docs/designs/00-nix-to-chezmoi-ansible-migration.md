@@ -484,7 +484,7 @@ _Docker Compose Stacks (22 in nixonomicon/nas/stacks/):_
 
 - arr-apps (sonarr, radarr, prowlarr, overseerr, flaresolverr, huntarr, recyclarr)
 - torrent (gluetun + qbittorrent)
-- homeassistant, frigate, scrypted, zwave-js-ui, mosquitto
+- homeassistant, frigate, scrypted
 - cloudflared, ddclient, sshd
 - homepage, ghost, privatebin, obsidian-livesync
 - anypod, podsync, isponsorblocktv

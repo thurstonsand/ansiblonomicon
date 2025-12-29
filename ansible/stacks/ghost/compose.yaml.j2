@@ -8,9 +8,9 @@ services:
     command: ["node", "current/index.js"]
     networks:
       external:
-        ipv4_address: 192.168.5.233
+        ipv4_address: {{ lan.external.ghost.ip }}
     ports:
-      - "2368:2368"
+      - "{{ lan.external.ghost.ports.web }}:{{ lan.external.ghost.ports.web }}" # web
     volumes:
       - /mnt/capacity/watch/ghost/var/lib/ghost/content:/var/lib/ghost/content
       - /mnt/performance/docker/stacks/ghost/entrypoint-admin.sh:/custom-entrypoint-admin.sh:ro
@@ -18,7 +18,7 @@ services:
       ghost_mysql:
         condition: service_healthy
     environment:
-      url: "https://blog.thurstons.house"
+      url: "https://{{ lan.external.ghost.domain }}"
       mail__transport: SMTP
       mail__options__host: smtp.mail.me.com
       mail__options__port: 587
@@ -27,7 +27,7 @@ services:
       mail__options__auth__pass: "${GHOST_MAIL_AUTH_PASS}"
       mail__from: "notifications@thurstons.house"
       database__client: mysql
-      database__connection__host: 192.168.5.234
+      database__connection__host: {{ lan.external.ghost_mysql.ip }}
       database__connection__database: ghostdb
       database__connection__user: ghostuser
       database__connection__password: "${GHOST_DB_PASSWORD}"
@@ -36,12 +36,12 @@ services:
     image: mysql:8
     container_name: ghost_mysql
     restart: unless-stopped
-    user: "950:544"
+    user: "{{ user.id }}"
     networks:
       external:
-        ipv4_address: 192.168.5.234
+        ipv4_address: {{ lan.external.ghost_mysql.ip }}
     ports:
-      - "3306:3306"
+      - "{{ lan.external.ghost_mysql.ports.mysql }}:{{ lan.external.ghost_mysql.ports.mysql }}" # mysql
     volumes:
       - /mnt/capacity/watch/ghost_mysql/var/lib/mysql:/var/lib/mysql
       - /mnt/performance/docker/stacks/ghost/conf/my.cnf:/etc/my.cnf:ro

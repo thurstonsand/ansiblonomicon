@@ -5,9 +5,9 @@ services:
     # mac_address: aa:aa:ba:eb:4c:fc
     networks:
       personal:
-        ipv4_address: 192.168.6.228
+        ipv4_address: {{ lan.personal.flaresolverr.ip }}
     ports:
-      - "8191:8191"
+      - "{{ lan.personal.flaresolverr.ports.web }}:{{ lan.personal.flaresolverr.ports.web }}" # web
     volumes:
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
@@ -18,15 +18,15 @@ services:
     # mac_address: aa:bb:ba:ba:8f:f1
     networks:
       personal:
-        ipv4_address: 192.168.6.229
+        ipv4_address: {{ lan.personal.prowlarr.ip }}
     ports:
-      - "9696:9696"
+      - "{{ lan.personal.prowlarr.ports.web }}:{{ lan.personal.prowlarr.ports.web }}" # web
     volumes:
       - /mnt/performance/docker/arr-apps/prowlarr/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PUID=950
-      - PGID=544
+      - PUID={{ user.puid }}
+      - PGID={{ user.pgid }}
     restart: unless-stopped
 
   sonarr:
@@ -35,16 +35,16 @@ services:
     # mac_address: aa:88:44:f4:6a:d3
     networks:
       personal:
-        ipv4_address: 192.168.6.230
+        ipv4_address: {{ lan.personal.sonarr.ip }}
     ports:
-      - "8989:8989"
+      - "{{ lan.personal.sonarr.ports.web }}:{{ lan.personal.sonarr.ports.web }}" # web
     volumes:
       - /mnt/capacity/watch:/watch
       - /mnt/performance/docker/arr-apps/sonarr/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PUID=950
-      - PGID=544
+      - PUID={{ user.puid }}
+      - PGID={{ user.pgid }}
     restart: unless-stopped
 
   radarr:
@@ -53,16 +53,16 @@ services:
     # mac_address: aa:fc:67:fd:fb:e8
     networks:
       personal:
-        ipv4_address: 192.168.6.231
+        ipv4_address: {{ lan.personal.radarr.ip }}
     ports:
-      - "7878:7878"
+      - "{{ lan.personal.radarr.ports.web }}:{{ lan.personal.radarr.ports.web }}" # web
     volumes:
       - /mnt/capacity/watch:/watch
       - /mnt/performance/docker/arr-apps/radarr/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PUID=950
-      - PGID=544
+      - PUID={{ user.puid }}
+      - PGID={{ user.pgid }}
     restart: unless-stopped
 
   huntarr:
@@ -70,9 +70,9 @@ services:
     container_name: huntarr
     networks:
       personal:
-        ipv4_address: 192.168.6.237
+        ipv4_address: {{ lan.personal.huntarr.ip }}
     ports:
-      - "9705:9705"
+      - "{{ lan.personal.huntarr.ports.web }}:{{ lan.personal.huntarr.ports.web }}" # web
     volumes:
       - /mnt/performance/docker/arr-apps/huntarr/config:/config
       - /etc/localtime:/etc/localtime:ro
@@ -81,7 +81,7 @@ services:
   recyclarr:
     image: ghcr.io/recyclarr/recyclarr
     container_name: recyclarr
-    user: "950:544"
+    user: "{{ user.id }}"
     volumes:
       - /mnt/performance/docker/arr-apps/recyclarr/config:/config
       - /etc/localtime:/etc/localtime:ro
@@ -93,15 +93,15 @@ services:
     # mac_address: aa:06:ca:89:9e:df
     networks:
       external:
-        ipv4_address: 192.168.5.227
+        ipv4_address: {{ lan.external.overseerr.ip }}
     ports:
-      - "5055:5055"
+      - "{{ lan.external.overseerr.ports.web }}:{{ lan.external.overseerr.ports.web }}" # web
     volumes:
       - /mnt/performance/docker/arr-apps/overseerr/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PUID=950
-      - PGID=544
+      - PUID={{ user.puid }}
+      - PGID={{ user.pgid }}
     restart: unless-stopped
 
 networks:

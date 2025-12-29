@@ -1,0 +1,28 @@
+services:
+  cli-proxy-api:
+    image: eceasy/cli-proxy-api:latest
+    container_name: cli-proxy-api
+    restart: unless-stopped
+    # pull_policy: always
+    user: "{{ user.id }}"
+    networks:
+      external:
+        ipv4_address: {{ lan.external.cli_proxy_api.ip }}
+    ports:
+      - "{{ lan.external.cli_proxy_api.ports.api }}:{{ lan.external.cli_proxy_api.ports.api }}" # api
+      - "{{ lan.external.cli_proxy_api.ports.gemini_oauth }}:{{ lan.external.cli_proxy_api.ports.gemini_oauth }}" # gemini oauth
+      - "{{ lan.external.cli_proxy_api.ports.codex_oauth }}:{{ lan.external.cli_proxy_api.ports.codex_oauth }}" # codex oauth
+      - "{{ lan.external.cli_proxy_api.ports.claude_oauth }}:{{ lan.external.cli_proxy_api.ports.claude_oauth }}" # claude oauth
+      - "{{ lan.external.cli_proxy_api.ports.antigravity_oauth }}:{{ lan.external.cli_proxy_api.ports.antigravity_oauth }}" # antigravity oauth
+      - "{{ lan.external.cli_proxy_api.ports.iflow_oauth }}:{{ lan.external.cli_proxy_api.ports.iflow_oauth }}" # iflow oauth
+    volumes:
+      - /mnt/performance/docker/cliproxyapi/CLIProxyAPI/config.yaml:/CLIProxyAPI/config.yaml
+      - /mnt/performance/docker/cliproxyapi/CLIProxyAPI/auths:/CLIProxyAPI/auths
+      - /mnt/performance/docker/cliproxyapi/CLIProxyAPI/logs:/CLIProxyAPI/logs
+      - /mnt/performance/docker/cliproxyapi/CLIProxyAPI/static:/CLIProxyAPI/static
+    environment:
+      - MANAGEMENT_STATIC_PATH=/CLIProxyAPI/static
+
+networks:
+  external:
+    external: true

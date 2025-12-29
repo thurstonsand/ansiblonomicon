@@ -7,7 +7,7 @@ services:
     shm_size: "675mb" # Shared memory for 6 cameras at 2K resolution
     networks:
       iot:
-        ipv4_address: 192.168.3.227
+        ipv4_address: {{ lan.iot.frigate.ip }}
     volumes:
       - /mnt/capacity/docker/frigate/config:/config
       - /mnt/capacity/docker/frigate/media/frigate:/media/frigate
@@ -17,10 +17,10 @@ services:
         tmpfs:
           size: 1000000000 # 1GB cache for detection
     ports:
-      - "5000:5000" # Web UI
-      - "8554:8554" # RTSP feed
-      - "8555:8555" # WebRTC
-      - "8555:8555/udp" # WebRTC
+      - "{{ lan.iot.frigate.ports.web_ui }}:{{ lan.iot.frigate.ports.web_ui }}" # web ui
+      - "{{ lan.iot.frigate.ports.rtsp }}:{{ lan.iot.frigate.ports.rtsp }}" # rtsp
+      - "{{ lan.iot.frigate.ports.webrtc }}:{{ lan.iot.frigate.ports.webrtc }}" # webrtc
+      - "{{ lan.iot.frigate.ports.webrtc }}:{{ lan.iot.frigate.ports.webrtc }}/udp" # webrtc
     environment:
       FRIGATE_RTSP_PASSWORD: "${FRIGATE_RTSP_PASSWORD}"
     # depends_on:

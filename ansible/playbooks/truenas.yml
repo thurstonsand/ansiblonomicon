@@ -6,6 +6,8 @@
   become: true
   environment:
     middleware_method: midclt
+  vars_files:
+    - ../config/docker.yml
   tasks:
     # ===================
     # Services
@@ -279,6 +281,25 @@
         delete: false
         rsync_opts:
           - "--exclude=.DS_Store"
+          - "--exclude=*.j2"
+
+    - name: Find compose templates
+      tags: [docker, docker-stacks]
+      ansible.builtin.find:
+        paths: "{{ playbook_dir }}/../stacks"
+        patterns: "compose.yaml.j2"
+        recurse: true
+      register: compose_templates
+      delegate_to: localhost
+      become: false
+
+    - name: Template compose files
+      tags: [docker, docker-stacks]
+      ansible.builtin.template:
+        src: "{{ item.path }}"
+        dest: "/mnt/performance/docker/stacks/{{ item.path | dirname | basename }}/compose.yaml"
+        mode: "0644"
+      loop: "{{ compose_templates.files }}"
 
     - name: Template ddclient.conf with secrets
       tags: [docker, docker-stacks]
@@ -367,13 +388,6 @@
       tags: [docker, docker-stacks]
       community.docker.docker_compose_v2:
         project_src: /mnt/performance/docker/stacks/isponsorblocktv
-        state: present
-        pull: always
-
-    - name: Deploy mosquitto stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/mosquitto
         state: present
         pull: always
 

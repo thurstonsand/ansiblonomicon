@@ -17,13 +17,33 @@
 
 - `ansible/playbooks/local.yml` — Local machine playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook
 - `ansible/roles/` — Custom roles
-- `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS
+- `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS (`.j2` templates use centralized config)
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `archlinux.config.yml` for OS-specific
+- `ansible/config/docker.yml` — Centralized Docker config (IPs, ports, domains) for TrueNAS stacks
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps
 - `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2, Workers)
 - `terraform/cloudflare/workers/` — Cloudflare Worker source code (deployed via Terraform, secrets via wrangler)
 - `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
+
+# Cloudflare Worker Logs
+
+**Real-time tail** (requires terminal that stays open):
+
+```sh
+cd terraform/cloudflare && op run --env-file=.env.op -- npx wrangler tail llms --format pretty
+```
+
+**Historical logs via CLI** (requires cached secrets):
+
+```sh
+./scripts/cache-secrets.sh           # One-time: cache 1Password secrets
+./scripts/worker-logs.sh             # Query last 60 minutes
+./scripts/worker-logs.sh -m 30       # Query last 30 minutes
+./scripts/worker-logs.sh --list-queries  # List saved queries
+```
+
+**Historical logs via Dashboard**: Cloudflare Dashboard → Workers & Pages → select worker → Logs tab
 
 # Code Style
 

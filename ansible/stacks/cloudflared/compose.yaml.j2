@@ -5,7 +5,7 @@ services:
     # mac_address: aa:ac:db:0f:4f:d5
     networks:
       external:
-        ipv4_address: 192.168.5.225
+        ipv4_address: {{ lan.external.cloudflared.ip }}
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
     restart: unless-stopped
 networks:

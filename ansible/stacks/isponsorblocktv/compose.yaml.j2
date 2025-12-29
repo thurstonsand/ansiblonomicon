@@ -4,7 +4,7 @@ services:
     container_name: isponsorblocktv
     networks:
       personal:
-        ipv4_address: 192.168.6.235
+        ipv4_address: {{ lan.personal.isponsorblocktv.ip }}
     volumes:
       - /mnt/performance/docker/isponsorblocktv/app/data:/app/data
     restart: unless-stopped

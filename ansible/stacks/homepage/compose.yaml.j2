@@ -6,9 +6,9 @@ services:
     # mac_address: aa:5f:e6:ed:91:31
     networks:
       personal:
-        ipv4_address: 192.168.6.234
+        ipv4_address: {{ lan.personal.homepage_docker_socket_proxy.ip }}
     ports:
-      - 2375:2375
+      - "{{ lan.personal.homepage_docker_socket_proxy.ports.docker_api }}:{{ lan.personal.homepage_docker_socket_proxy.ports.docker_api }}" # docker api
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
@@ -22,9 +22,9 @@ services:
     # mac_address: aa:3d:4a:69:04:ca
     networks:
       personal:
-        ipv4_address: 192.168.6.225
+        ipv4_address: {{ lan.personal.homepage.ip }}
     ports:
-      - 80:80
+      - "{{ lan.personal.homepage.ports.web }}:{{ lan.personal.homepage.ports.web }}" # web
     volumes:
       - /mnt/performance/docker/homepage/app/config:/app/config
       - /mnt/performance/docker/homepage/app/public/images:/app/public/images
@@ -32,11 +32,11 @@ services:
       - /mnt/performance/docker:/apps
       - /mnt/capacity/watch:/watch
     environment:
-      PUID: 950
-      PGID: 544
-      PORT: 80
-      HOMEPAGE_ALLOWED_HOSTS: dash.thurstons.house,dash.thurstons.house:80
-    user: 950:544
+      PUID: {{ user.puid }}
+      PGID: {{ user.pgid }}
+      PORT: {{ lan.personal.homepage.ports.web }}
+      HOMEPAGE_ALLOWED_HOSTS: {{ lan.personal.homepage.domain }},{{ lan.personal.homepage.domain }}:{{ lan.personal.homepage.ports.web }}
+    user: "{{ user.id }}"
     depends_on:
       - homepage-docker-socket-proxy
     restart: unless-stopped

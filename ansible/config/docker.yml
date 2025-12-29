@@ -1,0 +1,120 @@
+# Centralized Docker configuration for TrueNAS stacks
+
+# Common user/group for Docker containers
+user:
+  puid: 950
+  pgid: 544
+  id: "950:544"
+
+# Network ranges (macvlan iprange):
+#   iot:      192.168.3.224/27 (192.168.3.224-255)
+#   external: 192.168.5.224/27 (192.168.5.224-255)
+#   personal: 192.168.6.224/27 (192.168.6.224-255)
+
+lan:
+  iot:
+    frigate:
+      ip: 192.168.3.227
+      ports:
+        web_ui: 5000
+        rtsp: 8554
+        webrtc: 8555
+      domain: frigate.thurstons.house
+
+  external:
+    cloudflared:
+      ip: 192.168.5.225
+      ports: {}
+    overseerr:
+      ip: 192.168.5.227
+      ports:
+        web: 5055
+      domain: overseerr.thurstons.house
+    anypod:
+      ip: 192.168.5.231
+      ports:
+        web: 8024
+      domain: anypod.thurstons.house
+    bgutil_pot_provider:
+      ip: 192.168.5.232
+      ports:
+        api: 4416
+    ghost:
+      ip: 192.168.5.233
+      ports:
+        web: 2368
+      domain: blog.thurstons.house
+    ghost_mysql:
+      ip: 192.168.5.234
+      ports:
+        mysql: 3306
+    cli_proxy_api:
+      ip: 192.168.5.235
+      ports:
+        api: 8317
+        gemini_oauth: 8085
+        codex_oauth: 1455
+        claude_oauth: 54545
+        antigravity_oauth: 51121
+        iflow_oauth: 11451
+      domain: cli-proxy-api.thurstons.house
+      domain_public: llms.thurstons.house
+
+  personal:
+    homepage:
+      ip: 192.168.6.225
+      ports:
+        web: 80
+      domain: dash.thurstons.house
+    homepage_docker_socket_proxy:
+      ip: 192.168.6.234
+      ports:
+        docker_api: 2375
+    gluetun:
+      ip: 192.168.6.226
+      ports:
+        control: 8000
+        http_proxy: 8888
+        shadowsocks: 8388
+        qbittorrent_web: 80
+        qbittorrent_bt: 6881
+    qbittorrent:
+      domain: torrent.thurstons.house
+    flaresolverr:
+      ip: 192.168.6.228
+      ports:
+        web: 8191
+    prowlarr:
+      ip: 192.168.6.229
+      ports:
+        web: 9696
+      domain: prowlarr.thurstons.house
+    sonarr:
+      ip: 192.168.6.230
+      ports:
+        web: 8989
+      domain: sonarr.thurstons.house
+    radarr:
+      ip: 192.168.6.231
+      ports:
+        web: 7878
+      domain: radarr.thurstons.house
+    huntarr:
+      ip: 192.168.6.237
+      ports:
+        web: 9705
+      domain: huntarr.thurstons.house
+    scrypted:
+      ip: 192.168.6.232
+      ports:
+        web_insecure: 11080
+        web_secure: 10443
+      domain: scrypted.thurstons.house
+    isponsorblocktv:
+      ip: 192.168.6.235
+      ports: {}
+    arcane:
+      ip: 192.168.6.236
+      ports:
+        web: 3552
+      domain: arcane.thurstons.house

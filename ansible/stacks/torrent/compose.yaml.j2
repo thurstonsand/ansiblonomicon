@@ -7,15 +7,15 @@ services:
     mac_address: aa:be:8f:17:f7:f9
     networks:
       personal:
-        ipv4_address: 192.168.6.226
+        ipv4_address: {{ lan.personal.gluetun.ip }}
     ports:
-      - "8000:8000/tcp" # gluetun control server
-      - "8888:8888/tcp" # HTTP proxy
-      - "8388:8388/tcp" # Shadowsocks
-      - "8388:8388/udp" # Shadowsocks
-      - "80:80" # qbittorrent web ui
-      - "6881:6881" # qbittorrent
-      - "6881:6881/udp" # qbittorrent
+      - "{{ lan.personal.gluetun.ports.control }}:{{ lan.personal.gluetun.ports.control }}/tcp" # control
+      - "{{ lan.personal.gluetun.ports.http_proxy }}:{{ lan.personal.gluetun.ports.http_proxy }}/tcp" # http proxy
+      - "{{ lan.personal.gluetun.ports.shadowsocks }}:{{ lan.personal.gluetun.ports.shadowsocks }}/tcp" # shadowsocks
+      - "{{ lan.personal.gluetun.ports.shadowsocks }}:{{ lan.personal.gluetun.ports.shadowsocks }}/udp" # shadowsocks
+      - "{{ lan.personal.gluetun.ports.qbittorrent_web }}:{{ lan.personal.gluetun.ports.qbittorrent_web }}" # qbittorrent web
+      - "{{ lan.personal.gluetun.ports.qbittorrent_bt }}:{{ lan.personal.gluetun.ports.qbittorrent_bt }}" # qbittorrent bt
+      - "{{ lan.personal.gluetun.ports.qbittorrent_bt }}:{{ lan.personal.gluetun.ports.qbittorrent_bt }}/udp" # qbittorrent bt
     volumes:
       - /mnt/performance/docker/torrent/gluetun/gluetun:/gluetun
       - /etc/localtime:/etc/localtime:ro
@@ -27,22 +27,22 @@ services:
       - SERVER_CITIES=Atlanta GA
       - FIREWALL_OUTBOUND_SUBNETS=192.168.6.0/24
       - UPDATER_PERIOD=24h
-      - PUID=950 # admin
-      - PGID=544 # builtin_administrators
+      - PUID={{ user.puid }}
+      - PGID={{ user.pgid }}
     restart: unless-stopped
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
-    user: "950:544"
+    user: "{{ user.id }}"
     network_mode: service:gluetun
     volumes:
       - /mnt/performance/docker/torrent/qbittorrent/config:/config
       - /mnt/capacity/watch:/watch
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - WEBUI_PORT=80
-      - PUID=950 # admin
-      - PGID=544 # builtin_administrators
+      - WEBUI_PORT={{ lan.personal.gluetun.ports.qbittorrent_web }}
+      - PUID={{ user.puid }}
+      - PGID={{ user.pgid }}
     depends_on:
       - gluetun
     restart: unless-stopped
@@ -51,7 +51,7 @@ services:
       context: .
       dockerfile: Dockerfile.mam-updater
     container_name: mam-updater
-    user: "950:544"
+    user: "{{ user.id }}"
     network_mode: service:gluetun
     volumes:
       - /mnt/performance/docker/torrent/mam-updater:/data

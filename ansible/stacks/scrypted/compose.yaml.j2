@@ -1,0 +1,26 @@
+services:
+  scrypted:
+    image: koush/scrypted
+    container_name: scrypted
+    networks:
+      personal:
+        ipv4_address: {{ lan.personal.scrypted.ip }}
+    ports:
+      - "{{ lan.personal.scrypted.ports.web_insecure }}:{{ lan.personal.scrypted.ports.web_insecure }}" # web insecure
+      - "{{ lan.personal.scrypted.ports.web_secure }}:{{ lan.personal.scrypted.ports.web_secure }}" # web secure
+    volumes:
+      # Avahi Daemon mDNS
+      # - /var/run/dbus:/var/run/dbus
+      # - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
+
+      - /mnt/performance/docker/scrypted/server/volume:/server/volume
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - SCRYPTED_INSECURE_PORT={{ lan.personal.scrypted.ports.web_insecure }}
+      - SCRYPTED_SECURE_PORT={{ lan.personal.scrypted.ports.web_secure }}
+      # Watchtower auto-update webhook (test if Scrypted runs without these)
+    restart: unless-stopped
+
+networks:
+  personal:
+    external: true
