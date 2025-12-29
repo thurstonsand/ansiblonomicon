@@ -13,11 +13,11 @@ Examples:
 
 import argparse
 import os
+from pathlib import Path
 import stat
 import sys
-from pathlib import Path
 
-MARKDOWN_TEMPLATE = '''# {title}
+MARKDOWN_TEMPLATE = """# {title}
 
 ## SYSTEM
 
@@ -41,9 +41,9 @@ You are a [role description]. Your objectives are to:
 ## TASK
 
 [Main prompt content here]
-'''
+"""
 
-BASH_TEMPLATE = '''#!/bin/bash
+BASH_TEMPLATE = """#!/bin/bash
 # {title}
 # Usage: {name} [arguments]
 
@@ -84,7 +84,7 @@ Processing: $ARG
 [Your dynamic prompt content here]
 
 EOF
-'''
+"""
 
 PYTHON_TEMPLATE = '''#!/usr/bin/env python3
 """

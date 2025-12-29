@@ -2,16 +2,14 @@
 
 Thin Ansible wrappers around TrueNAS SCALE's `midclt` CLI.
 
-## Commands
+## Dev Commands
 
-Run from repo root:
-- `uv run poe lint` — Lint everything (includes this collection)
-- `uv run ruff check ansible/collections/` — Python linting only
-- `uv run basedpyright` — Type checking only
+Same as what is run from repo root.
 
 ## Module Pattern
 
 Each module defines these constants, then follows query→compare→act→report:
+
 - `RESOURCE` — midclt endpoint (e.g., `"initshutdownscript"`)
 - `IDENTITY_FIELD` — Field used to find existing resources (e.g., `"comment"`)
 - `MANAGED_FIELDS` — List of fields that can be set via the module

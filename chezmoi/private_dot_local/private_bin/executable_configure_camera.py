@@ -61,7 +61,7 @@ def list_devices(uvc_util: str) -> list[dict[str, str]]:
 
 
 def set_control(uvc_util: str, selector: list[str], control: str, value: str) -> None:
-    args = [uvc_util] + selector + [f"--set={control}={value}"]
+    args = [uvc_util, *selector, f"--set={control}={value}"]
     code, out, err = run_command(args)
     if code != 0:
         raise RuntimeError(f"Failed setting {control} to {value}: {err or out}")
@@ -80,17 +80,14 @@ def value_to_uvc(value: ControlValue) -> str:
     if isinstance(value, dict):
         parts: list[str] = []
         for k, v in value.items():
-            if isinstance(v, bool):
-                v_str = "true" if v else "false"
-            else:
-                v_str = str(v)
+            v_str = ("true" if v else "false") if isinstance(v, bool) else str(v)
             parts.append(f"{k}={v_str}")
         return "{" + ",".join(parts) + "}"
     return str(value)
 
 
 def load_settings(settings_path: str) -> Settings:
-    with open(settings_path, "r", encoding="utf-8") as f:
+    with open(settings_path, encoding="utf-8") as f:
         data: Settings = json.load(f)
     return data
 

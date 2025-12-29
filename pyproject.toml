@@ -3,7 +3,10 @@ name = "ansiblonomicon"
 version = "0.1.0"
 description = "Ansible configuration for macOS systems"
 requires-python = ">=3.14"
-dependencies = ["ansible>=12.3.0"]
+dependencies = [
+    "ansible>=12.3.0",
+    "httpx>=0.28.1",
+]
 
 [tool.poe.tasks.init-secrets]
 help = "Resolve 1Password secrets to .env.secrets cache (force regenerate)"
@@ -18,10 +21,13 @@ cmd = "ansible-lint"
 cwd = "ansible"
 
 [tool.poe.tasks."lint:python"]
-sequence = ["lint:ruff", "lint:types"]
+sequence = ["lint:format", "lint:ruff", "lint:types"]
+
+[tool.poe.tasks."lint:format"]
+cmd = "ruff format --check ."
 
 [tool.poe.tasks."lint:ruff"]
-cmd = "ruff check ansible/collections/"
+cmd = "ruff check --fix --unsafe-fixes ."
 
 [tool.poe.tasks."lint:types"]
 cmd = "basedpyright"

@@ -1,19 +1,26 @@
 # Commands
 
-- `./scripts/bootstrap.sh` — First-time setup (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI, runs playbook)
+- `./scripts/bootstrap.sh` — First-time setup on a brand new machine (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI)
 - `./scripts/test-bootstrap.sh` — Test bootstrap in clean macOS VM via Tart
   - `--reuse` reuses existing VM; `--uninstall-xcode` tests fresh Xcode install; `--full-brew-bundle` uses real Brewfile
-- `uv run poe init-secrets` — Resolve 1Password secrets to `.env.secrets` (auto-runs via direnv)
 - `uv run poe local` — Apply local Ansible playbook
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as local)
-- `uv run poe lint` — Lint with ansible-lint (production profile, strict)
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
 - `uv run poe pages-deploy` — Deploy Cloudflare Pages (tesla)
 - `uv run poe worker-deploy` — Deploy llms Worker via Wrangler (includes secrets, observability)
   - `--force-secret` / `-f` — Update API_KEY secret even if it exists
+
+# Dev Commands
+
+- `uv run poe init-secrets` — Resolve 1Password secrets to `.env.secrets` (auto-runs via direnv)
+- `uv run poe lint` — Run all linters (combines all below)
+- `uv run ruff format --check .` — Check Python formatting
+- `uv run ruff check .` — Lint Python code
+- `uv run basedpyright` — Type check Python code
+- `ansible-lint` (in ansible/) — Lint Ansible code
 
 # Architecture
 
