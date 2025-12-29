@@ -3,7 +3,8 @@
 - `./scripts/bootstrap.sh` — First-time setup (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI, runs playbook)
 - `./scripts/test-bootstrap.sh` — Test bootstrap in clean macOS VM via Tart
   - `--reuse` reuses existing VM; `--uninstall-xcode` tests fresh Xcode install; `--full-brew-bundle` uses real Brewfile
-- `uv run poe local` — Apply local Ansible playbook (uses 1Password for sudo)
+- `uv run poe init-secrets` — Resolve 1Password secrets to `.env.secrets` (auto-runs via direnv)
+- `uv run poe local` — Apply local Ansible playbook
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as local)
@@ -11,7 +12,8 @@
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
 - `uv run poe pages-deploy` — Deploy Cloudflare Pages (tesla)
-- `uv run poe worker-secret` — Set API_KEY secret for llms Worker (run after tfa)
+- `uv run poe worker-deploy` — Deploy llms Worker via Wrangler (includes secrets, observability)
+  - `--force-secret` / `-f` — Update API_KEY secret even if it exists
 
 # Architecture
 
@@ -22,8 +24,8 @@
 - `ansible/config/docker.yml` — Centralized Docker config (IPs, ports, domains) for TrueNAS stacks
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps
-- `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2, Workers)
-- `terraform/cloudflare/workers/` — Cloudflare Worker source code (deployed via Terraform, secrets via wrangler)
+- `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
+- `wrangler/` — Cloudflare Workers (deployed via wrangler, not Terraform)
 - `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
 
 # Cloudflare Worker Logs
@@ -31,13 +33,12 @@
 **Real-time tail** (requires terminal that stays open):
 
 ```sh
-cd terraform/cloudflare && op run --env-file=.env.op -- npx wrangler tail llms --format pretty
+cd terraform/cloudflare && wrangler tail llms --format pretty
 ```
 
 **Historical logs via CLI** (requires cached secrets):
 
 ```sh
-./scripts/cache-secrets.sh           # One-time: cache 1Password secrets
 ./scripts/worker-logs.sh             # Query last 60 minutes
 ./scripts/worker-logs.sh -m 30       # Query last 30 minutes
 ./scripts/worker-logs.sh --list-queries  # List saved queries
@@ -61,7 +62,24 @@ cd terraform/cloudflare && op run --env-file=.env.op -- npx wrangler tail llms -
 
 # Adding Secrets
 
-Secrets are stored in 1Password and accessed via the `op` CLI.
+Secrets are stored in 1Password and cached locally via `.env.secrets` (resolved on first direnv load).
+
+1. Add the secret reference to `.secrets.jsonc` (root of repo):
+
+   ```jsonc
+   "MY_SECRET": "op://Vault/Item/field"
+   ```
+
+2. Regenerate the cache:
+
+   ```sh
+   uv run poe init-secrets
+   ```
+
+3. Access in code:
+   - **Ansible**: `{{ lookup('env', 'MY_SECRET') }}`
+   - **Terraform**: Define `variable "my_secret" {}` in `variables.tf`, add `TF_VAR_my_secret` to `.secrets.jsonc`
+   - **Chezmoi**: Use `op-secret` template (see below)
 
 ## Chezmoi Secrets
 
@@ -79,29 +97,6 @@ For secrets in dotfiles, use the `op-secret` template with a named wrapper:
    api_key = {{ template "my-api-key" . }}
    ```
 
-3. Add the env var to `ansible/.env.op`:
-   ```sh
-   ENV_VAR_NAME=op://Vault/Item/field
-   ```
+3. Add the env var to `.secrets.jsonc` and run `poe init-secrets`
 
 This pattern allows `chezmoi apply` to use pre-resolved env vars (fast) when run via `poe local`, while still working standalone via `onepasswordRead` (slower, prompts for auth).
-
-## Ansible Secrets
-
-Add secret references to `ansible/.env.op` — they're resolved once by `op run` at playbook start:
-
-```sh
-MY_SECRET=op://Vault/Item/field
-```
-
-Access in playbooks via `{{ lookup('env', 'MY_SECRET') }}`.
-
-## Terraform Secrets
-
-Add secret references to `terraform/cloudflare/.env.op` — they're resolved by `op run` when running `poe tfi/tfp/tfa`:
-
-```sh
-TF_VAR_my_secret=op://Vault/Item/field
-```
-
-Access in Terraform via `var.my_secret` (define the variable in `variables.tf`).

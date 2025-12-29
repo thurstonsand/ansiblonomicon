@@ -62,6 +62,7 @@ brew "zoxide"
 
 # AI/Dev tools
 brew "cliproxyapi"
+brew "cloudflare-wrangler"
 brew "gemini-cli"
 
 # Network/System

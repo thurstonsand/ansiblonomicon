@@ -39,7 +39,8 @@ Interactive sudo still uses TouchID as normal.
 │       └── truenas.yml      # TrueNAS playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
-├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2, Workers)
+├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
+├── wrangler/                 # Cloudflare Workers (deployed via wrangler)
 └── scripts/
     ├── bootstrap.sh          # One-liner bootstrap for new machines
     └── test-bootstrap.sh     # Test bootstrap in a clean macOS VM (requires tart)
@@ -59,7 +60,7 @@ Interactive sudo still uses TouchID as normal.
 - `poe tfp` — Terraform plan (Cloudflare)
 - `poe tfa` — Terraform apply (Cloudflare)
 - `poe pages-deploy` — Deploy Cloudflare Pages (tesla)
-- `poe worker-secret` — Set API_KEY secret for llms Worker (run after tfa)
+- `poe worker-deploy` — Deploy llms Worker via Wrangler (includes secrets)
 
 ## Design
 

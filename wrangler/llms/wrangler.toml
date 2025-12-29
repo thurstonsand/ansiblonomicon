@@ -1,0 +1,32 @@
+# LLM API Worker - validates API key before forwarding to backend
+#
+# llms.thurstons.house → Worker (API key auth) → cli-proxy-api tunnel
+# cli-proxy-api.thurstons.house → Cloudflare Access (browser auth) → tunnel
+
+name = "llms"
+main = "worker.js"
+compatibility_date = "2024-01-01"
+account_id = "f052696250a2530e9afce0df33177b65"
+
+# Custom Domain - wrangler manages both route and DNS record
+routes = [
+  { pattern = "llms.thurstons.house", custom_domain = true }
+]
+
+# Plain text bindings
+[vars]
+ORIGIN_HOSTNAME = "cli-proxy-api.thurstons.house"
+
+# Analytics Engine for usage tracking
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "llms_usage"
+
+# Observability settings
+[observability]
+enabled = true
+head_sampling_rate = 1
+
+[observability.logs]
+enabled = true
+invocation_logs = true

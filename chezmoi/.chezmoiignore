@@ -15,3 +15,6 @@ Library/
 
 # App caches and generated files
 Library/Application Support/PrusaSlicer/cache/
+
+# Documentation files (keep in source, don't deploy)
+.ssh/README.md

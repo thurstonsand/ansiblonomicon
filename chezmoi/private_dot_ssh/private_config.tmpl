@@ -23,6 +23,11 @@ Host truenas-dev
   HostName 192.168.6.227
   SetEnv TERM="xterm-256color"
 
+Host udmp
+  ForwardAgent yes
+  User root
+  HostName 192.168.1.1
+
 Host *
   ServerAliveInterval 60
   ServerAliveCountMax 3

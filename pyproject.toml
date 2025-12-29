@@ -5,6 +5,10 @@ description = "Ansible configuration for macOS systems"
 requires-python = ">=3.14"
 dependencies = ["ansible>=12.3.0"]
 
+[tool.poe.tasks.init-secrets]
+help = "Resolve 1Password secrets to .env.secrets cache (force regenerate)"
+shell = "rm -f .env.secrets && uv run scripts/init-secrets.py"
+
 [tool.poe.tasks.lint]
 help = "Lint all code (ansible + python)"
 sequence = ["lint:ansible", "lint:python"]
@@ -24,7 +28,7 @@ cmd = "basedpyright"
 
 [tool.poe.tasks.local]
 help = "Run the local ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "op run --env-file=.env.op -- ansible-playbook -i inventory playbooks/local.yml ${check:+--check} ${tags:+--tags ${tags}}"
+cmd = "ansible-playbook -i inventory playbooks/local.yml ${check:+--check} ${tags:+--tags ${tags}}"
 cwd = "ansible"
 
 [[tool.poe.tasks.local.args]]
@@ -40,7 +44,7 @@ help = "Only run tasks with these tags (comma-separated)"
 
 [tool.poe.tasks.truenas]
 help = "Run the TrueNAS ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "op run --env-file=.env.op -- ansible-playbook -i inventory playbooks/truenas.yml ${check:+--check} ${tags:+--tags ${tags}}"
+cmd = "ansible-playbook -i inventory playbooks/truenas.yml ${check:+--check} ${tags:+--tags ${tags}}"
 cwd = "ansible"
 
 [[tool.poe.tasks.truenas.args]]
@@ -85,30 +89,35 @@ args = [{ name = "file", positional = true, required = true }]
 # Terraform tasks
 [tool.poe.tasks.tfi]
 help = "Terraform init"
-cmd = "op run --env-file=.env.op -- tofu init"
+cmd = "tofu init"
 cwd = "terraform/cloudflare"
 
 [tool.poe.tasks.tfp]
 help = "Terraform plan"
-cmd = "op run --env-file=.env.op -- tofu plan"
+cmd = "tofu plan"
 cwd = "terraform/cloudflare"
 
 [tool.poe.tasks.tfa]
 help = "Terraform apply"
-cmd = "op run --env-file=.env.op -- tofu apply"
+cmd = "tofu apply"
 cwd = "terraform/cloudflare"
 
 # Cloudflare Pages deployment
 [tool.poe.tasks.pages-deploy]
 help = "Deploy Cloudflare Pages (tesla)"
-cmd = "op run --env-file=../../terraform/cloudflare/.env.op -- npx -y wrangler pages deploy"
+cmd = "wrangler pages deploy"
 cwd = "cloudflare-pages/tesla"
 
 # Cloudflare Workers
-[tool.poe.tasks.worker-secret]
-help = "Set the API_KEY secret for cli-proxy-api Worker (run after tfa)"
-shell = "op run --env-file=../.env.op -- sh -c 'echo $LLM_API_KEY | npx -y wrangler secret put API_KEY'"
-cwd = "terraform/cloudflare/workers/llms"
+[tool.poe.tasks.worker-deploy]
+help = "Deploy llms Worker via Wrangler (includes secret management)"
+cmd = "./scripts/worker-deploy.sh ${force_secret:+--force-secret}"
+
+[[tool.poe.tasks.worker-deploy.args]]
+name = "force_secret"
+type = "boolean"
+options = ["--force-secret", "-f"]
+help = "Update API_KEY secret even if it exists"
 
 [dependency-groups]
 dev = [
@@ -118,6 +127,7 @@ dev = [
   "ruff>=0.11.7",
   "basedpyright>=1.31.7",
   "mypy>=1.19.1",
+  "json-with-comments>=1.2.10",
 ]
 
 # Ruff configuration
