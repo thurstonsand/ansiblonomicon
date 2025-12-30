@@ -9,6 +9,7 @@
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as local)
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
+  - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)
 - `uv run poe pages-deploy` — Deploy Cloudflare Pages (tesla)
 - `uv run poe wrangler` — Deploy all Workers (llms + aig)
 - `uv run poe wrangler:llms` — Deploy llms Worker via Wrangler (includes secrets, observability)

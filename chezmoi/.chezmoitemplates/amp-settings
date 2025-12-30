@@ -1,4 +1,4 @@
-  "amp.url": "https://llms.thurstons.house",
+  "amp.url": "https://aig.thurstons.house",
 {{- if eq . "ide" }}
   "amp.tab.enabled": true,
   "amp.tab.experimental.showHotStreakProgress": true,
@@ -9,9 +9,7 @@
   "amp.git.commit.coauthor.enabled": false,
   "amp.mcpServers": {},
   "amp.guardedFiles.allowlist": [
-    "~/.config/amp/skills/amp-skill-creator/SKILL.md",
-    "~/Develop/ansiblonomicon/ansible/.env.op",
-    "~/Develop/ansiblonomicon/terraform/cloudflare/.env.op"
+    "~/.config/amp/*",
   ],
 {{- if eq . "ide" }}
   "amp.tools.disable": [

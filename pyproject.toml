@@ -104,9 +104,15 @@ cmd = "tofu plan"
 cwd = "terraform/cloudflare"
 
 [tool.poe.tasks.tfa]
-help = "Terraform apply"
-cmd = "tofu apply"
+help = "Terraform apply (pass --yes to auto-approve)"
+cmd = "tofu apply ${yes:+-auto-approve}"
 cwd = "terraform/cloudflare"
+
+[[tool.poe.tasks.tfa.args]]
+name = "yes"
+type = "boolean"
+options = ["--yes", "-y"]
+help = "Auto-approve the apply (no confirmation prompt)"
 
 # Cloudflare Pages deployment
 [tool.poe.tasks.pages-deploy]

@@ -82,7 +82,7 @@
 {{- range $i, $m := $models }}
     "{{ $m.id }}": {
       "name": "{{ $m.name }}",
-      "url": "https://llms.thurstons.house/v1",
+      "url": "https://aig.thurstons.house/v1",
       "toolCalling": true,
       "vision": {{ $m.vision }},
       "thinking": {{ $m.thinking }},
@@ -306,7 +306,11 @@
 
   // --- JAVASCRIPT / TYPESCRIPT ---
   "biome.suggestInstallingGlobally": false,
-    "[javascript]": {
+  "[javascript]": {
+    "editor.maxTokenizationLineLength": 2500,
+    "editor.defaultFormatter": "vscode.typescript-language-features"
+  },
+  "[typescript]": {
     "editor.maxTokenizationLineLength": 2500
   },
 
