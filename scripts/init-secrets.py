@@ -13,23 +13,6 @@ SECRETS_CONFIG = ROOT_DIR / ".secrets.jsonc"
 SECRETS_CACHE = ROOT_DIR / ".env.secrets"
 
 
-def resolve_secret(value: str) -> str:
-    """Resolve op:// references via 1Password CLI, or return literal values."""
-    if not value.startswith("op://"):
-        return value
-
-    result = subprocess.run(
-        ["op", "read", value],
-        capture_output=True,
-        text=True,
-        check=False,
-    )
-    if result.returncode != 0:
-        print(f"Error resolving {value}: {result.stderr.strip()}", file=sys.stderr)
-        sys.exit(1)
-    return result.stdout.strip()
-
-
 def main() -> None:
     # Check if cache is current
     if (
@@ -46,11 +29,36 @@ def main() -> None:
     print("Resolving secrets from 1Password (one-time auth)...")
 
     config: dict[str, str] = jsonc.loads(SECRETS_CONFIG.read_text())
-    resolved: dict[str, str] = {}
 
+    # Build a template for op inject to resolve all secrets in one call
+    # Format: KEY="{{ op://... }}" for op:// refs, KEY="literal" for literals
+    template_lines: list[str] = []
     for key, value in config.items():
-        resolved[key] = resolve_secret(value)
+        if value.startswith("op://"):
+            # Use op inject template syntax: {{ op://vault/item/field }}
+            template_lines.append(f'{key}={{{{ {value} }}}}')
+        else:
+            # Literal value - escape any braces and quotes
+            escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+            template_lines.append(f'{key}="{escaped}"')
 
+    template = "\n".join(template_lines)
+
+    # Run op inject to resolve all secrets at once
+    result = subprocess.run(
+        ["op", "inject"],
+        input=template,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    if result.returncode != 0:
+        print(f"Error resolving secrets: {result.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
+
+    # Parse resolved output and build final .env file
+    resolved_lines = result.stdout.strip().split("\n")
     lines = [
         "# Cached secrets - DO NOT COMMIT",
         f"# Generated: {datetime.now(UTC).isoformat()}",
@@ -58,15 +66,19 @@ def main() -> None:
         "# Regenerate: poe init-secrets",
         "",
     ]
-    for key, value in resolved.items():
-        # Escape any double quotes in the value
-        escaped = value.replace('"', '\\"')
-        lines.append(f'{key}="{escaped}"')
+
+    for line in resolved_lines:
+        if "=" in line:
+            key, value = line.split("=", 1)
+            # Ensure values are quoted
+            if not (value.startswith('"') and value.endswith('"')):
+                value = f'"{value.replace(chr(34), chr(92) + chr(34))}"'
+            lines.append(f"{key}={value}")
 
     SECRETS_CACHE.write_text("\n".join(lines) + "\n")
     SECRETS_CACHE.chmod(0o600)
 
-    print(f"Secrets cached to .env.secrets ({len(resolved)} vars, mode 600)")
+    print(f"Secrets cached to .env.secrets ({len(config)} vars, mode 600)")
 
 
 if __name__ == "__main__":

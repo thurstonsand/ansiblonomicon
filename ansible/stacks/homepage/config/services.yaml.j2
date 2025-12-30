@@ -1,0 +1,148 @@
+---
+- Infra:
+    - TrueNas Server:
+        icon: truenas.svg
+        href: https://truenas.thurstons.house
+        widget:
+          type: truenas
+          url: {{ truenas.url }}
+          key: "{{ lookup('env', 'HOMEPAGE_TRUENAS_API_KEY') }}"
+          nasType: scale
+          enablePools: true
+    - Arcane:
+        icon: arcane.png
+        href: https://{{ lan.personal.arcane.domain }}
+        server: docker-proxy
+        container: arcane
+    - Cloudflare DNS:
+        icon: cloudflare.svg
+        href: https://dash.cloudflare.com/{{ cloudflare.account_id }}/thurstons.house
+    - Cloudflare Tunnel:
+        icon: cloudflare.svg
+        href: https://one.dash.cloudflare.com/{{ cloudflare.account_id }}/networks/tunnels
+        server: docker-proxy
+        container: cloudflared
+        widget:
+          type: cloudflared
+          accountid: {{ cloudflare.account_id }}
+          tunnelid: {{ cloudflare.tunnel_id }}
+          key: "{{ lookup('env', 'HOMEPAGE_CLOUDFLARE_API_KEY') }}"
+    - ddclient:
+        icon: cloudflare.svg
+        server: docker-proxy
+        container: ddclient
+    - NextDNS:
+        icon: nextdns.svg
+        href: https://my.nextdns.io/{{ nextdns.profile_id }}/setup
+        widget:
+          type: nextdns
+          profile: {{ nextdns.profile_id }}
+          key: {{ lookup('env', 'HOMEPAGE_NEXTDNS_API_KEY') }}
+    - Storj Backup:
+        icon: storj.svg
+        href: https://us1.storj.io/projects/hzvoLUcSRZ2/dashboard
+    - Storj Node:
+        icon: storj.svg
+        href: http://truenas.thurstons.house:20909/
+
+- Arr Apps:
+    - Calendar:
+        widget:
+          type: calendar
+          firstDayInWeek: monday
+          view: monthly
+          maxEvents: 100
+          integrations:
+            - type: sonarr
+              service_group: Arr Apps
+              service_name: Sonarr
+            - type: radarr
+              service_group: Arr Apps
+              service_name: Radarr
+    - Overseerr:
+        href: https://{{ lan.external.overseerr.domain }}
+        icon: overseerr.svg
+        server: docker-proxy
+        container: overseerr
+        widget:
+          type: overseerr
+          url: https://{{ lan.external.overseerr.domain }}
+          key: "{{ lookup('env', 'HOMEPAGE_OVERSEERR_API_KEY') }}"
+    - Plex:
+        href: https://app.plex.tv/desktop/
+        icon: plex.svg
+        widget:
+          type: plex
+          url: http://{{ plex.ip }}:{{ plex.port }}
+          key: "{{ lookup('env', 'HOMEPAGE_PLEX_API_KEY') }}"
+          fields:
+            - streams
+            - movies
+            - tv
+    - Torrent VPN:
+        icon: mullvad.svg
+        server: docker-proxy
+        container: gluetun
+        widget:
+          type: gluetun
+          url: http://{{ lan.personal.qbittorrent.domain }}:{{ lan.personal.gluetun.ports.control }}
+          version: 2
+    - Torrent:
+        href: http://{{ lan.personal.qbittorrent.domain }}
+        icon: qbittorrent.svg
+        server: docker-proxy
+        container: qbittorrent
+        widget:
+          type: qbittorrent
+          url: http://{{ lan.personal.qbittorrent.domain }}
+          username: "{{ lookup('env', 'HOMEPAGE_QBITTORRENT_USERNAME') }}"
+          password: "{{ lookup('env', 'HOMEPAGE_QBITTORRENT_PASSWORD') }}"
+          enableLeechProgress: true
+          enableLeechSize: true
+    - Prowlarr:
+        href: http://{{ lan.personal.prowlarr.domain }}:{{ lan.personal.prowlarr.ports.web }}
+        icon: prowlarr.svg
+        server: docker-proxy
+        container: prowlarr
+        widget:
+          type: prowlarr
+          url: http://{{ lan.personal.prowlarr.domain }}:{{ lan.personal.prowlarr.ports.web }}
+          key: "{{ lookup('env', 'HOMEPAGE_PROWLARR_API_KEY') }}"
+    - Radarr:
+        href: http://{{ lan.personal.radarr.domain }}:{{ lan.personal.radarr.ports.web }}
+        icon: radarr.svg
+        server: docker-proxy
+        container: radarr
+        widget:
+          type: radarr
+          url: http://{{ lan.personal.radarr.domain }}:{{ lan.personal.radarr.ports.web }}
+          key: "{{ lookup('env', 'HOMEPAGE_RADARR_API_KEY') }}"
+          enableQueue: true
+    - Sonarr:
+        href: http://{{ lan.personal.sonarr.domain }}:{{ lan.personal.sonarr.ports.web }}
+        icon: sonarr.svg
+        server: docker-proxy
+        container: sonarr
+        widget:
+          type: sonarr
+          url: http://{{ lan.personal.sonarr.domain }}:{{ lan.personal.sonarr.ports.web }}
+          key: "{{ lookup('env', 'HOMEPAGE_SONARR_API_KEY') }}"
+          enableQueue: true
+    - Huntarr:
+        href: http://{{ lan.personal.huntarr.domain }}:{{ lan.personal.huntarr.ports.web }}
+        icon: huntarr.png
+        server: docker-proxy
+        container: huntarr
+
+- Smart Home:
+    - HomeAssistant:
+        icon: home-assistant.svg
+        href: https://ha.thurstons.house
+        widget:
+          type: homeassistant
+          url: https://ha.thurstons.house
+          key: "{{ lookup('env', 'HOMEPAGE_HOMEASSISTANT_API_KEY') }}"
+          fields:
+            - people_home
+            - lights_on
+            - switches_on

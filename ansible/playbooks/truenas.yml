@@ -377,6 +377,23 @@
         GHOST_MYSQL_ROOT_PASSWORD: "{{ lookup('env', 'GHOST_MYSQL_ROOT_PASSWORD') }}"
         GHOST_MAIL_AUTH_PASS: "{{ lookup('env', 'GHOST_MAIL_AUTH_PASS') }}"
 
+    - name: Find homepage config templates
+      tags: [docker, docker-stacks]
+      ansible.builtin.find:
+        paths: "{{ playbook_dir }}/../stacks/homepage/config"
+        patterns: "*.yaml.j2"
+      register: homepage_config_templates
+      delegate_to: localhost
+      become: false
+
+    - name: Template homepage config files
+      tags: [docker, docker-stacks]
+      ansible.builtin.template:
+        src: "{{ item.path }}"
+        dest: "/mnt/performance/docker/homepage/app/config/{{ item.path | basename | regex_replace('\\.j2$', '') }}"
+        mode: "0644"
+      loop: "{{ homepage_config_templates.files }}"
+
     - name: Deploy homepage stack
       tags: [docker, docker-stacks]
       community.docker.docker_compose_v2:

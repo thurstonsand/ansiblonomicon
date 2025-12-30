@@ -9,7 +9,7 @@
   "amp.git.commit.coauthor.enabled": false,
   "amp.mcpServers": {},
   "amp.guardedFiles.allowlist": [
-    "~/.config/amp/*",
+    "~/.config/amp/*"
   ],
 {{- if eq . "ide" }}
   "amp.tools.disable": [
