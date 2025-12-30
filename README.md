@@ -60,7 +60,9 @@ Interactive sudo still uses TouchID as normal.
 - `poe tfp` — Terraform plan (Cloudflare)
 - `poe tfa` — Terraform apply (Cloudflare)
 - `poe pages-deploy` — Deploy Cloudflare Pages (tesla)
-- `poe worker-deploy` — Deploy llms Worker via Wrangler (includes secrets)
+- `poe wrangler` — Deploy all Workers (llms + aig)
+- `poe wrangler:llms` — Deploy llms Worker via Wrangler (includes secrets)
+- `poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker
 
 ## Design
 

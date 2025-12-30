@@ -5,7 +5,7 @@
 
 name = "llms"
 main = "worker.js"
-compatibility_date = "2024-01-01"
+compatibility_date = "2025-12-30"
 account_id = "f052696250a2530e9afce0df33177b65"
 
 # Custom Domain - wrangler manages both route and DNS record

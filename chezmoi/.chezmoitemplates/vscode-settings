@@ -306,6 +306,9 @@
 
   // --- JAVASCRIPT / TYPESCRIPT ---
   "biome.suggestInstallingGlobally": false,
+    "[javascript]": {
+    "editor.maxTokenizationLineLength": 2500
+  },
 
   // --- GO ---
   "go.toolsManagement.autoUpdate": true,

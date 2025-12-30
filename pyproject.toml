@@ -115,15 +115,29 @@ cmd = "wrangler pages deploy"
 cwd = "cloudflare-pages/tesla"
 
 # Cloudflare Workers
-[tool.poe.tasks.worker-deploy]
+[tool.poe.tasks.wrangler]
+help = "Deploy all Workers (llms + aig)"
+sequence = ["wrangler:llms", "wrangler:aig"]
+
+[tool.poe.tasks."wrangler:llms"]
 help = "Deploy llms Worker via Wrangler (includes secret management)"
 cmd = "./scripts/worker-deploy.sh ${force_secret:+--force-secret}"
 
-[[tool.poe.tasks.worker-deploy.args]]
+[[tool.poe.tasks."wrangler:llms".args]]
 name = "force_secret"
 type = "boolean"
 options = ["--force-secret", "-f"]
 help = "Update API_KEY secret even if it exists"
+
+[tool.poe.tasks."wrangler:aig"]
+help = "Deploy aig Worker via Wrangler (includes secret management)"
+cmd = "./scripts/aig-deploy.sh ${force_secret:+--force-secret}"
+
+[[tool.poe.tasks."wrangler:aig".args]]
+name = "force_secret"
+type = "boolean"
+options = ["--force-secret", "-f"]
+help = "Update secrets even if they exist"
 
 [dependency-groups]
 dev = [

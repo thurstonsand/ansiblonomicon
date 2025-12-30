@@ -10,8 +10,11 @@
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
 - `uv run poe pages-deploy` — Deploy Cloudflare Pages (tesla)
-- `uv run poe worker-deploy` — Deploy llms Worker via Wrangler (includes secrets, observability)
+- `uv run poe wrangler` — Deploy all Workers (llms + aig)
+- `uv run poe wrangler:llms` — Deploy llms Worker via Wrangler (includes secrets, observability)
   - `--force-secret` / `-f` — Update API_KEY secret even if it exists
+- `uv run poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker via Wrangler
+  - `--force-secret` / `-f` — Update secrets even if they exist
 
 # Dev Commands
 
