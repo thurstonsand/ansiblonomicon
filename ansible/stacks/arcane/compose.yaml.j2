@@ -11,12 +11,16 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - /mnt/performance/docker/arcane/app/data:/app/data
       - /mnt/performance/docker/stacks:/mnt/performance/docker/stacks
+    devices:
+      - /dev/dri:/dev/dri # Intel iGPU for monitoring
     environment:
       APP_URL: http://{{ lan.personal.arcane.domain }}
       PUID: {{ user.puid }}
       PGID: {{ user.pgid }}
       ENCRYPTION_KEY: ${ARCANE_ENCRYPTION_KEY}
       JWT_SECRET: ${ARCANE_JWT_SECRET}
+      GPU_MONITORING_ENABLED: "true"
+      GPU_TYPE: intel
     restart: unless-stopped
 
 networks:

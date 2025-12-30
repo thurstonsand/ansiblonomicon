@@ -476,9 +476,9 @@ Thin wrappers around TrueNAS SCALE's `midclt` CLI, executed via SSH. Action plug
 
 **Current inventory (from TrueNAS investigation):**
 
-_TrueNAS Apps (3, managed by TrueNAS UI — leave as-is):_
+_TrueNAS Apps (2, managed by TrueNAS UI — leave as-is):_
 
-- storj-node, plex, dockge
+- storj-node, plex
 
 _Docker Compose Stacks (22 in nixonomicon/nas/stacks/):_
 
@@ -488,7 +488,7 @@ _Docker Compose Stacks (22 in nixonomicon/nas/stacks/):_
 - cloudflared, ddclient, sshd
 - homepage, ghost, privatebin, obsidian-livesync
 - anypod, podsync, isponsorblocktv
-- unifi-client-check, watchtower, cli-proxy-api, orb
+- unifi-client-check, arcane, cli-proxy-api, orb
 
 _Datasets to manage:_
 

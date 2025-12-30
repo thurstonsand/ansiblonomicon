@@ -308,15 +308,15 @@
         dest: /mnt/performance/docker/stacks/ddclient/ddclient.conf
         mode: "0600"
 
-    # - name: Deploy arcane stack
-    #   tags: [docker, docker-stacks]
-    #   community.docker.docker_compose_v2:
-    #     project_src: /mnt/performance/docker/stacks/arcane
-    #     state: present
-    #     pull: always
-    #   environment:
-    #     ARCANE_ENCRYPTION_KEY: "{{ lookup('env', 'ARCANE_ENCRYPTION_KEY') }}"
-    #     ARCANE_JWT_SECRET: "{{ lookup('env', 'ARCANE_JWT_SECRET') }}"
+    - name: Deploy arcane stack
+      tags: [docker, docker-stacks]
+      community.docker.docker_compose_v2:
+        project_src: /mnt/performance/docker/stacks/arcane
+        state: present
+        pull: always
+      environment:
+        ARCANE_ENCRYPTION_KEY: "{{ lookup('env', 'ARCANE_ENCRYPTION_KEY') }}"
+        ARCANE_JWT_SECRET: "{{ lookup('env', 'ARCANE_JWT_SECRET') }}"
 
     - name: Deploy anypod stack
       tags: [docker, docker-stacks]
