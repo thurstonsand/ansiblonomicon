@@ -75,7 +75,11 @@
   },
   {
     "key": "cmd+r",
+{{- if $isVSCode }}
+    "command": "amp.agent.toggleVisibility"
+{{- else }}
     "command": "workbench.action.toggleAuxiliaryBar"
+{{- end }}
   },
   {
     "key": "ctrl+alt+cmd+g",

@@ -9,7 +9,8 @@
   "amp.git.commit.coauthor.enabled": false,
   "amp.mcpServers": {},
   "amp.guardedFiles.allowlist": [
-    "~/.config/amp/*"
+    "~/.config/amp/*",
+    "/Users/thurstonsand/Library/Application Support/Code - Insiders/User/keybindings.json"
   ],
 {{- if eq . "ide" }}
   "amp.tools.disable": [

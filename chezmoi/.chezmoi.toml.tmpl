@@ -24,7 +24,7 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
   # | Windsurf     | windsurf       |
   # | Zed          | zed            |
   #
-  codeEditor = "code-insiders"
+  codeEditor = "code"
 {{- if eq .chezmoi.os "darwin" }}
   developDir = "Develop"
 {{- else if eq .chezmoi.os "linux" }}
