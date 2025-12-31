@@ -10,14 +10,14 @@ services:
     ports:
       - "{{ lan.external.anypod.ports.web }}:{{ lan.external.anypod.ports.web }}" # web
     volumes:
-      - /mnt/performance/docker/anypod/config/feeds.yaml:/config/feeds.yaml
+      - {{ docker.config_dir }}/anypod/config/feeds.yaml:/config/feeds.yaml
       - /mnt/capacity/watch/anypod/data:/data
-      - /mnt/performance/docker/anypod/cookies/cookies.txt:/cookies/cookies.txt
+      - {{ docker.config_dir }}/anypod/cookies/cookies.txt:/cookies/cookies.txt
       - /etc/localtime:/etc/localtime:ro
     environment:
       # User/Group
-      PUID: {{ user.puid }}
-      PGID: {{ user.pgid }}
+      PUID: {{ docker.user.puid }}
+      PGID: {{ docker.user.pgid }}
       # Logging configuration
       LOG_FORMAT: json
       LOG_LEVEL: INFO

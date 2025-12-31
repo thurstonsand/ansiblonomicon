@@ -6,7 +6,7 @@ services:
       personal:
         ipv4_address: {{ lan.personal.isponsorblocktv.ip }}
     volumes:
-      - /mnt/performance/docker/isponsorblocktv/app/data:/app/data
+      - {{ docker.config_dir }}/isponsorblocktv/app/data:/app/data
     restart: unless-stopped
 
 networks:

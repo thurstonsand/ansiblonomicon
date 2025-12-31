@@ -36,7 +36,7 @@ def main() -> None:
     for key, value in config.items():
         if value.startswith("op://"):
             # Use op inject template syntax: {{ op://vault/item/field }}
-            template_lines.append(f'{key}={{{{ {value} }}}}')
+            template_lines.append(f"{key}={{{{ {value} }}}}")
         else:
             # Literal value - escape any braces and quotes
             escaped = value.replace("\\", "\\\\").replace('"', '\\"')

@@ -1,0 +1,60 @@
+---
+# Sync files from source to destination
+# Params:
+#   sync_src: source directory (local)
+#   sync_dest: destination directory (remote)
+#   sync_owner: optional owner for files/dirs
+#   sync_group: optional group for files/dirs
+
+- name: Find all files in {{ sync_src | basename }}
+  ansible.builtin.find:
+    paths: "{{ sync_src }}"
+    recurse: "{{ sync_recurse | default(true) }}"
+    file_type: file
+  register: docker_stack_all_files
+  delegate_to: localhost
+  become: false
+
+- name: Find subdirectories in {{ sync_src | basename }}
+  ansible.builtin.find:
+    paths: "{{ sync_src }}"
+    recurse: true
+    file_type: directory
+  register: docker_stack_subdirs
+  delegate_to: localhost
+  become: false
+  when: sync_recurse | default(true)
+
+- name: Ensure subdirectories exist in {{ sync_dest | basename }}
+  ansible.builtin.file:
+    path: "{{ sync_dest }}/{{ item.path | relpath(sync_src) }}"
+    state: directory
+    mode: "0755"
+    owner: "{{ sync_owner | default(omit) }}"
+    group: "{{ sync_group | default(omit) }}"
+  loop: "{{ docker_stack_subdirs.files | default([]) }}"
+  loop_control:
+    label: "{{ item.path | relpath(sync_src) }}"
+  when: sync_recurse | default(true) and (docker_stack_subdirs.files | default([]) | length > 0)
+
+- name: Template .j2 files to {{ sync_dest | basename }}
+  ansible.builtin.template:
+    src: "{{ item.path }}"
+    dest: "{{ sync_dest }}/{{ item.path | relpath(sync_src) | regex_replace('\\.j2$', '') }}"
+    mode: "{{ item.mode }}"
+    owner: "{{ sync_owner | default(omit) }}"
+    group: "{{ sync_group | default(omit) }}"
+  loop: "{{ docker_stack_all_files.files | default([]) | selectattr('path', 'match', '.*\\.j2$') }}"
+  loop_control:
+    label: "{{ item.path | relpath(sync_src) | regex_replace('\\.j2$', '') }}"
+
+- name: Copy plain files to {{ sync_dest | basename }}
+  ansible.builtin.copy:
+    src: "{{ item.path }}"
+    dest: "{{ sync_dest }}/{{ item.path | relpath(sync_src) }}"
+    mode: preserve
+    owner: "{{ sync_owner | default(omit) }}"
+    group: "{{ sync_group | default(omit) }}"
+  loop: "{{ docker_stack_all_files.files | default([]) | rejectattr('path', 'match', '.*\\.j2$') }}"
+  loop_control:
+    label: "{{ item.path | relpath(sync_src) }}"

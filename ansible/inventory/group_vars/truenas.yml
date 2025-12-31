@@ -1,18 +1,33 @@
-# Centralized Docker configuration for TrueNAS stacks
-
-# Common user/group for Docker containers
-user:
-  puid: 950
-  pgid: 544
-  id: "950:544"
+---
+# Docker configuration
+docker:
+  # Base path for container configs: {config_base}/{stack}/{container}/...
+  config_base: /mnt/performance/docker
+  # User/group for containers
+  user:
+    puid: 950
+    pgid: 544
+    id: "950:544"
 
 # Network ranges (macvlan iprange):
+#   trusted:  192.168.1.0/24 (host network)
 #   iot:      192.168.3.224/27 (192.168.3.224-255)
 #   external: 192.168.5.224/27 (192.168.5.224-255)
 #   personal: 192.168.6.224/27 (192.168.6.224-255)
-
 lan:
+  trusted:
+    truenas:
+      ip: 192.168.1.68
+      ports:
+        plex: 32400
+        storj_node: 20909
+      domain: truenas.thurstons.house
+
   iot:
+    homeassistant:
+      ip: 192.168.1.89
+      ports:
+        mqtt: 1883
     frigate:
       ip: 192.168.3.227
       ports:
@@ -109,6 +124,7 @@ lan:
       ports:
         web_insecure: 11080
         web_secure: 10443
+        rtsp: 554
       domain: scrypted.thurstons.house
     isponsorblocktv:
       ip: 192.168.6.235
@@ -118,22 +134,3 @@ lan:
       ports:
         web: 3552
       domain: arcane.thurstons.house
-
-# External services (not Docker containers)
-truenas:
-  ip: 192.168.1.68
-  url: http://truenas.thurstons.house
-
-cloudflare:
-  account_id: f052696250a2530e9afce0df33177b65
-  tunnel_id: bdf40586-2e80-4b11-8b28-669a4f92251e
-
-nextdns:
-  profile_id: e13115
-
-plex:
-  ip: 192.168.1.68
-  port: 32400
-
-unifi:
-  ip: 192.168.6.1

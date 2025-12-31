@@ -13,7 +13,7 @@ services:
       # - /var/run/dbus:/var/run/dbus
       # - /var/run/avahi-daemon/socket:/var/run/avahi-daemon/socket
 
-      - /mnt/performance/docker/scrypted/server/volume:/server/volume
+      - {{ docker.config_dir }}/scrypted/server/volume:/server/volume
       - /etc/localtime:/etc/localtime:ro
     environment:
       - SCRYPTED_INSECURE_PORT={{ lan.personal.scrypted.ports.web_insecure }}

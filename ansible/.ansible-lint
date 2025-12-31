@@ -21,7 +21,8 @@ exclude_paths:
   - .git/
 
 # Skip specific rules if needed
-skip_list: []
+skip_list:
+  - yaml[line-length]
 
 # Warn list - empty to treat everything as errors
 warn_list: []

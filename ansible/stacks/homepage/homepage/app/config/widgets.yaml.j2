@@ -16,6 +16,6 @@
     disk: /apps
 
 - unifi_console:
-    url: https://{{ unifi.ip }}:443
+    url: https://192.168.6.1:443
     username: "{{ lookup('env', 'HOMEPAGE_UNIFI_USERNAME') }}"
     password: "{{ lookup('env', 'HOMEPAGE_UNIFI_PASSWORD') }}"

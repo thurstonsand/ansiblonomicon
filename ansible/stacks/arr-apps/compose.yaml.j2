@@ -22,11 +22,11 @@ services:
     ports:
       - "{{ lan.personal.prowlarr.ports.web }}:{{ lan.personal.prowlarr.ports.web }}" # web
     volumes:
-      - /mnt/performance/docker/arr-apps/prowlarr/config:/config
+      - {{ docker.config_dir }}/prowlarr/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PUID={{ user.puid }}
-      - PGID={{ user.pgid }}
+      - PUID={{ docker.user.puid }}
+      - PGID={{ docker.user.pgid }}
     restart: unless-stopped
 
   sonarr:
@@ -40,11 +40,11 @@ services:
       - "{{ lan.personal.sonarr.ports.web }}:{{ lan.personal.sonarr.ports.web }}" # web
     volumes:
       - /mnt/capacity/watch:/watch
-      - /mnt/performance/docker/arr-apps/sonarr/config:/config
+      - {{ docker.config_dir }}/sonarr/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PUID={{ user.puid }}
-      - PGID={{ user.pgid }}
+      - PUID={{ docker.user.puid }}
+      - PGID={{ docker.user.pgid }}
     restart: unless-stopped
 
   radarr:
@@ -58,11 +58,11 @@ services:
       - "{{ lan.personal.radarr.ports.web }}:{{ lan.personal.radarr.ports.web }}" # web
     volumes:
       - /mnt/capacity/watch:/watch
-      - /mnt/performance/docker/arr-apps/radarr/config:/config
+      - {{ docker.config_dir }}/radarr/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PUID={{ user.puid }}
-      - PGID={{ user.pgid }}
+      - PUID={{ docker.user.puid }}
+      - PGID={{ docker.user.pgid }}
     restart: unless-stopped
 
   huntarr:
@@ -74,16 +74,16 @@ services:
     ports:
       - "{{ lan.personal.huntarr.ports.web }}:{{ lan.personal.huntarr.ports.web }}" # web
     volumes:
-      - /mnt/performance/docker/arr-apps/huntarr/config:/config
+      - {{ docker.config_dir }}/huntarr/config:/config
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
   recyclarr:
     image: ghcr.io/recyclarr/recyclarr
     container_name: recyclarr
-    user: "{{ user.id }}"
+    user: "{{ docker.user.id }}"
     volumes:
-      - /mnt/performance/docker/arr-apps/recyclarr/config:/config
+      - {{ docker.config_dir }}/recyclarr/config:/config
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
@@ -97,11 +97,11 @@ services:
     ports:
       - "{{ lan.external.overseerr.ports.web }}:{{ lan.external.overseerr.ports.web }}" # web
     volumes:
-      - /mnt/performance/docker/arr-apps/overseerr/config:/config
+      - {{ docker.config_dir }}/overseerr/config:/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PUID={{ user.puid }}
-      - PGID={{ user.pgid }}
+      - PUID={{ docker.user.puid }}
+      - PGID={{ docker.user.pgid }}
     restart: unless-stopped
 
 networks:

@@ -34,7 +34,7 @@ cmd = "basedpyright"
 
 [tool.poe.tasks.local]
 help = "Run the local ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "ansible-playbook -i inventory playbooks/local.yml ${check:+--check} ${tags:+--tags ${tags}}"
+cmd = "ansible-playbook -i inventory playbooks/local.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
 cwd = "ansible"
 
 [[tool.poe.tasks.local.args]]
@@ -50,7 +50,7 @@ help = "Only run tasks with these tags (comma-separated)"
 
 [tool.poe.tasks.truenas]
 help = "Run the TrueNAS ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "ansible-playbook -i inventory playbooks/truenas.yml ${check:+--check} ${tags:+--tags ${tags}}"
+cmd = "ansible-playbook -i inventory playbooks/truenas.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
 cwd = "ansible"
 
 [[tool.poe.tasks.truenas.args]]

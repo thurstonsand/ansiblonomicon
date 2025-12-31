@@ -1,0 +1,18 @@
+{
+    "devices": [
+        {
+            "screen_id": "k77lod8b922ghq0edbmjh7mib",
+            "name": "Apple TV",
+            "offset": 0
+        }
+    ],
+    "apikey": "",
+    "skip_categories": [
+        "sponsor"
+    ],
+    "channel_whitelist": [],
+    "skip_count_tracking": true,
+    "mute_ads": false,
+    "skip_ads": false,
+    "auto_play": false
+}

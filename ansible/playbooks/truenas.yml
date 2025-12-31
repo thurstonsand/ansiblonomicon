@@ -6,8 +6,6 @@
   become: true
   environment:
     middleware_method: midclt
-  vars_files:
-    - ../config/docker.yml
   tasks:
     # ===================
     # Services
@@ -269,159 +267,112 @@
         state: present
 
     # ===================
-    # Docker Stacks
+    # Docker Stack
     # ===================
-    - name: Sync docker stacks to TrueNAS
-      tags: [docker, docker-stacks]
-      become: false
-      ansible.posix.synchronize:
-        src: "{{ playbook_dir }}/../stacks/"
-        dest: /mnt/performance/docker/stacks/
-        recursive: true
-        delete: false
-        rsync_opts:
-          - "--exclude=.DS_Store"
-          - "--exclude=*.j2"
-
-    - name: Find compose templates
-      tags: [docker, docker-stacks]
-      ansible.builtin.find:
-        paths: "{{ playbook_dir }}/../stacks"
-        patterns: "compose.yaml.j2"
-        recurse: true
-      register: compose_templates
-      delegate_to: localhost
-      become: false
-
-    - name: Template compose files
-      tags: [docker, docker-stacks]
-      ansible.builtin.template:
-        src: "{{ item.path }}"
-        dest: "/mnt/performance/docker/stacks/{{ item.path | dirname | basename }}/compose.yaml"
-        mode: "0644"
-      loop: "{{ compose_templates.files }}"
-
-    - name: Template ddclient.conf with secrets
-      tags: [docker, docker-stacks]
-      ansible.builtin.template:
-        src: "{{ playbook_dir }}/../stacks/ddclient/ddclient.conf.j2"
-        dest: /mnt/performance/docker/stacks/ddclient/ddclient.conf
-        mode: "0600"
+    - name: Deploy anypod stack
+      tags: [docker-stack-role, anypod]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, anypod]
+      vars:
+        docker_stack_name: anypod
 
     - name: Deploy arcane stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/arcane
-        state: present
-        pull: always
-      environment:
-        ARCANE_ENCRYPTION_KEY: "{{ lookup('env', 'ARCANE_ENCRYPTION_KEY') }}"
-        ARCANE_JWT_SECRET: "{{ lookup('env', 'ARCANE_JWT_SECRET') }}"
-
-    - name: Deploy anypod stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/anypod
-        state: present
-        pull: always
+      tags: [docker-stack-role, arcane]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, arcane]
+      vars:
+        docker_stack_name: arcane
 
     - name: Deploy arr-apps stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/arr-apps
-        state: present
-        pull: always
+      tags: [docker-stack-role, arr-apps]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, arr-apps]
+      vars:
+        docker_stack_name: arr-apps
 
     - name: Deploy cli-proxy-api stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/cli-proxy-api
-        state: present
-        pull: always
+      tags: [docker-stack-role, cli-proxy-api]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, cli-proxy-api]
+      vars:
+        docker_stack_name: cli-proxy-api
 
     - name: Deploy cloudflared stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/cloudflared
-        state: present
-        pull: always
-      environment:
-        CLOUDFLARE_TOKEN: "{{ lookup('env', 'CLOUDFLARE_TOKEN') }}"
+      tags: [docker-stack-role, cloudflared]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, cloudflared]
+      vars:
+        docker_stack_name: cloudflared
 
     - name: Deploy ddclient stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/ddclient
-        state: present
-        pull: always
-      environment:
-        DDCLIENT_GITHUB_PAT: "{{ lookup('env', 'DDCLIENT_GITHUB_PAT') }}"
+      tags: [docker-stack-role, ddclient]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, ddclient]
+      vars:
+        docker_stack_name: ddclient
 
     - name: Deploy frigate stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/frigate
-        state: present
-        pull: always
-      environment:
-        FRIGATE_RTSP_PASSWORD: "{{ lookup('env', 'FRIGATE_RTSP_PASSWORD') }}"
+      tags: [docker-stack-role, frigate]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, frigate]
+      vars:
+        docker_stack_name: frigate
 
     - name: Deploy ghost stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/ghost
-        state: present
-        pull: always
-      environment:
-        GHOST_DB_PASSWORD: "{{ lookup('env', 'GHOST_DB_PASSWORD') }}"
-        GHOST_MYSQL_ROOT_PASSWORD: "{{ lookup('env', 'GHOST_MYSQL_ROOT_PASSWORD') }}"
-        GHOST_MAIL_AUTH_PASS: "{{ lookup('env', 'GHOST_MAIL_AUTH_PASS') }}"
-
-    - name: Find homepage config templates
-      tags: [docker, docker-stacks]
-      ansible.builtin.find:
-        paths: "{{ playbook_dir }}/../stacks/homepage/config"
-        patterns: "*.yaml.j2"
-      register: homepage_config_templates
-      delegate_to: localhost
-      become: false
-
-    - name: Template homepage config files
-      tags: [docker, docker-stacks]
-      ansible.builtin.template:
-        src: "{{ item.path }}"
-        dest: "/mnt/performance/docker/homepage/app/config/{{ item.path | basename | regex_replace('\\.j2$', '') }}"
-        mode: "0644"
-      loop: "{{ homepage_config_templates.files }}"
+      tags: [docker-stack-role, ghost]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, ghost]
+      vars:
+        docker_stack_name: ghost
 
     - name: Deploy homepage stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/homepage
-        state: present
-        pull: always
+      tags: [docker-stack-role, homepage]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, homepage]
+      vars:
+        docker_stack_name: homepage
 
     - name: Deploy isponsorblocktv stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/isponsorblocktv
-        state: present
-        pull: always
+      tags: [docker-stack-role, isponsorblocktv]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, isponsorblocktv]
+      vars:
+        docker_stack_name: isponsorblocktv
 
     - name: Deploy scrypted stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/scrypted
-        state: present
-        pull: always
+      tags: [docker-stack-role, scrypted]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, scrypted]
+      vars:
+        docker_stack_name: scrypted
 
     - name: Deploy torrent stack
-      tags: [docker, docker-stacks]
-      community.docker.docker_compose_v2:
-        project_src: /mnt/performance/docker/stacks/torrent
-        state: present
-        build: always
-        pull: always
-      environment:
-        TORRENT_OPENVPN_USER: "{{ lookup('env', 'TORRENT_OPENVPN_USER') }}"
-        TORRENT_MAM_ID: "{{ lookup('env', 'TORRENT_MAM_ID') }}"
+      tags: [docker-stack-role, torrent]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, torrent]
+      vars:
+        docker_stack_name: torrent

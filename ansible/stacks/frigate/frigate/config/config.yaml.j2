@@ -1,0 +1,200 @@
+# yaml-language-server: $schema=http://{{ lan.iot.frigate.domain }}:{{ lan.iot.frigate.ports.web_ui }}/api/config/schema.json
+
+# Frigate configuration for 6 UniFi cameras at 2688x1512 (2K) resolution
+
+# MQTT configuration for UniFi Protect motion events
+mqtt:
+  enabled: true
+  host: {{ lan.iot.homeassistant.ip }}
+  port: {{ lan.iot.homeassistant.ports.mqtt }}
+  topic_prefix: frigate
+  client_id: frigate
+  user: mqtt-client
+  password: {{ lookup('env', 'MQTT_CLIENT_PASSWORD') }}
+
+# FFMPEG settings optimized for RTSPS streams with VAAPI hardware acceleration
+ffmpeg:
+  hwaccel_args: preset-vaapi
+
+# Define the OpenVINO detector for Intel iGPU
+detectors:
+  ov:
+    type: openvino
+    device: GPU
+
+# Model configuration for OpenVINO
+model:
+  width: 300
+  height: 300
+  input_tensor: nhwc
+  input_pixel_format: bgr
+  path: /openvino-model/ssdlite_mobilenet_v2.xml
+  labelmap_path: /openvino-model/coco_91cl_bkgr.txt
+
+# Global camera defaults
+detect:
+  width: 1280
+  height: 720
+  fps: 5
+  enabled: true
+motion:
+  enabled: true
+  threshold: 25
+  contour_area: 30
+  improve_contrast: true
+
+# Record configuration
+record:
+  enabled: true
+  retain:
+    days: 60
+    mode: motion
+  alerts:
+    retain:
+      days: 60
+  detections:
+    retain:
+      days: 60
+
+# Snapshot configuration
+snapshots:
+  enabled: true
+  retain:
+    default: 60
+
+genai:
+  enabled: true
+  provider: gemini
+  api_key: {{ lookup('env', 'GEMINI_API_KEY') }}
+  model: gemini-flash-lite-latest
+  prompt: >
+    <instructions>
+      <identity>
+        - You are an AI expert in image analysis and natural language processing.
+        - You specialize in generating descriptive metadata for images to enhance
+    semantic search capabilities.
+      </identity>
+      <context>
+        - You receive snapshots from a camera system where motion has been detected.
+        - Your task is to analyze these snapshots and produce descriptive summaries
+    and keywords.
+        - The descriptions will be used for semantic search via Jina AI's CLIP model.
+        - The snapshots you are looking at were captured in the {camera} and contain
+    {label}. there might be additional description of the object here: {sub_label}.
+      </context>
+      <constraints>
+        - CRITICAL: Your output must ONLY contain two plain text sections: a "Description:"
+    line followed by the description, and a "Keywords:" line followed by comma-separated
+    keywords.
+        - Do not include any introduction, commentary, markdown formatting, or quotes
+    in your response.
+        - Do not use bold text, asterisks, or any other formatting.
+        - Never begin with phrases like "Here's the analysis" or "Based on the image".
+        - Ensure the description is concise, clear, and semantically rich to facilitate
+    effective search.
+        - Focus on accurately describing the detected object and its context within
+    the snapshot.
+      </constraints>
+      <task>
+        1. Use the provided context (location: {camera}, object: {label} {sub_label})
+    to generate a descriptive summary and keywords.
+          1a. If the object is doing something, also include a description of the
+    action.
+        2. Generate a descriptive summary highlighting the key elements of the snapshot.
+        3. Provide relevant keywords to enhance searchability.
+      </task>
+      <output_format>
+        Description: [descriptive text about what's in the image]
+
+        Keywords: [keyword1, keyword2, keyword3, etc.]
+      </output_format>
+    </instructions>
+
+semantic_search:
+  enabled: true
+  model_size: large
+face_recognition:
+  enabled: true
+  model_size: large
+lpr:
+  enabled: false
+classification:
+  bird:
+    enabled: false
+
+# Camera configurations
+cameras:
+  bedroom:
+    ffmpeg:
+      inputs:
+        - path: rtsp://{{ lan.personal.scrypted.domain }}:33827/6b985f1e9ebae4c6
+          roles:
+            - record
+            - detect
+    genai:
+      enabled: true
+      use_snapshot: true
+
+  closet:
+    ffmpeg:
+      inputs:
+        - path: rtsp://{{ lan.personal.scrypted.domain }}:34849/081af9680d355409
+          roles:
+            - record
+            - detect
+    genai:
+      enabled: true
+      use_snapshot: true
+
+  dining:
+    ffmpeg:
+      inputs:
+        - path: rtsp://{{ lan.personal.scrypted.domain }}:33969/98180b2f9762e55c
+          roles:
+            - record
+            - detect
+    genai:
+      enabled: true
+      use_snapshot: true
+
+  garage:
+    ffmpeg:
+      inputs:
+        - path: rtsp://{{ lan.personal.scrypted.domain }}:39545/f6eeb904929453e1
+          roles:
+            - record
+            - detect
+    genai:
+      enabled: true
+      use_snapshot: true
+
+  living_room:
+    ffmpeg:
+      inputs:
+        - path: rtsp://{{ lan.personal.scrypted.domain }}:43627/e23d862268dcc393
+          roles:
+            - record
+            - detect
+    genai:
+      enabled: true
+      use_snapshot: true
+
+  study:
+    ffmpeg:
+      inputs:
+        - path: rtsp://{{ lan.personal.scrypted.domain }}:35967/161e34b4b0b74b9f
+          roles:
+            - record
+            - detect
+    genai:
+      enabled: true
+      use_snapshot: true
+
+# Birdseye view configuration
+birdseye:
+  enabled: true
+  width: 1280
+  height: 720
+  quality: 8
+  mode: motion
+version: 0.16-0

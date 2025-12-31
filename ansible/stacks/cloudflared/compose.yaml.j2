@@ -6,7 +6,7 @@ services:
     networks:
       external:
         ipv4_address: {{ lan.external.cloudflared.ip }}
-    command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TOKEN}
+    command: tunnel --no-autoupdate run --token {{ lookup('env', 'CLOUDFLARE_TOKEN') }}
     restart: unless-stopped
 networks:
   external:

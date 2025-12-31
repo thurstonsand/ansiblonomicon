@@ -9,7 +9,7 @@ services:
       iot:
         ipv4_address: {{ lan.iot.frigate.ip }}
     volumes:
-      - /mnt/capacity/docker/frigate/config:/config
+      - {{ docker.config_dir }}/frigate/config:/config
       - /mnt/capacity/docker/frigate/media/frigate:/media/frigate
       - /etc/localtime:/etc/localtime:ro
       - type: tmpfs # RAM cache for detection
@@ -22,7 +22,7 @@ services:
       - "{{ lan.iot.frigate.ports.webrtc }}:{{ lan.iot.frigate.ports.webrtc }}" # webrtc
       - "{{ lan.iot.frigate.ports.webrtc }}:{{ lan.iot.frigate.ports.webrtc }}/udp" # webrtc
     environment:
-      FRIGATE_RTSP_PASSWORD: "${FRIGATE_RTSP_PASSWORD}"
+      FRIGATE_RTSP_PASSWORD: "{{ lookup('env', 'FRIGATE_RTSP_PASSWORD') }}"
     # depends_on:
     #   - ollama
     devices:

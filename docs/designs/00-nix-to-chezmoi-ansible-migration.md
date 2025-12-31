@@ -377,7 +377,7 @@ Ordered by complexity (highest first) to fail fast:
 - [x] Uninstall Determinate Nix (`/nix/nix-installer uninstall`)
 - [x] Clear evalcache (`rm -rf ~/.cache/zsh/*`)
 - [x] Clean up shell config: switch `__CHEZMOI_ZSHENV_ENV_CONFIGURED` back to `__ZSHENV_ENV_CONFIGURED` in .zshenv
-- [ ] Archive nixonomicon repo (or repurpose for NAS-only)
+- [x] Archive nixonomicon repo (or repurpose for NAS-only)
 
 ### Phase 13: Migrate Terraform State to Cloud Storage ✅
 
@@ -566,19 +566,19 @@ ansible/
 **Implementation:**
 
 - [x] Create `ansible/inventory/truenas.yml` with TrueNAS host
-- [ ] Create `ansible/group_vars/truenas.yml` with dataset/share/user definitions
+- [x] Create `ansible/group_vars/truenas.yml` with dataset/share/user definitions
 - [x] Create `ansible/playbooks/truenas.yml` entry playbook
 - [ ] Create roles:
   - [ ] `truenas-base`: hostname, services, certificates, initscripts
   - [ ] `truenas-storage`: datasets, snapshot tasks, scrub tasks, SMART tests
   - [ ] `truenas-shares`: SMB and NFS share configuration
   - [ ] `truenas-stacks`: Docker Compose deployment
-- [ ] Migrate stacks from nixonomicon/nas/stacks/ to ansible/stacks/
-- [ ] Create stack deployment tasks:
-  - [ ] Sync compose files to TrueNAS
-  - [ ] Render .env files from 1Password secrets
-  - [ ] Run `docker compose up -d` for each stack
-  - [ ] Handle external Docker network creation
+- [x] Migrate stacks from nixonomicon/nas/stacks/ to ansible/stacks/
+- [x] Create stack deployment tasks:
+  - [x] Sync compose files to TrueNAS
+  - [x] Render .env files from 1Password secrets
+  - [x] Run `docker compose up -d` for each stack
+  - [x] Handle external Docker network creation
 - [x] Create `poe truenas` task for TrueNAS-specific playbook
 - [ ] Create initscript for dotfile symlinks (persistent across upgrades)
 - [ ] Test: Full playbook run is idempotent

@@ -29,13 +29,13 @@ echo "Checking API_KEY secret..."
 if wrangler secret list 2>/dev/null | grep -q "API_KEY"; then
   if $FORCE_SECRET; then
     echo "Updating API_KEY secret (--force-secret)..."
-    echo "$LLM_API_KEY" | wrangler secret put API_KEY
+    echo "$CLI_PROXY_API_KEY" | wrangler secret put API_KEY
   else
     echo "API_KEY secret already exists (use --force-secret to update)"
   fi
 else
   echo "Creating API_KEY secret..."
-  echo "$LLM_API_KEY" | wrangler secret put API_KEY
+  echo "$CLI_PROXY_API_KEY" | wrangler secret put API_KEY
 fi
 
 echo ""

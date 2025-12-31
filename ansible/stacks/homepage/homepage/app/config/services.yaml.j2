@@ -2,10 +2,10 @@
 - Infra:
     - TrueNas Server:
         icon: truenas.svg
-        href: https://truenas.thurstons.house
+        href: https://{{ lan.trusted.truenas.domain }}
         widget:
           type: truenas
-          url: {{ truenas.url }}
+          url: http://{{ lan.trusted.truenas.domain }}
           key: "{{ lookup('env', 'HOMEPAGE_TRUENAS_API_KEY') }}"
           nasType: scale
           enablePools: true
@@ -16,16 +16,16 @@
         container: arcane
     - Cloudflare DNS:
         icon: cloudflare.svg
-        href: https://dash.cloudflare.com/{{ cloudflare.account_id }}/thurstons.house
+        href: https://dash.cloudflare.com/{{ lookup('env', 'CLOUDFLARE_ACCOUNT_ID') }}/thurstons.house
     - Cloudflare Tunnel:
         icon: cloudflare.svg
-        href: https://one.dash.cloudflare.com/{{ cloudflare.account_id }}/networks/tunnels
+        href: https://one.dash.cloudflare.com/{{ lookup('env', 'CLOUDFLARE_ACCOUNT_ID') }}/networks/tunnels
         server: docker-proxy
         container: cloudflared
         widget:
           type: cloudflared
-          accountid: {{ cloudflare.account_id }}
-          tunnelid: {{ cloudflare.tunnel_id }}
+          accountid: {{ lookup('env', 'CLOUDFLARE_ACCOUNT_ID') }}
+          tunnelid: {{ lookup('env', 'CLOUDFLARE_TUNNEL_ID') }}
           key: "{{ lookup('env', 'HOMEPAGE_CLOUDFLARE_API_KEY') }}"
     - ddclient:
         icon: cloudflare.svg
@@ -33,17 +33,17 @@
         container: ddclient
     - NextDNS:
         icon: nextdns.svg
-        href: https://my.nextdns.io/{{ nextdns.profile_id }}/setup
+        href: https://my.nextdns.io/{{ lookup('env', 'NEXTDNS_PROFILE_ID') }}/setup
         widget:
           type: nextdns
-          profile: {{ nextdns.profile_id }}
-          key: {{ lookup('env', 'HOMEPAGE_NEXTDNS_API_KEY') }}
+          profile: {{ lookup('env', 'NEXTDNS_PROFILE_ID') }}
+          key: {{ lookup('env', 'NEXTDNS_API_KEY') }}
     - Storj Backup:
         icon: storj.svg
-        href: https://us1.storj.io/projects/hzvoLUcSRZ2/dashboard
+        href: https://us1.storj.io/projects/{{ lookup('env', 'STORJ_PROJECT_ID') }}/dashboard
     - Storj Node:
         icon: storj.svg
-        href: http://truenas.thurstons.house:20909/
+        href: http://{{ lan.trusted.truenas.domain }}:{{ lan.trusted.truenas.ports.storj_node }}/
 
 - Arr Apps:
     - Calendar:
@@ -73,7 +73,7 @@
         icon: plex.svg
         widget:
           type: plex
-          url: http://{{ plex.ip }}:{{ plex.port }}
+          url: http://{{ lan.trusted.truenas.ip }}:{{ lan.trusted.truenas.ports.plex }}
           key: "{{ lookup('env', 'HOMEPAGE_PLEX_API_KEY') }}"
           fields:
             - streams

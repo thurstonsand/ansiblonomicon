@@ -1,0 +1,144 @@
+feeds:
+    # appstories:
+    #   url: "https://youtube.com/playlist?list=PLDSpdP6G2mHvrG8-MlfOsRXFd4N2V7otL&si=EJncwT3ZvQ6icB-j"
+    #   yt_args: >
+    #     --format
+    #     bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+    #     --exec
+    #     post_process:'convert_video.sh %(filepath)q'
+    #   schedule: "0 2 * * *"
+    #   since: "20241014"
+    #   keep_last: 1
+    #   metadata:
+    #     language: en
+    #     category: Technology
+    variety-hour:
+        yt_args: >
+            --format
+            bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+            --extractor-args
+            youtubetab:skip=authcheck
+            --embed-thumbnail
+            --exec
+            after_move:'convert_video.sh %(filepath)q'
+        schedule: "manual"
+        transcript_lang: en
+        metadata:
+            title: "Variety Hour"
+            description: "Videos from around the internet, collected in one place"
+            language: en
+            podcast_type: episodic
+            explicit: "yes"
+            category: "Society & Culture, News > News Commentary"
+            image_url: "https://kagi.com/proxy/AtomicVariety-Final-Flat.png?c=8c5q1uKdhGQBVo5TJ1WDZHtMaZqBu4YhTNF5az9sQ-krNegRung_OTtMhj-Zv97STiVXz308W-DbN0l-nsCBWvd1bK-aGK-HJu_a3Kh8KIam2k4cOML3y-rSVmfhHjC4UC4sAluI9CpMlDH9sGNsUg%3D%3D"
+    wan-show:
+        url: "https://youtube.com/playlist?list=PL8mG-RkN2uTw7PhlnAr4pZZz2QubIbujH&si=z6ztuVjTRBmdt4E7"
+        yt_args: >
+            --format
+            bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+            --extractor-args
+            youtubetab:skip=authcheck
+            --embed-thumbnail
+            --exec
+            after_move:'convert_video.sh %(filepath)q'
+        schedule: "0 4 * * *"
+        since: "20250613"
+        transcript_lang: en
+        metadata:
+            category: Technology
+    destiny:
+        url: https://www.youtube.com/@destiny
+        yt_args: >
+            --format
+            bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+            --extractor-args
+            youtubetab:skip=authcheck
+            --embed-thumbnail
+            --exec
+            after_move:'convert_video.sh %(filepath)q'
+        schedule: "0 3 * * *"
+        since: "20250629"
+        transcript_lang: en
+        metadata:
+            title: Destiny
+            category: "News > Politics"
+            podcast_type: "episodic"
+            explicit: "yes"
+    the-vergecast:
+        url: "https://youtube.com/playlist?list=PL39u5ZEfYDEO5PaNRWyqloGY6zzJ1fjBa&si=E3N28O_fzeZ8-u16"
+        yt_args: >
+            --format
+            bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+            --extractor-args
+            youtubetab:skip=authcheck
+            --embed-thumbnail
+            --exec
+            after_move:'convert_video.sh %(filepath)q'
+        schedule: "0 4 * * *"
+        since: "20250213"
+        transcript_lang: en
+        metadata:
+            category: Technology, News > Politics
+            podcast_type: "episodic"
+            explicit: "no"
+    version-history:
+        url: "https://youtube.com/playlist?list=PL39u5ZEfYDEOqeEjmT9DTh3ADLX8Hs996&si=OXoVSCaWsScAdvNV"
+        yt_args: >
+            --format
+            bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+            --extractor-args
+            youtubetab:skip=authcheck
+            --embed-thumbnail
+            --exec
+            after_move:'convert_video.sh %(filepath)q'
+        schedule: "0 4 * * *"
+        since: "20251004"
+        metadata:
+            category: Technology
+    lemonade-stand:
+        url: "https://youtube.com/playlist?list=PLYkjTdVaDaTDv86TQEWq8EDG3iIqoj3em&si=cReR1vJ-ro9fHPIe"
+        yt_args: >
+            --format
+            bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+            --extractor-args
+            youtubetab:skip=authcheck
+            --embed-thumbnail
+            --exec
+            after_move:'convert_video.sh %(filepath)q'
+        schedule: "0 5 * * *"
+        transcript_lang: en
+        metadata:
+            category: "News > Politics, Business"
+            podcast_type: "episodic"
+            explicit: "yes"
+    lemonade-stand-premium:
+        url: "https://patreon.com/LemonadeStand"
+        yt_args: >
+            --format
+            bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+            --embed-thumbnail
+            --exec
+            after_move:'convert_video.sh %(filepath)q'
+        schedule: "0 5 * * *"
+        transcript_lang: en
+        metadata:
+            title: "Lemonade Stand (Premium)"
+            category: "News > Politics, Business"
+            podcast_type: "episodic"
+            explicit: "yes"
+    decoder:
+        url: "https://youtube.com/playlist?list=PLpSDO_dtIcqWA9t93zepnxw0UKxyT2F-H&si=H2sKBuD-_9DR6JHI"
+        yt_args: >
+            --format
+            bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+            --embed-thumbnail
+            --exec
+            after_move:'convert_video.sh %(filepath)q'
+        schedule: "0 2 * * *"
+        since: "20251020"
+        transcript_lang: en
+        metadata:
+            title: "Decoder"
+            category: "Business"
+            podcast_type: "episodic"
+            explicit: "no"

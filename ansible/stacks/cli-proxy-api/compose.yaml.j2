@@ -4,7 +4,7 @@ services:
     container_name: cli-proxy-api
     restart: unless-stopped
     # pull_policy: always
-    user: "{{ user.id }}"
+    user: "{{ docker.user.id }}"
     networks:
       external:
         ipv4_address: {{ lan.external.cli_proxy_api.ip }}
@@ -16,10 +16,10 @@ services:
       - "{{ lan.external.cli_proxy_api.ports.antigravity_oauth }}:{{ lan.external.cli_proxy_api.ports.antigravity_oauth }}" # antigravity oauth
       - "{{ lan.external.cli_proxy_api.ports.iflow_oauth }}:{{ lan.external.cli_proxy_api.ports.iflow_oauth }}" # iflow oauth
     volumes:
-      - /mnt/performance/docker/cliproxyapi/CLIProxyAPI/config.yaml:/CLIProxyAPI/config.yaml
-      - /mnt/performance/docker/cliproxyapi/CLIProxyAPI/auths:/CLIProxyAPI/auths
-      - /mnt/performance/docker/cliproxyapi/CLIProxyAPI/logs:/CLIProxyAPI/logs
-      - /mnt/performance/docker/cliproxyapi/CLIProxyAPI/static:/CLIProxyAPI/static
+      - {{ docker.config_dir }}/cli-proxy-api/CLIProxyAPI/config.yaml:/CLIProxyAPI/config.yaml
+      - {{ docker.config_dir }}/cli-proxy-api/CLIProxyAPI/auths:/CLIProxyAPI/auths
+      - {{ docker.config_dir }}/cli-proxy-api/CLIProxyAPI/logs:/CLIProxyAPI/logs
+      - {{ docker.config_dir }}/cli-proxy-api/CLIProxyAPI/static:/CLIProxyAPI/static
     environment:
       - MANAGEMENT_STATIC_PATH=/CLIProxyAPI/static
 

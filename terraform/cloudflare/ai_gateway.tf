@@ -46,7 +46,7 @@
 # Request flow:
 #
 #   Client
-#     │ Authorization: Bearer <LLM_API_KEY>
+#     │ Authorization: Bearer <CLI_PROXY_API_KEY>
 #     ▼
 #   aig.thurstons.house (Worker)
 #     │ Validates API_KEY

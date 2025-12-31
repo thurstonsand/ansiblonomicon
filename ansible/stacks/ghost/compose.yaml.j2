@@ -12,8 +12,8 @@ services:
     ports:
       - "{{ lan.external.ghost.ports.web }}:{{ lan.external.ghost.ports.web }}" # web
     volumes:
-      - /mnt/capacity/watch/ghost/var/lib/ghost/content:/var/lib/ghost/content
-      - /mnt/performance/docker/stacks/ghost/entrypoint-admin.sh:/custom-entrypoint-admin.sh:ro
+      - {{ docker.config_dir }}/ghost/var/lib/ghost/content:/var/lib/ghost/content
+      - {{ docker.config_dir }}/ghost/custom-entrypoint-admin.sh:/custom-entrypoint-admin.sh:ro
     depends_on:
       ghost_mysql:
         condition: service_healthy
@@ -24,19 +24,19 @@ services:
       mail__options__port: 587
       mail__options__secureConnection: false
       mail__options__auth__user: "thurstonsand@icloud.com"
-      mail__options__auth__pass: "${GHOST_MAIL_AUTH_PASS}"
+      mail__options__auth__pass: "{{ lookup('env', 'GHOST_MAIL_AUTH_PASS') }}"
       mail__from: "notifications@thurstons.house"
       database__client: mysql
       database__connection__host: {{ lan.external.ghost_mysql.ip }}
       database__connection__database: ghostdb
       database__connection__user: ghostuser
-      database__connection__password: "${GHOST_DB_PASSWORD}"
+      database__connection__password: "{{ lookup('env', 'GHOST_DB_PASSWORD') }}"
 
   ghost_mysql:
     image: mysql:8
     container_name: ghost_mysql
     restart: unless-stopped
-    user: "{{ user.id }}"
+    user: "{{ docker.user.id }}"
     networks:
       external:
         ipv4_address: {{ lan.external.ghost_mysql.ip }}
@@ -44,14 +44,14 @@ services:
       - "{{ lan.external.ghost_mysql.ports.mysql }}:{{ lan.external.ghost_mysql.ports.mysql }}" # mysql
     volumes:
       - /mnt/capacity/watch/ghost_mysql/var/lib/mysql:/var/lib/mysql
-      - /mnt/performance/docker/stacks/ghost/conf/my.cnf:/etc/my.cnf:ro
+      - {{ docker.config_dir }}/ghost_mysql/etc/my.cnf:/etc/my.cnf:ro
     environment:
-      MYSQL_ROOT_PASSWORD: "${GHOST_MYSQL_ROOT_PASSWORD}"
+      MYSQL_ROOT_PASSWORD: "{{ lookup('env', 'GHOST_MYSQL_ROOT_PASSWORD') }}"
       MYSQL_DATABASE: "ghostdb"
       MYSQL_USER: "ghostuser"
-      MYSQL_PASSWORD: "${GHOST_DB_PASSWORD}"
+      MYSQL_PASSWORD: "{{ lookup('env', 'GHOST_DB_PASSWORD') }}"
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${GHOST_MYSQL_ROOT_PASSWORD}"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p{{ lookup('env', 'GHOST_MYSQL_ROOT_PASSWORD') }}"]
       interval: 5s
       timeout: 5s
       retries: 10

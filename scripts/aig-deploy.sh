@@ -42,7 +42,7 @@ update_secret() {
   fi
 }
 
-update_secret "API_KEY" "$LLM_API_KEY"
+update_secret "API_KEY" "$CLI_PROXY_API_KEY"
 update_secret "AIG_TOKEN" "$CLOUDFLARE_AI_GATEWAY_API_TOKEN"
 update_secret "CF_ACCESS_CLIENT_ID" "$CF_ACCESS_CLIENT_ID"
 update_secret "CF_ACCESS_CLIENT_SECRET" "$CF_ACCESS_CLIENT_SECRET"

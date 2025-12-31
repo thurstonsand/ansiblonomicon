@@ -17,32 +17,32 @@ services:
       - "{{ lan.personal.gluetun.ports.qbittorrent_bt }}:{{ lan.personal.gluetun.ports.qbittorrent_bt }}" # qbittorrent bt
       - "{{ lan.personal.gluetun.ports.qbittorrent_bt }}:{{ lan.personal.gluetun.ports.qbittorrent_bt }}/udp" # qbittorrent bt
     volumes:
-      - /mnt/performance/docker/torrent/gluetun/gluetun:/gluetun
+      - {{ docker.config_dir }}/gluetun/gluetun:/gluetun
       - /etc/localtime:/etc/localtime:ro
     environment:
       - VPN_TYPE=openvpn
       - VPN_SERVICE_PROVIDER=mullvad
-      - OPENVPN_USER=${TORRENT_OPENVPN_USER}
+      - OPENVPN_USER={{ lookup('env', 'TORRENT_OPENVPN_USER') }}
       - SERVER_COUNTRIES=USA
       - SERVER_CITIES=Atlanta GA
       - FIREWALL_OUTBOUND_SUBNETS=192.168.6.0/24
       - UPDATER_PERIOD=24h
-      - PUID={{ user.puid }}
-      - PGID={{ user.pgid }}
+      - PUID={{ docker.user.puid }}
+      - PGID={{ docker.user.pgid }}
     restart: unless-stopped
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
-    user: "{{ user.id }}"
+    user: "{{ docker.user.id }}"
     network_mode: service:gluetun
     volumes:
-      - /mnt/performance/docker/torrent/qbittorrent/config:/config
+      - {{ docker.config_dir }}/qbittorrent/config:/config
       - /mnt/capacity/watch:/watch
       - /etc/localtime:/etc/localtime:ro
     environment:
       - WEBUI_PORT={{ lan.personal.gluetun.ports.qbittorrent_web }}
-      - PUID={{ user.puid }}
-      - PGID={{ user.pgid }}
+      - PUID={{ docker.user.puid }}
+      - PGID={{ docker.user.pgid }}
     depends_on:
       - gluetun
     restart: unless-stopped
@@ -50,14 +50,17 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.mam-updater
+    pull_policy: build
     container_name: mam-updater
-    user: "{{ user.id }}"
+    labels:
+      com.getarcaneapp.arcane.updater: "false"
+    user: "{{ docker.user.id }}"
     network_mode: service:gluetun
     volumes:
-      - /mnt/performance/docker/torrent/mam-updater:/data
+      - {{ docker.config_dir }}/mam-updater:/data
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - MAM_ID=${TORRENT_MAM_ID}
+      - MAM_ID={{ lookup('env', 'TORRENT_MAM_ID') }}
     depends_on:
       - gluetun
     restart: unless-stopped

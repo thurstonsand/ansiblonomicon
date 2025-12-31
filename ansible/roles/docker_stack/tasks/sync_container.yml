@@ -1,0 +1,19 @@
+---
+# Wrapper to sync container config with proper ownership
+# container_dir is passed from main.yml loop
+
+- name: Ensure container config directory exists for {{ container_dir.path | basename }}
+  ansible.builtin.file:
+    path: "{{ docker.config_dir }}/{{ container_dir.path | basename }}"
+    state: directory
+    mode: "0750"
+    owner: "{{ docker.user.puid }}"
+    group: "{{ docker.user.pgid }}"
+
+- name: Sync container files for {{ container_dir.path | basename }}
+  ansible.builtin.include_tasks: sync_files.yml
+  vars:
+    sync_src: "{{ container_dir.path }}"
+    sync_dest: "{{ docker.config_dir }}/{{ container_dir.path | basename }}"
+    sync_owner: "{{ docker.user.puid }}"
+    sync_group: "{{ docker.user.pgid }}"

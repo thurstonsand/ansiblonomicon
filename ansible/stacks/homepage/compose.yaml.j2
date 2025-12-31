@@ -3,7 +3,6 @@ services:
     image: ghcr.io/tecnativa/docker-socket-proxy:latest
     container_name: homepage-docker-socket-proxy
     privileged: true
-    # mac_address: aa:5f:e6:ed:91:31
     networks:
       personal:
         ipv4_address: {{ lan.personal.homepage_docker_socket_proxy.ip }}
@@ -19,27 +18,27 @@ services:
   homepage:
     image: ghcr.io/gethomepage/homepage:latest
     container_name: homepage
-    # mac_address: aa:3d:4a:69:04:ca
     networks:
       personal:
         ipv4_address: {{ lan.personal.homepage.ip }}
     ports:
       - "{{ lan.personal.homepage.ports.web }}:{{ lan.personal.homepage.ports.web }}" # web
     volumes:
-      - /mnt/performance/docker/homepage/app/config:/app/config
-      - /mnt/performance/docker/homepage/app/public/images:/app/public/images
+      - {{ docker.config_dir }}/homepage/app/config:/app/config
+      - {{ docker.config_dir }}/homepage/app/public/images:/app/public/images
       - /etc/localtime:/etc/localtime:ro
-      - /mnt/performance/docker:/apps
+      - {{ docker.config_base }}:/apps
       - /mnt/capacity/watch:/watch
     environment:
-      PUID: {{ user.puid }}
-      PGID: {{ user.pgid }}
+      PUID: {{ docker.user.puid }}
+      PGID: {{ docker.user.pgid }}
       PORT: {{ lan.personal.homepage.ports.web }}
       HOMEPAGE_ALLOWED_HOSTS: {{ lan.personal.homepage.domain }},{{ lan.personal.homepage.domain }}:{{ lan.personal.homepage.ports.web }}
-    user: "{{ user.id }}"
+    user: "{{ docker.user.id }}"
     depends_on:
       - homepage-docker-socket-proxy
     restart: unless-stopped
+
 networks:
   personal:
     external: true
