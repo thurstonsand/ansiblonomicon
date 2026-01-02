@@ -19,12 +19,16 @@ routes = [
 [vars]
 ACCOUNT_ID = "f052696250a2530e9afce0df33177b65"
 GATEWAY_ID = "llms"
+# Auth index for Codex OAuth credentials in cli-proxy-api (see /management.html)
+# First credential is "codex-0", second is "codex-1", etc.
+CODEX_AUTH_INDEX = "codex-0"
 
 # Secrets (set via wrangler secret put):
 # - API_KEY: Your LLM API key for client auth
 # - AIG_TOKEN: AI Gateway authentication token
 # - CF_ACCESS_CLIENT_ID: Service token for Access bypass
 # - CF_ACCESS_CLIENT_SECRET: Service token secret
+# - CLI_PROXY_API_ADMIN_KEY: Management API key for cli-proxy-api (for /v1/responses/compact proxy)
 
 # Observability settings
 [observability]
