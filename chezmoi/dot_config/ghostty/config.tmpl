@@ -1,7 +1,7 @@
-font-family = Mononoki Nerd Font
+font-family = {{ .fonts.mono }}
 # also change the window title at the top
-window-title-font-family = Mononoki Nerd Font Bold
-font-size = 14
+window-title-font-family = {{ .fonts.mono }} Bold
+font-size = {{ .fonts.monoSize }}
 
 # if not inheriting from a previous window
 working-directory = {{ .chezmoi.homeDir }}/{{ .developDir }}

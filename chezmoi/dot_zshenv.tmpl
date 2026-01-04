@@ -47,6 +47,9 @@ path=(
   "$HOME/.npm-global/bin"
   "$HOME/.opencode/bin"
   "$HOME/.cargo/bin"
+{{- if eq .chezmoi.os "darwin" }}
+  "/opt/homebrew/opt/rustup/bin"
+{{- end }}
 {{- if ne .chezmoi.os "darwin" }}
   "$HOME/.local/bin"
 {{- end }}

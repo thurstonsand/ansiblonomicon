@@ -102,6 +102,48 @@
               transitive_deps: "{{ brew_dep_changes if brew_dep_changes | length > 0 else 'Up to date' }}"
           when: (brew_bundle_changes | length > 0) or (brew_dep_changes | length > 0)
 
+    - name: Install opencode via curl
+      tags: ["opencode"]
+      block:
+        - name: Check if opencode is installed
+          ansible.builtin.stat:
+            path: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
+          register: opencode_binary
+
+        - name: Download opencode install script
+          when: not opencode_binary.stat.exists
+          ansible.builtin.get_url:
+            url: https://opencode.ai/install
+            dest: /tmp/opencode-install.sh
+            mode: "0755"
+
+        - name: Run opencode install script
+          when: not opencode_binary.stat.exists
+          ansible.builtin.command:
+            cmd: /tmp/opencode-install.sh
+            creates: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
+
+    - name: Install Claude Code via curl
+      tags: ["claude-code"]
+      block:
+        - name: Check if Claude Code is installed
+          ansible.builtin.stat:
+            path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
+          register: claude_binary
+
+        - name: Download Claude Code install script
+          when: not claude_binary.stat.exists
+          ansible.builtin.get_url:
+            url: https://claude.ai/install.sh
+            dest: /tmp/claude-install.sh
+            mode: "0755"
+
+        - name: Run Claude Code install script
+          when: not claude_binary.stat.exists
+          ansible.builtin.command:
+            cmd: /tmp/claude-install.sh
+            creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
+
     - name: Set hostname
       ansible.builtin.hostname:
         name: "{{ hostname }}"

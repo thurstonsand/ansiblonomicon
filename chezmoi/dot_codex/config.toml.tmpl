@@ -12,6 +12,7 @@ apply_patch_freeform = true
 experimental_sandbox_command_assessment = true
 ghost_commit = true
 rmcp_client = true
+shell_snapshot = true
 
 [history]
 persistence = "save-all"
@@ -32,7 +33,15 @@ args = [
     "universal-skills",
     "mcp",
     "--skill-dir",
-    "{{ .chezmoi.homeDir }}/.claude/plugins/marketplaces/thurstons-skills",
+    "{{ .chezmoi.homeDir }}/.claude/plugins/marketplaces/thurstons-skills"
+]
+
+[mcp_servers.tmux]
+command = "npx"
+args = [
+    "-y",
+    "tmux-mcp",
+    "--shell-type=zsh"
 ]
 
 [notice]

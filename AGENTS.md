@@ -1,3 +1,7 @@
+# Skills
+
+When working with TrueNAS (SSH, Docker containers, stacks, debugging services), **always load the `truenas-docker-ops` skill first**. It contains essential paths, commands, and helper scripts.
+
 # Commands
 
 - `./scripts/bootstrap.sh` — First-time setup on a brand new machine (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI)
@@ -38,6 +42,13 @@
 - `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 - `wrangler/` — Cloudflare Workers (deployed via wrangler, not Terraform)
 - `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
+
+## TrueNAS Docker Directory Layout
+
+On TrueNAS, Docker stacks use two separate paths:
+
+- **Compose files**: `/mnt/performance/docker/stacks/{stack}/compose.yaml`
+- **Config data**: `/mnt/performance/docker/{stack}/{container}/config`
 
 # Cloudflare Worker Logs
 

@@ -6,7 +6,7 @@ set -euo pipefail
 
 required='{
   "thurstons-skills": {"source": {"source": "git", "url": "git@github.com:thurstonsand/thurstons-claude-skills.git"}},
-  "claude-plugins-official": {"source": {"source": "github", "repo": "anthropics/claude-plugins-official"}},
+  "claude-code-plugins": {"source": {"source": "github", "repo": "anthropics/claude-code"}},
   "agent-skill-creator": {"source": {"source": "github", "repo": "FrancyJGLisboa/agent-skill-creator"}}
 }'
 

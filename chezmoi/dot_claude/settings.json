@@ -19,8 +19,8 @@
   "enabledPlugins": {
     "project-management@thurstons-skills": true,
     "homelab@thurstons-skills": true,
-    "frontend-design@claude-code-plugins": false,
-    "agent-skill-creator-plugin@agent-skill-creator": true
+    "agent-skill-creator-plugin@agent-skill-creator": true,
+    "frontend-design@claude-code-plugins": true
   },
   "alwaysThinkingEnabled": true
 }

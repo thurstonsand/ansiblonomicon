@@ -48,7 +48,7 @@ brew "python"
 brew "rclone"
 brew "restic"
 brew "ripgrep"
-brew "rustup-init"
+brew "rustup"
 brew "sqlite-utils"
 brew "starship"
 brew "storj-uplink"
@@ -58,6 +58,7 @@ brew "tree"
 brew "unzip"
 brew "uv"
 brew "vim"
+brew "zig"
 brew "zoxide"
 
 # AI/Dev tools
@@ -73,6 +74,7 @@ brew "sshpass"
 # Fonts
 cask "font-fontawesome"
 cask "font-mononoki-nerd-font"
+cask "font-blex-mono-nerd-font"  # IBM Plex Mono
 
 # Casks
 # cask "aerospace"

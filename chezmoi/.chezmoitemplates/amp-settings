@@ -51,11 +51,17 @@
   "amp.permissions": [
     {
       "tool": "Bash",
+      "matches": { "cmd": "/^amp\\s+permissions/" },
+      "action": "allow"
+    },
+    {
+      "tool": "Bash",
       "matches": {
         "cmd": [
-          "*git stash*",
-          "*git add -A*",
-          "*git commit*"
+          "/\\bgit\\s+(\\S+\\s+)*?stash\\b/",
+          "/\\bgit\\s+(\\S+\\s+)*?add\\b/",
+          "/\\bgit\\s+(\\S+\\s+)*?commit\\b/",
+          "/\\bgit\\s+(\\S+\\s+)*?push\\b/"
         ]
       },
       "action": "ask"

@@ -424,7 +424,7 @@ Replace the nix `switch` alias with `anup` for Ansible.
 
 ### Phase 17: TrueNAS Management via Ansible
 
-Full "NAS as Code" management of TrueNAS SCALE via Ansible over SSH, using a custom `local.truenas` collection for middleware API access plus custom tasks for container lifecycle.
+Full "NAS as Code" management of TrueNAS SCALE via Ansible over SSH, using a custom `local.truenas` collection for middleware API access plus a `docker_stack` role for container lifecycle.
 
 **Platform notes:**
 
@@ -433,9 +433,11 @@ Full "NAS as Code" management of TrueNAS SCALE via Ansible over SSH, using a cus
 - Middleware/midclt-driven automation is more stable long-term than REST (deprecated in 25.04+)
 - OS-level package installs not supported; may enable Developer Mode for minimal CLI tools (git-crypt, jq, ripgrep) and re-apply post-upgrade
 
+**Design evolution:** Original plan called for `arensb.truenas` collection, but we built a custom `local.truenas` collection instead. This gives us tighter control, simpler action plugins, and avoids bugs/limitations in the external dependencies (e.g. deprecated apis).
+
 **Ansible Collection:** `local.truenas` (in-repo at `ansible/collections/ansible_collections/local/truenas/`)
 
-Thin wrappers around TrueNAS SCALE's `midclt` CLI, executed via SSH. Action plugins run on controller with full Python 3.12+ features; only raw `midclt call` commands execute on TrueNAS. Modules available:
+Thin wrappers around TrueNAS SCALE's `midclt` CLI, executed via SSH. Action plugins run on controller with full Python 3.12+ features; only raw `midclt call` commands execute on TrueNAS. Modules implemented:
 
 | Category  | Modules              | Notes                        |
 | --------- | -------------------- | ---------------------------- |
@@ -451,22 +453,21 @@ Thin wrappers around TrueNAS SCALE's `midclt` CLI, executed via SSH. Action plug
 
 1. **Core TrueNAS configuration ("NAS as code"):**
 
-   - Storage: datasets (compression, quotas, recordsize), zvols
-   - Access: users, groups, permissions/ACLs
-   - Shares: SMB shares/service, NFS shares/service
-   - Ops: periodic snapshot tasks, scrub tasks, SMART tests
-   - System: hostname, system dataset, certificates
+   - Shares: SMB shares/service, NFS shares/service ✅
+   - Ops: periodic snapshot tasks, scrub tasks, SMART tests ✅
+   - Services: cifs, nfs, ssh, ups, smartd ✅
+   - Init scripts: WOL enable ✅
+   - _Not yet implemented:_ datasets (compression, quotas, recordsize), users, groups, hostname, system dataset, certificates
 
 2. **Container/app lifecycle:**
 
-   - Deploy Docker Compose stacks from Git-controlled definitions
-   - Render .env files from 1Password secrets
-   - Lifecycle via SSH (docker compose up/down, or midclt if needed)
-   - Network creation (external Docker networks)
+   - Deploy Docker Compose stacks from Git-controlled definitions ✅
+   - Render .env files from 1Password secrets (via Jinja2 templates) ✅
+   - Lifecycle via SSH (docker compose up -d) ✅
+   - Network creation (external macvlan Docker networks) ✅
 
 3. **Shell environment:**
-   - Dotfiles stored on persistent dataset, symlinked via initscript
-   - Replaces truenas-shell home-manager config
+   - _Not yet implemented:_ Dotfiles stored on persistent dataset, symlinked via initscript
 
 **Out of scope (managed via TrueNAS UI):**
 
@@ -474,116 +475,102 @@ Thin wrappers around TrueNAS SCALE's `midclt` CLI, executed via SSH. Action plug
 - Network/VLAN configuration (rarely changes, hardware-dependent)
 - OS updates (remain through TrueNAS UI)
 
-**Current inventory (from TrueNAS investigation):**
+**Current implementation:**
 
 _TrueNAS Apps (2, managed by TrueNAS UI — leave as-is):_
 
 - storj-node, plex
 
-_Docker Compose Stacks (22 in nixonomicon/nas/stacks/):_
+_Docker Compose Stacks deployed (12 in ansible/stacks/):_
 
 - arr-apps (sonarr, radarr, prowlarr, overseerr, flaresolverr, huntarr, recyclarr)
 - torrent (gluetun + qbittorrent)
-- homeassistant, frigate, scrypted
-- cloudflared, ddclient, sshd
-- homepage, ghost, privatebin, obsidian-livesync
-- anypod, podsync, isponsorblocktv
-- unifi-client-check, arcane, cli-proxy-api, orb
+- frigate, scrypted
+- cloudflared, ddclient
+- homepage, ghost
+- anypod, isponsorblocktv
+- arcane, cli-proxy-api
 
-_Datasets to manage:_
+_Stacks not migrated:_
 
-| Pool        | Dataset               | Purpose            | Key Properties |
-| ----------- | --------------------- | ------------------ | -------------- |
-| capacity    | backup/timemachine/\_ | Time Machine       | quota: 2T      |
-| capacity    | backup/windows        | Windows backup     |                |
-| capacity    | storj-node/\_         | Storj storage      |                |
-| capacity    | watch                 | Media watch folder |                |
-| performance | docker                | Container configs  |                |
-| performance | home                  | Admin home         |                |
-| performance | apps/plex             | Plex data          |                |
+- homeassistant (runs as TrueNAS VM, not Docker)
+- sshd, privatebin, obsidian-livesync, podsync, unifi-client-check, orb, grafana, watchtower (deprecated and no longer using)
+- mosquitto, zwave-js-ui (migrated to homeassistant VM, removed from TrueNAS)
 
-_Shares:_
+_Shares configured:_
 
-| Type | Name                  | Path                                         | Notes          |
-| ---- | --------------------- | -------------------------------------------- | -------------- |
-| SMB  | windows               | /mnt/capacity/backup/windows                 |                |
-| SMB  | thurston-personal-mbp | /mnt/capacity/backup/timemachine/thurston-\* | Time Machine   |
-| SMB  | watch                 | /mnt/capacity/watch                          |                |
-| NFS  | docker                | /mnt/performance/docker                      | 192.168.1.0/24 |
-| NFS  | watch                 | /mnt/capacity/watch                          | 192.168.1.0/24 |
+| Type | Name                  | Path                                         | Notes           |
+| ---- | --------------------- | -------------------------------------------- | --------------- |
+| SMB  | windows               | /mnt/capacity/backup/windows                 | ✅              |
+| SMB  | thurston-personal-mbp | /mnt/capacity/backup/timemachine/thurston-\* | Time Machine ✅ |
+| SMB  | watch                 | /mnt/capacity/watch                          | ✅              |
+| NFS  | docker                | /mnt/performance/docker                      | ✅              |
+| NFS  | watch                 | /mnt/capacity/watch                          | ✅              |
 
-_Scheduled Tasks:_
+_Scheduled Tasks configured:_
 
-| Type     | Target      | Schedule       | Retention |
-| -------- | ----------- | -------------- | --------- |
-| Snapshot | performance | every 6h       | 3 days    |
-| Snapshot | performance | monthly        | 1 month   |
-| Scrub    | performance | daily 4am      |           |
-| Scrub    | capacity    | daily 4am      |           |
-| SMART    | all disks   | short daily    |           |
-| SMART    | all disks   | long 1st of mo |           |
+| Type     | Target      | Schedule          | Retention  |
+| -------- | ----------- | ----------------- | ---------- |
+| Snapshot | performance | every 6h          | 3 days ✅  |
+| Snapshot | performance | monthly           | 1 month ✅ |
+| Scrub    | performance | weekly Tue 4am    | ✅         |
+| Scrub    | capacity    | weekly Tue 4am    | ✅         |
+| SMART    | all disks   | short daily 00:00 | ✅         |
+| SMART    | all disks   | long 1st of mo    | ✅         |
 
-_Services:_ cifs, nfs, ssh, ups, smartd
+_Services enabled:_ cifs, nfs, ssh, ups, smartd ✅
 
-_Docker Networks (macvlan):_
+_Docker Networks (macvlan):_ trusted, iot, external, personal ✅
 
-| Network  | Subnet         | IP Range         | Parent |
-| -------- | -------------- | ---------------- | ------ |
-| trusted  | 192.168.1.0/24 | 192.168.1.224/27 | br0.1  |
-| iot      | 192.168.3.0/24 | 192.168.3.224/27 | br0.2  |
-| external | 192.168.5.0/24 | 192.168.5.224/27 | br0.3  |
-| personal | 192.168.6.0/24 | 192.168.6.224/27 | br0.4  |
+_Init Scripts:_ WOL enable ✅
 
-_Init Scripts:_
-
-- WOL enable: `ethtool -s enp3s0 wol g` (POSTINIT)
-
-_Admin Shell:_
-
-- Custom .zshrc with cdto function, basic prompt, history — migrate to chezmoi-managed dotfiles on persistent dataset
-
-**Repository structure:**
+**Repository structure (actual):**
 
 ```
 ansible/
+├── collections/ansible_collections/local/truenas/  # Custom TrueNAS collection
+│   └── plugins/
+│       ├── action/           # Action plugins (run on controller)
+│       ├── modules/          # Module definitions
+│       └── plugin_utils/     # midclt helper
 ├── inventory/
-│   └── truenas.yml           # TrueNAS host definition
-├── group_vars/
-│   └── truenas.yml           # TrueNAS-specific vars (datasets, shares, users)
+│   ├── truenas.yml           # TrueNAS host definition
+│   └── group_vars/
+│       └── truenas.yml       # Docker config, network IPs/ports/domains
 ├── playbooks/
-│   └── truenas.yml           # TrueNAS playbook
+│   └── truenas.yml           # TrueNAS playbook (flat tasks, no roles)
 ├── roles/
-│   ├── truenas-base/         # Core config (hostname, services, certs)
-│   ├── truenas-storage/      # Datasets, snapshots, scrubs
-│   ├── truenas-shares/       # SMB/NFS shares
-│   └── truenas-stacks/       # Docker Compose deployment
-└── stacks/                   # Docker Compose files (migrated from nixonomicon)
+│   └── docker_stack/         # Generic Docker Compose deployment role
+└── stacks/                   # Docker Compose files (.j2 templates)
     ├── arr-apps/
-    ├── homeassistant/
+    ├── cloudflared/
     └── ...
 ```
 
-**Implementation:**
+**Implementation status:**
 
 - [x] Create `ansible/inventory/truenas.yml` with TrueNAS host
-- [x] Create `ansible/group_vars/truenas.yml` with dataset/share/user definitions
+- [x] Create `ansible/inventory/group_vars/truenas.yml` with Docker config, network IPs/ports/domains
 - [x] Create `ansible/playbooks/truenas.yml` entry playbook
-- [ ] Create roles:
-  - [ ] `truenas-base`: hostname, services, certificates, initscripts
-  - [ ] `truenas-storage`: datasets, snapshot tasks, scrub tasks, SMART tests
-  - [ ] `truenas-shares`: SMB and NFS share configuration
-  - [ ] `truenas-stacks`: Docker Compose deployment
+- [x] Build custom `local.truenas` collection with action plugins for:
+  - [x] `service` - service enable/start/stop
+  - [x] `smart_test` - SMART test schedules
+  - [x] `pool_scrub` - pool scrub tasks
+  - [x] `pool_snapshottask` - snapshot scheduling
+  - [x] `sharing_smb` - SMB shares
+  - [x] `sharing_nfs` - NFS shares
+  - [x] `initshutdownscript` - init/shutdown scripts
 - [x] Migrate stacks from nixonomicon/nas/stacks/ to ansible/stacks/
-- [x] Create stack deployment tasks:
-  - [x] Sync compose files to TrueNAS
+- [x] Create `docker_stack` role for Docker Compose deployment:
+  - [x] Sync compose files to TrueNAS (Jinja2 templates)
   - [x] Render .env files from 1Password secrets
   - [x] Run `docker compose up -d` for each stack
-  - [x] Handle external Docker network creation
+- [x] Create Docker network tasks for macvlan networks
 - [x] Create `poe truenas` task for TrueNAS-specific playbook
-- [ ] Create initscript for dotfile symlinks (persistent across upgrades)
+- [ ] Add `local.truenas` modules for datasets, users, groups (if needed)
+- [ ] dotfile symlinks
 - [ ] Test: Full playbook run is idempotent
-- [ ] Delete nas/stacks/ from nixonomicon after migration
-- [ ] Document upgrade procedure (re-run Ansible post-TrueNAS upgrade)
+- [ ] Delete nas/stacks/ from nixonomicon after migration complete
 
 ### Phase 18: VM Configuration Capture
 

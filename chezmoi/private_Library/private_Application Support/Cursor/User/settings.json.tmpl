@@ -1,1 +1,2 @@
-{{ template "vscode-settings" (dict "editor" "cursor" "models" nil) }}
+{{- template "llm-models" . -}}
+{{ template "vscode-settings" (dict "editor" "cursor" "models" nil "fonts" .fonts) }}

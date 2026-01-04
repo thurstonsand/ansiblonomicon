@@ -1,0 +1,20 @@
+# Static data available in all templates as .variableName
+#
+# Code editor configuration - change codeEditor to switch editors
+# This controls both ~/.local/bin/code symlink and duti file associations
+#
+# | Editor       | Command        |
+# |--------------|----------------|
+# | VS Code      | code           |
+# | VS Code Ins. | code-insiders  |
+# | Cursor       | cursor         |
+# | Windsurf     | windsurf       |
+# | Zed          | zed            |
+#
+codeEditor = "code"
+
+# Font configuration - centralized for all apps
+# Change monoFont to update Ghostty, Zed, VSCode, etc.
+[fonts]
+mono = "BlexMono Nerd Font"       # Base name (apps append Mono/Propo as needed)
+monoSize = 13                      # Default size for editor/terminal
