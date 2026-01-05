@@ -3,165 +3,198 @@
 
 # Taps
 tap "cirruslabs/cli"
-tap "oven-sh/bun"
 tap "domt4/autoupdate"
 tap "nikitabobko/tap"
+tap "oven-sh/bun"
 tap "rfidresearchgroup/proxmark3"
 tap "sst/tap"
 tap "steipete/tap"
 
-# Brews (formulae)
-# Core CLI tools
+# =============================================================================
+# Shell & Terminal
+# =============================================================================
 brew "ack"
 brew "ast-grep"
 brew "bat"
-brew "bun"
-brew "cf-terraforming"
-brew "chezmoi"
-brew "cmake"
-brew "deno"
 brew "direnv"
 brew "duti"
 brew "eza"
-brew "ffmpeg"
 brew "fzf"
+brew "htop"
+brew "jq"
+brew "mactop"
+brew "mas"
+brew "nextdns"
+brew "prettyping"
+brew "ripgrep"
+brew "softnet"
+brew "sqlite-utils"
+brew "starship"
+brew "tldr"
+brew "tmux"
+brew "tree"
+brew "unzip"
+brew "vim"
+brew "zoxide"
+
+# =============================================================================
+# Software Engineering
+# =============================================================================
+# Git
 brew "gh"
 brew "git"
 brew "git-crypt"
 brew "git-delta"
 brew "git-trim"
-brew "go"
-brew "htop"
-brew "imagemagick"
-brew "jq"
 brew "jujutsu"
-brew "just"
 brew "lazygit"
-brew "llm"
-brew "mactop"
-brew "mas"
-brew "nextdns"
+cask "git-credential-manager"
+
+# Languages
+brew "bun"
+brew "cmake"
+brew "deno"
+brew "go"
+brew "just"
 brew "node"
-brew "opentofu"
-brew "prettyping"
 brew "python"
+brew "rustup"
+brew "uv"
+brew "zig"
+
+# Infra/Cloud
+brew "cf-terraforming"
+brew "chezmoi"
+brew "cloudflare-wrangler"
+brew "opentofu"
 brew "rclone"
 brew "restic"
-brew "ripgrep"
-brew "rustup"
-brew "sqlite-utils"
-brew "starship"
+brew "sshpass"
 brew "storj-uplink"
 brew "tart"
-brew "tldr"
-brew "tree"
-brew "unzip"
-brew "uv"
-brew "vim"
-brew "zig"
-brew "zoxide"
 
-# AI/Dev tools
-brew "cliproxyapi"
-brew "cloudflare-wrangler"
-brew "gemini-cli"
-
-# Network/System
-brew "softnet"
-brew "sshpass"
-# brew "proxmark3", args: ["with-generic", "HEAD"]
-
-# Fonts
-cask "font-fontawesome"
-cask "font-mononoki-nerd-font"
-cask "font-blex-mono-nerd-font"  # IBM Plex Mono
-
-# Casks
-# cask "aerospace"
-cask "1password"
-cask "1password-cli"
-cask "antigravity"
-cask "aqua-voice"
-cask "bazecor"
-cask "beeper"
-cask "bloom"
-cask "chatgpt"
-cask "chatgpt-atlas"
-# cask "choosy"
-cask "claude"
-cask "comet"
-cask "clay"
 cask "cloudflare-warp"
-cask "codex"
-cask "codexbar"
-cask "contexts"
-cask "cursor"
-cask "displaylink"
-cask "elgato-camera-hub"
-cask "elgato-control-center"
-cask "fantastical"
-cask "git-credential-manager"
-cask "ghostty"
-cask "google-chrome"
-# cask "google-drive"
 cask "gcloud-cli"
-cask "iina"
-cask "legcord"
-cask "localsend"
-cask "mac-mouse-fix"
-# cask "macwhisper"
-cask "mimestream"
-cask "monodraw"
-cask "moonlight"
-# cask "mqtt-explorer"
-cask "obsidian"
 cask "orbstack"
-cask "orion"
-cask "prusaslicer"
-cask "qlmarkdown"
-cask "raycast"
-cask "rectangle-pro"
-# cask "reflect"
-cask "setapp"
-cask "slack"
-cask "sony-ps-remote-play"
-cask "steam"
-# cask "tabtab"
-cask "thebrowsercompany-dia"
+cask "wifiman"
+
+mas "Tailscale", id: 1475387142
+
+# Editors/Terminals
+cask "cursor"
+cask "ghostty"
+cask "monodraw"
 cask "visual-studio-code"
 cask "visual-studio-code@insiders"
 cask "warp"
-cask "wifiman"
 cask "windsurf"
 cask "zed"
-cask "zoom"
 
-# Mac App Store apps (install only - uninstall broken in mas CLI on macOS 11+)
-mas "1Password for Safari", id: 1569813296
+# Apple
+mas "Logger for Shortcuts", id: 1611554653
+mas "TestFlight", id: 899247664
+mas "Xcode", id: 497799835
+
+# =============================================================================
+# AI
+# =============================================================================
+brew "cliproxyapi"
+brew "gemini-cli"
+brew "llm"
+
+cask "chatgpt"
+cask "chatgpt-atlas"
+cask "claude"
+cask "codex"
+cask "codexbar"
+
+mas "Perplexity: Ask Anything", id: 6714467650
+
+# =============================================================================
+# Media
+# =============================================================================
+brew "ffmpeg"
+brew "imagemagick"
+
+cask "iina"
+cask "moonlight"
+cask "sony-ps-remote-play"
+cask "steam"
+
 mas "Acorn 8", id: 6737921844
-mas "Copilot", id: 1447330651
 mas "Infuse", id: 1136220934
+mas "Play: Save Videos Watch Later", id: 1596506190
+
+# =============================================================================
+# Productivity
+# =============================================================================
+# Browsers
+cask "antigravity"
+cask "comet"
+cask "google-chrome"
+cask "orion"
+cask "thebrowsercompany-dia"
+
+# Window/Launcher
+cask "contexts"
+cask "raycast"
+cask "rectangle-pro"
+
+mas "Raycast Companion", id: 6738274497
+
+# Apps
+cask "1password"
+cask "1password-cli"
+cask "aqua-voice"
+cask "bloom"
+cask "fantastical"
+cask "obsidian"
+cask "qlmarkdown"
+cask "setapp"
+
+mas "Copilot", id: 1447330651
+mas "Mela", id: 1568924476
+mas "Parcel", id: 375589283
+mas "Remind Me Faster", id: 985555908
+mas "Uplock", id: 6469049274
+
+# Fonts
+cask "font-blex-mono-nerd-font"
+cask "font-fontawesome"
+cask "font-mononoki-nerd-font"
+
+# Safari Extensions
+mas "1Password for Safari", id: 1569813296
 mas "Kagi for Safari", id: 1622835804
 mas "Keepa - Price Tracker", id: 1533805339
 mas "Keyword Search", id: 1558453954
-mas "Logger for Shortcuts", id: 1611554653
-mas "Mela", id: 1568924476
 mas "Noir – Dark Mode for Safari", id: 1592917505
 mas "Obsidian Web Clipper", id: 6720708363
-mas "Parcel", id: 375589283
-mas "Perplexity: Ask Anything", id: 6714467650
-mas "Play: Save Videos Watch Later", id: 1596506190
-mas "Poolsuite FM", id: 1514817810
-mas "Raycast Companion", id: 6738274497
 mas "Redirect Web", id: 1571283503
-mas "Remind Me Faster", id: 985555908
-# mas "Save to Reader", id: 1640236961
 mas "SponsorBlock for Safari", id: 1573461917
-# mas "Spokenly: Voice to Text AI", id: 6740315592
-mas "Tailscale", id: 1475387142
-mas "Telegram", id: 747648890
-mas "TestFlight", id: 899247664
-mas "Uplock", id: 6469049274
-mas "WhatsApp Messenger", id: 310633997
 mas "Wipr", id: 1662217862
-mas "Xcode", id: 497799835
+
+# =============================================================================
+# Communication
+# =============================================================================
+cask "beeper"
+cask "clay"
+cask "legcord"
+cask "localsend"
+cask "mimestream"
+cask "slack"
+cask "zoom"
+
+mas "Telegram", id: 747648890
+mas "WhatsApp Messenger", id: 310633997
+
+# =============================================================================
+# Hardware & Drivers
+# =============================================================================
+cask "bazecor"
+cask "displaylink"
+cask "elgato-camera-hub"
+cask "elgato-control-center"
+cask "mac-mouse-fix"
+cask "prusaslicer"
+# brew "proxmark3", args: ["with-generic", "HEAD"]
