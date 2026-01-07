@@ -1,5 +1,5 @@
 ---
-# Cleanup orphaned skills and commands not managed by agent_harness
+# Cleanup orphaned skills, commands, and agents not managed by agent_harness
 # This makes Ansible the source of truth for these directories
 
 - name: Set agent config for cleanup
@@ -62,3 +62,32 @@
     state: absent
   loop: "{{ agent_harness_orphaned_commands }}"
   when: agent_harness_orphaned_commands | length > 0
+
+# --- Agents cleanup ---
+
+- name: Find existing agents in destination
+  ansible.builtin.find:
+    paths: "{{ agent_harness_agent_config.agents_dir }}"
+    patterns: "*.md"
+    file_type: file
+    recurse: false
+  register: agent_harness_existing_agents
+
+- name: Build expected agents list (with .md extension)
+  ansible.builtin.set_fact:
+    agent_harness_expected_agents: "{{ agent_harness_plugin_resources.agents | map(attribute='name') | map('regex_replace', '$', '.md') | list }}"
+
+- name: Identify orphaned agents
+  ansible.builtin.set_fact:
+    agent_harness_orphaned_agents: >-
+      {{ agent_harness_existing_agents.files
+         | map(attribute='path')
+         | map('basename')
+         | difference(agent_harness_expected_agents) }}
+
+- name: Remove orphaned agents
+  ansible.builtin.file:
+    path: "{{ agent_harness_agent_config.agents_dir }}/{{ item }}"
+    state: absent
+  loop: "{{ agent_harness_orphaned_agents }}"
+  when: agent_harness_orphaned_agents | length > 0

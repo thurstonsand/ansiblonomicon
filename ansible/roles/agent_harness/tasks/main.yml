@@ -24,7 +24,13 @@
   loop_control:
     loop_var: agent_harness_target_agent
 
-- name: Cleanup orphaned skills and commands
+- name: Deploy agents to target agents
+  ansible.builtin.include_tasks: deploy_agents.yml
+  loop: "{{ agent_harness_target_agents }}"
+  loop_control:
+    loop_var: agent_harness_target_agent
+
+- name: Cleanup orphaned skills, commands, and agents
   ansible.builtin.include_tasks: cleanup_orphans.yml
   loop: "{{ agent_harness_target_agents }}"
   loop_control:

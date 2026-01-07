@@ -25,31 +25,162 @@ Bridle (github.com/neiii/bridle) solves this with a Rust runtime that translates
 - Goose support (not needed)
 - Dynamic MCP loading (Amp/OpenCode support this but we'll use static deployment)
 
-## Phased Approach
+## Implementation Status
 
-### Phase 1: Claude Code Only (MVP)
+### Phase 1: Claude Code Only (MVP) — **IN PROGRESS**
 
-Deploy skills, commands, and agents to Claude Code. No translation needed — it's the source format.
+| Feature                                  | Status         | Notes                                             |
+| ---------------------------------------- | -------------- | ------------------------------------------------- |
+| Role structure                           | ✅ Done        | `ansible/roles/agent_harness/`                    |
+| Git source cloning                       | ✅ Done        | Clones repos to cache, supports `pull` option     |
+| Local source support                     | ✅ Done        | Direct path to local skills                       |
+| Skill discovery (marketplace.json)       | ✅ Done        | Finds skills in Claude plugin marketplaces        |
+| Skill discovery (standalone plugin.json) | ✅ Done        | Finds skills in single-plugin repos               |
+| Skill sync to Claude                     | ✅ Done        | rsync with checksum, excludes .git/.claude-plugin |
+| Commands deployment                      | ✅ Done        | Sync markdown files from commands/ directories    |
+| Agents/subagents deployment              | ✅ Done        | Sync markdown files from agents/ directories      |
+| Orphan cleanup                           | ✅ Done        | Remove skills/commands/agents not in sources      |
+| MCP config merging                       | ❌ Not started |                                                   |
+| Unit tests                               | ✅ Done        | 48 tests for filter plugins                       |
 
-### Phase 2: Add Amp
+### Phase 2: Add Amp — Not started
 
-Amp uses nearly identical formats to Claude. Minor differences:
+### Phase 3: Add OpenCode — Not started
 
-- MCP config in `settings.json` instead of `.mcp.json`
-- No agents/subagents support
+### Phase 4: Add Codex — Not started
 
-### Phase 3: Add OpenCode
+---
 
-OpenCode requires translation:
+## Current Implementation
 
-- Lowercase + dash names for directories
-- Singular directory names (`skill/` not `skills/`)
-- Different MCP format (array commands, `{env:VAR}` syntax)
-- Agent color/tools field normalization
+### Role Structure
 
-### Phase 4: Add Codex
+```
+ansible/roles/agent_harness/
+├── defaults/
+│   └── main.yml                   # Default variables
+├── filter_plugins/
+│   └── harness_filters.py         # Resource discovery and source parsing
+├── tasks/
+│   ├── main.yml                   # Entry point
+│   ├── clone_git_repos.yml        # Clone/update git sources
+│   ├── deploy_skills.yml          # Deploy skills to target agent
+│   ├── deploy_single_skill.yml    # Sync individual skill
+│   ├── deploy_commands.yml        # Deploy commands to target agent
+│   ├── deploy_single_command.yml  # Sync individual command
+│   ├── deploy_agents.yml          # Deploy agents to target agent
+│   ├── deploy_single_agent.yml    # Sync individual agent
+│   └── cleanup_orphans.yml        # Remove unmanaged skills/commands/agents
+├── tests/
+│   ├── conftest.py                # pytest path setup
+│   └── test_harness_filters.py    # Unit tests for filters
+└── vars/
+    └── agents.yml                 # Agent-specific paths and quirks
+```
 
-Codex is similar to Claude but with limited features (skills only, no commands/agents).
+### Configuration
+
+#### Sources Configuration (`ansible/config.yml`)
+
+```yaml
+agent_harness_sources:
+  # Git sources - clone from GitHub
+  - repo: anthropics/claude-code
+    pull: true # Update on each run (default: true)
+    skills:
+      - frontend-design # short form: auto-discover
+      - name: custom-name # long form: explicit path
+        path: plugins/some-plugin/skills/actual-skill
+
+  # Local sources - use existing directory
+  - local: "{{ playbook_dir }}/../ai-resources"
+    skills:
+      - my-skill # short form: skills/{name}/
+      - name: another-skill
+        path: custom/path/to/skill
+```
+
+#### Role Defaults (`defaults/main.yml`)
+
+```yaml
+# Which agents to deploy to
+agent_harness_target_agents:
+  - claude
+
+# Sources for skills (see above)
+agent_harness_sources: []
+
+# Git update behavior (default: true = always pull)
+agent_harness_update: true
+
+# Where to cache git repos
+agent_harness_cache_dir: "{{ ansible_facts.env.HOME }}/.cache/ansiblonomicon-harness"
+```
+
+#### Agent Configuration (`vars/agents.yml`)
+
+Currently only Claude is configured:
+
+```yaml
+agent_harness_agents:
+  claude:
+    config_root: "{{ ansible_facts.env.HOME }}/.claude"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.claude/skills"
+    commands_dir: "{{ ansible_facts.env.HOME }}/.claude/commands"
+    agents_dir: "{{ ansible_facts.env.HOME }}/.claude/agents"
+    mcp_file: "{{ ansible_facts.env.HOME }}/.claude/.mcp.json"
+    mcp_format: json
+    mcp_key: mcpServers
+    mcp_env_format: "${VAR}"
+    mcp_command_format: separate
+    name_transform: preserve
+    transform_content: false
+    instructions_file: CLAUDE.md
+```
+
+### Filter Plugins
+
+Two main filters implemented:
+
+| Filter                                 | Purpose                                                                                                                             |
+| -------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `agent_harness_get_git_sources`        | Extract git sources from sources list, normalize with defaults                                                                      |
+| `agent_harness_build_plugin_resources` | Resolve all plugin specs to concrete paths for skills, commands, and agents (handles marketplace.json, plugin.json, explicit paths) |
+
+### Skill Discovery Logic
+
+The filter plugin implements Claude's plugin discovery protocol:
+
+1. **Marketplace repos** (e.g., `anthropics/claude-code`):
+
+   - Check `.claude-plugin/marketplace.json` for plugin registry
+   - Look up plugin by name, get source path
+   - Handle `strict: true/false` for plugin.json merging
+   - Search `skills_paths` for matching skill
+
+2. **Standalone plugin repos**:
+
+   - Check `.claude-plugin/plugin.json` at repo root
+   - Match plugin name, search skills paths
+
+3. **Explicit path** (long form):
+   - Use provided path directly
+
+---
+
+## Remaining Work for Phase 1
+
+### Must Have
+
+1. **MCP config merging** (`merge_mcp.yml`)
+   - Find `mcp.json` files in deployed skills
+   - Merge into `~/.claude/.mcp.json`
+   - Must be idempotent (don't duplicate entries)
+
+### Nice to Have
+
+2. **Dry-run mode**
+   - Show what would be deployed without making changes
 
 ---
 
@@ -145,517 +276,59 @@ Skill-bundled `mcp.json`:
 
 ---
 
-## Design
-
-### Role Structure
-
-```
-ansible/roles/agent_harness/
-├── defaults/
-│   └── main.yml              # Default variables
-├── tasks/
-│   ├── main.yml              # Entry point
-│   ├── deploy_skills.yml     # Deploy all skills
-│   ├── deploy_commands.yml   # Deploy all commands
-│   ├── deploy_agents.yml     # Deploy all agents
-│   └── merge_mcp.yml         # Merge skill mcp.json into agent config
-├── vars/
-│   └── agents.yml            # Agent-specific paths and quirks
-└── filter_plugins/
-    └── harness_filters.py    # Custom filters for translation
-```
-
-### Variables
-
-#### Agent Configuration (`vars/agents.yml`)
-
-```yaml
----
-harness_agents:
-  claude:
-    config_root: "{{ ansible_env.HOME }}/.claude"
-    skills_dir: "{{ ansible_env.HOME }}/.claude/skills"
-    commands_dir: "{{ ansible_env.HOME }}/.claude/commands"
-    agents_dir: "{{ ansible_env.HOME }}/.claude/agents"
-    mcp_file: "{{ ansible_env.HOME }}/.claude/.mcp.json"
-    mcp_format: json
-    mcp_key: mcpServers
-    mcp_env_format: "${VAR}"
-    mcp_command_format: separate # command + args separate fields
-    name_transform: preserve
-    transform_content: false
-    instructions_file: CLAUDE.md
-
-  amp:
-    config_root: "{{ ansible_env.HOME }}/.config/amp"
-    skills_dir: "{{ ansible_env.HOME }}/.config/amp/skills"
-    commands_dir: "{{ ansible_env.HOME }}/.config/amp/commands"
-    agents_dir: null # Amp doesn't support agents
-    mcp_file: "{{ ansible_env.HOME }}/.config/amp/settings.json"
-    mcp_format: json
-    mcp_key: "amp.mcpServers"
-    mcp_env_format: "${VAR}"
-    mcp_command_format: separate
-    name_transform: preserve
-    transform_content: false
-    instructions_file: AGENTS.md
-
-  opencode:
-    config_root: "{{ ansible_env.HOME }}/.config/opencode"
-    skills_dir: "{{ ansible_env.HOME }}/.config/opencode/skill" # SINGULAR
-    commands_dir: "{{ ansible_env.HOME }}/.config/opencode/command" # SINGULAR
-    agents_dir: "{{ ansible_env.HOME }}/.config/opencode/agent" # SINGULAR
-    mcp_file: "{{ ansible_env.HOME }}/.config/opencode/opencode.jsonc"
-    mcp_format: jsonc
-    mcp_key: mcp
-    mcp_env_format: "{env:VAR}"
-    mcp_command_format: array # command is array with args merged
-    mcp_type_required: true # must include type: local/remote
-    name_transform: lowercase_dash
-    transform_content: true # rewrite frontmatter for OpenCode
-    instructions_file: AGENTS.md
-
-  codex:
-    config_root: "{{ ansible_env.HOME }}/.codex"
-    skills_dir: "{{ ansible_env.HOME }}/.codex/skills"
-    commands_dir: null # Codex doesn't support commands
-    agents_dir: null # Codex doesn't support agents
-    mcp_file: null # Unknown
-    mcp_format: null
-    mcp_key: null
-    name_transform: preserve
-    transform_content: false
-    instructions_file: AGENTS.md
-```
-
-#### Role Variables (`defaults/main.yml`)
-
-```yaml
----
-# Which agents to deploy to
-harness_target_agents:
-  - claude
-
-# Path to resources directory (contains skills/, commands/, agents/)
-harness_resources_dir: "{{ playbook_dir }}/../ai-resources"
-
-# Git-sourced skills
-# Short form: skill name auto-discovers at plugins/{name}/skills/{name}/SKILL.md
-# Long form: explicit path for non-standard layouts
-harness_git_skills: []
-#   - repo: anthropics/claude-code
-#     skills:
-#       - frontend-design                    # short form
-#       - memory
-#       - name: custom-name                  # long form
-#         path: plugins/some-plugin/skills/actual-skill
-#
-#   - repo: neiii/bridle
-#     skills:
-#       - path: skills/tmux-interactive      # explicit path only
-
-# Git update behavior
-# false (default): clone if missing, never pull (fast, predictable)
-# true: always pull latest (use with -e harness_update_git=true)
-harness_update_git: false
-
-# Where to cache git repos
-harness_cache_dir: "{{ ansible_env.HOME }}/.cache/ansiblonomicon-harness"
-```
-
-### Task Flow
-
-#### Main Entry Point (`tasks/main.yml`)
-
-```yaml
----
-- name: Include agent configuration
-  ansible.builtin.include_vars: agents.yml
-
-- name: Validate target agents
-  ansible.builtin.assert:
-    that: item in harness_agents
-    fail_msg: "Unknown agent: {{ item }}"
-  loop: "{{ harness_target_agents }}"
-
-- name: Deploy skills
-  ansible.builtin.include_tasks: deploy_skills.yml
-
-- name: Deploy commands
-  ansible.builtin.include_tasks: deploy_commands.yml
-
-- name: Deploy agents
-  ansible.builtin.include_tasks: deploy_agents.yml
-```
-
-#### Deploy Skills (`tasks/deploy_skills.yml`)
-
-```yaml
----
-- name: Find local skills
-  ansible.builtin.find:
-    paths: "{{ harness_resources_dir }}/skills"
-    patterns: "SKILL.md"
-    recurse: true
-    file_type: file
-  register: found_skills
-  delegate_to: localhost
-
-- name: Deploy each skill to each target agent
-  ansible.builtin.include_tasks: deploy_single_skill.yml
-  vars:
-    skill_path: "{{ skill_item.path | dirname }}"
-    skill_name: "{{ skill_item.path | dirname | basename }}"
-  loop: "{{ found_skills.files }}"
-  loop_control:
-    loop_var: skill_item
-    label: "{{ skill_item.path | dirname | basename }}"
-```
-
-#### Deploy Single Skill (`tasks/deploy_single_skill.yml`)
-
-```yaml
----
-- name: Deploy skill to each target agent
-  block:
-    - name: Get agent config
-      ansible.builtin.set_fact:
-        agent_config: "{{ harness_agents[agent_name] }}"
-
-    - name: Skip if agent doesn't support skills
-      ansible.builtin.debug:
-        msg: "Skipping {{ agent_name }} - no skills support"
-      when: agent_config.skills_dir is none
-
-    - name: Compute target skill name
-      ansible.builtin.set_fact:
-        target_skill_name: "{{ skill_name | harness_transform_name(agent_config.name_transform) }}"
-      when: agent_config.skills_dir is not none
-
-    - name: Ensure agent skills directory exists
-      ansible.builtin.file:
-        path: "{{ agent_config.skills_dir }}"
-        state: directory
-        mode: "0755"
-      when: agent_config.skills_dir is not none
-
-    - name: Sync skill directory
-      ansible.posix.synchronize:
-        src: "{{ skill_path }}/"
-        dest: "{{ agent_config.skills_dir }}/{{ target_skill_name }}/"
-        delete: true
-        recursive: true
-      delegate_to: "{{ inventory_hostname }}"
-      when: agent_config.skills_dir is not none
-
-    - name: Transform SKILL.md content if needed
-      when:
-        - agent_config.skills_dir is not none
-        - agent_config.transform_content | default(false)
-      block:
-        - name: Read SKILL.md
-          ansible.builtin.slurp:
-            src: "{{ agent_config.skills_dir }}/{{ target_skill_name }}/SKILL.md"
-          register: skill_content
-
-        - name: Transform and write SKILL.md
-          ansible.builtin.copy:
-            content: "{{ skill_content.content | b64decode | harness_transform_skill(target_skill_name) }}"
-            dest: "{{ agent_config.skills_dir }}/{{ target_skill_name }}/SKILL.md"
-            mode: "0644"
-
-    - name: Merge MCP configuration if present
-      ansible.builtin.include_tasks: merge_mcp.yml
-      vars:
-        mcp_source: "{{ skill_path }}/mcp.json"
-      when:
-        - agent_config.skills_dir is not none
-        - agent_config.mcp_file is not none
-
-  loop: "{{ harness_target_agents }}"
-  loop_control:
-    loop_var: agent_name
-    label: "{{ skill_name }} -> {{ agent_name }}"
-```
-
-### Custom Filter Plugin (`filter_plugins/harness_filters.py`)
-
-```python
-"""Custom Jinja2 filters for agent harness deployment."""
-
-import re
-
-
-# Color name to hex mapping (from bridle)
-COLOR_MAP = {
-    "red": "#FF0000", "green": "#00FF00", "blue": "#0000FF",
-    "yellow": "#FFFF00", "orange": "#FFA500", "purple": "#800080",
-    "cyan": "#00FFFF", "magenta": "#FF00FF", "white": "#FFFFFF",
-    "black": "#000000", "gray": "#808080", "grey": "#808080",
-    "pink": "#FFC0CB", "brown": "#A52A2A", "lime": "#00FF00",
-    "navy": "#000080", "teal": "#008080", "olive": "#808000",
-    "maroon": "#800000", "aqua": "#00FFFF", "silver": "#C0C0C0",
-    "gold": "#FFD700",
-}
-
-
-def harness_sanitize_name(name: str) -> str:
-    """Sanitize name for OpenCode (lowercase + dashes only)."""
-    name = name.lower()
-    name = re.sub(r"[^a-z0-9]", "-", name)
-    name = re.sub(r"-+", "-", name).strip("-")
-    return name
-
-
-def harness_transform_name(name: str, transform: str) -> str:
-    """Transform name according to agent requirements."""
-    if transform == "lowercase_dash":
-        return harness_sanitize_name(name)
-    return name  # preserve
-
-
-def harness_transform_skill(content: str, sanitized_name: str) -> str:
-    """Transform SKILL.md for OpenCode (rewrite frontmatter)."""
-    if not content.strip().startswith("---"):
-        return f"---\nname: {sanitized_name}\ndescription: Skill\n---\n{content}"
-
-    parts = content.split("---", 2)
-    if len(parts) < 3:
-        return content
-
-    frontmatter = parts[1]
-    body = parts[2]
-
-    new_lines = []
-    found_name = False
-    found_description = False
-
-    for line in frontmatter.strip().split("\n"):
-        stripped = line.strip()
-        if stripped.startswith("name:"):
-            new_lines.append(f"name: {sanitized_name}")
-            found_name = True
-            continue
-        if stripped.startswith("description:"):
-            found_description = True
-        new_lines.append(line)
-
-    if not found_name:
-        new_lines.insert(0, f"name: {sanitized_name}")
-    if not found_description:
-        new_lines.insert(1, "description: Skill")
-
-    return f"---\n{chr(10).join(new_lines)}\n---{body}"
-
-
-def harness_transform_agent(content: str, sanitized_name: str) -> str:
-    """Transform agent.md for OpenCode (color to hex, tools normalization)."""
-    if not content.strip().startswith("---"):
-        return content
-
-    parts = content.split("---", 2)
-    if len(parts) < 3:
-        return content
-
-    frontmatter = parts[1]
-    body = parts[2]
-
-    new_lines = []
-    for line in frontmatter.strip().split("\n"):
-        stripped = line.strip()
-
-        # Handle name field
-        if stripped.startswith("name:"):
-            new_lines.append(f"name: {sanitized_name}")
-            continue
-
-        # Handle color field - convert names to hex
-        if stripped.startswith("color:"):
-            color_value = stripped.split(":", 1)[1].strip().strip("\"'")
-            if color_value.lower() in COLOR_MAP:
-                new_lines.append(f'color: "{COLOR_MAP[color_value.lower()]}"')
-                continue
-
-        # Handle tools field - normalize to wildcard
-        if stripped.startswith("tools:"):
-            value = stripped.split(":", 1)[1].strip()
-            if value and not value.startswith("{") and value not in ("|", ">"):
-                new_lines.append("tools:")
-                new_lines.append('  "*": true')
-                continue
-
-        new_lines.append(line)
-
-    return f"---\n{chr(10).join(new_lines)}\n---{body}"
-
-
-def harness_transform_mcp_server(server: dict, agent_config: dict) -> dict:
-    """Transform MCP server config for target agent."""
-    cmd_format = agent_config.get("mcp_command_format", "separate")
-    env_format = agent_config.get("mcp_env_format", "${VAR}")
-    type_required = agent_config.get("mcp_type_required", False)
-
-    result = {}
-    command = server.get("command", "")
-    args = server.get("args", [])
-
-    if cmd_format == "array":
-        # OpenCode: command is array
-        result["command"] = [command] + args if command else args
-        result["type"] = "local"
-        result["enabled"] = True
-    else:
-        # Claude/Amp: separate fields
-        result["command"] = command
-        if args:
-            result["args"] = args
-
-    # Handle environment variables
-    env = server.get("env", {})
-    if env:
-        transformed_env = {}
-        for key, value in env.items():
-            if env_format == "{env:VAR}" and value.startswith("${") and value.endswith("}"):
-                var_name = value[2:-1]
-                transformed_env[key] = f"{{env:{var_name}}}"
-            else:
-                transformed_env[key] = value
-
-        if cmd_format == "array":
-            result["environment"] = transformed_env
-        else:
-            result["env"] = transformed_env
-
-    if type_required and "type" not in result:
-        result["type"] = "local"
-
-    return result
-
-
-def harness_mcp_merge(skill_mcp: dict, agent_config: dict) -> dict:
-    """Merge skill MCP config into agent format."""
-    mcp_key = agent_config.get("mcp_key", "mcpServers")
-
-    transformed = {}
-    for name, server in skill_mcp.items():
-        transformed[name] = harness_transform_mcp_server(server, agent_config)
-
-    if mcp_key == "mcpServers":
-        return {"mcpServers": transformed}
-    elif mcp_key == "amp.mcpServers":
-        return {"amp": {"mcpServers": transformed}}
-    elif mcp_key == "mcp":
-        return {"mcp": transformed}
-    else:
-        return transformed
-
-
-class FilterModule:
-    """Ansible filter plugin for agent harness."""
-
-    def filters(self):
-        return {
-            "harness_sanitize_name": harness_sanitize_name,
-            "harness_transform_name": harness_transform_name,
-            "harness_transform_skill": harness_transform_skill,
-            "harness_transform_agent": harness_transform_agent,
-            "harness_transform_mcp_server": harness_transform_mcp_server,
-            "harness_mcp_merge": harness_mcp_merge,
-        }
-```
-
----
-
 ## Usage
 
-### Resources Directory Structure
-
-```
-ansible/ai-resources/
-├── skills/
-│   ├── git-commit-helper/
-│   │   └── SKILL.md
-│   ├── truenas-docker-ops/
-│   │   ├── SKILL.md
-│   │   └── scripts/
-│   │       └── docker-exec.sh
-│   └── tmux-interactive-sessions/
-│       ├── SKILL.md
-│       └── mcp.json
-│
-├── commands/
-│   ├── gc.md
-│   └── system-architect.md
-│
-└── agents/
-    └── code-reviewer.md
-```
-
-### Playbook Integration
+### Current Playbook Integration
 
 ```yaml
 # ansible/playbooks/local.yml
 - name: Deploy AI agent resources
   ansible.builtin.include_role:
     name: agent_harness
-  vars:
-    harness_target_agents:
-      - claude # Phase 1: Claude only
-      # - amp       # Phase 2
-      # - opencode  # Phase 3
-      # - codex     # Phase 4
-  tags: [agent-harness]
+    apply:
+      tags: ["agent-harness"]
+  when: configure_agent_harness | default(true)
+  tags: ["agent-harness"]
 ```
 
-### Phase 1 Deployment (Claude Only)
+### Running
 
-```yaml
-harness_target_agents:
-  - claude
-```
+```bash
+# Deploy skills
+uv run poe local -t agent-harness
 
-Results in:
+# Dry-run
+uv run poe local -t agent-harness --check
 
-```
-~/.claude/
-├── skills/
-│   ├── git-commit-helper/
-│   │   └── SKILL.md
-│   ├── truenas-docker-ops/
-│   │   ├── SKILL.md
-│   │   └── scripts/
-│   └── tmux-interactive-sessions/
-│       ├── SKILL.md
-│       └── mcp.json
-├── commands/
-│   ├── gc.md
-│   └── system-architect.md
-├── agents/
-│   └── code-reviewer.md
-└── .mcp.json  # Updated with tmux server
+# Force git pull even if pull: false
+uv run poe local -t agent-harness -e agent_harness_update=true
 ```
 
 ---
 
 ## Migration Plan
 
-### Phase 1: Claude Code (MVP)
+### Phase 1: Claude Code (MVP) — Current
 
-1. Create `ansible/roles/agent_harness/` structure
-2. Create `ansible/ai-resources/` with skills/commands/agents from current locations
-3. Implement basic sync for Claude (no translation needed)
-4. Test: Skills appear in Claude Code, MCP config merged correctly
+1. ✅ Create `ansible/roles/agent_harness/` structure
+2. ✅ Implement git source cloning with plugin discovery
+3. ✅ Implement skill sync for Claude
+4. ✅ Implement commands deployment
+5. ✅ Implement agents deployment
+6. ✅ Implement orphan cleanup (skills/commands/agents)
+7. ⬜ Implement MCP config merging
+8. ⬜ Test: Skills/commands/agents appear in Claude Code, MCP config merged
 
 ### Phase 2: Add Amp
 
-1. Add Amp to `harness_agents` config
+1. Add Amp to `agent_harness_agents` config
 2. Handle MCP file difference (`settings.json` vs `.mcp.json`)
 3. Skip agents (Amp doesn't support them)
 4. Test: Same skills work in both Claude and Amp
 
 ### Phase 3: Add OpenCode
 
-1. Add OpenCode to `harness_agents` config
+1. Add OpenCode to `agent_harness_agents` config
 2. Implement name transformation (lowercase_dash)
 3. Implement content transformation (SKILL.md frontmatter, agent colors)
 4. Implement MCP format translation
@@ -670,7 +343,7 @@ Results in:
 
 ---
 
-## Appendix: Translation Reference
+## Appendix: Translation Reference (Future Phases)
 
 ### OpenCode Transformations
 

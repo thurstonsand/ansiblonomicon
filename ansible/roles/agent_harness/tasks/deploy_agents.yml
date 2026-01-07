@@ -1,0 +1,20 @@
+---
+# Deploy agents to a target agent
+
+- name: Set agent config
+  ansible.builtin.set_fact:
+    agent_harness_agent_config: "{{ agent_harness_agents[agent_harness_target_agent] }}"
+
+- name: Ensure agents directory exists
+  ansible.builtin.file:
+    path: "{{ agent_harness_agent_config.agents_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Deploy agents
+  ansible.builtin.include_tasks: deploy_single_agent.yml
+  loop: "{{ agent_harness_plugin_resources.agents }}"
+  loop_control:
+    loop_var: agent_harness_agent_info
+    label: "{{ agent_harness_agent_info.name }}"
+  when: agent_harness_plugin_resources.agents | length > 0

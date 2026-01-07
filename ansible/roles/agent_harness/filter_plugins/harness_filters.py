@@ -13,6 +13,7 @@ class PluginLongForm(TypedDict, total=False):
     path: str
     exclude_skills: list[str]
     exclude_commands: list[str]
+    exclude_agents: list[str]
 
 
 @dataclass
@@ -52,6 +53,7 @@ class PluginConfig:
     source_path: str  # path to plugin directory (relative to repo root or absolute)
     skills_paths: list[str]  # paths to look for skills (relative to plugin root)
     commands_paths: list[str]  # paths to look for commands (relative to plugin root)
+    agents_paths: list[str]  # paths to look for agents (relative to plugin root)
 
 
 def _get_skills_paths(config: dict[str, str | list[str] | None]) -> list[str]:
@@ -91,6 +93,25 @@ def _get_commands_paths(config: dict[str, str | list[str] | None]) -> list[str]:
         return [commands_field.lstrip("./")]
 
     return [p.lstrip("./") for p in commands_field]
+
+
+def _get_agents_paths(config: dict[str, str | list[str] | None]) -> list[str]:
+    """Extract agents paths from a plugin config dict.
+
+    Args:
+        config: Plugin config dict (from marketplace entry or plugin.json)
+
+    Returns:
+        List of normalized agent paths, defaults to ["agents"]
+    """
+    agents_field: str | list[str] | None = config.get("agents")
+    if agents_field is None:
+        return ["agents"]
+
+    if isinstance(agents_field, str):
+        return [agents_field.lstrip("./")]
+
+    return [p.lstrip("./") for p in agents_field]
 
 
 def _load_plugin_json(plugin_path: Path) -> dict[str, str | list[str] | None] | None:
@@ -174,20 +195,24 @@ def _find_plugin_in_marketplace(
                 merged_config = {**plugin_json, **plugin_entry}
                 skills_paths = _get_skills_paths(merged_config)
                 commands_paths = _get_commands_paths(merged_config)
+                agents_paths = _get_agents_paths(merged_config)
             else:
                 # No plugin.json but strict=true, use marketplace entry
                 skills_paths = _get_skills_paths(plugin_entry)
                 commands_paths = _get_commands_paths(plugin_entry)
+                agents_paths = _get_agents_paths(plugin_entry)
         else:
             # strict=false: marketplace entry IS the config
             skills_paths = _get_skills_paths(plugin_entry)
             commands_paths = _get_commands_paths(plugin_entry)
+            agents_paths = _get_agents_paths(plugin_entry)
 
         return PluginConfig(
             name=plugin_name,
             source_path=source,
             skills_paths=skills_paths,
             commands_paths=commands_paths,
+            agents_paths=agents_paths,
         )
 
     return None
@@ -218,6 +243,7 @@ def _check_standalone_plugin(repo_path: Path, plugin_name: str) -> PluginConfig 
         source_path=".",
         skills_paths=_get_skills_paths(plugin_json),
         commands_paths=_get_commands_paths(plugin_json),
+        agents_paths=_get_agents_paths(plugin_json),
     )
 
 
@@ -333,9 +359,56 @@ def _get_command_source_path(
     return None
 
 
+def _discover_agents_in_plugin(plugin_path: Path, agents_paths: list[str]) -> list[str]:
+    """Discover all agents within a plugin directory.
+
+    Looks for .md files in agent directories.
+
+    Args:
+        plugin_path: Path to the plugin directory
+        agents_paths: List of paths to search for agents (relative to plugin root)
+
+    Returns:
+        List of agent names found (without .md extension)
+    """
+    agents: list[str] = []
+
+    for agent_base in agents_paths:
+        agent_dir = plugin_path / agent_base
+        if not agent_dir.exists() or not agent_dir.is_dir():
+            continue
+
+        for entry in agent_dir.iterdir():
+            if entry.is_file() and entry.suffix == ".md":
+                agents.append(entry.stem)
+
+    return agents
+
+
+def _get_agent_source_path(
+    plugin_path: Path, agent_name: str, agents_paths: list[str]
+) -> str | None:
+    """Get the full path to an agent within a plugin.
+
+    Args:
+        plugin_path: Path to the plugin directory
+        agent_name: Name of the agent (without .md extension)
+        agents_paths: List of paths to search for agents
+
+    Returns:
+        Full path to agent file, or None if not found
+    """
+    for agent_base in agents_paths:
+        agent_file = plugin_path / agent_base / f"{agent_name}.md"
+        if agent_file.exists():
+            return str(agent_file)
+
+    return None
+
+
 def _resolve_plugin_from_repo(
     repo_path: Path, plugin_spec: str | PluginLongForm
-) -> tuple[PluginConfig | None, Path | None, list[str], list[str]]:
+) -> tuple[PluginConfig | None, Path | None, list[str], list[str], list[str]]:
     """Resolve a plugin specification from a git repo.
 
     Args:
@@ -343,11 +416,12 @@ def _resolve_plugin_from_repo(
         plugin_spec: Plugin name (str) or PluginLongForm dict
 
     Returns:
-        Tuple of (PluginConfig, plugin_path, exclude_skills, exclude_commands)
-        Returns (None, None, [], []) if not resolvable
+        Tuple of (PluginConfig, plugin_path, exclude_skills, exclude_commands, exclude_agents)
+        Returns (None, None, [], [], []) if not resolvable
     """
     exclude_skills: list[str] = []
     exclude_commands: list[str] = []
+    exclude_agents: list[str] = []
 
     if isinstance(plugin_spec, str):
         plugin_name = plugin_spec
@@ -357,6 +431,7 @@ def _resolve_plugin_from_repo(
         explicit_path = plugin_spec.get("path")
         exclude_skills = list(plugin_spec.get("exclude_skills", []))
         exclude_commands = list(plugin_spec.get("exclude_commands", []))
+        exclude_agents = list(plugin_spec.get("exclude_agents", []))
 
     # If explicit path, use it directly
     if explicit_path:
@@ -372,26 +447,27 @@ def _resolve_plugin_from_repo(
             source_path=explicit_path,
             skills_paths=_get_skills_paths(plugin_json or {}),
             commands_paths=_get_commands_paths(plugin_json or {}),
+            agents_paths=_get_agents_paths(plugin_json or {}),
         )
-        return config, plugin_path, exclude_skills, exclude_commands
+        return config, plugin_path, exclude_skills, exclude_commands, exclude_agents
 
     # Try marketplace lookup
     config = _find_plugin_in_marketplace(repo_path, plugin_name)
     if config:
         plugin_path = repo_path / config.source_path
-        return config, plugin_path, exclude_skills, exclude_commands
+        return config, plugin_path, exclude_skills, exclude_commands, exclude_agents
 
     # Try standalone plugin
     config = _check_standalone_plugin(repo_path, plugin_name)
     if config:
-        return config, repo_path, exclude_skills, exclude_commands
+        return config, repo_path, exclude_skills, exclude_commands, exclude_agents
 
-    return None, None, [], []
+    return None, None, [], [], []
 
 
 def _resolve_plugin_from_local(
     local_path: str, plugin_spec: str | PluginLongForm
-) -> tuple[PluginConfig | None, Path | None, list[str], list[str]]:
+) -> tuple[PluginConfig | None, Path | None, list[str], list[str], list[str]]:
     """Resolve a plugin specification from a local path.
 
     Args:
@@ -399,11 +475,12 @@ def _resolve_plugin_from_local(
         plugin_spec: Plugin name (str) or PluginLongForm dict
 
     Returns:
-        Tuple of (PluginConfig, plugin_path, exclude_skills, exclude_commands)
-        Returns (None, None, [], []) if not resolvable
+        Tuple of (PluginConfig, plugin_path, exclude_skills, exclude_commands, exclude_agents)
+        Returns (None, None, [], [], []) if not resolvable
     """
     exclude_skills: list[str] = []
     exclude_commands: list[str] = []
+    exclude_agents: list[str] = []
     base_path = Path(local_path)
 
     if isinstance(plugin_spec, str):
@@ -414,6 +491,7 @@ def _resolve_plugin_from_local(
         explicit_path = plugin_spec.get("path")
         exclude_skills = list(plugin_spec.get("exclude_skills", []))
         exclude_commands = list(plugin_spec.get("exclude_commands", []))
+        exclude_agents = list(plugin_spec.get("exclude_agents", []))
 
     # Determine plugin path
     if explicit_path:
@@ -435,26 +513,28 @@ def _resolve_plugin_from_local(
         source_path=str(plugin_path),
         skills_paths=_get_skills_paths(plugin_json or {}),
         commands_paths=_get_commands_paths(plugin_json or {}),
+        agents_paths=_get_agents_paths(plugin_json or {}),
     )
 
-    return config, plugin_path, exclude_skills, exclude_commands
+    return config, plugin_path, exclude_skills, exclude_commands, exclude_agents
 
 
 def agent_harness_build_plugin_resources(
     sources: list[SourceConfig], cache_dir: str
 ) -> dict[str, list[dict[str, str]]]:
-    """Build lists of skills and commands from plugin-based sources config.
+    """Build lists of skills, commands, and agents from plugin-based sources config.
 
     Args:
         sources: List of source configs (git repos or local paths)
         cache_dir: Path to the cache directory for git repos
 
     Returns:
-        Dict with 'skills' and 'commands' keys, each containing a list of
+        Dict with 'skills', 'commands', and 'agents' keys, each containing a list of
         dicts with 'name', 'source', 'origin' keys
     """
     skills: list[dict[str, str]] = []
     commands: list[dict[str, str]] = []
+    agents: list[dict[str, str]] = []
 
     for source in sources:
         if "repo" in source:
@@ -465,9 +545,13 @@ def agent_harness_build_plugin_resources(
             plugins = source.get("plugins", [])
 
             for plugin_spec in plugins:
-                config, plugin_path, exclude_skills, exclude_commands = (
-                    _resolve_plugin_from_repo(repo_path, plugin_spec)
-                )
+                (
+                    config,
+                    plugin_path,
+                    exclude_skills,
+                    exclude_commands,
+                    exclude_agents,
+                ) = _resolve_plugin_from_repo(repo_path, plugin_spec)
                 if not config or not plugin_path:
                     continue
 
@@ -485,11 +569,13 @@ def agent_harness_build_plugin_resources(
                         plugin_path, skill_name, config.skills_paths, root_skill_name
                     )
                     if source_path:
-                        skills.append({
-                            "name": skill_name,
-                            "source": source_path,
-                            "origin": repo,
-                        })
+                        skills.append(
+                            {
+                                "name": skill_name,
+                                "source": source_path,
+                                "origin": repo,
+                            }
+                        )
 
                 # Discover and add commands
                 discovered_commands = _discover_commands_in_plugin(
@@ -502,11 +588,32 @@ def agent_harness_build_plugin_resources(
                         plugin_path, cmd_name, config.commands_paths
                     )
                     if source_path:
-                        commands.append({
-                            "name": cmd_name,
-                            "source": source_path,
-                            "origin": repo,
-                        })
+                        commands.append(
+                            {
+                                "name": cmd_name,
+                                "source": source_path,
+                                "origin": repo,
+                            }
+                        )
+
+                # Discover and add agents
+                discovered_agents = _discover_agents_in_plugin(
+                    plugin_path, config.agents_paths
+                )
+                for agent_name in discovered_agents:
+                    if agent_name in exclude_agents:
+                        continue
+                    source_path = _get_agent_source_path(
+                        plugin_path, agent_name, config.agents_paths
+                    )
+                    if source_path:
+                        agents.append(
+                            {
+                                "name": agent_name,
+                                "source": source_path,
+                                "origin": repo,
+                            }
+                        )
 
         elif "local" in source:
             # Local source
@@ -514,9 +621,13 @@ def agent_harness_build_plugin_resources(
             plugins = source.get("plugins", [])
 
             for plugin_spec in plugins:
-                config, plugin_path, exclude_skills, exclude_commands = (
-                    _resolve_plugin_from_local(local_path, plugin_spec)
-                )
+                (
+                    config,
+                    plugin_path,
+                    exclude_skills,
+                    exclude_commands,
+                    exclude_agents,
+                ) = _resolve_plugin_from_local(local_path, plugin_spec)
                 if not config or not plugin_path:
                     continue
 
@@ -531,11 +642,13 @@ def agent_harness_build_plugin_resources(
                         plugin_path, skill_name, config.skills_paths, config.name
                     )
                     if source_path:
-                        skills.append({
-                            "name": skill_name,
-                            "source": source_path,
-                            "origin": "local",
-                        })
+                        skills.append(
+                            {
+                                "name": skill_name,
+                                "source": source_path,
+                                "origin": "local",
+                            }
+                        )
 
                 # Discover and add commands
                 discovered_commands = _discover_commands_in_plugin(
@@ -548,13 +661,34 @@ def agent_harness_build_plugin_resources(
                         plugin_path, cmd_name, config.commands_paths
                     )
                     if source_path:
-                        commands.append({
-                            "name": cmd_name,
-                            "source": source_path,
-                            "origin": "local",
-                        })
+                        commands.append(
+                            {
+                                "name": cmd_name,
+                                "source": source_path,
+                                "origin": "local",
+                            }
+                        )
 
-    return {"skills": skills, "commands": commands}
+                # Discover and add agents
+                discovered_agents = _discover_agents_in_plugin(
+                    plugin_path, config.agents_paths
+                )
+                for agent_name in discovered_agents:
+                    if agent_name in exclude_agents:
+                        continue
+                    source_path = _get_agent_source_path(
+                        plugin_path, agent_name, config.agents_paths
+                    )
+                    if source_path:
+                        agents.append(
+                            {
+                                "name": agent_name,
+                                "source": source_path,
+                                "origin": "local",
+                            }
+                        )
+
+    return {"skills": skills, "commands": commands, "agents": agents}
 
 
 def agent_harness_get_git_sources(sources: list[SourceConfig]) -> list[dict[str, Any]]:

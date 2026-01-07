@@ -1,0 +1,18 @@
+---
+# Deploy a single agent to the target agent
+
+- name: Check if agent source exists
+  ansible.builtin.stat:
+    path: "{{ agent_harness_agent_info.source }}"
+  register: agent_harness_agent_source_stat
+
+- name: Fail if agent source not found
+  ansible.builtin.fail:
+    msg: "Agent source not found: {{ agent_harness_agent_info.source }} (from {{ agent_harness_agent_info.origin }})"
+  when: not agent_harness_agent_source_stat.stat.exists
+
+- name: Copy agent file
+  ansible.builtin.copy:
+    src: "{{ agent_harness_agent_info.source }}"
+    dest: "{{ agent_harness_agent_config.agents_dir }}/{{ agent_harness_agent_info.name }}.md"
+    mode: "0644"
