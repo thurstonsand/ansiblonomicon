@@ -27,7 +27,7 @@ Bridle (github.com/neiii/bridle) solves this with a Rust runtime that translates
 
 ## Implementation Status
 
-### Phase 1: Claude Code Only (MVP) — **IN PROGRESS**
+### Phase 1: Claude Code Only (MVP) — **COMPLETE**
 
 | Feature                                  | Status         | Notes                                             |
 | ---------------------------------------- | -------------- | ------------------------------------------------- |
@@ -40,10 +40,21 @@ Bridle (github.com/neiii/bridle) solves this with a Rust runtime that translates
 | Commands deployment                      | ✅ Done        | Sync markdown files from commands/ directories    |
 | Agents/subagents deployment              | ✅ Done        | Sync markdown files from agents/ directories      |
 | Orphan cleanup                           | ✅ Done        | Remove skills/commands/agents not in sources      |
-| MCP config merging                       | ❌ Not started |                                                   |
-| Unit tests                               | ✅ Done        | 48 tests for filter plugins                       |
+| MCP config merging                       | ⏸️ Deferred   | MCP is plugin-scoped, not skill-scoped            |
+| LSP server deployment                    | ⏸️ Deferred   | LSP is plugin-scoped, not skill-scoped            |
+| Unit tests                               | ✅ Done        | 97 tests for filter plugins                       |
 
-### Phase 2: Add Amp — Not started
+### Phase 2: Add Amp — **COMPLETE**
+
+| Feature                           | Status       | Notes                                                |
+| --------------------------------- | ------------ | ---------------------------------------------------- |
+| Amp agent config                  | ✅ Done      | Added to `vars/agents.yml`                           |
+| Per-agent targeting               | ✅ Done      | `target_agents` field in plugin spec                 |
+| Skills deployment to Amp          | ✅ Done      | Same format as Claude, rsync works unchanged         |
+| Commands deployment to Amp        | ✅ Done      | Amp uses same commands dir structure                 |
+| Skip agents for Amp               | ✅ Done      | `agents_dir: null` skips deployment/cleanup          |
+| Skill-bundled MCP (Amp-only)      | ✅ Done      | rsync copies mcp.json, Amp reads natively            |
+| Local skills backup               | ✅ Done      | `ansible/local-resources/amp-skills/`                |
 
 ### Phase 3: Add OpenCode — Not started
 
@@ -136,6 +147,22 @@ agent_harness_agents:
     name_transform: preserve
     transform_content: false
     instructions_file: CLAUDE.md
+    supports_skill_mcp: false
+
+  amp:
+    config_root: "{{ ansible_facts.env.HOME }}/.config/amp"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.config/amp/skills"
+    commands_dir: "{{ ansible_facts.env.HOME }}/.config/amp/commands"
+    agents_dir: null  # Amp does not support user-defined subagents
+    mcp_file: "{{ ansible_facts.env.HOME }}/.config/amp/settings.json"
+    mcp_format: json
+    mcp_key: amp.mcpServers
+    mcp_env_format: "${VAR}"
+    mcp_command_format: separate
+    name_transform: preserve
+    transform_content: false
+    instructions_file: AGENTS.md
+    supports_skill_mcp: true  # Amp reads mcp.json from skill directories
 ```
 
 ### Filter Plugins
@@ -170,17 +197,16 @@ The filter plugin implements Claude's plugin discovery protocol:
 
 ## Remaining Work for Phase 1
 
-### Must Have
-
-1. **MCP config merging** (`merge_mcp.yml`)
-   - Find `mcp.json` files in deployed skills
-   - Merge into `~/.claude/.mcp.json`
-   - Must be idempotent (don't duplicate entries)
-
 ### Nice to Have
 
-2. **Dry-run mode**
+1. **Dry-run mode**
    - Show what would be deployed without making changes
+
+### Deferred
+
+2. **MCP config merging** — MCP servers are a plugin-level feature, not skill-level. Since we deploy individual skills (not full plugins), MCP doesn't cleanly map. Users should configure MCP servers separately via `claude mcp add`.
+
+3. **LSP server deployment** — LSP servers are also plugin-scoped (configured via `.lsp.json` or inline in `plugin.json`). Claude Code has no user-level LSP config outside the plugin system. Users should install LSP plugins from the official marketplace (`/plugin` → Discover → search "lsp").
 
 ---
 

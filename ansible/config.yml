@@ -13,14 +13,30 @@ configure_agent_harness: true
 chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
 
 # Agent Harness configuration
+agent_harness_target_agents:
+  - claude
+  - amp
+
 agent_harness_sources:
   - repo: anthropics/claude-code
     pull: true
     plugins:
       - frontend-design
+      - name: commit-commands
+        target_agents: [claude] # commands only for Claude (testing)
+        exclude_commands:
+          - clean_gone
+
   - repo: FrancyJGLisboa/agent-skill-creator
     pull: true
     plugins:
       - name: agent-skill-creator-plugin
         exclude_skills:
           - article-to-prototype-cskill
+
+  # Amp-specific plugin
+  - local: "{{ playbook_dir }}/../../agents/amp"
+    plugins:
+      - name: local-skills
+        path: "."
+        target_agents: [amp]

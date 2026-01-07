@@ -8,9 +8,12 @@ from typing import Any
 
 from harness_filters import (
     _check_standalone_plugin,
+    _discover_agents_in_plugin,
     _discover_commands_in_plugin,
     _discover_skills_in_plugin,
     _find_plugin_in_marketplace,
+    _get_agent_source_path,
+    _get_agents_paths,
     _get_command_source_path,
     _get_commands_paths,
     _get_skill_source_path,
@@ -19,6 +22,7 @@ from harness_filters import (
     _resolve_plugin_from_local,
     _resolve_plugin_from_repo,
     agent_harness_build_plugin_resources,
+    agent_harness_filter_resources,
     agent_harness_get_git_sources,
 )
 import pytest
@@ -28,6 +32,7 @@ WriteMarketplace = Callable[[dict[str, Any]], None]
 WritePluginJson = Callable[[dict[str, Any], str], Path]
 CreateSkill = Callable[[str], Path]
 CreateCommand = Callable[[str], Path]
+CreateAgent = Callable[[str], Path]
 
 
 @pytest.fixture
@@ -83,6 +88,19 @@ def create_command(tmp_path: Path) -> CreateCommand:
         cmd_path.parent.mkdir(parents=True, exist_ok=True)
         cmd_path.write_text("# Command")
         return cmd_path
+
+    return _create
+
+
+@pytest.fixture
+def create_agent(tmp_path: Path) -> CreateAgent:
+    """Return a function to create an agent .md file at a given path."""
+
+    def _create(subpath: str) -> Path:
+        agent_path = tmp_path / subpath
+        agent_path.parent.mkdir(parents=True, exist_ok=True)
+        agent_path.write_text("# Agent")
+        return agent_path
 
     return _create
 
@@ -511,9 +529,7 @@ def test_discover_commands_in_plugin_ignores_non_md(tmp_path: Path) -> None:
 
 
 @pytest.mark.unit
-def test_get_skill_source_path_found(
-    tmp_path: Path, create_skill: CreateSkill
-) -> None:
+def test_get_skill_source_path_found(tmp_path: Path, create_skill: CreateSkill) -> None:
     create_skill("skills/my-skill")
     result = _get_skill_source_path(tmp_path, "my-skill", ["skills"], "my-plugin")
     assert result == str(tmp_path / "skills" / "my-skill")
@@ -569,14 +585,15 @@ def test_resolve_plugin_from_repo_marketplace(
     marketplace = {"plugins": [{"name": "my-plugin", "source": "./plugins/my-plugin"}]}
     (plugin_dir / "marketplace.json").write_text(json.dumps(marketplace))
 
-    config, plugin_path, exclude_skills, exclude_commands = _resolve_plugin_from_repo(
-        repo_path, "my-plugin"
-    )
-    assert config is not None
-    assert config.name == "my-plugin"
-    assert plugin_path == repo_path / "plugins" / "my-plugin"
-    assert exclude_skills == []
-    assert exclude_commands == []
+    resolved = _resolve_plugin_from_repo(repo_path, "my-plugin")
+    assert resolved.is_valid
+    assert resolved.config is not None
+    assert resolved.config.name == "my-plugin"
+    assert resolved.plugin_path == repo_path / "plugins" / "my-plugin"
+    assert resolved.exclude_skills == []
+    assert resolved.exclude_commands == []
+    assert resolved.exclude_agents == []
+    assert resolved.target_agents == []
 
 
 @pytest.mark.unit
@@ -587,25 +604,25 @@ def test_resolve_plugin_from_repo_standalone(
     plugin_dir.mkdir()
     (plugin_dir / "plugin.json").write_text(json.dumps({"name": "standalone"}))
 
-    config, plugin_path, exclude_skills, _ = _resolve_plugin_from_repo(
-        repo_path, "standalone"
-    )
-    assert config is not None
-    assert config.name == "standalone"
-    assert plugin_path == repo_path
-    assert exclude_skills == []
+    resolved = _resolve_plugin_from_repo(repo_path, "standalone")
+    assert resolved.is_valid
+    assert resolved.config is not None
+    assert resolved.config.name == "standalone"
+    assert resolved.plugin_path == repo_path
+    assert resolved.exclude_skills == []
 
 
 @pytest.mark.unit
 def test_resolve_plugin_from_repo_explicit_path(repo_path: Path) -> None:
     (repo_path / "custom" / "location").mkdir(parents=True)
 
-    config, resolved_path, _, _ = _resolve_plugin_from_repo(
+    resolved = _resolve_plugin_from_repo(
         repo_path, {"name": "explicit", "path": "custom/location"}
     )
-    assert config is not None
-    assert config.name == "explicit"
-    assert resolved_path == repo_path / "custom" / "location"
+    assert resolved.is_valid
+    assert resolved.config is not None
+    assert resolved.config.name == "explicit"
+    assert resolved.plugin_path == repo_path / "custom" / "location"
 
 
 @pytest.mark.unit
@@ -614,7 +631,7 @@ def test_resolve_plugin_from_repo_with_exclusions(repo_path: Path) -> None:
     plugin_dir.mkdir()
     (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
 
-    config, _, exclude_skills, exclude_commands = _resolve_plugin_from_repo(
+    resolved = _resolve_plugin_from_repo(
         repo_path,
         {
             "name": "my-plugin",
@@ -622,16 +639,17 @@ def test_resolve_plugin_from_repo_with_exclusions(repo_path: Path) -> None:
             "exclude_commands": ["unwanted-cmd"],
         },
     )
-    assert config is not None
-    assert exclude_skills == ["unwanted-skill"]
-    assert exclude_commands == ["unwanted-cmd"]
+    assert resolved.is_valid
+    assert resolved.exclude_skills == ["unwanted-skill"]
+    assert resolved.exclude_commands == ["unwanted-cmd"]
 
 
 @pytest.mark.unit
 def test_resolve_plugin_from_repo_not_found(repo_path: Path) -> None:
-    config, plugin_path, _, _ = _resolve_plugin_from_repo(repo_path, "nonexistent")
-    assert config is None
-    assert plugin_path is None
+    resolved = _resolve_plugin_from_repo(repo_path, "nonexistent")
+    assert not resolved.is_valid
+    assert resolved.config is None
+    assert resolved.plugin_path is None
 
 
 # =============================================================================
@@ -643,19 +661,20 @@ def test_resolve_plugin_from_repo_not_found(repo_path: Path) -> None:
 def test_resolve_plugin_from_local_explicit_path(tmp_path: Path) -> None:
     (tmp_path / "my-plugins" / "custom").mkdir(parents=True)
 
-    config, resolved_path, _, _ = _resolve_plugin_from_local(
+    resolved = _resolve_plugin_from_local(
         str(tmp_path / "my-plugins"), {"name": "custom", "path": "custom"}
     )
-    assert config is not None
-    assert config.name == "custom"
-    assert resolved_path == tmp_path / "my-plugins" / "custom"
+    assert resolved.is_valid
+    assert resolved.config is not None
+    assert resolved.config.name == "custom"
+    assert resolved.plugin_path == tmp_path / "my-plugins" / "custom"
 
 
 @pytest.mark.unit
 def test_resolve_plugin_from_local_with_exclusions(tmp_path: Path) -> None:
     (tmp_path / "plugins" / "my-plugin").mkdir(parents=True)
 
-    config, _, exclude_skills, exclude_commands = _resolve_plugin_from_local(
+    resolved = _resolve_plugin_from_local(
         str(tmp_path),
         {
             "name": "my-plugin",
@@ -663,9 +682,9 @@ def test_resolve_plugin_from_local_with_exclusions(tmp_path: Path) -> None:
             "exclude_commands": ["skip-cmd"],
         },
     )
-    assert config is not None
-    assert exclude_skills == ["skip-skill"]
-    assert exclude_commands == ["skip-cmd"]
+    assert resolved.is_valid
+    assert resolved.exclude_skills == ["skip-skill"]
+    assert resolved.exclude_commands == ["skip-cmd"]
 
 
 # =============================================================================
@@ -707,7 +726,7 @@ def test_agent_harness_get_git_sources_preserves_fields() -> None:
 @pytest.mark.unit
 def test_agent_harness_build_plugin_resources_empty(cache_dir: Path) -> None:
     result = agent_harness_build_plugin_resources([], str(cache_dir))
-    assert result == {"skills": [], "commands": []}
+    assert result == {"skills": [], "commands": [], "agents": []}
 
 
 # --- Git source tests ---
@@ -973,7 +992,7 @@ def test_agent_harness_build_plugin_resources_unresolvable_skipped(
 ) -> None:
     sources: list[Any] = [{"repo": "owner/repo", "plugins": ["nonexistent"]}]
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
-    assert result == {"skills": [], "commands": []}
+    assert result == {"skills": [], "commands": [], "agents": []}
 
 
 @pytest.mark.unit
@@ -993,15 +1012,475 @@ def test_agent_harness_build_plugin_resources_multiple_plugins_same_source(
 
     # Create skills in each plugin
     for plugin_name in ["plugin-a", "plugin-b"]:
-        skill_dir = repo_path / "plugins" / plugin_name / "skills" / f"{plugin_name}-skill"
+        skill_dir = (
+            repo_path / "plugins" / plugin_name / "skills" / f"{plugin_name}-skill"
+        )
         skill_dir.mkdir(parents=True)
         (skill_dir / "SKILL.md").write_text(f"# {plugin_name} skill")
 
-    sources: list[Any] = [
-        {"repo": "owner/repo", "plugins": ["plugin-a", "plugin-b"]}
-    ]
+    sources: list[Any] = [{"repo": "owner/repo", "plugins": ["plugin-a", "plugin-b"]}]
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
 
     assert len(result["skills"]) == 2
     names = sorted(s["name"] for s in result["skills"])
     assert names == ["plugin-a-skill", "plugin-b-skill"]
+
+
+# =============================================================================
+# Tests for _get_agents_paths
+# =============================================================================
+
+
+@pytest.mark.parametrize(
+    ("config", "expected"),
+    [
+        ({}, ["agents"]),
+        ({"agents": None}, ["agents"]),
+        ({"agents": "custom"}, ["custom"]),
+        ({"agents": "./custom"}, ["custom"]),
+        ({"agents": ["a", "b"]}, ["a", "b"]),
+        ({"agents": ["./a", "./b"]}, ["a", "b"]),
+    ],
+    ids=[
+        "empty-config",
+        "explicit-none",
+        "string",
+        "string-with-prefix",
+        "list",
+        "list-with-prefix",
+    ],
+)
+@pytest.mark.unit
+def test_get_agents_paths(config: dict[str, Any], expected: list[str]) -> None:
+    assert _get_agents_paths(config) == expected
+
+
+# =============================================================================
+# Tests for _discover_agents_in_plugin
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_discover_agents_in_plugin_empty(tmp_path: Path) -> None:
+    result = _discover_agents_in_plugin(tmp_path, ["agents"])
+    assert result == []
+
+
+@pytest.mark.unit
+def test_discover_agents_in_plugin_finds_md_files(
+    tmp_path: Path, create_agent: CreateAgent
+) -> None:
+    create_agent("agents/agent-a.md")
+    create_agent("agents/agent-b.md")
+    result = _discover_agents_in_plugin(tmp_path, ["agents"])
+    assert sorted(result) == ["agent-a", "agent-b"]
+
+
+@pytest.mark.unit
+def test_discover_agents_in_plugin_multiple_paths(
+    tmp_path: Path, create_agent: CreateAgent
+) -> None:
+    create_agent("agents/agent-a.md")
+    create_agent("custom-agents/agent-b.md")
+    result = _discover_agents_in_plugin(tmp_path, ["agents", "custom-agents"])
+    assert sorted(result) == ["agent-a", "agent-b"]
+
+
+@pytest.mark.unit
+def test_discover_agents_in_plugin_ignores_non_md(tmp_path: Path) -> None:
+    (tmp_path / "agents").mkdir()
+    (tmp_path / "agents" / "script.sh").write_text("#!/bin/bash")
+    (tmp_path / "agents" / "config.json").write_text("{}")
+    result = _discover_agents_in_plugin(tmp_path, ["agents"])
+    assert result == []
+
+
+# =============================================================================
+# Tests for _get_agent_source_path
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_get_agent_source_path_found(tmp_path: Path, create_agent: CreateAgent) -> None:
+    create_agent("agents/my-agent.md")
+    result = _get_agent_source_path(tmp_path, "my-agent", ["agents"])
+    assert result == str(tmp_path / "agents" / "my-agent.md")
+
+
+@pytest.mark.unit
+def test_get_agent_source_path_not_found(tmp_path: Path) -> None:
+    (tmp_path / "agents").mkdir()
+    result = _get_agent_source_path(tmp_path, "missing", ["agents"])
+    assert result is None
+
+
+# =============================================================================
+# Tests for agents in _resolve_plugin_from_repo
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_repo_with_exclude_agents(repo_path: Path) -> None:
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    resolved = _resolve_plugin_from_repo(
+        repo_path, {"name": "my-plugin", "exclude_agents": ["skip-agent"]}
+    )
+    assert resolved.is_valid
+    assert resolved.exclude_agents == ["skip-agent"]
+
+
+# =============================================================================
+# Tests for agents in _resolve_plugin_from_local
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_local_with_exclude_agents(tmp_path: Path) -> None:
+    local_path = tmp_path / "local"
+    plugin_path = local_path / "plugins" / "my-plugin"
+    plugin_path.mkdir(parents=True)
+
+    resolved = _resolve_plugin_from_local(
+        str(local_path), {"name": "my-plugin", "exclude_agents": ["skip-agent"]}
+    )
+    assert resolved.is_valid
+    assert resolved.exclude_agents == ["skip-agent"]
+
+
+# =============================================================================
+# Tests for agents in agent_harness_build_plugin_resources
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_git_discovers_agents(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    # Setup standalone plugin
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    # Create agents
+    agent_dir = repo_path / "agents"
+    agent_dir.mkdir()
+    (agent_dir / "agent-a.md").write_text("# Agent A")
+    (agent_dir / "agent-b.md").write_text("# Agent B")
+
+    sources: list[Any] = [{"repo": "owner/repo", "plugins": ["my-plugin"]}]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["agents"]) == 2
+    names = sorted(a["name"] for a in result["agents"])
+    assert names == ["agent-a", "agent-b"]
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_git_with_exclude_agents(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    # Setup standalone plugin
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    # Create agents
+    agent_dir = repo_path / "agents"
+    agent_dir.mkdir()
+    (agent_dir / "keep-agent.md").write_text("# Keep")
+    (agent_dir / "skip-agent.md").write_text("# Skip")
+
+    sources: list[Any] = [
+        {
+            "repo": "owner/repo",
+            "plugins": [{"name": "my-plugin", "exclude_agents": ["skip-agent"]}],
+        }
+    ]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["agents"]) == 1
+    assert result["agents"][0]["name"] == "keep-agent"
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_local_discovers_agents(
+    tmp_path: Path, cache_dir: Path
+) -> None:
+    # Create local plugin structure
+    local_path = tmp_path / "local"
+    plugin_path = local_path / "plugins" / "my-plugin"
+    agent_dir = plugin_path / "agents"
+    agent_dir.mkdir(parents=True)
+    (agent_dir / "local-agent.md").write_text("# Local Agent")
+
+    sources: list[Any] = [{"local": str(local_path), "plugins": ["my-plugin"]}]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["agents"]) == 1
+    assert result["agents"][0]["name"] == "local-agent"
+    assert result["agents"][0]["origin"] == "local"
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_local_with_exclude_agents(
+    tmp_path: Path, cache_dir: Path
+) -> None:
+    # Create local plugin structure
+    local_path = tmp_path / "local"
+    plugin_path = local_path / "plugins" / "my-plugin"
+    agent_dir = plugin_path / "agents"
+    agent_dir.mkdir(parents=True)
+    (agent_dir / "keep.md").write_text("# Keep")
+    (agent_dir / "skip.md").write_text("# Skip")
+
+    sources: list[Any] = [
+        {
+            "local": str(local_path),
+            "plugins": [{"name": "my-plugin", "exclude_agents": ["skip"]}],
+        }
+    ]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["agents"]) == 1
+    assert result["agents"][0]["name"] == "keep"
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_mixed_all_types(
+    tmp_path: Path, cache_dir: Path
+) -> None:
+    # Create local plugin with skills, commands, and agents
+    local_path = tmp_path / "local"
+    plugin_path = local_path / "plugins" / "mixed-plugin"
+
+    skill_dir = plugin_path / "skills" / "my-skill"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text("# Skill")
+
+    cmd_dir = plugin_path / "commands"
+    cmd_dir.mkdir(parents=True)
+    (cmd_dir / "my-cmd.md").write_text("# Command")
+
+    agent_dir = plugin_path / "agents"
+    agent_dir.mkdir(parents=True)
+    (agent_dir / "my-agent.md").write_text("# Agent")
+
+    sources: list[Any] = [{"local": str(local_path), "plugins": ["mixed-plugin"]}]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["skills"]) == 1
+    assert result["skills"][0]["name"] == "my-skill"
+    assert len(result["commands"]) == 1
+    assert result["commands"][0]["name"] == "my-cmd"
+    assert len(result["agents"]) == 1
+    assert result["agents"][0]["name"] == "my-agent"
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_empty_returns_agents_key(
+    cache_dir: Path,
+) -> None:
+    sources: list[Any] = [{"repo": "owner/repo", "plugins": ["nonexistent"]}]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+    assert "agents" in result
+    assert result["agents"] == []
+
+
+# =============================================================================
+# Tests for target_agents in _resolve_plugin_from_repo
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_repo_with_target_agents(repo_path: Path) -> None:
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    resolved = _resolve_plugin_from_repo(
+        repo_path, {"name": "my-plugin", "target_agents": ["claude", "amp"]}
+    )
+    assert resolved.is_valid
+    assert resolved.target_agents == ["claude", "amp"]
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_repo_without_target_agents(repo_path: Path) -> None:
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    resolved = _resolve_plugin_from_repo(repo_path, {"name": "my-plugin"})
+    assert resolved.is_valid
+    assert resolved.target_agents == []
+
+
+# =============================================================================
+# Tests for target_agents in _resolve_plugin_from_local
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_local_with_target_agents(tmp_path: Path) -> None:
+    local_path = tmp_path / "local"
+    plugin_path = local_path / "plugins" / "my-plugin"
+    plugin_path.mkdir(parents=True)
+
+    resolved = _resolve_plugin_from_local(
+        str(local_path), {"name": "my-plugin", "target_agents": ["amp"]}
+    )
+    assert resolved.is_valid
+    assert resolved.target_agents == ["amp"]
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_local_without_target_agents(tmp_path: Path) -> None:
+    local_path = tmp_path / "local"
+    plugin_path = local_path / "plugins" / "my-plugin"
+    plugin_path.mkdir(parents=True)
+
+    resolved = _resolve_plugin_from_local(str(local_path), {"name": "my-plugin"})
+    assert resolved.is_valid
+    assert resolved.target_agents == []
+
+
+# =============================================================================
+# Tests for target_agents in agent_harness_build_plugin_resources
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_includes_target_agents(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    # Setup standalone plugin with a skill
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    skills_dir = repo_path / "skills" / "my-skill"
+    skills_dir.mkdir(parents=True)
+    (skills_dir / "SKILL.md").write_text("---\nname: my-skill\n---\n# My Skill")
+
+    sources: list[Any] = [
+        {
+            "repo": "owner/repo",
+            "plugins": [{"name": "my-plugin", "target_agents": ["claude"]}],
+        }
+    ]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["skills"]) == 1
+    assert result["skills"][0]["target_agents"] == ["claude"]
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_empty_target_agents(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    # Setup standalone plugin with a skill
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    skills_dir = repo_path / "skills" / "my-skill"
+    skills_dir.mkdir(parents=True)
+    (skills_dir / "SKILL.md").write_text("---\nname: my-skill\n---\n# My Skill")
+
+    sources: list[Any] = [
+        {
+            "repo": "owner/repo",
+            "plugins": [{"name": "my-plugin"}],  # No target_agents specified
+        }
+    ]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["skills"]) == 1
+    assert result["skills"][0]["target_agents"] == []
+
+
+# =============================================================================
+# Tests for agent_harness_filter_resources
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_agent_harness_filter_resources_empty_target_agents() -> None:
+    """Resources with empty target_agents should be included for all agents."""
+    resources: list[Any] = [
+        {"name": "skill-a", "source": "/path/a", "origin": "repo", "target_agents": []},
+    ]
+    result = agent_harness_filter_resources(resources, "claude")
+    assert len(result) == 1
+    assert result[0]["name"] == "skill-a"
+
+
+@pytest.mark.unit
+def test_agent_harness_filter_resources_matching_agent() -> None:
+    """Resources with matching target_agents should be included."""
+    resources: list[Any] = [
+        {
+            "name": "skill-a",
+            "source": "/path/a",
+            "origin": "repo",
+            "target_agents": ["claude", "amp"],
+        },
+    ]
+    result = agent_harness_filter_resources(resources, "claude")
+    assert len(result) == 1
+    assert result[0]["name"] == "skill-a"
+
+
+@pytest.mark.unit
+def test_agent_harness_filter_resources_non_matching_agent() -> None:
+    """Resources with non-matching target_agents should be excluded."""
+    resources: list[Any] = [
+        {
+            "name": "skill-a",
+            "source": "/path/a",
+            "origin": "repo",
+            "target_agents": ["amp"],
+        },
+    ]
+    result = agent_harness_filter_resources(resources, "claude")
+    assert len(result) == 0
+
+
+@pytest.mark.unit
+def test_agent_harness_filter_resources_mixed() -> None:
+    """Filter correctly handles mixed resources."""
+    resources: list[Any] = [
+        {"name": "for-all", "source": "/a", "origin": "repo", "target_agents": []},
+        {
+            "name": "for-claude",
+            "source": "/b",
+            "origin": "repo",
+            "target_agents": ["claude"],
+        },
+        {"name": "for-amp", "source": "/c", "origin": "repo", "target_agents": ["amp"]},
+        {
+            "name": "for-both",
+            "source": "/d",
+            "origin": "repo",
+            "target_agents": ["claude", "amp"],
+        },
+    ]
+
+    claude_result = agent_harness_filter_resources(resources, "claude")
+    assert len(claude_result) == 3
+    names = [r["name"] for r in claude_result]
+    assert "for-all" in names
+    assert "for-claude" in names
+    assert "for-both" in names
+    assert "for-amp" not in names
+
+    amp_result = agent_harness_filter_resources(resources, "amp")
+    assert len(amp_result) == 3
+    names = [r["name"] for r in amp_result]
+    assert "for-all" in names
+    assert "for-amp" in names
+    assert "for-both" in names
+    assert "for-claude" not in names

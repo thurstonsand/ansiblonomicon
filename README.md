@@ -39,6 +39,7 @@ Interactive sudo still uses TouchID as normal.
 │       └── truenas.yml      # TrueNAS playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
+├── agents/                   # Local AI agent skills (source for agent_harness role)
 ├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 ├── wrangler/                 # Cloudflare Workers (deployed via wrangler)
 └── scripts/

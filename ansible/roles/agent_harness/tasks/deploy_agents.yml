@@ -1,20 +1,30 @@
 ---
 # Deploy agents to a target agent
+# Skipped if the target agent doesn't support agents (agents_dir is null)
 
 - name: Set agent config
   ansible.builtin.set_fact:
     agent_harness_agent_config: "{{ agent_harness_agents[agent_harness_target_agent] }}"
 
-- name: Ensure agents directory exists
-  ansible.builtin.file:
-    path: "{{ agent_harness_agent_config.agents_dir }}"
-    state: directory
-    mode: "0755"
-
 - name: Deploy agents
-  ansible.builtin.include_tasks: deploy_single_agent.yml
-  loop: "{{ agent_harness_plugin_resources.agents }}"
-  loop_control:
-    loop_var: agent_harness_agent_info
-    label: "{{ agent_harness_agent_info.name }}"
-  when: agent_harness_plugin_resources.agents | length > 0
+  when: agent_harness_agent_config.agents_dir is not none
+  block:
+    - name: Build agent-specific agents list
+      ansible.builtin.set_fact:
+        agent_harness_agent_specific_agents: >-
+          {{ agent_harness_plugin_resources.agents
+             | agent_harness_filter_resources(agent_harness_target_agent) }}
+
+    - name: Ensure agents directory exists
+      ansible.builtin.file:
+        path: "{{ agent_harness_agent_config.agents_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy agent files
+      ansible.builtin.include_tasks: deploy_single_agent.yml
+      loop: "{{ agent_harness_agent_specific_agents }}"
+      loop_control:
+        loop_var: agent_harness_agent_info
+        label: "{{ agent_harness_agent_info.name }}"
+      when: agent_harness_agent_specific_agents | length > 0

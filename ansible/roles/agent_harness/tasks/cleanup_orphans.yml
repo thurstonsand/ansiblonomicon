@@ -8,6 +8,12 @@
 
 # --- Skills cleanup ---
 
+- name: Build agent-specific skills list for cleanup
+  ansible.builtin.set_fact:
+    agent_harness_agent_specific_skills: >-
+      {{ agent_harness_plugin_resources.skills
+         | agent_harness_filter_resources(agent_harness_target_agent) }}
+
 - name: Find existing skills in destination
   ansible.builtin.find:
     paths: "{{ agent_harness_agent_config.skills_dir }}"
@@ -17,7 +23,7 @@
 
 - name: Build expected skills list
   ansible.builtin.set_fact:
-    agent_harness_expected_skills: "{{ agent_harness_plugin_resources.skills | map(attribute='name') | list }}"
+    agent_harness_expected_skills: "{{ agent_harness_agent_specific_skills | map(attribute='name') | list }}"
 
 - name: Identify orphaned skills
   ansible.builtin.set_fact:
@@ -36,6 +42,12 @@
 
 # --- Commands cleanup ---
 
+- name: Build agent-specific commands list for cleanup
+  ansible.builtin.set_fact:
+    agent_harness_agent_specific_commands: >-
+      {{ agent_harness_plugin_resources.commands
+         | agent_harness_filter_resources(agent_harness_target_agent) }}
+
 - name: Find existing commands in destination
   ansible.builtin.find:
     paths: "{{ agent_harness_agent_config.commands_dir }}"
@@ -46,7 +58,7 @@
 
 - name: Build expected commands list (with .md extension)
   ansible.builtin.set_fact:
-    agent_harness_expected_commands: "{{ agent_harness_plugin_resources.commands | map(attribute='name') | map('regex_replace', '$', '.md') | list }}"
+    agent_harness_expected_commands: "{{ agent_harness_agent_specific_commands | map(attribute='name') | map('regex_replace', '$', '.md') | list }}"
 
 - name: Identify orphaned commands
   ansible.builtin.set_fact:
@@ -64,30 +76,40 @@
   when: agent_harness_orphaned_commands | length > 0
 
 # --- Agents cleanup ---
+# Skipped if the target agent doesn't support agents (agents_dir is null)
 
-- name: Find existing agents in destination
-  ansible.builtin.find:
-    paths: "{{ agent_harness_agent_config.agents_dir }}"
-    patterns: "*.md"
-    file_type: file
-    recurse: false
-  register: agent_harness_existing_agents
+- name: Cleanup orphaned agents
+  when: agent_harness_agent_config.agents_dir is not none
+  block:
+    - name: Build agent-specific agents list for cleanup
+      ansible.builtin.set_fact:
+        agent_harness_agent_specific_agents: >-
+          {{ agent_harness_plugin_resources.agents
+             | agent_harness_filter_resources(agent_harness_target_agent) }}
 
-- name: Build expected agents list (with .md extension)
-  ansible.builtin.set_fact:
-    agent_harness_expected_agents: "{{ agent_harness_plugin_resources.agents | map(attribute='name') | map('regex_replace', '$', '.md') | list }}"
+    - name: Find existing agents in destination
+      ansible.builtin.find:
+        paths: "{{ agent_harness_agent_config.agents_dir }}"
+        patterns: "*.md"
+        file_type: file
+        recurse: false
+      register: agent_harness_existing_agents
 
-- name: Identify orphaned agents
-  ansible.builtin.set_fact:
-    agent_harness_orphaned_agents: >-
-      {{ agent_harness_existing_agents.files
-         | map(attribute='path')
-         | map('basename')
-         | difference(agent_harness_expected_agents) }}
+    - name: Build expected agents list (with .md extension)
+      ansible.builtin.set_fact:
+        agent_harness_expected_agents: "{{ agent_harness_agent_specific_agents | map(attribute='name') | map('regex_replace', '$', '.md') | list }}"
 
-- name: Remove orphaned agents
-  ansible.builtin.file:
-    path: "{{ agent_harness_agent_config.agents_dir }}/{{ item }}"
-    state: absent
-  loop: "{{ agent_harness_orphaned_agents }}"
-  when: agent_harness_orphaned_agents | length > 0
+    - name: Identify orphaned agents
+      ansible.builtin.set_fact:
+        agent_harness_orphaned_agents: >-
+          {{ agent_harness_existing_agents.files
+             | map(attribute='path')
+             | map('basename')
+             | difference(agent_harness_expected_agents) }}
+
+    - name: Remove orphaned agents
+      ansible.builtin.file:
+        path: "{{ agent_harness_agent_config.agents_dir }}/{{ item }}"
+        state: absent
+      loop: "{{ agent_harness_orphaned_agents }}"
+      when: agent_harness_orphaned_agents | length > 0

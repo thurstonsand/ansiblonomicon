@@ -5,6 +5,12 @@
   ansible.builtin.set_fact:
     agent_harness_agent_config: "{{ agent_harness_agents[agent_harness_target_agent] }}"
 
+- name: Build agent-specific skills list
+  ansible.builtin.set_fact:
+    agent_harness_agent_specific_skills: >-
+      {{ agent_harness_plugin_resources.skills
+         | agent_harness_filter_resources(agent_harness_target_agent) }}
+
 - name: Ensure skills directory exists
   ansible.builtin.file:
     path: "{{ agent_harness_agent_config.skills_dir }}"
@@ -13,8 +19,8 @@
 
 - name: Deploy skills
   ansible.builtin.include_tasks: deploy_single_skill.yml
-  loop: "{{ agent_harness_plugin_resources.skills }}"
+  loop: "{{ agent_harness_agent_specific_skills }}"
   loop_control:
     loop_var: agent_harness_skill_info
     label: "{{ agent_harness_skill_info.name }}"
-  when: agent_harness_plugin_resources.skills | length > 0
+  when: agent_harness_agent_specific_skills | length > 0

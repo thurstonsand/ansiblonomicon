@@ -15,3 +15,19 @@ agent_harness_agents:
     name_transform: preserve
     transform_content: false
     instructions_file: CLAUDE.md
+    supports_skill_mcp: false
+
+  amp:
+    config_root: "{{ ansible_facts.env.HOME }}/.config/amp"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.config/amp/skills"
+    commands_dir: "{{ ansible_facts.env.HOME }}/.config/amp/commands"
+    agents_dir: null # Amp does not support user-defined subagents
+    mcp_file: "{{ ansible_facts.env.HOME }}/.config/amp/settings.json"
+    mcp_format: json
+    mcp_key: amp.mcpServers
+    mcp_env_format: "${VAR}"
+    mcp_command_format: separate
+    name_transform: preserve
+    transform_content: false
+    instructions_file: AGENTS.md
+    supports_skill_mcp: true

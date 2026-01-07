@@ -43,6 +43,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 - `wrangler/` — Cloudflare Workers (deployed via wrangler, not Terraform)
 - `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
+- `agents/` — Local AI agent skills deployed via `agent_harness` role
 
 ## TrueNAS Docker Directory Layout
 
