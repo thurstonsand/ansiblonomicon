@@ -189,6 +189,14 @@
       when: configure_chezmoi | default(true)
       tags: ["chezmoi", "dotfiles"]
 
+    - name: Deploy AI agent resources
+      ansible.builtin.include_role:
+        name: agent_harness
+        apply:
+          tags: ["agent-harness"]
+      when: configure_agent_harness | default(true)
+      tags: ["agent-harness"]
+
     - name: Placeholder - Arch Linux tasks
       ansible.builtin.debug:
         msg: "Ready for Arch Linux configuration (pacman: {{ configure_pacman | default(false) }})"

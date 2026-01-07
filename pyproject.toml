@@ -154,6 +154,7 @@ dev = [
   "basedpyright>=1.31.7",
   "mypy>=1.19.1",
   "json-with-comments>=1.2.10",
+  "pytest>=9.0.2",
 ]
 
 # Ruff configuration
@@ -191,8 +192,9 @@ indent-style = "space"
 
 # Basedpyright configuration
 [tool.basedpyright]
-include = ["ansible/collections/ansible_collections/local"]
-exclude = ["**/node_modules", "**/__pycache__", ".venv", "build", "dist"]
+exclude = ["**/node_modules", "**/__pycache__", ".venv", "build", "dist", "stubs"]
+# Ansible filter plugins aren't proper Python packages; this lets tests import them
+extraPaths = ["ansible/roles/agent_harness/filter_plugins"]
 stubPath = "stubs"
 typeCheckingMode = "strict"
 pythonVersion = "3.12"
@@ -201,3 +203,12 @@ reportMissingImports = "error"
 reportMissingTypeStubs = "error"
 reportUnusedImport = "warning"
 reportUnusedVariable = "warning"
+
+[tool.pytest.ini_options]
+minversion = "7.0"
+testpaths = ["ansible/roles/agent_harness/tests"]
+addopts = "-ra -q --tb=short --strict-markers"
+filterwarnings = ["error"]
+markers = [
+    "unit: marks tests as unit tests (fast, no external dependencies)",
+]

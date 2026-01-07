@@ -1,0 +1,17 @@
+---
+# Agent-specific configuration
+
+agent_harness_agents:
+  claude:
+    config_root: "{{ ansible_facts.env.HOME }}/.claude"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.claude/skills"
+    commands_dir: "{{ ansible_facts.env.HOME }}/.claude/commands"
+    agents_dir: "{{ ansible_facts.env.HOME }}/.claude/agents"
+    mcp_file: "{{ ansible_facts.env.HOME }}/.claude/.mcp.json"
+    mcp_format: json
+    mcp_key: mcpServers
+    mcp_env_format: "${VAR}"
+    mcp_command_format: separate
+    name_transform: preserve
+    transform_content: false
+    instructions_file: CLAUDE.md

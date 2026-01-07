@@ -1,0 +1,31 @@
+---
+# Agent Harness - Deploy AI agent skills/commands/agents
+
+- name: Include agent configuration
+  ansible.builtin.include_vars: agents.yml
+
+- name: Clone git repositories
+  ansible.builtin.include_tasks: clone_git_repos.yml
+  when: (agent_harness_sources | agent_harness_get_git_sources) | length > 0
+
+- name: Build plugin resources from all sources
+  ansible.builtin.set_fact:
+    agent_harness_plugin_resources: "{{ agent_harness_sources | agent_harness_build_plugin_resources(agent_harness_cache_dir) }}"
+
+- name: Deploy skills to target agents
+  ansible.builtin.include_tasks: deploy_skills.yml
+  loop: "{{ agent_harness_target_agents }}"
+  loop_control:
+    loop_var: agent_harness_target_agent
+
+- name: Deploy commands to target agents
+  ansible.builtin.include_tasks: deploy_commands.yml
+  loop: "{{ agent_harness_target_agents }}"
+  loop_control:
+    loop_var: agent_harness_target_agent
+
+- name: Cleanup orphaned skills and commands
+  ansible.builtin.include_tasks: cleanup_orphans.yml
+  loop: "{{ agent_harness_target_agents }}"
+  loop_control:
+    loop_var: agent_harness_target_agent

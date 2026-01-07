@@ -1,0 +1,33 @@
+---
+# Which agents to deploy to
+agent_harness_target_agents:
+  - claude
+
+# Sources for plugins containing skills/commands
+# Supports both git repos and local paths
+agent_harness_sources: []
+#   # Git sources - clone from GitHub
+#   - repo: anthropics/claude-code
+#     pull: false  # override global pull setting per-repo
+#     plugins:
+#       - frontend-design                    # short form: enable entire plugin
+#       - name: memory                       # long form: with exclusions
+#         exclude_skills: [unwanted-skill]
+#         exclude_commands: [unwanted-cmd]
+#       - path: plugins/custom-plugin        # explicit path to plugin dir
+#
+#   # Local sources - use existing directory
+#   - local: "{{ playbook_dir }}/../ai-resources"
+#     plugins:
+#       - my-plugin                          # short form: plugins/{name}/
+#       - name: another-plugin
+#         path: custom/path/to/plugin
+#         exclude_skills: [skip-this]
+
+# Git update behavior (can be overridden per-source with 'pull' key)
+# false (default): clone if missing, never pull (fast, predictable)
+# true: always pull latest (use with -e agent_harness_update=true)
+agent_harness_update: false
+
+# Where to cache git repos
+agent_harness_cache_dir: "{{ ansible_facts.env.HOME }}/.cache/ansiblonomicon-harness"

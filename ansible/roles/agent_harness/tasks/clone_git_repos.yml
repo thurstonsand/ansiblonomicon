@@ -1,0 +1,19 @@
+---
+# Clone git repositories containing skills
+
+- name: Ensure cache directory exists
+  ansible.builtin.file:
+    path: "{{ agent_harness_cache_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Clone skill repositories # noqa: latest[git]
+  ansible.builtin.git:
+    repo: "https://github.com/{{ item.repo }}.git"
+    dest: "{{ agent_harness_cache_dir }}/{{ item.repo | replace('/', '--') }}"
+    update: "{{ item.pull }}"
+    depth: 1
+    version: HEAD
+  loop: "{{ agent_harness_sources | agent_harness_get_git_sources }}"
+  loop_control:
+    label: "{{ item.repo }}"

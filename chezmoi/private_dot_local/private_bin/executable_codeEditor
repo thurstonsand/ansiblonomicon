@@ -1,0 +1,38 @@
+#!/bin/bash
+# Smart editor wrapper - detects IDE terminal and uses matching editor,
+# otherwise falls back to vim
+#
+# Bundle IDs:
+#   com.microsoft.VSCode         - VS Code
+#   com.microsoft.VSCodeInsiders - VS Code Insiders
+#   com.todesktop.230313mzl4w4u92 - Cursor
+#   com.exafunction.windsurf     - Windsurf
+#   com.google.antigravity       - Antigravity
+#   dev.zed.Zed                  - Zed
+
+case "$__CFBundleIdentifier" in
+  com.microsoft.VSCode)
+    exec code "$@" ;;
+  com.microsoft.VSCodeInsiders)
+    exec code-insiders "$@" ;;
+  com.todesktop.*)
+    exec cursor "$@" ;;
+  com.exafunction.windsurf)
+    exec windsurf "$@" ;;
+  com.google.antigravity)
+    exec antigravity "$@" ;;
+  dev.zed.Zed)
+    exec zed "$@" ;;
+  *)
+    # Also check VSCODE env vars for nested terminals
+    if [[ "$TERM_PROGRAM" == "vscode" ]] || [[ -n "$VSCODE_GIT_ASKPASS_NODE" ]]; then
+      exec code "$@"
+    fi
+    # vim blocks by default, strip --wait flag
+    args=()
+    for arg in "$@"; do
+      [[ "$arg" != "--wait" ]] && args+=("$arg")
+    done
+    exec vim "${args[@]}"
+    ;;
+esac

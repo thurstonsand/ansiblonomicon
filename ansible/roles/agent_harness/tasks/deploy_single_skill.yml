@@ -1,0 +1,24 @@
+---
+# Deploy a single skill to the target agent
+
+- name: Check if skill source exists
+  ansible.builtin.stat:
+    path: "{{ agent_harness_skill_info.source }}"
+  register: agent_harness_skill_source_stat
+
+- name: Fail if skill source not found
+  ansible.builtin.fail:
+    msg: "Skill source not found: {{ agent_harness_skill_info.source }} (from {{ agent_harness_skill_info.repo }})"
+  when: not agent_harness_skill_source_stat.stat.exists
+
+- name: Sync skill directory
+  ansible.posix.synchronize:
+    src: "{{ agent_harness_skill_info.source }}/"
+    dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/"
+    delete: true
+    recursive: true
+    checksum: true
+    rsync_opts:
+      - "--exclude=.git"
+      - "--exclude=.claude-plugin"
+  delegate_to: localhost

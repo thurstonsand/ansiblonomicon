@@ -7,6 +7,20 @@ configure_user: thurstonsand
 # Feature flags (all platforms)
 configure_dotfiles: true
 configure_chezmoi: true
+configure_agent_harness: true
 
 # Chezmoi configuration
 chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
+
+# Agent Harness configuration
+agent_harness_sources:
+  - repo: anthropics/claude-code
+    pull: true
+    plugins:
+      - frontend-design
+  - repo: FrancyJGLisboa/agent-skill-creator
+    pull: true
+    plugins:
+      - name: agent-skill-creator-plugin
+        exclude_skills:
+          - article-to-prototype-cskill

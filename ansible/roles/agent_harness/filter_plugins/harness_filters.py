@@ -1,0 +1,579 @@
+"""Filter plugins for agent_harness role."""
+
+from dataclasses import dataclass, field
+import json
+from pathlib import Path
+from typing import Any, TypedDict
+
+
+class PluginLongForm(TypedDict, total=False):
+    """Long form plugin config with optional exclusions."""
+
+    name: str
+    path: str
+    exclude_skills: list[str]
+    exclude_commands: list[str]
+
+
+@dataclass
+class GitSourceConfig:
+    """Configuration for a git-based source."""
+
+    repo: str
+    pull: bool = True
+    plugins: list[str | PluginLongForm] = field(default_factory=list)
+
+    @classmethod
+    def from_dict(cls, d: dict[str, Any]) -> "GitSourceConfig":
+        """Create from a raw dict (e.g., from Ansible YAML)."""
+        return cls(
+            repo=d["repo"],
+            pull=d.get("pull", True),
+            plugins=list(d.get("plugins", [])),
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to plain dict for Ansible (which can't serialize dataclasses)."""
+        return {
+            "repo": self.repo,
+            "pull": self.pull,
+            "plugins": list(self.plugins),
+        }
+
+
+SourceConfig = dict[str, Any]  # Union of git/local source dicts from Ansible
+
+
+@dataclass
+class PluginConfig:
+    """Unified plugin configuration from marketplace entry or plugin.json."""
+
+    name: str
+    source_path: str  # path to plugin directory (relative to repo root or absolute)
+    skills_paths: list[str]  # paths to look for skills (relative to plugin root)
+    commands_paths: list[str]  # paths to look for commands (relative to plugin root)
+
+
+def _get_skills_paths(config: dict[str, str | list[str] | None]) -> list[str]:
+    """Extract skills paths from a plugin config dict.
+
+    Args:
+        config: Plugin config dict (from marketplace entry or plugin.json)
+
+    Returns:
+        List of normalized skill paths, defaults to ["skills"]
+    """
+    skills_field: str | list[str] | None = config.get("skills")
+    if skills_field is None:
+        return ["skills"]
+
+    if isinstance(skills_field, str):
+        return [skills_field.lstrip("./")]
+
+    # Must be list[str]
+    return [p.lstrip("./") for p in skills_field]
+
+
+def _get_commands_paths(config: dict[str, str | list[str] | None]) -> list[str]:
+    """Extract commands paths from a plugin config dict.
+
+    Args:
+        config: Plugin config dict (from marketplace entry or plugin.json)
+
+    Returns:
+        List of normalized command paths, defaults to ["commands"]
+    """
+    commands_field: str | list[str] | None = config.get("commands")
+    if commands_field is None:
+        return ["commands"]
+
+    if isinstance(commands_field, str):
+        return [commands_field.lstrip("./")]
+
+    return [p.lstrip("./") for p in commands_field]
+
+
+def _load_plugin_json(plugin_path: Path) -> dict[str, str | list[str] | None] | None:
+    """Load and parse plugin.json from a plugin directory.
+
+    Args:
+        plugin_path: Path to the plugin directory
+
+    Returns:
+        Parsed plugin config dict, or None if not found/invalid
+    """
+    plugin_json_path = plugin_path / ".claude-plugin" / "plugin.json"
+    if not plugin_json_path.exists():
+        return None
+
+    try:
+        with plugin_json_path.open() as f:
+            return json.load(f)  # type: ignore[no-any-return]
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def _find_plugin_in_marketplace(
+    repo_path: Path, plugin_name: str
+) -> PluginConfig | None:
+    """Look up a plugin by name in marketplace.json.
+
+    Handles the `strict` field:
+    - strict: true (default): load plugin.json from plugin directory
+    - strict: false: use marketplace entry as the plugin config
+
+    Args:
+        repo_path: Path to the cloned repository
+        plugin_name: Name of the plugin to find
+
+    Returns:
+        PluginConfig if found, None otherwise
+    """
+    marketplace_path = repo_path / ".claude-plugin" / "marketplace.json"
+    if not marketplace_path.exists():
+        return None
+
+    try:
+        with marketplace_path.open() as f:
+            marketplace = json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+    plugins = marketplace.get("plugins", [])
+    plugin_root = marketplace.get("metadata", {}).get("pluginRoot", "")
+
+    for plugin_entry in plugins:
+        if plugin_entry.get("name") != plugin_name:
+            continue
+
+        # Found the plugin - resolve its source path
+        source = plugin_entry.get("source", "")
+
+        # Handle different source formats
+        if isinstance(source, dict):
+            # External source (github, url) - not supported for now
+            continue
+        elif isinstance(source, str):
+            # Relative path
+            if plugin_root and not source.startswith(("./", "/")):
+                source = f"{plugin_root}/{source}"
+            source = source.lstrip("./")
+        else:
+            continue
+
+        plugin_path = repo_path / source
+
+        # Check strict mode
+        strict = plugin_entry.get("strict", True)
+
+        if strict:
+            # Load plugin.json and merge with marketplace entry
+            plugin_json = _load_plugin_json(plugin_path)
+            if plugin_json:
+                # Marketplace entry overrides plugin.json for specified fields
+                merged_config = {**plugin_json, **plugin_entry}
+                skills_paths = _get_skills_paths(merged_config)
+                commands_paths = _get_commands_paths(merged_config)
+            else:
+                # No plugin.json but strict=true, use marketplace entry
+                skills_paths = _get_skills_paths(plugin_entry)
+                commands_paths = _get_commands_paths(plugin_entry)
+        else:
+            # strict=false: marketplace entry IS the config
+            skills_paths = _get_skills_paths(plugin_entry)
+            commands_paths = _get_commands_paths(plugin_entry)
+
+        return PluginConfig(
+            name=plugin_name,
+            source_path=source,
+            skills_paths=skills_paths,
+            commands_paths=commands_paths,
+        )
+
+    return None
+
+
+def _check_standalone_plugin(repo_path: Path, plugin_name: str) -> PluginConfig | None:
+    """Check if the repo is a standalone plugin (not a marketplace).
+
+    A standalone plugin has .claude-plugin/plugin.json at the repo root.
+
+    Args:
+        repo_path: Path to the cloned repository
+        plugin_name: Name of the plugin to find
+
+    Returns:
+        PluginConfig if this is a standalone plugin matching the name, None otherwise
+    """
+    plugin_json = _load_plugin_json(repo_path)
+    if plugin_json is None:
+        return None
+
+    # Check if the plugin name matches
+    if plugin_json.get("name") != plugin_name:
+        return None
+
+    return PluginConfig(
+        name=plugin_name,
+        source_path=".",
+        skills_paths=_get_skills_paths(plugin_json),
+        commands_paths=_get_commands_paths(plugin_json),
+    )
+
+
+def _discover_skills_in_plugin(
+    plugin_path: Path, skills_paths: list[str], root_skill_name: str
+) -> list[str]:
+    """Discover all skills within a plugin directory.
+
+    Looks for directories containing SKILL.md files.
+
+    Args:
+        plugin_path: Path to the plugin directory
+        skills_paths: List of paths to search for skills (relative to plugin root)
+        root_skill_name: Name to use if the plugin root itself is a skill
+
+    Returns:
+        List of skill names found
+    """
+    skills: list[str] = []
+
+    # Check if plugin root has SKILL.md (plugin is the skill)
+    if (plugin_path / "SKILL.md").exists():
+        skills.append(root_skill_name)
+
+    # Search each skills path
+    for skills_base in skills_paths:
+        skills_dir = plugin_path / skills_base
+        if not skills_dir.exists() or not skills_dir.is_dir():
+            continue
+
+        # Find all subdirectories with SKILL.md
+        for entry in skills_dir.iterdir():
+            if entry.is_dir() and (entry / "SKILL.md").exists():
+                skills.append(entry.name)
+
+    return skills
+
+
+def _discover_commands_in_plugin(
+    plugin_path: Path, commands_paths: list[str]
+) -> list[str]:
+    """Discover all commands within a plugin directory.
+
+    Looks for .md files in command directories.
+
+    Args:
+        plugin_path: Path to the plugin directory
+        commands_paths: List of paths to search for commands (relative to plugin root)
+
+    Returns:
+        List of command names found (without .md extension)
+    """
+    commands: list[str] = []
+
+    for cmd_base in commands_paths:
+        cmd_dir = plugin_path / cmd_base
+        if not cmd_dir.exists() or not cmd_dir.is_dir():
+            continue
+
+        # Find all .md files
+        for entry in cmd_dir.iterdir():
+            if entry.is_file() and entry.suffix == ".md":
+                commands.append(entry.stem)
+
+    return commands
+
+
+def _get_skill_source_path(
+    plugin_path: Path, skill_name: str, skills_paths: list[str], root_skill_name: str
+) -> str | None:
+    """Get the full path to a skill within a plugin.
+
+    Args:
+        plugin_path: Path to the plugin directory
+        skill_name: Name of the skill
+        skills_paths: List of paths to search for skills
+        root_skill_name: Name used for root-level skill (for matching)
+
+    Returns:
+        Full path to skill directory, or None if not found
+    """
+    # Check if plugin root is the skill
+    if (plugin_path / "SKILL.md").exists() and skill_name == root_skill_name:
+        return str(plugin_path)
+
+    # Search skills paths
+    for skills_base in skills_paths:
+        skill_dir = plugin_path / skills_base / skill_name
+        if skill_dir.exists() and (skill_dir / "SKILL.md").exists():
+            return str(skill_dir)
+
+    return None
+
+
+def _get_command_source_path(
+    plugin_path: Path, command_name: str, commands_paths: list[str]
+) -> str | None:
+    """Get the full path to a command within a plugin.
+
+    Args:
+        plugin_path: Path to the plugin directory
+        command_name: Name of the command (without .md extension)
+        commands_paths: List of paths to search for commands
+
+    Returns:
+        Full path to command file, or None if not found
+    """
+    for cmd_base in commands_paths:
+        cmd_file = plugin_path / cmd_base / f"{command_name}.md"
+        if cmd_file.exists():
+            return str(cmd_file)
+
+    return None
+
+
+def _resolve_plugin_from_repo(
+    repo_path: Path, plugin_spec: str | PluginLongForm
+) -> tuple[PluginConfig | None, Path | None, list[str], list[str]]:
+    """Resolve a plugin specification from a git repo.
+
+    Args:
+        repo_path: Path to the cloned repository
+        plugin_spec: Plugin name (str) or PluginLongForm dict
+
+    Returns:
+        Tuple of (PluginConfig, plugin_path, exclude_skills, exclude_commands)
+        Returns (None, None, [], []) if not resolvable
+    """
+    exclude_skills: list[str] = []
+    exclude_commands: list[str] = []
+
+    if isinstance(plugin_spec, str):
+        plugin_name = plugin_spec
+        explicit_path = None
+    else:
+        plugin_name = plugin_spec.get("name", "")
+        explicit_path = plugin_spec.get("path")
+        exclude_skills = list(plugin_spec.get("exclude_skills", []))
+        exclude_commands = list(plugin_spec.get("exclude_commands", []))
+
+    # If explicit path, use it directly
+    if explicit_path:
+        plugin_path = repo_path / explicit_path.lstrip("./")
+        plugin_json = _load_plugin_json(plugin_path)
+
+        # Infer name from path if not provided
+        if not plugin_name:
+            plugin_name = plugin_path.name
+
+        config = PluginConfig(
+            name=plugin_name,
+            source_path=explicit_path,
+            skills_paths=_get_skills_paths(plugin_json or {}),
+            commands_paths=_get_commands_paths(plugin_json or {}),
+        )
+        return config, plugin_path, exclude_skills, exclude_commands
+
+    # Try marketplace lookup
+    config = _find_plugin_in_marketplace(repo_path, plugin_name)
+    if config:
+        plugin_path = repo_path / config.source_path
+        return config, plugin_path, exclude_skills, exclude_commands
+
+    # Try standalone plugin
+    config = _check_standalone_plugin(repo_path, plugin_name)
+    if config:
+        return config, repo_path, exclude_skills, exclude_commands
+
+    return None, None, [], []
+
+
+def _resolve_plugin_from_local(
+    local_path: str, plugin_spec: str | PluginLongForm
+) -> tuple[PluginConfig | None, Path | None, list[str], list[str]]:
+    """Resolve a plugin specification from a local path.
+
+    Args:
+        local_path: Base path to local plugins
+        plugin_spec: Plugin name (str) or PluginLongForm dict
+
+    Returns:
+        Tuple of (PluginConfig, plugin_path, exclude_skills, exclude_commands)
+        Returns (None, None, [], []) if not resolvable
+    """
+    exclude_skills: list[str] = []
+    exclude_commands: list[str] = []
+    base_path = Path(local_path)
+
+    if isinstance(plugin_spec, str):
+        plugin_name = plugin_spec
+        explicit_path = None
+    else:
+        plugin_name = plugin_spec.get("name", "")
+        explicit_path = plugin_spec.get("path")
+        exclude_skills = list(plugin_spec.get("exclude_skills", []))
+        exclude_commands = list(plugin_spec.get("exclude_commands", []))
+
+    # Determine plugin path
+    if explicit_path:
+        plugin_path = base_path / explicit_path.lstrip("./")
+        if not plugin_name:
+            plugin_name = plugin_path.name
+    else:
+        # For local, assume plugins/{name} structure
+        plugin_path = base_path / "plugins" / plugin_name
+
+    # If plugin path doesn't exist, try base_path directly (for standalone)
+    if not plugin_path.exists():
+        plugin_path = base_path
+
+    plugin_json = _load_plugin_json(plugin_path)
+
+    config = PluginConfig(
+        name=plugin_name,
+        source_path=str(plugin_path),
+        skills_paths=_get_skills_paths(plugin_json or {}),
+        commands_paths=_get_commands_paths(plugin_json or {}),
+    )
+
+    return config, plugin_path, exclude_skills, exclude_commands
+
+
+def agent_harness_build_plugin_resources(
+    sources: list[SourceConfig], cache_dir: str
+) -> dict[str, list[dict[str, str]]]:
+    """Build lists of skills and commands from plugin-based sources config.
+
+    Args:
+        sources: List of source configs (git repos or local paths)
+        cache_dir: Path to the cache directory for git repos
+
+    Returns:
+        Dict with 'skills' and 'commands' keys, each containing a list of
+        dicts with 'name', 'source', 'origin' keys
+    """
+    skills: list[dict[str, str]] = []
+    commands: list[dict[str, str]] = []
+
+    for source in sources:
+        if "repo" in source:
+            # Git source
+            repo = source["repo"]
+            repo_cache_name = repo.replace("/", "--")
+            repo_path = Path(cache_dir) / repo_cache_name
+            plugins = source.get("plugins", [])
+
+            for plugin_spec in plugins:
+                config, plugin_path, exclude_skills, exclude_commands = (
+                    _resolve_plugin_from_repo(repo_path, plugin_spec)
+                )
+                if not config or not plugin_path:
+                    continue
+
+                # For git sources, use repo name for root-level skills
+                root_skill_name = repo.split("/")[-1]
+
+                # Discover and add skills
+                discovered_skills = _discover_skills_in_plugin(
+                    plugin_path, config.skills_paths, root_skill_name
+                )
+                for skill_name in discovered_skills:
+                    if skill_name in exclude_skills:
+                        continue
+                    source_path = _get_skill_source_path(
+                        plugin_path, skill_name, config.skills_paths, root_skill_name
+                    )
+                    if source_path:
+                        skills.append({
+                            "name": skill_name,
+                            "source": source_path,
+                            "origin": repo,
+                        })
+
+                # Discover and add commands
+                discovered_commands = _discover_commands_in_plugin(
+                    plugin_path, config.commands_paths
+                )
+                for cmd_name in discovered_commands:
+                    if cmd_name in exclude_commands:
+                        continue
+                    source_path = _get_command_source_path(
+                        plugin_path, cmd_name, config.commands_paths
+                    )
+                    if source_path:
+                        commands.append({
+                            "name": cmd_name,
+                            "source": source_path,
+                            "origin": repo,
+                        })
+
+        elif "local" in source:
+            # Local source
+            local_path = source["local"]
+            plugins = source.get("plugins", [])
+
+            for plugin_spec in plugins:
+                config, plugin_path, exclude_skills, exclude_commands = (
+                    _resolve_plugin_from_local(local_path, plugin_spec)
+                )
+                if not config or not plugin_path:
+                    continue
+
+                # Discover and add skills
+                discovered_skills = _discover_skills_in_plugin(
+                    plugin_path, config.skills_paths, config.name
+                )
+                for skill_name in discovered_skills:
+                    if skill_name in exclude_skills:
+                        continue
+                    source_path = _get_skill_source_path(
+                        plugin_path, skill_name, config.skills_paths, config.name
+                    )
+                    if source_path:
+                        skills.append({
+                            "name": skill_name,
+                            "source": source_path,
+                            "origin": "local",
+                        })
+
+                # Discover and add commands
+                discovered_commands = _discover_commands_in_plugin(
+                    plugin_path, config.commands_paths
+                )
+                for cmd_name in discovered_commands:
+                    if cmd_name in exclude_commands:
+                        continue
+                    source_path = _get_command_source_path(
+                        plugin_path, cmd_name, config.commands_paths
+                    )
+                    if source_path:
+                        commands.append({
+                            "name": cmd_name,
+                            "source": source_path,
+                            "origin": "local",
+                        })
+
+    return {"skills": skills, "commands": commands}
+
+
+def agent_harness_get_git_sources(sources: list[SourceConfig]) -> list[dict[str, Any]]:
+    """Extract only git sources from the sources list.
+
+    Args:
+        sources: List of source configs
+
+    Returns:
+        List of git source configs as dicts (Ansible can't serialize dataclasses)
+    """
+    return [GitSourceConfig.from_dict(s).to_dict() for s in sources if "repo" in s]
+
+
+class FilterModule:
+    """Ansible filter plugin for agent harness."""
+
+    def filters(self) -> dict[str, object]:
+        return {
+            "agent_harness_build_plugin_resources": agent_harness_build_plugin_resources,
+            "agent_harness_get_git_sources": agent_harness_get_git_sources,
+        }

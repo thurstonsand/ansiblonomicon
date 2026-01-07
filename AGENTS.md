@@ -29,6 +29,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run ruff check .` — Lint Python code
 - `uv run basedpyright` — Type check Python code
 - `ansible-lint` (in ansible/) — Lint Ansible code
+- `uv run pytest` — Run unit tests (agent_harness filter plugins)
 
 # Architecture
 
@@ -70,11 +71,17 @@ cd terraform/cloudflare && wrangler tail llms --format pretty
 
 # Code Style
 
+## Ansible
+
 - Use FQCN for all Ansible modules (e.g., `ansible.builtin.file`, not `file`)
 - YAML: 2-space indent, no trailing whitespace
 - Ansible-lint enforces production profile — treat all warnings as errors
 
-# Chezmoi Patterns
+## Python
+
+- Follow strict type hints throughout all python code
+
+## Chezmoi
 
 - `dot_` prefix → `.` in target; `private_` prefix → 0600 permissions (doesn't cascade to children)
 - `.tmpl` suffix for Go template processing
