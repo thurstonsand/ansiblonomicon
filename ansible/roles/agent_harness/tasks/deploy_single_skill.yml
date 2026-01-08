@@ -11,6 +11,12 @@
     msg: "Skill source not found: {{ agent_harness_skill_info.source }} (from {{ agent_harness_skill_info.repo }})"
   when: not agent_harness_skill_source_stat.stat.exists
 
+- name: Build rsync exclude options
+  ansible.builtin.set_fact:
+    agent_harness_skill_rsync_opts: >-
+      {{ ['--exclude=.git', '--exclude=.claude-plugin']
+         + (agent_harness_skill_info.exclude_data | default([]) | map('regex_replace', '^(.*)$', '--exclude=\1') | list) }}
+
 - name: Sync skill directory
   ansible.posix.synchronize:
     src: "{{ agent_harness_skill_info.source }}/"
@@ -18,7 +24,5 @@
     delete: true
     recursive: true
     checksum: true
-    rsync_opts:
-      - "--exclude=.git"
-      - "--exclude=.claude-plugin"
+    rsync_opts: "{{ agent_harness_skill_rsync_opts }}"
   delegate_to: localhost

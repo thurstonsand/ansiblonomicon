@@ -3,6 +3,7 @@
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
+import re
 from typing import Any, TypedDict
 
 
@@ -14,6 +15,7 @@ class PluginLongForm(TypedDict, total=False):
     exclude_skills: list[str]
     exclude_commands: list[str]
     exclude_agents: list[str]
+    exclude_data: list[str]  # rsync --exclude patterns for deployed files
     target_agents: list[str]
 
 
@@ -25,6 +27,7 @@ class ResourceInfo:
     source: str
     origin: str
     target_agents: list[str] = field(default_factory=list)
+    exclude_data: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dict for Ansible/Jinja2 compatibility."""
@@ -33,6 +36,7 @@ class ResourceInfo:
             "source": self.source,
             "origin": self.origin,
             "target_agents": list(self.target_agents),
+            "exclude_data": list(self.exclude_data),
         }
 
 
@@ -73,6 +77,7 @@ class ResolvedPlugin:
     exclude_skills: list[str] = field(default_factory=list)
     exclude_commands: list[str] = field(default_factory=list)
     exclude_agents: list[str] = field(default_factory=list)
+    exclude_data: list[str] = field(default_factory=list)
     target_agents: list[str] = field(default_factory=list)
 
     @property
@@ -480,6 +485,7 @@ def _resolve_plugin_from_repo(
     exclude_skills: list[str] = []
     exclude_commands: list[str] = []
     exclude_agents: list[str] = []
+    exclude_data: list[str] = []
     target_agents: list[str] = []
 
     if isinstance(plugin_spec, str):
@@ -491,6 +497,7 @@ def _resolve_plugin_from_repo(
         exclude_skills = list(plugin_spec.get("exclude_skills", []))
         exclude_commands = list(plugin_spec.get("exclude_commands", []))
         exclude_agents = list(plugin_spec.get("exclude_agents", []))
+        exclude_data = list(plugin_spec.get("exclude_data", []))
         target_agents = list(plugin_spec.get("target_agents", []))
 
     # If explicit path, use it directly
@@ -515,6 +522,7 @@ def _resolve_plugin_from_repo(
             exclude_skills=exclude_skills,
             exclude_commands=exclude_commands,
             exclude_agents=exclude_agents,
+            exclude_data=exclude_data,
             target_agents=target_agents,
         )
 
@@ -528,6 +536,7 @@ def _resolve_plugin_from_repo(
             exclude_skills=exclude_skills,
             exclude_commands=exclude_commands,
             exclude_agents=exclude_agents,
+            exclude_data=exclude_data,
             target_agents=target_agents,
         )
 
@@ -540,6 +549,7 @@ def _resolve_plugin_from_repo(
             exclude_skills=exclude_skills,
             exclude_commands=exclude_commands,
             exclude_agents=exclude_agents,
+            exclude_data=exclude_data,
             target_agents=target_agents,
         )
 
@@ -561,6 +571,7 @@ def _resolve_plugin_from_local(
     exclude_skills: list[str] = []
     exclude_commands: list[str] = []
     exclude_agents: list[str] = []
+    exclude_data: list[str] = []
     target_agents: list[str] = []
     base_path = Path(local_path)
 
@@ -573,6 +584,7 @@ def _resolve_plugin_from_local(
         exclude_skills = list(plugin_spec.get("exclude_skills", []))
         exclude_commands = list(plugin_spec.get("exclude_commands", []))
         exclude_agents = list(plugin_spec.get("exclude_agents", []))
+        exclude_data = list(plugin_spec.get("exclude_data", []))
         target_agents = list(plugin_spec.get("target_agents", []))
 
     # Determine plugin path
@@ -581,12 +593,14 @@ def _resolve_plugin_from_local(
         if not plugin_name:
             plugin_name = plugin_path.name
     else:
-        # For local, assume plugins/{name} structure
+        # Try plugins/{name} structure first
         plugin_path = base_path / "plugins" / plugin_name
-
-    # If plugin path doesn't exist, try base_path directly (for standalone)
-    if not plugin_path.exists():
-        plugin_path = base_path
+        # Then try {name} directly under base_path
+        if not plugin_path.exists():
+            plugin_path = base_path / plugin_name
+        # Finally fall back to base_path itself (standalone plugin)
+        if not plugin_path.exists():
+            plugin_path = base_path
 
     plugin_json = _load_plugin_json(plugin_path)
 
@@ -604,6 +618,7 @@ def _resolve_plugin_from_local(
         exclude_skills=exclude_skills,
         exclude_commands=exclude_commands,
         exclude_agents=exclude_agents,
+        exclude_data=exclude_data,
         target_agents=target_agents,
     )
 
@@ -662,6 +677,7 @@ def agent_harness_build_plugin_resources(
                                 source=source_path,
                                 origin=repo,
                                 target_agents=resolved.target_agents,
+                                exclude_data=resolved.exclude_data,
                             )
                         )
 
@@ -682,6 +698,7 @@ def agent_harness_build_plugin_resources(
                                 source=source_path,
                                 origin=repo,
                                 target_agents=resolved.target_agents,
+                                exclude_data=resolved.exclude_data,
                             )
                         )
 
@@ -702,6 +719,7 @@ def agent_harness_build_plugin_resources(
                                 source=source_path,
                                 origin=repo,
                                 target_agents=resolved.target_agents,
+                                exclude_data=resolved.exclude_data,
                             )
                         )
 
@@ -737,6 +755,7 @@ def agent_harness_build_plugin_resources(
                                 source=source_path,
                                 origin="local",
                                 target_agents=resolved.target_agents,
+                                exclude_data=resolved.exclude_data,
                             )
                         )
 
@@ -757,6 +776,7 @@ def agent_harness_build_plugin_resources(
                                 source=source_path,
                                 origin="local",
                                 target_agents=resolved.target_agents,
+                                exclude_data=resolved.exclude_data,
                             )
                         )
 
@@ -777,6 +797,7 @@ def agent_harness_build_plugin_resources(
                                 source=source_path,
                                 origin="local",
                                 target_agents=resolved.target_agents,
+                                exclude_data=resolved.exclude_data,
                             )
                         )
 
@@ -818,6 +839,225 @@ def agent_harness_filter_resources(
     ]
 
 
+# =============================================================================
+# Command transformation (Claude -> Amp)
+# =============================================================================
+
+# Pattern to match Claude's !`command` syntax for dynamic execution
+CLAUDE_DYNAMIC_CMD_PATTERN = re.compile(r"!\`([^`]+)\`")
+
+
+@dataclass
+class CommandTransformResult:
+    """Result of transforming a Claude command to Amp format."""
+
+    content: str
+    is_executable: bool  # True if this should be an executable script
+    description: str  # From frontmatter, for logging/debugging
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dict for Ansible/Jinja2 compatibility."""
+        return {
+            "content": self.content,
+            "is_executable": self.is_executable,
+            "description": self.description,
+        }
+
+
+def _parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:
+    """Parse YAML frontmatter from markdown content.
+
+    Args:
+        content: Markdown content potentially with YAML frontmatter
+
+    Returns:
+        Tuple of (frontmatter dict, body without frontmatter)
+    """
+    if not content.startswith("---"):
+        return {}, content
+
+    lines = content.split("\n")
+    end_idx = -1
+    for i, line in enumerate(lines[1:], start=1):
+        if line.strip() == "---":
+            end_idx = i
+            break
+
+    if end_idx == -1:
+        return {}, content
+
+    frontmatter_lines = lines[1:end_idx]
+    body = "\n".join(lines[end_idx + 1 :]).lstrip("\n")
+
+    # Simple YAML parsing (handles key: value and key: "value")
+    frontmatter: dict[str, Any] = {}
+    for line in frontmatter_lines:
+        if ":" in line:
+            key, _, value = line.partition(":")
+            key = key.strip()
+            value = value.strip()
+            # Remove quotes if present
+            if (value.startswith('"') and value.endswith('"')) or (
+                value.startswith("'") and value.endswith("'")
+            ):
+                value = value[1:-1]
+            frontmatter[key] = value
+
+    return frontmatter, body
+
+
+def _has_dynamic_commands(content: str) -> bool:
+    """Check if content contains Claude's !`command` dynamic execution syntax."""
+    return bool(CLAUDE_DYNAMIC_CMD_PATTERN.search(content))
+
+
+def _extract_dynamic_commands(content: str) -> list[str]:
+    """Extract all dynamic commands from content.
+
+    Args:
+        content: Markdown content with !`command` patterns
+
+    Returns:
+        List of commands in order of appearance
+    """
+    return CLAUDE_DYNAMIC_CMD_PATTERN.findall(content)
+
+
+def _generate_amp_executable(body: str, commands: list[str], description: str) -> str:
+    """Generate an Amp-compatible bash executable from Claude command format.
+
+    The script runs each command and substitutes the output inline.
+
+    Args:
+        body: Markdown body content
+        commands: List of commands to execute
+        description: Command description for header comment
+
+    Returns:
+        Bash script content
+    """
+    # Build the script
+    script_lines = [
+        "#!/bin/bash",
+        f"# {description}"
+        if description
+        else "# Amp command (transformed from Claude format)",
+        "# Auto-generated by agent_harness from Claude command format",
+        "",
+        "set -euo pipefail",
+        "",
+    ]
+
+    # Generate variable assignments for each unique command
+    cmd_vars: dict[str, str] = {}
+    for i, cmd in enumerate(commands):
+        var_name = f"CMD_OUTPUT_{i}"
+        cmd_vars[cmd] = var_name
+        # Use $() for command substitution, handle potential failures
+        script_lines.append(f'{var_name}=$({cmd} 2>&1 || echo "[command failed]")')
+
+    script_lines.append("")
+    script_lines.append("cat <<'HEREDOC_EOF'")
+
+    # Transform body: replace !`cmd` with ${VAR}
+    transformed_body = body
+    for cmd, var_name in cmd_vars.items():
+        # Escape the backtick pattern for regex
+        pattern = re.escape(f"!`{cmd}`")
+        # Replace with heredoc variable reference (need to break out of heredoc)
+        # Actually, we need a different approach - use intermediate markers
+        transformed_body = re.sub(pattern, f"<<<{var_name}>>>", transformed_body)
+
+    # Now we need to handle the heredoc + variable substitution
+    # Split on markers and reconstruct with proper heredoc breaks
+    parts = re.split(r"<<<(CMD_OUTPUT_\d+)>>>", transformed_body)
+
+    script_lines_body: list[str] = []
+    for i, part in enumerate(parts):
+        if i % 2 == 0:
+            # Text part - add to heredoc
+            if part:
+                script_lines_body.append(part)
+        else:
+            # Variable reference - break heredoc, echo var, restart heredoc
+            if script_lines_body:
+                # End current heredoc segment
+                script_lines.append("".join(script_lines_body))
+                script_lines_body = []
+            script_lines.append("HEREDOC_EOF")
+            script_lines.append(f'echo "${{{part}}}"')
+            script_lines.append("cat <<'HEREDOC_EOF'")
+
+    # Add any remaining text
+    if script_lines_body:
+        script_lines.append("".join(script_lines_body))
+
+    script_lines.append("HEREDOC_EOF")
+
+    return "\n".join(script_lines)
+
+
+def agent_harness_transform_command(
+    source_path: str, target_agent: str
+) -> dict[str, Any]:
+    """Transform a Claude command to Amp format if needed.
+
+    Claude commands can use !`command` syntax for dynamic execution at prompt time.
+    Amp doesn't support this - instead it uses executable scripts.
+
+    This function:
+    1. Reads the source command file
+    2. Checks if it needs transformation (has !`cmd` patterns)
+    3. Returns either the original content or a transformed bash script
+
+    Args:
+        source_path: Path to the source command file
+        target_agent: Target agent name (e.g., "amp", "claude")
+
+    Returns:
+        Dict with 'content', 'is_executable', 'description' keys
+    """
+    path = Path(source_path)
+    if not path.exists():
+        return CommandTransformResult(
+            content="",
+            is_executable=False,
+            description="",
+        ).to_dict()
+
+    content = path.read_text()
+    frontmatter, body = _parse_frontmatter(content)
+    description = str(frontmatter.get("description", ""))
+
+    # Claude doesn't need transformation - it understands its own format
+    if target_agent == "claude":
+        return CommandTransformResult(
+            content=content,
+            is_executable=False,
+            description=description,
+        ).to_dict()
+
+    # Check if transformation is needed
+    if not _has_dynamic_commands(body):
+        # No dynamic commands - strip frontmatter for non-Claude agents
+        # (they don't understand allowed-tools etc.)
+        return CommandTransformResult(
+            content=body if frontmatter else content,
+            is_executable=False,
+            description=description,
+        ).to_dict()
+
+    # Transform to executable for Amp
+    commands = _extract_dynamic_commands(body)
+    executable_content = _generate_amp_executable(body, commands, description)
+
+    return CommandTransformResult(
+        content=executable_content,
+        is_executable=True,
+        description=description,
+    ).to_dict()
+
+
 class FilterModule:
     """Ansible filter plugin for agent harness."""
 
@@ -826,4 +1066,5 @@ class FilterModule:
             "agent_harness_build_plugin_resources": agent_harness_build_plugin_resources,
             "agent_harness_get_git_sources": agent_harness_get_git_sources,
             "agent_harness_filter_resources": agent_harness_filter_resources,
+            "agent_harness_transform_command": agent_harness_transform_command,
         }

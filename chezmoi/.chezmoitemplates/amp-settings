@@ -61,7 +61,11 @@
           "/\\bgit\\s+(\\S+\\s+)*?stash\\b/",
           "/\\bgit\\s+(\\S+\\s+)*?add\\b/",
           "/\\bgit\\s+(\\S+\\s+)*?commit\\b/",
-          "/\\bgit\\s+(\\S+\\s+)*?push\\b/"
+          "/\\bgit\\s+(\\S+\\s+)*?push\\b/",
+          "/\\bgit\\s+(\\S+\\s+)*?checkout\\b/",
+          "/\\bgit\\s+(\\S+\\s+)*?reset\\b/",
+          "/\\bgit\\s+(\\S+\\s+)*?clean\\b/",
+          "/\\bgit\\s+(\\S+\\s+)*?rebase\\b/"
         ]
       },
       "action": "ask"

@@ -4,7 +4,7 @@
 
 AI coding agents (Claude Code, Amp, OpenCode, Codex) each have their own directory structures, file formats, and quirks for skills, commands, and subagents. Currently:
 
-- Skills are scattered across unmanaged directories, a separate git repo (`thurstons-skills`), and third-party marketplaces
+- Skills were scattered across unmanaged directories and third-party marketplaces (now consolidated in `agents/` directory)
 - Each agent needs its own translation (OpenCode wants lowercase names, different MCP formats, etc.)
 - No automation exists to deploy a skill source to multiple agents at once
 
@@ -54,11 +54,18 @@ Bridle (github.com/neiii/bridle) solves this with a Rust runtime that translates
 | Commands deployment to Amp        | ✅ Done      | Amp uses same commands dir structure                 |
 | Skip agents for Amp               | ✅ Done      | `agents_dir: null` skips deployment/cleanup          |
 | Skill-bundled MCP (Amp-only)      | ✅ Done      | rsync copies mcp.json, Amp reads natively            |
-| Local skills backup               | ✅ Done      | `ansible/local-resources/amp-skills/`                |
+| thurstons-skills migration        | ✅ Done      | Migrated to `agents/claude/`, deprecated old repo    |
 
-### Phase 3: Add OpenCode — Not started
+### Phase 3: Add Codex — **COMPLETE**
 
-### Phase 4: Add Codex — Not started
+| Feature                           | Status       | Notes                                                |
+| --------------------------------- | ------------ | ---------------------------------------------------- |
+| Codex agent config                | ✅ Done      | Added to `vars/agents.yml`                           |
+| Skills deployment to Codex        | ✅ Done      | Same SKILL.md format, rsync works unchanged          |
+| Commands deployment to Codex      | ✅ Done      | Codex uses `~/.codex/prompts/` ("custom prompts")    |
+| Skip agents for Codex             | ✅ Done      | `agents_dir: null` skips deployment/cleanup          |
+
+### Phase 4: Add OpenCode — Not started
 
 ---
 
@@ -218,8 +225,8 @@ The filter plugin implements Claude's plugin discovery protocol:
 | -------- | --------------------- | --------------------------- | ----------------------------- | --------------------------- | ------------ |
 | Claude   | `~/.claude/`          | `~/.claude/skills/`         | `~/.claude/commands/`         | `~/.claude/agents/`         | `CLAUDE.md`  |
 | Amp      | `~/.config/amp/`      | `~/.config/amp/skills/`     | `~/.config/amp/commands/`     | N/A                         | `AGENTS.md`  |
+| Codex    | `~/.codex/`           | `~/.codex/skills/`          | `~/.codex/prompts/`           | N/A                         | `AGENTS.md`  |
 | OpenCode | `~/.config/opencode/` | `~/.config/opencode/skill/` | `~/.config/opencode/command/` | `~/.config/opencode/agent/` | `AGENTS.md`  |
-| Codex    | `~/.codex/`           | `~/.codex/skills/`          | N/A                           | N/A                         | `AGENTS.md`  |
 
 **Key difference**: OpenCode uses **singular** directory names (`skill/`, `command/`, `agent/`) while all others use plural.
 
@@ -229,8 +236,8 @@ The filter plugin implements Claude's plugin discovery protocol:
 | -------- | --------------------------- | ------------------------ | ---------------- | ------------------------------------------------ |
 | Claude   | Preserve original case      | `.mcp.json` (JSON)       | `mcpServers`     | **Source format**; env: `${VAR}`                 |
 | Amp      | Preserve original case      | `settings.json` (JSON)   | `amp.mcpServers` | Skill mcp.json merged into global; env: `${VAR}` |
+| Codex    | Preserve original case      | `config.toml` (TOML)     | `mcp_servers`    | Commands in `prompts/`; env: literal strings     |
 | OpenCode | **Lowercase + dashes only** | `opencode.jsonc` (JSONC) | `mcp`            | Singular dirs; env: `{env:VAR}`; cmd=array       |
-| Codex    | Preserve original case      | Unknown                  | Unknown          | Limited testing                                  |
 
 ### Claude Code Format (Source of Truth)
 
@@ -345,14 +352,21 @@ uv run poe local -t agent-harness -e agent_harness_update=true
 7. ⬜ Implement MCP config merging
 8. ⬜ Test: Skills/commands/agents appear in Claude Code, MCP config merged
 
-### Phase 2: Add Amp
+### Phase 2: Add Amp — ✅ Complete
 
-1. Add Amp to `agent_harness_agents` config
-2. Handle MCP file difference (`settings.json` vs `.mcp.json`)
-3. Skip agents (Amp doesn't support them)
-4. Test: Same skills work in both Claude and Amp
+1. ✅ Add Amp to `agent_harness_agents` config
+2. ✅ Handle MCP file difference (`settings.json` vs `.mcp.json`)
+3. ✅ Skip agents (Amp doesn't support them)
+4. ✅ Test: Same skills work in both Claude and Amp
 
-### Phase 3: Add OpenCode
+### Phase 3: Add Codex — ✅ Complete
+
+1. ✅ Add Codex to `agent_harness_agents` config
+2. ✅ Skills deploy to `~/.codex/skills/`
+3. ✅ Commands deploy to `~/.codex/prompts/` ("custom prompts")
+4. ✅ Skip agents (Codex doesn't support them)
+
+### Phase 4: Add OpenCode
 
 1. Add OpenCode to `agent_harness_agents` config
 2. Implement name transformation (lowercase_dash)
@@ -360,12 +374,12 @@ uv run poe local -t agent-harness -e agent_harness_update=true
 4. Implement MCP format translation
 5. Test: Skills deploy with correct transformations
 
-### Phase 4: Add Codex + Cleanup
+### Phase 5: Cleanup — ✅ Complete
 
-1. Add Codex (skills only)
-2. Delete `thurstons-skills` repo
-3. Remove Claude marketplace config
-4. Update documentation
+1. ✅ Migrated `thurstons-skills` repo to `agents/claude/`
+2. ✅ Removed Claude marketplace config from chezmoi
+3. ✅ Updated Codex/OpenCode universal-skills MCP to use `~/.claude/skills`
+4. 🔲 Delete `thurstons-claude-skills` repo from GitHub (manual step)
 
 ---
 
@@ -389,5 +403,5 @@ uv run poe local -t agent-harness -e agent_harness_update=true
 | -------- | ------ | -------- | ------ |
 | Claude   | skills | commands | agents |
 | Amp      | skills | commands | —      |
+| Codex    | skills | prompts  | —      |
 | OpenCode | skill  | command  | agent  |
-| Codex    | skills | —        | —      |

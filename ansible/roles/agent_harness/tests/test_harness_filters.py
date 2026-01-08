@@ -687,6 +687,35 @@ def test_resolve_plugin_from_local_with_exclusions(tmp_path: Path) -> None:
     assert resolved.exclude_commands == ["skip-cmd"]
 
 
+@pytest.mark.unit
+def test_resolve_plugin_from_local_direct_name_path(tmp_path: Path) -> None:
+    """Test that base_path/{name} is resolved when plugins/{name} doesn't exist."""
+    # Create agents/my-plugin structure (not plugins/my-plugin)
+    (tmp_path / "my-plugin" / "skills").mkdir(parents=True)
+
+    resolved = _resolve_plugin_from_local(str(tmp_path), "my-plugin")
+    assert resolved.is_valid
+    assert resolved.config is not None
+    assert resolved.config.name == "my-plugin"
+    assert resolved.plugin_path == tmp_path / "my-plugin"
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_local_with_exclude_data(tmp_path: Path) -> None:
+    """Test that exclude_data is passed through to resolved plugin."""
+    (tmp_path / "plugins" / "my-plugin").mkdir(parents=True)
+
+    resolved = _resolve_plugin_from_local(
+        str(tmp_path),
+        {
+            "name": "my-plugin",
+            "exclude_data": ["references/examples", "*.pyc"],
+        },
+    )
+    assert resolved.is_valid
+    assert resolved.exclude_data == ["references/examples", "*.pyc"]
+
+
 # =============================================================================
 # Tests for agent_harness_get_git_sources
 # =============================================================================
@@ -925,6 +954,31 @@ def test_agent_harness_build_plugin_resources_local_with_exclusions(
 
     assert len(result["skills"]) == 1
     assert result["skills"][0]["name"] == "keep"
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_local_with_exclude_data(
+    tmp_path: Path, cache_dir: Path
+) -> None:
+    """Test that exclude_data is passed through to ResourceInfo."""
+    local_path = tmp_path / "local"
+    plugin_path = local_path / "plugins" / "my-plugin"
+    skill_dir = plugin_path / "skills" / "my-skill"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text("# My Skill")
+
+    sources: list[Any] = [
+        {
+            "local": str(local_path),
+            "plugins": [
+                {"name": "my-plugin", "exclude_data": ["references/examples", "*.pyc"]}
+            ],
+        }
+    ]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["skills"]) == 1
+    assert result["skills"][0]["exclude_data"] == ["references/examples", "*.pyc"]
 
 
 # --- Integration tests ---

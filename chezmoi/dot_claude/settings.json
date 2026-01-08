@@ -5,9 +5,8 @@
     "allow": [
       "mcp__parallel-search__web_search_preview",
       "mcp__parallel-search__web_fetch",
-      "Project-management:updating-documentation-for-changes",
-      "Skill(project-management:updating-documentation-for-changes)",
-      "Skill(project-management:git-commit-helper)"
+      "Skill(updating-documentation-for-changes)",
+      "Skill(git-commit-helper)"
     ],
     "deny": []
   },
@@ -15,12 +14,6 @@
     "type": "command",
     "command": "bunx -y ccstatusline@latest",
     "padding": 0
-  },
-  "enabledPlugins": {
-    "project-management@thurstons-skills": true,
-    "homelab@thurstons-skills": true,
-    "agent-skill-creator-plugin@agent-skill-creator": true,
-    "frontend-design@claude-code-plugins": true
   },
   "alwaysThinkingEnabled": true
 }

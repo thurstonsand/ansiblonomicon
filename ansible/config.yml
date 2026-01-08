@@ -16,16 +16,18 @@ chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
 agent_harness_target_agents:
   - claude
   - amp
+  - codex
 
 agent_harness_sources:
   - repo: anthropics/claude-code
     pull: true
     plugins:
       - frontend-design
-      - name: commit-commands
-        target_agents: [claude] # commands only for Claude (testing)
-        exclude_commands:
-          - clean_gone
+  #   # for use in testing if needed
+  #   - name: commit-commands
+  #   target_agents: [claude] # commands only for Claude (testing)
+  #   exclude_commands:
+  #     - clean_gone
 
   - repo: FrancyJGLisboa/agent-skill-creator
     pull: true
@@ -33,10 +35,18 @@ agent_harness_sources:
       - name: agent-skill-creator-plugin
         exclude_skills:
           - article-to-prototype-cskill
+        exclude_data:
+          - references/examples
+          - references/templates
+          - references/tools
+          - exports
+          - integrations
+          - article-to-prototype-cskill
+          - README.md
 
-  # Amp-specific plugin
-  - local: "{{ playbook_dir }}/../../agents/amp"
+  - local: "{{ playbook_dir }}/../../agents"
     plugins:
-      - name: local-skills
-        path: "."
+      - name: amp
         target_agents: [amp]
+      - project-management
+      - homelab

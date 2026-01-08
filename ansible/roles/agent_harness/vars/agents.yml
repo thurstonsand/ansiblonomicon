@@ -31,3 +31,18 @@ agent_harness_agents:
     transform_content: false
     instructions_file: AGENTS.md
     supports_skill_mcp: true
+
+  codex:
+    config_root: "{{ ansible_facts.env.HOME }}/.codex"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.codex/skills"
+    commands_dir: "{{ ansible_facts.env.HOME }}/.codex/prompts" # Codex calls these "custom prompts"
+    agents_dir: null # Codex does not support subagents
+    mcp_file: "{{ ansible_facts.env.HOME }}/.codex/config.toml"
+    mcp_format: toml
+    mcp_key: mcp_servers
+    mcp_env_format: literal # env values are literal strings in TOML
+    mcp_command_format: separate
+    name_transform: preserve
+    transform_content: false
+    instructions_file: AGENTS.md
+    supports_skill_mcp: false

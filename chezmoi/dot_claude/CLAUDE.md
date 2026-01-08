@@ -2,7 +2,7 @@
 
 ## Parallel Tool Execution
 
-**IMPORTANT**: When you invoke multiple tools in a single message, they execute in parallel, not sequentially.
+When you invoke multiple tools in a single message, they execute in parallel, not sequentially.
 
 ### Sleep Commands
 
@@ -21,3 +21,18 @@ Message 2: <invoke BashOutput to check results>
 Single message: <invoke Bash sleep 30> AND <invoke BashOutput>
 # These run in parallel - the sleep doesn't delay the BashOutput call!
 ```
+
+## Comment Policy
+
+### Unacceptable Comments
+
+- Comments that repeat what code does
+- Obvious comments ("increment counter")
+- Comments instead of good naming
+- Comments instead of good naming
+- Comments about updates to old code ("# Now supports xyz")
+
+### Principle
+
+Code should be self-documenting. If you need a comment to explain WHAT the code does, consider refactoring to make it clearer.
+Comments should be reserved for unexpected requirements or behavior that leads to a non-obvious design decision.

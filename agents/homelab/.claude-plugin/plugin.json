@@ -1,0 +1,17 @@
+{
+  "name": "homelab",
+  "version": "3.0.0",
+  "description": "Skills for managing homelab infrastructure including remote server management",
+  "author": {
+    "name": "Thurston Sandberg"
+  },
+  "keywords": [
+    "homelab",
+    "truenas",
+    "docker",
+    "tmux",
+    "interactive-cli",
+    "infrastructure",
+    "remote-management"
+  ]
+}
