@@ -17,6 +17,7 @@ agent_harness_target_agents:
   - claude
   - amp
   - codex
+  - opencode
 
 agent_harness_sources:
   - repo: anthropics/claude-code

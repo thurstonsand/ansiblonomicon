@@ -46,3 +46,18 @@ agent_harness_agents:
     transform_content: false
     instructions_file: AGENTS.md
     supports_skill_mcp: false
+
+  opencode:
+    config_root: "{{ ansible_facts.env.HOME }}/.config/opencode"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/skill" # SINGULAR - not "skills"
+    commands_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/command" # SINGULAR - not "commands"
+    agents_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/agent" # SINGULAR - not "agents"
+    mcp_file: "{{ ansible_facts.env.HOME }}/.config/opencode/opencode.json"
+    mcp_format: json
+    mcp_key: mcp
+    mcp_env_format: "{env:VAR}" # OpenCode uses {env:VAR} syntax
+    mcp_command_format: array # command is an array: ["cmd", "arg1", "arg2"]
+    name_transform: lowercase_dash # Names must be lowercase alphanumeric with single hyphen separators
+    transform_content: false # Content transformation not needed - SKILL.md format is compatible
+    instructions_file: AGENTS.md
+    supports_skill_mcp: false # MCP is configured in opencode.json, not per-skill

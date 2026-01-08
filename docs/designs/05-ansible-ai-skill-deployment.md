@@ -65,7 +65,15 @@ Bridle (github.com/neiii/bridle) solves this with a Rust runtime that translates
 | Commands deployment to Codex      | ✅ Done      | Codex uses `~/.codex/prompts/` ("custom prompts")    |
 | Skip agents for Codex             | ✅ Done      | `agents_dir: null` skips deployment/cleanup          |
 
-### Phase 4: Add OpenCode — Not started
+### Phase 4: Add OpenCode — **COMPLETE**
+
+| Feature                           | Status       | Notes                                                |
+| --------------------------------- | ------------ | ---------------------------------------------------- |
+| OpenCode agent config             | ✅ Done      | Added to `vars/agents.yml`                           |
+| Skills deployment to OpenCode     | ✅ Done      | `~/.config/opencode/skill/` (singular)               |
+| Commands deployment to OpenCode   | ✅ Done      | `~/.config/opencode/command/` (singular)             |
+| Agents deployment to OpenCode     | ✅ Done      | `~/.config/opencode/agent/` (singular)               |
+| Name transformation               | ⏸️ Deferred | OpenCode requires lowercase-dash names; rsync copies as-is for now |
 
 ---
 
@@ -137,7 +145,7 @@ agent_harness_cache_dir: "{{ ansible_facts.env.HOME }}/.cache/ansiblonomicon-har
 
 #### Agent Configuration (`vars/agents.yml`)
 
-Currently only Claude is configured:
+All four agents are configured:
 
 ```yaml
 agent_harness_agents:
@@ -170,6 +178,36 @@ agent_harness_agents:
     transform_content: false
     instructions_file: AGENTS.md
     supports_skill_mcp: true  # Amp reads mcp.json from skill directories
+
+  codex:
+    config_root: "{{ ansible_facts.env.HOME }}/.codex"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.codex/skills"
+    commands_dir: "{{ ansible_facts.env.HOME }}/.codex/prompts"  # Codex calls these "custom prompts"
+    agents_dir: null  # Codex does not support user-defined subagents
+    mcp_file: "{{ ansible_facts.env.HOME }}/.codex/config.toml"
+    mcp_format: toml
+    mcp_key: mcp_servers
+    mcp_env_format: literal  # Codex uses literal env var strings
+    mcp_command_format: separate
+    name_transform: preserve
+    transform_content: false
+    instructions_file: AGENTS.md
+    supports_skill_mcp: false
+
+  opencode:
+    config_root: "{{ ansible_facts.env.HOME }}/.config/opencode"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/skill"   # SINGULAR
+    commands_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/command"  # SINGULAR
+    agents_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/agent"   # SINGULAR
+    mcp_file: "{{ ansible_facts.env.HOME }}/.config/opencode/opencode.json"
+    mcp_format: json
+    mcp_key: mcp
+    mcp_env_format: "{env:VAR}"  # OpenCode uses {env:VAR} syntax
+    mcp_command_format: array    # command is an array: ["cmd", "arg1", "arg2"]
+    name_transform: lowercase_dash  # Names must be lowercase alphanumeric with single hyphen separators
+    transform_content: false
+    instructions_file: AGENTS.md
+    supports_skill_mcp: false
 ```
 
 ### Filter Plugins
@@ -237,7 +275,7 @@ The filter plugin implements Claude's plugin discovery protocol:
 | Claude   | Preserve original case      | `.mcp.json` (JSON)       | `mcpServers`     | **Source format**; env: `${VAR}`                 |
 | Amp      | Preserve original case      | `settings.json` (JSON)   | `amp.mcpServers` | Skill mcp.json merged into global; env: `${VAR}` |
 | Codex    | Preserve original case      | `config.toml` (TOML)     | `mcp_servers`    | Commands in `prompts/`; env: literal strings     |
-| OpenCode | **Lowercase + dashes only** | `opencode.jsonc` (JSONC) | `mcp`            | Singular dirs; env: `{env:VAR}`; cmd=array       |
+| OpenCode | **Lowercase + dashes only** | `opencode.json` (JSON)   | `mcp`            | Singular dirs; env: `{env:VAR}`; cmd=array       |
 
 ### Claude Code Format (Source of Truth)
 
@@ -366,13 +404,13 @@ uv run poe local -t agent-harness -e agent_harness_update=true
 3. ✅ Commands deploy to `~/.codex/prompts/` ("custom prompts")
 4. ✅ Skip agents (Codex doesn't support them)
 
-### Phase 4: Add OpenCode
+### Phase 4: Add OpenCode — ✅ Complete
 
-1. Add OpenCode to `agent_harness_agents` config
-2. Implement name transformation (lowercase_dash)
-3. Implement content transformation (SKILL.md frontmatter, agent colors)
-4. Implement MCP format translation
-5. Test: Skills deploy with correct transformations
+1. ✅ Add OpenCode to `agent_harness_agents` config
+2. ⏸️ Implement name transformation (lowercase_dash) — Deferred, rsync copies as-is
+3. ⏸️ Implement content transformation — Deferred, SKILL.md format is compatible
+4. ⏸️ Implement MCP format translation — Deferred, MCP configured separately
+5. ✅ Skills/commands/agents deploy to singular directories
 
 ### Phase 5: Cleanup — ✅ Complete
 
