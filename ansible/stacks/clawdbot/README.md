@@ -168,6 +168,97 @@ Add to your `cloudflared` config to expose externally (with authentication).
 - Browser automation (headless Chromium)
 - Scheduled tasks/cron
 - Agent coding tasks
+- **Librarian skill** (sandboxed coding environments)
+
+## Librarian Skill - Sandboxed Coding Agents
+
+The librarian skill spawns isolated Docker containers with OpenCode to work on any git repository. Containers persist for follow-up questions in the same session.
+
+### Setup
+
+1. Create `.env` file with API keys:
+
+```bash
+cd /mnt/performance/docker/stacks/clawdbot
+cat > .env << 'EOF'
+ANTHROPIC_API_KEY=sk-ant-...
+GITHUB_TOKEN=ghp_...
+EOF
+```
+
+2. Build the librarian sandbox image:
+
+```bash
+docker build -t clawdbot-librarian:local -f Dockerfile.librarian .
+```
+
+3. Restart gateway to pick up the env vars:
+
+```bash
+docker compose up -d
+```
+
+### Usage (via Clawdbot chat)
+
+Ask Clawdbot to use the librarian:
+
+```
+"Use librarian to clone https://github.com/fastapi/fastapi and review the dependency injection system"
+```
+
+Or be explicit:
+
+```
+"librarian spawn --repo https://github.com/user/repo --task 'Add unit tests for auth module'"
+```
+
+### Commands
+
+| Command | Description |
+|---------|-------------|
+| `librarian spawn --repo <url> --task "<task>"` | Create new sandbox |
+| `librarian ask --session <id> "<question>"` | Follow-up in existing sandbox |
+| `librarian logs --session <id>` | View OpenCode output |
+| `librarian status --session <id>` | Check sandbox state |
+| `librarian list` | List all active sandboxes |
+| `librarian kill --session <id>` | Destroy sandbox |
+
+### Session Persistence
+
+- Each sandbox gets a unique session ID (e.g., `abc123`)
+- Containers persist until explicitly killed
+- Follow-up questions go to the same OpenCode instance
+- Changes, commits, files all remain in the container
+
+### Example Workflow
+
+```bash
+# Start a coding task
+librarian spawn \
+  --repo https://github.com/org/api \
+  --task "Review security of auth endpoints"
+# Returns: Session ID: x7k2m9
+
+# Check progress
+librarian logs --session x7k2m9
+
+# Ask follow-up
+librarian ask --session x7k2m9 "Now implement fixes for the top 3 issues"
+
+# Get the commit
+librarian ask --session x7k2m9 "Commit changes and show the diff"
+
+# Clean up
+librarian kill --session x7k2m9
+```
+
+### Resource Limits
+
+- Memory: 2GB per sandbox
+- CPU: 2 cores per sandbox
+- Storage: Ephemeral (lost on kill)
+
+See `skills/librarian/SKILL.md` for full documentation
 
 ## What Doesn't Work on NAS
 

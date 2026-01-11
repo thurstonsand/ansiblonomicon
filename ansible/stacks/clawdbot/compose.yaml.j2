@@ -17,6 +17,12 @@ services:
       - {{ docker.config_dir }}/clawdbot-gateway/.clawdbot:/home/node/.clawdbot
       - {{ docker.config_dir }}/clawdbot-gateway/clawd:/home/node/clawd
       - /etc/localtime:/etc/localtime:ro
+      # Docker socket for librarian skill (spawning sandbox containers)
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Librarian scripts and Dockerfile
+      - {{ docker.config_base }}/stacks/clawdbot/scripts:/opt/clawdbot/scripts:ro
+      - {{ docker.config_base }}/stacks/clawdbot/Dockerfile.librarian:/opt/clawdbot/Dockerfile.librarian:ro
+      - {{ docker.config_base }}/stacks/clawdbot/skills:/opt/clawdbot/skills:ro
     environment:
       HOME: /home/node
       NODE_ENV: production
@@ -25,8 +31,16 @@ services:
       CLAWDBOT_GATEWAY_PORT: "18789"
       CLAWDBOT_BRIDGE_PORT: "18790"
       # Token is loaded from .clawdbot/clawdbot.json after onboarding
+      # API keys for agent skills (set in .env file)
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY:-}"
+      OPENAI_API_KEY: "${OPENAI_API_KEY:-}"
+      GITHUB_TOKEN: "${GITHUB_TOKEN:-}"
+      # Librarian config
+      LIBRARIAN_IMAGE: clawdbot-librarian:local
       # GOG_KEYRING_PASSWORD for Gmail (set manually if using gog skill)
       XDG_CONFIG_HOME: /home/node/.clawdbot
+      # Add librarian to PATH
+      PATH: /opt/clawdbot/scripts:/home/linuxbrew/.linuxbrew/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
     command:
       - node
       - dist/index.js
