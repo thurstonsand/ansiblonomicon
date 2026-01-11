@@ -1,0 +1,41 @@
+services:
+  clawdbot-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: clawdbot:local
+    container_name: clawdbot-gateway
+    restart: unless-stopped
+    init: true
+    networks:
+      personal:
+        ipv4_address: {{ lan.personal.clawdbot.ip }}
+    ports:
+      - "{{ lan.personal.clawdbot.ports.gateway }}:18789" # gateway websocket + webchat
+      - "{{ lan.personal.clawdbot.ports.bridge }}:18790" # bridge for mobile nodes
+    volumes:
+      - {{ docker.config_dir }}/clawdbot-gateway/.clawdbot:/home/node/.clawdbot
+      - {{ docker.config_dir }}/clawdbot-gateway/clawd:/home/node/clawd
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      HOME: /home/node
+      NODE_ENV: production
+      TERM: xterm-256color
+      CLAWDBOT_GATEWAY_BIND: lan
+      CLAWDBOT_GATEWAY_PORT: "18789"
+      CLAWDBOT_BRIDGE_PORT: "18790"
+      # Token is loaded from .clawdbot/clawdbot.json after onboarding
+      # GOG_KEYRING_PASSWORD for Gmail (set manually if using gog skill)
+      XDG_CONFIG_HOME: /home/node/.clawdbot
+    command:
+      - node
+      - dist/index.js
+      - gateway-daemon
+      - --bind
+      - lan
+      - --port
+      - "18789"
+
+networks:
+  personal:
+    external: true

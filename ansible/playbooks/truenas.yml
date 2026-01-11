@@ -305,6 +305,15 @@
       vars:
         docker_stack_name: cli-proxy-api
 
+    - name: Deploy clawdbot stack
+      tags: [docker-stack-role, clawdbot]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, clawdbot]
+      vars:
+        docker_stack_name: clawdbot
+
     - name: Deploy cloudflared stack
       tags: [docker-stack-role, cloudflared]
       ansible.builtin.include_role:

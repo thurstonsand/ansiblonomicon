@@ -134,3 +134,9 @@ lan:
       ports:
         web: 3552
       domain: arcane.thurstons.house
+    clawdbot:
+      ip: 192.168.6.238
+      ports:
+        gateway: 18789
+        bridge: 18790
+      domain: clawdbot.thurstons.house
