@@ -14,7 +14,8 @@
 codeEditor = "code"
 
 # Font configuration - centralized for all apps
-# Change monoFont to update Ghostty, Zed, VSCode, etc.
+# Store full variant names so templates don't need to append suffixes
 [fonts]
-mono = "BlexMono Nerd Font"       # Base name (apps append Mono/Propo as needed)
-monoSize = 13                      # Default size for editor/terminal
+mono = "BerkeleyMono Nerd Font Mono"   # Terminal / monospace contexts (nerd font patched)
+propo = "BerkeleyMono Nerd Font Mono"  # Editor / UI contexts
+size = 13

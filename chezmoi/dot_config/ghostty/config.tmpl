@@ -1,7 +1,7 @@
 font-family = {{ .fonts.mono }}
 # also change the window title at the top
 window-title-font-family = {{ .fonts.mono }} Bold
-font-size = {{ .fonts.monoSize }}
+font-size = {{ .fonts.size }}
 
 # if not inheriting from a previous window
 working-directory = {{ .chezmoi.homeDir }}/{{ .developDir }}
@@ -22,7 +22,7 @@ macos-non-native-fullscreen = visible-menu
 auto-update = download
 auto-update-channel = stable
 
-theme = dark:Catppuccin Mocha,light:Catppuccin Latte
+theme = dark:Gruvbox Dark Hard,light:Gruvbox Light Hard
 
 keybind = global:control+option+.=toggle_quick_terminal
 keybind = cmd+enter=ignore

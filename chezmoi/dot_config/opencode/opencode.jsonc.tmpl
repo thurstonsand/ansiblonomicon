@@ -1,35 +1,51 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-openai-codex-auth@4.3.0", "opencode-gemini-auth@1.3.6"],
-  "tools": {
-    "read": true
+  "plugin": ["opencode-antigravity-auth@1.2.8"],
+  "agent": {
+    "explore": {
+      "model": "anthropic/claude-haiku-4-5"
+    }
   },
   "permission": {
-    "bash": {
-      "tree*": "allow",
-      "find*": "allow",
-      "awk*": "allow",
-      "sed*": "allow",
-      "grep*": "allow",
-      "jq*": "allow",
-      "mkdir*": "allow",
-      "rg*": "allow",
-      "git status*": "allow",
-      "git add*": "allow",
-      "git diff*": "allow",
-      "git log*": "allow",
-      "git show*": "allow",
-      "git rev-parse*": "allow",
-      "gh pr view*": "allow",
-      "gh run view*": "allow",
-      "uv run basedpyright*": "allow",
-      "uv run ruff*": "allow",
-      "uv run pre-commit*": "allow",
-      "uv run yt-dlp*": "allow"
+    "webfetch": "deny",
+    "websearch": "deny",
+    // Keep "*" first; last match wins.
+    "read": {
+      "*": "allow",
+      "*.env": "allow",
+      "*.env.*": "allow"
     },
-    "webfetch": "allow"
+    "external_directory": "allow",
+    "bash": {
+      "*": "allow",
+      "git *stash*": "ask",
+      "git *add*": "ask",
+      "git *commit*": "ask",
+      "git *push*": "ask",
+      "git *checkout*": "ask",
+      "git *reset*": "ask",
+      "git *clean*": "ask",
+      "git *rebase*": "ask",
+      "rm *-rf*": "ask",
+      "rm *-fr*": "ask",
+      "rm *-r* -f*": "ask",
+      "rm *-f* -r*": "ask",
+      "rm *--recursive*--force*": "ask",
+      "rm *--force*--recursive*": "ask",
+      "find *-delete*": "ask",
+      "find *-execdir*": "ask",
+      "find *-exec*": "ask"
+    }
   },
-  "keybinds": {},
+  "disabled_providers": [
+    "amazon-bedrock",
+    "cloudflare-ai-gateway",
+    "cloudflare-workers-ai"
+  ],
+  "keybinds": {
+    "session_child_cycle": "ctrl+alt+super+k",
+    "session_child_cycle_reverse": "ctrl+alt+super+j"
+  },
   "mcp": {
     "parallel": {
       "enabled": true,
@@ -40,7 +56,7 @@
       }
     }
   },
-  "model": "openai/gpt-5.2-codex",
+  // "model": "openai/gpt-5.2-codex",
   "provider": {
     "anthropic": {
       "blacklist": [
@@ -91,20 +107,58 @@
         "gemini-live-2.5-flash-preview-native-audio"
       ],
       "models": {
-        "gemini-3-pro-preview": {
-          "options": {
-            "thinkingConfig": {
-              "thinkingLevel": "high",
-              "includeThoughts": true
-            }
+        "antigravity-gemini-3-pro": {
+          "name": "Gemini 3 Pro (Antigravity)",
+          "limit": {
+            "context": 1048576,
+            "output": 65535
+          },
+          "modalities": {
+            "input": ["text", "image", "pdf"],
+            "output": ["text"]
+          },
+          "variants": {
+            "low": { "thinkingLevel": "low" },
+            "high": { "thinkingLevel": "high" }
           }
         },
-        "gemini-2.5-flash": {
-          "options": {
-            "thinkingConfig": {
-              "thinkingBudget": 8192,
-              "includeThoughts": true
-            }
+        "antigravity-gemini-3-flash": {
+          "name": "Gemini 3 Flash (Antigravity)",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": ["text", "image", "pdf"],
+            "output": ["text"]
+          },
+          "variants": {
+            "minimal": { "thinkingLevel": "minimal" },
+            "low": { "thinkingLevel": "low" },
+            "medium": { "thinkingLevel": "medium" },
+            "high": { "thinkingLevel": "high" }
+          }
+        },
+        "gemini-3-pro-preview": {
+          "name": "Gemini 3 Pro Preview (Gemini CLI)",
+          "limit": {
+            "context": 1048576,
+            "output": 65535
+          },
+          "modalities": {
+            "input": ["text", "image", "pdf"],
+            "output": ["text"]
+          }
+        },
+        "gemini-3-flash-preview": {
+          "name": "Gemini 3 Flash Preview (Gemini CLI)",
+          "limit": {
+            "context": 1048576,
+            "output": 65536
+          },
+          "modalities": {
+            "input": ["text", "image", "pdf"],
+            "output": ["text"]
           }
         }
       }
@@ -146,19 +200,8 @@
         "text-embedding-3-large",
         "text-embedding-3-small",
         "text-embedding-ada-002",
-        "gpt-5.1-low",
-        "gpt-5.1-medium",
-        "gpt-5.1-high",
-        "gpt-5.1-codex-low",
-        "gpt-5.1-codex-medium",
-        "gpt-5.1-codex-high",
         "gpt-5.1-codex-max",
-        "gpt-5.1-codex-max-low",
-        "gpt-5.1-codex-max-medium",
-        "gpt-5.1-codex-max-high",
-        "gpt-5.1-codex-max-xhigh",
-        "gpt-5.1-codex-mini-medium",
-        "gpt-5.1-codex-mini-high",
+        "gpt-5.1-codex-mini",
         "gpt-5.2",
         "gpt-5.2-chat-latest",
         "gpt-5.2-pro"
@@ -251,143 +294,6 @@
               "reasoningEffort": "xhigh",
               "reasoningSummary": "detailed",
               "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.1-codex-max": {
-          "name": "GPT 5.1 Codex Max (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            },
-            "xhigh": {
-              "reasoningEffort": "xhigh",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.1-codex": {
-          "name": "GPT 5.1 Codex (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.1-codex-mini": {
-          "name": "GPT 5.1 Codex Mini (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "medium"
-            }
-          }
-        },
-        "gpt-5.1": {
-          "name": "GPT 5.1 (OAuth)",
-          "limit": {
-            "context": 272000,
-            "output": 128000
-          },
-          "modalities": {
-            "input": [
-              "text",
-              "image"
-            ],
-            "output": [
-              "text"
-            ]
-          },
-          "variants": {
-            "none": {
-              "reasoningEffort": "none",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "low": {
-              "reasoningEffort": "low",
-              "reasoningSummary": "auto",
-              "textVerbosity": "low"
-            },
-            "medium": {
-              "reasoningEffort": "medium",
-              "reasoningSummary": "auto",
-              "textVerbosity": "medium"
-            },
-            "high": {
-              "reasoningEffort": "high",
-              "reasoningSummary": "detailed",
-              "textVerbosity": "high"
             }
           }
         }

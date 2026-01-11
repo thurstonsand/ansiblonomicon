@@ -46,6 +46,7 @@ brew "git"
 brew "git-crypt"
 brew "git-delta"
 brew "git-trim"
+brew "glab"
 brew "jujutsu"
 brew "lazygit"
 cask "git-credential-manager"
@@ -66,6 +67,7 @@ brew "zig"
 brew "cf-terraforming"
 brew "chezmoi"
 brew "cloudflare-wrangler"
+brew "mise"
 brew "opentofu"
 brew "rclone"
 brew "restic"
@@ -107,6 +109,7 @@ cask "chatgpt-atlas"
 cask "claude"
 cask "codex"
 cask "codexbar"
+cask "opencode-desktop"
 
 mas "Perplexity: Ask Anything", id: 6714467650
 
@@ -151,6 +154,7 @@ cask "fantastical"
 cask "obsidian"
 cask "qlmarkdown"
 cask "setapp"
+cask "wispr-flow"
 
 mas "Copilot", id: 1447330651
 mas "Mela", id: 1568924476

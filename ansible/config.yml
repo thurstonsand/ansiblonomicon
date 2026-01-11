@@ -20,10 +20,11 @@ agent_harness_target_agents:
   - opencode
 
 agent_harness_sources:
-  - repo: anthropics/claude-code
+  - repo: anthropics/claude-plugins-official
     pull: true
     plugins:
       - frontend-design
+      - code-simplifier
   #   # for use in testing if needed
   #   - name: commit-commands
   #   target_agents: [claude] # commands only for Claude (testing)

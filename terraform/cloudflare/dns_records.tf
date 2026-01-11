@@ -136,3 +136,16 @@ resource "cloudflare_record" "google_site_verification" {
   proxied = false
   ttl     = 3600
 }
+
+# GitLab Pages - https://gitlab.com/thurstons.house/snippethost
+resource "cloudflare_record" "snippethost" {
+  zone_id = local.zone_id
+  name    = "snippethost"
+  type    = "CNAME"
+  content = "thurstons.house.gitlab.io"
+  comment = "GitLab Pages: https://gitlab.com/thurstons.house/snippethost"
+  proxied = false
+  ttl     = 1
+}
+
+
