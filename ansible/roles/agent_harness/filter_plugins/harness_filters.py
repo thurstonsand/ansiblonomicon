@@ -4,7 +4,9 @@ from dataclasses import dataclass, field
 import json
 from pathlib import Path
 import re
-from typing import Any, TypedDict
+from typing import Any, TypedDict, cast
+
+import frontmatter
 
 
 class PluginLongForm(TypedDict, total=False):
@@ -864,48 +866,6 @@ class CommandTransformResult:
         }
 
 
-def _parse_frontmatter(content: str) -> tuple[dict[str, Any], str]:
-    """Parse YAML frontmatter from markdown content.
-
-    Args:
-        content: Markdown content potentially with YAML frontmatter
-
-    Returns:
-        Tuple of (frontmatter dict, body without frontmatter)
-    """
-    if not content.startswith("---"):
-        return {}, content
-
-    lines = content.split("\n")
-    end_idx = -1
-    for i, line in enumerate(lines[1:], start=1):
-        if line.strip() == "---":
-            end_idx = i
-            break
-
-    if end_idx == -1:
-        return {}, content
-
-    frontmatter_lines = lines[1:end_idx]
-    body = "\n".join(lines[end_idx + 1 :]).lstrip("\n")
-
-    # Simple YAML parsing (handles key: value and key: "value")
-    frontmatter: dict[str, Any] = {}
-    for line in frontmatter_lines:
-        if ":" in line:
-            key, _, value = line.partition(":")
-            key = key.strip()
-            value = value.strip()
-            # Remove quotes if present
-            if (value.startswith('"') and value.endswith('"')) or (
-                value.startswith("'") and value.endswith("'")
-            ):
-                value = value[1:-1]
-            frontmatter[key] = value
-
-    return frontmatter, body
-
-
 def _has_dynamic_commands(content: str) -> bool:
     """Check if content contains Claude's !`command` dynamic execution syntax."""
     return bool(CLAUDE_DYNAMIC_CMD_PATTERN.search(content))
@@ -1026,8 +986,8 @@ def agent_harness_transform_command(
         ).to_dict()
 
     content = path.read_text()
-    frontmatter, body = _parse_frontmatter(content)
-    description = str(frontmatter.get("description", ""))
+    post = frontmatter.loads(content)
+    description = str(post.metadata.get("description", ""))
 
     # Claude doesn't need transformation - it understands its own format
     if target_agent == "claude":
@@ -1038,24 +998,163 @@ def agent_harness_transform_command(
         ).to_dict()
 
     # Check if transformation is needed
-    if not _has_dynamic_commands(body):
+    if not _has_dynamic_commands(post.content):
         # No dynamic commands - strip frontmatter for non-Claude agents
         # (they don't understand allowed-tools etc.)
         return CommandTransformResult(
-            content=body if frontmatter else content,
+            content=post.content if post.metadata else content,
             is_executable=False,
             description=description,
         ).to_dict()
 
     # Transform to executable for Amp
-    commands = _extract_dynamic_commands(body)
-    executable_content = _generate_amp_executable(body, commands, description)
+    commands = _extract_dynamic_commands(post.content)
+    executable_content = _generate_amp_executable(post.content, commands, description)
 
     return CommandTransformResult(
         content=executable_content,
         is_executable=True,
         description=description,
     ).to_dict()
+
+
+# =============================================================================
+# Skill transformation (model alias replacement)
+# =============================================================================
+
+
+@dataclass
+class SkillTransformResult:
+    """Result of transforming a skill for a target agent."""
+
+    content: str
+    modified: bool
+
+    def to_dict(self) -> dict[str, Any]:
+        """Convert to dict for Ansible/Jinja2 compatibility."""
+        return {
+            "content": self.content,
+            "modified": self.modified,
+        }
+
+
+def _build_model_alias_map(
+    models_config: dict[str, Any],
+) -> dict[str, dict[str, str]]:
+    """Build a lookup map from source aliases to target agent model names.
+
+    Args:
+        models_config: The 'models' section from models.yml
+
+    Returns:
+        Dict mapping source_alias -> {target_agent -> replacement_model}
+        e.g., {"sonnet": {"opencode": "anthropic/claude-sonnet-4-5-..."}}
+    """
+    alias_map: dict[str, dict[str, str]] = {}
+
+    for provider_models in models_config.values():
+        if not isinstance(provider_models, dict):
+            continue
+
+        for model_config in cast(dict[str, Any], provider_models).values():
+            if not isinstance(model_config, dict):
+                continue
+
+            harness_config = cast(dict[str, Any], model_config).get("agent_harness")
+            if not harness_config or not isinstance(harness_config, dict):
+                continue
+
+            aliases = cast(dict[str, Any], harness_config).get("aliases")
+            if not aliases or not isinstance(aliases, dict):
+                continue
+
+            aliases_dict = cast(dict[str, str], aliases)
+            for source_alias in aliases_dict.values():
+                if source_alias not in alias_map:
+                    alias_map[source_alias] = {}
+
+                for tgt_agent, tgt_alias in aliases_dict.items():
+                    alias_map[source_alias][tgt_agent] = tgt_alias
+
+    return alias_map
+
+
+def _deep_convert_to_dict(obj: Any) -> Any:
+    """Recursively convert Ansible lazy containers to regular Python types.
+
+    Ansible passes _AnsibleLazyTemplateDict and similar types that can't be
+    serialized by standard YAML libraries.
+    """
+    if isinstance(obj, dict):
+        return {
+            str(k): _deep_convert_to_dict(v)
+            for k, v in cast(dict[Any, Any], obj).items()
+        }
+    if isinstance(obj, list):
+        return [_deep_convert_to_dict(item) for item in cast(list[Any], obj)]
+    return obj
+
+
+def _serialize_frontmatter(metadata: dict[str, Any], content: str) -> str:
+    """Serialize frontmatter manually to avoid Ansible's YAML representer pollution.
+
+    Ansible modifies PyYAML's global representers which can cause issues with
+    frontmatter.dumps(). This function builds the output manually.
+    """
+    import yaml
+
+    yaml_content = yaml.dump(
+        dict(metadata),
+        Dumper=yaml.SafeDumper,
+        default_flow_style=False,
+        allow_unicode=True,
+        sort_keys=True,
+    )
+    return f"---\n{yaml_content}---\n\n{content}"
+
+
+def agent_harness_transform_skill(
+    source_path: str, target_agent: str, models_config: dict[str, Any]
+) -> dict[str, Any]:
+    """Transform a skill's frontmatter model field for the target agent.
+
+    Skills may specify a model alias (e.g., "sonnet") in their frontmatter.
+    Different agents use different model naming conventions:
+    - Claude/Amp: "sonnet", "haiku", "opus"
+    - OpenCode: "anthropic/claude-sonnet-4-5-20250929"
+
+    This function rewrites the model field based on the target agent.
+
+    Args:
+        source_path: Path to the source skill file (SKILL.md)
+        target_agent: Target agent name (e.g., "opencode", "claude", "amp")
+        models_config: The 'models' section from models.yml
+
+    Returns:
+        Dict with 'content' (transformed file content) and 'modified' (bool)
+    """
+    path = Path(source_path)
+    if not path.exists():
+        return SkillTransformResult(content="", modified=False).to_dict()
+
+    content = path.read_text()
+    post = frontmatter.loads(content)
+
+    model_value = post.metadata.get("model")
+    if not model_value or not isinstance(model_value, str):
+        return SkillTransformResult(content=content, modified=False).to_dict()
+
+    plain_config = _deep_convert_to_dict(models_config)
+    alias_map = _build_model_alias_map(plain_config)
+
+    replacement = alias_map.get(model_value, {}).get(target_agent)
+    if not replacement or replacement == model_value:
+        return SkillTransformResult(content=content, modified=False).to_dict()
+
+    new_metadata = _deep_convert_to_dict(dict(post.metadata))
+    new_metadata["model"] = str(replacement)
+    serialized = _serialize_frontmatter(new_metadata, post.content)
+    return SkillTransformResult(content=serialized, modified=True).to_dict()
 
 
 class FilterModule:
@@ -1067,4 +1166,5 @@ class FilterModule:
             "agent_harness_get_git_sources": agent_harness_get_git_sources,
             "agent_harness_filter_resources": agent_harness_filter_resources,
             "agent_harness_transform_command": agent_harness_transform_command,
+            "agent_harness_transform_skill": agent_harness_transform_skill,
         }

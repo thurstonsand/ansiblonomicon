@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 from harness_filters import (
+    _build_model_alias_map,
     _check_standalone_plugin,
     _discover_agents_in_plugin,
     _discover_commands_in_plugin,
@@ -24,6 +25,7 @@ from harness_filters import (
     agent_harness_build_plugin_resources,
     agent_harness_filter_resources,
     agent_harness_get_git_sources,
+    agent_harness_transform_skill,
 )
 import pytest
 
@@ -1538,3 +1540,218 @@ def test_agent_harness_filter_resources_mixed() -> None:
     assert "for-amp" in names
     assert "for-both" in names
     assert "for-claude" not in names
+
+
+# =============================================================================
+# Tests for _build_model_alias_map
+# =============================================================================
+
+
+@pytest.fixture
+def sample_models_config() -> dict[str, Any]:
+    """Sample models config matching the structure in models.yml."""
+    return {
+        "anthropic": {
+            "haiku": {
+                "version": "claude-haiku-4-5-20251001",
+                "agent_harness": {
+                    "aliases": {
+                        "claude": "haiku",
+                        "opencode": "anthropic/claude-haiku-4-5",
+                    }
+                },
+            },
+            "sonnet": {
+                "version": "claude-sonnet-4-5-20250929",
+                "agent_harness": {
+                    "aliases": {
+                        "claude": "sonnet",
+                        "opencode": "anthropic/claude-sonnet-4-5",
+                    }
+                },
+            },
+            "opus": {
+                "version": "claude-opus-4-5-20251101",
+                "agent_harness": {
+                    "aliases": {
+                        "claude": "opus",
+                        "opencode": "anthropic/claude-opus-4-5",
+                    }
+                },
+            },
+        },
+        "openai": {
+            "gpt": {
+                "version": "gpt-5.2",
+            }
+        },
+    }
+
+
+@pytest.mark.unit
+def test_build_model_alias_map_creates_bidirectional_mappings(
+    sample_models_config: dict[str, Any],
+) -> None:
+    alias_map = _build_model_alias_map(sample_models_config)
+
+    assert "sonnet" in alias_map
+    assert alias_map["sonnet"]["opencode"] == "anthropic/claude-sonnet-4-5"
+    assert alias_map["sonnet"]["claude"] == "sonnet"
+
+
+@pytest.mark.unit
+def test_build_model_alias_map_includes_full_model_names(
+    sample_models_config: dict[str, Any],
+) -> None:
+    alias_map = _build_model_alias_map(sample_models_config)
+
+    assert "anthropic/claude-opus-4-5" in alias_map
+    assert alias_map["anthropic/claude-opus-4-5"]["claude"] == "opus"
+
+
+@pytest.mark.unit
+def test_build_model_alias_map_skips_models_without_harness_config() -> None:
+    config: dict[str, Any] = {
+        "openai": {
+            "gpt": {"version": "gpt-5.2"},
+        }
+    }
+    alias_map = _build_model_alias_map(config)
+    assert alias_map == {}
+
+
+@pytest.mark.unit
+def test_build_model_alias_map_handles_empty_config() -> None:
+    assert _build_model_alias_map({}) == {}
+
+
+# =============================================================================
+# Tests for agent_harness_transform_skill
+# =============================================================================
+
+
+@pytest.fixture
+def create_skill_with_model(tmp_path: Path) -> Callable[[str, str], Path]:
+    """Return a function to create a skill file with a model field."""
+
+    def _create(name: str, model: str) -> Path:
+        skill_dir = tmp_path / name
+        skill_dir.mkdir(parents=True)
+        skill_file = skill_dir / "SKILL.md"
+        skill_file.write_text(f"""---
+name: {name}
+description: A test skill
+model: {model}
+---
+
+# {name}
+
+This is the body content.
+""")
+        return skill_file
+
+    return _create
+
+
+@pytest.mark.unit
+def test_transform_skill_replaces_model_for_opencode(
+    create_skill_with_model: Callable[[str, str], Path],
+    sample_models_config: dict[str, Any],
+) -> None:
+    skill_file = create_skill_with_model("test-skill", "sonnet")
+
+    result = agent_harness_transform_skill(
+        str(skill_file), "opencode", sample_models_config
+    )
+
+    assert result["modified"] is True
+    assert "model: anthropic/claude-sonnet-4-5" in result["content"]
+    assert "model: sonnet" not in result["content"]
+
+
+@pytest.mark.unit
+def test_transform_skill_no_change_when_same_alias(
+    create_skill_with_model: Callable[[str, str], Path],
+    sample_models_config: dict[str, Any],
+) -> None:
+    skill_file = create_skill_with_model("test-skill", "sonnet")
+
+    result = agent_harness_transform_skill(
+        str(skill_file), "claude", sample_models_config
+    )
+
+    assert result["modified"] is False
+
+
+@pytest.mark.unit
+def test_transform_skill_no_change_when_target_not_in_aliases(
+    create_skill_with_model: Callable[[str, str], Path],
+    sample_models_config: dict[str, Any],
+) -> None:
+    skill_file = create_skill_with_model("test-skill", "sonnet")
+
+    result = agent_harness_transform_skill(str(skill_file), "amp", sample_models_config)
+
+    assert result["modified"] is False
+
+
+@pytest.mark.unit
+def test_transform_skill_no_change_when_no_model_field(
+    tmp_path: Path,
+    sample_models_config: dict[str, Any],
+) -> None:
+    skill_file = tmp_path / "SKILL.md"
+    skill_file.write_text("""---
+name: no-model-skill
+description: A skill without model
+---
+
+# Content
+""")
+
+    result = agent_harness_transform_skill(
+        str(skill_file), "opencode", sample_models_config
+    )
+
+    assert result["modified"] is False
+
+
+@pytest.mark.unit
+def test_transform_skill_no_change_when_unknown_model(
+    create_skill_with_model: Callable[[str, str], Path],
+    sample_models_config: dict[str, Any],
+) -> None:
+    skill_file = create_skill_with_model("test-skill", "unknown-model")
+
+    result = agent_harness_transform_skill(
+        str(skill_file), "opencode", sample_models_config
+    )
+
+    assert result["modified"] is False
+
+
+@pytest.mark.unit
+def test_transform_skill_missing_file(
+    sample_models_config: dict[str, Any],
+) -> None:
+    result = agent_harness_transform_skill(
+        "/nonexistent/path/SKILL.md", "opencode", sample_models_config
+    )
+
+    assert result["modified"] is False
+    assert result["content"] == ""
+
+
+@pytest.mark.unit
+def test_transform_skill_preserves_body_content(
+    create_skill_with_model: Callable[[str, str], Path],
+    sample_models_config: dict[str, Any],
+) -> None:
+    skill_file = create_skill_with_model("test-skill", "opus")
+
+    result = agent_harness_transform_skill(
+        str(skill_file), "opencode", sample_models_config
+    )
+
+    assert "# test-skill" in result["content"]
+    assert "This is the body content." in result["content"]

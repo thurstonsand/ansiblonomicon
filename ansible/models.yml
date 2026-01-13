@@ -23,7 +23,7 @@ models:
       agent_harness:
         aliases:
           claude: "haiku"
-          opencode: "anthropic/claude-haiku-4-5-20251001"
+          opencode: "anthropic/claude-haiku-4-5"
       vscode:
         include: true
         thinking: false
@@ -40,7 +40,7 @@ models:
       agent_harness:
         aliases:
           claude: "sonnet"
-          opencode: "anthropic/claude-sonnet-4-5-20250929"
+          opencode: "anthropic/claude-sonnet-4-5"
       vscode:
         include: true
         thinking: true
@@ -57,7 +57,7 @@ models:
       agent_harness:
         aliases:
           claude: "opus"
-          opencode: "anthropic/claude-opus-4-5-20251101"
+          opencode: "anthropic/claude-opus-4-5"
       vscode:
         include: true
         thinking: true

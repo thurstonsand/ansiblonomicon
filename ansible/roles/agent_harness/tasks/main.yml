@@ -4,6 +4,11 @@
 - name: Include agent configuration
   ansible.builtin.include_vars: agents.yml
 
+- name: Load models configuration
+  ansible.builtin.include_vars:
+    file: "{{ playbook_dir }}/../models.yml"
+    name: agent_harness_models
+
 - name: Clone git repositories
   ansible.builtin.include_tasks: clone_git_repos.yml
   when: (agent_harness_sources | agent_harness_get_git_sources) | length > 0

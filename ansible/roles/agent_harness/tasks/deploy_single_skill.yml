@@ -8,7 +8,7 @@
 
 - name: Fail if skill source not found
   ansible.builtin.fail:
-    msg: "Skill source not found: {{ agent_harness_skill_info.source }} (from {{ agent_harness_skill_info.repo }})"
+    msg: "Skill source not found: {{ agent_harness_skill_info.source }} (from {{ agent_harness_skill_info.origin }})"
   when: not agent_harness_skill_source_stat.stat.exists
 
 - name: Build rsync exclude options
@@ -26,3 +26,16 @@
     checksum: true
     rsync_opts: "{{ agent_harness_skill_rsync_opts }}"
   delegate_to: localhost
+
+- name: Transform SKILL.md for target agent
+  ansible.builtin.set_fact:
+    agent_harness_transformed_skill: >-
+      {{ (agent_harness_skill_info.source ~ '/SKILL.md')
+         | agent_harness_transform_skill(agent_harness_target_agent, agent_harness_models.models) }}
+
+- name: Update SKILL.md if model was transformed
+  ansible.builtin.copy:
+    content: "{{ agent_harness_transformed_skill.content }}"
+    dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/SKILL.md"
+    mode: "0644"
+  when: agent_harness_transformed_skill.modified
