@@ -6,6 +6,9 @@
   become: true
   environment:
     middleware_method: midclt
+  vars_files:
+    - ../config.yml
+    - ../models.yml
   tasks:
     # ===================
     # Services

@@ -1,0 +1,220 @@
+# Centralized Model Configuration
+# ================================
+# Single source of truth for all model definitions across:
+# - Ansible (CLI proxy API, agent harness)
+# - Chezmoi (Zed, VS Code, OpenCode, etc.)
+#
+# Update model versions here; all consumers reference this file.
+# Chezmoi accesses via symlink: chezmoi/.chezmoidata/models.yaml -> ansible/models.yml
+---
+models:
+  # ===========================================================================
+  # ANTHROPIC
+  # ===========================================================================
+  anthropic:
+    haiku:
+      version: "claude-haiku-4-5-20251001"
+      display_name: "Claude Haiku 4.5"
+      max_input: 200000
+      max_output: 64000
+      vision: true
+      cli_proxy_api:
+        pattern: "^claude-haiku-4-5"
+      agent_harness:
+        aliases:
+          claude: "haiku"
+          opencode: "anthropic/claude-haiku-4-5-20251001"
+      vscode:
+        include: true
+        thinking: false
+      zed: true
+
+    sonnet:
+      version: "claude-sonnet-4-5-20250929"
+      display_name: "Claude Sonnet 4.5"
+      max_input: 200000
+      max_output: 64000
+      vision: true
+      cli_proxy_api:
+        pattern: "^claude-sonnet-4-5"
+      agent_harness:
+        aliases:
+          claude: "sonnet"
+          opencode: "anthropic/claude-sonnet-4-5-20250929"
+      vscode:
+        include: true
+        thinking: true
+      zed: true
+
+    opus:
+      version: "claude-opus-4-5-20251101"
+      display_name: "Claude Opus 4.5"
+      max_input: 200000
+      max_output: 64000
+      vision: true
+      cli_proxy_api:
+        pattern: "^claude-opus-4-5"
+      agent_harness:
+        aliases:
+          claude: "opus"
+          opencode: "anthropic/claude-opus-4-5-20251101"
+      vscode:
+        include: true
+        thinking: true
+      zed: true
+
+  # ===========================================================================
+  # OPENAI
+  # ===========================================================================
+  openai:
+    gpt:
+      version: "gpt-5.2"
+      display_name: "GPT 5.2"
+      max_input: 400000
+      max_output: 128000
+      vision: true
+      vscode:
+        include: true
+        thinking: true
+      zed: true
+      variants:
+        medium:
+          id: "gpt-5.2(medium)"
+          display_name: "GPT 5.2 Medium"
+          vscode: true
+        high:
+          id: "gpt-5.2(high)"
+          display_name: "GPT 5.2 High"
+          vscode: true
+          zed: true
+        xhigh:
+          id: "gpt-5.2(xhigh)"
+          display_name: "GPT 5.2 XHigh"
+          vscode: true
+
+    gpt_codex:
+      version: "gpt-5.2-codex"
+      display_name: "GPT 5.2 Codex"
+      max_input: 400000
+      max_output: 128000
+      vision: true
+      vscode:
+        include: false
+        thinking: true
+      variants:
+        medium:
+          id: "gpt-5.2-codex(medium)"
+          display_name: "GPT 5.2 Codex Medium"
+          vscode: true
+        high:
+          id: "gpt-5.2-codex(high)"
+          display_name: "GPT 5.2 Codex High"
+          vscode: true
+        xhigh:
+          id: "gpt-5.2-codex(xhigh)"
+          display_name: "GPT 5.2 Codex XHigh"
+          vscode: true
+
+  # ===========================================================================
+  # GOOGLE
+  # ===========================================================================
+  google:
+    gemini_3_flash:
+      version: "gemini-3-flash-preview"
+      display_name: "Gemini 3 Flash"
+      max_input: 1000000
+      max_output: 65536
+      vision: true
+      cli_proxy_api:
+        pattern: "^gemini-3-flash"
+      vscode:
+        include: true
+        thinking: true
+      zed: true
+
+    gemini_3_pro:
+      version: "gemini-3-pro-preview"
+      display_name: "Gemini 3 Pro"
+      max_input: 1000000
+      max_output: 65536
+      vision: true
+      cli_proxy_api:
+        pattern: "^gemini-3-pro"
+      vscode:
+        include: true
+        thinking: true
+      zed: true
+
+    # CLI proxy only - normalize AMP's calls to these models
+    gemini_25_flash:
+      version: "gemini-2.5-flash"
+      display_name: "Gemini 2.5 Flash"
+      max_input: 1000000
+      max_output: 65536
+      vision: true
+      cli_proxy_api:
+        pattern: "^gemini-2\\\\.5-flash"
+
+    gemini_25_flash_lite:
+      version: "gemini-2.5-flash-lite"
+      display_name: "Gemini 2.5 Flash Lite"
+      max_input: 1000000
+      max_output: 65536
+      vision: true
+      cli_proxy_api:
+        pattern: "^gemini-2\\\\.5-flash-lite"
+
+    gemini_25_pro:
+      version: "gemini-2.5-pro"
+      display_name: "Gemini 2.5 Pro"
+      max_input: 1000000
+      max_output: 65536
+      vision: true
+      cli_proxy_api:
+        pattern: "^gemini-2\\\\.5-pro"
+
+# =============================================================================
+# CLI PROXY API - Non-model-specific configuration
+# =============================================================================
+cli_proxy_api:
+  # Aliased models (provider exposes other providers' models under different names)
+  oauth_model_mappings:
+    antigravity:
+      - name: "gemini-claude-opus-4-5-thinking"
+        alias: "claude-opus-4-5-thinking"
+        fork: true
+      - name: "gemini-claude-sonnet-4-5"
+        alias: "claude-sonnet-4-5"
+        fork: true
+      - name: "gemini-claude-sonnet-4-5-thinking"
+        alias: "claude-sonnet-4-5-thinking"
+        fork: true
+
+  # Legacy/deprecated model exclusions (models not in the models section)
+  legacy_exclusions:
+    claude:
+      - claude-3-5-haiku-20241022
+      - claude-3-7-sonnet-20250219
+      - claude-sonnet-4-20250514
+      - claude-opus-4-20250514
+      - claude-opus-4-1-20250805
+    gemini-cli:
+      - gemini-2.5-computer-use-preview-10-2025
+      - gemini-2.0-*
+      - gemini-1.5-*
+      - gemini-1.0-*
+    antigravity:
+      - gemini-2.5-computer-use-preview-10-2025
+      - gemini-2.0-*
+      - gemini-1.5-*
+      - gemini-1.0-*
+      - gemini-claude-*
+      - gpt-oss-*
+    codex:
+      - gpt-5
+      - gpt-5.1
+      - gpt-5.1-codex-mini
+      - gpt-5.1-codex-max
+      - gpt-5-codex
+      - gpt-5-codex-mini
+      - gpt-5.1-codex

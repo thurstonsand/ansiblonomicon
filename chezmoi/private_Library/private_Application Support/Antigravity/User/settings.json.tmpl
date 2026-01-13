@@ -1,2 +1,1 @@
-{{- template "llm-models" . -}}
-{{ template "vscode-settings" (dict "editor" "antigravity" "models" nil "fonts" .fonts) }}
+{{ template "vscode-settings" (dict "editor" "antigravity" "models" .models "fonts" .fonts) }}

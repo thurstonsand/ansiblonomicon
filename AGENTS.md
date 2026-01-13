@@ -40,6 +40,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `ansible/roles/` — Custom roles
 - `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS (`.j2` templates use centralized config)
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `archlinux.config.yml` for OS-specific
+- `ansible/models.yml` — Centralized model definitions (versions, aliases, vscode/zed config); symlinked to `chezmoi/.chezmoidata/models.yaml`
 - `ansible/inventory/group_vars/truenas.yml` — TrueNAS host vars (Docker config, network IPs/ports/domains)
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps

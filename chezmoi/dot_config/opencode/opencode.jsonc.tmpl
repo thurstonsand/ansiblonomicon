@@ -3,8 +3,12 @@
   "plugin": ["opencode-antigravity-auth@1.2.8"],
   "agent": {
     "explore": {
-      "model": "anthropic/claude-haiku-4-5"
+      "model": "{{ .models.anthropic.haiku.agent_harness.aliases.opencode }}"
     }
+  },
+  "tui": {
+    "scroll_speed": 1,
+    "scroll_acceleration": { "enabled": true }
   },
   "permission": {
     "webfetch": "deny",

@@ -1,11 +1,51 @@
 # CLI Proxy models - routes through https://aig.thurstons.house
-{{- template "llm-models" . }}
-{{ range .models }}
-- model_id: {{ .name }}
-  model_name: {{ .id }}
+{{- range $key, $model := .models.anthropic }}
+{{- $vscode := index $model "vscode" }}
+{{- if and $vscode $vscode.include }}
+- model_id: {{ $model.display_name }}
+  model_name: {{ $model.version }}
   api_base: https://aig.thurstons.house/v1
   api_key_name: llm-api-key
   headers:
     CF-Access-Client-Id: {{ template "cf-access-client-id" $ }}
     CF-Access-Client-Secret: {{ template "cf-access-client-secret" $ }}
-{{ end -}}
+{{- end }}
+{{- end }}
+{{- range $key, $model := .models.openai }}
+{{- $vscode := index $model "vscode" }}
+{{- if and $vscode $vscode.include }}
+- model_id: {{ $model.display_name }}
+  model_name: {{ $model.version }}
+  api_base: https://aig.thurstons.house/v1
+  api_key_name: llm-api-key
+  headers:
+    CF-Access-Client-Id: {{ template "cf-access-client-id" $ }}
+    CF-Access-Client-Secret: {{ template "cf-access-client-secret" $ }}
+{{- end }}
+{{- $variants := index $model "variants" }}
+{{- if $variants }}
+{{- range $vkey, $variant := $variants }}
+{{- if $variant.vscode }}
+- model_id: {{ $variant.display_name }}
+  model_name: {{ $variant.id }}
+  api_base: https://aig.thurstons.house/v1
+  api_key_name: llm-api-key
+  headers:
+    CF-Access-Client-Id: {{ template "cf-access-client-id" $ }}
+    CF-Access-Client-Secret: {{ template "cf-access-client-secret" $ }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- range $key, $model := .models.google }}
+{{- $vscode := index $model "vscode" }}
+{{- if and $vscode $vscode.include }}
+- model_id: {{ $model.display_name }}
+  model_name: {{ $model.version }}
+  api_base: https://aig.thurstons.house/v1
+  api_key_name: llm-api-key
+  headers:
+    CF-Access-Client-Id: {{ template "cf-access-client-id" $ }}
+    CF-Access-Client-Secret: {{ template "cf-access-client-secret" $ }}
+{{- end }}
+{{- end }}

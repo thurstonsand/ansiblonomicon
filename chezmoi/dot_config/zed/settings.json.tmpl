@@ -1,4 +1,3 @@
-{{- template "llm-models" . -}}
 // Zed settings
 //
 // For information on how to configure Zed, see the Zed
@@ -7,6 +6,7 @@
 // To see all of Zed's default settings without changing your
 // custom settings, run `zed: open default settings` from the
 // command palette (cmd-shift-p / ctrl-shift-p)
+{{- $m := .models }}
 {
   "context_servers": {
     "Parallel Search": {
@@ -30,19 +30,19 @@
     "openai": {
       "available_models": [
         {
-          "name": "{{ .gpt52.id }}",
-          "display_name": "{{ .gpt52.name }}",
-          "max_tokens": {{ .gpt52.maxInput }},
-          "max_output_tokens": {{ .gpt52.maxOutput }},
-          "max_completion_tokens": {{ .gpt52.maxOutput }}
+          "name": "{{ $m.openai.gpt.version }}",
+          "display_name": "{{ $m.openai.gpt.display_name }}",
+          "max_tokens": {{ $m.openai.gpt.max_input }},
+          "max_output_tokens": {{ $m.openai.gpt.max_output }},
+          "max_completion_tokens": {{ $m.openai.gpt.max_output }}
         },
         {
-          "name": "{{ .gpt52High.id }}",
-          "display_name": "{{ .gpt52High.name }}",
+          "name": "{{ $m.openai.gpt.variants.high.id }}",
+          "display_name": "{{ $m.openai.gpt.variants.high.display_name }}",
           "reasoning_effort": "high",
-          "max_tokens": {{ .gpt52High.maxInput }},
-          "max_output_tokens": {{ .gpt52High.maxOutput }},
-          "max_completion_tokens": {{ .gpt52High.maxOutput }}
+          "max_tokens": {{ $m.openai.gpt.max_input }},
+          "max_output_tokens": {{ $m.openai.gpt.max_output }},
+          "max_completion_tokens": {{ $m.openai.gpt.max_output }}
         }
       ],
       "api_url": "https://aig.thurstons.house/v1"
@@ -160,20 +160,20 @@
   "agent": {
     "always_allow_tool_actions": true,
     "default_model": {
-      "provider": "openai",
-      "model": "gpt-5.2"
+      "provider": "anthropic",
+      "model": "{{ $m.anthropic.opus.version }}"
     },
     "inline_assistant_model": {
       "provider": "anthropic",
-      "model": "claude-opus-4-5-latest"
+      "model": "{{ $m.anthropic.opus.version }}"
     },
     "commit_message_model": {
-      "provider": "anthropic",
-      "model": "claude-opus-4-5-latest"
+      "provider": "google",
+      "model": "{{ $m.google.gemini_3_flash.version }}"
     },
     "thread_summary_model": {
-      "provider": "anthropic",
-      "model": "claude-opus-4-5-latest"
+      "provider": "google",
+      "model": "{{ $m.google.gemini_3_flash.version }}"
     },
     "model_parameters": []
   },

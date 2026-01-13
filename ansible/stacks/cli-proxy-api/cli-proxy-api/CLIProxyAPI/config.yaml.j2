@@ -49,33 +49,32 @@ ampcode:
   restrict-management-to-localhost: false
   model-mappings:
     # Map any dated/preview suffix versions to stable model names
-    # Gemini models available: gemini-3-pro-preview, gemini-3-flash-preview,
-    #                          gemini-2.5-pro, gemini-2.5-flash, gemini-2.5-flash-lite
-    - from: "^gemini-2\\.5-flash-lite"
-      to: "gemini-2.5-flash-lite"
+    # Model versions sourced from ansible/models.yml
+    # Gemini models (order matters: more specific patterns first)
+    - from: "{{ models.google.gemini_25_flash_lite.cli_proxy_api.pattern }}"
+      to: "{{ models.google.gemini_25_flash_lite.version }}"
       regex: true
-    - from: "^gemini-2\\.5-flash"
-      to: "gemini-2.5-flash"
+    - from: "{{ models.google.gemini_25_flash.cli_proxy_api.pattern }}"
+      to: "{{ models.google.gemini_25_flash.version }}"
       regex: true
-    - from: "^gemini-2\\.5-pro"
-      to: "gemini-2.5-pro"
+    - from: "{{ models.google.gemini_25_pro.cli_proxy_api.pattern }}"
+      to: "{{ models.google.gemini_25_pro.version }}"
       regex: true
-    - from: "^gemini-3-flash"
-      to: "gemini-3-flash-preview"
+    - from: "{{ models.google.gemini_3_flash.cli_proxy_api.pattern }}"
+      to: "{{ models.google.gemini_3_flash.version }}"
       regex: true
-    - from: "^gemini-3-pro"
-      to: "gemini-3-pro-preview"
+    - from: "{{ models.google.gemini_3_pro.cli_proxy_api.pattern }}"
+      to: "{{ models.google.gemini_3_pro.version }}"
       regex: true
-    # Claude models available: claude-sonnet-4-5-20250929, claude-opus-4-5-20251101,
-    #                          claude-haiku-4-5-20251001
-    - from: "^claude-sonnet-4-5"
-      to: "claude-sonnet-4-5-20250929"
+    # Claude models
+    - from: "{{ models.anthropic.sonnet.cli_proxy_api.pattern }}"
+      to: "{{ models.anthropic.sonnet.version }}"
       regex: true
-    - from: "^claude-opus-4-5"
-      to: "claude-opus-4-5-20251101"
+    - from: "{{ models.anthropic.opus.cli_proxy_api.pattern }}"
+      to: "{{ models.anthropic.opus.version }}"
       regex: true
-    - from: "^claude-haiku-4-5"
-      to: "claude-haiku-4-5-20251001"
+    - from: "{{ models.anthropic.haiku.cli_proxy_api.pattern }}"
+      to: "{{ models.anthropic.haiku.version }}"
       regex: true
   force-model-mappings: false
 payload:
@@ -91,41 +90,8 @@ logs-max-total-size-mb: 0
 routing:
   strategy: "round-robin"
 # Alias antigravity's Claude models to standard Anthropic names
+# Sourced from ansible/models.yml
 oauth-model-mappings:
-  antigravity:
-    - name: "gemini-claude-opus-4-5-thinking"
-      alias: "claude-opus-4-5-thinking"
-      fork: true
-    - name: "gemini-claude-sonnet-4-5"
-      alias: "claude-sonnet-4-5"
-      fork: true
-    - name: "gemini-claude-sonnet-4-5-thinking"
-      alias: "claude-sonnet-4-5-thinking"
-      fork: true
+{{ cli_proxy_api.oauth_model_mappings | to_nice_yaml(indent=2) | indent(2, first=true) }}
 oauth-excluded-models:
-  claude:
-    - claude-3-5-haiku-20241022
-    - claude-3-7-sonnet-20250219
-    - claude-sonnet-4-20250514
-    - claude-opus-4-20250514
-    - claude-opus-4-1-20250805
-  gemini-cli:
-    - gemini-2.5-computer-use-preview-10-2025
-    - gemini-2.0-*
-    - gemini-1.5-*
-    - gemini-1.0-*
-  antigravity:
-    - gemini-2.5-computer-use-preview-10-2025
-    - gemini-2.0-*
-    - gemini-1.5-*
-    - gemini-1.0-*
-    - gemini-claude-*
-    - gpt-oss-*
-  codex:
-    - gpt-5
-    - gpt-5.1
-    - gpt-5.1-codex-mini
-    - gpt-5.1-codex-max
-    - gpt-5-codex
-    - gpt-5-codex-mini
-    - gpt-5.1-codex
+{{ cli_proxy_api.legacy_exclusions | to_nice_yaml(indent=2) | indent(2, first=true) }}

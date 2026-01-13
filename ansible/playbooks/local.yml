@@ -7,6 +7,7 @@
 
   vars_files:
     - ../config.yml
+    - ../models.yml
 
   pre_tasks:
     - name: Load Darwin-specific config

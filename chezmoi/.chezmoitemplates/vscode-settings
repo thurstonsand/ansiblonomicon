@@ -1,11 +1,10 @@
 {{- /* Template for VSCode-alike settings.json files */ -}}
-{{- /* Usage: {{ template "vscode-settings" (dict "editor" "vscode" "models" .models "claudeHaiku" .claudeHaiku) }} */ -}}
+{{- /* Usage: {{ template "vscode-settings" (dict "editor" "vscode" "models" .models "fonts" .fonts) }} */ -}}
 {{- /* Valid editors: vscode, insiders, cursor, windsurf, antigravity */ -}}
 {{- $editor := .editor -}}
 {{- $isVSCode := or (eq $editor "vscode") (eq $editor "insiders") -}}
 {{- $isCursor := eq $editor "cursor" -}}
-{{- $models := .models -}}
-{{- $claudeHaiku := index . "claudeHaiku" -}}
+{{- $m := .models -}}
 {
 {{- if $isCursor }}
   // ============================================================================
@@ -79,18 +78,7 @@
     "timezone": "America/New York"
   },
   "github.copilot.chat.customOAIModels": {
-{{- range $i, $m := $models }}
-    "{{ $m.id }}": {
-      "name": "{{ $m.name }}",
-      "url": "https://aig.thurstons.house/v1",
-      "toolCalling": true,
-      "vision": {{ $m.vision }},
-      "thinking": {{ $m.thinking }},
-      "maxInputTokens": {{ $m.maxInput }},
-      "maxOutputTokens": {{ $m.maxOutput }},
-      "requiresAPIKey": true
-    }{{ if lt $i (sub (len $models) 1) }},{{ end }}
-{{- end }}
+{{- template "vscode-models" .models }}
   },
 
   // ============================================================================
@@ -138,7 +126,7 @@
   "editor.multiCursorModifier": "alt",
   "editor.mouseWheelZoom": true,
   "editor.codeActions.triggerOnFocusChange": true,
-  "editor.accessibilitySupport": "off",
+  "editor.accessibilitySupport": "on",
   "editor.wordBasedSuggestions": "off",
   "diffEditor.codeLens": true,
   "editor.minimap.enabled": true,
@@ -183,7 +171,7 @@
   "gitlens.mode.active": "zen",
 {{- if $isVSCode }}
   "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "customOAIModels:{{ $claudeHaiku.id }}",
+  "gitlens.ai.vscode.model": "customOAIModels:{{ $m.anthropic.haiku.version }}",
   "gitlens.ai.experimental.composer.enabled": true,
 {{- end }}
 
@@ -320,5 +308,127 @@
   // ============================================================================
   // CODERABBIT
   // ============================================================================
-  "coderabbit.autoReviewMode": "disabled"
+  "coderabbit.autoReviewMode": "disabled",
+  "accessibility.signals.lineHasBreakpoint": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.chatEditModifiedFile": {
+    "sound": "off"
+  },
+  "accessibility.signals.chatRequestSent": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.chatResponseReceived": {
+    "sound": "off"
+  },
+  "accessibility.signals.chatUserActionRequired": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.clear": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.codeActionApplied": {
+    "sound": "off"
+  },
+  "accessibility.signals.codeActionTriggered": {
+    "sound": "off"
+  },
+  "accessibility.signals.onDebugBreak": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.diffLineDeleted": {
+    "sound": "off"
+  },
+  "accessibility.signals.diffLineInserted": {
+    "sound": "off"
+  },
+  "accessibility.signals.diffLineModified": {
+    "sound": "off"
+  },
+  "accessibility.signals.editsKept": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.positionHasError": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.lineHasError": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.lineHasFoldedArea": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.lineHasInlineSuggestion": {
+    "sound": "off"
+  },
+  "accessibility.signals.nextEditSuggestion": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.noInlayHints": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.notebookCellCompleted": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.notebookCellFailed": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.progress": {
+    "sound": "off",
+    "announcement": "off"
+  },
+  "accessibility.signals.taskCompleted": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.taskFailed": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.terminalBell": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.terminalCommandFailed": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.terminalCommandSucceeded": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.terminalQuickFix": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.editsUndone": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.voiceRecordingStarted": {
+    "sound": "off"
+  },
+  "accessibility.signals.voiceRecordingStopped": {
+    "sound": "off"
+  },
+  "accessibility.signals.positionHasWarning": {
+    "sound": "off",
+    "announcement": "auto"
+  },
+  "accessibility.signals.lineHasWarning": {
+    "sound": "off",
+    "announcement": "auto"
+  }
 }
