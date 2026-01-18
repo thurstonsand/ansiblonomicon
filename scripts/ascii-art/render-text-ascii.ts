@@ -111,58 +111,33 @@ function renderTextToAscii(
   return asciiArt;
 }
 
-// Main execution
-console.log(`\n${"=".repeat(60)}`);
-console.log(`  "fast jira" rendered at ${FONT_SIZE}pt in ${FONT_FAMILY} (Blex Mono)`);
-console.log(`${"=".repeat(60)}\n`);
+// Main execution - High resolution render at 100pt with 1x2 cell sampling
+const SCALED_FONT_SIZE = 100;
 
-// Standard rendering - good balance of size and detail
-console.log("Standard (2x4 cell sampling):\n");
-const ascii1 = renderTextToAscii(TEXT, FONT_SIZE, FONT_FAMILY, {
-  cellWidth: 2,
-  cellHeight: 4,
-  charset: ASCII_CHARS_DETAILED,
-});
-console.log(ascii1);
+console.log(`\n${"=".repeat(80)}`);
+console.log(`  "fast jira" rendered at ${SCALED_FONT_SIZE}pt in ${FONT_FAMILY} (Blex Mono) - HIGH RES`);
+console.log(`${"=".repeat(80)}\n`);
 
-// Save to file
-const outputPath = path.resolve(__dirname, "fast-jira-ascii.txt");
-fs.writeFileSync(outputPath, ascii1);
-console.log(`Saved to: ${outputPath}\n`);
-
-// Higher resolution version
-console.log("\nHigher Resolution (1x2 cell sampling):\n");
-const ascii2 = renderTextToAscii(TEXT, FONT_SIZE, FONT_FAMILY, {
+// High resolution rendering - large font with fine sampling
+console.log("High Resolution (100pt, 1x2 cell sampling):\n");
+const asciiHighRes = renderTextToAscii(TEXT, SCALED_FONT_SIZE, FONT_FAMILY, {
   cellWidth: 1,
   cellHeight: 2,
   charset: ASCII_CHARS_DETAILED,
+  contrast: 1.2,
 });
-console.log(ascii2);
+console.log(asciiHighRes);
 
-// Simple charset version
-console.log("\nSimple Characters Version:\n");
-const ascii3 = renderTextToAscii(TEXT, FONT_SIZE, FONT_FAMILY, {
-  cellWidth: 2,
-  cellHeight: 4,
-  charset: ASCII_CHARS_SIMPLE,
-});
-console.log(ascii3);
+// Save high-res to file
+const outputPath = path.resolve(__dirname, "fast-jira-ascii.txt");
+fs.writeFileSync(outputPath, asciiHighRes);
+console.log(`Saved to: ${outputPath}\n`);
 
-// Block characters version
-console.log("\nBlock Characters Version:\n");
-const ascii4 = renderTextToAscii(TEXT, FONT_SIZE, FONT_FAMILY, {
-  cellWidth: 2,
-  cellHeight: 4,
+// Block characters version at high res
+console.log("\nHigh Resolution Block Characters (100pt):\n");
+const asciiBlocks = renderTextToAscii(TEXT, SCALED_FONT_SIZE, FONT_FAMILY, {
+  cellWidth: 1,
+  cellHeight: 2,
   charset: ASCII_CHARS_BLOCKS,
 });
-console.log(ascii4);
-
-// With contrast boost
-console.log("\nWith Contrast Enhancement (1.5x):\n");
-const ascii5 = renderTextToAscii(TEXT, FONT_SIZE, FONT_FAMILY, {
-  cellWidth: 2,
-  cellHeight: 4,
-  contrast: 1.5,
-  charset: ASCII_CHARS_DETAILED,
-});
-console.log(ascii5);
+console.log(asciiBlocks);
