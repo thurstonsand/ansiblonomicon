@@ -26,7 +26,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 
 # Dev Commands
 
-- `uv run poe init-secrets` — Resolve 1Password secrets to `.env` (auto-runs via direnv)
+- `uv run poe init-secrets` — Resolve 1Password secrets to `.env` and worker `.dev.vars` files (auto-runs via direnv)
 - `uv run poe lint` — Run all linters (combines all below)
 - `uv run ruff format --check .` — Check Python formatting
 - `uv run ruff check .` — Lint Python code

@@ -10,12 +10,12 @@ dependencies = [
 ]
 
 [tool.poe.tasks.init-secrets]
-help = "Resolve 1Password secrets to .env cache (force regenerate)"
+help = "Resolve 1Password secrets to .env and worker .dev.vars files (force regenerate)"
 shell = "rm -f .env && uv run scripts/init-secrets.py"
 
 [tool.poe.tasks.lint]
-help = "Lint all code (ansible + python)"
-sequence = ["lint:ansible", "lint:python"]
+help = "Lint all code (ansible + python + workers)"
+sequence = ["lint:ansible", "lint:python", "lint:workers"]
 
 [tool.poe.tasks."lint:ansible"]
 cmd = "ansible-lint"
@@ -32,6 +32,14 @@ cmd = "ruff check --fix --unsafe-fixes ."
 
 [tool.poe.tasks."lint:types"]
 cmd = "basedpyright"
+
+[tool.poe.tasks."lint:workers"]
+help = "Type-check Cloudflare Workers via wrangler"
+sequence = ["lint:workers:aig"]
+
+[tool.poe.tasks."lint:workers:aig"]
+cmd = "wrangler deploy --dry-run"
+cwd = "wrangler/aig"
 
 [tool.poe.tasks.local]
 help = "Run the local ansible playbook (pass --check for dry-run, --tags for specific tags)"
@@ -138,7 +146,7 @@ help = "Update API_KEY secret even if it exists"
 
 [tool.poe.tasks."wrangler:aig"]
 help = "Deploy aig Worker via Wrangler (includes secret management)"
-cmd = "./scripts/aig-deploy.sh ${force_secret:+--force-secret}"
+script = "scripts.aig_deploy:main(force_secret)"
 
 [[tool.poe.tasks."wrangler:aig".args]]
 name = "force_secret"
@@ -156,6 +164,7 @@ dev = [
   "mypy>=1.19.1",
   "json-with-comments>=1.2.10",
   "pytest>=9.0.2",
+  "python-dotenv>=1.2.1",
 ]
 
 # Ruff configuration

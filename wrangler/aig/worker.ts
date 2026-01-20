@@ -10,18 +10,46 @@
 const GATEWAY_BASE = "https://gateway.ai.cloudflare.com/v1";
 const ORIGIN = "https://cli-proxy-api.thurstons.house";
 
-// Categorizes requests for analytics tracking
-// Returns: "provider", "amp_metadata", or "other"
-function getRequestCategory(pathname) {
+type RequestCategory = "provider" | "amp_metadata" | "other";
+
+type AnalyticsIndex = "response" | "empty_content_fix";
+
+interface Analytics {
+  track(index: AnalyticsIndex, ...blobs: string[]): void;
+}
+
+function createAnalytics(dataset?: AnalyticsEngineDataset): Analytics {
+  return {
+    track(index, ...blobs) {
+      dataset?.writeDataPoint({ blobs, indexes: [index] });
+    },
+  };
+}
+
+interface MessageContent {
+  type: string;
+  text?: string;
+  content?: MessageContent[];
+  tool_use_id?: string;
+}
+
+interface Message {
+  role?: string;
+  content?: MessageContent[];
+}
+
+interface AnthropicRequestBody {
+  messages?: Message[];
+}
+
+function getRequestCategory(pathname: string): RequestCategory {
   const segments = pathname.split("/").filter(Boolean);
   const first = segments[0];
   const second = segments[1];
 
-  // Provider routes (go through AI Gateway)
   if (first === "v1" || first === "v1beta") return "provider";
   if (first === "api" && second === "provider") return "provider";
 
-  // Amp metadata routes (go direct to origin)
   const ampMetadataPaths = [
     "internal",
     "user",
@@ -61,29 +89,17 @@ function getRequestCategory(pathname) {
 // /settings/*          - Settings
 // /keep-alive          - Health check
 
-function isAuthorized(url, headers, apiKey) {
-  const authHeader = headers.get("Authorization");
-  if (authHeader === `Bearer ${apiKey}`) return true;
+function isAuthorized(url: URL, headers: Headers, apiKey: string): boolean {
+  if (headers.get("Authorization") === `Bearer ${apiKey}`) return true;
   if (headers.get("x-api-key") === apiKey) return true;
   if (headers.get("x-goog-api-key") === apiKey) return true;
-
-  const key = url.searchParams.get("key");
-  if (key === apiKey) return true;
-
-  const authToken = url.searchParams.get("auth_token");
-  if (authToken === apiKey) return true;
-
+  if (url.searchParams.get("key") === apiKey) return true;
+  if (url.searchParams.get("auth_token") === apiKey) return true;
   return false;
 }
 
-// Fixes empty text content blocks in the messages array.
-// Some clients (Amp 👀) have a bug where tool results sometimes have empty
-// text content, which Anthropic rejects with "text content blocks must be non-empty".
-// This function replaces empty text with an error message so the request can proceed.
-// Returns true if any fixes were made.
-// If analytics binding is provided, writes a data point for each fix.
-function fixEmptyTextBlocks(messages, analytics) {
-  if (!Array.isArray(messages)) return false;
+function fixEmptyTextBlocks(messages: Message[] | undefined, analytics: Analytics): boolean {
+  if (!messages) return false;
 
   let fixed = false;
 
@@ -91,7 +107,6 @@ function fixEmptyTextBlocks(messages, analytics) {
     if (!msg.content || !Array.isArray(msg.content)) continue;
 
     for (const block of msg.content) {
-      // Check tool_result content blocks for empty text
       if (block.type === "tool_result" && Array.isArray(block.content)) {
         for (const inner of block.content) {
           if (inner.type === "text" && inner.text === "") {
@@ -99,12 +114,7 @@ function fixEmptyTextBlocks(messages, analytics) {
               tool_use_id: block.tool_use_id,
               message_role: msg.role,
             });
-            if (analytics) {
-              analytics.writeDataPoint({
-                blobs: [block.tool_use_id || "unknown", msg.role || "unknown"],
-                indexes: ["empty_content_fix"],
-              });
-            }
+            analytics.track("empty_content_fix", block.tool_use_id ?? "unknown", msg.role ?? "unknown");
             inner.text = `<error>EMPTY_CONTENT_ERROR (tool_use_id=${block.tool_use_id}): The tool returned empty content due to a client bug. Please retry this exact tool call.</error>`;
             fixed = true;
           }
@@ -116,57 +126,61 @@ function fixEmptyTextBlocks(messages, analytics) {
   return fixed;
 }
 
+function getStatusBucket(status: number): string {
+  if (status >= 200 && status < 300) return "2xx";
+  if (status >= 400 && status < 500) return "4xx";
+  if (status >= 500) return "5xx";
+  return "other";
+}
+
+function getConversationId(headers: Headers): string {
+  return headers.get("x-amp-thread-id") ?? "unknown";
+}
+
 export default {
-  async fetch(request, env) {
+  async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+    const analytics = createAnalytics(env.ANALYTICS);
+    const category = getRequestCategory(url.pathname);
+    const conversationId = getConversationId(request.headers);
 
     if (!isAuthorized(url, request.headers, env.API_KEY)) {
+      analytics.track("response", category, "4xx", "401", conversationId);
       return new Response("Unauthorized: Invalid or missing API key", {
         status: 401,
         headers: { "Content-Type": "text/plain" },
       });
     }
 
-    const category = getRequestCategory(url.pathname);
-
-    env.ANALYTICS.writeDataPoint({
-      blobs: [category, request.method, url.pathname],
-      indexes: ["request"],
-    });
-
-    // Clone headers and add Access service token for origin auth
     const headers = new Headers(request.headers);
     headers.set("CF-Access-Client-Id", env.CF_ACCESS_CLIENT_ID);
     headers.set("CF-Access-Client-Secret", env.CF_ACCESS_CLIENT_SECRET);
 
-    let targetUrl;
-    let body = request.body;
+    let targetUrl: string;
+    let body: BodyInit | null = request.body;
 
     if (category === "provider") {
-      // Route LLM requests through AI Gateway
-      // https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/custom-{provider_slug}/{path}
       targetUrl = `${GATEWAY_BASE}/${env.ACCOUNT_ID}/${env.GATEWAY_ID}/custom-cli-proxy-api${url.pathname}${url.search}`;
       headers.set("cf-aig-authorization", `Bearer ${env.AIG_TOKEN}`);
 
-      // Fix empty text blocks in Amp's Anthropic requests (workaround for Amp client bug)
-      // Only Amp uses /api/provider/... paths; other clients use /v1/messages directly
       if (
         request.method === "POST" &&
         url.pathname.startsWith("/api/provider/anthropic/") &&
         url.pathname.endsWith("/messages")
       ) {
-        body = await request.text();
+        const rawBody = await request.text();
         try {
-          const parsed = JSON.parse(body);
-          if (fixEmptyTextBlocks(parsed.messages, env.ANALYTICS)) {
+          const parsed = JSON.parse(rawBody) as AnthropicRequestBody;
+          if (fixEmptyTextBlocks(parsed.messages, analytics)) {
             body = JSON.stringify(parsed);
+          } else {
+            body = rawBody;
           }
         } catch {
-          // If JSON parsing fails, body already has the raw text - upstream will handle the error
+          body = rawBody;
         }
       }
     } else {
-      // Route non-LLM requests directly to origin
       targetUrl = `${ORIGIN}${url.pathname}${url.search}`;
     }
 
@@ -177,6 +191,8 @@ export default {
       redirect: "follow",
     });
 
+    analytics.track("response", category, getStatusBucket(response.status), String(response.status), conversationId);
+
     return response;
   },
-};
+} satisfies ExportedHandler<Env>;

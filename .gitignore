@@ -2,6 +2,9 @@
 __pycache__/
 *.pyc
 
+# Typescript
+node_modules
+
 # Ansible
 *.retry
 .ansible/
@@ -23,3 +26,4 @@ __pycache__/
 
 # Cached secrets
 .env
+.dev.vars

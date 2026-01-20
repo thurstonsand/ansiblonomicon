@@ -1,16 +1,32 @@
 #!/usr/bin/env python3
-"""Resolve 1Password secrets from .secrets.jsonc and cache to .env."""
+"""Resolve 1Password secrets from .secrets.jsonc and cache to .env.
+
+Also generates .dev.vars files for Cloudflare Workers based on WORKER_DEV_VARS mapping.
+"""
 
 from datetime import UTC, datetime
+from io import StringIO
 from pathlib import Path
 import subprocess
 import sys
 
+from dotenv import dotenv_values
 import jsonc  # pyright: ignore[reportMissingTypeStubs]
 
 ROOT_DIR = Path(__file__).parent.parent
 SECRETS_CONFIG = ROOT_DIR / ".secrets.jsonc"
 SECRETS_CACHE = ROOT_DIR / ".env"
+
+# Map worker directories to their .dev.vars secrets
+# Format: { "worker/path": { "WORKER_VAR": "ENV_VAR_NAME" } }
+WORKER_DEV_VARS: dict[str, dict[str, str]] = {
+    "wrangler/aig": {
+        "API_KEY": "CLI_PROXY_API_KEY",
+        "AIG_TOKEN": "CLOUDFLARE_AI_GATEWAY_API_TOKEN",
+        "CF_ACCESS_CLIENT_ID": "CF_ACCESS_CLIENT_ID",
+        "CF_ACCESS_CLIENT_SECRET": "CF_ACCESS_CLIENT_SECRET",
+    },
+}
 
 
 def main() -> None:
@@ -57,8 +73,10 @@ def main() -> None:
         print(f"Error resolving secrets: {result.stderr.strip()}", file=sys.stderr)
         sys.exit(1)
 
-    # Parse resolved output and build final .env file
-    resolved_lines = result.stdout.strip().split("\n")
+    # Parse resolved output
+    resolved_secrets = dotenv_values(stream=StringIO(result.stdout))
+
+    # Build final .env file
     lines = [
         "# Cached secrets - DO NOT COMMIT",
         f"# Generated: {datetime.now(UTC).isoformat()}",
@@ -66,19 +84,31 @@ def main() -> None:
         "# Regenerate: poe init-secrets",
         "",
     ]
-
-    for line in resolved_lines:
-        if "=" in line:
-            key, value = line.split("=", 1)
-            # Ensure values are quoted
-            if not (value.startswith('"') and value.endswith('"')):
-                value = f'"{value.replace(chr(34), chr(92) + chr(34))}"'
-            lines.append(f"{key}={value}")
+    for key, value in resolved_secrets.items():
+        escaped = (value or "").replace('"', '\\"')
+        lines.append(f'{key}="{escaped}"')
 
     SECRETS_CACHE.write_text("\n".join(lines) + "\n")
     SECRETS_CACHE.chmod(0o600)
 
     print(f"Secrets cached to .env ({len(config)} vars, mode 600)")
+
+    # Generate .dev.vars for workers
+    for worker_path, var_mapping in WORKER_DEV_VARS.items():
+        dev_vars_path = ROOT_DIR / worker_path / ".dev.vars"
+        dev_vars_lines = [
+            "# Cached secrets for local development - DO NOT COMMIT",
+            f"# Generated: {datetime.now(UTC).isoformat()}",
+            "# Regenerate: poe init-secrets",
+            "",
+        ]
+        for worker_var, env_var in var_mapping.items():
+            value = resolved_secrets.get(env_var, "")
+            dev_vars_lines.append(f'{worker_var}="{value}"')
+
+        dev_vars_path.write_text("\n".join(dev_vars_lines) + "\n")
+        dev_vars_path.chmod(0o600)
+        print(f"Generated {worker_path}/.dev.vars ({len(var_mapping)} vars)")
 
 
 if __name__ == "__main__":

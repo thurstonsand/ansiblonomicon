@@ -6,14 +6,12 @@
 # This is an experiment before potentially promoting to llms.thurstons.house
 
 name = "aig"
-main = "worker.js"
+main = "worker.ts"
 compatibility_date = "2025-12-30"
 account_id = "f052696250a2530e9afce0df33177b65"
 
 # Custom Domain
-routes = [
-  { pattern = "aig.thurstons.house", custom_domain = true }
-]
+routes = [{ pattern = "aig.thurstons.house", custom_domain = true }]
 
 # Plain text bindings
 [vars]
@@ -24,12 +22,6 @@ GATEWAY_ID = "llms"
 [[analytics_engine_datasets]]
 binding = "ANALYTICS"
 dataset = "aig_events"
-
-# Secrets (set via wrangler secret put):
-# - API_KEY: Your LLM API key for client auth
-# - AIG_TOKEN: AI Gateway authentication token
-# - CF_ACCESS_CLIENT_ID: Service token for Access bypass
-# - CF_ACCESS_CLIENT_SECRET: Service token secret
 
 # Observability settings
 [observability]
