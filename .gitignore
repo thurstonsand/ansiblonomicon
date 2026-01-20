@@ -22,4 +22,4 @@ __pycache__/
 *.tfplan
 
 # Cached secrets
-.env.secrets
+.env

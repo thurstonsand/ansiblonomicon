@@ -1,0 +1,3 @@
+{{- /* amp CLI requires strict JSON, but amp-settings uses JSONC (trailing commas)
+       for VSCode compatibility. Convert to strict. */ -}}
+{{ includeTemplate "amp-settings" "cli" | printf "{%s}" | fromJsonc | toPrettyJson }}

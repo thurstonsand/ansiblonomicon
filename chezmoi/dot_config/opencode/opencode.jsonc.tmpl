@@ -1,9 +1,12 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "plugin": ["opencode-antigravity-auth@1.2.8"],
+  "plugin": ["opencode-antigravity-auth@1.3.0"],
   "agent": {
     "explore": {
       "model": "{{ .models.anthropic.haiku.agent_harness.aliases.opencode }}"
+    },
+    "handoff": {
+      "model": "{{ .models.google.gemini_3_flash.agent_harness.aliases.opencode }}"
     }
   },
   "tui": {
@@ -80,8 +83,7 @@
         "claude-sonnet-4-0",
         "claude-opus-4-1-20250805",
         "claude-3-sonnet-20240229",
-        "claude-opus-4-5-20251101",
-        "claude-haiku-4-5-20251001"
+        "claude-opus-4-5-20251101"
       ]
     },
     "google": {

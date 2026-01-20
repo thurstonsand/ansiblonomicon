@@ -145,6 +145,22 @@
             cmd: /tmp/claude-install.sh
             creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
 
+    - name: Install global npm packages
+      tags: ["npm"]
+      community.general.npm:
+        name: "{{ item }}"
+        global: true
+        state: latest
+      loop: "{{ npm_global_packages | default([]) }}"
+
+    - name: Install global uv tools
+      tags: ["uv"]
+      ansible.builtin.command:
+        cmd: uv tool install --upgrade {{ item }}
+      loop: "{{ uv_global_tools | default([]) }}"
+      register: uv_tool_result
+      changed_when: "'Installed' in uv_tool_result.stderr or 'Updated' in uv_tool_result.stderr"
+
     - name: Set hostname
       ansible.builtin.hostname:
         name: "{{ hostname }}"

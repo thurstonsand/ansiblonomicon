@@ -10,7 +10,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe local` — Apply local Ansible playbook
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **Local tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `homebrew`/`mas`, `opencode`, `sysconfig`/`hostname`, `uvc-util`
+  - **Local tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `homebrew`/`mas`, `npm`, `opencode`, `sysconfig`/`hostname`, `uv`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as local)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `cli-proxy-api`, `cloudflared`, `ddclient`, `frigate`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
@@ -26,7 +26,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 
 # Dev Commands
 
-- `uv run poe init-secrets` — Resolve 1Password secrets to `.env.secrets` (auto-runs via direnv)
+- `uv run poe init-secrets` — Resolve 1Password secrets to `.env` (auto-runs via direnv)
 - `uv run poe lint` — Run all linters (combines all below)
 - `uv run ruff format --check .` — Check Python formatting
 - `uv run ruff check .` — Lint Python code
@@ -96,7 +96,7 @@ cd terraform/cloudflare && wrangler tail llms --format pretty
 
 # Adding Secrets
 
-Secrets are stored in 1Password and cached locally via `.env.secrets` (resolved on first direnv load).
+Secrets are stored in 1Password and cached locally via `.env` (resolved on first direnv load).
 
 1. Add the secret reference to `.secrets.jsonc` (root of repo):
 

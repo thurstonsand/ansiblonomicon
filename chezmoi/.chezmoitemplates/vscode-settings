@@ -51,7 +51,7 @@
   // ============================================================================
   "github.copilot.enable": {
     "*": false,
-    "python": false
+    "python": false,
   },
   "github.copilot.nextEditSuggestions.enabled": false,
   "chat.agent.thinkingStyle": "collapsedPreview",
@@ -59,7 +59,7 @@
   "chat.checkpoints.showFileChanges": true,
   "chat.edits2.enabled": true,
   "chat.promptFilesLocations": {
-    ".claude/commands": true
+    ".claude/commands": true,
   },
   "chat.tools.terminal.blockDetectedFileWrites": "never",
   "chat.useNestedAgentsMdFiles": true,
@@ -75,7 +75,7 @@
     "city": "Atlanta",
     "region": "Georgia",
     "country": "US",
-    "timezone": "America/New York"
+    "timezone": "America/New York",
   },
   "github.copilot.chat.customOAIModels": {
 {{- template "vscode-models" .models }}
@@ -201,12 +201,12 @@
     "editor.defaultFormatter": "charliermarsh.ruff",
     "editor.codeActionsOnSave": {
       "source.organizeImports.ruff": "explicit",
-      "source.fixAll": "explicit"
+      "source.fixAll": "explicit",
     },
     "diffEditor.ignoreTrimWhitespace": false,
     "gitlens.codeLens.symbolScopes": ["!Module"],
     "editor.formatOnType": true,
-    "editor.wordBasedSuggestions": "off"
+    "editor.wordBasedSuggestions": "off",
   },
 
   // --- PYRIGHT ---
@@ -235,23 +235,23 @@
     "editor.quickSuggestions": {
       "other": true,
       "comments": false,
-      "strings": true
+      "strings": true,
     },
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
 
   // --- JSON ---
   "[json]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "[jsonc]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
   "json.schemaDownload.enable": true,
 
   // --- MARKDOWN ---
   "[markdown]": {
-    "editor.defaultFormatter": "esbenp.prettier-vscode"
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
   },
 
   // --- CSV ---
@@ -260,7 +260,7 @@
   "rainbow_csv.csv_lint_detect_trailing_spaces": true,
   "rainbow_csv.rbql_with_headers_by_default": true,
   "[csv]": {
-    "editor.inlayHints.maximumLength": 0
+    "editor.inlayHints.maximumLength": 0,
   },
 
   // --- DOCKER & DOCKER COMPOSE ---
@@ -269,12 +269,12 @@
     "editor.insertSpaces": true,
     "editor.tabSize": 2,
     "editor.autoIndent": "advanced",
-    "editor.defaultFormatter": "redhat.vscode-yaml"
+    "editor.defaultFormatter": "redhat.vscode-yaml",
   },
 
   // --- GITHUB ACTIONS ---
   "[github-actions-workflow]": {
-    "editor.defaultFormatter": "redhat.vscode-yaml"
+    "editor.defaultFormatter": "redhat.vscode-yaml",
   },
 
   // --- NIX ---
@@ -284,9 +284,9 @@
   "nix.serverSettings": {
     "nil": {
       "formatting": {
-        "command": ["nix", "fmt", "--", "--"]
-      }
-    }
+        "command": ["nix", "fmt", "--", "--"],
+      },
+    },
   },
 
   // --- SVELTE ---
@@ -296,10 +296,10 @@
   "biome.suggestInstallingGlobally": false,
   "[javascript]": {
     "editor.maxTokenizationLineLength": 2500,
-    "editor.defaultFormatter": "vscode.typescript-language-features"
+    "editor.defaultFormatter": "vscode.typescript-language-features",
   },
   "[typescript]": {
-    "editor.maxTokenizationLineLength": 2500
+    "editor.maxTokenizationLineLength": 2500,
   },
 
   // --- GO ---
@@ -311,124 +311,124 @@
   "coderabbit.autoReviewMode": "disabled",
   "accessibility.signals.lineHasBreakpoint": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.chatEditModifiedFile": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.chatRequestSent": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.chatResponseReceived": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.chatUserActionRequired": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.clear": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.codeActionApplied": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.codeActionTriggered": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.onDebugBreak": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.diffLineDeleted": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.diffLineInserted": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.diffLineModified": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.editsKept": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.positionHasError": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.lineHasError": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.lineHasFoldedArea": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.lineHasInlineSuggestion": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.nextEditSuggestion": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.noInlayHints": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.notebookCellCompleted": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.notebookCellFailed": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.progress": {
     "sound": "off",
-    "announcement": "off"
+    "announcement": "off",
   },
   "accessibility.signals.taskCompleted": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.taskFailed": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.terminalBell": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.terminalCommandFailed": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.terminalCommandSucceeded": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.terminalQuickFix": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.editsUndone": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.voiceRecordingStarted": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.voiceRecordingStopped": {
-    "sound": "off"
+    "sound": "off",
   },
   "accessibility.signals.positionHasWarning": {
     "sound": "off",
-    "announcement": "auto"
+    "announcement": "auto",
   },
   "accessibility.signals.lineHasWarning": {
     "sound": "off",
-    "announcement": "auto"
-  }
+    "announcement": "auto",
+  },
 }

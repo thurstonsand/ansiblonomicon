@@ -313,12 +313,25 @@ def _check_standalone_plugin(repo_path: Path, plugin_name: str) -> PluginConfig 
     )
 
 
+def _find_skill_md(directory: Path) -> Path | None:
+    """Find SKILL.md in a directory, case-insensitive.
+
+    Returns the path to the skill file if found, or None if not found.
+    """
+    if not directory.exists():
+        return None
+    for entry in directory.iterdir():
+        if entry.is_file() and entry.name.lower() == "skill.md":
+            return entry
+    return None
+
+
 def _discover_skills_in_plugin(
     plugin_path: Path, skills_paths: list[str], root_skill_name: str
 ) -> list[str]:
     """Discover all skills within a plugin directory.
 
-    Looks for directories containing SKILL.md files.
+    Looks for directories containing SKILL.md files (case-insensitive).
 
     Args:
         plugin_path: Path to the plugin directory
@@ -331,7 +344,7 @@ def _discover_skills_in_plugin(
     skills: list[str] = []
 
     # Check if plugin root has SKILL.md (plugin is the skill)
-    if (plugin_path / "SKILL.md").exists():
+    if _find_skill_md(plugin_path):
         skills.append(root_skill_name)
 
     # Search each skills path
@@ -342,7 +355,7 @@ def _discover_skills_in_plugin(
 
         # Find all subdirectories with SKILL.md
         for entry in skills_dir.iterdir():
-            if entry.is_dir() and (entry / "SKILL.md").exists():
+            if entry.is_dir() and _find_skill_md(entry):
                 skills.append(entry.name)
 
     return skills
@@ -392,13 +405,13 @@ def _get_skill_source_path(
         Full path to skill directory, or None if not found
     """
     # Check if plugin root is the skill
-    if (plugin_path / "SKILL.md").exists() and skill_name == root_skill_name:
+    if _find_skill_md(plugin_path) and skill_name == root_skill_name:
         return str(plugin_path)
 
     # Search skills paths
     for skills_base in skills_paths:
         skill_dir = plugin_path / skills_base / skill_name
-        if skill_dir.exists() and (skill_dir / "SKILL.md").exists():
+        if skill_dir.exists() and _find_skill_md(skill_dir):
             return str(skill_dir)
 
     return None
@@ -504,7 +517,7 @@ def _resolve_plugin_from_repo(
 
     # If explicit path, use it directly
     if explicit_path:
-        plugin_path = repo_path / explicit_path.lstrip("./")
+        plugin_path = repo_path / explicit_path.removeprefix("./")
         plugin_json = _load_plugin_json(plugin_path)
 
         # Infer name from path if not provided
@@ -591,7 +604,7 @@ def _resolve_plugin_from_local(
 
     # Determine plugin path
     if explicit_path:
-        plugin_path = base_path / explicit_path.lstrip("./")
+        plugin_path = base_path / explicit_path.removeprefix("./")
         if not plugin_name:
             plugin_name = plugin_path.name
     else:
@@ -659,8 +672,8 @@ def agent_harness_build_plugin_resources(
                 assert config is not None
                 assert plugin_path is not None
 
-                # For git sources, use repo name for root-level skills
-                root_skill_name = repo.split("/")[-1]
+                # For root-level skills, use plugin name (or repo name as fallback)
+                root_skill_name = config.name or repo.split("/")[-1]
 
                 # Discover and add skills
                 discovered_skills = _discover_skills_in_plugin(

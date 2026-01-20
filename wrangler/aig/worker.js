@@ -10,19 +10,32 @@
 const GATEWAY_BASE = "https://gateway.ai.cloudflare.com/v1";
 const ORIGIN = "https://cli-proxy-api.thurstons.house";
 
-function isProviderPath(pathname) {
+// Categorizes requests for analytics tracking
+// Returns: "provider", "amp_metadata", or "other"
+function getRequestCategory(pathname) {
   const segments = pathname.split("/").filter(Boolean);
   const first = segments[0];
   const second = segments[1];
 
-  // /v1/... - OpenAI-compatible routes (chat/completions, messages, models, etc.)
-  // /v1beta/... - Gemini-compatible routes
-  if (first === "v1" || first === "v1beta") return true;
+  // Provider routes (go through AI Gateway)
+  if (first === "v1" || first === "v1beta") return "provider";
+  if (first === "api" && second === "provider") return "provider";
 
-  // /api/provider/... - Amp CLI provider aliases (LLM calls to various providers)
-  if (first === "api" && second === "provider") return true;
+  // Amp metadata routes (go direct to origin)
+  const ampMetadataPaths = [
+    "internal",
+    "user",
+    "auth",
+    "meta",
+    "telemetry",
+    "threads",
+    "ads",
+    "otel",
+    "tab",
+  ];
+  if (first === "api" && ampMetadataPaths.includes(second)) return "amp_metadata";
 
-  return false;
+  return "other";
 }
 
 // For reference, these paths go DIRECT to origin (not through AI Gateway):
@@ -63,6 +76,46 @@ function isAuthorized(url, headers, apiKey) {
   return false;
 }
 
+// Fixes empty text content blocks in the messages array.
+// Some clients (Amp 👀) have a bug where tool results sometimes have empty
+// text content, which Anthropic rejects with "text content blocks must be non-empty".
+// This function replaces empty text with an error message so the request can proceed.
+// Returns true if any fixes were made.
+// If analytics binding is provided, writes a data point for each fix.
+function fixEmptyTextBlocks(messages, analytics) {
+  if (!Array.isArray(messages)) return false;
+
+  let fixed = false;
+
+  for (const msg of messages) {
+    if (!msg.content || !Array.isArray(msg.content)) continue;
+
+    for (const block of msg.content) {
+      // Check tool_result content blocks for empty text
+      if (block.type === "tool_result" && Array.isArray(block.content)) {
+        for (const inner of block.content) {
+          if (inner.type === "text" && inner.text === "") {
+            console.warn("EMPTY_CONTENT_FIX", {
+              tool_use_id: block.tool_use_id,
+              message_role: msg.role,
+            });
+            if (analytics) {
+              analytics.writeDataPoint({
+                blobs: [block.tool_use_id || "unknown", msg.role || "unknown"],
+                indexes: ["empty_content_fix"],
+              });
+            }
+            inner.text = `<error>EMPTY_CONTENT_ERROR (tool_use_id=${block.tool_use_id}): The tool returned empty content due to a client bug. Please retry this exact tool call.</error>`;
+            fixed = true;
+          }
+        }
+      }
+    }
+  }
+
+  return fixed;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -74,17 +127,44 @@ export default {
       });
     }
 
+    const category = getRequestCategory(url.pathname);
+
+    env.ANALYTICS.writeDataPoint({
+      blobs: [category, request.method, url.pathname],
+      indexes: ["request"],
+    });
+
     // Clone headers and add Access service token for origin auth
     const headers = new Headers(request.headers);
     headers.set("CF-Access-Client-Id", env.CF_ACCESS_CLIENT_ID);
     headers.set("CF-Access-Client-Secret", env.CF_ACCESS_CLIENT_SECRET);
 
     let targetUrl;
-    if (isProviderPath(url.pathname)) {
+    let body = request.body;
+
+    if (category === "provider") {
       // Route LLM requests through AI Gateway
       // https://gateway.ai.cloudflare.com/v1/{account_id}/{gateway_id}/custom-{provider_slug}/{path}
       targetUrl = `${GATEWAY_BASE}/${env.ACCOUNT_ID}/${env.GATEWAY_ID}/custom-cli-proxy-api${url.pathname}${url.search}`;
       headers.set("cf-aig-authorization", `Bearer ${env.AIG_TOKEN}`);
+
+      // Fix empty text blocks in Amp's Anthropic requests (workaround for Amp client bug)
+      // Only Amp uses /api/provider/... paths; other clients use /v1/messages directly
+      if (
+        request.method === "POST" &&
+        url.pathname.startsWith("/api/provider/anthropic/") &&
+        url.pathname.endsWith("/messages")
+      ) {
+        body = await request.text();
+        try {
+          const parsed = JSON.parse(body);
+          if (fixEmptyTextBlocks(parsed.messages, env.ANALYTICS)) {
+            body = JSON.stringify(parsed);
+          }
+        } catch {
+          // If JSON parsing fails, body already has the raw text - upstream will handle the error
+        }
+      }
     } else {
       // Route non-LLM requests directly to origin
       targetUrl = `${ORIGIN}${url.pathname}${url.search}`;
@@ -93,7 +173,7 @@ export default {
     const response = await fetch(targetUrl, {
       method: request.method,
       headers,
-      body: request.body,
+      body,
       redirect: "follow",
     });
 

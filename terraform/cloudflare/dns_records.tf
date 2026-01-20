@@ -148,4 +148,13 @@ resource "cloudflare_record" "snippethost" {
   ttl     = 1
 }
 
+resource "cloudflare_record" "snippethost_gitlab_verification" {
+  zone_id = local.zone_id
+  name    = "_gitlab-pages-verification-code.snippethost"
+  type    = "TXT"
+  content = "gitlab-pages-verification-code=fe5b120df90704ee84343f9fc9770490"
+  comment = "GitLab Pages domain verification for snippethost"
+  ttl     = 1
+}
+
 

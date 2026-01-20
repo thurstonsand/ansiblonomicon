@@ -23,7 +23,7 @@ models:
       agent_harness:
         aliases:
           claude: "haiku"
-          opencode: "anthropic/claude-haiku-4-5"
+          opencode: "anthropic/claude-haiku-4-5-20251001"
       vscode:
         include: true
         thinking: false
@@ -127,6 +127,10 @@ models:
       vision: true
       cli_proxy_api:
         pattern: "^gemini-3-flash"
+      agent_harness:
+        aliases:
+          opencode: google/antigravity-gemini-3-flash
+
       vscode:
         include: true
         thinking: true

@@ -20,6 +20,11 @@ routes = [
 ACCOUNT_ID = "f052696250a2530e9afce0df33177b65"
 GATEWAY_ID = "llms"
 
+# Analytics Engine binding for custom metrics
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "aig_events"
+
 # Secrets (set via wrangler secret put):
 # - API_KEY: Your LLM API key for client auth
 # - AIG_TOKEN: AI Gateway authentication token

@@ -2,12 +2,10 @@
 {{- /* Usage: {{ template "vscode-models" .models }} */ -}}
 {{- /* Iterates models.* where vscode.include is true, plus variants with vscode: true */ -}}
 {{- /* Input: the models object containing anthropic, openai, google keys */ -}}
-{{- $first := true -}}
 {{- /* Anthropic models */ -}}
 {{- range $key, $model := .anthropic -}}
 {{- $vscode := index $model "vscode" -}}
-{{- if and $vscode $vscode.include -}}
-{{- if not $first }},{{ end }}{{ $first = false }}
+{{- if and $vscode $vscode.include }}
     "{{ $model.version }}": {
       "name": "{{ $model.display_name }}",
       "url": "https://aig.thurstons.house/v1",
@@ -16,15 +14,14 @@
       "thinking": {{ $vscode.thinking }},
       "maxInputTokens": {{ $model.max_input }},
       "maxOutputTokens": {{ $model.max_output }},
-      "requiresAPIKey": true
-    }
+      "requiresAPIKey": true,
+    },
 {{- end -}}
 {{- end -}}
 {{- /* OpenAI models */ -}}
 {{- range $key, $model := .openai -}}
 {{- $vscode := index $model "vscode" -}}
-{{- if and $vscode $vscode.include -}}
-{{- if not $first }},{{ end }}{{ $first = false }}
+{{- if and $vscode $vscode.include }}
     "{{ $model.version }}": {
       "name": "{{ $model.display_name }}",
       "url": "https://aig.thurstons.house/v1",
@@ -33,15 +30,14 @@
       "thinking": {{ $vscode.thinking }},
       "maxInputTokens": {{ $model.max_input }},
       "maxOutputTokens": {{ $model.max_output }},
-      "requiresAPIKey": true
-    }
+      "requiresAPIKey": true,
+    },
 {{- end -}}
 {{- /* OpenAI variants */ -}}
 {{- $variants := index $model "variants" -}}
 {{- if $variants -}}
 {{- range $vkey, $variant := $variants -}}
-{{- if $variant.vscode -}}
-{{- if not $first }},{{ end }}{{ $first = false }}
+{{- if $variant.vscode }}
     "{{ $variant.id }}": {
       "name": "{{ $variant.display_name }}",
       "url": "https://aig.thurstons.house/v1",
@@ -50,8 +46,8 @@
       "thinking": {{ $vscode.thinking }},
       "maxInputTokens": {{ $model.max_input }},
       "maxOutputTokens": {{ $model.max_output }},
-      "requiresAPIKey": true
-    }
+      "requiresAPIKey": true,
+    },
 {{- end -}}
 {{- end -}}
 {{- end -}}
@@ -59,8 +55,7 @@
 {{- /* Google models */ -}}
 {{- range $key, $model := .google -}}
 {{- $vscode := index $model "vscode" -}}
-{{- if and $vscode $vscode.include -}}
-{{- if not $first }},{{ end }}{{ $first = false }}
+{{- if and $vscode $vscode.include }}
     "{{ $model.version }}": {
       "name": "{{ $model.display_name }}",
       "url": "https://aig.thurstons.house/v1",
@@ -69,7 +64,7 @@
       "thinking": {{ $vscode.thinking }},
       "maxInputTokens": {{ $model.max_input }},
       "maxOutputTokens": {{ $model.max_output }},
-      "requiresAPIKey": true
-    }
+      "requiresAPIKey": true,
+    },
 {{- end -}}
 {{- end -}}

@@ -41,5 +41,10 @@
         { "task_name": "LazyGit", "reveal_target": "center" }
       ]
     }
+  },
+  {
+    "bindings": {
+      "ctrl-cmd-k": "agent::AddSelectionToThread"
+    }
   }
 ]

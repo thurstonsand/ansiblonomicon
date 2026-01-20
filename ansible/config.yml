@@ -12,6 +12,14 @@ configure_agent_harness: true
 # Chezmoi configuration
 chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
 
+# Global uv tools
+uv_global_tools:
+  - claude-code-tools
+
+# Global npm packages
+npm_global_packages:
+  - agent-browser
+
 # Agent Harness configuration
 agent_harness_target_agents:
   - claude
@@ -46,9 +54,22 @@ agent_harness_sources:
           - article-to-prototype-cskill
           - README.md
 
+  - repo: pchalasani/claude-code-tools
+    pull: true
+    plugins:
+      - tmux-cli
+
+  - repo: vercel-labs/agent-browser
+    pull: true
+    plugins:
+      - name: agent-browser
+        path: skills/agent-browser
+
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: amp
         target_agents: [amp]
+        exclude_skills:
+          - tmux-interactive-sessions
       - project-management
       - homelab

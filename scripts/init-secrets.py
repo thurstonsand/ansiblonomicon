@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Resolve 1Password secrets from .secrets.jsonc and cache to .env.secrets."""
+"""Resolve 1Password secrets from .secrets.jsonc and cache to .env."""
 
 from datetime import UTC, datetime
 from pathlib import Path
@@ -10,7 +10,7 @@ import jsonc  # pyright: ignore[reportMissingTypeStubs]
 
 ROOT_DIR = Path(__file__).parent.parent
 SECRETS_CONFIG = ROOT_DIR / ".secrets.jsonc"
-SECRETS_CACHE = ROOT_DIR / ".env.secrets"
+SECRETS_CACHE = ROOT_DIR / ".env"
 
 
 def main() -> None:
@@ -78,7 +78,7 @@ def main() -> None:
     SECRETS_CACHE.write_text("\n".join(lines) + "\n")
     SECRETS_CACHE.chmod(0o600)
 
-    print(f"Secrets cached to .env.secrets ({len(config)} vars, mode 600)")
+    print(f"Secrets cached to .env ({len(config)} vars, mode 600)")
 
 
 if __name__ == "__main__":

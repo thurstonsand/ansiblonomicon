@@ -10,8 +10,8 @@ dependencies = [
 ]
 
 [tool.poe.tasks.init-secrets]
-help = "Resolve 1Password secrets to .env.secrets cache (force regenerate)"
-shell = "rm -f .env.secrets && uv run scripts/init-secrets.py"
+help = "Resolve 1Password secrets to .env cache (force regenerate)"
+shell = "rm -f .env && uv run scripts/init-secrets.py"
 
 [tool.poe.tasks.lint]
 help = "Lint all code (ansible + python)"
