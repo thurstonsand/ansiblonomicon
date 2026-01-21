@@ -328,6 +328,69 @@ These keys are faster and always available:
 - `$metadata.level`: Log level (log, warn, error)
 - `$metadata.requestId`: Unique request identifier
 
+### cf_ai_gateway_logs.py
+
+Query AI Gateway logs with conversation-focused interface. Each log entry contains the full conversation history (Anthropic Messages API format), so viewing the latest entry for a conversation gives you everything.
+
+**Modes (mutually exclusive, one required):**
+
+- `--conversations`: List conversations grouped by conversation-id metadata
+- `--conversation ID`: Get messages from a specific conversation's latest log
+- `--raw`: Dump raw logs to /tmp file (prints filename to avoid context overload)
+
+```sh
+uv run scripts/cf_ai_gateway_logs.py <mode> [options]
+```
+
+**Common Options:**
+
+- `--gateway NAME`: AI Gateway ID (default: llms)
+- `--minutes N`: Time range in minutes (default: 60)
+- `--limit N`: Max results (default: 20)
+
+**Options for --conversation mode:**
+
+- `--last-messages N`: Only show the last N messages (default: 4, use 0 for all)
+- `--include-tools`: Include the full tools array (omitted by default)
+- `--include-system`: Include the full system prompt (omitted by default)
+- `--truncate CHARS`: Truncate text content to N characters
+
+**Options for --raw mode:**
+
+- `--include-bodies`: Include request bodies in dump (slow, fetches each individually)
+
+**Examples:**
+
+List recent conversations:
+
+```sh
+uv run scripts/cf_ai_gateway_logs.py --conversations --limit 10
+```
+
+Get last 10 messages from a conversation:
+
+```sh
+uv run scripts/cf_ai_gateway_logs.py --conversation T-xxx-xxx --last-messages 10
+```
+
+Dump 100 raw logs to file:
+
+```sh
+uv run scripts/cf_ai_gateway_logs.py --raw --limit 100
+```
+
+Include request bodies in raw dump:
+
+```sh
+uv run scripts/cf_ai_gateway_logs.py --raw --limit 10 --include-bodies
+```
+
+**Workflow Example:**
+
+1. List conversations: `uv run scripts/cf_ai_gateway_logs.py --conversations`
+2. Pick a conversation ID from the output
+3. View messages: `uv run scripts/cf_ai_gateway_logs.py --conversation T-xxx --last-messages 10`
+
 ## Regex Notes
 
 For `regex` operations, Cloudflare uses ClickHouse RE2 syntax (not PCRE/JavaScript):

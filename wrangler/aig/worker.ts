@@ -46,7 +46,6 @@ function getRequestCategory(pathname: string): RequestCategory {
   const segments = pathname.split("/").filter(Boolean);
   const first = segments[0];
   const second = segments[1];
-
   if (first === "v1" || first === "v1beta") return "provider";
   if (first === "api" && second === "provider") return "provider";
 
@@ -133,8 +132,8 @@ function getStatusBucket(status: number): string {
   return "other";
 }
 
-function getConversationId(headers: Headers): string {
-  return headers.get("x-amp-thread-id") ?? "unknown";
+function getConversationId(headers: Headers): string | undefined {
+  return headers.get("x-amp-thread-id") ?? headers.get("x-opencode-session-id") ?? undefined;
 }
 
 export default {
@@ -145,7 +144,7 @@ export default {
     const conversationId = getConversationId(request.headers);
 
     if (!isAuthorized(url, request.headers, env.API_KEY)) {
-      analytics.track("response", category, "4xx", "401", conversationId);
+      analytics.track("response", category, "4xx", "401", conversationId ?? "unknown");
       return new Response("Unauthorized: Invalid or missing API key", {
         status: 401,
         headers: { "Content-Type": "text/plain" },
@@ -162,6 +161,10 @@ export default {
     if (category === "provider") {
       targetUrl = `${GATEWAY_BASE}/${env.ACCOUNT_ID}/${env.GATEWAY_ID}/custom-cli-proxy-api${url.pathname}${url.search}`;
       headers.set("cf-aig-authorization", `Bearer ${env.AIG_TOKEN}`);
+
+      if (conversationId) {
+        headers.set("cf-aig-metadata", JSON.stringify({ "conversation-id": conversationId }));
+      }
 
       if (
         request.method === "POST" &&
@@ -191,7 +194,7 @@ export default {
       redirect: "follow",
     });
 
-    analytics.track("response", category, getStatusBucket(response.status), String(response.status), conversationId);
+    analytics.track("response", category, getStatusBucket(response.status), String(response.status), conversationId ?? "unknown");
 
     return response;
   },

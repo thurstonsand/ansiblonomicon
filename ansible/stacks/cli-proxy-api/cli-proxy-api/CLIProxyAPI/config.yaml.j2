@@ -88,10 +88,10 @@ gemini-api-key:
       - '*'
 logs-max-total-size-mb: 0
 routing:
-  strategy: "round-robin"
+  strategy: "fill-first"
 # Alias antigravity's Claude models to standard Anthropic names
 # Sourced from ansible/models.yml
-oauth-model-mappings:
-{{ cli_proxy_api.oauth_model_mappings | to_nice_yaml(indent=2) | indent(2, first=true) }}
+oauth-model-alias:
+{{ cli_proxy_api.oauth_model_alias | to_nice_yaml(indent=4) | indent(2, first=true) }}
 oauth-excluded-models:
-{{ cli_proxy_api.legacy_exclusions | to_nice_yaml(indent=2) | indent(2, first=true) }}
+{{ cli_proxy_api.legacy_exclusions | to_nice_yaml(indent=4) | indent(2, first=true) }}

@@ -40,7 +40,7 @@ models:
       agent_harness:
         aliases:
           claude: "sonnet"
-          opencode: "anthropic/claude-sonnet-4-5"
+          opencode: "anthropic/claude-sonnet-4-5-20250929"
       vscode:
         include: true
         thinking: true
@@ -57,7 +57,7 @@ models:
       agent_harness:
         aliases:
           claude: "opus"
-          opencode: "anthropic/claude-opus-4-5"
+          opencode: "anthropic/claude-opus-4-5-20251101"
       vscode:
         include: true
         thinking: true
@@ -129,7 +129,7 @@ models:
         pattern: "^gemini-3-flash"
       agent_harness:
         aliases:
-          opencode: google/antigravity-gemini-3-flash
+          opencode: google/gemini-3-flash-preview
 
       vscode:
         include: true
@@ -182,17 +182,28 @@ models:
 # =============================================================================
 cli_proxy_api:
   # Aliased models (provider exposes other providers' models under different names)
-  oauth_model_mappings:
+  # name = upstream model name, alias = client-visible name
+  oauth_model_alias:
     antigravity:
-      - name: "gemini-claude-opus-4-5-thinking"
-        alias: "claude-opus-4-5-thinking"
+      # Claude models via Antigravity
+      - name: gemini-claude-opus-4-5-thinking
+        alias: claude-opus-4-5-thinking
         fork: true
-      - name: "gemini-claude-sonnet-4-5"
-        alias: "claude-sonnet-4-5"
+      - name: gemini-claude-sonnet-4-5
+        alias: claude-sonnet-4-5
         fork: true
-      - name: "gemini-claude-sonnet-4-5-thinking"
-        alias: "claude-sonnet-4-5-thinking"
+      - name: gemini-claude-sonnet-4-5-thinking
+        alias: claude-sonnet-4-5-thinking
         fork: true
+      # Gemini model name mappings (internal codenames → friendly names)
+      - name: rev19-uic3-1p
+        alias: gemini-2.5-computer-use-preview-10-2025
+      - name: gemini-3-pro-image
+        alias: gemini-3-pro-image-preview
+      - name: gemini-3-pro-high
+        alias: gemini-3-pro-preview
+      - name: gemini-3-flash
+        alias: gemini-3-flash-preview
 
   # Legacy/deprecated model exclusions (models not in the models section)
   legacy_exclusions:
