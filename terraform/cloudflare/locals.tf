@@ -17,5 +17,6 @@ locals {
     { host = "blog", service = "http://192.168.5.233:2368" },
     { host = "cli-proxy-api", service = "http://192.168.5.235:8317" },
     { host = "clawdbot", service = "http://192.168.1.90:18789" },
+    { host = "gmail-pubsub", service = "http://192.168.1.90:8788" },
   ]
 }
