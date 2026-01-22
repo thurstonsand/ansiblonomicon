@@ -20,12 +20,12 @@ resource "cloudflare_ruleset" "firewall_custom" {
   rules {
     action = "skip"
     action_parameters {
-      # Skip SBFM (Super Bot Fight Mode) phase for AI Gateway callbacks
-      phases = ["http_request_sbfm"]
+      # Skip SBFM and managed WAF for AI Gateway endpoints
+      phases = ["http_request_sbfm", "http_request_firewall_managed"]
     }
     description = "allow llm clients on llms api (skip security for AI Gateway)"
     enabled     = true
-    expression  = "(http.host in {\"llms.thurstons.house\" \"aig.thurstons.house\" \"cli-proxy-api.thurstons.house\"}) and ((http.user_agent contains \"OpenAI\") or (http.user_agent contains \"llm/\"))"
+    expression  = "(http.host in {\"llms.thurstons.house\" \"aig.thurstons.house\" \"cli-proxy-api.thurstons.house\"})"
     logging {
       enabled = true
     }

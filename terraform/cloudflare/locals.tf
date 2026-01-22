@@ -16,5 +16,6 @@ locals {
     { host = "anypod", service = "http://192.168.5.231:8024" },
     { host = "blog", service = "http://192.168.5.233:2368" },
     { host = "cli-proxy-api", service = "http://192.168.5.235:8317" },
+    { host = "clawdbot", service = "http://192.168.1.90:18789" },
   ]
 }

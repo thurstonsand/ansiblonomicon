@@ -27,6 +27,12 @@ services:
       - SERVER_CITIES=Atlanta GA
       - FIREWALL_OUTBOUND_SUBNETS=192.168.6.0/24
       - UPDATER_PERIOD=24h
+      # If gluetun fails to connect with "no server found" after restart, the cached
+      # servers.json may be stale. Fix: delete /gluetun/servers.json and restart.
+      # To prevent this permanently, uncomment below to disable server caching.
+      # Tradeoff: startup then relies on bundled server data in the image, which may
+      # be outdated if the gluetun image hasn't been updated recently.
+      # - STORAGE_FILEPATH=
       - PUID={{ docker.user.puid }}
       - PGID={{ docker.user.pgid }}
     restart: unless-stopped

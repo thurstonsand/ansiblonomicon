@@ -184,6 +184,14 @@ cli_proxy_api:
   # Aliased models (provider exposes other providers' models under different names)
   # name = upstream model name, alias = client-visible name
   oauth_model_alias:
+    anthropic:
+      # Dateless aliases
+      - name: claude-sonnet-4-5-20250929
+        alias: claude-sonnet-4-5
+      - name: claude-opus-4-5-20251101
+        alias: claude-opus-4-5
+      - name: claude-haiku-4-5-20251001
+        alias: claude-haiku-4-5
     antigravity:
       # Claude models via Antigravity
       - name: gemini-claude-opus-4-5-thinking
@@ -204,6 +212,11 @@ cli_proxy_api:
         alias: gemini-3-pro-preview
       - name: gemini-3-flash
         alias: gemini-3-flash-preview
+      # Dateless aliases
+      - name: gemini-3-pro-preview
+        alias: gemini-3-pro
+      - name: gemini-3-flash-preview
+        alias: gemini-3-flash
 
   # Legacy/deprecated model exclusions (models not in the models section)
   legacy_exclusions:

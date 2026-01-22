@@ -23,6 +23,11 @@ Host truenas-dev
   HostName 192.168.6.227
   SetEnv TERM="xterm-256color"
 
+Host clawdbot
+  ForwardAgent yes
+  User thurstonsand
+  HostName clawdbot-admin.thurstons.house
+
 Host udmp
   ForwardAgent yes
   User root

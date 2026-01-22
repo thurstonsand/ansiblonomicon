@@ -11,7 +11,8 @@ resource "cloudflare_zero_trust_access_application" "truenas_app" {
   # Sticking with v4.x for now as Cloudflare recommends waiting until March 2025 for v5 to stabilize
   self_hosted_domains = [
     "cli-proxy-api.${local.zone_name}",
-    "anypod.${local.zone_name}/admin/*"
+    "anypod.${local.zone_name}/admin/*",
+    "clawdbot.${local.zone_name}"
   ]
   policies = [
     cloudflare_zero_trust_access_policy.home_network_bypass.id,

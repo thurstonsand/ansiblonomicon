@@ -19,6 +19,7 @@ uv_global_tools:
 # Global npm packages
 npm_global_packages:
   - agent-browser
+  - clawdbot
 
 # Agent Harness configuration
 agent_harness_target_agents:

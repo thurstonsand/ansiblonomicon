@@ -49,6 +49,13 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
 - `agents/` — Local AI agent skills deployed via `agent_harness` role
 
+## Clawdbot
+
+Clawdbot is a remote AI agent instance accessible via Cloudflare tunnel.
+
+- **SSH**: `ssh clawdbot` (connects to `clawdbot-admin.thurstons.house` as `thurstonsand`)
+- **Web UI**: `clawdbot.thurstons.house` (behind Zero Trust)
+
 ## TrueNAS Docker Directory Layout
 
 On TrueNAS, Docker stacks use two separate paths:

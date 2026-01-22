@@ -69,6 +69,17 @@ Interactive sudo still uses TouchID as normal.
 
 See [nixonomicon/docs/designs/nix-to-chezmoi-ansible-migration.md](https://github.com/thurstonsand/nixonomicon/blob/main/docs/designs/nix-to-chezmoi-ansible-migration.md) for the full migration plan.
 
+## Hosts
+
+SSH aliases are configured via chezmoi (`~/.ssh/config`):
+
+| Host                             | Alias          | Description                                    |
+| -------------------------------- | -------------- | ---------------------------------------------- |
+| `truenas.thurstons.house`        | `ssh truenas`  | TrueNAS SCALE server (Docker stacks, media)    |
+| `clawdbot-admin.thurstons.house` | `ssh clawdbot` | Clawdbot AI agent instance (Cloudflare tunnel) |
+| `192.168.1.89:22222`             | `ssh haos`     | Home Assistant OS                              |
+| `192.168.1.1`                    | `ssh udmp`     | UniFi Dream Machine Pro                        |
+
 ## Platform Support
 
 - **macOS** (Darwin) — Primary, fully supported
