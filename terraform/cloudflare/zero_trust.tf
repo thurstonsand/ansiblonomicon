@@ -122,6 +122,21 @@ resource "cloudflare_zero_trust_access_policy" "gmail_pubsub_bypass" {
   }
 }
 
+# SSH Access - WARP-only (no home IP bypass for security)
+resource "cloudflare_zero_trust_access_application" "ssh_access" {
+  account_id                = local.account_id
+  name                      = "SSH Access"
+  type                      = "self_hosted"
+  session_duration          = "24h"
+  auto_redirect_to_identity = true
+  allowed_idps              = [cloudflare_zero_trust_access_identity_provider.google.id]
+  self_hosted_domains       = [for app in local.ssh_tunnel_apps : "${app.host}.${local.zone_name}"]
+  policies = [
+    cloudflare_zero_trust_access_policy.warp_bypass.id,
+    cloudflare_zero_trust_access_policy.admin_access.id,
+  ]
+}
+
 # TODO: Add device profile with split tunnel in Include mode when upgrading to provider v5
 # This will route only thurstons.house through WARP, everything else direct
 # Resource: cloudflare_zero_trust_device_custom_profile

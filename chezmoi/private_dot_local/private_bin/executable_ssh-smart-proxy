@@ -1,0 +1,13 @@
+#!/bin/bash
+set -euo pipefail
+
+HOST="$1"
+LOCAL_IP="$2"
+LOCAL_PORT="$3"
+TUNNEL_HOST="$4"
+
+if nc -z -w1 "$LOCAL_IP" "$LOCAL_PORT" 2>/dev/null; then
+  exec nc "$LOCAL_IP" "$LOCAL_PORT"
+else
+  exec cloudflared access ssh --hostname "$TUNNEL_HOST"
+fi

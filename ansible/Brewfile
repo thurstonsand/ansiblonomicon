@@ -67,6 +67,7 @@ brew "zig"
 # Infra/Cloud
 brew "cf-terraforming"
 brew "chezmoi"
+brew "cloudflared"
 brew "cloudflare-wrangler"
 brew "mise"
 brew "opentofu"
@@ -78,6 +79,7 @@ brew "tart"
 
 cask "cloudflare-warp"
 cask "gcloud-cli"
+cask "glkvm"
 cask "orbstack"
 cask "wifiman"
 
@@ -86,6 +88,7 @@ mas "Tailscale", id: 1475387142
 # Editors/Terminals
 cask "cursor"
 cask "ghostty"
+cask "iterm2"
 cask "monodraw"
 cask "visual-studio-code"
 cask "visual-studio-code@insiders"

@@ -19,4 +19,12 @@ locals {
     { host = "clawdbot", service = "http://192.168.1.90:18789" },
     { host = "gmail-pubsub", service = "http://192.168.1.90:8788" },
   ]
+
+  # SSH endpoints exposed via Cloudflare Tunnel (WARP-only access)
+  ssh_tunnel_apps = [
+    { host = "truenas-ssh", ip = "192.168.1.68", port = 22 },
+    { host = "haos-ssh", ip = "192.168.1.89", port = 22222 },
+    { host = "udmp-ssh", ip = "192.168.1.1", port = 22 },
+    { host = "clawdbot-ssh", ip = "192.168.1.90", port = 22 },
+  ]
 }

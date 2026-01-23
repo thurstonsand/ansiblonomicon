@@ -5,6 +5,7 @@
   "amp.tab.hoverDiagnosticSuggestions": true,
 {{- end }}
   "amp.experimental.dojoMode": true,
+  "amp.experimental.codeReviewSkill": true,
   "amp.git.commit.ampThread.enabled": false,
   "amp.git.commit.coauthor.enabled": false,
   "amp.mcpServers": {
