@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Git SSH signing wrapper using 1Password CLI
-# Mimics op-ssh-sign behavior for Linux systems
+# Mimics op-ssh-sign behavior for Linux systems without 1Password desktop app
 
 set -euo pipefail
 
@@ -12,25 +12,33 @@ trap 'rm -f "$TEMP_KEY" "${TEMP_KEY}.pub"' EXIT
 op read "$KEY_REF" > "$TEMP_KEY"
 chmod 600 "$TEMP_KEY"
 
-# Generate public key from private key
+# Generate public key (ssh-keygen needs <key>.pub to exist)
 ssh-keygen -y -f "$TEMP_KEY" > "${TEMP_KEY}.pub"
 
-# Pass all arguments to ssh-keygen for signing
-# Git calls: op-ssh-sign -Y sign -n git -f <key> <file>
-# We intercept -f and replace with our temp key
+# Git calls: op-ssh-sign -Y sign -n git -f <pubkey-file> -U <file-to-sign>
+# -U means "use agent" - we need to remove it and use our private key instead
 args=()
 skip_next=false
+
 for arg in "$@"; do
     if $skip_next; then
         skip_next=false
         continue
     fi
-    if [[ "$arg" == "-f" ]]; then
-        args+=("-f" "$TEMP_KEY")
-        skip_next=true
-    else
-        args+=("$arg")
-    fi
+    
+    case "$arg" in
+        -f)
+            # Replace -f <pubkey> with -f <our-private-key>
+            args+=("-f" "$TEMP_KEY")
+            skip_next=true
+            ;;
+        -U)
+            # Skip -U (agent mode) - we're using file-based signing
+            ;;
+        *)
+            args+=("$arg")
+            ;;
+    esac
 done
 
 ssh-keygen "${args[@]}"
