@@ -1,5 +1,9 @@
 os:
+{{- if eq .chezmoi.hostname "clawdbot" }}
+  editPreset: "vim"
+{{- else }}
   editPreset: "vscode"
+{{- end }}
 
 gui:
   nerdFontsVersion: "3"

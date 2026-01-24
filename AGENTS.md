@@ -7,13 +7,17 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `./scripts/bootstrap.sh` — First-time setup on a brand new machine (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI)
 - `./scripts/test-bootstrap.sh` — Test bootstrap in clean macOS VM via Tart
   - `--reuse` reuses existing VM; `--uninstall-xcode` tests fresh Xcode install; `--full-brew-bundle` uses real Brewfile
-- `uv run poe local` — Apply local Ansible playbook
+- `uv run poe macos` — Apply macOS Ansible playbook
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **Local tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `homebrew`/`mas`, `npm`, `opencode`, `sysconfig`/`hostname`, `uv`, `uvc-util`
+  - **macOS tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `homebrew`/`mas`, `npm`, `opencode`, `sysconfig`/`hostname`, `uv`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
-- `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as local)
+- `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `cli-proxy-api`, `cloudflared`, `ddclient`, `frigate`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
+- `uv run poe clawdbot` — Apply Clawdbot Ansible playbook (run from clawdbot itself)
+  - `--check` / `-c` — Dry-run mode (no changes made)
+  - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
+  - **Clawdbot tags**: `apt`, `apt-repos`, `chezmoi`/`dotfiles`, `claude-code`, `npm`, `opencode`, `uv`, `agent-harness`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)
@@ -36,10 +40,10 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 
 # Architecture
 
-- `ansible/playbooks/local.yml` — Local machine playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook
+- `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/clawdbot.yml` — Clawdbot (Debian VM) playbook
 - `ansible/roles/` — Custom roles
 - `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS (`.j2` templates use centralized config)
-- `ansible/config.yml` — Shared vars; `darwin.config.yml` / `archlinux.config.yml` for OS-specific
+- `ansible/config.yml` — Shared vars; `darwin.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS-specific
 - `ansible/models.yml` — Centralized model definitions (versions, aliases, vscode/zed config); symlinked to `chezmoi/.chezmoidata/models.yaml`
 - `ansible/inventory/group_vars/truenas.yml` — TrueNAS host vars (Docker config, network IPs/ports/domains)
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
@@ -51,10 +55,13 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 
 ## Clawdbot
 
-Clawdbot is a remote AI agent instance accessible via Cloudflare tunnel.
+Clawdbot is a Debian VM running as a remote AI agent instance, accessible via Cloudflare tunnel.
 
-- **SSH**: `ssh clawdbot` (connects to `clawdbot-admin.thurstons.house` as `thurstonsand`)
+- **SSH**: `ssh clawdbot` (connects to `clawdbot-ssh.thurstons.house` as `thurstonsand`)
 - **Web UI**: `clawdbot.thurstons.house` (behind Zero Trust)
+- **Ansible**: Run `uv run poe clawdbot` from clawdbot itself (not remote)
+- **Config**: `ansible/debian.config.yml` for apt packages and feature flags
+- **Chezmoi**: Uses `{{ .chezmoi.hostname "clawdbot" }}` conditionals; 1Password via `~/clawd/bin/op` wrapper
 
 ## TrueNAS Docker Directory Layout
 

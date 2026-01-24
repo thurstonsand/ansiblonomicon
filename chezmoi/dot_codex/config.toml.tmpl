@@ -13,6 +13,8 @@ experimental_sandbox_command_assessment = true
 ghost_commit = true
 rmcp_client = true
 shell_snapshot = true
+collab = true
+steer = true
 
 [history]
 persistence = "save-all"
@@ -20,19 +22,11 @@ persistence = "save-all"
 [tui]
 notifications = true
 
-[projects."{{ .chezmoi.homeDir }}/Develop/nixonomicon"]
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/nixonomicon"]
 trust_level = "trusted"
 
-[projects."{{ .chezmoi.homeDir }}/Develop/anypod"]
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/anypod"]
 trust_level = "trusted"
-
-[mcp_servers.tmux]
-command = "npx"
-args = [
-    "-y",
-    "tmux-mcp",
-    "--shell-type=zsh"
-]
 
 [notice]
 hide_gpt5_1_migration_prompt = true

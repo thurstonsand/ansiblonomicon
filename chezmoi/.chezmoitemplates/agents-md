@@ -27,6 +27,10 @@ Boundaries:
 
 If a skill references a script, you can access that script relative to the root path of the skill.
 
+## Relative Directories
+
+If trying to execute a command in a relative directory, you MUST use absolute paths to that directory.
+
 ## Comment Policy
 
 ### Unacceptable Comments

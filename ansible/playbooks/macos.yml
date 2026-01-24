@@ -1,6 +1,6 @@
 ---
-# Local machine configuration playbook
-# Run with: uv run poe local
+# macOS configuration playbook
+# Run with: uv run poe macos
 
 - name: Configure host
   hosts: 127.0.0.1

@@ -15,7 +15,7 @@ anup
 ### Sudo Access
 
 Ansible uses `op run` with `SUDO_ASKPASS` to get the sudo password from 1Password automatically.
-Just run `poe local` — no manual password entry needed.
+Just run `poe macos` — no manual password entry needed.
 
 Interactive sudo still uses TouchID as normal.
 
@@ -27,6 +27,7 @@ Interactive sudo still uses TouchID as normal.
 │   ├── inventory/           # Host definitions (localhost, truenas)
 │   ├── config.yml           # Shared configuration variables
 │   ├── darwin.config.yml    # macOS-specific config
+│   ├── debian.config.yml    # Debian-specific config (clawdbot)
 │   ├── archlinux.config.yml # Arch Linux-specific config
 │   ├── Brewfile             # Homebrew packages, casks, and MAS apps
 │   ├── requirements.yml     # Ansible Galaxy dependencies
@@ -35,7 +36,8 @@ Interactive sudo still uses TouchID as normal.
 │   ├── collections/         # Local Ansible collections (local.truenas)
 │   ├── stacks/              # Docker Compose stacks for TrueNAS
 │   └── playbooks/
-│       ├── local.yml        # Local machine playbook
+│       ├── macos.yml        # macOS playbook
+│       ├── clawdbot.yml     # Clawdbot (Debian VM) playbook
 │       └── truenas.yml      # TrueNAS playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
@@ -49,8 +51,10 @@ Interactive sudo still uses TouchID as normal.
 
 ## Commands
 
-- `anup` — Apply local Ansible playbook (alias set up by this playbook)
+- `anup` — Apply macOS Ansible playbook (alias set up by this playbook)
 - `anup --check` — Dry-run mode (shows what would change without applying)
+- `poe macos` — Apply macOS Ansible playbook (same as `anup`)
+- `poe clawdbot` — Apply Clawdbot (Debian VM) Ansible playbook
 - `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe cz-diff` — Preview dotfile changes (source → home)
 - `poe cz-status` — Show files that differ between source and home
@@ -76,11 +80,12 @@ SSH aliases are configured via chezmoi (`~/.ssh/config`):
 | Host                             | Alias          | Description                                    |
 | -------------------------------- | -------------- | ---------------------------------------------- |
 | `truenas.thurstons.house`        | `ssh truenas`  | TrueNAS SCALE server (Docker stacks, media)    |
-| `clawdbot-admin.thurstons.house` | `ssh clawdbot` | Clawdbot AI agent instance (Cloudflare tunnel) |
+| `clawdbot-ssh.thurstons.house`   | `ssh clawdbot` | Clawdbot AI agent VM (Cloudflare tunnel)       |
 | `192.168.1.89:22222`             | `ssh haos`     | Home Assistant OS                              |
 | `192.168.1.1`                    | `ssh udmp`     | UniFi Dream Machine Pro                        |
 
 ## Platform Support
 
 - **macOS** (Darwin) — Primary, fully supported
+- **Debian** (clawdbot) — Clawdbot VM, fully supported
 - **Arch Linux** (omarchy) — Future, structure ready

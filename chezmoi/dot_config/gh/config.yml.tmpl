@@ -1,0 +1,8 @@
+aliases: {}
+{{- if eq .chezmoi.hostname "clawdbot" }}
+editor: vim
+{{- else }}
+editor: code --wait
+{{- end }}
+git_protocol: ssh
+version: "1"

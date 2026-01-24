@@ -3,6 +3,11 @@ Include ~/.ssh/1Password/config
 # SSH via Cloudflare Tunnel (hostname-based access)
 # Uses ssh-smart-proxy: tries local connection first, falls back to cloudflared access ssh
 
+Host glkvm 192.168.1.34
+  HostName 192.168.1.34
+  User root
+  IdentityFile ~/.ssh/id_ecdsa_glkvm
+
 Host haos
   ForwardAgent yes
   User root
@@ -22,11 +27,15 @@ Host truenas-dev
   HostName 192.168.6.227
   SetEnv TERM="xterm-256color"
 
+{{- if ne .chezmoi.hostname "clawdbot" }}
+
 Host clawdbot
   ForwardAgent yes
   User thurstonsand
   HostKeyAlias clawdbot
   ProxyCommand ssh-smart-proxy clawdbot 192.168.1.90 22 clawdbot-ssh.thurstons.house
+
+{{- end }}
 
 Host udmp
   ForwardAgent yes
@@ -41,6 +50,4 @@ Host *
   HashKnownHosts no
 {{- if eq .chezmoi.os "darwin" }}
   IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-{{- else }}
-  IdentityAgent ~/.1password/agent.sock
 {{- end }}

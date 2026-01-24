@@ -1,0 +1,1 @@
+{{- template "op-secret" list "GIPHY_API_KEY" "op://Private/Giphy/apikey" -}}

@@ -10,6 +10,12 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 [diff]
   pager = "delta"
 
+{{- if eq .chezmoi.hostname "clawdbot" }}
+[onepassword]
+  command = "/home/thurstonsand/clawd/bin/op"
+  prompt = false
+{{- end }}
+
 [data]
   # Machine-specific variables (OS-dependent)
 {{- if eq .chezmoi.os "darwin" }}

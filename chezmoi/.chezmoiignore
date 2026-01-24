@@ -1,10 +1,17 @@
 # Files to ignore based on platform
 # Syntax: Go template conditionals around glob patterns
 
-# macOS-only files - ignore on non-Darwin
+# macOS-only scripts - ignore on non-Darwin
 {{ if ne .chezmoi.os "darwin" }}
-.chezmoiscripts/darwin/
+.chezmoiscripts/darwin/**
+.config/linearmouse/
 .config/nextdns.conf
+.local/bin/camera_settings.json
+.local/bin/code
+.local/bin/codeEditor
+.local/bin/configure_camera.py
+.local/bin/delta
+.mactop/
 Library/
 {{ end }}
 

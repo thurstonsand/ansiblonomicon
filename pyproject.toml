@@ -41,18 +41,18 @@ sequence = ["lint:workers:aig"]
 cmd = "wrangler deploy --dry-run"
 cwd = "wrangler/aig"
 
-[tool.poe.tasks.local]
-help = "Run the local ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "ansible-playbook -i inventory playbooks/local.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
+[tool.poe.tasks.macos]
+help = "Run the macOS ansible playbook (pass --check for dry-run, --tags for specific tags)"
+cmd = "ansible-playbook -i inventory/macos.ini playbooks/macos.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
 cwd = "ansible"
 
-[[tool.poe.tasks.local.args]]
+[[tool.poe.tasks.macos.args]]
 name = "check"
 type = "boolean"
 options = ["--check", "-c"]
 help = "Dry-run mode (no changes made)"
 
-[[tool.poe.tasks.local.args]]
+[[tool.poe.tasks.macos.args]]
 name = "tags"
 options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"
@@ -69,6 +69,22 @@ options = ["--check", "-c"]
 help = "Dry-run mode (no changes made)"
 
 [[tool.poe.tasks.truenas.args]]
+name = "tags"
+options = ["--tags", "-t"]
+help = "Only run tasks with these tags (comma-separated)"
+
+[tool.poe.tasks.clawdbot]
+help = "Run the clawdbot ansible playbook (pass --check for dry-run, --tags for specific tags)"
+cmd = "ansible-playbook -i inventory/clawdbot.ini playbooks/clawdbot.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
+cwd = "ansible"
+
+[[tool.poe.tasks.clawdbot.args]]
+name = "check"
+type = "boolean"
+options = ["--check", "-c"]
+help = "Dry-run mode (no changes made)"
+
+[[tool.poe.tasks.clawdbot.args]]
 name = "tags"
 options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"

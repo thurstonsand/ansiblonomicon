@@ -1,0 +1,116 @@
+---
+# Debian-specific configuration (clawdbot)
+
+# System settings
+hostname: "clawdbot"
+
+# Feature flags
+configure_chezmoi: true
+configure_apt: true
+
+# Packages from default Debian repos
+apt_packages:
+  - aptitude
+  - btop
+  - ca-certificates
+  - curl
+  - direnv
+  - eza
+  - fuse3
+  - fzf
+  - git
+  - git-delta
+  - gh
+  - golang-go
+  - htop
+  - jq
+  - lazygit
+  - openssh-client
+  - openssh-server
+  - prettyping
+  - rclone
+  - rsync
+  - rustup
+  - sqlite3
+  - sshpass
+  - starship
+  - sudo
+  - tmux
+  - tree
+  - unzip
+  - vim
+  - zsh
+
+# External repositories and their packages
+apt_external_repos:
+  - name: 1password
+    url: https://downloads.1password.com/linux/debian/amd64
+    suites: stable
+    components: main
+    key_url: https://downloads.1password.com/linux/keys/1password.asc
+    key_path: /usr/share/keyrings/1password-archive-keyring.gpg
+    packages:
+      - 1password-cli
+
+  - name: docker
+    url: https://download.docker.com/linux/debian
+    suites: trixie
+    components: stable
+    key_url: https://download.docker.com/linux/debian/gpg
+    key_path: /etc/apt/keyrings/docker.asc
+    packages:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-buildx-plugin
+      - docker-compose-plugin
+
+  - name: nodesource
+    url: https://deb.nodesource.com/node_22.x
+    suites: nodistro
+    components: main
+    key_url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    key_path: /usr/share/keyrings/nodesource.gpg
+    packages:
+      - nodejs
+
+  - name: tailscale
+    url: https://pkgs.tailscale.com/stable/debian
+    suites: trixie
+    components: main
+    key_url: https://pkgs.tailscale.com/stable/debian/trixie.noarmor.gpg
+    key_path: /usr/share/keyrings/tailscale-archive-keyring.gpg
+    packages:
+      - tailscale
+
+  - name: opentofu
+    url: https://packages.opentofu.org/opentofu/tofu/any/
+    suites: any
+    components: main
+    key_urls:
+      - https://get.opentofu.org/opentofu.gpg
+      - https://packages.opentofu.org/opentofu/tofu/gpgkey
+    key_paths:
+      - /etc/apt/keyrings/opentofu.gpg
+      - /etc/apt/keyrings/opentofu-repo.gpg
+    packages:
+      - tofu
+
+  - name: deb-multimedia
+    url: https://www.deb-multimedia.org
+    suites: trixie
+    components: main non-free
+    key_url: https://www.deb-multimedia.org/pool/main/d/deb-multimedia-keyring/deb-multimedia-keyring_2024.9.1_all.deb
+    key_path: /usr/share/keyrings/deb-multimedia-keyring.pgp
+    key_is_deb: true
+    packages:
+      - ffmpeg
+
+  - name: mise
+    url: https://mise.jdx.dev/deb
+    suites: stable
+    components: main
+    key_url: https://mise.jdx.dev/gpg-key.pub
+    key_path: /etc/apt/keyrings/mise-archive-keyring.pub
+    packages:
+      - mise

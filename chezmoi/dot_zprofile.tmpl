@@ -14,3 +14,9 @@ path=("$HOME/.local/bin" $path)
 # OrbStack shell integration
 source ~/.orbstack/shell/init.zsh 2>/dev/null || :
 {{- end }}
+
+{{- if eq .chezmoi.hostname "clawdbot" }}
+
+# Regenerate clawdbot MOTD tagline on login (detached from TTY)
+( setsid update-motd-tagline &>/dev/null & )
+{{- end }}

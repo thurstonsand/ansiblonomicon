@@ -1,0 +1,177 @@
+---
+# Clawdbot (Debian VM) configuration playbook
+# Run with: uv run poe clawdbot
+
+- name: Configure clawdbot
+  hosts: 127.0.0.1
+
+  vars_files:
+    - ../config.yml
+    - ../models.yml
+
+  pre_tasks:
+    - name: Load Debian-specific config
+      ansible.builtin.include_vars: ../debian.config.yml
+      tags: ["always"]
+
+    - name: Display system info
+      ansible.builtin.debug:
+        msg: "Configuring {{ ansible_facts['os_family'] }} ({{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }})"
+      tags: ["always"]
+
+  tasks:
+    - name: Install apt packages
+      become: true
+      ansible.builtin.apt:
+        name: "{{ apt_packages | default([]) }}"
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+      tags: ["apt"]
+
+    - name: Configure external apt repositories
+      tags: ["apt", "apt-repos"]
+      become: true
+      block:
+        - name: Ensure keyrings directories exist
+          ansible.builtin.file:
+            path: "{{ item }}"
+            state: directory
+            mode: "0755"
+          loop:
+            - /usr/share/keyrings
+            - /etc/apt/keyrings
+
+        - name: Download GPG keys (single key)
+          ansible.builtin.get_url:
+            url: "{{ item.key_url }}"
+            dest: "{{ item.key_path }}"
+            mode: "0644"
+          loop: "{{ apt_external_repos | selectattr('key_url', 'defined') | rejectattr('key_is_deb', 'defined') | list }}"
+          loop_control:
+            label: "{{ item.name }}"
+
+        - name: Download GPG keys (multiple keys)
+          ansible.builtin.get_url:
+            url: "{{ item.1 }}"
+            dest: "{{ item.0.key_paths[idx] }}"
+            mode: "0644"
+          loop: "{{ apt_external_repos | selectattr('key_urls', 'defined') | subelements('key_urls') }}"
+          loop_control:
+            label: "{{ item.0.name }} - {{ item.1 | basename }}"
+            index_var: idx
+
+        - name: Install deb-multimedia keyring package
+          ansible.builtin.apt:
+            deb: "{{ item.key_url }}"
+            state: present
+            allow_unauthenticated: true
+          loop: "{{ apt_external_repos | selectattr('key_is_deb', 'defined') | list }}"
+          loop_control:
+            label: "{{ item.name }}"
+
+        - name: Add external repositories
+          ansible.builtin.apt_repository:
+            repo: "deb [arch=amd64 signed-by={{ item.key_path | default(item.key_paths | join(',')) }}] {{ item.url }} {{ item.suites }} {{ item.components }}"
+            filename: "{{ item.name }}"
+            state: present
+          loop: "{{ apt_external_repos }}"
+          loop_control:
+            label: "{{ item.name }}"
+
+        - name: Update apt cache after adding repos
+          ansible.builtin.apt:
+            update_cache: true
+
+        - name: Install packages from external repos
+          ansible.builtin.apt:
+            name: "{{ apt_external_repos | map(attribute='packages') | flatten }}"
+            state: present
+
+    - name: Install chezmoi via curl
+      tags: ["chezmoi"]
+      block:
+        - name: Check if chezmoi is installed
+          ansible.builtin.stat:
+            path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/chezmoi"
+          register: chezmoi_binary
+
+        - name: Install chezmoi
+          when: not chezmoi_binary.stat.exists
+          ansible.builtin.shell:
+            cmd: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
+            creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/chezmoi"
+
+    - name: Install Claude Code via curl
+      tags: ["claude-code"]
+      block:
+        - name: Check if Claude Code is installed
+          ansible.builtin.stat:
+            path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
+          register: claude_binary
+
+        - name: Download Claude Code install script
+          when: not claude_binary.stat.exists
+          ansible.builtin.get_url:
+            url: https://claude.ai/install.sh
+            dest: /tmp/claude-install.sh
+            mode: "0755"
+
+        - name: Run Claude Code install script
+          when: not claude_binary.stat.exists
+          ansible.builtin.command:
+            cmd: /tmp/claude-install.sh
+            creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
+
+    - name: Install opencode via curl
+      tags: ["opencode"]
+      block:
+        - name: Check if opencode is installed
+          ansible.builtin.stat:
+            path: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
+          register: opencode_binary
+
+        - name: Download opencode install script
+          when: not opencode_binary.stat.exists
+          ansible.builtin.get_url:
+            url: https://opencode.ai/install
+            dest: /tmp/opencode-install.sh
+            mode: "0755"
+
+        - name: Run opencode install script
+          when: not opencode_binary.stat.exists
+          ansible.builtin.command:
+            cmd: /tmp/opencode-install.sh
+            creates: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
+
+    - name: Install global npm packages
+      tags: ["npm"]
+      community.general.npm:
+        name: "{{ item }}"
+        global: true
+        state: latest
+      loop: "{{ npm_global_packages | default([]) }}"
+
+    - name: Install global uv tools
+      tags: ["uv"]
+      ansible.builtin.command:
+        cmd: uv tool install --upgrade {{ item }}
+      loop: "{{ uv_global_tools | default([]) }}"
+      register: uv_tool_result
+      changed_when: "'Installed' in uv_tool_result.stderr or 'Updated' in uv_tool_result.stderr"
+
+    - name: Apply chezmoi dotfiles
+      ansible.builtin.include_role:
+        name: chezmoi
+        apply:
+          tags: ["chezmoi", "dotfiles"]
+      when: configure_chezmoi | default(false)
+      tags: ["chezmoi", "dotfiles"]
+
+    - name: Deploy AI agent resources
+      ansible.builtin.include_role:
+        name: agent_harness
+        apply:
+          tags: ["agent-harness"]
+      when: configure_agent_harness | default(true)
+      tags: ["agent-harness"]
