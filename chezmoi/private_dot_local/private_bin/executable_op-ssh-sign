@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Git SSH signing wrapper using 1Password CLI
+# Mimics op-ssh-sign behavior for Linux systems
+
+set -euo pipefail
+
+KEY_REF="op://Private/Git SSH Key/private key"
+TEMP_KEY=$(mktemp)
+trap 'rm -f "$TEMP_KEY" "${TEMP_KEY}.pub"' EXIT
+
+# Extract private key from 1Password
+op read "$KEY_REF" > "$TEMP_KEY"
+chmod 600 "$TEMP_KEY"
+
+# Generate public key from private key
+ssh-keygen -y -f "$TEMP_KEY" > "${TEMP_KEY}.pub"
+
+# Pass all arguments to ssh-keygen for signing
+# Git calls: op-ssh-sign -Y sign -n git -f <key> <file>
+# We intercept -f and replace with our temp key
+args=()
+skip_next=false
+for arg in "$@"; do
+    if $skip_next; then
+        skip_next=false
+        continue
+    fi
+    if [[ "$arg" == "-f" ]]; then
+        args+=("-f" "$TEMP_KEY")
+        skip_next=true
+    else
+        args+=("$arg")
+    fi
+done
+
+ssh-keygen "${args[@]}"

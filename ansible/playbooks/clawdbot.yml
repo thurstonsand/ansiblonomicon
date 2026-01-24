@@ -168,6 +168,20 @@
       when: configure_chezmoi | default(false)
       tags: ["chezmoi", "dotfiles"]
 
+    - name: Configure system maintenance timers
+      ansible.builtin.include_role:
+        name: system_maintenance
+        apply:
+          tags: ["system-maintenance", "timers"]
+      tags: ["system-maintenance", "timers"]
+
+    - name: Configure MOTD
+      ansible.builtin.include_role:
+        name: motd
+        apply:
+          tags: ["motd"]
+      tags: ["motd"]
+
     - name: Deploy AI agent resources
       ansible.builtin.include_role:
         name: agent_harness

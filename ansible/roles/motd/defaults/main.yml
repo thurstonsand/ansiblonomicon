@@ -1,0 +1,7 @@
+---
+motd_user: "{{ ansible_user_id }}"
+motd_home: "{{ ansible_facts['env']['HOME'] }}"
+motd_bin_dir: "{{ motd_home }}/.local/bin"
+motd_cache_dir: "{{ motd_home }}/.cache"
+
+motd_clawdbot_enabled: "{{ 'clawdbot' in (npm_global_packages | default([])) }}"

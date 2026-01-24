@@ -1,0 +1,90 @@
+---
+- name: Ensure bin directory exists
+  ansible.builtin.file:
+    path: "{{ system_maintenance_bin_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Deploy update-go-tools script
+  when: (go_tools | default([])) | length > 0
+  ansible.builtin.template:
+    src: update-go-tools.sh.j2
+    dest: "{{ system_maintenance_bin_dir }}/update-go-tools"
+    mode: "0755"
+
+- name: Deploy update-npm-global script
+  when: (npm_global_packages | default([])) | length > 0
+  ansible.builtin.template:
+    src: update-npm-global.sh.j2
+    dest: "{{ system_maintenance_bin_dir }}/update-npm-global"
+    mode: "0755"
+
+- name: Deploy update-uv script
+  when: (uv_global_tools | default([])) | length > 0
+  ansible.builtin.template:
+    src: update-uv.sh.j2
+    dest: "{{ system_maintenance_bin_dir }}/update-uv"
+    mode: "0755"
+
+- name: Deploy systemd service units
+  become: true
+  ansible.builtin.template:
+    src: "{{ item.name }}.service.j2"
+    dest: "/etc/systemd/system/{{ item.name }}.service"
+    mode: "0644"
+  loop:
+    - name: update-go-tools
+      enabled: "{{ (go_tools | default([])) | length > 0 }}"
+      path: "{{ system_maintenance_home }}/go/bin"
+    - name: update-npm-global
+      enabled: "{{ (npm_global_packages | default([])) | length > 0 }}"
+      path: "{{ system_maintenance_home }}/.npm-global/bin"
+    - name: update-uv
+      enabled: "{{ (uv_global_tools | default([])) | length > 0 }}"
+      path: "{{ system_maintenance_home }}/.local/bin"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.enabled
+  notify: Reload systemd
+
+- name: Deploy systemd timer units
+  become: true
+  ansible.builtin.template:
+    src: timer.j2
+    dest: "/etc/systemd/system/{{ item.name }}.timer"
+    mode: "0644"
+  loop:
+    - name: update-go-tools
+      enabled: "{{ (go_tools | default([])) | length > 0 }}"
+      description: Update Go CLI tools
+    - name: update-npm-global
+      enabled: "{{ (npm_global_packages | default([])) | length > 0 }}"
+      description: Update global npm packages
+    - name: update-uv
+      enabled: "{{ (uv_global_tools | default([])) | length > 0 }}"
+      description: Update uv and uv tools
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.enabled
+  notify: Reload systemd
+
+- name: Flush handlers to reload systemd
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start timers
+  become: true
+  ansible.builtin.systemd:
+    name: "{{ item.name }}.timer"
+    enabled: true
+    state: started
+    daemon_reload: true
+  loop:
+    - name: update-go-tools
+      enabled: "{{ (go_tools | default([])) | length > 0 }}"
+    - name: update-npm-global
+      enabled: "{{ (npm_global_packages | default([])) | length > 0 }}"
+    - name: update-uv
+      enabled: "{{ (uv_global_tools | default([])) | length > 0 }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.enabled

@@ -39,6 +39,7 @@ apt_packages:
   - tree
   - unzip
   - vim
+  - zoxide
   - zsh
 
 # External repositories and their packages
@@ -114,3 +115,9 @@ apt_external_repos:
     key_path: /etc/apt/keyrings/mise-archive-keyring.pub
     packages:
       - mise
+
+# Go CLI tools to keep updated (weekly via systemd timer)
+go_tools:
+  - github.com/steipete/gifgrep/cmd/gifgrep
+  - github.com/steipete/gogcli/cmd/gog
+  - github.com/steipete/sag/cmd/sag

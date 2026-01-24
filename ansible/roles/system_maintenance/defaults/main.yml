@@ -1,0 +1,4 @@
+---
+system_maintenance_user: "{{ ansible_user_id }}"
+system_maintenance_home: "{{ ansible_facts['env']['HOME'] }}"
+system_maintenance_bin_dir: "{{ system_maintenance_home }}/.local/bin"

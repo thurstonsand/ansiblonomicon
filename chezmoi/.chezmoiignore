@@ -20,6 +20,12 @@ Library/
 # (none yet)
 {{ end }}
 
+# Clawdbot-only files
+{{ if ne .chezmoi.hostname "clawdbot" }}
+.local/bin/op
+.local/bin/op-ssh-sign
+{{ end }}
+
 # App caches and generated files
 Library/Application Support/PrusaSlicer/cache/
 

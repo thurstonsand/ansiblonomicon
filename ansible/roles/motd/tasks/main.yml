@@ -1,0 +1,48 @@
+---
+- name: Truncate default /etc/motd
+  become: true
+  ansible.builtin.copy:
+    content: ""
+    dest: /etc/motd
+    mode: "0644"
+
+- name: Remove default uname MOTD script
+  become: true
+  ansible.builtin.file:
+    path: /etc/update-motd.d/10-uname
+    state: absent
+
+- name: Disable PrintLastLog in sshd
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/ssh/sshd_config
+    regexp: "^#?PrintLastLog"
+    line: "PrintLastLog no"
+  notify: Reload sshd
+
+- name: Configure clawdbot MOTD
+  when: motd_clawdbot_enabled
+  block:
+    - name: Deploy update-motd-tagline script
+      ansible.builtin.template:
+        src: update-motd-tagline.sh.j2
+        dest: "{{ motd_bin_dir }}/update-motd-tagline"
+        mode: "0755"
+
+    - name: Ensure cache directory exists
+      ansible.builtin.file:
+        path: "{{ motd_cache_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Deploy clawdbot MOTD script
+      become: true
+      ansible.builtin.template:
+        src: 20-clawdbot.j2
+        dest: /etc/update-motd.d/20-clawdbot
+        mode: "0755"
+
+    - name: Generate initial tagline
+      ansible.builtin.command:
+        cmd: "{{ motd_bin_dir }}/update-motd-tagline"
+        creates: "{{ motd_cache_dir }}/clawdbot-motd.txt"

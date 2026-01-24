@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+echo "Updating uv..."
+uv self update || echo "  Failed"
+
+{% for tool in uv_global_tools %}
+echo "Updating: {{ tool }}"
+uv tool upgrade "{{ tool }}" || echo "  Failed"
+{% endfor %}
+
+echo "Done."

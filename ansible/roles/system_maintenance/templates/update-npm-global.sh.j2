@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{% for pkg in npm_global_packages %}
+echo "Updating: {{ pkg }}"
+npm install -g "{{ pkg }}" || echo "  Failed"
+{% endfor %}
+
+echo "Done."

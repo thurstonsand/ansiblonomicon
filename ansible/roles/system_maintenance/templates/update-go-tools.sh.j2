@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{% for tool in go_tools %}
+echo "Updating: {{ tool }}"
+go install "{{ tool }}@latest" || echo "  Failed"
+{% endfor %}
+
+echo "Done."

@@ -17,7 +17,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe clawdbot` — Apply Clawdbot Ansible playbook (run from clawdbot itself)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **Clawdbot tags**: `apt`, `apt-repos`, `chezmoi`/`dotfiles`, `claude-code`, `npm`, `opencode`, `uv`, `agent-harness`
+  - **Clawdbot tags**: `apt`, `apt-repos`, `chezmoi`/`dotfiles`, `claude-code`, `motd`, `npm`, `opencode`, `system-maintenance`/`timers`, `uv`, `agent-harness`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)
@@ -61,7 +61,7 @@ Clawdbot is a Debian VM running as a remote AI agent instance, accessible via Cl
 - **Web UI**: `clawdbot.thurstons.house` (behind Zero Trust)
 - **Ansible**: Run `uv run poe clawdbot` from clawdbot itself (not remote)
 - **Config**: `ansible/debian.config.yml` for apt packages and feature flags
-- **Chezmoi**: Uses `{{ .chezmoi.hostname "clawdbot" }}` conditionals; 1Password via `~/clawd/bin/op` wrapper
+- **Chezmoi**: Uses `{{ .chezmoi.hostname "clawdbot" }}` conditionals; 1Password via `~/.local/bin/op` wrapper (chezmoi-managed)
 
 ## TrueNAS Docker Directory Layout
 
