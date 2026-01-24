@@ -1,13 +1,18 @@
 Include ~/.ssh/1Password/config
 
+# SSH via Cloudflare Tunnel (hostname-based access)
+# Uses ssh-smart-proxy: tries local connection first, falls back to cloudflared access ssh
+
 Host haos
   ForwardAgent yes
   User root
+  HostKeyAlias haos
   ProxyCommand ssh-smart-proxy haos 192.168.1.89 22222 haos-ssh.thurstons.house
 
 Host truenas
   ForwardAgent yes
   User admin
+  HostKeyAlias truenas
   ProxyCommand ssh-smart-proxy truenas 192.168.1.68 22 truenas-ssh.thurstons.house
 
 Host truenas-dev
@@ -20,11 +25,13 @@ Host truenas-dev
 Host clawdbot
   ForwardAgent yes
   User thurstonsand
+  HostKeyAlias clawdbot
   ProxyCommand ssh-smart-proxy clawdbot 192.168.1.90 22 clawdbot-ssh.thurstons.house
 
 Host udmp
   ForwardAgent yes
   User root
+  HostKeyAlias udmp
   ProxyCommand ssh-smart-proxy udmp 192.168.1.1 22 udmp-ssh.thurstons.house
 
 Host *

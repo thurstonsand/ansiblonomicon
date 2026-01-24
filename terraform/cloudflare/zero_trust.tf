@@ -122,7 +122,8 @@ resource "cloudflare_zero_trust_access_policy" "gmail_pubsub_bypass" {
   }
 }
 
-# SSH Access - WARP-only (no home IP bypass for security)
+# SSH Access via hostname-based tunnel ingress
+# Uses cloudflared access ssh on the client side
 resource "cloudflare_zero_trust_access_application" "ssh_access" {
   account_id                = local.account_id
   name                      = "SSH Access"
@@ -132,7 +133,6 @@ resource "cloudflare_zero_trust_access_application" "ssh_access" {
   allowed_idps              = [cloudflare_zero_trust_access_identity_provider.google.id]
   self_hosted_domains       = [for app in local.ssh_tunnel_apps : "${app.host}.${local.zone_name}"]
   policies = [
-    cloudflare_zero_trust_access_policy.warp_bypass.id,
     cloudflare_zero_trust_access_policy.admin_access.id,
   ]
 }

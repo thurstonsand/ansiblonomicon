@@ -26,7 +26,7 @@ resource "cloudflare_tunnel_config" "home" {
       for_each = local.ssh_tunnel_apps
       content {
         hostname = "${ingress_rule.value.host}.${local.zone_name}"
-        service  = "tcp://${ingress_rule.value.ip}:${ingress_rule.value.port}"
+        service  = "ssh://${ingress_rule.value.ip}:${ingress_rule.value.port}"
       }
     }
 
