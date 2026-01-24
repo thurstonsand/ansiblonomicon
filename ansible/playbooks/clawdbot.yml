@@ -150,13 +150,13 @@
         name: "{{ item }}"
         global: true
         state: latest
-      loop: "{{ npm_global_packages | default([]) }}"
+      loop: "{{ npm_global_packages }}"
 
     - name: Install global uv tools
       tags: ["uv"]
       ansible.builtin.command:
         cmd: uv tool install --upgrade {{ item }}
-      loop: "{{ uv_global_tools | default([]) }}"
+      loop: "{{ uv_global_tools }}"
       register: uv_tool_result
       changed_when: "'Installed' in uv_tool_result.stderr or 'Updated' in uv_tool_result.stderr"
 

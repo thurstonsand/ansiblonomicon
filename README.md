@@ -68,6 +68,7 @@ Interactive sudo still uses TouchID as normal.
 - `poe wrangler` — Deploy all Workers (llms + aig)
 - `poe wrangler:llms` — Deploy llms Worker via Wrangler (includes secrets)
 - `poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker
+- `poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker
 
 ## Design
 

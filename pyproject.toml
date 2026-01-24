@@ -35,11 +35,15 @@ cmd = "basedpyright"
 
 [tool.poe.tasks."lint:workers"]
 help = "Type-check Cloudflare Workers via wrangler"
-sequence = ["lint:workers:aig"]
+sequence = ["lint:workers:aig", "lint:workers:hooks"]
 
 [tool.poe.tasks."lint:workers:aig"]
 cmd = "wrangler deploy --dry-run"
 cwd = "wrangler/aig"
+
+[tool.poe.tasks."lint:workers:hooks"]
+cmd = "wrangler deploy --dry-run"
+cwd = "wrangler/hooks"
 
 [tool.poe.tasks.macos]
 help = "Run the macOS ansible playbook (pass --check for dry-run, --tags for specific tags)"
@@ -165,6 +169,16 @@ help = "Deploy aig Worker via Wrangler (includes secret management)"
 script = "scripts.aig_deploy:main(force_secret)"
 
 [[tool.poe.tasks."wrangler:aig".args]]
+name = "force_secret"
+type = "boolean"
+options = ["--force-secret", "-f"]
+help = "Update secrets even if they exist"
+
+[tool.poe.tasks."wrangler:hooks"]
+help = "Deploy hooks Worker via Wrangler (includes secret management)"
+script = "scripts.hooks_deploy:main(force_secret)"
+
+[[tool.poe.tasks."wrangler:hooks".args]]
 name = "force_secret"
 type = "boolean"
 options = ["--force-secret", "-f"]

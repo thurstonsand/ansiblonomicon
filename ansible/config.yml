@@ -12,14 +12,19 @@ configure_agent_harness: true
 # Chezmoi configuration
 chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
 
-# Global uv tools
-uv_global_tools:
+# Global uv tools (base set for all hosts)
+uv_global_tools_base:
   - claude-code-tools
 
-# Global npm packages
-npm_global_packages:
+# Global npm packages (base set for all hosts)
+npm_global_packages_base:
   - agent-browser
   - clawdbot
+
+# Combined lists (base + host-specific extras)
+go_tools: "{{ (go_tools_base | default([])) + (go_tools_extra | default([])) }}"
+uv_global_tools: "{{ (uv_global_tools_base | default([])) + (uv_global_tools_extra | default([])) }}"
+npm_global_packages: "{{ (npm_global_packages_base | default([])) + (npm_global_packages_extra | default([])) }}"
 
 # Agent Harness configuration
 agent_harness_target_agents:

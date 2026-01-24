@@ -6,21 +6,21 @@
     mode: "0755"
 
 - name: Deploy update-go-tools script
-  when: (go_tools | default([])) | length > 0
+  when: go_tools | length > 0
   ansible.builtin.template:
     src: update-go-tools.sh.j2
     dest: "{{ system_maintenance_bin_dir }}/update-go-tools"
     mode: "0755"
 
 - name: Deploy update-npm-global script
-  when: (npm_global_packages | default([])) | length > 0
+  when: npm_global_packages | length > 0
   ansible.builtin.template:
     src: update-npm-global.sh.j2
     dest: "{{ system_maintenance_bin_dir }}/update-npm-global"
     mode: "0755"
 
 - name: Deploy update-uv script
-  when: (uv_global_tools | default([])) | length > 0
+  when: uv_global_tools | length > 0
   ansible.builtin.template:
     src: update-uv.sh.j2
     dest: "{{ system_maintenance_bin_dir }}/update-uv"
@@ -34,13 +34,13 @@
     mode: "0644"
   loop:
     - name: update-go-tools
-      enabled: "{{ (go_tools | default([])) | length > 0 }}"
+      enabled: "{{ go_tools | length > 0 }}"
       path: "{{ system_maintenance_home }}/go/bin"
     - name: update-npm-global
-      enabled: "{{ (npm_global_packages | default([])) | length > 0 }}"
+      enabled: "{{ npm_global_packages | length > 0 }}"
       path: "{{ system_maintenance_home }}/.npm-global/bin"
     - name: update-uv
-      enabled: "{{ (uv_global_tools | default([])) | length > 0 }}"
+      enabled: "{{ uv_global_tools | length > 0 }}"
       path: "{{ system_maintenance_home }}/.local/bin"
   loop_control:
     label: "{{ item.name }}"
@@ -55,13 +55,13 @@
     mode: "0644"
   loop:
     - name: update-go-tools
-      enabled: "{{ (go_tools | default([])) | length > 0 }}"
+      enabled: "{{ go_tools | length > 0 }}"
       description: Update Go CLI tools
     - name: update-npm-global
-      enabled: "{{ (npm_global_packages | default([])) | length > 0 }}"
+      enabled: "{{ npm_global_packages | length > 0 }}"
       description: Update global npm packages
     - name: update-uv
-      enabled: "{{ (uv_global_tools | default([])) | length > 0 }}"
+      enabled: "{{ uv_global_tools | length > 0 }}"
       description: Update uv and uv tools
   loop_control:
     label: "{{ item.name }}"
@@ -80,11 +80,11 @@
     daemon_reload: true
   loop:
     - name: update-go-tools
-      enabled: "{{ (go_tools | default([])) | length > 0 }}"
+      enabled: "{{ go_tools | length > 0 }}"
     - name: update-npm-global
-      enabled: "{{ (npm_global_packages | default([])) | length > 0 }}"
+      enabled: "{{ npm_global_packages | length > 0 }}"
     - name: update-uv
-      enabled: "{{ (uv_global_tools | default([])) | length > 0 }}"
+      enabled: "{{ uv_global_tools | length > 0 }}"
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled

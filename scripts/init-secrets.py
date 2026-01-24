@@ -26,6 +26,9 @@ WORKER_DEV_VARS: dict[str, dict[str, str]] = {
         "CF_ACCESS_CLIENT_ID": "CF_ACCESS_CLIENT_ID",
         "CF_ACCESS_CLIENT_SECRET": "CF_ACCESS_CLIENT_SECRET",
     },
+    "wrangler/hooks": {
+        "GOG_GMAIL_TOKEN": "GOG_GMAIL_PUSH_TOKEN",
+    },
 }
 
 

@@ -1,0 +1,40 @@
+# Webhook Gateway Worker
+# Validates inbound webhooks (Google Pub/Sub, GitHub) at the edge before forwarding to Clawdbot
+#
+# Routes:
+#   /gmail/*  → Validate Google OIDC JWT → Forward to Clawdbot
+#   /github/* → Validate HMAC-SHA256    → Forward to Clawdbot (future)
+
+name = "hooks"
+main = "worker.ts"
+compatibility_date = "2025-12-30"
+account_id = "f052696250a2530e9afce0df33177b65"
+
+routes = [{ pattern = "hooks.thurstons.house", custom_domain = true }]
+
+[vars]
+# gog internal endpoint (IP:port reachable via VPC Service tunnel binding)
+GOG_GMAIL_URL = "http://192.168.1.90:8788/gmail-pubsub"
+# GOG_GMAIL_TOKEN set via `wrangler secret put GOG_GMAIL_TOKEN` (pushToken from clawdbot.json hooks.gmail.pushToken)
+# Clawdbot gateway hooks endpoint for future GitHub webhooks
+CLAWDBOT_HOOKS_URL = "https://clawdbot.thurstons.house/hooks"
+# Google Pub/Sub OIDC config
+GOOGLE_PUBSUB_AUDIENCE = "https://hooks.thurstons.house/gmail/pubsub"
+GOOGLE_PUBSUB_SERVICE_ACCOUNT = "pubsub-push@gen-lang-client-0166268742.iam.gserviceaccount.com"
+# GitHub webhook secret (set via `wrangler secret put GITHUB_WEBHOOK_SECRET` when needed); follow secret handling from other worker when needed
+GITHUB_WEBHOOK_SECRET = ""
+
+# VPC Service binding for gog (internal access via Cloudflare Tunnel)
+[[vpc_services]]
+binding = "GOG_SERVICE"
+service_id = "019bf22a-39a7-7191-9721-e17c3bdf212d"
+
+# Analytics Engine for tracking webhook success/failure
+[[analytics_engine_datasets]]
+binding = "ANALYTICS"
+dataset = "hooks"
+
+# Observability
+[observability.logs]
+enabled = true
+invocation_logs = true

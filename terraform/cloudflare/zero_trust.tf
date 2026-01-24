@@ -98,30 +98,6 @@ resource "cloudflare_zero_trust_access_application" "warp_login" {
   policies             = [cloudflare_zero_trust_access_policy.admin_access.id]
 }
 
-# Gmail Pub/Sub webhook - bypasses Access (gog validates via token param)
-resource "cloudflare_zero_trust_access_application" "gmail_pubsub" {
-  account_id           = local.account_id
-  name                 = "Gmail Pub/Sub Webhook"
-  domain               = "gmail-pubsub.${local.zone_name}"
-  type                 = "self_hosted"
-  app_launcher_visible = false
-  policies             = [cloudflare_zero_trust_access_policy.gmail_pubsub_bypass.id]
-}
-
-resource "cloudflare_zero_trust_access_policy" "gmail_pubsub_bypass" {
-  account_id = local.account_id
-  name       = "Gmail Pub/Sub Bypass"
-  decision   = "bypass"
-
-  include {
-    everyone = true
-  }
-
-  lifecycle {
-    create_before_destroy = true
-  }
-}
-
 # SSH Access via hostname-based tunnel ingress
 # Uses cloudflared access ssh on the client side
 resource "cloudflare_zero_trust_access_application" "ssh_access" {

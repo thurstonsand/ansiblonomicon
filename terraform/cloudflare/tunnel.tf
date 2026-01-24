@@ -23,6 +23,14 @@ resource "cloudflare_tunnel_config" "home" {
     }
 
     dynamic "ingress_rule" {
+      for_each = local.internal_tunnel_apps
+      content {
+        hostname = "${ingress_rule.value.host}.${local.zone_name}"
+        service  = ingress_rule.value.service
+      }
+    }
+
+    dynamic "ingress_rule" {
       for_each = local.ssh_tunnel_apps
       content {
         hostname = "${ingress_rule.value.host}.${local.zone_name}"

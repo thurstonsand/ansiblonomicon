@@ -27,6 +27,8 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - `--force-secret` / `-f` — Update API_KEY secret even if it exists
 - `uv run poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker via Wrangler
   - `--force-secret` / `-f` — Update secrets even if they exist
+- `uv run poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker via Wrangler
+  - `--force-secret` / `-f` — Update secrets even if they exist
 
 # Dev Commands
 

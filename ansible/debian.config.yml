@@ -116,8 +116,12 @@ apt_external_repos:
     packages:
       - mise
 
-# Go CLI tools to keep updated (weekly via systemd timer)
-go_tools:
+# Additional npm packages for clawdbot (extends npm_global_packages_base)
+npm_global_packages_extra:
+  - wrangler
+
+# Additional Go CLI tools for clawdbot (extends go_tools_base)
+go_tools_extra:
   - github.com/steipete/gifgrep/cmd/gifgrep
   - github.com/steipete/gogcli/cmd/gog
   - github.com/steipete/sag/cmd/sag

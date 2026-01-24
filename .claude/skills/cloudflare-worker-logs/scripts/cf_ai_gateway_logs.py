@@ -79,10 +79,16 @@ class AIGatewayClient:
         start_date = now - timedelta(minutes=minutes)
 
         all_filters = filters or []
-        all_filters.extend([
-            {"key": "created_at", "operator": "gt", "value": [start_date.isoformat()]},
-            {"key": "created_at", "operator": "lt", "value": [now.isoformat()]},
-        ])
+        all_filters.extend(
+            [
+                {
+                    "key": "created_at",
+                    "operator": "gt",
+                    "value": [start_date.isoformat()],
+                },
+                {"key": "created_at", "operator": "lt", "value": [now.isoformat()]},
+            ]
+        )
 
         params: dict[str, Any] = {
             "per_page": min(limit, 50),
@@ -165,7 +171,11 @@ def list_conversations(client: AIGatewayClient, minutes: int, limit: int) -> int
         reverse=True,
     )[:limit]
 
-    print(json.dumps({"conversations": sorted_convs, "count": len(sorted_convs)}, indent=2))
+    print(
+        json.dumps(
+            {"conversations": sorted_convs, "count": len(sorted_convs)}, indent=2
+        )
+    )
     return 0
 
 
@@ -224,13 +234,17 @@ def get_conversation_messages(
     return 0
 
 
-def dump_raw_logs(client: AIGatewayClient, minutes: int, limit: int, include_bodies: bool) -> int:
+def dump_raw_logs(
+    client: AIGatewayClient, minutes: int, limit: int, include_bodies: bool
+) -> int:
     """Dump raw logs to a temp file."""
     all_logs: list[dict[str, Any]] = []
     page = 1
 
     while len(all_logs) < limit:
-        data = client.list_logs(minutes=minutes, limit=min(50, limit - len(all_logs)), page=page)
+        data = client.list_logs(
+            minutes=minutes, limit=min(50, limit - len(all_logs)), page=page
+        )
         if not data.get("success"):
             print(f"API Error: {json.dumps(data.get('errors', []))}", file=sys.stderr)
             return 1
