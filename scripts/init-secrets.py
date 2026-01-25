@@ -28,6 +28,7 @@ WORKER_DEV_VARS: dict[str, dict[str, str]] = {
     },
     "wrangler/hooks": {
         "GOG_GMAIL_TOKEN": "GOG_GMAIL_PUSH_TOKEN",
+        "CLAWDBOT_HOOKS_TOKEN": "CLAWDBOT_HOOKS_TOKEN",
     },
 }
 

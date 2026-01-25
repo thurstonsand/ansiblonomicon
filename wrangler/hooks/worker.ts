@@ -372,15 +372,12 @@ async function handleHealth(request: Request, env: Env, analytics: Analytics): P
   };
 
   try {
-    // Forward via public URL with CF Access headers (VPC service binding not available - see wrangler.toml)
-    const forwardResponse = await fetch(`${env.CLAWDBOT_HOOKS_URL}/agent`, {
+    // Forward via VPC service binding
+    const forwardResponse = await env.CLAWDBOT_SERVICE.fetch("http://clawdbot/hooks/agent", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${env.CLAWDBOT_HOOKS_TOKEN}`,
-        // CF Access headers for clawdbot.thurstons.house (protected by Access)
-        "CF-Access-Client-Id": env.CF_ACCESS_CLIENT_ID,
-        "CF-Access-Client-Secret": env.CF_ACCESS_CLIENT_SECRET,
       },
       body: JSON.stringify(agentPayload),
     });

@@ -27,3 +27,6 @@ node_modules
 # Cached secrets
 .env
 .dev.vars
+
+# Wrangler build output
+wrangler/*/dist/

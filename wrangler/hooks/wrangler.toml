@@ -25,25 +25,24 @@ GOOGLE_PUBSUB_SERVICE_ACCOUNT = "pubsub-push@gen-lang-client-0166268742.iam.gser
 # GitHub webhook secret (set via `wrangler secret put GITHUB_WEBHOOK_SECRET` when needed); follow secret handling from other worker when needed
 GITHUB_WEBHOOK_SECRET = ""
 
-# Health webhook
-# Auth handled by Cloudflare Access at edge (see terraform/cloudflare/zero_trust.tf)
+# Health webhook - auth handled by CF Access at edge, then forwarded via VPC service binding
 # CLAWDBOT_HOOKS_TOKEN - set via wrangler secret put (from clawdbot.json hooks.token)
 
 # VPC Service bindings for internal access via Cloudflare Tunnel
 # These bypass public URLs and CF Access - direct tunnel access
-# NOTE: VPC services are NOT the same as infrastructure targets - different API
-# GOG_SERVICE was created via dashboard/special API; mechanism unclear
+# Future: service_ids could be passed via `wrangler deploy --var` from `terraform output`, after v5 cloudflare provider upgrade
 
-# gog gmail endpoint (192.168.1.90:8788)
+# gog gmail endpoint (192.168.1.90:8788) - created via Cloudflare Connectivity Directory API
+# POST /accounts/{account_id}/connectivity/directory/services
 [[vpc_services]]
 binding = "GOG_SERVICE"
 service_id = "019bf22a-39a7-7191-9721-e17c3bdf212d"
 
-# TODO: Add CLAWDBOT_SERVICE when we figure out how VPC services are actually created
-# The infrastructure target API creates a different resource type that doesn't work here
-# [[vpc_services]]
-# binding = "CLAWDBOT_SERVICE"
-# service_id = "???"
+# clawdbot gateway (192.168.1.90:18789) - created via Cloudflare Connectivity Directory API
+# POST /accounts/{account_id}/connectivity/directory/services
+[[vpc_services]]
+binding = "CLAWDBOT_SERVICE"
+service_id = "019bf380-8c74-7da0-8e8e-3a11fabeda32"
 
 # Analytics Engine for tracking webhook success/failure
 [[analytics_engine_datasets]]

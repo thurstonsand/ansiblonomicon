@@ -115,14 +115,16 @@ resource "cloudflare_zero_trust_access_application" "ssh_access" {
 
 # VPC Service bindings for Workers → Tunnel origins
 #
-# NOTE: VPC services are NOT the same as infrastructure targets!
-# - Infrastructure targets (cloudflare_zero_trust_access_infrastructure_target) = Access for Infrastructure
-# - VPC services (wrangler [[vpc_services]]) = Workers private tunnel access
-# These are different APIs and IDs are NOT interchangeable.
+# VPC services are created via the Cloudflare Connectivity Directory API:
+# POST /accounts/{account_id}/connectivity/directory/services
+# See: https://developers.cloudflare.com/workers-vpc/configuration/vpc-services/
 #
-# GOG_SERVICE (019bf22a-39a7-7191-9721-e17c3bdf212d) was created via unknown mechanism.
-# Infrastructure target API creates different resource type that doesn't work as VPC service.
-# TODO: Figure out how to create VPC services programmatically (dashboard? different API?)
+# Current VPC services (listed via GET /connectivity/directory/services):
+# - gog-gmail (019bf22a-39a7-7191-9721-e17c3bdf212d) → 192.168.1.90:8788
+# - clawdbot-gateway (019bf380-8c74-7da0-8e8e-3a11fabeda32) → 192.168.1.90:18789
+#
+# TODO: Manage VPC services via Terraform when upgrading to CF provider v5
+# Resource should be cloudflare_zero_trust_connectivity_service or similar
 
 # Health webhook endpoint for iOS Shortcuts
 # Uses service token auth - CF validates at edge before worker runs
