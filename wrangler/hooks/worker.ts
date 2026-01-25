@@ -363,17 +363,16 @@ async function handleHealth(request: Request, env: Env, analytics: Analytics): P
 
   const message = parts.join("\n");
 
-  // Forward to Clawdbot agent hook
-  const agentPayload = {
-    message: `${message}\n\nAnalyze this health data and provide any relevant observations or nudges. Be concise. If nothing notable, acknowledge receipt briefly.`,
-    name: "Health",
-    deliver: true,
-    channel: "telegram",
+  // Forward to Clawdbot health hook
+  // Clawdbot config handles routing, session isolation, and delivery
+  const healthPayload = {
+    message,
+    raw: healthData,
   };
 
   try {
     // Forward via VPC service binding
-    const forwardResponse = await env.CLAWDBOT_SERVICE.fetch("http://clawdbot/hooks/agent", {
+    const forwardResponse = await env.CLAWDBOT_SERVICE.fetch("http://clawdbot/hooks/health", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
