@@ -1,9 +1,10 @@
 # Webhook Gateway Worker
-# Validates inbound webhooks (Google Pub/Sub, GitHub) at the edge before forwarding to Clawdbot
+# Validates inbound webhooks (Google Pub/Sub, GitHub, iOS Health) at the edge before forwarding to Clawdbot
 #
 # Routes:
-#   /gmail/*  → Validate Google OIDC JWT → Forward to Clawdbot
-#   /github/* → Validate HMAC-SHA256    → Forward to Clawdbot (future)
+#   /gmail/*  → Validate Google OIDC JWT    → Forward to Clawdbot
+#   /github/* → Validate HMAC-SHA256        → Forward to Clawdbot (future)
+#   /health/* → Validate CF Service Token   → Forward to Clawdbot agent hook
 
 name = "hooks"
 main = "worker.ts"
@@ -24,10 +25,25 @@ GOOGLE_PUBSUB_SERVICE_ACCOUNT = "pubsub-push@gen-lang-client-0166268742.iam.gser
 # GitHub webhook secret (set via `wrangler secret put GITHUB_WEBHOOK_SECRET` when needed); follow secret handling from other worker when needed
 GITHUB_WEBHOOK_SECRET = ""
 
-# VPC Service binding for gog (internal access via Cloudflare Tunnel)
+# Health webhook
+# Auth handled by Cloudflare Access at edge (see terraform/cloudflare/zero_trust.tf)
+# CLAWDBOT_HOOKS_TOKEN - set via wrangler secret put (from clawdbot.json hooks.token)
+
+# VPC Service bindings for internal access via Cloudflare Tunnel
+# These bypass public URLs and CF Access - direct tunnel access
+# NOTE: VPC services are NOT the same as infrastructure targets - different API
+# GOG_SERVICE was created via dashboard/special API; mechanism unclear
+
+# gog gmail endpoint (192.168.1.90:8788)
 [[vpc_services]]
 binding = "GOG_SERVICE"
 service_id = "019bf22a-39a7-7191-9721-e17c3bdf212d"
+
+# TODO: Add CLAWDBOT_SERVICE when we figure out how VPC services are actually created
+# The infrastructure target API creates a different resource type that doesn't work here
+# [[vpc_services]]
+# binding = "CLAWDBOT_SERVICE"
+# service_id = "???"
 
 # Analytics Engine for tracking webhook success/failure
 [[analytics_engine_datasets]]

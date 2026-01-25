@@ -113,6 +113,33 @@ resource "cloudflare_zero_trust_access_application" "ssh_access" {
   ]
 }
 
+# VPC Service bindings for Workers → Tunnel origins
+#
+# NOTE: VPC services are NOT the same as infrastructure targets!
+# - Infrastructure targets (cloudflare_zero_trust_access_infrastructure_target) = Access for Infrastructure
+# - VPC services (wrangler [[vpc_services]]) = Workers private tunnel access
+# These are different APIs and IDs are NOT interchangeable.
+#
+# GOG_SERVICE (019bf22a-39a7-7191-9721-e17c3bdf212d) was created via unknown mechanism.
+# Infrastructure target API creates different resource type that doesn't work as VPC service.
+# TODO: Figure out how to create VPC services programmatically (dashboard? different API?)
+
+# Health webhook endpoint for iOS Shortcuts
+# Uses service token auth - CF validates at edge before worker runs
+resource "cloudflare_zero_trust_access_application" "health_webhook" {
+  account_id       = local.account_id
+  name             = "Health Webhook"
+  type             = "self_hosted"
+  session_duration = "24h"
+  self_hosted_domains = [
+    "hooks.${local.zone_name}/health",
+    "hooks.${local.zone_name}/health/*"
+  ]
+  policies = [
+    cloudflare_zero_trust_access_policy.service_auth.id,
+  ]
+}
+
 # TODO: Add device profile with split tunnel in Include mode when upgrading to provider v5
 # This will route only thurstons.house through WARP, everything else direct
 # Resource: cloudflare_zero_trust_device_custom_profile

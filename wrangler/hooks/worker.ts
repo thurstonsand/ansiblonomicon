@@ -4,6 +4,7 @@
 // Routes:
 //   /gmail/*  → Validate Google OIDC JWT → Forward to gog via internal tunnel
 //   /github/* → Validate HMAC-SHA256    → Forward to Clawdbot (future)
+//   /health/* → Validate CF Access Token → Forward to Clawdbot agent hook
 //
 // Global variables (cachedKeys, cacheExpiry) persist within a single isolate but
 // are NOT guaranteed to persist across requests. Cloudflare may spin up multiple
@@ -276,6 +277,134 @@ async function handleGitHubWebhook(request: Request, env: Env): Promise<Response
   });
 }
 
+// --- Health Data Handler ---
+// Auth handled by Cloudflare Access at edge (service token validation)
+// Worker just parses payload and forwards to Clawdbot agent hook
+// Used by iOS Shortcuts to push Apple Health data
+
+interface HealthPayload {
+  sleep?: {
+    duration_hours?: number;
+    quality?: string;
+    bed_time?: string;
+    wake_time?: string;
+  };
+  heart_rate?: {
+    resting?: number;
+    current?: number;
+  };
+  activity?: {
+    steps?: number;
+    active_energy?: number;
+    exercise_minutes?: number;
+  };
+  hrv?: number;
+  timestamp?: string;
+}
+
+async function handleHealth(request: Request, env: Env, analytics: Analytics): Promise<Response> {
+  // Auth already validated by Cloudflare Access at edge
+
+  // Validate CLAWDBOT_HOOKS_TOKEN is configured
+  if (!env.CLAWDBOT_HOOKS_TOKEN) {
+    console.error("health: CLAWDBOT_HOOKS_TOKEN not configured");
+    analytics.track("health", "config_error", "501");
+    return new Response("Not configured", { status: 501 });
+  }
+
+  // Parse health data payload
+  let healthData: HealthPayload;
+  try {
+    healthData = (await request.json()) as HealthPayload;
+  } catch {
+    console.error("health: invalid JSON payload");
+    analytics.track("health", "parse_error", "400");
+    return new Response("Bad Request: Invalid JSON", { status: 400 });
+  }
+
+  // Validate at least some health data is present
+  const hasData = healthData.sleep || healthData.heart_rate || healthData.activity || healthData.hrv !== undefined;
+  if (!hasData) {
+    console.error("health: empty payload");
+    analytics.track("health", "parse_error", "400");
+    return new Response("Bad Request: No health data provided", { status: 400 });
+  }
+
+  // Format health data as a readable message for the agent
+  const parts: string[] = ["Apple Health update received:"];
+
+  if (healthData.sleep) {
+    const s = healthData.sleep;
+    if (s.duration_hours !== undefined) parts.push(`• Sleep: ${s.duration_hours.toFixed(1)}h`);
+    if (s.quality) parts.push(`  Quality: ${s.quality}`);
+    if (s.bed_time && s.wake_time) parts.push(`  ${s.bed_time} → ${s.wake_time}`);
+  }
+
+  if (healthData.heart_rate) {
+    const hr = healthData.heart_rate;
+    if (hr.resting !== undefined) parts.push(`• Resting HR: ${hr.resting} bpm`);
+    if (hr.current !== undefined) parts.push(`• Current HR: ${hr.current} bpm`);
+  }
+
+  if (healthData.activity) {
+    const a = healthData.activity;
+    if (a.steps !== undefined) parts.push(`• Steps: ${a.steps.toLocaleString()}`);
+    if (a.active_energy !== undefined) parts.push(`• Active energy: ${a.active_energy} kcal`);
+    if (a.exercise_minutes !== undefined) parts.push(`• Exercise: ${a.exercise_minutes} min`);
+  }
+
+  if (healthData.hrv !== undefined) {
+    parts.push(`• HRV: ${healthData.hrv} ms`);
+  }
+
+  if (healthData.timestamp) {
+    parts.push(`\nTimestamp: ${healthData.timestamp}`);
+  }
+
+  const message = parts.join("\n");
+
+  // Forward to Clawdbot agent hook
+  const agentPayload = {
+    message: `${message}\n\nAnalyze this health data and provide any relevant observations or nudges. Be concise. If nothing notable, acknowledge receipt briefly.`,
+    name: "Health",
+    deliver: true,
+    channel: "telegram",
+  };
+
+  try {
+    // Forward via public URL with CF Access headers (VPC service binding not available - see wrangler.toml)
+    const forwardResponse = await fetch(`${env.CLAWDBOT_HOOKS_URL}/agent`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${env.CLAWDBOT_HOOKS_TOKEN}`,
+        // CF Access headers for clawdbot.thurstons.house (protected by Access)
+        "CF-Access-Client-Id": env.CF_ACCESS_CLIENT_ID,
+        "CF-Access-Client-Secret": env.CF_ACCESS_CLIENT_SECRET,
+      },
+      body: JSON.stringify(agentPayload),
+    });
+
+    const statusBucket = getStatusBucket(forwardResponse.status);
+    if (forwardResponse.ok) {
+      console.log(`health: forwarded ok status=${forwardResponse.status}`);
+    } else {
+      const errorText = await forwardResponse.text();
+      console.error(`health: forward failed status=${forwardResponse.status} body=${errorText}`);
+    }
+    analytics.track("health", "forward", statusBucket, String(forwardResponse.status));
+
+    return new Response(forwardResponse.ok ? "Accepted" : "Forward failed", {
+      status: forwardResponse.ok ? 202 : 502,
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error(`health: forward error: ${error}`);
+    analytics.track("health", "forward", "5xx", "502");
+    return new Response(`Forward failed: ${error}`, { status: 502 });
+  }
+}
+
 // --- Main Handler ---
 
 export default {
@@ -289,6 +418,10 @@ export default {
 
     if (url.pathname.startsWith("/github")) {
       return handleGitHubWebhook(request, env);
+    }
+
+    if (url.pathname.startsWith("/health")) {
+      return handleHealth(request, env, analytics);
     }
 
     return new Response("Not Found", { status: 404 });
