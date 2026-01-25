@@ -21,6 +21,7 @@ apt_packages:
   - git
   - git-delta
   - gh
+  - gifsicle
   - golang-go
   - htop
   - jq

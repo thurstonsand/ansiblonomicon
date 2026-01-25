@@ -45,6 +45,7 @@ export CLI_PROXY_API_KEY="{{ template "llm-api-key" . }}"
 export GIPHY_API_KEY="{{ template "giphy-api-key" . }}"
 export GOG_KEYRING_PASSWORD="{{ template "gog-keyring-password" . }}"
 export ELEVENLABS_API_KEY="{{ template "elevenlabs-api-key" . }}"
+export CLAWDBOT_GATEWAY_PASSWORD="{{ template "clawdbot-gateway-password" . }}"
 {{- else }}
 export EDITOR="codeEditor --wait"
 {{- end }}
