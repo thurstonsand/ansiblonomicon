@@ -175,6 +175,79 @@
           tags: ["system-maintenance", "timers"]
       tags: ["system-maintenance", "timers"]
 
+    - name: Configure Xvfb virtual display
+      tags: ["xvfb"]
+      block:
+        - name: Create Xvfb systemd user service
+          ansible.builtin.copy:
+            dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/xvfb.service"
+            mode: "0644"
+            content: |
+              [Unit]
+              Description=Xvfb virtual display
+              Before=clawdbot-gateway.service
+
+              [Service]
+              ExecStart=/usr/bin/Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp
+              Restart=always
+              RestartSec=3
+
+              [Install]
+              WantedBy=default.target
+
+        - name: Reload systemd user daemon
+          ansible.builtin.systemd:
+            daemon_reload: true
+            scope: user
+
+        - name: Enable and start Xvfb service
+          ansible.builtin.systemd:
+            name: xvfb.service
+            enabled: true
+            state: started
+            scope: user
+
+        - name: Ensure clawdbot-gateway drop-in directory exists
+          ansible.builtin.file:
+            path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/clawdbot-gateway.service.d"
+            state: directory
+            mode: "0755"
+
+        - name: Create gateway DISPLAY drop-in
+          ansible.builtin.copy:
+            dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/clawdbot-gateway.service.d/display.conf"
+            mode: "0644"
+            content: |
+              [Unit]
+              After=xvfb.service
+              Wants=xvfb.service
+
+              [Service]
+              Environment="DISPLAY=:99"
+          register: display_conf_result
+
+        - name: Create gateway env drop-in
+          ansible.builtin.copy:
+            dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/clawdbot-gateway.service.d/env.conf"
+            mode: "0600"
+            content: |
+              [Service]
+              Environment="PATH={{ ansible_facts['env']['HOME'] }}/go/bin:{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['HOME'] }}/.npm-global/bin:{{ ansible_facts['env']['HOME'] }}/.bun/bin:{{ ansible_facts['env']['HOME'] }}/.local/share/pnpm:{{ ansible_facts['env']['HOME'] }}/clawd/bin:/usr/local/bin:/usr/bin:/bin"
+              Environment="CLI_PROXY_API_KEY={{ lookup('env', 'CLI_PROXY_API_KEY') }}"
+              Environment="GIPHY_API_KEY={{ lookup('env', 'GIPHY_API_KEY') }}"
+              Environment="GOG_KEYRING_PASSWORD={{ lookup('env', 'GOG_KEYRING_PASSWORD') }}"
+              Environment="ELEVENLABS_API_KEY={{ lookup('env', 'ELEVENLABS_API_KEY') }}"
+              Environment="CLAWDBOT_GATEWAY_PASSWORD={{ lookup('env', 'CLAWDBOT_GATEWAY_PASSWORD') }}"
+          register: env_conf_result
+
+        - name: Reload clawdbot gateway
+          ansible.builtin.systemd:
+            name: clawdbot-gateway.service
+            daemon_reload: true
+            state: restarted
+            scope: user
+          when: display_conf_result.changed or env_conf_result.changed
+
     - name: Configure MOTD
       ansible.builtin.include_role:
         name: motd
