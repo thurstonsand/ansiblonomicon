@@ -1,0 +1,1 @@
+{{- template "op-secret" list "KAGI_API_KEY" "op://Private/Kagi/apikey" -}}

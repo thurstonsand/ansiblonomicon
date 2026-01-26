@@ -1,1 +1,0 @@
-{{- template "op-secret" list "PARALLEL_SEARCH_KEY" "op://Private/Parallel Platform API Key/credential" -}}

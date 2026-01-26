@@ -17,7 +17,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe clawdbot` — Apply Clawdbot Ansible playbook (run from clawdbot itself)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **Clawdbot tags**: `apt`, `apt-repos`, `chezmoi`/`dotfiles`, `claude-code`, `motd`, `npm`, `opencode`, `system-maintenance`/`timers`, `uv`, `xvfb`, `agent-harness`
+  - **Clawdbot tags**: `apt`, `apt-repos`, `chezmoi`/`dotfiles`, `claude-code`, `gateway-env`, `motd`, `npm`, `opencode`, `system-maintenance`/`timers`, `uv`, `xvfb`, `agent-harness`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)

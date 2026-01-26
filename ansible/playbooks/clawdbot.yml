@@ -224,7 +224,16 @@
 
               [Service]
               Environment="DISPLAY=:99"
-          register: display_conf_result
+          notify: Reload clawdbot gateway
+
+    - name: Configure clawdbot gateway environment
+      tags: ["gateway-env"]
+      block:
+        - name: Ensure clawdbot-gateway drop-in directory exists
+          ansible.builtin.file:
+            path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/clawdbot-gateway.service.d"
+            state: directory
+            mode: "0755"
 
         - name: Create gateway env drop-in
           ansible.builtin.copy:
@@ -238,15 +247,9 @@
               Environment="GOG_KEYRING_PASSWORD={{ lookup('env', 'GOG_KEYRING_PASSWORD') }}"
               Environment="ELEVENLABS_API_KEY={{ lookup('env', 'ELEVENLABS_API_KEY') }}"
               Environment="CLAWDBOT_GATEWAY_PASSWORD={{ lookup('env', 'CLAWDBOT_GATEWAY_PASSWORD') }}"
-          register: env_conf_result
-
-        - name: Reload clawdbot gateway
-          ansible.builtin.systemd:
-            name: clawdbot-gateway.service
-            daemon_reload: true
-            state: restarted
-            scope: user
-          when: display_conf_result.changed or env_conf_result.changed
+              Environment="KAGI_API_KEY={{ lookup('env', 'KAGI_API_KEY') }}"
+              Environment="PARALLEL_API_KEY={{ lookup('env', 'PARALLEL_API_KEY') }}"
+          notify: Reload clawdbot gateway
 
     - name: Configure MOTD
       ansible.builtin.include_role:
@@ -262,3 +265,11 @@
           tags: ["agent-harness"]
       when: configure_agent_harness | default(true)
       tags: ["agent-harness"]
+
+  handlers:
+    - name: Reload clawdbot gateway
+      ansible.builtin.systemd:
+        name: clawdbot-gateway.service
+        daemon_reload: true
+        state: restarted
+        scope: user

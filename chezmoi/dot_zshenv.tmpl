@@ -46,6 +46,8 @@ export GIPHY_API_KEY="{{ template "giphy-api-key" . }}"
 export GOG_KEYRING_PASSWORD="{{ template "gog-keyring-password" . }}"
 export ELEVENLABS_API_KEY="{{ template "elevenlabs-api-key" . }}"
 export CLAWDBOT_GATEWAY_PASSWORD="{{ template "clawdbot-gateway-password" . }}"
+export KAGI_API_KEY="{{ template "kagi-api-key" . }}"
+export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
 {{- else }}
 export EDITOR="codeEditor --wait"
 {{- end }}
