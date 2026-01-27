@@ -1,0 +1,1 @@
+{{- template "op-secret" list "CT0" "op://Private/tcpok6crtgekix4re2ca3fl2wa/ct0" -}}
