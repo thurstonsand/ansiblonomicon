@@ -51,8 +51,8 @@ export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
 export VENICE_API_KEY="{{ template "venice-api-key" . }}"
 
 # Twitter/X cookies for bird CLI
-export AUTH_TOKEN="{{ template "twitter-auth-token" . }}"
-export CT0="{{ template "twitter-ct0" . }}"
+export TWITTER_AUTH_TOKEN="{{ template "twitter-auth-token" . }}"
+export TWITTER_CT0="{{ template "twitter-ct0" . }}"
 {{- else }}
 export EDITOR="codeEditor --wait"
 {{- end }}

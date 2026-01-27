@@ -250,8 +250,8 @@
               Environment="KAGI_API_KEY={{ lookup('env', 'KAGI_API_KEY') }}"
               Environment="PARALLEL_API_KEY={{ lookup('env', 'PARALLEL_API_KEY') }}"
               Environment="VENICE_API_KEY={{ lookup('env', 'VENICE_API_KEY') }}"
-              Environment="AUTH_TOKEN={{ lookup('env', 'AUTH_TOKEN') }}"
-              Environment="CT0={{ lookup('env', 'CT0') }}"
+              Environment="TWITTER_AUTH_TOKEN={{ lookup('env', 'TWITTER_AUTH_TOKEN') }}"
+              Environment="TWITTER_CT0={{ lookup('env', 'TWITTER_CT0') }}"
           notify: Reload clawdbot gateway
 
     - name: Configure MOTD
