@@ -124,6 +124,7 @@ apt_external_repos:
 # Additional npm packages for clawdbot (extends npm_global_packages_base)
 npm_global_packages_extra:
   - wrangler
+  - "@steipete/bird"
 
 # Additional Go CLI tools for clawdbot (extends go_tools_base)
 go_tools_extra:
