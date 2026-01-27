@@ -1,0 +1,9 @@
+{
+  "name": "pi-extensions",
+  "private": true,
+  "devDependencies": {
+    "@mariozechner/pi-coding-agent": "*",
+    "@types/node": "*",
+    "typescript": "*"
+  }
+}

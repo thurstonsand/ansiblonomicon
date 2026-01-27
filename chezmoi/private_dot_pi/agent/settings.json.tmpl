@@ -1,0 +1,30 @@
+{
+  "defaultProvider": "anthropic",
+  "defaultModel": "{{ .models.anthropic.opus.version }}",
+  "defaultThinkingLevel": "medium",
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 16384,
+    "keepRecentTokens": 20000
+  },
+  "retry": {
+    "enabled": true,
+    "maxRetries": 3,
+    "baseDelayMs": 2000
+  },
+  "terminal": {
+    "showImages": true
+  },
+  "images": {
+    "autoResize": true,
+    "blockImages": false
+  },
+  "lastChangelogVersion": "0.50.1",
+  "enabledModels": [
+    "anthropic/{{ .models.anthropic.opus.version }}",
+    "openai/{{ .models.openai.gpt_codex.version }}",
+    "google/{{ .models.google.gemini_3_pro.version }}"
+  ],
+  "steeringMode": "all",
+  "followUpMode": "all"
+}

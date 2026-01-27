@@ -25,7 +25,7 @@ for arg in "$@"; do
         skip_next=false
         continue
     fi
-    
+
     case "$arg" in
         -f)
             # Replace -f <pubkey> with -f <our-private-key>

@@ -153,6 +153,13 @@
         state: latest
       loop: "{{ npm_global_packages }}"
 
+    - name: Install global bun packages
+      tags: ["bun"]
+      ansible.builtin.command:
+        cmd: bun install --global {{ item }}
+      loop: "{{ bun_global_packages | default([]) }}"
+      changed_when: true
+
     - name: Install global uv tools
       tags: ["uv"]
       ansible.builtin.command:

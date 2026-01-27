@@ -18,13 +18,18 @@ uv_global_tools_base:
 
 # Global npm packages (base set for all hosts)
 npm_global_packages_base:
+  - "@mariozechner/pi-coding-agent"
   - agent-browser
   - clawdbot
+
+# Global bun packages (base set for all hosts)
+bun_global_packages_base: []
 
 # Combined lists (base + host-specific extras)
 go_tools: "{{ (go_tools_base | default([])) + (go_tools_extra | default([])) }}"
 uv_global_tools: "{{ (uv_global_tools_base | default([])) + (uv_global_tools_extra | default([])) }}"
 npm_global_packages: "{{ (npm_global_packages_base | default([])) + (npm_global_packages_extra | default([])) }}"
+bun_global_packages: "{{ (bun_global_packages_base | default([])) + (bun_global_packages_extra | default([])) }}"
 
 # Agent Harness configuration
 agent_harness_target_agents:

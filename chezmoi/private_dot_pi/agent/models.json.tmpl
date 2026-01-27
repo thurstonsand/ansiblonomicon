@@ -1,0 +1,91 @@
+{
+  "providers": {
+    "anthropic": {
+      "baseUrl": "https://aig.thurstons.house",
+      "apiKey": "{{ template "llm-api-key" . }}",
+      "api": "anthropic-messages",
+      "authHeader": true,
+      "models": [
+        {
+          "id": "{{ .models.anthropic.opus.version }}",
+          "name": "{{ .models.anthropic.opus.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "contextWindow": {{ .models.anthropic.opus.max_input }},
+          "maxTokens": {{ .models.anthropic.opus.max_output }}
+        },
+        {
+          "id": "{{ .models.anthropic.sonnet.version }}",
+          "name": "{{ .models.anthropic.sonnet.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "contextWindow": {{ .models.anthropic.sonnet.max_input }},
+          "maxTokens": {{ .models.anthropic.sonnet.max_output }}
+        },
+        {
+          "id": "{{ .models.anthropic.haiku.version }}",
+          "name": "{{ .models.anthropic.haiku.display_name }}",
+          "reasoning": false,
+          "input": ["text", "image"],
+          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "contextWindow": {{ .models.anthropic.haiku.max_input }},
+          "maxTokens": {{ .models.anthropic.haiku.max_output }}
+        }
+      ]
+    },
+    "openai": {
+      "baseUrl": "https://aig.thurstons.house/v1",
+      "apiKey": "{{ template "llm-api-key" . }}",
+      "api": "openai-completions",
+      "authHeader": true,
+      "models": [
+        {
+          "id": "{{ .models.openai.gpt.version }}",
+          "name": "{{ .models.openai.gpt.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "contextWindow": {{ .models.openai.gpt.max_input }},
+          "maxTokens": {{ .models.openai.gpt.max_output }}
+        },
+        {
+          "id": "{{ .models.openai.gpt_codex.version }}",
+          "name": "{{ .models.openai.gpt_codex.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "contextWindow": {{ .models.openai.gpt_codex.max_input }},
+          "maxTokens": {{ .models.openai.gpt_codex.max_output }}
+        }
+      ]
+    },
+    "google": {
+      "baseUrl": "https://aig.thurstons.house/v1beta",
+      "apiKey": "{{ template "llm-api-key" . }}",
+      "api": "google-generative-ai",
+      "authHeader": true,
+      "models": [
+        {
+          "id": "{{ .models.google.gemini_3_flash.version }}",
+          "name": "{{ .models.google.gemini_3_flash.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "contextWindow": {{ .models.google.gemini_3_flash.max_input }},
+          "maxTokens": {{ .models.google.gemini_3_flash.max_output }}
+        },
+        {
+          "id": "{{ .models.google.gemini_3_pro.version }}",
+          "name": "{{ .models.google.gemini_3_pro.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "contextWindow": {{ .models.google.gemini_3_pro.max_input }},
+          "maxTokens": {{ .models.google.gemini_3_pro.max_output }}
+        }
+      ]
+    }
+  }
+}
