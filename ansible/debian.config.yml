@@ -20,6 +20,7 @@ apt_packages:
   - xvfb
   - direnv
   - eza
+  - fd-find
   - fuse3
   - fzf
   - git

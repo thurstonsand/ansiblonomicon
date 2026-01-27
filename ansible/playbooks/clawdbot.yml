@@ -20,13 +20,26 @@
       tags: ["always"]
 
   tasks:
+    - name: Update apt cache and upgrade all packages
+      become: true
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+        upgrade: dist
+      tags: ["apt"]
+
     - name: Install apt packages
       become: true
       ansible.builtin.apt:
         name: "{{ apt_packages | default([]) }}"
         state: present
-        update_cache: true
-        cache_valid_time: 3600
+      tags: ["apt"]
+
+    - name: Create fd symlink (Debian uses fdfind)
+      ansible.builtin.file:
+        src: /usr/bin/fdfind
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/fd"
+        state: link
       tags: ["apt"]
 
     - name: Configure external apt repositories
