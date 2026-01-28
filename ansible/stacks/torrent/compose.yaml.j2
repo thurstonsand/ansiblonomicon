@@ -20,9 +20,10 @@ services:
       - {{ docker.config_dir }}/gluetun/gluetun:/gluetun
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - VPN_TYPE=openvpn
+      - VPN_TYPE=wireguard
       - VPN_SERVICE_PROVIDER=mullvad
-      - OPENVPN_USER={{ lookup('env', 'TORRENT_OPENVPN_USER') }}
+      - WIREGUARD_PRIVATE_KEY={{ lookup('env', 'TORRENT_WIREGUARD_PRIVATE_KEY') }}
+      - WIREGUARD_ADDRESSES={{ lookup('env', 'TORRENT_WIREGUARD_ADDRESS') }}
       - SERVER_COUNTRIES=USA
       - SERVER_CITIES=Atlanta GA
       - FIREWALL_OUTBOUND_SUBNETS=192.168.6.0/24
@@ -39,6 +40,8 @@ services:
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
+    labels:
+      com.getarcaneapp.arcane.depends-on: gluetun
     user: "{{ docker.user.id }}"
     network_mode: service:gluetun
     volumes:
@@ -60,6 +63,7 @@ services:
     container_name: mam-updater
     labels:
       com.getarcaneapp.arcane.updater: "false"
+      com.getarcaneapp.arcane.depends-on: gluetun
     user: "{{ docker.user.id }}"
     network_mode: service:gluetun
     volumes:
