@@ -379,3 +379,12 @@
           tags: [docker-stack-role, torrent]
       vars:
         docker_stack_name: torrent
+
+    - name: Deploy crabwalk stack
+      tags: [docker-stack-role, crabwalk]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, crabwalk]
+      vars:
+        docker_stack_name: crabwalk

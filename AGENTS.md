@@ -13,7 +13,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - **macOS tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `homebrew`/`mas`, `npm`, `opencode`, `sysconfig`/`hostname`, `uv`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
-  - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `cli-proxy-api`, `cloudflared`, `ddclient`, `frigate`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
+  - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `cli-proxy-api`, `cloudflared`, `crabwalk`, `ddclient`, `frigate`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
 - `uv run poe clawdbot` — Apply Clawdbot Ansible playbook (run from clawdbot itself)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
