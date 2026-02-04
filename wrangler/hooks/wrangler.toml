@@ -26,7 +26,10 @@ GOOGLE_PUBSUB_SERVICE_ACCOUNT = "pubsub-push@gen-lang-client-0166268742.iam.gser
 GITHUB_WEBHOOK_SECRET = ""
 
 # Health webhook - auth handled by CF Access at edge, then forwarded via VPC service binding
-# CLAWDBOT_HOOKS_TOKEN - set via wrangler secret put (from clawdbot.json hooks.token)
+# OPENCLAW_HOOKS_TOKEN - set via hooks_deploy.py (from .dev.vars, sourced from 1Password)
+
+# Voice gateway for ElevenLabs Agents - validates bearer token, forwards to OpenClaw chatCompletions
+# ELEVENLABS_VOICE_TOKEN - set via hooks_deploy.py (from .dev.vars, sourced from 1Password)
 
 # VPC Service bindings for internal access via Cloudflare Tunnel
 # These bypass public URLs and CF Access - direct tunnel access
