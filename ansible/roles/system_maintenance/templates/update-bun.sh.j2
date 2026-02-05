@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{% for pkg in bun_global_packages %}
+echo "Updating: {{ pkg }}"
+bun install --global "{{ pkg }}" || echo "  Failed"
+{% endfor %}
+
+echo "Done."

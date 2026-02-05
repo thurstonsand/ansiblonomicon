@@ -26,6 +26,13 @@
     dest: "{{ system_maintenance_bin_dir }}/update-uv"
     mode: "0755"
 
+- name: Deploy update-bun script
+  when: bun_global_packages | length > 0
+  ansible.builtin.template:
+    src: update-bun.sh.j2
+    dest: "{{ system_maintenance_bin_dir }}/update-bun"
+    mode: "0755"
+
 - name: Deploy systemd service units
   become: true
   ansible.builtin.template:
@@ -42,6 +49,9 @@
     - name: update-uv
       enabled: "{{ uv_global_tools | length > 0 }}"
       path: "{{ system_maintenance_home }}/.local/bin"
+    - name: update-bun
+      enabled: "{{ bun_global_packages | length > 0 }}"
+      path: "{{ system_maintenance_home }}/.bun/bin"
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled
@@ -63,6 +73,9 @@
     - name: update-uv
       enabled: "{{ uv_global_tools | length > 0 }}"
       description: Update uv and uv tools
+    - name: update-bun
+      enabled: "{{ bun_global_packages | length > 0 }}"
+      description: Update global bun packages
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled
@@ -85,6 +98,8 @@
       enabled: "{{ npm_global_packages | length > 0 }}"
     - name: update-uv
       enabled: "{{ uv_global_tools | length > 0 }}"
+    - name: update-bun
+      enabled: "{{ bun_global_packages | length > 0 }}"
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled

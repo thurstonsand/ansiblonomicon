@@ -1,0 +1,13 @@
+[Unit]
+Description=Update global bun packages
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User={{ system_maintenance_user }}
+Environment="HOME={{ system_maintenance_home }}"
+Environment="PATH={{ item.path }}:/usr/local/bin:/usr/bin:/bin"
+ExecStart={{ system_maintenance_bin_dir }}/update-bun
+StandardOutput=journal
+StandardError=journal

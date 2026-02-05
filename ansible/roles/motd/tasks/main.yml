@@ -20,8 +20,8 @@
     line: "PrintLastLog no"
   notify: Reload sshd
 
-- name: Configure clawdbot MOTD
-  when: motd_clawdbot_enabled
+- name: Configure openclaw MOTD
+  when: motd_openclaw_enabled
   block:
     - name: Deploy update-motd-tagline script
       ansible.builtin.template:
@@ -35,14 +35,14 @@
         state: directory
         mode: "0755"
 
-    - name: Deploy clawdbot MOTD script
+    - name: Deploy openclaw MOTD script
       become: true
       ansible.builtin.template:
-        src: 20-clawdbot.j2
-        dest: /etc/update-motd.d/20-clawdbot
+        src: 20-openclaw.j2
+        dest: /etc/update-motd.d/20-openclaw
         mode: "0755"
 
     - name: Generate initial tagline
       ansible.builtin.command:
         cmd: "{{ motd_bin_dir }}/update-motd-tagline"
-        creates: "{{ motd_cache_dir }}/clawdbot-motd.txt"
+        creates: "{{ motd_cache_dir }}/openclaw-motd.txt"

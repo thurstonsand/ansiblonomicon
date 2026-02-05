@@ -127,6 +127,10 @@ npm_global_packages_extra:
   - wrangler
   - "@steipete/bird"
 
+# Additional bun packages for clawdbot (extends bun_global_packages_base)
+bun_global_packages_extra:
+  - "github:tobi/qmd"
+
 # Additional Go CLI tools for clawdbot (extends go_tools_base)
 go_tools_extra:
   - github.com/steipete/gifgrep/cmd/gifgrep
