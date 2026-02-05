@@ -15,21 +15,11 @@
         server: docker-proxy
         container: arcane
         widget:
-          type: customapi
-          refreshInterval: 10000
-          headers:
-            X-Api-Key: "{{ lookup('env', 'HOMEPAGE_ARCANE_API_KEY') }}"
-          url: http://{{ lan.personal.arcane.domain }}:{{ lan.personal.arcane.ports.web }}/api/environments/0/containers
-          mappings:
-            - field: counts.runningContainers
-              format: number
-              label: Running
-            - field: counts.stoppedContainers
-              format: number
-              label: Stopped
-            - field: counts.totalContainers
-              format: number
-              label: Total
+          type: arcane
+          url: http://{{ lan.personal.arcane.domain }}:{{ lan.personal.arcane.ports.web }}
+          env: "0"
+          key: "{{ lookup('env', 'HOMEPAGE_ARCANE_API_KEY') }}"
+          fields: ["running", "stopped", "total", "image_updates"]
     - Cloudflare DNS:
         icon: cloudflare.svg
         href: https://dash.cloudflare.com/{{ lookup('env', 'CLOUDFLARE_ACCOUNT_ID') }}/thurstons.house
