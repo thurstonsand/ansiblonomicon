@@ -63,8 +63,16 @@ help = "Only run tasks with these tags (comma-separated)"
 
 [tool.poe.tasks.truenas]
 help = "Run the TrueNAS ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "./run-playbook.sh playbooks/truenas.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
+shell = """
+if [[ "$(uname)" == "Darwin" ]]; then
+  CTRL=inventory/control/macos.ini
+else
+  CTRL=inventory/control/linux.ini
+fi
+ansible-playbook -i inventory/targets -i "$CTRL" playbooks/truenas.yml --diff ${check:+--check} ${tags:+--tags ${tags}}
+"""
 cwd = "ansible"
+interpreter = "bash"
 
 [[tool.poe.tasks.truenas.args]]
 name = "check"
