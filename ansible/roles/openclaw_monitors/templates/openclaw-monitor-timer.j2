@@ -1,0 +1,9 @@
+[Unit]
+Description=Timer for OpenClaw monitor: {{ item.name }}
+
+[Timer]
+OnCalendar={{ item.schedule }}
+Persistent=true
+
+[Install]
+WantedBy=timers.target

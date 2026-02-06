@@ -1,0 +1,49 @@
+---
+- name: OpenClaw monitors setup
+  when: openclaw_monitors_enabled | default(true)
+  block:
+    - name: Find monitor scripts
+      ansible.builtin.find:
+        paths: "{{ openclaw_monitors_scripts_dir }}"
+        patterns: "*.sh"
+      register: openclaw_monitors_found_scripts
+
+    - name: Build monitor list with schedules
+      ansible.builtin.set_fact:
+        openclaw_monitors_list: >-
+          {{
+            openclaw_monitors_list | default([]) + [{
+              'name': item.path | basename | replace('.sh', ''),
+              'schedule': lookup('file', item.path | replace('.sh', '.schedule'), errors='ignore') | default(openclaw_monitors_default_schedule) | trim
+            }]
+          }}
+      loop: "{{ openclaw_monitors_found_scripts.files }}"
+
+    - name: Deploy service template unit
+      become: true
+      ansible.builtin.template:
+        src: openclaw-monitor@.service.j2
+        dest: /etc/systemd/system/openclaw-monitor@.service
+        mode: "0644"
+      notify: Reload systemd for monitors
+
+    - name: Deploy timer for each monitor
+      become: true
+      ansible.builtin.template:
+        src: openclaw-monitor-timer.j2
+        dest: "/etc/systemd/system/openclaw-monitor@{{ item.name }}.timer"
+        mode: "0644"
+      loop: "{{ openclaw_monitors_list }}"
+      notify: Reload systemd for monitors
+
+    - name: Flush handlers to reload systemd
+      ansible.builtin.meta: flush_handlers
+
+    - name: Enable and start monitor timers
+      become: true
+      ansible.builtin.systemd:
+        name: "openclaw-monitor@{{ item.name }}.timer"
+        enabled: true
+        state: started
+        daemon_reload: true
+      loop: "{{ openclaw_monitors_list }}"

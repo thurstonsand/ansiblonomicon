@@ -196,6 +196,13 @@
           tags: ["system-maintenance", "timers"]
       tags: ["system-maintenance", "timers"]
 
+    - name: Configure OpenClaw monitors
+      ansible.builtin.include_role:
+        name: openclaw_monitors
+        apply:
+          tags: ["openclaw-monitors", "monitors"]
+      tags: ["openclaw-monitors", "monitors"]
+
     - name: Configure Xvfb virtual display
       tags: ["xvfb"]
       block:

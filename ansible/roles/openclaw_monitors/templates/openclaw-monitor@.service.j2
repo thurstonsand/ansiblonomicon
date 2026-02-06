@@ -1,0 +1,12 @@
+[Unit]
+Description=OpenClaw monitor: %i
+After=network.target
+
+[Service]
+Type=oneshot
+User={{ openclaw_monitors_user }}
+ExecStart={{ openclaw_monitors_runner }} {{ openclaw_monitors_scripts_dir }}/%i.sh
+Environment="PATH=/home/{{ openclaw_monitors_user }}/.local/bin:/home/{{ openclaw_monitors_user }}/.npm-global/bin:/usr/local/bin:/usr/bin:/bin"
+
+# Ensure shell environment is loaded for openclaw CLI
+Environment="HOME=/home/{{ openclaw_monitors_user }}"
