@@ -47,17 +47,17 @@ models:
       zed: true
 
     opus:
-      version: "claude-opus-4-5-20251101"
-      display_name: "Claude Opus 4.5"
+      version: "claude-opus-4-6"
+      display_name: "Claude Opus 4.6"
       max_input: 200000
       max_output: 64000
       vision: true
       cli_proxy_api:
-        pattern: "^claude-opus-4-5"
+        pattern: "^claude-opus-4-6"
       agent_harness:
         aliases:
           claude: "opus"
-          opencode: "anthropic/claude-opus-4-5-20251101"
+          opencode: "anthropic/claude-opus-4-6"
       vscode:
         include: true
         thinking: true
@@ -93,26 +93,27 @@ models:
           vscode: true
 
     gpt_codex:
-      version: "gpt-5.2-codex"
-      display_name: "GPT 5.2 Codex"
+      version: "gpt-5.3-codex"
+      display_name: "GPT 5.3 Codex"
       max_input: 400000
       max_output: 128000
       vision: true
       vscode:
-        include: false
+        include: true
         thinking: true
+      zed: true
       variants:
         medium:
-          id: "gpt-5.2-codex(medium)"
-          display_name: "GPT 5.2 Codex Medium"
+          id: "gpt-5.3-codex(medium)"
+          display_name: "GPT 5.3 Codex Medium"
           vscode: true
         high:
-          id: "gpt-5.2-codex(high)"
-          display_name: "GPT 5.2 Codex High"
+          id: "gpt-5.3-codex(high)"
+          display_name: "GPT 5.3 Codex High"
           vscode: true
         xhigh:
-          id: "gpt-5.2-codex(xhigh)"
-          display_name: "GPT 5.2 Codex XHigh"
+          id: "gpt-5.3-codex(xhigh)"
+          display_name: "GPT 5.3 Codex XHigh"
           vscode: true
 
   # ===========================================================================
@@ -188,8 +189,6 @@ cli_proxy_api:
       # Dateless aliases
       - name: claude-sonnet-4-5-20250929
         alias: claude-sonnet-4-5
-      - name: claude-opus-4-5-20251101
-        alias: claude-opus-4-5
       - name: claude-haiku-4-5-20251001
         alias: claude-haiku-4-5
     antigravity:
@@ -226,6 +225,7 @@ cli_proxy_api:
       - claude-sonnet-4-20250514
       - claude-opus-4-20250514
       - claude-opus-4-1-20250805
+      - claude-opus-4-5-20251101
     gemini-cli:
       - gemini-2.5-computer-use-preview-10-2025
       - gemini-2.0-*
@@ -246,3 +246,4 @@ cli_proxy_api:
       - gpt-5-codex
       - gpt-5-codex-mini
       - gpt-5.1-codex
+      - gpt-5.2-codex

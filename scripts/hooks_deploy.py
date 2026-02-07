@@ -6,7 +6,6 @@ Use --force-secret/-f to update secrets even if they exist.
 """
 
 import json
-import os
 from pathlib import Path
 import subprocess
 import sys

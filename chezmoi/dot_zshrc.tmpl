@@ -65,6 +65,9 @@ fi
 _evalcache bun completions
 _evalcache direnv hook zsh
 _evalcache mise activate zsh
+{{- if eq .chezmoi.hostname "clawdbot" }}
+_evalcache openclaw completion --shell zsh
+{{- end }}
 
 # Aliases
 alias ping='prettyping'
