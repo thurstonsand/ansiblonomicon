@@ -10,13 +10,10 @@ from harness_filters import (
     _build_model_alias_map,
     _check_standalone_plugin,
     _discover_agents_in_plugin,
-    _discover_commands_in_plugin,
     _discover_skills_in_plugin,
     _find_plugin_in_marketplace,
     _get_agent_source_path,
     _get_agents_paths,
-    _get_command_source_path,
-    _get_commands_paths,
     _get_skill_source_path,
     _get_skills_paths,
     _load_plugin_json,
@@ -33,7 +30,6 @@ import pytest
 WriteMarketplace = Callable[[dict[str, Any]], None]
 WritePluginJson = Callable[[dict[str, Any], str], Path]
 CreateSkill = Callable[[str], Path]
-CreateCommand = Callable[[str], Path]
 CreateAgent = Callable[[str], Path]
 
 
@@ -77,19 +73,6 @@ def create_skill(tmp_path: Path) -> CreateSkill:
         skill_path.mkdir(parents=True, exist_ok=True)
         (skill_path / "SKILL.md").write_text("# Skill")
         return skill_path
-
-    return _create
-
-
-@pytest.fixture
-def create_command(tmp_path: Path) -> CreateCommand:
-    """Return a function to create a command .md file at a given path."""
-
-    def _create(subpath: str) -> Path:
-        cmd_path = tmp_path / subpath
-        cmd_path.parent.mkdir(parents=True, exist_ok=True)
-        cmd_path.write_text("# Command")
-        return cmd_path
 
     return _create
 
@@ -153,35 +136,6 @@ def test_get_skills_paths(config: dict[str, Any], expected: list[str]) -> None:
 
 
 # =============================================================================
-# Tests for _get_commands_paths
-# =============================================================================
-
-
-@pytest.mark.parametrize(
-    ("config", "expected"),
-    [
-        ({}, ["commands"]),
-        ({"commands": None}, ["commands"]),
-        ({"commands": "custom"}, ["custom"]),
-        ({"commands": "./custom"}, ["custom"]),
-        ({"commands": ["a", "b"]}, ["a", "b"]),
-        ({"commands": ["./a", "./b"]}, ["a", "b"]),
-    ],
-    ids=[
-        "empty-config",
-        "explicit-none",
-        "string",
-        "string-with-prefix",
-        "list",
-        "list-with-prefix",
-    ],
-)
-@pytest.mark.unit
-def test_get_commands_paths(config: dict[str, Any], expected: list[str]) -> None:
-    assert _get_commands_paths(config) == expected
-
-
-# =============================================================================
 # Tests for _load_plugin_json
 # =============================================================================
 
@@ -242,7 +196,6 @@ def test_find_plugin_in_marketplace_string_source(
     assert result.name == "my-plugin"
     assert result.source_path == "plugins/my-plugin"
     assert result.skills_paths == ["skills"]
-    assert result.commands_paths == ["commands"]
 
 
 @pytest.mark.parametrize(
@@ -300,14 +253,11 @@ def test_find_plugin_in_marketplace_strict_true_merges_plugin_json(
     write_marketplace(
         {"plugins": [{"name": "my-plugin", "source": "./my-plugin", "strict": True}]}
     )
-    write_plugin_json(
-        {"name": "my-plugin", "skills": "custom", "commands": "cmds"}, "my-plugin"
-    )
+    write_plugin_json({"name": "my-plugin", "skills": "custom"}, "my-plugin")
 
     result = _find_plugin_in_marketplace(tmp_path, "my-plugin")
     assert result is not None
     assert result.skills_paths == ["custom"]
-    assert result.commands_paths == ["cmds"]
 
 
 @pytest.mark.unit
@@ -400,13 +350,12 @@ def test_check_standalone_plugin_name_mismatch(
 
 
 @pytest.mark.parametrize(
-    ("plugin_config", "expected_skills_paths", "expected_commands_paths"),
+    ("plugin_config", "expected_skills_paths"),
     [
-        ({"name": "my-plugin"}, ["skills"], ["commands"]),
-        ({"name": "my-plugin", "skills": ["a", "b"]}, ["a", "b"], ["commands"]),
-        ({"name": "my-plugin", "commands": "cmds"}, ["skills"], ["cmds"]),
+        ({"name": "my-plugin"}, ["skills"]),
+        ({"name": "my-plugin", "skills": ["a", "b"]}, ["a", "b"]),
     ],
-    ids=["default-paths", "custom-skills", "custom-commands"],
+    ids=["default-paths", "custom-skills"],
 )
 @pytest.mark.unit
 def test_check_standalone_plugin_found(
@@ -414,7 +363,6 @@ def test_check_standalone_plugin_found(
     tmp_path: Path,
     plugin_config: dict[str, Any],
     expected_skills_paths: list[str],
-    expected_commands_paths: list[str],
 ) -> None:
     write_plugin_json(plugin_config, ".")
     result = _check_standalone_plugin(tmp_path, "my-plugin")
@@ -422,7 +370,6 @@ def test_check_standalone_plugin_found(
     assert result.name == "my-plugin"
     assert result.source_path == "."
     assert result.skills_paths == expected_skills_paths
-    assert result.commands_paths == expected_commands_paths
 
 
 # =============================================================================
@@ -485,47 +432,6 @@ def test_discover_skills_in_plugin_ignores_non_skill_dirs(tmp_path: Path) -> Non
 
 
 # =============================================================================
-# Tests for _discover_commands_in_plugin
-# =============================================================================
-
-
-@pytest.mark.unit
-def test_discover_commands_in_plugin_empty(tmp_path: Path) -> None:
-    (tmp_path / "commands").mkdir()
-    result = _discover_commands_in_plugin(tmp_path, ["commands"])
-    assert result == []
-
-
-@pytest.mark.unit
-def test_discover_commands_in_plugin_finds_commands(
-    tmp_path: Path, create_command: CreateCommand
-) -> None:
-    create_command("commands/cmd-a.md")
-    create_command("commands/cmd-b.md")
-    result = _discover_commands_in_plugin(tmp_path, ["commands"])
-    assert sorted(result) == ["cmd-a", "cmd-b"]
-
-
-@pytest.mark.unit
-def test_discover_commands_in_plugin_multiple_paths(
-    tmp_path: Path, create_command: CreateCommand
-) -> None:
-    create_command("commands/cmd-a.md")
-    create_command("other/cmd-b.md")
-    result = _discover_commands_in_plugin(tmp_path, ["commands", "other"])
-    assert sorted(result) == ["cmd-a", "cmd-b"]
-
-
-@pytest.mark.unit
-def test_discover_commands_in_plugin_ignores_non_md(tmp_path: Path) -> None:
-    (tmp_path / "commands").mkdir()
-    (tmp_path / "commands" / "script.sh").write_text("#!/bin/bash")
-    (tmp_path / "commands" / "config.json").write_text("{}")
-    result = _discover_commands_in_plugin(tmp_path, ["commands"])
-    assert result == []
-
-
-# =============================================================================
 # Tests for _get_skill_source_path
 # =============================================================================
 
@@ -552,27 +458,6 @@ def test_get_skill_source_path_not_found(tmp_path: Path) -> None:
 
 
 # =============================================================================
-# Tests for _get_command_source_path
-# =============================================================================
-
-
-@pytest.mark.unit
-def test_get_command_source_path_found(
-    tmp_path: Path, create_command: CreateCommand
-) -> None:
-    create_command("commands/my-cmd.md")
-    result = _get_command_source_path(tmp_path, "my-cmd", ["commands"])
-    assert result == str(tmp_path / "commands" / "my-cmd.md")
-
-
-@pytest.mark.unit
-def test_get_command_source_path_not_found(tmp_path: Path) -> None:
-    (tmp_path / "commands").mkdir()
-    result = _get_command_source_path(tmp_path, "missing", ["commands"])
-    assert result is None
-
-
-# =============================================================================
 # Tests for _resolve_plugin_from_repo
 # =============================================================================
 
@@ -593,7 +478,6 @@ def test_resolve_plugin_from_repo_marketplace(
     assert resolved.config.name == "my-plugin"
     assert resolved.plugin_path == repo_path / "plugins" / "my-plugin"
     assert resolved.exclude_skills == []
-    assert resolved.exclude_commands == []
     assert resolved.exclude_agents == []
     assert resolved.target_agents == []
 
@@ -638,12 +522,10 @@ def test_resolve_plugin_from_repo_with_exclusions(repo_path: Path) -> None:
         {
             "name": "my-plugin",
             "exclude_skills": ["unwanted-skill"],
-            "exclude_commands": ["unwanted-cmd"],
         },
     )
     assert resolved.is_valid
     assert resolved.exclude_skills == ["unwanted-skill"]
-    assert resolved.exclude_commands == ["unwanted-cmd"]
 
 
 @pytest.mark.unit
@@ -681,12 +563,10 @@ def test_resolve_plugin_from_local_with_exclusions(tmp_path: Path) -> None:
         {
             "name": "my-plugin",
             "exclude_skills": ["skip-skill"],
-            "exclude_commands": ["skip-cmd"],
         },
     )
     assert resolved.is_valid
     assert resolved.exclude_skills == ["skip-skill"]
-    assert resolved.exclude_commands == ["skip-cmd"]
 
 
 @pytest.mark.unit
@@ -757,7 +637,7 @@ def test_agent_harness_get_git_sources_preserves_fields() -> None:
 @pytest.mark.unit
 def test_agent_harness_build_plugin_resources_empty(cache_dir: Path) -> None:
     result = agent_harness_build_plugin_resources([], str(cache_dir))
-    assert result == {"skills": [], "commands": [], "agents": []}
+    assert result == {"skills": [], "agents": []}
 
 
 # --- Git source tests ---
@@ -792,29 +672,6 @@ def test_agent_harness_build_plugin_resources_git_discovers_skills(
 
 
 @pytest.mark.unit
-def test_agent_harness_build_plugin_resources_git_discovers_commands(
-    repo_path: Path, cache_dir: Path
-) -> None:
-    # Setup standalone plugin
-    plugin_dir = repo_path / ".claude-plugin"
-    plugin_dir.mkdir()
-    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
-
-    # Create commands
-    cmd_dir = repo_path / "commands"
-    cmd_dir.mkdir()
-    (cmd_dir / "cmd-a.md").write_text("# Command A")
-    (cmd_dir / "cmd-b.md").write_text("# Command B")
-
-    sources: list[Any] = [{"repo": "owner/repo", "plugins": ["my-plugin"]}]
-    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
-
-    assert len(result["commands"]) == 2
-    names = sorted(c["name"] for c in result["commands"])
-    assert names == ["cmd-a", "cmd-b"]
-
-
-@pytest.mark.unit
 def test_agent_harness_build_plugin_resources_git_with_exclusions(
     repo_path: Path, cache_dir: Path
 ) -> None:
@@ -829,12 +686,6 @@ def test_agent_harness_build_plugin_resources_git_with_exclusions(
         skill_dir.mkdir(parents=True)
         (skill_dir / "SKILL.md").write_text(f"# {name}")
 
-    # Create commands
-    cmd_dir = repo_path / "commands"
-    cmd_dir.mkdir()
-    (cmd_dir / "keep-cmd.md").write_text("# Keep")
-    (cmd_dir / "skip-cmd.md").write_text("# Skip")
-
     sources: list[Any] = [
         {
             "repo": "owner/repo",
@@ -842,7 +693,6 @@ def test_agent_harness_build_plugin_resources_git_with_exclusions(
                 {
                     "name": "my-plugin",
                     "exclude_skills": ["skip-skill"],
-                    "exclude_commands": ["skip-cmd"],
                 }
             ],
         }
@@ -851,8 +701,6 @@ def test_agent_harness_build_plugin_resources_git_with_exclusions(
 
     assert len(result["skills"]) == 1
     assert result["skills"][0]["name"] == "keep-skill"
-    assert len(result["commands"]) == 1
-    assert result["commands"][0]["name"] == "keep-cmd"
 
 
 @pytest.mark.unit
@@ -912,25 +760,6 @@ def test_agent_harness_build_plugin_resources_local_discovers_skills(
     assert len(result["skills"]) == 1
     assert result["skills"][0]["name"] == "local-skill"
     assert result["skills"][0]["origin"] == "local"
-
-
-@pytest.mark.unit
-def test_agent_harness_build_plugin_resources_local_discovers_commands(
-    tmp_path: Path, cache_dir: Path
-) -> None:
-    # Create local plugin structure
-    local_path = tmp_path / "local"
-    plugin_path = local_path / "plugins" / "my-plugin"
-    cmd_dir = plugin_path / "commands"
-    cmd_dir.mkdir(parents=True)
-    (cmd_dir / "local-cmd.md").write_text("# Local Command")
-
-    sources: list[Any] = [{"local": str(local_path), "plugins": ["my-plugin"]}]
-    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
-
-    assert len(result["commands"]) == 1
-    assert result["commands"][0]["name"] == "local-cmd"
-    assert result["commands"][0]["origin"] == "local"
 
 
 @pytest.mark.unit
@@ -1018,37 +847,12 @@ def test_agent_harness_build_plugin_resources_multiple_sources(
 
 
 @pytest.mark.unit
-def test_agent_harness_build_plugin_resources_mixed_skills_and_commands(
-    tmp_path: Path, cache_dir: Path
-) -> None:
-    # Create local plugin with both skills and commands
-    local_path = tmp_path / "local"
-    plugin_path = local_path / "plugins" / "mixed-plugin"
-
-    skill_dir = plugin_path / "skills" / "my-skill"
-    skill_dir.mkdir(parents=True)
-    (skill_dir / "SKILL.md").write_text("# Skill")
-
-    cmd_dir = plugin_path / "commands"
-    cmd_dir.mkdir(parents=True)
-    (cmd_dir / "my-cmd.md").write_text("# Command")
-
-    sources: list[Any] = [{"local": str(local_path), "plugins": ["mixed-plugin"]}]
-    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
-
-    assert len(result["skills"]) == 1
-    assert result["skills"][0]["name"] == "my-skill"
-    assert len(result["commands"]) == 1
-    assert result["commands"][0]["name"] == "my-cmd"
-
-
-@pytest.mark.unit
 def test_agent_harness_build_plugin_resources_unresolvable_skipped(
     cache_dir: Path,
 ) -> None:
     sources: list[Any] = [{"repo": "owner/repo", "plugins": ["nonexistent"]}]
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
-    assert result == {"skills": [], "commands": [], "agents": []}
+    assert result == {"skills": [], "agents": []}
 
 
 @pytest.mark.unit
@@ -1305,20 +1109,16 @@ def test_agent_harness_build_plugin_resources_local_with_exclude_agents(
 
 
 @pytest.mark.unit
-def test_agent_harness_build_plugin_resources_mixed_all_types(
+def test_agent_harness_build_plugin_resources_mixed_skills_and_agents(
     tmp_path: Path, cache_dir: Path
 ) -> None:
-    # Create local plugin with skills, commands, and agents
+    # Create local plugin with skills and agents
     local_path = tmp_path / "local"
     plugin_path = local_path / "plugins" / "mixed-plugin"
 
     skill_dir = plugin_path / "skills" / "my-skill"
     skill_dir.mkdir(parents=True)
     (skill_dir / "SKILL.md").write_text("# Skill")
-
-    cmd_dir = plugin_path / "commands"
-    cmd_dir.mkdir(parents=True)
-    (cmd_dir / "my-cmd.md").write_text("# Command")
 
     agent_dir = plugin_path / "agents"
     agent_dir.mkdir(parents=True)
@@ -1329,8 +1129,6 @@ def test_agent_harness_build_plugin_resources_mixed_all_types(
 
     assert len(result["skills"]) == 1
     assert result["skills"][0]["name"] == "my-skill"
-    assert len(result["commands"]) == 1
-    assert result["commands"][0]["name"] == "my-cmd"
     assert len(result["agents"]) == 1
     assert result["agents"][0]["name"] == "my-agent"
 

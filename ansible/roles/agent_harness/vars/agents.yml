@@ -5,7 +5,6 @@ agent_harness_agents:
   claude:
     config_root: "{{ ansible_facts.env.HOME }}/.claude"
     skills_dir: "{{ ansible_facts.env.HOME }}/.claude/skills"
-    commands_dir: "{{ ansible_facts.env.HOME }}/.claude/commands"
     agents_dir: "{{ ansible_facts.env.HOME }}/.claude/agents"
     mcp_file: "{{ ansible_facts.env.HOME }}/.claude/.mcp.json"
     mcp_format: json
@@ -20,7 +19,6 @@ agent_harness_agents:
   amp:
     config_root: "{{ ansible_facts.env.HOME }}/.config/amp"
     skills_dir: "{{ ansible_facts.env.HOME }}/.config/amp/skills"
-    commands_dir: "{{ ansible_facts.env.HOME }}/.config/amp/commands"
     agents_dir: null # Amp does not support user-defined subagents
     mcp_file: "{{ ansible_facts.env.HOME }}/.config/amp/settings.json"
     mcp_format: json
@@ -35,7 +33,6 @@ agent_harness_agents:
   codex:
     config_root: "{{ ansible_facts.env.HOME }}/.codex"
     skills_dir: "{{ ansible_facts.env.HOME }}/.codex/skills"
-    commands_dir: "{{ ansible_facts.env.HOME }}/.codex/prompts" # Codex calls these "custom prompts"
     agents_dir: null # Codex does not support subagents
     mcp_file: "{{ ansible_facts.env.HOME }}/.codex/config.toml"
     mcp_format: toml
@@ -50,7 +47,6 @@ agent_harness_agents:
   opencode:
     config_root: "{{ ansible_facts.env.HOME }}/.config/opencode"
     skills_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/skill" # SINGULAR - not "skills"
-    commands_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/command" # SINGULAR - not "commands"
     agents_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/agent" # SINGULAR - not "agents"
     mcp_file: "{{ ansible_facts.env.HOME }}/.config/opencode/opencode.json"
     mcp_format: json

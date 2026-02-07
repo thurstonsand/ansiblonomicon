@@ -3,7 +3,7 @@
 agent_harness_target_agents:
   - claude
 
-# Sources for plugins containing skills/commands
+# Sources for plugins containing skills
 # Supports both git repos and local paths
 agent_harness_sources: []
 #   # Git sources - clone from GitHub
@@ -13,7 +13,6 @@ agent_harness_sources: []
 #       - frontend-design                    # short form: enable entire plugin
 #       - name: memory                       # long form: with exclusions
 #         exclude_skills: [unwanted-skill]
-#         exclude_commands: [unwanted-cmd]
 #       - path: plugins/custom-plugin        # explicit path to plugin dir
 #
 #   # Local sources - use existing directory

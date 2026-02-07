@@ -19,7 +19,7 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.50.1",
+  "lastChangelogVersion": "0.50.7",
   "enabledModels": [
     "anthropic/{{ .models.anthropic.opus.version }}",
     "openai/{{ .models.openai.gpt_codex.version }}",
@@ -42,10 +42,15 @@
         "+extensions/oracle.ts",
         "-extensions/speedreading.ts",
         "-extensions/status-widget.ts",
-        "-extensions/ultrathink.ts",
-        "-extensions/usage-bar.ts"
+        "-extensions/resistance.ts",
+        "-extensions/teletext.ts",
+        "+extensions/usage-bar.ts",
+        "+extensions/ultrathink.ts"
       ],
-      "skills": ["-skills/a-nach-b/SKILL.md"]
+      "skills": [
+        "-skills/a-nach-b/SKILL.md"
+      ]
     }
-  ]
+  ],
+  "hideThinkingBlock": true
 }
