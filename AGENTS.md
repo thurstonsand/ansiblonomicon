@@ -14,10 +14,10 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `cli-proxy-api`, `cloudflared`, `crabwalk`, `ddclient`, `frigate`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
-- `uv run poe clawdbot` — Apply Clawdbot Ansible playbook (run from clawdbot itself)
+- `uv run poe openclaw` — Apply OpenClaw Ansible playbook (run from openclaw itself)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **Clawdbot tags**: `apt`, `apt-repos`, `chezmoi`/`dotfiles`, `claude-code`, `gateway-env`, `motd`, `npm`, `opencode`, `system-maintenance`/`timers`, `uv`, `xvfb`, `agent-harness`
+  - **OpenClaw tags**: `apt`, `apt-repos`, `chezmoi`/`dotfiles`, `claude-code`, `gateway-env`, `motd`, `npm`, `opencode`, `system-maintenance`/`timers`, `uv`, `xvfb`, `agent-harness`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)
@@ -42,7 +42,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 
 # Architecture
 
-- `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/clawdbot.yml` — Clawdbot (Debian VM) playbook
+- `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/openclaw.yml` — OpenClaw (Debian VM) playbook
 - `ansible/roles/` — Custom roles
 - `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS (`.j2` templates use centralized config)
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS-specific
@@ -55,15 +55,15 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
 - `agents/` — Local AI agent skills deployed via `agent_harness` role
 
-## Clawdbot
+## OpenClaw
 
-Clawdbot is a Debian VM running as a remote AI agent instance, accessible via Cloudflare tunnel.
+OpenClaw is a Debian VM running as a remote AI agent instance, accessible via Cloudflare tunnel.
 
-- **SSH**: `ssh clawdbot` (connects to `clawdbot-ssh.thurstons.house` as `thurstonsand`)
-- **Web UI**: `clawdbot.thurstons.house` (behind Zero Trust)
-- **Ansible**: Run `uv run poe clawdbot` from clawdbot itself (not remote)
+- **SSH**: `ssh openclaw` (connects to `openclaw-ssh.thurstons.house` as `thurstonsand`)
+- **Web UI**: `openclaw.thurstons.house` (behind Zero Trust)
+- **Ansible**: Run `uv run poe openclaw` from openclaw itself (not remote)
 - **Config**: `ansible/debian.config.yml` for apt packages and feature flags
-- **Chezmoi**: Uses `{{ .chezmoi.hostname "clawdbot" }}` conditionals; 1Password via `~/.local/bin/op` wrapper (chezmoi-managed)
+- **Chezmoi**: Uses `{{ .chezmoi.hostname "openclaw" }}` conditionals; 1Password via `~/.local/bin/op` wrapper (chezmoi-managed)
 
 ## TrueNAS Docker Directory Layout
 

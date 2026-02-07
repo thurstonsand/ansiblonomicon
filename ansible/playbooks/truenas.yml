@@ -175,7 +175,7 @@
         purpose: ENHANCED_TIMEMACHINE
         browsable: true
         acl: true
-        durablehandle: true
+        durablehandle: false
         streams: true
         timemachine: true
         shadowcopy: true

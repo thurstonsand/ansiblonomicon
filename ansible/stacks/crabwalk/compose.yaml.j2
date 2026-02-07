@@ -9,7 +9,7 @@ services:
       - "{{ lan.personal.crabwalk.ports.web }}:{{ lan.personal.crabwalk.ports.web }}"
     environment:
       CLAWDBOT_URL: ws://192.168.1.90:18789
-      CLAWDBOT_API_TOKEN: "{{ lookup('env', 'CLAWDBOT_GATEWAY_TOKEN') }}"
+      CLAWDBOT_API_TOKEN: "{{ lookup('env', 'OPENCLAW_GATEWAY_TOKEN') }}"
       ALLOWED_HOSTS: {{ lan.personal.crabwalk.domain }},{{ lan.personal.crabwalk.domain }}:{{ lan.personal.crabwalk.ports.web }}
     restart: unless-stopped
 

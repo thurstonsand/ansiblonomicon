@@ -27,7 +27,7 @@ Interactive sudo still uses TouchID as normal.
 │   ├── inventory/           # Host definitions (localhost, truenas)
 │   ├── config.yml           # Shared configuration variables
 │   ├── darwin.config.yml    # macOS-specific config
-│   ├── debian.config.yml    # Debian-specific config (clawdbot)
+│   ├── debian.config.yml    # Debian-specific config (openclaw)
 │   ├── archlinux.config.yml # Arch Linux-specific config
 │   ├── Brewfile             # Homebrew packages, casks, and MAS apps
 │   ├── requirements.yml     # Ansible Galaxy dependencies
@@ -37,7 +37,7 @@ Interactive sudo still uses TouchID as normal.
 │   ├── stacks/              # Docker Compose stacks for TrueNAS
 │   └── playbooks/
 │       ├── macos.yml        # macOS playbook
-│       ├── clawdbot.yml     # Clawdbot (Debian VM) playbook
+│       ├── openclaw.yml     # OpenClaw (Debian VM) playbook
 │       └── truenas.yml      # TrueNAS playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
@@ -54,7 +54,7 @@ Interactive sudo still uses TouchID as normal.
 - `anup` — Apply macOS Ansible playbook (alias set up by this playbook)
 - `anup --check` — Dry-run mode (shows what would change without applying)
 - `poe macos` — Apply macOS Ansible playbook (same as `anup`)
-- `poe clawdbot` — Apply Clawdbot (Debian VM) Ansible playbook
+- `poe openclaw` — Apply OpenClaw (Debian VM) Ansible playbook
 - `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe cz-diff` — Preview dotfile changes (source → home)
 - `poe cz-status` — Show files that differ between source and home
@@ -81,12 +81,12 @@ SSH aliases are configured via chezmoi (`~/.ssh/config`):
 | Host                             | Alias          | Description                                    |
 | -------------------------------- | -------------- | ---------------------------------------------- |
 | `truenas.thurstons.house`        | `ssh truenas`  | TrueNAS SCALE server (Docker stacks, media)    |
-| `clawdbot-ssh.thurstons.house`   | `ssh clawdbot` | Clawdbot AI agent VM (Cloudflare tunnel)       |
+| `openclaw-ssh.thurstons.house`   | `ssh openclaw` | OpenClaw AI agent VM (Cloudflare tunnel)       |
 | `192.168.1.89:22222`             | `ssh haos`     | Home Assistant OS                              |
 | `192.168.1.1`                    | `ssh udmp`     | UniFi Dream Machine Pro                        |
 
 ## Platform Support
 
 - **macOS** (Darwin) — Primary, fully supported
-- **Debian** (clawdbot) — Clawdbot VM, fully supported
+- **Debian** (openclaw) — OpenClaw VM, fully supported
 - **Arch Linux** (omarchy) — Future, structure ready

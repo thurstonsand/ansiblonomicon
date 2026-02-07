@@ -3,7 +3,6 @@ services:
     image: eceasy/cli-proxy-api:latest
     container_name: cli-proxy-api
     restart: unless-stopped
-    # pull_policy: always
     user: "{{ docker.user.id }}"
     networks:
       external:

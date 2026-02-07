@@ -1,8 +1,8 @@
 ---
-# Clawdbot (Debian VM) configuration playbook
-# Run with: uv run poe clawdbot
+# OpenClaw (Debian VM) configuration playbook
+# Run with: uv run poe openclaw
 
-- name: Configure clawdbot
+- name: Configure openclaw
   hosts: 127.0.0.1
 
   vars_files:

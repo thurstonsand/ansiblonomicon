@@ -9,6 +9,9 @@ dependencies = [
     "python-frontmatter>=1.1.0",
 ]
 
+[tool.poe]
+verbosity = -1
+
 [tool.poe.tasks.init-secrets]
 help = "Resolve 1Password secrets to .env and worker .dev.vars files (force regenerate)"
 shell = "rm -f .env && uv run scripts/init-secrets.py"
@@ -85,18 +88,18 @@ name = "tags"
 options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"
 
-[tool.poe.tasks.clawdbot]
-help = "Run the clawdbot ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "ansible-playbook -i inventory/control/linux.ini playbooks/clawdbot.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
+[tool.poe.tasks.openclaw]
+help = "Run the openclaw ansible playbook (pass --check for dry-run, --tags for specific tags)"
+cmd = "ansible-playbook -i inventory/control/linux.ini playbooks/openclaw.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
 cwd = "ansible"
 
-[[tool.poe.tasks.clawdbot.args]]
+[[tool.poe.tasks.openclaw.args]]
 name = "check"
 type = "boolean"
 options = ["--check", "-c"]
 help = "Dry-run mode (no changes made)"
 
-[[tool.poe.tasks.clawdbot.args]]
+[[tool.poe.tasks.openclaw.args]]
 name = "tags"
 options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"
