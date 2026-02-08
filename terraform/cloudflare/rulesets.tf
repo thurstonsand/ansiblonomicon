@@ -25,7 +25,7 @@ resource "cloudflare_ruleset" "firewall_custom" {
     }
     description = "allow llm clients on llms api (skip security for AI Gateway)"
     enabled     = true
-    expression  = "(http.host in {\"llms.thurstons.house\" \"aig.thurstons.house\" \"cli-proxy-api.thurstons.house\"})"
+    expression  = "(http.host in {\"llms.thurstons.house\" \"aig.thurstons.house\" \"cli-proxy-api.thurstons.house\" \"hooks.thurstons.house\" })"
     logging {
       enabled = true
     }

@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "Upgrading bun..."
+bun upgrade || echo "  Failed to upgrade bun"
+
 {% for pkg in bun_global_packages %}
 echo "Updating: {{ pkg }}"
 bun install --global "{{ pkg }}" || echo "  Failed"

@@ -42,6 +42,7 @@ apt_packages:
   - starship
   - sudo
   - tmux
+  - tcpdump
   - tree
   - unzip
   - vim

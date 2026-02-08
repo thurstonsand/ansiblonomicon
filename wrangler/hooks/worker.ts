@@ -401,98 +401,12 @@ async function handleHealth(request: Request, env: Env, analytics: Analytics): P
   }
 }
 
-// --- Voice Gateway Handler ---
-// Proxies ElevenLabs Agents to OpenClaw chatCompletions endpoint
-// ElevenLabs sends OpenAI-compatible /v1/chat/completions requests
-
-async function handleVoiceGateway(request: Request, env: Env, analytics: Analytics): Promise<Response> {
-  // Validate bearer token
-  const authHeader = request.headers.get("Authorization");
-  if (!authHeader?.startsWith("Bearer ")) {
-    console.error("voice: missing Authorization header");
-    analytics.track("voice", "auth_fail", "401");
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  const token = authHeader.slice(7);
-  if (!env.ELEVENLABS_VOICE_TOKEN) {
-    console.error("voice: ELEVENLABS_VOICE_TOKEN not configured");
-    analytics.track("voice", "config_error", "501");
-    return new Response("Not configured", { status: 501 });
-  }
-
-  if (token !== env.ELEVENLABS_VOICE_TOKEN) {
-    console.error("voice: invalid token");
-    analytics.track("voice", "auth_fail", "401");
-    return new Response("Unauthorized", { status: 401 });
-  }
-
-  // Validate OPENCLAW_GATEWAY_TOKEN is configured
-  if (!env.OPENCLAW_GATEWAY_TOKEN) {
-    console.error("voice: OPENCLAW_GATEWAY_TOKEN not configured");
-    analytics.track("voice", "config_error", "501");
-    return new Response("Not configured", { status: 501 });
-  }
-
-  // Forward to OpenClaw chatCompletions via VPC service binding
-  // Strip /voice prefix from path to get the actual endpoint path
-  const url = new URL(request.url);
-  const targetPath = url.pathname.replace(/^\/voice/, "") || "/v1/chat/completions";
-
-  try {
-    const forwardResponse = await env.CLAWDBOT_SERVICE.fetch(`http://clawdbot${targetPath}`, {
-      method: request.method,
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${env.OPENCLAW_GATEWAY_TOKEN}`,
-      },
-      body: request.body,
-    });
-
-    const statusBucket = getStatusBucket(forwardResponse.status);
-    if (forwardResponse.ok) {
-      console.log(`voice: forwarded ok status=${forwardResponse.status}`);
-    } else {
-      const errorText = await forwardResponse.clone().text();
-      console.error(`voice: forward failed status=${forwardResponse.status} body=${errorText}`);
-    }
-    analytics.track("voice", "forward", statusBucket, String(forwardResponse.status));
-
-    // Return response with CORS headers for ElevenLabs
-    return new Response(forwardResponse.body, {
-      status: forwardResponse.status,
-      headers: {
-        "Content-Type": forwardResponse.headers.get("Content-Type") || "application/json",
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Content-Type, Authorization",
-      },
-    });
-  } catch (err) {
-    const error = err instanceof Error ? err.message : String(err);
-    console.error(`voice: forward error: ${error}`);
-    analytics.track("voice", "forward", "5xx", "502");
-    return new Response(`Forward failed: ${error}`, { status: 502 });
-  }
-}
-
 // --- Main Handler ---
 
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const analytics = createAnalytics(env.ANALYTICS);
-
-    // Handle CORS preflight for voice endpoint
-    if (request.method === "OPTIONS" && url.pathname.startsWith("/voice")) {
-      return new Response(null, {
-        headers: {
-          "Access-Control-Allow-Origin": "*",
-          "Access-Control-Allow-Methods": "POST, OPTIONS",
-          "Access-Control-Allow-Headers": "Content-Type, Authorization",
-        },
-      });
-    }
 
     if (url.pathname.startsWith("/gmail")) {
       return handleGmailPubSub(request, env, analytics);
@@ -504,10 +418,6 @@ export default {
 
     if (url.pathname.startsWith("/health")) {
       return handleHealth(request, env, analytics);
-    }
-
-    if (url.pathname.startsWith("/voice")) {
-      return handleVoiceGateway(request, env, analytics);
     }
 
     return new Response("Not Found", { status: 404 });
