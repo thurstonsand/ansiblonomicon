@@ -1,6 +1,14 @@
 services:
   arcane:
+{% if arcane_override.build_from_source | default(false) %}
+    build:
+      context: ./source
+      dockerfile: docker/Dockerfile
+    pull_policy: build
+    image: arcane:local-fix
+{% else %}
     image: ghcr.io/getarcaneapp/arcane:latest
+{% endif %}
     container_name: arcane
     networks:
       personal:

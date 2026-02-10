@@ -139,3 +139,10 @@ lan:
       ports:
         web: 3000
       domain: crabwalk.thurstons.house
+
+# Override: build Arcane from source (forked fix for network_mode dependency bug)
+# Set to false to revert to upstream image
+arcane_override:
+  build_from_source: true
+  source_repo: https://github.com/thurstonsand/arcane.git
+  source_branch: fix/network-mode-stale-id

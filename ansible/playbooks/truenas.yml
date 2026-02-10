@@ -281,6 +281,15 @@
       vars:
         docker_stack_name: anypod
 
+    - name: Clone/update Arcane source for local build
+      tags: [docker-stack-role, arcane]
+      when: arcane_override.build_from_source | default(false)
+      ansible.builtin.git:
+        repo: "{{ arcane_override.source_repo }}"
+        dest: "{{ docker.config_base }}/stacks/arcane/source"
+        version: "{{ arcane_override.source_branch }}"
+        force: true
+
     - name: Deploy arcane stack
       tags: [docker-stack-role, arcane]
       ansible.builtin.include_role:
