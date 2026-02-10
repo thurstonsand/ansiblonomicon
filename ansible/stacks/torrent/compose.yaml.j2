@@ -36,12 +36,21 @@ services:
       # - STORAGE_FILEPATH=
       - PUID={{ docker.user.puid }}
       - PGID={{ docker.user.pgid }}
+    labels:
+      autoheal: "true"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --timeout=5 https://am.i.mullvad.net/connected | grep -q 'You are connected'"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     restart: unless-stopped
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
     container_name: qbittorrent
     labels:
       com.getarcaneapp.arcane.depends-on: gluetun
+      autoheal: "true"
     user: "{{ docker.user.id }}"
     network_mode: service:gluetun
     volumes:
@@ -52,6 +61,12 @@ services:
       - WEBUI_PORT={{ lan.personal.gluetun.ports.qbittorrent_web }}
       - PUID={{ docker.user.puid }}
       - PGID={{ docker.user.pgid }}
+    healthcheck:
+      test: ["CMD-SHELL", "wget --spider -q --timeout=5 http://1.1.1.1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
     depends_on:
       - gluetun
     restart: unless-stopped
@@ -73,6 +88,15 @@ services:
       - MAM_ID={{ lookup('env', 'TORRENT_MAM_ID') }}
     depends_on:
       - gluetun
+    restart: unless-stopped
+  autoheal:
+    image: willfarrell/autoheal
+    container_name: torrent-autoheal
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - AUTOHEAL_CONTAINER_LABEL=autoheal
+      - AUTOHEAL_INTERVAL=30
     restart: unless-stopped
 
 networks:

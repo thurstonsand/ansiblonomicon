@@ -192,6 +192,7 @@ cask "clay"
 cask "legcord"
 cask "localsend"
 cask "mimestream"
+cask "signal"
 cask "slack"
 cask "zoom"
 

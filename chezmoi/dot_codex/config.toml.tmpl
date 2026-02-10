@@ -1,4 +1,4 @@
-model = "gpt-5.2-codex"
+model = "{{ .models.openai.gpt_codex.version }}"
 model_reasoning_effort = "high"
 model_reasoning_summary = "auto"
 approval_policy = "never"
@@ -28,3 +28,6 @@ trust_level = "trusted"
 [notice]
 hide_gpt5_1_migration_prompt = true
 "hide_gpt-5.1-codex-max_migration_prompt" = true
+
+[notice.model_migrations]
+"gpt-5.2-codex" = "gpt-5.3-codex"
