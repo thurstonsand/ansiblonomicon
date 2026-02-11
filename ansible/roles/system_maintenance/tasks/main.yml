@@ -52,6 +52,8 @@
     - name: update-bun
       enabled: "{{ bun_global_packages | length > 0 }}"
       path: "{{ system_maintenance_home }}/.bun/bin"
+    - name: memory-monthly-digest
+      enabled: true
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled
@@ -60,7 +62,7 @@
 - name: Deploy systemd timer units
   become: true
   ansible.builtin.template:
-    src: timer.j2
+    src: "{{ item.src | default('timer.j2') }}"
     dest: "/etc/systemd/system/{{ item.name }}.timer"
     mode: "0644"
   loop:
@@ -76,6 +78,9 @@
     - name: update-bun
       enabled: "{{ bun_global_packages | length > 0 }}"
       description: Update global bun packages
+    - name: memory-monthly-digest
+      enabled: true
+      src: memory-monthly-digest.timer.j2
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled
@@ -100,6 +105,8 @@
       enabled: "{{ uv_global_tools | length > 0 }}"
     - name: update-bun
       enabled: "{{ bun_global_packages | length > 0 }}"
+    - name: memory-monthly-digest
+      enabled: true
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled
