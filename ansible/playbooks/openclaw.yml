@@ -274,6 +274,7 @@
               Environment="GIPHY_API_KEY={{ lookup('env', 'GIPHY_API_KEY') }}"
               Environment="GOG_KEYRING_PASSWORD={{ lookup('env', 'GOG_KEYRING_PASSWORD') }}"
               Environment="ELEVENLABS_API_KEY={{ lookup('env', 'ELEVENLABS_API_KEY') }}"
+              Environment="PARCEL_API_KEY={{ lookup('env', 'PARCEL_API_KEY') }}"
               Environment="OPENCLAW_GATEWAY_PASSWORD={{ lookup('env', 'OPENCLAW_GATEWAY_PASSWORD') }}"
               Environment="KAGI_API_KEY={{ lookup('env', 'KAGI_API_KEY') }}"
               Environment="PARALLEL_API_KEY={{ lookup('env', 'PARALLEL_API_KEY') }}"
