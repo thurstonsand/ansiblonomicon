@@ -1,0 +1,23 @@
+services:
+  caddy:
+    image: ghcr.io/caddybuilds/caddy-cloudflare:latest
+    container_name: caddy
+    networks:
+      personal:
+        ipv4_address: {{ lan.personal.caddy.ip }}
+    ports:
+      - "{{ lan.personal.caddy.ports.http }}:80" # http
+      - "{{ lan.personal.caddy.ports.https }}:443" # https
+      - "{{ lan.personal.caddy.ports.https }}:443/udp" # http/3
+    volumes:
+      - {{ docker.config_dir }}/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - {{ docker.config_dir }}/caddy/data:/data
+      - {{ docker.config_dir }}/caddy/config:/config
+      - {{ docker.config_dir }}/srv:/srv
+    environment:
+      - CLOUDFLARE_API_TOKEN={{ lookup('env', 'CLOUDFLARE_API_TOKEN') }}
+    restart: unless-stopped
+
+networks:
+  personal:
+    external: true

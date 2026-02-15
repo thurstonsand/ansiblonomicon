@@ -1,0 +1,13 @@
+{
+	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+}
+
+{{ lan.personal.caddy.domain }} {
+	file_server
+	root * /srv
+}
+
+http://{{ lan.personal.caddy.ip }} {
+	file_server
+	root * /srv
+}

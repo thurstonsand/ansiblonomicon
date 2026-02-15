@@ -139,6 +139,12 @@ lan:
       ports:
         web: 3000
       domain: crabwalk.thurstons.house
+    caddy:
+      ip: 192.168.6.239
+      ports:
+        http: 80
+        https: 443
+      domain: thurstons.house
 
 # Override: build Arcane from source (forked fix for network_mode dependency bug)
 # Set to false to revert to upstream image

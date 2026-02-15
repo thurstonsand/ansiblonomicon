@@ -308,6 +308,24 @@
       vars:
         docker_stack_name: arr-apps
 
+    - name: Ensure Caddy srv directory exists
+      tags: [docker-stack-role, caddy]
+      ansible.builtin.file:
+        path: "{{ docker.config_base }}/caddy/srv"
+        state: directory
+        mode: "0755"
+        owner: "{{ docker.user.puid }}"
+        group: "{{ docker.user.pgid }}"
+
+    - name: Deploy caddy stack
+      tags: [docker-stack-role, caddy]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, caddy]
+      vars:
+        docker_stack_name: caddy
+
     - name: Deploy cli-proxy-api stack
       tags: [docker-stack-role, cli-proxy-api]
       ansible.builtin.include_role:
