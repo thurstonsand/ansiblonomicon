@@ -289,6 +289,17 @@
         dest: "{{ docker.config_base }}/stacks/arcane/source"
         version: "{{ arcane_override.source_branch }}"
         force: true
+      register: arcane_git_result
+
+    - name: Rebuild Arcane image when source changed
+      tags: [docker-stack-role, arcane]
+      when:
+        - arcane_override.build_from_source | default(false)
+        - arcane_git_result is changed
+      ansible.builtin.command:
+        cmd: docker compose build --no-cache arcane
+        chdir: "{{ docker.config_base }}/stacks/arcane"
+      changed_when: true
 
     - name: Deploy arcane stack
       tags: [docker-stack-role, arcane]
