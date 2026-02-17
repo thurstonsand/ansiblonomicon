@@ -35,6 +35,7 @@ apt_packages:
   - openssh-server
   - prettyping
   - rclone
+  - ripgrep
   - rsync
   - rustup
   - sqlite3

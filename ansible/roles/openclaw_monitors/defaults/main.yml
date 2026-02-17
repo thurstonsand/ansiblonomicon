@@ -2,6 +2,6 @@
 # OpenClaw monitors configuration
 openclaw_monitors_enabled: true
 openclaw_monitors_user: thurstonsand
-openclaw_monitors_scripts_dir: /home/thurstonsand/clawd/monitors/checks
-openclaw_monitors_runner: /home/thurstonsand/clawd/monitors/runner.sh
+openclaw_monitors_scripts_dir: /home/thurstonsand/2b/monitors/checks
+openclaw_monitors_runner: /home/thurstonsand/2b/monitors/runner.sh
 openclaw_monitors_default_schedule: "*:0/5"

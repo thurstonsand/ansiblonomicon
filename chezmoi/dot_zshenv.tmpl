@@ -50,6 +50,7 @@ export PARCEL_API_KEY="{{ template "parcel-api-key" . }}"
 export KAGI_API_KEY="{{ template "kagi-api-key" . }}"
 export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
 export VENICE_API_KEY="{{ template "venice-api-key" . }}"
+export VOYAGE_API_KEY="{{ template "voyage-api-key" . }}"
 
 # Twitter/X cookies for bird CLI
 export TWITTER_AUTH_TOKEN="{{ template "twitter-auth-token" . }}"
@@ -75,7 +76,7 @@ path=(
   "/opt/homebrew/opt/rustup/bin"
 {{- end }}
 {{- if eq .chezmoi.hostname "clawdbot" }}
-  "$HOME/clawd/bin"
+  "$HOME/bin"
 {{- end }}
 {{- if ne .chezmoi.os "darwin" }}
   "$HOME/.local/bin"

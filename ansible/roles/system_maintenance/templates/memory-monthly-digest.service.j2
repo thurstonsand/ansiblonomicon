@@ -7,7 +7,7 @@ Wants=network-online.target
 Type=oneshot
 User={{ system_maintenance_user }}
 Environment="HOME={{ system_maintenance_home }}"
-Environment="PATH={{ system_maintenance_home }}/.npm-global/bin:{{ system_maintenance_home }}/clawd/bin:{{ system_maintenance_home }}/.local/bin:/usr/local/bin:/usr/bin:/bin"
-ExecStart={{ system_maintenance_home }}/clawd/bin/memory-monthly-digest
+Environment="PATH={{ system_maintenance_home }}/.npm-global/bin:{{ system_maintenance_home }}/bin:{{ system_maintenance_home }}/.local/bin:/usr/local/bin:/usr/bin:/bin"
+ExecStart={{ system_maintenance_home }}/bin/memory-monthly-digest
 StandardOutput=journal
 StandardError=journal

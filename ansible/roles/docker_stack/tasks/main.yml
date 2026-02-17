@@ -4,12 +4,27 @@
     docker: "{{ docker | combine({'config_dir': docker.config_base ~ '/' ~ docker_stack_name}) }}"
     docker_stack_src: "{{ playbook_dir }}/../stacks/{{ docker_stack_name }}"
     docker_stack_dest: "{{ docker.config_base }}/stacks/{{ docker_stack_name }}"
+    _docker_stack_changed: false
 
 - name: Ensure stack directory exists
   ansible.builtin.file:
     path: "{{ docker_stack_dest }}"
     state: directory
     mode: "0750"
+
+- name: Clone/update source repository
+  when: docker_stack_source is defined
+  ansible.builtin.git:
+    repo: "{{ docker_stack_source.repo }}"
+    dest: "{{ docker_stack_dest }}/{{ docker_stack_source.dest | default('source') }}"
+    version: "{{ docker_stack_source.version | default('main') }}"
+    force: true
+  register: _docker_stack_git_result
+
+- name: Track source repository changes  # noqa: var-naming[no-role-prefix] - internal tracking fact
+  when: docker_stack_source is defined and _docker_stack_git_result is changed
+  ansible.builtin.set_fact:
+    _docker_stack_changed: true
 
 - name: Sync stack-level files
   ansible.builtin.include_tasks: sync_files.yml
@@ -33,6 +48,13 @@
   loop_control:
     loop_var: container_dir
     label: "{{ container_dir.path | basename }}"
+
+- name: Rebuild images (no-cache)
+  when: _docker_stack_changed and (docker_stack_build_on_change | default(true))
+  ansible.builtin.command:
+    cmd: docker compose build --no-cache
+    chdir: "{{ docker_stack_dest }}"
+  changed_when: true
 
 - name: Deploy stack
   community.docker.docker_compose_v2:

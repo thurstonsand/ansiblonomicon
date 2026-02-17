@@ -281,26 +281,6 @@
       vars:
         docker_stack_name: anypod
 
-    - name: Clone/update Arcane source for local build
-      tags: [docker-stack-role, arcane]
-      when: arcane_override.build_from_source | default(false)
-      ansible.builtin.git:
-        repo: "{{ arcane_override.source_repo }}"
-        dest: "{{ docker.config_base }}/stacks/arcane/source"
-        version: "{{ arcane_override.source_branch }}"
-        force: true
-      register: arcane_git_result
-
-    - name: Rebuild Arcane image when source changed
-      tags: [docker-stack-role, arcane]
-      when:
-        - arcane_override.build_from_source | default(false)
-        - arcane_git_result is changed
-      ansible.builtin.command:
-        cmd: docker compose build --no-cache arcane
-        chdir: "{{ docker.config_base }}/stacks/arcane"
-      changed_when: true
-
     - name: Deploy arcane stack
       tags: [docker-stack-role, arcane]
       ansible.builtin.include_role:
@@ -309,6 +289,15 @@
           tags: [docker-stack-role, arcane]
       vars:
         docker_stack_name: arcane
+        docker_stack_build_on_change: "{{ arcane_override.build_from_source | default(false) }}"
+        docker_stack_source: >-
+          {{
+            (arcane_override.build_from_source | default(false))
+            | ternary(
+                {'repo': arcane_override.source_repo, 'version': arcane_override.source_branch, 'dest': 'source'},
+                omit
+              )
+          }}
 
     - name: Deploy arr-apps stack
       tags: [docker-stack-role, arr-apps]

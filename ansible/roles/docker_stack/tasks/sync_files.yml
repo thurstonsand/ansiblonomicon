@@ -47,6 +47,7 @@
   loop: "{{ docker_stack_all_files.files | default([]) | selectattr('path', 'match', '.*\\.j2$') }}"
   loop_control:
     label: "{{ item.path | relpath(sync_src) | regex_replace('\\.j2$', '') }}"
+  register: docker_stack_sync_template_result
 
 - name: Copy plain files to {{ sync_dest | basename }}
   ansible.builtin.copy:
@@ -58,3 +59,9 @@
   loop: "{{ docker_stack_all_files.files | default([]) | rejectattr('path', 'match', '.*\\.j2$') }}"
   loop_control:
     label: "{{ item.path | relpath(sync_src) }}"
+  register: docker_stack_sync_copy_result
+
+- name: Track synced file changes  # noqa: var-naming[no-role-prefix] - internal tracking fact
+  when: docker_stack_sync_template_result is changed or docker_stack_sync_copy_result is changed
+  ansible.builtin.set_fact:
+    _docker_stack_changed: true
