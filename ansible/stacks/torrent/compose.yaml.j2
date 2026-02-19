@@ -26,6 +26,10 @@ services:
       - WIREGUARD_ADDRESSES={{ lookup('env', 'TORRENT_WIREGUARD_ADDRESS') }}
       - SERVER_COUNTRIES=USA
       - SERVER_CITIES=Atlanta GA
+      # TODO: WIREGUARD_MTU pinned to work around gluetun PMTUD panic (minMTU > maxMTU
+      # in internal/pmtud/test/mtu.go). No upstream issue found as of 2026-02-19.
+      # Remove and retest after gluetun updates. See: qmcgaw/gluetun:latest
+      - WIREGUARD_MTU=1320
       - FIREWALL_OUTBOUND_SUBNETS=192.168.6.0/24
       - UPDATER_PERIOD=24h
       # If gluetun fails to connect with "no server found" after restart, the cached
