@@ -28,6 +28,7 @@ apt_packages:
   - gh
   - gifsicle
   - golang-go
+  - libopus-dev
   - htop
   - jq
   - lazygit
