@@ -1,10 +1,11 @@
 # Webhook Gateway Worker
-# Validates inbound webhooks (Google Pub/Sub, GitHub, iOS Health) at the edge before forwarding to Clawdbot
+# Validates inbound webhooks at the edge before forwarding to OpenClaw via Cloudflare Tunnel
 #
 # Routes:
-#   /gmail/*  → Validate Google OIDC JWT    → Forward to Clawdbot
-#   /github/* → Validate HMAC-SHA256        → Forward to Clawdbot (future)
-#   /health/* → Validate CF Service Token   → Forward to Clawdbot agent hook
+#   /gmail/*     → Validate Google OIDC JWT              → Forward to gog via VPC
+#   /github/*    → Validate HMAC-SHA256                  → Forward to OpenClaw (future)
+#   /health/*    → Validate CF Service Token             → Forward to OpenClaw agent hook
+#   /telegram/*  → Validate X-Telegram-Bot-Api-Secret    → Forward to gateway webhook listener
 
 name = "hooks"
 main = "worker.ts"
@@ -16,14 +17,17 @@ routes = [{ pattern = "hooks.thurstons.house", custom_domain = true }]
 [vars]
 # gog internal endpoint (IP:port reachable via VPC Service tunnel binding)
 GOG_GMAIL_URL = "http://192.168.1.90:8788/gmail-pubsub"
-# GOG_GMAIL_TOKEN set via `wrangler secret put GOG_GMAIL_TOKEN` (pushToken from clawdbot.json hooks.gmail.pushToken)
-# Clawdbot gateway hooks endpoint for future GitHub webhooks
-CLAWDBOT_HOOKS_URL = "https://clawdbot.thurstons.house/hooks"
+# GOG_GMAIL_TOKEN set via `wrangler secret put GOG_GMAIL_TOKEN` (pushToken from openclaw.json hooks.gmail.pushToken)
+# OpenClaw gateway hooks endpoint for future GitHub webhooks
+OPENCLAW_HOOKS_URL = "https://clawdbot.thurstons.house/hooks"
 # Google Pub/Sub OIDC config
 GOOGLE_PUBSUB_AUDIENCE = "https://hooks.thurstons.house/gmail/pubsub"
 GOOGLE_PUBSUB_SERVICE_ACCOUNT = "pubsub-push@gen-lang-client-0166268742.iam.gserviceaccount.com"
 # GitHub webhook secret (set via `wrangler secret put GITHUB_WEBHOOK_SECRET` when needed); follow secret handling from other worker when needed
 GITHUB_WEBHOOK_SECRET = ""
+
+# Telegram webhook - validates X-Telegram-Bot-Api-Secret-Token at edge, forwards to gateway webhook listener
+# TELEGRAM_WEBHOOK_SECRET - set via hooks_deploy.py (from .dev.vars, sourced from 1Password)
 
 # Health webhook - auth handled by CF Access at edge, then forwarded via VPC service binding
 # OPENCLAW_HOOKS_TOKEN - set via hooks_deploy.py (from .dev.vars, sourced from 1Password)
@@ -38,11 +42,22 @@ GITHUB_WEBHOOK_SECRET = ""
 binding = "GOG_SERVICE"
 service_id = "019bf22a-39a7-7191-9721-e17c3bdf212d"
 
-# clawdbot gateway (192.168.1.90:18789) - created via Cloudflare Connectivity Directory API
+# openclaw gateway (192.168.1.90:18789) - created via Cloudflare Connectivity Directory API
 # POST /accounts/{account_id}/connectivity/directory/services
 [[vpc_services]]
-binding = "CLAWDBOT_SERVICE"
+binding = "OPENCLAW_SERVICE"
 service_id = "019bf380-8c74-7da0-8e8e-3a11fabeda32"
+
+# openclaw telegram webhook listeners - created via Cloudflare Connectivity Directory API
+# POST /accounts/{account_id}/connectivity/directory/services
+# Separate ports per account (openclaw creates one HTTP server per bot)
+[[vpc_services]]
+binding = "TELEGRAM_WEBHOOK_9S_SERVICE"
+service_id = "019c8e1e-b11c-7d90-ab9b-5c5eba9d9897"
+
+[[vpc_services]]
+binding = "TELEGRAM_WEBHOOK_2B_SERVICE"
+service_id = "019c8e34-8b7e-7962-b03d-5e8fbe8d6715"
 
 # Analytics Engine for tracking webhook success/failure
 [[analytics_engine_datasets]]

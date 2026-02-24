@@ -84,8 +84,6 @@ force-model-prefix: false
 host: ""
 gemini-api-key:
   - api-key: "{{ lookup('env', 'GEMINI_API_KEY') }}"
-    excluded-models:
-      - '*'
 logs-max-total-size-mb: 0
 routing:
   strategy: "fill-first"

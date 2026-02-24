@@ -122,6 +122,8 @@ resource "cloudflare_zero_trust_access_application" "ssh_access" {
 # Current VPC services (listed via GET /connectivity/directory/services):
 # - gog-gmail (019bf22a-39a7-7191-9721-e17c3bdf212d) → 192.168.1.90:8788
 # - clawdbot-gateway (019bf380-8c74-7da0-8e8e-3a11fabeda32) → 192.168.1.90:18789
+# - openclaw-telegram-webhook (019c8e1e-b11c-7d90-ab9b-5c5eba9d9897) → 192.168.1.90:8787 (9s)
+# - openclaw-telegram-webhook-2b (019c8e34-8b7e-7962-b03d-5e8fbe8d6715) → 192.168.1.90:8789 (2b)
 #
 # TODO: Manage VPC services via Terraform when upgrading to CF provider v5
 # Resource should be cloudflare_zero_trust_connectivity_service or similar

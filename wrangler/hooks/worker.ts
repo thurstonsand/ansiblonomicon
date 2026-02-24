@@ -1,10 +1,11 @@
 // Webhook Gateway Worker
-// Validates inbound webhooks at the edge before forwarding to Clawdbot via Cloudflare Tunnel
+// Validates inbound webhooks at the edge before forwarding to OpenClaw via Cloudflare Tunnel
 //
 // Routes:
-//   /gmail/*  → Validate Google OIDC JWT → Forward to gog via internal tunnel
-//   /github/* → Validate HMAC-SHA256    → Forward to Clawdbot (future)
-//   /health/* → Validate CF Access Token → Forward to Clawdbot agent hook
+//   /gmail/*     → Validate Google OIDC JWT            → Forward to gog via VPC
+//   /github/*    → Validate HMAC-SHA256                → Forward to OpenClaw (future)
+//   /health/*    → Validate CF Access Token            → Forward to OpenClaw agent hook
+//   /telegram/*  → Validate X-Telegram-Bot-Api-Secret  → Forward to gateway webhook listener
 //
 // Global variables (cachedKeys, cacheExpiry) persist within a single isolate but
 // are NOT guaranteed to persist across requests. Cloudflare may spin up multiple
@@ -263,7 +264,7 @@ async function handleGitHubWebhook(request: Request, env: Env): Promise<Response
 
   const url = new URL(request.url);
   const pathAfterGithub = url.pathname.replace(/^\/github\/?/, "");
-  const forwardUrl = `${env.CLAWDBOT_HOOKS_URL}/github${pathAfterGithub ? "/" + pathAfterGithub : ""}`;
+  const forwardUrl = `${env.OPENCLAW_HOOKS_URL}/github${pathAfterGithub ? "/" + pathAfterGithub : ""}`;
 
   const forwardResponse = await fetch(forwardUrl, {
     method: request.method,
@@ -279,7 +280,7 @@ async function handleGitHubWebhook(request: Request, env: Env): Promise<Response
 
 // --- Health Data Handler ---
 // Auth handled by Cloudflare Access at edge (service token validation)
-// Worker just parses payload and forwards to Clawdbot agent hook
+// Worker just parses payload and forwards to OpenClaw agent hook
 // Used by iOS Shortcuts to push Apple Health data
 
 interface HealthPayload {
@@ -363,8 +364,8 @@ async function handleHealth(request: Request, env: Env, analytics: Analytics): P
 
   const message = parts.join("\n");
 
-  // Forward to Clawdbot health hook
-  // Clawdbot config handles routing, session isolation, and delivery
+  // Forward to OpenClaw health hook
+  // OpenClaw config handles routing, session isolation, and delivery
   const healthPayload = {
     message,
     raw: healthData,
@@ -372,7 +373,7 @@ async function handleHealth(request: Request, env: Env, analytics: Analytics): P
 
   try {
     // Forward via VPC service binding
-    const forwardResponse = await env.CLAWDBOT_SERVICE.fetch("http://clawdbot/hooks/health", {
+    const forwardResponse = await env.OPENCLAW_SERVICE.fetch("http://clawdbot.thurstons.house/hooks/health", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -401,6 +402,60 @@ async function handleHealth(request: Request, env: Env, analytics: Analytics): P
   }
 }
 
+// --- Telegram Webhook Handler ---
+// Validates X-Telegram-Bot-Api-Secret-Token at edge, forwards to gateway webhook listener via VPC
+
+async function handleTelegramWebhook(request: Request, env: Env, analytics: Analytics): Promise<Response> {
+  if (request.method !== "POST") {
+    analytics.track("telegram", "method_rejected", "405");
+    return new Response("Method Not Allowed", { status: 405 });
+  }
+
+  const secretHeader = request.headers.get("X-Telegram-Bot-Api-Secret-Token");
+  if (!secretHeader || secretHeader !== env.TELEGRAM_WEBHOOK_SECRET) {
+    console.error("telegram: invalid or missing secret token");
+    analytics.track("telegram", "auth_fail", "401");
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  const url = new URL(request.url);
+  const forwardPath = url.pathname;
+
+  const service = forwardPath.startsWith("/telegram/2b")
+    ? env.TELEGRAM_WEBHOOK_2B_SERVICE
+    : env.TELEGRAM_WEBHOOK_9S_SERVICE;
+
+  try {
+    const forwardResponse = await service.fetch(
+      `http://clawdbot.thurstons.house${forwardPath}`,
+      {
+        method: "POST",
+        headers: request.headers,
+        body: request.body,
+      }
+    );
+
+    const statusBucket = getStatusBucket(forwardResponse.status);
+    if (forwardResponse.ok) {
+      console.log(`telegram: forwarded ok path=${forwardPath} status=${forwardResponse.status}`);
+    } else {
+      const errorText = await forwardResponse.text();
+      console.error(`telegram: forward failed path=${forwardPath} status=${forwardResponse.status} body=${errorText}`);
+    }
+    analytics.track("telegram", "forward", statusBucket, String(forwardResponse.status));
+
+    return new Response(forwardResponse.body, {
+      status: forwardResponse.status,
+      headers: forwardResponse.headers,
+    });
+  } catch (err) {
+    const error = err instanceof Error ? err.message : String(err);
+    console.error(`telegram: forward error: ${error}`);
+    analytics.track("telegram", "forward", "5xx", "502");
+    return new Response(`Forward failed: ${error}`, { status: 502 });
+  }
+}
+
 // --- Main Handler ---
 
 export default {
@@ -418,6 +473,10 @@ export default {
 
     if (url.pathname.startsWith("/health")) {
       return handleHealth(request, env, analytics);
+    }
+
+    if (url.pathname.startsWith("/telegram")) {
+      return handleTelegramWebhook(request, env, analytics);
     }
 
     return new Response("Not Found", { status: 404 });
