@@ -55,7 +55,6 @@ services:
     labels:
       com.getarcaneapp.arcane.depends-on: gluetun
       autoheal: "true"
-    user: "{{ docker.user.id }}"
     network_mode: service:gluetun
     volumes:
       - {{ docker.config_dir }}/qbittorrent/config:/config
@@ -86,10 +85,10 @@ services:
     user: "{{ docker.user.id }}"
     network_mode: service:gluetun
     volumes:
-      - {{ docker.config_dir }}/mam-updater:/data
+      - {{ docker.config_dir }}/mam-updater/data:/data
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - MAM_ID={{ lookup('env', 'TORRENT_MAM_ID') }}
+      - MAM_UPDATE_DIR=/data
     depends_on:
       - gluetun
     restart: unless-stopped

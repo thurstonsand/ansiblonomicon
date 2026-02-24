@@ -15,5 +15,6 @@
     "command": "bunx -y ccstatusline@latest",
     "padding": 0
   },
-  "alwaysThinkingEnabled": true
+  "alwaysThinkingEnabled": true,
+  "skipDangerousModePermissionPrompt": true
 }

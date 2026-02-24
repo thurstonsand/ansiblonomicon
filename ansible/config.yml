@@ -15,6 +15,7 @@ chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
 # Global uv tools (base set for all hosts)
 uv_global_tools_base:
   - claude-code-tools
+  - showboat
 
 # Global npm packages (base set for all hosts)
 npm_global_packages_base:

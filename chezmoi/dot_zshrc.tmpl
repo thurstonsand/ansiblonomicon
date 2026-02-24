@@ -74,6 +74,31 @@ alias ping='prettyping'
 alias top='htop'
 alias lg='lazygit'
 
+ide() {
+  local dir_name="${PWD##*/}"
+  local dir_hash
+  dir_hash=$(printf '%s' "$PWD" | shasum | cut -c1-8)
+  local session="ide-${dir_name}-${dir_hash}"
+
+  if [[ -n "$ZELLIJ" ]]; then
+    if [[ "$ZELLIJ_SESSION_NAME" == "$session" ]]; then
+      echo "Already in session '$session'"
+    else
+      echo "Already inside zellij session '$ZELLIJ_SESSION_NAME'. Open a new terminal to start '$session'."
+    fi
+    return 1
+  fi
+
+  if [[ "$1" == "--recreate" ]]; then
+    zellij delete-session "$session" --force 2>/dev/null
+  fi
+  if zellij list-sessions 2>/dev/null | grep -q "^${session}"; then
+    zellij attach "$session"
+  else
+    zellij -n ide -s "$session"
+  fi
+}
+
 {{- if eq .chezmoi.os "darwin" }}
 alias bd='brew desc'
 alias bh='brew home'

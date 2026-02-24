@@ -167,21 +167,6 @@
         enabled: true
         state: present
 
-    - name: Time Machine SMB share
-      local.truenas.sharing_smb:
-        name: thurston-personal-mbp
-        path: /mnt/capacity/backup/timemachine/thurston-personal-mbp
-        path_suffix: "%U"
-        purpose: ENHANCED_TIMEMACHINE
-        browsable: true
-        acl: true
-        durablehandle: false
-        streams: true
-        timemachine: true
-        shadowcopy: true
-        enabled: true
-        state: present
-
     - name: Watch folder SMB share
       local.truenas.sharing_smb:
         name: watch

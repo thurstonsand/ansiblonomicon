@@ -68,22 +68,22 @@
       "authHeader": true,
       "models": [
         {
-          "id": "{{ .models.google.gemini_3_flash.version }}",
-          "name": "{{ .models.google.gemini_3_flash.display_name }}",
+          "id": "{{ .models.google.gemini_flash.version }}",
+          "name": "{{ .models.google.gemini_flash.display_name }}",
           "reasoning": true,
           "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.google.gemini_3_flash.max_input }},
-          "maxTokens": {{ .models.google.gemini_3_flash.max_output }}
+          "contextWindow": {{ .models.google.gemini_flash.max_input }},
+          "maxTokens": {{ .models.google.gemini_flash.max_output }}
         },
         {
-          "id": "{{ .models.google.gemini_3_pro.version }}",
-          "name": "{{ .models.google.gemini_3_pro.display_name }}",
+          "id": "{{ .models.google.gemini_pro.version }}",
+          "name": "{{ .models.google.gemini_pro.display_name }}",
           "reasoning": true,
           "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.google.gemini_3_pro.max_input }},
-          "maxTokens": {{ .models.google.gemini_3_pro.max_output }}
+          "contextWindow": {{ .models.google.gemini_pro.max_input }},
+          "maxTokens": {{ .models.google.gemini_pro.max_output }}
         }
       ]
     }

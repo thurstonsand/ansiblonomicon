@@ -36,6 +36,7 @@ brew "tmux"
 brew "tree"
 brew "unzip"
 brew "vim"
+brew "zellij"
 brew "zoxide"
 
 # =============================================================================
@@ -87,6 +88,7 @@ cask "wifiman"
 mas "Tailscale", id: 1475387142
 
 # Editors/Terminals
+brew "neovim"
 cask "cursor"
 cask "ghostty"
 cask "iterm2"

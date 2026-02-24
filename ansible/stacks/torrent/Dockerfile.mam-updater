@@ -1,7 +1,7 @@
-FROM python:alpine
+FROM ghcr.io/gellen89/mam-update:latest AS mam-update
+FROM alpine
 RUN apk add --no-cache supercronic
-COPY mam_updater.py /mam_updater.py
+COPY --from=mam-update /ko-app/mam-update /usr/local/bin/mam-update
 COPY crontab /crontab
-RUN chmod +x /mam_updater.py
 VOLUME /data
 CMD ["supercronic", "/crontab"]

@@ -120,6 +120,44 @@ models:
   # GOOGLE
   # ===========================================================================
   google:
+    gemini_pro:
+      version: "gemini-3.1-pro-high"
+      display_name: "Gemini 3.1 Pro"
+      max_input: 1000000
+      max_output: 65536
+      vision: true
+      agent_harness:
+        aliases:
+          opencode: google/gemini-3.1-pro-high
+      vscode:
+        include: true
+        thinking: true
+      zed: true
+
+    gemini_flash:
+      version: "gemini-3-flash-preview"
+      display_name: "Gemini 3 Flash"
+      max_input: 1000000
+      max_output: 65536
+      vision: true
+      agent_harness:
+        aliases:
+          opencode: google/gemini-3-flash-preview
+      vscode:
+        include: true
+        thinking: true
+      zed: true
+
+    # CLI proxy only - backward compat for versioned names
+    gemini_31_pro:
+      version: "gemini-3.1-pro-high"
+      display_name: "Gemini 3.1 Pro"
+      max_input: 1000000
+      max_output: 65536
+      vision: true
+      cli_proxy_api:
+        pattern: "^gemini-3\\\\.1-pro"
+
     gemini_3_flash:
       version: "gemini-3-flash-preview"
       display_name: "Gemini 3 Flash"
@@ -128,14 +166,6 @@ models:
       vision: true
       cli_proxy_api:
         pattern: "^gemini-3-flash"
-      agent_harness:
-        aliases:
-          opencode: google/gemini-3-flash-preview
-
-      vscode:
-        include: true
-        thinking: true
-      zed: true
 
     gemini_3_pro:
       version: "gemini-3-pro-preview"
@@ -145,12 +175,7 @@ models:
       vision: true
       cli_proxy_api:
         pattern: "^gemini-3-pro"
-      vscode:
-        include: true
-        thinking: true
-      zed: true
 
-    # CLI proxy only - normalize AMP's calls to these models
     gemini_25_flash:
       version: "gemini-2.5-flash"
       display_name: "Gemini 2.5 Flash"

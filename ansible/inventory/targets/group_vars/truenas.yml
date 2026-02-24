@@ -92,7 +92,7 @@ lan:
         http_proxy: 8888
         shadowsocks: 8388
         qbittorrent_web: 80
-        qbittorrent_bt: 6881
+        qbittorrent_bt: 57412
     qbittorrent:
       domain: torrent.thurstons.house
     flaresolverr:

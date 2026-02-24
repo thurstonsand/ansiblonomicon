@@ -32,6 +32,7 @@ apt_packages:
   - htop
   - jq
   - lazygit
+  - neovim
   - openssh-client
   - openssh-server
   - prettyping
@@ -49,6 +50,7 @@ apt_packages:
   - tree
   - unzip
   - vim
+  - zellij
   - zoxide
   - zsh
 
