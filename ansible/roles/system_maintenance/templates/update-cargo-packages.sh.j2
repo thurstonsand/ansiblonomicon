@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+if ! command -v cargo-binstall &>/dev/null; then
+  echo "Installing cargo-binstall..."
+  cargo install cargo-binstall || { echo "Failed to install cargo-binstall"; exit 1; }
+fi
+
+{% for pkg in cargo_packages %}
+echo "Updating: {{ pkg }}"
+cargo binstall --no-confirm "{{ pkg }}" || echo "  Failed"
+{% endfor %}
+{% if 'bob-nvim' in cargo_packages %}
+
+echo "Updating Neovim via bob..."
+bob use stable || echo "  Failed"
+{% endif %}
+
+echo "Done."

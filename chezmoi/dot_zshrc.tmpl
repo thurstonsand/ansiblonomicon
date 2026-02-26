@@ -74,6 +74,37 @@ alias ping='prettyping'
 alias top='htop'
 alias lg='lazygit'
 
+_detect_terminal_bg() {
+  local raw_response="" char
+  local old_stty
+  old_stty=$(stty -g 2>/dev/null)
+  stty raw -echo 2>/dev/null
+
+  printf '\e]11;?\e\\' > /dev/tty
+
+  while IFS= read -rs -t 0.5 -k 1 char < /dev/tty 2>/dev/null; do
+    raw_response+="$char"
+    [[ "$char" == $'\a' ]] && break
+    [[ "$raw_response" == *$'\e\\' ]] && break
+  done
+
+  stty "$old_stty" 2>/dev/null
+
+  if [[ "$raw_response" =~ rgb:([0-9a-fA-F]+)/([0-9a-fA-F]+)/([0-9a-fA-F]+) ]]; then
+    local r=$((16#${match[1]:0:2}))
+    local g=$((16#${match[2]:0:2}))
+    local b=$((16#${match[3]:0:2}))
+    local luminance=$(( (r * 299 + g * 587 + b * 114) / 1000 ))
+    if (( luminance < 128 )); then
+      echo "dark"
+    else
+      echo "light"
+    fi
+  else
+    echo "dark"
+  fi
+}
+
 ide() {
   local dir_name="${PWD##*/}"
   local dir_hash
@@ -89,6 +120,8 @@ ide() {
     return 1
   fi
 
+  export TERMINAL_BG=$(_detect_terminal_bg)
+
   if [[ "$1" == "--recreate" ]]; then
     zellij delete-session "$session" --force 2>/dev/null
   fi
@@ -98,6 +131,36 @@ ide() {
     zellij -n ide -s "$session"
   fi
 }
+
+ideoc() {
+  local session="openclaw"
+
+  if [[ -n "$ZELLIJ" ]]; then
+    if [[ "$ZELLIJ_SESSION_NAME" == "$session" ]]; then
+      echo "Already in session '$session'"
+    else
+      echo "Already inside zellij session '$ZELLIJ_SESSION_NAME'. Open a new terminal to start '$session'."
+    fi
+    return 1
+  fi
+
+  export TERMINAL_BG=$(_detect_terminal_bg)
+
+  if [[ "$1" == "--recreate" ]]; then
+    zellij delete-session "$session" --force 2>/dev/null
+    zellij -n openclaw-ide -s "$session"
+  elif zellij list-sessions -n 2>/dev/null | grep -q "^${session}"; then
+    zellij attach "$session"
+  else
+    zellij -n openclaw-ide -s "$session"
+  fi
+}
+
+{{- if eq .chezmoi.hostname "clawdbot" }}
+if [[ -n "$SSH_CONNECTION" && -z "$ZELLIJ" && $- == *i* ]]; then
+  ideoc
+fi
+{{- end }}
 
 {{- if eq .chezmoi.os "darwin" }}
 alias bd='brew desc'

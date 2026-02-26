@@ -1,5 +1,5 @@
   "amp.url": "https://aig.thurstons.house",
-{{- if eq . "ide" }}
+{{- if eq .mode "ide" }}
   "amp.tab.enabled": false,
   "amp.tab.experimental.showHotStreakProgress": true,
   "amp.tab.hoverDiagnosticSuggestions": true,
@@ -16,10 +16,13 @@
     },
   },
   "amp.guardedFiles.allowlist": [
+{{- if eq .hostname "clawdbot" }}
+    "~/.openclaw/extensions/**/*",
+{{- end }}
     "~/.config/amp/*",
     "/Users/thurstonsand/Library/Application Support/Code - Insiders/User/keybindings.json",
   ],
-{{- if eq . "ide" }}
+{{- if eq .mode "ide" }}
   "amp.tools.disable": [
     "evaluate_script",
     "get_console_message",

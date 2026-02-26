@@ -28,11 +28,9 @@ _evalcache() {
 }
 
 # =============================================================================
-# SECTION 2: Runs ONCE per shell tree (env vars inherit to children)
+# SECTION 2: Environment variables and PATH
 # =============================================================================
 
-[[ -n "$__ZSHENV_ENV_CONFIGURED" ]] && return
-export __ZSHENV_ENV_CONFIGURED=1
 
 # Environment variables
 export XDG_CONFIG_HOME="$HOME/.config"
@@ -77,6 +75,7 @@ path=(
 {{- end }}
 {{- if eq .chezmoi.hostname "clawdbot" }}
   "$HOME/bin"
+  "$HOME/.local/share/bob/nvim-bin"
 {{- end }}
 {{- if ne .chezmoi.os "darwin" }}
   "$HOME/.local/bin"

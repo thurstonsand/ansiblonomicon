@@ -157,6 +157,20 @@
             cmd: /tmp/opencode-install.sh
             creates: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
 
+    - name: Install Neovim via bob
+      tags: ["neovim"]
+      block:
+        - name: Check if Neovim is installed via bob
+          ansible.builtin.stat:
+            path: "{{ ansible_facts['env']['HOME'] }}/.local/share/bob/nvim-bin/nvim"
+          register: bob_nvim_binary
+
+        - name: Install stable Neovim via bob
+          when: not bob_nvim_binary.stat.exists
+          ansible.builtin.command:
+            cmd: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin/bob use stable"
+            creates: "{{ ansible_facts['env']['HOME'] }}/.local/share/bob/nvim-bin/nvim"
+
     - name: Install global npm packages
       tags: ["npm"]
       community.general.npm:

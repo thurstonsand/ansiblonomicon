@@ -32,10 +32,10 @@ apt_packages:
   - htop
   - jq
   - lazygit
-  - neovim
   - openssh-client
   - openssh-server
   - prettyping
+  - python3.13-venv
   - rclone
   - ripgrep
   - rsync
@@ -50,7 +50,6 @@ apt_packages:
   - tree
   - unzip
   - vim
-  - zellij
   - zoxide
   - zsh
 
@@ -136,6 +135,11 @@ npm_global_packages_extra:
 # Additional bun packages for clawdbot (extends bun_global_packages_base)
 bun_global_packages_extra:
   - "github:tobi/qmd"
+
+# Cargo packages for clawdbot (extends cargo_packages_base)
+cargo_packages_extra:
+  - bob-nvim
+  - zellij
 
 # Additional Go CLI tools for clawdbot (extends go_tools_base)
 go_tools_extra:
