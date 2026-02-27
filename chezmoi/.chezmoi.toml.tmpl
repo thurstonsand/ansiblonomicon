@@ -8,11 +8,15 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
   args = ["--wait"]
 
 [diff]
+{{- if eq .chezmoi.os "darwin" }}
   pager = "delta"
+{{- else }}
+  pager = "delta --${TERMINAL_BG:-dark}"
+{{- end }}
 
 {{- if eq .chezmoi.hostname "clawdbot" }}
 [onepassword]
-  command = "/home/thurstonsand/clawd/bin/op"
+  command = "/home/thurstonsand/.local/bin/op"
   prompt = false
 {{- end }}
 

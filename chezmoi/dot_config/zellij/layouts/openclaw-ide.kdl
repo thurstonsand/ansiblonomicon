@@ -8,17 +8,13 @@ layout {
     }
     tab name="ansiblonomicon" focus=true cwd="/home/thurstonsand/code/ansiblonomicon" {
         pane stacked=true {
-            pane name="editor" command="zsh" focus=true {
-                args "-c" "nvim .; exec zsh"
-            }
+            pane name="editor" edit="." focus=true
             pane name="agent"
         }
     }
-    tab name="openclaw" cwd="/home/thurstonsand/code/external/openclaw" {
+    tab name="home" cwd="/home/thurstonsand" {
         pane stacked=true {
-            pane name="editor" command="zsh" {
-                args "-c" "nvim .; exec zsh"
-            }
+            pane name="editor" edit="."
             pane name="agent"
         }
     }

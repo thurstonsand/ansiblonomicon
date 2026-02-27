@@ -90,19 +90,26 @@ _detect_terminal_bg() {
 
   stty "$old_stty" 2>/dev/null
 
+  local result="dark"
   if [[ "$raw_response" =~ rgb:([0-9a-fA-F]+)/([0-9a-fA-F]+)/([0-9a-fA-F]+) ]]; then
     local r=$((16#${match[1]:0:2}))
     local g=$((16#${match[2]:0:2}))
     local b=$((16#${match[3]:0:2}))
     local luminance=$(( (r * 299 + g * 587 + b * 114) / 1000 ))
-    if (( luminance < 128 )); then
-      echo "dark"
-    else
-      echo "light"
-    fi
-  else
-    echo "dark"
+    (( luminance >= 128 )) && result="light"
   fi
+
+  echo "$result" > ~/.terminal-bg
+  echo "$result"
+}
+
+_maybe_refresh_terminal_bg() {
+  local bg_file=~/.terminal-bg
+  [[ ! -f "$bg_file" ]] && return
+  local now=${EPOCHSECONDS:-$(date +%s)}
+  local mtime=$(stat -c %Y "$bg_file" 2>/dev/null)
+  (( now - mtime < 300 )) && return
+  export TERMINAL_BG=$(_detect_terminal_bg)
 }
 
 ide() {
@@ -146,10 +153,13 @@ ideoc() {
 
   export TERMINAL_BG=$(_detect_terminal_bg)
 
-  if [[ "$1" == "--recreate" ]]; then
+  local session_info
+  session_info=$(zellij list-sessions -n 2>/dev/null | grep "^${session}")
+
+  if [[ "$1" == "--recreate" ]] || [[ -n "$session_info" && "$session_info" == *"EXITED"* ]]; then
     zellij delete-session "$session" --force 2>/dev/null
     zellij -n openclaw-ide -s "$session"
-  elif zellij list-sessions -n 2>/dev/null | grep -q "^${session}"; then
+  elif [[ -n "$session_info" ]]; then
     zellij attach "$session"
   else
     zellij -n openclaw-ide -s "$session"
@@ -157,6 +167,8 @@ ideoc() {
 }
 
 {{- if eq .chezmoi.hostname "clawdbot" }}
+precmd_functions+=(_maybe_refresh_terminal_bg)
+
 if [[ -n "$SSH_CONNECTION" && -z "$ZELLIJ" && $- == *i* ]]; then
   ideoc
 fi

@@ -13,7 +13,7 @@ if terminal_bg == "light" or terminal_bg == "dark" then
   vim.o.background = terminal_bg
 end
 
--- OSC 52 clipboard for remote/SSH sessions (e.g. clawdbot via zellij)
+-- OSC 52 clipboard for remote/SSH sessions
 if os.getenv("SSH_TTY") or os.getenv("SSH_CONNECTION") then
   vim.g.clipboard = {
     name = "OSC 52",

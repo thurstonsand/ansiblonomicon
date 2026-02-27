@@ -1,6 +1,7 @@
 {
   "extras": [
-
+    "formatting.prettier",
+    "lang.json"
   ],
   "install_version": 8,
   "news": {

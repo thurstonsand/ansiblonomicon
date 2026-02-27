@@ -17,3 +17,4 @@
   loop: "{{ agent_harness_sources | agent_harness_get_git_sources }}"
   loop_control:
     label: "{{ item.repo }}"
+  diff: false
