@@ -1,0 +1,70 @@
+# Terminal compatibility (required for Amp CLI)
+set -g default-terminal "tmux-256color"
+set -g allow-passthrough all
+set -ga terminal-features ",*:hyperlinks:RGB"
+set -s set-clipboard on
+set -s extended-keys on
+set -as terminal-features 'xterm*:extkeys'
+set -s escape-time 0
+set -g focus-events on
+set -g set-titles on
+set -g set-titles-string "#{s|^ide-(.+)-[a-f0-9]+$|\\1|:session_name}:#{window_name}"
+
+# Behavior
+set -g mouse on
+set -g base-index 1
+setw -g pane-base-index 1
+set -g renumber-windows on
+set -g history-limit 50000
+set -g display-time 4000
+setw -g aggressive-resize on
+set -g mode-keys vi
+set -g status-keys emacs
+set-hook -g after-select-window 'if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"'
+set-hook -g after-select-pane 'if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"'
+set-hook -g pane-focus-in 'if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"'
+if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"
+
+# Status bar style (mirrors nvim lualine ordering and separators)
+set -g status-position bottom
+set -g status-style "bg=#3c3836,fg=#a89984,nobold,noitalics,nounderscore"
+set -g status-left-length 80
+set -g status-right-length 80
+set -g status-left '#[bg=#a89984,fg=#282828,bold,noitalics,nounderscore] #{s|^ide-(.+)-[a-f0-9]+$|\1|:session_name} #[bg=#504945,fg=#a89984,nobold,noitalics,nounderscore]'
+set -g window-status-separator '#[bg=#504945,fg=#504945]  '
+set -g window-status-format '#[bg=#504945,fg=#928374,nobold,noitalics,nounderscore] #W#{?window_end_flag, #[bg=#3c3836,fg=#504945,nobold,noitalics,nounderscore],}'
+set -g window-status-current-format '#[bg=#504945,fg=#fabd2f,nobold,noitalics,nounderscore] #W#{?window_end_flag, #[bg=#3c3836,fg=#504945,nobold,noitalics,nounderscore],}'
+set -g status-right '#[bg=#3c3836,fg=#a89984,nobold,noitalics,nounderscore]#[bg=#a89984,fg=#282828,bold,noitalics,nounderscore] #h '
+
+# Pane border labels (gruvbox handles border colors)
+set -g pane-border-status top
+set -g pane-border-format " #{pane_index}: #{pane_current_command} "
+
+# Quick window switching (no prefix)
+bind -n M-1 select-window -t :=1
+bind -n M-2 select-window -t :=2
+bind -n M-3 select-window -t :=3
+bind -n M-4 select-window -t :=4
+bind -n M-5 select-window -t :=5
+
+# Zoom toggle
+bind -n M-z resize-pane -Z
+
+# Floating scratch session
+bind -n M-f if-shell -F '#{==:#{session_name},scratch}' {
+    detach-client
+} {
+    display-popup -w 80% -h 80% -E "tmux new -As scratch"
+}
+
+# Copy mode
+bind -n M-[ copy-mode
+
+# Plugins (TPM)
+set -g @plugin 'tmux-plugins/tpm'
+set -g @plugin 'christoomey/vim-tmux-navigator'
+set -g @plugin 'sainnhe/tmux-fzf'
+
+# Initialize TPM (keep at bottom — TPM cloned via Ansible)
+run '~/.config/tmux/plugins/tpm/tpm'
+

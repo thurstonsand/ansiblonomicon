@@ -103,14 +103,7 @@ _detect_terminal_bg() {
   echo "$result"
 }
 
-_maybe_refresh_terminal_bg() {
-  local bg_file=~/.terminal-bg
-  [[ ! -f "$bg_file" ]] && return
-  local now=${EPOCHSECONDS:-$(date +%s)}
-  local mtime=$(stat -c %Y "$bg_file" 2>/dev/null)
-  (( now - mtime < 300 )) && return
-  export TERMINAL_BG=$(_detect_terminal_bg)
-}
+source ~/.config/zsh/tmux-theme.zsh 2>/dev/null || :
 
 ide() {
   local dir_name="${PWD##*/}"
@@ -118,11 +111,11 @@ ide() {
   dir_hash=$(printf '%s' "$PWD" | shasum | cut -c1-8)
   local session="ide-${dir_name}-${dir_hash}"
 
-  if [[ -n "$ZELLIJ" ]]; then
-    if [[ "$ZELLIJ_SESSION_NAME" == "$session" ]]; then
+  if [[ -n "$TMUX" ]]; then
+    if [[ "$(tmux display-message -p '#{session_name}')" == "$session" ]]; then
       echo "Already in session '$session'"
     else
-      echo "Already inside zellij session '$ZELLIJ_SESSION_NAME'. Open a new terminal to start '$session'."
+      echo "Already inside tmux session '$(tmux display-message -p '#{session_name}')'. Detach first."
     fi
     return 1
   fi
@@ -130,46 +123,75 @@ ide() {
   export TERMINAL_BG=$(_detect_terminal_bg)
 
   if [[ "$1" == "--recreate" ]]; then
-    zellij delete-session "$session" --force 2>/dev/null
+    tmux kill-session -t "$session" 2>/dev/null
   fi
-  if zellij list-sessions 2>/dev/null | grep -q "^${session}"; then
-    zellij attach "$session"
+
+  if tmux has-session -t "$session" 2>/dev/null; then
+    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
+    _apply_tmux_gruvbox "$TERMINAL_BG"
+    tmux attach -t "$session"
   else
-    zellij -n ide -s "$session"
+    tmux new-session -d -s "$session" -n editor -c "$PWD"
+    tmux new-window -t "$session" -n agent -c "$PWD"
+    tmux set-option -w -t "$session":agent @cwd_hash "$dir_hash"
+    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
+    _apply_tmux_gruvbox "$TERMINAL_BG"
+    tmux select-window -t "$session":editor
+    (sleep 1.0 && \
+      pane_cmd=$(tmux display-message -t "$session":editor -p '#{pane_current_command}') && \
+      [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
+      tmux send-keys -t "$session":editor "nvim ." Enter
+    ) &!
+    tmux attach -t "$session"
   fi
 }
 
+{{- if eq .chezmoi.hostname "clawdbot" }}
 ideoc() {
   local session="openclaw"
 
-  if [[ -n "$ZELLIJ" ]]; then
-    if [[ "$ZELLIJ_SESSION_NAME" == "$session" ]]; then
+  if [[ -n "$TMUX" ]]; then
+    if [[ "$(tmux display-message -p '#{session_name}')" == "$session" ]]; then
       echo "Already in session '$session'"
     else
-      echo "Already inside zellij session '$ZELLIJ_SESSION_NAME'. Open a new terminal to start '$session'."
+      echo "Already inside tmux session '$(tmux display-message -p '#{session_name}')'. Detach first."
     fi
     return 1
   fi
 
   export TERMINAL_BG=$(_detect_terminal_bg)
 
-  local session_info
-  session_info=$(zellij list-sessions -n 2>/dev/null | grep "^${session}")
+  if [[ "$1" == "--recreate" ]]; then
+    tmux kill-session -t "$session" 2>/dev/null
+  fi
 
-  if [[ "$1" == "--recreate" ]] || [[ -n "$session_info" && "$session_info" == *"EXITED"* ]]; then
-    zellij delete-session "$session" --force 2>/dev/null
-    zellij -n openclaw-ide -s "$session"
-  elif [[ -n "$session_info" ]]; then
-    zellij attach "$session"
+  if tmux has-session -t "$session" 2>/dev/null; then
+    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
+    _apply_tmux_gruvbox "$TERMINAL_BG"
+    tmux attach -t "$session"
   else
-    zellij -n openclaw-ide -s "$session"
+    local ansi_hash
+    ansi_hash=$(printf '%s' "$HOME/code/ansiblonomicon" | shasum | cut -c1-8)
+    local home_hash
+    home_hash=$(printf '%s' "$HOME" | shasum | cut -c1-8)
+
+    tmux new-session -d -s "$session" -n ansiblonomicon -c ~/code/ansiblonomicon
+    tmux split-window -v -t "$session":ansiblonomicon -c ~/code/ansiblonomicon
+    tmux new-window -t "$session" -n agent -c ~/code/ansiblonomicon
+    tmux set-option -w -t "$session":agent @cwd_hash "$ansi_hash"
+    tmux new-window -t "$session" -n home -c ~
+    tmux split-window -v -t "$session":home -c ~
+    tmux new-window -t "$session" -n agent2 -c ~
+    tmux set-option -w -t "$session":agent2 @cwd_hash "$home_hash"
+    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
+    _apply_tmux_gruvbox "$TERMINAL_BG"
+    tmux select-window -t "$session":ansiblonomicon
+    tmux select-pane -t 0
+    tmux attach -t "$session"
   fi
 }
 
-{{- if eq .chezmoi.hostname "clawdbot" }}
-precmd_functions+=(_maybe_refresh_terminal_bg)
-
-if [[ -n "$SSH_CONNECTION" && -z "$ZELLIJ" && $- == *i* ]]; then
+if [[ -n "$SSH_CONNECTION" && -z "$TMUX" && $- == *i* ]]; then
   ideoc
 fi
 {{- end }}

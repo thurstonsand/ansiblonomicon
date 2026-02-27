@@ -30,6 +30,10 @@ bun_global_packages_base: []
 cargo_packages_base:
   - cargo-binstall
 
+# Global Go tools (base set for all hosts)
+go_tools_base:
+  - github.com/steipete/eightctl/cmd/eightctl
+
 # Combined lists (base + host-specific extras)
 go_tools: "{{ (go_tools_base | default([])) + (go_tools_extra | default([])) }}"
 uv_global_tools: "{{ (uv_global_tools_base | default([])) + (uv_global_tools_extra | default([])) }}"

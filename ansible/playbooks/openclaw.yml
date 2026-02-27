@@ -203,6 +203,11 @@
       when: configure_chezmoi | default(false)
       tags: ["chezmoi", "dotfiles"]
 
+    - name: Install tmux plugin manager and plugins
+      tags: ["tmux"]
+      ansible.builtin.include_tasks:
+        file: ../tasks/tmux_plugins.yml
+
     - name: Configure system maintenance timers
       ansible.builtin.include_role:
         name: system_maintenance

@@ -2,7 +2,7 @@
 
 When working with TrueNAS (SSH, Docker containers, stacks, debugging services), **always load the `truenas-docker-ops` skill first**. It contains essential paths, commands, and helper scripts.
 
-# Commands
+## Commands
 
 - `./scripts/bootstrap.sh` — First-time setup on a brand new machine (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI)
 - `./scripts/test-bootstrap.sh` — Test bootstrap in clean macOS VM via Tart
@@ -30,7 +30,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker via Wrangler
   - `--force-secret` / `-f` — Update secrets even if they exist
 
-# Dev Commands
+## Dev Commands
 
 - `uv run poe init-secrets` — Resolve 1Password secrets to `.env` and worker `.dev.vars` files (auto-runs via direnv)
 - `uv run poe lint` — Run all linters (combines all below)
@@ -40,7 +40,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `ansible-lint` (in ansible/) — Lint Ansible code
 - `uv run pytest` — Run unit tests (agent_harness filter plugins)
 
-# Architecture
+## Architecture
 
 - `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/openclaw.yml` — OpenClaw (Debian VM) playbook
 - `ansible/roles/` — Custom roles
@@ -72,7 +72,7 @@ On TrueNAS, Docker stacks use two separate paths:
 - **Compose files**: `/mnt/performance/docker/stacks/{stack}/compose.yaml`
 - **Config data**: `/mnt/performance/docker/{stack}/{container}/config`
 
-# Cloudflare Worker Logs
+## Cloudflare Worker Logs
 
 **Real-time tail** (requires terminal that stays open):
 
@@ -90,7 +90,7 @@ cd terraform/cloudflare && wrangler tail llms --format pretty
 
 **Historical logs via Dashboard**: Cloudflare Dashboard → Workers & Pages → select worker → Logs tab
 
-# Code Style
+## Code Style
 
 ## Ansible
 
@@ -110,7 +110,7 @@ cd terraform/cloudflare && wrangler tail llms --format pretty
 - Platform conditionals: `{{ if eq .chezmoi.os "darwin" }}` in templates
 - Use `.chezmoiignore` for entire platform-specific files
 
-# Adding Secrets
+## Adding Secrets
 
 Secrets are stored in 1Password and cached locally via `.env` (resolved on first direnv load).
 

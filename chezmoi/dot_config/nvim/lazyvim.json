@@ -1,7 +1,7 @@
 {
   "extras": [
-    "formatting.prettier",
-    "lang.json"
+    "lazyvim.plugins.extras.formatting.prettier",
+    "lazyvim.plugins.extras.lang.json"
   ],
   "install_version": 8,
   "news": {

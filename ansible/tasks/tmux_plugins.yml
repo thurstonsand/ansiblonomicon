@@ -1,0 +1,16 @@
+---
+# Shared: Install tmux plugin manager (TPM) and declared plugins
+# Include from playbooks with: ansible.builtin.include_tasks
+
+- name: Clone TPM # noqa: latest[git]
+  ansible.builtin.git:
+    repo: https://github.com/tmux-plugins/tpm.git
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/tmux/plugins/tpm"
+    version: master
+    update: true
+
+- name: Install tmux plugins via TPM
+  ansible.builtin.command:
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.config/tmux/plugins/tpm/bin/install_plugins"
+  register: tpm_install_result
+  changed_when: "'Installing' in tpm_install_result.stdout"

@@ -178,13 +178,13 @@ Changes from current: `$ZELLIJ` check becomes `$TMUX` check.
 
 #### What Changes
 
-| Component | Before (Zellij) | After (tmux) |
-|---|---|---|
-| `_detect_terminal_bg()` | No change | No change — runs before tmux, OSC 11 works |
-| `_maybe_refresh_terminal_bg()` | Runs in precmd every 300s | **Removed** — OSC 11 can't round-trip inside tmux |
-| Source of truth | `~/.terminal-bg` file | `~/.terminal-bg` file (for nvim watcher) + `tmux set-environment` (for shells) |
-| nvim file watcher | Watches `~/.terminal-bg` | **Kept unchanged** — reacts to bglight/bgdark writes |
-| nvim FocusGained | Not used | Not needed — file watcher is more responsive |
+| Component                      | Before (Zellij)           | After (tmux)                                                                   |
+| ------------------------------ | ------------------------- | ------------------------------------------------------------------------------ |
+| `_detect_terminal_bg()`        | No change                 | No change — runs before tmux, OSC 11 works                                     |
+| `_maybe_refresh_terminal_bg()` | Runs in precmd every 300s | **Removed** — OSC 11 can't round-trip inside tmux                              |
+| Source of truth                | `~/.terminal-bg` file     | `~/.terminal-bg` file (for nvim watcher) + `tmux set-environment` (for shells) |
+| nvim file watcher              | Watches `~/.terminal-bg`  | **Kept unchanged** — reacts to bglight/bgdark writes                           |
+| nvim FocusGained               | Not used                  | Not needed — file watcher is more responsive                                   |
 
 #### `bglight` / `bgdark` Functions
 
@@ -215,7 +215,8 @@ macOS theme changes → Ghostty updates colors →
 ```
 
 For mid-session changes (rare — typically once per day):
-```
+
+```psuedo
 User runs `bglight` or `bgdark` →
   writes ~/.terminal-bg → nvim watcher fires immediately →
   sets tmux env → new shells get updated TERMINAL_BG →
@@ -224,18 +225,18 @@ User runs `bglight` or `bgdark` →
 
 ### File Changes Summary
 
-| File | Action | Notes |
-|---|---|---|
-| `chezmoi/dot_config/tmux/tmux.conf.tmpl` | **Create** | New tmux config |
-| `chezmoi/dot_zshrc.tmpl` | **Modify** | Replace ideoc/ide (zellij→tmux), drop `_maybe_refresh_terminal_bg`, add bglight/bgdark, change `$ZELLIJ` to `$TMUX` |
-| `chezmoi/dot_config/zellij/` | **Keep for now** | Don't remove until tmux is validated; ignore via `.chezmoiignore` if needed |
-| `chezmoi/dot_config/nvim/lua/config/autocmds.lua` | **No change** | File watcher on `~/.terminal-bg` stays as-is |
-| `chezmoi/dot_config/nvim/lua/config/options.lua` | **No change** | `TERMINAL_BG` env var read at startup stays |
-| `chezmoi/dot_config/nvim/lua/plugins/` | **Add** | vim-tmux-navigator plugin spec |
-| `chezmoi/dot_config/git/config.tmpl` | **No change** | `--${TERMINAL_BG:-dark}` delta config unchanged |
-| `chezmoi/.chezmoi.toml.tmpl` | **No change** | Delta pager config unchanged |
-| `chezmoi/.chezmoiignore` | **Maybe modify** | Add zellij config to ignore if removing from deployment |
-| `chezmoi/dot_config/zellij/layouts/openclaw-ide.kdl` | **Keep** | Don't delete until tmux is fully validated |
+| File                                                 | Action           | Notes                                                                                                               |
+| ---------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
+| `chezmoi/dot_config/tmux/tmux.conf.tmpl`             | **Create**       | New tmux config                                                                                                     |
+| `chezmoi/dot_zshrc.tmpl`                             | **Modify**       | Replace ideoc/ide (zellij→tmux), drop `_maybe_refresh_terminal_bg`, add bglight/bgdark, change `$ZELLIJ` to `$TMUX` |
+| `chezmoi/dot_config/zellij/`                         | **Keep for now** | Don't remove until tmux is validated; ignore via `.chezmoiignore` if needed                                         |
+| `chezmoi/dot_config/nvim/lua/config/autocmds.lua`    | **No change**    | File watcher on `~/.terminal-bg` stays as-is                                                                        |
+| `chezmoi/dot_config/nvim/lua/config/options.lua`     | **No change**    | `TERMINAL_BG` env var read at startup stays                                                                         |
+| `chezmoi/dot_config/nvim/lua/plugins/`               | **Add**          | vim-tmux-navigator plugin spec                                                                                      |
+| `chezmoi/dot_config/git/config.tmpl`                 | **No change**    | `--${TERMINAL_BG:-dark}` delta config unchanged                                                                     |
+| `chezmoi/.chezmoi.toml.tmpl`                         | **No change**    | Delta pager config unchanged                                                                                        |
+| `chezmoi/.chezmoiignore`                             | **Maybe modify** | Add zellij config to ignore if removing from deployment                                                             |
+| `chezmoi/dot_config/zellij/layouts/openclaw-ide.kdl` | **Keep**         | Don't delete until tmux is fully validated                                                                          |
 
 ### nvim Plugin Addition
 
