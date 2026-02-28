@@ -9,11 +9,13 @@
   "amp.git.commit.ampThread.enabled": false,
   "amp.git.commit.coauthor.enabled": false,
   "amp.mcpServers": {
+{{- if ne .hostname "clawdbot" }}
     "macos_automator": {
       "command": "npx",
       "args": ["-y", "@steipete/macos-automator-mcp@latest"],
       "env": {},
     },
+{{- end }}
   },
   "amp.guardedFiles.allowlist": [
 {{- if eq .hostname "clawdbot" }}

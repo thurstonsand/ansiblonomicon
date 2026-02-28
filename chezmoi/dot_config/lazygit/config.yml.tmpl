@@ -16,7 +16,7 @@ git:
     order: "topo-order"
     showGraph: always
   pagers:
-    - pager: delta --paging=never
+    - pager: delta --paging=never --$(cat ~/.terminal-bg 2>/dev/null || echo dark)
       colorArg: always
   autoFetch: false
   overrideGpg: true

@@ -105,6 +105,11 @@ _detect_terminal_bg() {
 
 source ~/.config/zsh/tmux-theme.zsh 2>/dev/null || :
 
+# detect terminal background before tmux starts (tmux.conf reads ~/.terminal-bg)
+if [[ -z "$TMUX" && -t 0 ]]; then
+  export TERMINAL_BG=$(_detect_terminal_bg)
+fi
+
 ide() {
   local dir_name="${PWD##*/}"
   local dir_hash
@@ -120,22 +125,16 @@ ide() {
     return 1
   fi
 
-  export TERMINAL_BG=$(_detect_terminal_bg)
-
   if [[ "$1" == "--recreate" ]]; then
     tmux kill-session -t "$session" 2>/dev/null
   fi
 
   if tmux has-session -t "$session" 2>/dev/null; then
-    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
-    _apply_tmux_gruvbox "$TERMINAL_BG"
     tmux attach -t "$session"
   else
     tmux new-session -d -s "$session" -n editor -c "$PWD"
     tmux new-window -t "$session" -n agent -c "$PWD"
     tmux set-option -w -t "$session":agent @cwd_hash "$dir_hash"
-    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
-    _apply_tmux_gruvbox "$TERMINAL_BG"
     tmux select-window -t "$session":editor
     (sleep 1.0 && \
       pane_cmd=$(tmux display-message -t "$session":editor -p '#{pane_current_command}') && \
@@ -159,15 +158,11 @@ ideoc() {
     return 1
   fi
 
-  export TERMINAL_BG=$(_detect_terminal_bg)
-
   if [[ "$1" == "--recreate" ]]; then
     tmux kill-session -t "$session" 2>/dev/null
   fi
 
   if tmux has-session -t "$session" 2>/dev/null; then
-    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
-    _apply_tmux_gruvbox "$TERMINAL_BG"
     tmux attach -t "$session"
   else
     local ansi_hash
@@ -176,17 +171,22 @@ ideoc() {
     home_hash=$(printf '%s' "$HOME" | shasum | cut -c1-8)
 
     tmux new-session -d -s "$session" -n ansiblonomicon -c ~/code/ansiblonomicon
-    tmux split-window -v -t "$session":ansiblonomicon -c ~/code/ansiblonomicon
-    tmux new-window -t "$session" -n agent -c ~/code/ansiblonomicon
-    tmux set-option -w -t "$session":agent @cwd_hash "$ansi_hash"
+    tmux new-window -t "$session" -n ansi_agent -c ~/code/ansiblonomicon
+    tmux set-option -w -t "$session":ansi_agent @cwd_hash "$ansi_hash"
     tmux new-window -t "$session" -n home -c ~
-    tmux split-window -v -t "$session":home -c ~
-    tmux new-window -t "$session" -n agent2 -c ~
-    tmux set-option -w -t "$session":agent2 @cwd_hash "$home_hash"
-    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
-    _apply_tmux_gruvbox "$TERMINAL_BG"
+    tmux new-window -t "$session" -n home_agent -c ~
+    tmux set-option -w -t "$session":home_agent @cwd_hash "$home_hash"
     tmux select-window -t "$session":ansiblonomicon
-    tmux select-pane -t 0
+    (sleep 1.0 && \
+      pane_cmd=$(tmux display-message -t "$session":ansiblonomicon -p '#{pane_current_command}') && \
+      [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
+      tmux send-keys -t "$session":ansiblonomicon "nvim ." Enter
+    ) &!
+    (sleep 5.0 && \
+      pane_cmd=$(tmux display-message -t "$session":home -p '#{pane_current_command}') && \
+      [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
+      tmux send-keys -t "$session":home "nvim ." Enter
+    ) &!
     tmux attach -t "$session"
   fi
 }

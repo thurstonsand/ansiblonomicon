@@ -21,7 +21,6 @@ uv_global_tools_base:
 npm_global_packages_base:
   - "@mariozechner/pi-coding-agent"
   - agent-browser
-  - openclaw
 
 # Global bun packages (base set for all hosts)
 bun_global_packages_base: []

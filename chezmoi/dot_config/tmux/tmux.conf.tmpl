@@ -25,16 +25,8 @@ set-hook -g after-select-pane 'if-shell -F "#{==:#{pane_current_command},nvim}" 
 set-hook -g pane-focus-in 'if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"'
 if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"
 
-# Status bar style (mirrors nvim lualine ordering and separators)
+# Status bar layout
 set -g status-position bottom
-set -g status-style "bg=#3c3836,fg=#a89984,nobold,noitalics,nounderscore"
-set -g status-left-length 80
-set -g status-right-length 80
-set -g status-left '#[bg=#a89984,fg=#282828,bold,noitalics,nounderscore] #{s|^ide-(.+)-[a-f0-9]+$|\1|:session_name} #[bg=#504945,fg=#a89984,nobold,noitalics,nounderscore]'
-set -g window-status-separator '#[bg=#504945,fg=#504945]  '
-set -g window-status-format '#[bg=#504945,fg=#928374,nobold,noitalics,nounderscore] #W#{?window_end_flag, #[bg=#3c3836,fg=#504945,nobold,noitalics,nounderscore],}'
-set -g window-status-current-format '#[bg=#504945,fg=#fabd2f,nobold,noitalics,nounderscore] #W#{?window_end_flag, #[bg=#3c3836,fg=#504945,nobold,noitalics,nounderscore],}'
-set -g status-right '#[bg=#3c3836,fg=#a89984,nobold,noitalics,nounderscore]#[bg=#a89984,fg=#282828,bold,noitalics,nounderscore] #h '
 
 # Pane border labels (gruvbox handles border colors)
 set -g pane-border-status top
@@ -61,9 +53,17 @@ bind -n M-f if-shell -F '#{==:#{session_name},scratch}' {
 bind -n M-[ copy-mode
 
 # Plugins (TPM)
+set-environment -g TMUX_PLUGIN_MANAGER_PATH '~/.config/tmux/plugins'
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'christoomey/vim-tmux-navigator'
 set -g @plugin 'sainnhe/tmux-fzf'
+
+# Theme: load from ~/.terminal-bg, auto-switch via mode 2031 (tmux 3.6+, Ghostty)
+if-shell "[ \"$(cat ~/.terminal-bg 2>/dev/null)\" = light ]" \
+  "source-file ~/.config/tmux/gruvbox-light.conf" \
+  "source-file ~/.config/tmux/gruvbox-dark.conf"
+set-hook -g client-dark-theme "run-shell 'echo dark > ~/.terminal-bg'; set-environment -g TERMINAL_BG dark; source-file ~/.config/tmux/gruvbox-dark.conf"
+set-hook -g client-light-theme "run-shell 'echo light > ~/.terminal-bg'; set-environment -g TERMINAL_BG light; source-file ~/.config/tmux/gruvbox-light.conf"
 
 # Initialize TPM (keep at bottom — TPM cloned via Ansible)
 run '~/.config/tmux/plugins/tpm/tpm'

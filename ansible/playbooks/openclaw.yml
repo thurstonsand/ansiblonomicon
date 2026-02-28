@@ -28,6 +28,38 @@
         upgrade: dist
       tags: ["apt"]
 
+    - name: Pin select packages from Debian sid
+      become: true
+      tags: ["apt"]
+      block:
+        - name: Add Debian sid source (disabled by default via pinning)
+          ansible.builtin.apt_repository:
+            repo: "deb http://deb.debian.org/debian/ sid main"
+            filename: debian-sid
+            state: present
+
+        - name: Pin sid to low default priority
+          ansible.builtin.copy:
+            dest: /etc/apt/preferences.d/sid-low-priority
+            content: |
+              Package: *
+              Pin: release a=unstable
+              Pin-Priority: 100
+            mode: "0644"
+
+        - name: Pin specific packages to sid
+          ansible.builtin.copy:
+            dest: /etc/apt/preferences.d/sid-pinned-packages
+            content: |
+              Package: tmux
+              Pin: release a=unstable
+              Pin-Priority: 900
+            mode: "0644"
+
+        - name: Update apt cache after adding sid
+          ansible.builtin.apt:
+            update_cache: true
+
     - name: Install apt packages
       become: true
       ansible.builtin.apt:

@@ -27,36 +27,29 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- watch ~/.terminal-bg for light/dark changes (written by shell's _detect_terminal_bg)
-if vim.env.SSH_TTY or vim.env.SSH_CONNECTION then
-  local bg_file = vim.fn.expand("~/.terminal-bg")
-
-  local function apply_terminal_bg()
-    local f = io.open(bg_file, "r")
-    if not f then
-      return
-    end
-    local bg = vim.trim(f:read("*l") or "")
-    f:close()
-    if (bg == "light" or bg == "dark") and bg ~= vim.o.background then
-      vim.o.background = bg
-    end
-  end
-
-  apply_terminal_bg()
-
-  local bg_watcher = vim.uv.new_fs_event()
-  if bg_watcher then
-    local function watch_bg()
-      bg_watcher:start(bg_file, {}, function(err)
-        if err then
+-- theme sync: watch ~/.terminal-bg for changes (written by tmux hooks or bgdark/bglight)
+local bg_file = vim.fn.expand("~/.terminal-bg")
+local bg_watcher = vim.uv.new_fs_event()
+if bg_watcher then
+  local function watch_bg()
+    bg_watcher:start(bg_file, {}, function(err)
+      if err then
+        return
+      end
+      vim.schedule(function()
+        local f = io.open(bg_file, "r")
+        if not f then
           return
         end
-        vim.schedule(apply_terminal_bg)
-        bg_watcher:stop()
-        watch_bg()
+        local bg = vim.trim(f:read("*l") or "")
+        f:close()
+        if (bg == "light" or bg == "dark") and bg ~= vim.o.background then
+          vim.o.background = bg
+        end
       end)
-    end
-    watch_bg()
+      bg_watcher:stop()
+      watch_bg()
+    end)
   end
+  watch_bg()
 end

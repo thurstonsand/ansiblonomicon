@@ -20,10 +20,10 @@
 {{- else }}
 
 [core]
-	pager = "delta --${TERMINAL_BG:-dark}"
+	pager = "delta --$(cat ~/.terminal-bg 2>/dev/null || echo dark)"
 
 [interactive]
-	diffFilter = "delta --color-only --${TERMINAL_BG:-dark}"
+	diffFilter = "delta --color-only --$(cat ~/.terminal-bg 2>/dev/null || echo dark)"
 {{- end }}
 
 [delta]
