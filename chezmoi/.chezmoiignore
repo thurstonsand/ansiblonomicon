@@ -26,6 +26,8 @@ Library/
 {{ if ne .chezmoi.hostname "clawdbot" }}
 .local/bin/op
 .local/bin/op-ssh-sign
+.ssh/id_ed25519_nas
+.ssh/id_ed25519_nas.pub
 {{ end }}
 
 # App caches and generated files
