@@ -20,10 +20,10 @@ set -g display-time 4000
 setw -g aggressive-resize on
 set -g mode-keys vi
 set -g status-keys emacs
-set-hook -g after-select-window 'if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"'
-set-hook -g after-select-pane 'if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"'
-set-hook -g pane-focus-in 'if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"'
-if-shell -F "#{==:#{pane_current_command},nvim}" "set-option -g status off" "set-option -g status on"
+set-hook -g after-select-window 'if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"'
+set-hook -g after-select-pane 'if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"'
+set-hook -g pane-focus-in 'if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"'
+if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"
 
 # Status bar layout
 set -g status-position bottom
@@ -42,11 +42,15 @@ bind -n M-5 select-window -t :=5
 # Zoom toggle
 bind -n M-z resize-pane -Z
 
-# Floating scratch session
+# Floating scratch session (sends C-/ to nvim for Snacks terminal toggle)
 bind -n M-f if-shell -F '#{==:#{session_name},scratch}' {
     detach-client
 } {
-    display-popup -w 80% -h 80% -E "tmux new -As scratch"
+    if-shell -F '#{==:#{pane_current_command},nvim}' {
+        send-keys C-_
+    } {
+        display-popup -w 80% -h 80% -E "tmux new -As scratch"
+    }
 }
 
 # Copy mode
@@ -67,4 +71,3 @@ set-hook -g client-light-theme "run-shell 'echo light > ~/.terminal-bg'; set-env
 
 # Initialize TPM (keep at bottom — TPM cloned via Ansible)
 run '~/.config/tmux/plugins/tpm/tpm'
-

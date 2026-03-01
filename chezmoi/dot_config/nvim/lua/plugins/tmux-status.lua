@@ -1,6 +1,6 @@
 local function set_tmux_status(value)
   if not vim.env.TMUX then return end
-  vim.fn.system({ "tmux", "set-option", "-g", "status", value })
+  vim.fn.system({ "tmux", "set-option", "status", value })
 end
 
 local function tmux_session()

@@ -10,6 +10,7 @@
 .local/bin/code
 .local/bin/codeEditor
 .local/bin/configure_camera.py
+.local/bin/btt-paste-image.sh
 .local/bin/delta
 .mactop/
 .pi/agent/extensions/mac-system-theme.ts

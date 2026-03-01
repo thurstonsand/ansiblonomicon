@@ -8,7 +8,8 @@
       "Skill(updating-documentation-for-changes)",
       "Skill(git-commit-helper)"
     ],
-    "deny": []
+    "deny": [],
+    "defaultMode": "acceptEdits"
   },
   "statusLine": {
     "type": "command",

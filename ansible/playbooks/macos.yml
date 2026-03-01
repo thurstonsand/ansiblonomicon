@@ -168,6 +168,14 @@
       register: uv_tool_result
       changed_when: "'Installed' in uv_tool_result.stderr or 'Updated' in uv_tool_result.stderr"
 
+    - name: Install global Go tools
+      tags: ["go"]
+      ansible.builtin.command:
+        cmd: go install {{ item }}@latest
+      loop: "{{ go_tools }}"
+      register: go_tool_result
+      changed_when: go_tool_result.stderr | length > 0
+
     - name: Set hostname
       ansible.builtin.hostname:
         name: "{{ hostname }}"
