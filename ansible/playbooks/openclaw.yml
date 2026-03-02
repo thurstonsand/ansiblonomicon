@@ -211,6 +211,15 @@
         state: latest
       loop: "{{ npm_global_packages }}"
 
+    - name: Install OpenClaw bundled extension dependencies
+      tags: ["npm", "openclaw-plugins"]
+      ansible.builtin.command:
+        cmd: npm install --no-fund --no-audit
+        chdir: "{{ ansible_facts['env']['HOME'] }}/.npm-global/lib/node_modules/openclaw/extensions/{{ item }}"
+      loop: "{{ openclaw_bundled_extensions }}"
+      register: openclaw_ext_result
+      changed_when: "'added' in openclaw_ext_result.stdout"
+
     - name: Install global uv tools
       tags: ["uv"]
       ansible.builtin.command:

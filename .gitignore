@@ -1,6 +1,6 @@
 # Python
 __pycache__/
-*.pyc
+* pyc
 
 # Typescript
 node_modules

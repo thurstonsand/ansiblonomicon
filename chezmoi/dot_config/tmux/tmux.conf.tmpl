@@ -23,7 +23,6 @@ set -g status-keys emacs
 set-hook -g after-select-window 'if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"'
 set-hook -g after-select-pane 'if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"'
 set-hook -g pane-focus-in 'if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"'
-if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"
 
 # Status bar layout
 set -g status-position bottom
