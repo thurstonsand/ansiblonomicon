@@ -83,7 +83,10 @@ agent_harness_sources:
     pull: true
     plugins:
       - name: agent-browser
-        path: skills/agent-browser
+        skills: skills
+        exclude_skills:
+          - dogfood
+          - slack
 
   - local: "{{ playbook_dir }}/../../agents"
     plugins:

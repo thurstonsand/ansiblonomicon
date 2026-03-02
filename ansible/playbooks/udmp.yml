@@ -1,0 +1,83 @@
+---
+# UniFi Dream Machine Pro configuration playbook
+# Run with: poe udmp
+- name: Configure UDMP
+  hosts: udmp
+
+  tasks:
+    # ===================
+    # Multicast querier
+    # ===================
+    - name: Deploy multicast querier script
+      tags: [multicast-querier]
+      ansible.builtin.copy:
+        content: |
+          #!/bin/sh
+          # Enable multicast querier on all bridges
+          # Fixes TREL reassembly timeouts for Thread/Matter devices
+          for br in {{ multicast_querier_bridges | join(' ') }}; do
+            if [ -d "/sys/devices/virtual/net/$br/bridge" ]; then
+              echo 1 > "/sys/devices/virtual/net/$br/bridge/multicast_querier"
+            fi
+          done
+        dest: /data/multicast-querier.sh
+        mode: "0755"
+
+    - name: Deploy multicast querier systemd service
+      tags: [multicast-querier]
+      ansible.builtin.copy:
+        content: |
+          [Unit]
+          Description=Enable multicast querier on bridges
+          After=network-online.target
+          Wants=network-online.target
+
+          [Service]
+          Type=oneshot
+          RemainAfterExit=yes
+          ExecStart=/data/multicast-querier.sh
+
+          [Install]
+          WantedBy=multi-user.target
+        dest: /etc/systemd/system/multicast-querier.service
+        mode: "0644"
+      notify: Reload systemd
+
+    - name: Flush handlers for systemd reload
+      tags: [multicast-querier]
+      ansible.builtin.meta: flush_handlers
+
+    - name: Enable and start multicast querier service
+      tags: [multicast-querier]
+      ansible.builtin.systemd:
+        name: multicast-querier
+        enabled: true
+        state: started
+
+    # ===================
+    # NextDNS
+    # ===================
+    - name: Deploy NextDNS configuration
+      tags: [nextdns]
+      ansible.builtin.copy:
+        content: |
+          {% for key, value in nextdns_config.items() %}
+          {% if value is not none %}
+          {{ key }} {{ value }}
+          {% else %}
+          {{ key }}
+          {% endif %}
+          {% endfor %}
+        dest: /data/nextdns.conf
+        mode: "0644"
+      notify: Restart nextdns
+
+  handlers:
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: true
+
+    - name: Restart nextdns
+      ansible.builtin.systemd:
+        name: nextdns
+        state: restarted

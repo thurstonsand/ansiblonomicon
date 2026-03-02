@@ -724,10 +724,11 @@ def test_agent_harness_build_plugin_resources_git_root_skill(
 def test_agent_harness_build_plugin_resources_git_explicit_path(
     repo_path: Path, cache_dir: Path
 ) -> None:
-    # Create plugin at custom path
+    # Create plugin at custom path — with explicit path and no plugin.json,
+    # skill directories are expected as direct children
     custom_plugin = repo_path / "custom" / "path"
     custom_plugin.mkdir(parents=True)
-    skill_dir = custom_plugin / "skills" / "custom-skill"
+    skill_dir = custom_plugin / "custom-skill"
     skill_dir.mkdir(parents=True)
     (skill_dir / "SKILL.md").write_text("# Custom")
 

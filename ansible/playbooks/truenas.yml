@@ -338,15 +338,6 @@
       vars:
         docker_stack_name: ddclient
 
-    - name: Deploy frigate stack
-      tags: [docker-stack-role, frigate]
-      ansible.builtin.include_role:
-        name: docker_stack
-        apply:
-          tags: [docker-stack-role, frigate]
-      vars:
-        docker_stack_name: frigate
-
     - name: Deploy ghost stack
       tags: [docker-stack-role, ghost]
       ansible.builtin.include_role:

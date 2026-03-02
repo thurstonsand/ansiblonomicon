@@ -1,5 +1,6 @@
 """Filter plugins for agent_harness role."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
@@ -13,6 +14,8 @@ class PluginLongForm(TypedDict, total=False):
 
     name: str
     path: str
+    skills: str | list[str]  # override skills search paths within plugin
+    agents: str | list[str]  # override agents search paths within plugin
     exclude_skills: list[str]
     exclude_agents: list[str]
     exclude_data: list[str]  # rsync --exclude patterns for deployed files
@@ -116,7 +119,7 @@ class GitSourceConfig:
 SourceConfig = dict[str, Any]  # Union of git/local source dicts from Ansible
 
 
-def _get_skills_paths(config: dict[str, str | list[str] | None]) -> list[str]:
+def _get_skills_paths(config: Mapping[str, str | list[str] | None]) -> list[str]:
     """Extract skills paths from a plugin config dict.
 
     Args:
@@ -136,7 +139,7 @@ def _get_skills_paths(config: dict[str, str | list[str] | None]) -> list[str]:
     return [p.lstrip("./") for p in skills_field]
 
 
-def _get_agents_paths(config: dict[str, str | list[str] | None]) -> list[str]:
+def _get_agents_paths(config: Mapping[str, str | list[str] | None]) -> list[str]:
     """Extract agents paths from a plugin config dict.
 
     Args:
@@ -153,6 +156,13 @@ def _get_agents_paths(config: dict[str, str | list[str] | None]) -> list[str]:
         return [agents_field.lstrip("./")]
 
     return [p.lstrip("./") for p in agents_field]
+
+
+def _normalize_path_field(value: str | list[str]) -> list[str]:
+    """Normalize a string or list of strings into a list of cleaned paths."""
+    if isinstance(value, str):
+        return [value.lstrip("./")]
+    return [p.lstrip("./") for p in value]
 
 
 def _load_plugin_json(plugin_path: Path) -> dict[str, str | list[str] | None] | None:
@@ -422,16 +432,29 @@ def _resolve_plugin_from_repo(
     exclude_data: list[str] = []
     target_agents: list[str] = []
 
+    skills_override: str | list[str] | None = None
+    agents_override: str | list[str] | None = None
+
     if isinstance(plugin_spec, str):
         plugin_name = plugin_spec
         explicit_path = None
     else:
         plugin_name = plugin_spec.get("name", "")
         explicit_path = plugin_spec.get("path")
+        skills_override = plugin_spec.get("skills")
+        agents_override = plugin_spec.get("agents")
         exclude_skills = list(plugin_spec.get("exclude_skills", []))
         exclude_agents = list(plugin_spec.get("exclude_agents", []))
         exclude_data = list(plugin_spec.get("exclude_data", []))
         target_agents = list(plugin_spec.get("target_agents", []))
+
+    def _apply_overrides(config: PluginConfig) -> PluginConfig:
+        """Apply skills/agents path overrides from the plugin spec."""
+        if skills_override is not None:
+            config.skills_paths = _normalize_path_field(skills_override)
+        if agents_override is not None:
+            config.agents_paths = _normalize_path_field(agents_override)
+        return config
 
     # If explicit path, use it directly
     if explicit_path:
@@ -442,11 +465,19 @@ def _resolve_plugin_from_repo(
         if not plugin_name:
             plugin_name = plugin_path.name
 
-        config = PluginConfig(
-            name=plugin_name,
-            source_path=explicit_path,
-            skills_paths=_get_skills_paths(plugin_json or {}),
-            agents_paths=_get_agents_paths(plugin_json or {}),
+        # When path is explicit with no plugin.json, scan the directory
+        # itself rather than looking for a skills/ subdirectory
+        no_config_default = {
+            "skills": ["."],
+            "agents": ["."],
+        }
+        config = _apply_overrides(
+            PluginConfig(
+                name=plugin_name,
+                source_path=explicit_path,
+                skills_paths=_get_skills_paths(plugin_json or no_config_default),
+                agents_paths=_get_agents_paths(plugin_json or no_config_default),
+            )
         )
         return ResolvedPlugin(
             config=config,
@@ -460,6 +491,7 @@ def _resolve_plugin_from_repo(
     # Try marketplace lookup
     config = _find_plugin_in_marketplace(repo_path, plugin_name)
     if config:
+        _apply_overrides(config)
         plugin_path = repo_path / config.source_path
         return ResolvedPlugin(
             config=config,
@@ -473,6 +505,7 @@ def _resolve_plugin_from_repo(
     # Try standalone plugin
     config = _check_standalone_plugin(repo_path, plugin_name)
     if config:
+        _apply_overrides(config)
         return ResolvedPlugin(
             config=config,
             plugin_path=repo_path,
@@ -501,6 +534,8 @@ def _resolve_plugin_from_local(
     exclude_agents: list[str] = []
     exclude_data: list[str] = []
     target_agents: list[str] = []
+    skills_override: str | list[str] | None = None
+    agents_override: str | list[str] | None = None
     base_path = Path(local_path)
 
     if isinstance(plugin_spec, str):
@@ -509,6 +544,8 @@ def _resolve_plugin_from_local(
     else:
         plugin_name = plugin_spec.get("name", "")
         explicit_path = plugin_spec.get("path")
+        skills_override = plugin_spec.get("skills")
+        agents_override = plugin_spec.get("agents")
         exclude_skills = list(plugin_spec.get("exclude_skills", []))
         exclude_agents = list(plugin_spec.get("exclude_agents", []))
         exclude_data = list(plugin_spec.get("exclude_data", []))
@@ -531,12 +568,18 @@ def _resolve_plugin_from_local(
 
     plugin_json = _load_plugin_json(plugin_path)
 
+    no_config_default = {"skills": ["."], "agents": ["."]} if explicit_path else {}
     config = PluginConfig(
         name=plugin_name,
         source_path=str(plugin_path),
-        skills_paths=_get_skills_paths(plugin_json or {}),
-        agents_paths=_get_agents_paths(plugin_json or {}),
+        skills_paths=_get_skills_paths(plugin_json or no_config_default),
+        agents_paths=_get_agents_paths(plugin_json or no_config_default),
     )
+
+    if skills_override is not None:
+        config.skills_paths = _normalize_path_field(skills_override)
+    if agents_override is not None:
+        config.agents_paths = _normalize_path_field(agents_override)
 
     return ResolvedPlugin(
         config=config,

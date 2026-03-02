@@ -38,7 +38,8 @@ Interactive sudo still uses TouchID as normal.
 │   └── playbooks/
 │       ├── macos.yml        # macOS playbook
 │       ├── openclaw.yml     # OpenClaw (Debian VM) playbook
-│       └── truenas.yml      # TrueNAS playbook
+│       ├── truenas.yml      # TrueNAS playbook
+│       └── udmp.yml         # UDMP playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
 ├── agents/                   # Local AI agent skills (source for agent_harness role)
@@ -56,6 +57,7 @@ Interactive sudo still uses TouchID as normal.
 - `poe macos` — Apply macOS Ansible playbook (same as `anup`)
 - `poe openclaw` — Apply OpenClaw (Debian VM) Ansible playbook
 - `poe truenas` — Apply TrueNAS Ansible playbook
+- `poe udmp` — Apply UDMP Ansible playbook
 - `poe cz-diff` — Preview dotfile changes (source → home)
 - `poe cz-status` — Show files that differ between source and home
 - `poe cz-re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)

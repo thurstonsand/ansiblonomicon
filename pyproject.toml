@@ -88,6 +88,30 @@ name = "tags"
 options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"
 
+[tool.poe.tasks.udmp]
+help = "Run the UDMP ansible playbook (pass --check for dry-run, --tags for specific tags)"
+shell = """
+if [[ "$(uname)" == "Darwin" ]]; then
+  CTRL=inventory/control/macos.ini
+else
+  CTRL=inventory/control/linux.ini
+fi
+ansible-playbook -i inventory/targets -i "$CTRL" playbooks/udmp.yml --diff ${check:+--check} ${tags:+--tags ${tags}}
+"""
+cwd = "ansible"
+interpreter = "bash"
+
+[[tool.poe.tasks.udmp.args]]
+name = "check"
+type = "boolean"
+options = ["--check", "-c"]
+help = "Dry-run mode (no changes made)"
+
+[[tool.poe.tasks.udmp.args]]
+name = "tags"
+options = ["--tags", "-t"]
+help = "Only run tasks with these tags (comma-separated)"
+
 [tool.poe.tasks.openclaw]
 help = "Run the openclaw ansible playbook (pass --check for dry-run, --tags for specific tags)"
 cmd = "ansible-playbook -i inventory/control/linux.ini playbooks/openclaw.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"

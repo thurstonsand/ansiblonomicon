@@ -13,7 +13,9 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - **macOS tags**: `agent-harness`, `bun`, `chezmoi`/`dotfiles`, `claude-code`, `go`, `homebrew`/`mas`, `npm`, `opencode`, `sysconfig`/`hostname`, `uv`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
-  - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `crabwalk`, `ddclient`, `frigate`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
+  - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `crabwalk`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
+- `uv run poe udmp` — Apply UDMP Ansible playbook (same options as macos)
+  - **UDMP tags**: `multicast-querier`, `nextdns`
 - `uv run poe openclaw` — Apply OpenClaw Ansible playbook (run from openclaw itself)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
@@ -42,7 +44,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 
 ## Architecture
 
-- `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/openclaw.yml` — OpenClaw (Debian VM) playbook
+- `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/openclaw.yml` — OpenClaw (Debian VM) playbook; `ansible/playbooks/udmp.yml` — UDMP playbook
 - `ansible/roles/` — Custom roles
 - `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS (`.j2` templates use centralized config)
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS-specific
