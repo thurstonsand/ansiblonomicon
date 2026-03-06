@@ -145,7 +145,7 @@ agent_harness_cache_dir: "{{ ansible_facts.env.HOME }}/.cache/ansiblonomicon-har
 
 #### Agent Configuration (`vars/agents.yml`)
 
-All four agents are configured:
+All five agents are configured:
 
 ```yaml
 agent_harness_agents:
@@ -208,6 +208,21 @@ agent_harness_agents:
     transform_content: false
     instructions_file: AGENTS.md
     supports_skill_mcp: false
+
+  pi:
+    config_root: "{{ ansible_facts.env.HOME }}/.pi/agent"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.pi/agent/skills"
+    commands_dir: null
+    agents_dir: null
+    mcp_file: null
+    mcp_format: json
+    mcp_key: null
+    mcp_env_format: "${VAR}"
+    mcp_command_format: separate
+    name_transform: preserve
+    transform_content: false
+    instructions_file: AGENTS.md
+    supports_skill_mcp: false
 ```
 
 ### Filter Plugins
@@ -259,23 +274,25 @@ The filter plugin implements Claude's plugin discovery protocol:
 
 ### Directory Structures
 
-| Agent    | Config Root           | Skills                      | Commands                      | Agents/Subagents            | Instructions |
-| -------- | --------------------- | --------------------------- | ----------------------------- | --------------------------- | ------------ |
-| Claude   | `~/.claude/`          | `~/.claude/skills/`         | `~/.claude/commands/`         | `~/.claude/agents/`         | `CLAUDE.md`  |
-| Amp      | `~/.config/amp/`      | `~/.config/amp/skills/`     | `~/.config/amp/commands/`     | N/A                         | `AGENTS.md`  |
-| Codex    | `~/.codex/`           | `~/.codex/skills/`          | `~/.codex/prompts/`           | N/A                         | `AGENTS.md`  |
+| Agent    | Config Root           | Skills                      | Commands              | Agents/Subagents            | Instructions |
+| -------- | --------------------- | --------------------------- | --------------------- | --------------------------- | ------------ |
+| Claude   | `~/.claude/`          | `~/.claude/skills/`         | `~/.claude/commands/` | `~/.claude/agents/`         | `CLAUDE.md`  |
+| Amp      | `~/.config/amp/`      | `~/.config/amp/skills/`     | `~/.config/amp/commands/` | N/A                      | `AGENTS.md`  |
+| Codex    | `~/.codex/`           | `~/.codex/skills/`          | `~/.codex/prompts/`   | N/A                         | `AGENTS.md`  |
 | OpenCode | `~/.config/opencode/` | `~/.config/opencode/skill/` | `~/.config/opencode/command/` | `~/.config/opencode/agent/` | `AGENTS.md`  |
+| Pi       | `~/.pi/agent/`        | `~/.pi/agent/skills/`       | N/A                   | N/A                         | `AGENTS.md`  |
 
 **Key difference**: OpenCode uses **singular** directory names (`skill/`, `command/`, `agent/`) while all others use plural.
 
 ### Agent Quirks
 
-| Agent    | Naming Rules                | MCP Format               | MCP Key          | Special Requirements                             |
-| -------- | --------------------------- | ------------------------ | ---------------- | ------------------------------------------------ |
-| Claude   | Preserve original case      | `.mcp.json` (JSON)       | `mcpServers`     | **Source format**; env: `${VAR}`                 |
-| Amp      | Preserve original case      | `settings.json` (JSON)   | `amp.mcpServers` | Skill mcp.json merged into global; env: `${VAR}` |
-| Codex    | Preserve original case      | `config.toml` (TOML)     | `mcp_servers`    | Commands in `prompts/`; env: literal strings     |
-| OpenCode | **Lowercase + dashes only** | `opencode.json` (JSON)   | `mcp`            | Singular dirs; env: `{env:VAR}`; cmd=array       |
+| Agent    | Naming Rules                | MCP Format             | MCP Key          | Special Requirements                             |
+| -------- | --------------------------- | ---------------------- | ---------------- | ------------------------------------------------ |
+| Claude   | Preserve original case      | `.mcp.json` (JSON)     | `mcpServers`     | **Source format**; env: `${VAR}`                 |
+| Amp      | Preserve original case      | `settings.json` (JSON) | `amp.mcpServers` | Skill mcp.json merged into global; env: `${VAR}` |
+| Codex    | Preserve original case      | `config.toml` (TOML)   | `mcp_servers`    | Commands in `prompts/`; env: literal strings     |
+| OpenCode | **Lowercase + dashes only** | `opencode.json` (JSON) | `mcp`            | Singular dirs; env: `{env:VAR}`; cmd=array       |
+| Pi       | Preserve original case      | None                   | N/A              | Skills only; no built-in commands, agents, or MCP |
 
 ### Claude Code Format (Source of Truth)
 
@@ -412,7 +429,14 @@ uv run poe local -t agent-harness -e agent_harness_update=true
 4. ⏸️ Implement MCP format translation — Deferred, MCP configured separately
 5. ✅ Skills/commands/agents deploy to singular directories
 
-### Phase 5: Cleanup — ✅ Complete
+### Phase 5: Add Pi — ✅ Complete
+
+1. ✅ Add Pi to `agent_harness_agents` config
+2. ✅ Deploy skills to `~/.pi/agent/skills/`
+3. ✅ Deploy `AGENTS.md` instructions to `~/.pi/agent/AGENTS.md`
+4. ✅ Skip commands and agents (Pi does not support user-defined equivalents)
+
+### Phase 6: Cleanup — ✅ Complete
 
 1. ✅ Migrated `thurstons-skills` repo to `agents/claude/`
 2. ✅ Removed Claude marketplace config from chezmoi
@@ -443,3 +467,4 @@ uv run poe local -t agent-harness -e agent_harness_update=true
 | Amp      | skills | commands | —      |
 | Codex    | skills | prompts  | —      |
 | OpenCode | skill  | command  | agent  |
+| Pi       | skills | —        | —      |

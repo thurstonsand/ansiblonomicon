@@ -65,16 +65,16 @@ services:
       - PGID={{ docker.user.pgid }}
     restart: unless-stopped
 
-  huntarr:
-    image: huntarr/huntarr:latest
-    container_name: huntarr
+  newtarr:
+    image: ghcr.io/elfhosted/newtarr:rolling
+    container_name: newtarr
     networks:
       personal:
-        ipv4_address: {{ lan.personal.huntarr.ip }}
+        ipv4_address: {{ lan.personal.newtarr.ip }}
     ports:
-      - "{{ lan.personal.huntarr.ports.web }}:{{ lan.personal.huntarr.ports.web }}" # web
+      - "{{ lan.personal.newtarr.ports.web }}:{{ lan.personal.newtarr.ports.web }}" # web
     volumes:
-      - {{ docker.config_dir }}/huntarr/config:/config
+      - {{ docker.config_dir }}/newtarr/config:/config
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 

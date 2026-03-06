@@ -134,11 +134,11 @@
           url: http://{{ lan.personal.sonarr.domain }}:{{ lan.personal.sonarr.ports.web }}
           key: "{{ lookup('env', 'HOMEPAGE_SONARR_API_KEY') }}"
           enableQueue: true
-    - Huntarr:
-        href: http://{{ lan.personal.huntarr.domain }}:{{ lan.personal.huntarr.ports.web }}
+    - NewtArr:
+        href: http://{{ lan.personal.newtarr.domain }}:{{ lan.personal.newtarr.ports.web }}
         icon: huntarr.png
         server: docker-proxy
-        container: huntarr
+        container: newtarr
 
 - Smart Home:
     - HomeAssistant:

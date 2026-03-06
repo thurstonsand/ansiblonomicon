@@ -1,6 +1,6 @@
 {
-  "defaultProvider": "anthropic",
-  "defaultModel": "{{ .models.anthropic.opus.version }}",
+  "defaultProvider": "openai",
+  "defaultModel": "{{ .models.openai.gpt.version }}",
   "defaultThinkingLevel": "medium",
   "compaction": {
     "enabled": true,
@@ -19,10 +19,12 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.55.3",
+  "lastChangelogVersion": "0.56.2",
   "enabledModels": [
     "anthropic/{{ .models.anthropic.opus.version }}",
+    "openai/{{ .models.openai.gpt.version }}",
     "openai/{{ .models.openai.gpt_codex.version }}",
+    "openai/{{ .models.openai.gpt_codex_spark.version }}",
     "google/{{ .models.google.gemini_pro.version }}"
   ],
   "steeringMode": "all",
@@ -45,7 +47,7 @@
         "-extensions/resistance.ts",
         "-extensions/teletext.ts",
         "+extensions/usage-bar.ts",
-        "+extensions/ultrathink.ts"
+        "-extensions/ultrathink.ts"
       ],
       "skills": [
         "-skills/a-nach-b/SKILL.md"

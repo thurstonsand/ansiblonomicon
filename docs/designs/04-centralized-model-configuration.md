@@ -8,6 +8,9 @@ Model versions and identifiers are duplicated across multiple files:
 - `ansible/stacks/cli-proxy-api/.../config.yaml.j2` (Jinja2 with hardcoded values)
 - `chezmoi/dot_config/zed/settings.json.tmpl`
 - `chezmoi/dot_config/opencode/opencode.jsonc.tmpl`
+- `chezmoi/private_dot_pi/agent/settings.json.tmpl`
+- `chezmoi/private_dot_pi/agent/models.json.tmpl`
+- `chezmoi/dot_codex/config.toml.tmpl`
 - Various VS Code/Cursor/Windsurf settings templates
 
 When model versions change (e.g., `claude-sonnet-4-5-20250929` → new dated release), updates must be made in multiple places.
@@ -77,6 +80,9 @@ anthropic:
 | Update `zed/settings.json.tmpl`                         | ✅ Done    | Uses `$m := .Data.models`                          |
 | Update VS Code settings templates                       | ✅ Done    | Code, Cursor, Windsurf, Code-Insiders, Antigravity |
 | Update `opencode/opencode.jsonc.tmpl`                   | ✅ Done    |                                                    |
+| Update `private_dot_pi/agent/settings.json.tmpl`        | ✅ Done    | Pi now reads centralized OpenAI model definitions  |
+| Update `private_dot_pi/agent/models.json.tmpl`          | ✅ Done    | Includes GPT Codex Spark in generated catalog      |
+| Update `dot_codex/config.toml.tmpl`                     | ✅ Done    | Uses centralized OpenAI defaults                   |
 | Update `io.datasette.llm/extra-openai-models.yaml.tmpl` | ✅ Done    |                                                    |
 | Update Ansible playbooks                                | ✅ Done    | Added `include_vars: models.yml`                   |
 | Test `chezmoi apply`                                    | ❓ Pending | Verify templates render correctly                  |
@@ -108,6 +114,9 @@ anthropic:
 - `ansible/stacks/cli-proxy-api/.../config.yaml.j2` - Uses shared model data
 - `chezmoi/dot_config/zed/settings.json.tmpl`
 - `chezmoi/dot_config/opencode/opencode.jsonc.tmpl`
+- `chezmoi/private_dot_pi/agent/settings.json.tmpl`
+- `chezmoi/private_dot_pi/agent/models.json.tmpl`
+- `chezmoi/dot_codex/config.toml.tmpl`
 - `chezmoi/.chezmoitemplates/vscode-settings`
 - `chezmoi/private_Library/.../Code/User/settings.json.tmpl`
 - `chezmoi/private_Library/.../Cursor/User/settings.json.tmpl`

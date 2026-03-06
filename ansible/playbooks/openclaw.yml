@@ -189,6 +189,84 @@
             cmd: /tmp/opencode-install.sh
             creates: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
 
+    - name: Configure system maintenance timers
+      ansible.builtin.include_role:
+        name: system_maintenance
+        apply:
+          tags: ["system-maintenance", "timers"]
+      tags: ["system-maintenance", "timers"]
+
+    - name: Update global npm packages
+      tags: ["npm"]
+      when: npm_global_packages | length > 0
+      ansible.builtin.command:
+        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-npm-global"
+      register: update_npm_result
+      changed_when: >-
+        'added' in update_npm_result.stdout or
+        'changed' in update_npm_result.stdout or
+        'removed' in update_npm_result.stdout or
+        'added' in update_npm_result.stderr or
+        'changed' in update_npm_result.stderr or
+        'removed' in update_npm_result.stderr
+
+    - name: Install OpenClaw bundled extension dependencies
+      tags: ["npm", "openclaw-plugins"]
+      ansible.builtin.command:
+        cmd: npm install --no-fund --no-audit
+        chdir: "{{ ansible_facts['env']['HOME'] }}/.npm-global/lib/node_modules/openclaw/extensions/{{ item }}"
+      loop: "{{ openclaw_bundled_extensions }}"
+      register: openclaw_ext_result
+      changed_when: "'added' in openclaw_ext_result.stdout"
+
+    - name: Update uv and uv tools
+      tags: ["uv"]
+      when: uv_global_tools | length > 0
+      ansible.builtin.command:
+        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-uv"
+      register: update_uv_result
+      changed_when: >-
+        'Installed' in update_uv_result.stderr or
+        'Updated' in update_uv_result.stderr or
+        'updated' in update_uv_result.stdout or
+        'successfully upgraded' in update_uv_result.stdout or
+        'successfully upgraded' in update_uv_result.stderr
+
+    - name: Update bun and global bun packages
+      tags: ["bun"]
+      when: bun_global_packages | length > 0
+      ansible.builtin.command:
+        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-bun"
+      register: update_bun_result
+      changed_when: >-
+        'installed' in update_bun_result.stdout or
+        'upgraded' in update_bun_result.stdout or
+        'Installed' in update_bun_result.stderr or
+        'Upgraded' in update_bun_result.stderr
+
+    - name: Update global Go tools
+      tags: ["go", "system-maintenance", "timers"]
+      when: go_tools | length > 0
+      ansible.builtin.command:
+        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-go-tools"
+      register: update_go_result
+      changed_when: update_go_result.stderr | length > 0
+
+    - name: Update cargo packages
+      tags: ["cargo", "system-maintenance", "timers", "neovim"]
+      when: cargo_packages | length > 0
+      ansible.builtin.command:
+        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-cargo-packages"
+      register: update_cargo_result
+      changed_when: >-
+        'Installing' in update_cargo_result.stdout or
+        'installed' in update_cargo_result.stdout or
+        'Updated' in update_cargo_result.stdout or
+        'Replaced' in update_cargo_result.stdout or
+        'Installing' in update_cargo_result.stderr or
+        'Updated' in update_cargo_result.stderr or
+        'Replaced' in update_cargo_result.stderr
+
     - name: Install Neovim via bob
       tags: ["neovim"]
       block:
@@ -203,39 +281,6 @@
             cmd: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin/bob use stable"
             creates: "{{ ansible_facts['env']['HOME'] }}/.local/share/bob/nvim-bin/nvim"
 
-    - name: Install global npm packages
-      tags: ["npm"]
-      community.general.npm:
-        name: "{{ item }}"
-        global: true
-        state: latest
-      loop: "{{ npm_global_packages }}"
-
-    - name: Install OpenClaw bundled extension dependencies
-      tags: ["npm", "openclaw-plugins"]
-      ansible.builtin.command:
-        cmd: npm install --no-fund --no-audit
-        chdir: "{{ ansible_facts['env']['HOME'] }}/.npm-global/lib/node_modules/openclaw/extensions/{{ item }}"
-      loop: "{{ openclaw_bundled_extensions }}"
-      register: openclaw_ext_result
-      changed_when: "'added' in openclaw_ext_result.stdout"
-
-    - name: Install global uv tools
-      tags: ["uv"]
-      ansible.builtin.command:
-        cmd: uv tool install --upgrade {{ item }}
-      loop: "{{ uv_global_tools }}"
-      register: uv_tool_result
-      changed_when: "'Installed' in uv_tool_result.stderr or 'Updated' in uv_tool_result.stderr"
-
-    - name: Install global bun packages
-      tags: ["bun"]
-      ansible.builtin.command:
-        cmd: bun install --global {{ item }}
-      loop: "{{ bun_global_packages }}"
-      register: bun_result
-      changed_when: "'installed' in bun_result.stdout or 'Installed' in bun_result.stderr"
-
     - name: Apply chezmoi dotfiles
       ansible.builtin.include_role:
         name: chezmoi
@@ -248,13 +293,6 @@
       tags: ["tmux"]
       ansible.builtin.include_tasks:
         file: ../tasks/tmux_plugins.yml
-
-    - name: Configure system maintenance timers
-      ansible.builtin.include_role:
-        name: system_maintenance
-        apply:
-          tags: ["system-maintenance", "timers"]
-      tags: ["system-maintenance", "timers"]
 
     - name: Configure OpenClaw monitors
       ansible.builtin.include_role:

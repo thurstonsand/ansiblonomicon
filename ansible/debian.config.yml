@@ -129,8 +129,9 @@ apt_external_repos:
 
 # Additional npm packages for clawdbot (extends npm_global_packages_base)
 npm_global_packages_extra:
-  - wrangler
+  - "@openai/codex"
   - "@steipete/bird"
+  - wrangler
 
 # Additional bun packages for clawdbot (extends bun_global_packages_base)
 bun_global_packages_extra:

@@ -50,6 +50,7 @@ agent_harness_target_agents:
   - amp
   - codex
   - opencode
+  - pi
 
 agent_harness_sources:
   - repo: anthropics/claude-plugins-official

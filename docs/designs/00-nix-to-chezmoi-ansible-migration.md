@@ -75,6 +75,7 @@ These are in your home directory but not currently managed by Nix:
 | Config          | Location                                         | Notes                                                         |
 | --------------- | ------------------------------------------------ | ------------------------------------------------------------- |
 | opencode        | `~/.config/opencode/`                            | AGENTS.md, config.json, opencode.jsonc                        |
+| pi              | `~/.pi/agent/`                                   | AGENTS.md, settings.json, models.json, skills, extensions     |
 | amp             | `~/.config/amp/`                                 | AGENTS.md, settings.json, skills, commands                    |
 | zed             | `~/.config/zed/`                                 | settings.json, keymap.json, themes                            |
 | linearmouse     | `~/.config/linearmouse/`                         | Mouse customization                                           |
@@ -127,6 +128,11 @@ These are in your home directory but not currently managed by Nix:
 │   │   ├── opencode/
 │   │   │   ├── AGENTS.md
 │   │   │   └── opencode.jsonc
+│   │   ├── private_dot_pi/
+│   │   │   └── agent/
+│   │   │       ├── AGENTS.md
+│   │   │       ├── models.json
+│   │   │       └── settings.json
 │   │   └── zed/
 │   │       └── settings.json
 │   ├── dot_ssh/
@@ -483,7 +489,7 @@ _TrueNAS Apps (2, managed by TrueNAS UI — leave as-is):_
 
 _Docker Compose Stacks deployed (12 in ansible/stacks/):_
 
-- arr-apps (sonarr, radarr, prowlarr, overseerr, flaresolverr, huntarr, recyclarr)
+- arr-apps (sonarr, radarr, prowlarr, overseerr, flaresolverr, newtarr, recyclarr)
 - torrent (gluetun + qbittorrent)
 - frigate, scrypted
 - cloudflared, ddclient

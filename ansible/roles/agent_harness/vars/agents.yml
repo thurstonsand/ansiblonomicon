@@ -57,3 +57,17 @@ agent_harness_agents:
     transform_content: false # Content transformation not needed - SKILL.md format is compatible
     instructions_file: AGENTS.md
     supports_skill_mcp: false # MCP is configured in opencode.json, not per-skill
+
+  pi:
+    config_root: "{{ ansible_facts.env.HOME }}/.pi/agent"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.pi/agent/skills"
+    agents_dir: null # Pi does not support built-in user-defined subagents
+    mcp_file: null
+    mcp_format: json
+    mcp_key: null
+    mcp_env_format: "${VAR}"
+    mcp_command_format: separate
+    name_transform: preserve
+    transform_content: false
+    instructions_file: AGENTS.md
+    supports_skill_mcp: false

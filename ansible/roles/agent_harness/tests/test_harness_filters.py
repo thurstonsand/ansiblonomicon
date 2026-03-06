@@ -1381,7 +1381,7 @@ def sample_models_config() -> dict[str, Any]:
         },
         "openai": {
             "gpt": {
-                "version": "gpt-5.2",
+                "version": "gpt-5.4",
             }
         },
     }
@@ -1412,7 +1412,7 @@ def test_build_model_alias_map_includes_full_model_names(
 def test_build_model_alias_map_skips_models_without_harness_config() -> None:
     config: dict[str, Any] = {
         "openai": {
-            "gpt": {"version": "gpt-5.2"},
+            "gpt": {"version": "gpt-5.4"},
         }
     }
     alias_map = _build_model_alias_map(config)

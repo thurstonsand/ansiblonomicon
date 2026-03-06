@@ -55,6 +55,19 @@ bind -n M-f if-shell -F '#{==:#{session_name},scratch}' {
 # Copy mode
 bind -n M-[ copy-mode
 
+# Universal newline workaround for apps inside tmux.
+#
+# Most terminal apps treat Ctrl-J as "insert newline", so Shift-Enter is
+# remapped to Ctrl-J by default.
+#
+# Claude Code is the annoying exception: inside tmux it does not accept Ctrl-J
+# or Alt-Enter here, but it *does* treat a literal backslash followed by Enter
+# as "insert newline". Sending those two keys back-to-back is too fast and
+# Claude submits the prompt instead, so we add a tiny delay between them.
+#
+# Yes, this is cursed. But it works.
+bind-key -n S-Enter if-shell -F '#{==:#{pane_current_command},claude}' { send-keys -l '\' ; run-shell 'sleep 0.05' ; send-keys Enter } { send-keys C-j }
+
 # Plugins (TPM)
 set-environment -g TMUX_PLUGIN_MANAGER_PATH '~/.config/tmux/plugins'
 set -g @plugin 'tmux-plugins/tpm'

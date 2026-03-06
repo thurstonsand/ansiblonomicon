@@ -19,7 +19,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe openclaw` — Apply OpenClaw Ansible playbook (run from openclaw itself)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **OpenClaw tags**: `apt`, `apt-repos`, `chezmoi`/`dotfiles`, `claude-code`, `gateway-env`, `motd`, `npm`, `opencode`, `system-maintenance`/`timers`, `uv`, `xvfb`, `agent-harness`
+  - **OpenClaw tags**: `agent-harness`, `apt`, `apt-repos`, `cargo`, `chezmoi`/`dotfiles`, `claude-code`, `gateway-env`, `go`, `motd`, `neovim`, `npm`, `opencode`, `system-maintenance`/`timers`, `uv`, `xvfb`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)

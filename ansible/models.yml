@@ -68,8 +68,8 @@ models:
   # ===========================================================================
   openai:
     gpt:
-      version: "gpt-5.2"
-      display_name: "GPT 5.2"
+      version: "gpt-5.4"
+      display_name: "GPT 5.4"
       max_input: 400000
       max_output: 128000
       vision: true
@@ -79,17 +79,17 @@ models:
       zed: true
       variants:
         medium:
-          id: "gpt-5.2(medium)"
-          display_name: "GPT 5.2 Medium"
+          id: "gpt-5.4(medium)"
+          display_name: "GPT 5.4 Medium"
           vscode: true
         high:
-          id: "gpt-5.2(high)"
-          display_name: "GPT 5.2 High"
+          id: "gpt-5.4(high)"
+          display_name: "GPT 5.4 High"
           vscode: true
           zed: true
         xhigh:
-          id: "gpt-5.2(xhigh)"
-          display_name: "GPT 5.2 XHigh"
+          id: "gpt-5.4(xhigh)"
+          display_name: "GPT 5.4 XHigh"
           vscode: true
 
     gpt_codex:
@@ -115,6 +115,17 @@ models:
           id: "gpt-5.3-codex(xhigh)"
           display_name: "GPT 5.3 Codex XHigh"
           vscode: true
+
+    gpt_codex_spark:
+      version: "gpt-5.3-codex-spark"
+      display_name: "GPT Codex Spark"
+      max_input: 128000
+      max_output: 128000
+      vision: true
+      vscode:
+        include: true
+        thinking: true
+      zed: true
 
   # ===========================================================================
   # GOOGLE

@@ -108,11 +108,11 @@ lan:
       ports:
         web: 7878
       domain: radarr.thurstons.house
-    huntarr:
+    newtarr:
       ip: 192.168.6.237
       ports:
         web: 9705
-      domain: huntarr.thurstons.house
+      domain: newtarr.thurstons.house
     scrypted:
       ip: 192.168.6.232
       ports:
