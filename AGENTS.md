@@ -35,7 +35,10 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 ## Dev Commands
 
 - `uv run poe init-secrets` — Resolve 1Password secrets to `.env` and worker `.dev.vars` files (auto-runs via direnv)
-- `uv run poe lint` — Run all linters (combines all below)
+- `uv run poe lint` — Run all linters (Ansible, Python, Workers, and pi extensions)
+- `uv run poe lint:pi` — Lint and type-check pi extension packages
+  - `--format` / `-f` — Apply Biome formatting/fixes before type-checking
+- `uv run poe pi:update-deps` — Update dependencies for all tracked pi extension packages (pins pi to the currently installed global version)
 - `uv run ruff format --check .` — Check Python formatting
 - `uv run ruff check .` — Lint Python code
 - `uv run basedpyright` — Type check Python code

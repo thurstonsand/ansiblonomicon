@@ -71,6 +71,8 @@ Interactive sudo still uses TouchID as normal.
 - `poe wrangler:llms` — Deploy llms Worker via Wrangler (includes secrets)
 - `poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker
 - `poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker
+- `poe lint:pi` — Lint and type-check pi extension packages (`--format` applies Biome formatting/fixes first)
+- `poe pi:update-deps` — Update dependencies for tracked pi extension packages
 
 ## Design
 

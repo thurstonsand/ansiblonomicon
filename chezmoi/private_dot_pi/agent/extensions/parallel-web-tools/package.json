@@ -1,0 +1,21 @@
+{
+  "name": "pi-parallel-web-tools",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Pi extension that adds Parallel-backed search_web and fetch_web tools",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "dependencies": {
+    "parallel-web": "^0.3.1"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "^2.4.6",
+    "@mariozechner/pi-coding-agent": "^0.56.2",
+    "@types/node": "^25.3.5",
+    "typescript": "^5.9.3"
+  }
+}

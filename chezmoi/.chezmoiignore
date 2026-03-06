@@ -32,12 +32,9 @@ Library/
 
 # App caches and generated files
 Library/Application Support/PrusaSlicer/cache/
+**/node_modules/
 
 # Documentation files (keep in source, don't deploy)
 .ssh/README.md
 
 # Extension dev artifacts (for IDE type checking, not deployed)
-.pi/agent/extensions/node_modules/
-.pi/agent/extensions/package-lock.json
-.pi/agent/extensions/package.json
-.pi/agent/extensions/tsconfig.json

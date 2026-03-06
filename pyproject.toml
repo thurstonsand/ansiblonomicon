@@ -17,8 +17,8 @@ help = "Resolve 1Password secrets to .env and worker .dev.vars files (force rege
 shell = "rm -f .env && uv run scripts/init-secrets.py"
 
 [tool.poe.tasks.lint]
-help = "Lint all code (ansible + python + workers)"
-sequence = ["lint:ansible", "lint:python", "lint:workers"]
+help = "Lint all code (ansible + python + workers + pi)"
+sequence = ["lint:ansible", "lint:python", "lint:workers", "lint:pi"]
 
 [tool.poe.tasks."lint:ansible"]
 cmd = "ansible-lint"
@@ -47,6 +47,20 @@ cwd = "wrangler/aig"
 [tool.poe.tasks."lint:workers:hooks"]
 cmd = "wrangler deploy --dry-run"
 cwd = "wrangler/hooks"
+
+[tool.poe.tasks."lint:pi"]
+help = "Lint and type-check pi extensions (pass --format to apply formatting)"
+cmd = "./scripts/pi-lint.sh ${format:+--format}"
+
+[[tool.poe.tasks."lint:pi".args]]
+name = "format"
+type = "boolean"
+options = ["--format", "-f"]
+help = "Apply Biome formatting/fixes before type-checking"
+
+[tool.poe.tasks."pi:update-deps"]
+help = "Update dependencies for all tracked pi extension packages"
+cmd = "./scripts/pi-extension-deps.sh"
 
 [tool.poe.tasks.macos]
 help = "Run the macOS ansible playbook (pass --check for dry-run, --tags for specific tags)"
