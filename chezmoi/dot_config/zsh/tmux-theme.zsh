@@ -3,20 +3,15 @@ _apply_tmux_gruvbox() {
   tmux source-file ~/.config/tmux/gruvbox-"$theme".conf
 }
 
-bglight() {
-  echo "light" > ~/.terminal-bg
-  export TERMINAL_BG=light
+_set_theme() {
+  local mode="$1"
+  python3 ~/.local/bin/terminal-theme-switch.py "$mode"
+  export TERMINAL_BG="$mode"
   if [[ -n "$TMUX" ]]; then
-    tmux set-environment TERMINAL_BG light
-    _apply_tmux_gruvbox light
+    tmux set-environment TERMINAL_BG "$mode"
+    _apply_tmux_gruvbox "$mode"
   fi
 }
 
-bgdark() {
-  echo "dark" > ~/.terminal-bg
-  export TERMINAL_BG=dark
-  if [[ -n "$TMUX" ]]; then
-    tmux set-environment TERMINAL_BG dark
-    _apply_tmux_gruvbox dark
-  fi
-}
+bglight() { _set_theme light; }
+bgdark() { _set_theme dark; }

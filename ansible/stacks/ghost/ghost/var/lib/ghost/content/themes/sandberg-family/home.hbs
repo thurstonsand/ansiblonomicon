@@ -1,0 +1,274 @@
+{{!< default}}
+
+<style>
+    .landing {
+        padding: 0;
+    }
+
+    .landing-hero {
+        text-align: center;
+        padding: 72px 24px 56px;
+    }
+
+    .landing-title {
+        font-family: "EB Garamond", Georgia, serif;
+        font-size: clamp(2.8rem, 4.5vw, 4.5rem);
+        font-weight: 450;
+        letter-spacing: -0.015em;
+        line-height: 1;
+        margin: 0 0 14px;
+        color: #1a1a1a;
+    }
+
+    .landing-subtitle {
+        font-size: 1rem;
+        color: #999;
+        margin: 0 0 24px;
+        font-weight: 400;
+    }
+
+    .landing-rule {
+        width: 40px;
+        height: 1.5px;
+        background: #1a1a1a;
+        margin: 0 auto;
+        opacity: 0.2;
+    }
+
+    .landing-cards {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        max-width: 1240px;
+        margin: 0 auto;
+    }
+
+    .landing-card {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        min-height: 380px;
+        text-decoration: none;
+        color: inherit;
+        border-bottom: 1px solid rgba(0,0,0,0.06);
+    }
+
+    .landing-card:last-child {
+        border-bottom: none;
+    }
+
+    .landing-card:nth-child(even) {
+        direction: rtl;
+    }
+
+    .landing-card:nth-child(even) > * {
+        direction: ltr;
+    }
+
+    .landing-card-color {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+    }
+
+    .landing-card-color-inner {
+        font-family: "EB Garamond", Georgia, serif;
+        font-style: italic;
+        font-size: clamp(4.5rem, 7vw, 8.5rem);
+        font-weight: 500;
+        color: rgba(255,255,255,0.10);
+        letter-spacing: -0.03em;
+        line-height: 1;
+        white-space: nowrap;
+        user-select: none;
+    }
+
+    .landing-card-body {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: clamp(36px, 5vw, 68px);
+    }
+
+    .landing-card-number {
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        opacity: 0.22;
+        margin-bottom: 20px;
+        font-variant-numeric: tabular-nums;
+    }
+
+    .landing-card-name {
+        font-family: "EB Garamond", Georgia, serif;
+        font-size: clamp(2.2rem, 3vw, 3.2rem);
+        font-weight: 450;
+        letter-spacing: -0.015em;
+        line-height: 1.1;
+        margin: 0 0 8px;
+        color: #1a1a1a;
+    }
+
+    .landing-card[data-accent="blue"] .landing-card-name {
+        font-family: "Berkeley Mono", monospace;
+        font-size: clamp(1.9rem, 2.6vw, 2.7rem);
+        font-weight: 500;
+        letter-spacing: -0.01em;
+    }
+
+    .landing-card[data-accent="blue"] .landing-card-color-inner {
+        font-family: "Berkeley Mono", monospace;
+        font-style: oblique 12deg;
+        letter-spacing: -0.02em;
+    }
+
+    .landing-card-subtitle {
+        font-size: clamp(0.95rem, 1.15vw, 1.1rem);
+        opacity: 0.45;
+        margin: 0 0 28px;
+        line-height: 1.6;
+    }
+
+    .landing-card-latest {
+        font-size: clamp(0.9rem, 1.1vw, 1.05rem);
+        line-height: 1.45;
+        opacity: 0.65;
+        margin: 0;
+    }
+
+    .landing-card-latest-label {
+        display: block;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        opacity: 0.5;
+        margin-bottom: 4px;
+        font-weight: 600;
+    }
+
+    .landing-card-cta {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        margin-top: 24px;
+        opacity: 0.4;
+        transition: opacity 0.2s, gap 0.2s;
+    }
+
+    .landing-card:hover .landing-card-cta {
+        opacity: 0.9;
+        gap: 10px;
+    }
+
+    [data-section="home"] .gh-footer-signup {
+        display: none;
+    }
+
+    @media (max-width: 768px) {
+        .landing-hero {
+            padding: 48px 24px 36px;
+        }
+
+        .landing-card {
+            grid-template-columns: 1fr;
+            min-height: auto;
+        }
+
+        .landing-card-color {
+            min-height: 180px;
+        }
+
+        .landing-card:nth-child(even) {
+            direction: ltr;
+        }
+
+        .landing-card-body {
+            padding: 32px 24px 40px;
+        }
+    }
+
+    @keyframes landing-enter {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+
+    .landing-hero { animation: landing-enter 0.5s ease both; }
+    .landing-card:nth-child(1) { animation: landing-enter 0.5s ease 0.08s both; }
+    .landing-card:nth-child(2) { animation: landing-enter 0.5s ease 0.16s both; }
+    .landing-card:nth-child(3) { animation: landing-enter 0.5s ease 0.24s both; }
+</style>
+
+<main class="landing">
+    <div class="landing-hero">
+        <h1 class="landing-title">The Sandberg Blog</h1>
+        <p class="landing-subtitle">Three writers, one family.</p>
+        <div class="landing-rule"></div>
+    </div>
+
+    <div class="landing-cards">
+
+        <a href="/hikiking/" class="landing-card">
+            <div class="landing-card-color" style="background: linear-gradient(135deg, #3e6d4c 0%, #4a7c59 45%, #5c8e68 100%);">
+                <div class="landing-card-color-inner">Hikiking</div>
+            </div>
+            <div class="landing-card-body">
+                <div class="landing-card-number">01</div>
+                <h2 class="landing-card-name">The Hikiking</h2>
+                <p class="landing-card-subtitle">PCT trail journal — one day at a time.</p>
+                {{#get "posts" filter="author:thehikiking" limit="1"}}
+                    {{#foreach posts}}
+                        <div class="landing-card-latest">
+                            <span class="landing-card-latest-label">Latest</span>
+                            {{title}}
+                        </div>
+                    {{/foreach}}
+                {{/get}}
+                <div class="landing-card-cta">Read <span>→</span></div>
+            </div>
+        </a>
+
+        <a href="/thurston/" class="landing-card" data-accent="blue">
+            <div class="landing-card-color" style="background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 45%, #3b82f6 100%);">
+                <div class="landing-card-color-inner">OK Computer</div>
+            </div>
+            <div class="landing-card-body">
+                <div class="landing-card-number">02</div>
+                <h2 class="landing-card-name">OK Computer</h2>
+                <p class="landing-card-subtitle">Tech, AI, and whatever else.</p>
+                {{#get "posts" filter="author:thurstonsand" limit="1"}}
+                    {{#foreach posts}}
+                        <div class="landing-card-latest">
+                            <span class="landing-card-latest-label">Latest</span>
+                            {{title}}
+                        </div>
+                    {{/foreach}}
+                {{/get}}
+                <div class="landing-card-cta">Read <span>→</span></div>
+            </div>
+        </a>
+
+        <a href="/bob/" class="landing-card">
+            <div class="landing-card-color" style="background: linear-gradient(135deg, #92400e 0%, #b45309 45%, #d97706 100%);">
+                <div class="landing-card-color-inner">Bikiking</div>
+            </div>
+            <div class="landing-card-body">
+                <div class="landing-card-number">03</div>
+                <h2 class="landing-card-name">Bob Sandberg</h2>
+                <p class="landing-card-subtitle">Pedaling the Lewis &amp; Clark Trail, coast to coast.</p>
+                {{#get "posts" filter="author:bob" limit="1"}}
+                    {{#foreach posts}}
+                        <div class="landing-card-latest">
+                            <span class="landing-card-latest-label">Latest</span>
+                            {{title}}
+                        </div>
+                    {{/foreach}}
+                {{/get}}
+                <div class="landing-card-cta">Read <span>→</span></div>
+            </div>
+        </a>
+
+    </div>
+</main>

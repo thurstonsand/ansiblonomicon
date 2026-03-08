@@ -11,6 +11,9 @@ set -g set-titles on
 set -g set-titles-string "#{s|^ide-(.+)-[a-f0-9]+$|\\1|:session_name}:#{window_name}"
 
 # Behavior
+unbind C-b
+set -g prefix M-a
+bind M-a send-prefix
 set -g mouse on
 set -g base-index 1
 setw -g pane-base-index 1
@@ -42,7 +45,7 @@ bind -n M-5 select-window -t :=5
 bind -n M-z resize-pane -Z
 
 # Floating scratch session (sends C-/ to nvim for Snacks terminal toggle)
-bind -n M-f if-shell -F '#{==:#{session_name},scratch}' {
+bind -n M-s if-shell -F '#{==:#{session_name},scratch}' {
     detach-client
 } {
     if-shell -F '#{==:#{pane_current_command},nvim}' {
@@ -78,8 +81,8 @@ set -g @plugin 'sainnhe/tmux-fzf'
 if-shell "[ \"$(cat ~/.terminal-bg 2>/dev/null)\" = light ]" \
   "source-file ~/.config/tmux/gruvbox-light.conf" \
   "source-file ~/.config/tmux/gruvbox-dark.conf"
-set-hook -g client-dark-theme "run-shell 'echo dark > ~/.terminal-bg'; set-environment -g TERMINAL_BG dark; source-file ~/.config/tmux/gruvbox-dark.conf"
-set-hook -g client-light-theme "run-shell 'echo light > ~/.terminal-bg'; set-environment -g TERMINAL_BG light; source-file ~/.config/tmux/gruvbox-light.conf"
+set-hook -g client-dark-theme "run-shell 'python3 ~/.local/bin/terminal-theme-switch.py dark'; set-environment -g TERMINAL_BG dark; source-file ~/.config/tmux/gruvbox-dark.conf"
+set-hook -g client-light-theme "run-shell 'python3 ~/.local/bin/terminal-theme-switch.py light'; set-environment -g TERMINAL_BG light; source-file ~/.config/tmux/gruvbox-light.conf"
 
 # Initialize TPM (keep at bottom — TPM cloned via Ansible)
 run '~/.config/tmux/plugins/tpm/tpm'

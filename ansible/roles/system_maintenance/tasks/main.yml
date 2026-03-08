@@ -40,6 +40,13 @@
     dest: "{{ system_maintenance_bin_dir }}/update-cargo-packages"
     mode: "0755"
 
+- name: Deploy update-gems script
+  when: gem_packages | length > 0
+  ansible.builtin.template:
+    src: update-gems.sh.j2
+    dest: "{{ system_maintenance_bin_dir }}/update-gems"
+    mode: "0755"
+
 - name: Deploy systemd service units
   become: true
   ansible.builtin.template:
@@ -62,6 +69,9 @@
     - name: update-cargo-packages
       enabled: "{{ cargo_packages | length > 0 }}"
       path: "{{ system_maintenance_home }}/.cargo/bin"
+    - name: update-gems
+      enabled: "{{ gem_packages | length > 0 }}"
+      path: /usr/local/bin
     - name: memory-monthly-digest
       enabled: true
   loop_control:
@@ -91,6 +101,9 @@
     - name: update-cargo-packages
       enabled: "{{ cargo_packages | length > 0 }}"
       description: Update cargo packages
+    - name: update-gems
+      enabled: "{{ gem_packages | length > 0 }}"
+      description: Update Ruby gems
     - name: memory-monthly-digest
       enabled: true
       src: memory-monthly-digest.timer.j2
@@ -120,6 +133,8 @@
       enabled: "{{ bun_global_packages | length > 0 }}"
     - name: update-cargo-packages
       enabled: "{{ cargo_packages | length > 0 }}"
+    - name: update-gems
+      enabled: "{{ gem_packages | length > 0 }}"
     - name: memory-monthly-digest
       enabled: true
   loop_control:

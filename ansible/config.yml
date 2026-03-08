@@ -33,6 +33,9 @@ bun_global_packages_base: []
 cargo_packages_base:
   - cargo-binstall
 
+# Global Ruby gems (base set for all hosts)
+gem_packages_base: []
+
 # Global Go tools (base set for all hosts)
 go_tools_base:
   - github.com/steipete/eightctl/cmd/eightctl
@@ -43,6 +46,7 @@ uv_global_tools: "{{ (uv_global_tools_base | default([])) + (uv_global_tools_ext
 npm_global_packages: "{{ (npm_global_packages_base | default([])) + (npm_global_packages_extra | default([])) }}"
 bun_global_packages: "{{ (bun_global_packages_base | default([])) + (bun_global_packages_extra | default([])) }}"
 cargo_packages: "{{ (cargo_packages_base | default([])) + (cargo_packages_extra | default([])) }}"
+gem_packages: "{{ (gem_packages_base | default([])) + (gem_packages_extra | default([])) }}"
 
 # Agent Harness configuration
 agent_harness_target_agents:

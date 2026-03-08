@@ -1,0 +1,47 @@
+{{!< default}}
+
+<style>
+    .section-hikiking .section-header {
+        text-align: center;
+        padding: 60px 24px 48px;
+        border-bottom: 3px solid #4a7c59;
+    }
+
+    .section-hikiking .section-header h1 {
+        font-size: 2.4rem;
+        margin: 0 0 8px;
+        letter-spacing: -0.02em;
+        color: #4a7c59;
+    }
+
+    .section-hikiking .section-header p {
+        font-size: 1.05rem;
+        opacity: 0.6;
+        margin: 0 0 20px;
+    }
+
+    .section-hikiking .section-avatar {
+        width: 56px;
+        height: 56px;
+        border-radius: 50%;
+        object-fit: cover;
+    }
+</style>
+
+<div class="section-hikiking" data-section="hikiking">
+    <div class="section-header">
+        {{#get "users" filter="slug:thehikiking" limit="1"}}
+            {{#foreach .}}
+                {{#if profile_image}}
+                    <img class="section-avatar" src="{{profile_image}}" alt="{{name}}">
+                {{/if}}
+            {{/foreach}}
+        {{/get}}
+        <h1>The Hikiking</h1>
+        <p>Following the Pacific Crest Trail, one day at a time.</p>
+    </div>
+
+    <main class="gh-main">
+        {{> "components/post-list" feed="index" postFeedStyle=@custom.post_feed_style showTitle=false}}
+    </main>
+</div>

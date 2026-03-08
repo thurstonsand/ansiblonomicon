@@ -10,7 +10,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe macos` — Apply macOS Ansible playbook
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **macOS tags**: `agent-harness`, `bun`, `chezmoi`/`dotfiles`, `claude-code`, `go`, `homebrew`/`mas`, `npm`, `opencode`, `sysconfig`/`hostname`, `uv`, `uvc-util`
+  - **macOS tags**: `agent-harness`, `bun`, `chezmoi`/`dotfiles`, `claude-code`, `go`, `homebrew`/`mas`, `npm`, `opencode`, `ruby`, `sysconfig`/`hostname`, `tmux`, `uv`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `crabwalk`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
@@ -19,7 +19,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe openclaw` — Apply OpenClaw Ansible playbook (run from openclaw itself)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **OpenClaw tags**: `agent-harness`, `apt`, `apt-repos`, `cargo`, `chezmoi`/`dotfiles`, `claude-code`, `gateway-env`, `go`, `motd`, `neovim`, `npm`, `opencode`, `system-maintenance`/`timers`, `uv`, `xvfb`
+  - **OpenClaw tags**: `agent-harness`, `apt`, `apt-repos`, `bun`, `cargo`, `chezmoi`/`dotfiles`, `claude-code`, `gateway-env`, `go`, `motd`, `neovim`, `npm`, `openclaw-monitors`/`monitors`, `openclaw-plugins`, `opencode`, `ruby`, `system-maintenance`/`timers`, `tmux`, `uv`, `xvfb`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)
@@ -62,9 +62,9 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 
 ## OpenClaw
 
-OpenClaw is a Debian VM running as a remote AI agent instance, accessible via Cloudflare tunnel.
+OpenClaw is a Debian VM running as a remote AI agent instance, reached over LAN when available and through Cloudflare Access when it is not.
 
-- **SSH**: `ssh openclaw` (connects to `openclaw-ssh.thurstons.house` as `thurstonsand`)
+- **SSH**: `ssh clawdbot` (tries `192.168.1.90:22` first, falls back to `clawdbot-ssh.thurstons.house` as `thurstonsand`)
 - **Web UI**: `openclaw.thurstons.house` (behind Zero Trust)
 - **Ansible**: Run `uv run poe openclaw` from openclaw itself (not remote)
 - **Config**: `ansible/debian.config.yml` for apt packages and feature flags

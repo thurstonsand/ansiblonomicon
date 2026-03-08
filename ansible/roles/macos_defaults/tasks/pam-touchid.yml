@@ -2,6 +2,19 @@
 # PAM TouchID configuration
 # Uses sudo_local which is included by /etc/pam.d/sudo and survives macOS updates
 # Password fallback is already in /etc/pam.d/sudo via pam_opendirectory.so
+# pam_reattach restores Touch ID support inside tmux sessions
+
+- name: Enable pam_reattach for tmux Touch ID support
+  become: true
+  ansible.builtin.lineinfile:
+    path: /etc/pam.d/sudo_local
+    line: "auth       optional       /opt/homebrew/lib/pam/pam_reattach.so"
+    regexp: "^#?auth\\s+optional\\s+.*/pam_reattach\\.so"
+    insertbefore: "^auth.*pam_tid\\.so"
+    create: true
+    mode: "0444"
+    owner: root
+    group: wheel
 
 - name: Enable TouchID for sudo
   become: true

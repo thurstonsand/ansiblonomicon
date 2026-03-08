@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+{% for pkg in gem_packages %}
+echo "Updating: {{ pkg }}"
+gem install "{{ pkg }}" || echo "  Failed"
+{% endfor %}
+
+echo "Done."

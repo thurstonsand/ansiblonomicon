@@ -25,8 +25,8 @@ fi
 
 echo "Installing BerkeleyMono Nerd Font Mono from 1Password..."
 
-# Download font zip from 1Password
-op document get "Berkeley Mono Font" --vault "Private" --out-file "$TEMP_DIR/berkeley-mono.zip"
+# Download font zip from 1Password (Secure Note attachment)
+op read "op://Private/Berkeley Mono Font/nerd-font" --out-file "$TEMP_DIR/berkeley-mono.zip"
 
 # Extract and install
 unzip -q "$TEMP_DIR/berkeley-mono.zip" -d "$TEMP_DIR"

@@ -1,0 +1,16 @@
+{
+  "name": "amp",
+  "version": "1.0.0",
+  "description": "Amp-specific skill creation, tool building, permissions management, and tmux interactive sessions",
+  "author": {
+    "name": "Thurston Sandberg"
+  },
+  "keywords": [
+    "amp",
+    "skills",
+    "toolbox",
+    "permissions",
+    "tmux",
+    "interactive-cli"
+  ]
+}

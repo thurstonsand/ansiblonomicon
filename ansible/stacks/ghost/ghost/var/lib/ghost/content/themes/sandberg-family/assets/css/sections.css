@@ -1,0 +1,140 @@
+/* Berkeley Mono — Thurston section */
+@font-face {
+    font-family: "Berkeley Mono";
+    font-style: oblique 0deg 16deg;
+    font-weight: 400 700;
+    font-display: swap;
+    src: url(../fonts/berkeley-mono-variable.woff2) format("woff2");
+}
+
+/* EB Garamond — always available for custom pages */
+@font-face {
+    font-family: "EB Garamond";
+    font-style: normal;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url(../fonts/eb-garamond-roman.woff2) format("woff2");
+}
+@font-face {
+    font-family: "EB Garamond";
+    font-style: italic;
+    font-weight: 400 800;
+    font-display: swap;
+    src: url(../fonts/eb-garamond-italic.woff2) format("woff2");
+}
+
+/* Section-specific color overrides */
+[data-section="hikiking"] {
+    --ghost-accent-color: #4a7c59;
+    --section-accent: #4a7c59;
+    --section-bg: #f6faf7;
+}
+[data-section="thurston"] {
+    --ghost-accent-color: #2563eb;
+    --section-accent: #2563eb;
+    --section-bg: #f5f3ee;
+    --background-color: #f5f3ee;
+    --gh-font-heading: "Berkeley Mono", monospace;
+    --gh-font-body: "Berkeley Mono", monospace;
+}
+[data-section="bob"] {
+    --ghost-accent-color: #b45309;
+    --section-accent: #b45309;
+    --section-bg: #fdf6ee;
+}
+[data-section="home"] {
+    --ghost-accent-color: #333;
+    --background-color: #f7f5f0;
+}
+
+/* Section header styling */
+.section-header {
+    text-align: center;
+    padding: 60px 0 40px;
+}
+.section-header h1 {
+    font-size: 3.6rem;
+    font-weight: 700;
+    letter-spacing: -0.022em;
+    margin-bottom: 8px;
+}
+.section-header .section-tagline {
+    font-size: 1.8rem;
+    color: var(--color-secondary-text);
+    max-width: 600px;
+    margin: 0 auto;
+}
+.section-header .section-author-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    margin: 0 auto 20px;
+    object-fit: cover;
+}
+.section-header .section-accent-bar {
+    width: 40px;
+    height: 3px;
+    background: var(--section-accent, var(--ghost-accent-color));
+    margin: 16px auto 0;
+}
+
+/* Hide global nav items when inside a section — replace with section nav */
+[data-section="hikiking"] .gh-navigation-menu .nav,
+[data-section="thurston"] .gh-navigation-menu .nav,
+[data-section="bob"] .gh-navigation-menu .nav {
+    display: none;
+}
+
+/* Show section nav when in a section */
+.section-nav {
+    display: none;
+    align-items: center;
+    gap: 28px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+}
+[data-section="hikiking"] .section-nav.section-nav-hikiking,
+[data-section="thurston"] .section-nav.section-nav-thurston,
+[data-section="bob"] .section-nav.section-nav-bob {
+    display: inline-flex;
+}
+
+/* Section nav link styling to match Ghost's nav */
+.section-nav li a {
+    color: inherit;
+    font-weight: 550;
+}
+
+/* On landing page, hide the site logo and show a simpler nav */
+[data-section="home"] .gh-navigation-menu .nav li:not(:first-child) {
+    /* Keep all nav items on home */
+}
+
+/* Back to home link in footer for sections */
+.section-footer-home-link {
+    display: none;
+    margin-top: 8px;
+}
+[data-section="hikiking"] .section-footer-home-link,
+[data-section="thurston"] .section-footer-home-link,
+[data-section="bob"] .section-footer-home-link {
+    display: block;
+}
+
+/* Section logo switching */
+.section-logo-link {
+    display: none !important;
+}
+[data-section="hikiking"] .site-logo-link { display: none !important; }
+[data-section="hikiking"] .section-logo-hikiking { display: inline-flex !important; }
+[data-section="thurston"] .site-logo-link { display: none !important; }
+[data-section="thurston"] .section-logo-thurston { display: inline-flex !important; }
+[data-section="bob"] .site-logo-link { display: none !important; }
+[data-section="bob"] .section-logo-bob { display: inline-flex !important; }
+
+/* Thurston editorial styling */
+[data-section="thurston"] .gh-card-date {
+    font-variant-numeric: tabular-nums;
+}

@@ -51,6 +51,7 @@ apt_packages:
   - unzip
   - vim
   - zoxide
+  - ruby-full
   - zsh
 
 # External repositories and their packages

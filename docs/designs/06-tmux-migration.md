@@ -40,37 +40,49 @@ Chezmoi-managed at `chezmoi/dot_config/tmux/tmux.conf.tmpl`. Platform-specific s
 # Terminal compatibility
 set -g default-terminal "tmux-256color"
 set -g allow-passthrough all
-set -ga terminal-features ",*:hyperlinks"
+set -ga terminal-features ",*:hyperlinks:RGB"
 set -s set-clipboard on
 set -s extended-keys on
+set -as terminal-features 'xterm*:extkeys'
 set -s escape-time 0
 set -g focus-events on
+set -g set-titles on
+set -g set-titles-string "#{s|^ide-(.+)-[a-f0-9]+$|\\1|:session_name}:#{window_name}"
 
 # Behavior
+unbind C-b
+set -g prefix M-a
+bind M-a send-prefix
 set -g mouse on
 set -g base-index 1
 setw -g pane-base-index 1
 set -g renumber-windows on
 set -g history-limit 50000
+set -g display-time 4000
+setw -g aggressive-resize on
 set -g mode-keys vi
-set -g status-keys vi
+set -g status-keys emacs
 ```
 
-#### Theme: Inherit from Ghostty
+#### Theme: Ghostty-Driven Gruvbox Sync
 
-No explicit color theme. Use `default` to inherit terminal colors for status bar and borders. This means Ghostty's gruvbox light/dark theme controls the overall look, and tmux stays transparent.
+Ghostty still drives light/dark mode, but tmux now loads explicit gruvbox config files and updates shared state through a helper script. That keeps tmux, delta, nvim, and Claude aligned when the terminal theme changes.
 
 ```tmux
-set -g status-style 'bg=default,fg=default'
-set -g pane-border-style 'fg=default'
-set -g pane-active-border-style 'fg=default'
-set -g message-style 'bg=default,fg=default'
 set -g status-position bottom
+set -g pane-border-status top
+set -g pane-border-format " #{pane_index}: #{pane_current_command} "
+
+if-shell "[ \"$(cat ~/.terminal-bg 2>/dev/null)\" = light ]" \
+  "source-file ~/.config/tmux/gruvbox-light.conf" \
+  "source-file ~/.config/tmux/gruvbox-dark.conf"
+set-hook -g client-dark-theme "run-shell 'python3 ~/.local/bin/terminal-theme-switch.py dark'; set-environment -g TERMINAL_BG dark; source-file ~/.config/tmux/gruvbox-dark.conf"
+set-hook -g client-light-theme "run-shell 'python3 ~/.local/bin/terminal-theme-switch.py light'; set-environment -g TERMINAL_BG light; source-file ~/.config/tmux/gruvbox-light.conf"
 ```
 
-#### Alt-Key Bindings (Root Table)
+#### Key Bindings
 
-No prefix required. These occupy a namespace that doesn't conflict with nvim or coding agents.
+Daily navigation stays prefix-free. `C-b` is removed, `M-a` becomes the tmux prefix for commands that still need one, and the root-table shortcuts stay focused on window switching, zoom, scratch access, and copy mode.
 
 ```tmux
 # Window switching
@@ -80,22 +92,18 @@ bind -n M-3 select-window -t :=3
 bind -n M-4 select-window -t :=4
 bind -n M-5 select-window -t :=5
 
-# Pane navigation (overridden by vim-tmux-navigator for seamless nvim integration)
-bind -n M-h select-pane -L
-bind -n M-j select-pane -D
-bind -n M-k select-pane -U
-bind -n M-l select-pane -R
-
-# Pane/window management
-bind -n M-z resize-pane -Z          # zoom toggle
-bind -n M-n new-window
-bind -n M-x confirm-before -p "kill pane? (y/n)" kill-pane
+# Zoom toggle
+bind -n M-z resize-pane -Z
 
 # Floating scratch session
-bind -n M-f if-shell -F '#{==:#{session_name},scratch}' {
+bind -n M-s if-shell -F '#{==:#{session_name},scratch}' {
     detach-client
 } {
-    display-popup -w 80% -h 80% -E "tmux new -As scratch"
+    if-shell -F '#{==:#{pane_current_command},nvim}' {
+        send-keys C-_
+    } {
+        display-popup -w 80% -h 80% -E "tmux new -As scratch"
+    }
 }
 
 # Copy mode
@@ -118,7 +126,7 @@ bind -n C-\\ if-shell "$is_vim" 'send-keys C-\\\\' 'select-pane -l'
 
 ### Session Management: `ideoc()` Function
 
-Replaces the current Zellij-based `ideoc()` in `dot_zshrc.tmpl`. Creates or attaches to the `openclaw` tmux session with two windows.
+Replaces the current Zellij-based `ideoc()` in `dot_zshrc.tmpl`. The current implementation creates a four-window workspace: repo/editor, repo agent, home, and home agent.
 
 ```zsh
 ideoc() {
@@ -133,26 +141,35 @@ ideoc() {
     return 1
   fi
 
-  # Detect terminal background BEFORE entering tmux (OSC 11 works here)
-  export TERMINAL_BG=$(_detect_terminal_bg)
-
   if [[ "$1" == "--recreate" ]]; then
     tmux kill-session -t "$session" 2>/dev/null
   fi
 
   if tmux has-session -t "$session" 2>/dev/null; then
-    # Session exists — update env and attach
-    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
     tmux attach -t "$session"
   else
-    # Create new session with two windows
+    local ansi_hash
+    ansi_hash=$(printf '%s' "$HOME/code/ansiblonomicon" | shasum | cut -c1-8)
+    local home_hash
+    home_hash=$(printf '%s' "$HOME" | shasum | cut -c1-8)
+
     tmux new-session -d -s "$session" -n ansiblonomicon -c ~/code/ansiblonomicon
-    tmux split-window -v -t "$session":ansiblonomicon -c ~/code/ansiblonomicon
+    tmux new-window -t "$session" -n ansi_agent -c ~/code/ansiblonomicon
+    tmux set-option -w -t "$session":ansi_agent @cwd_hash "$ansi_hash"
     tmux new-window -t "$session" -n home -c ~
-    tmux split-window -v -t "$session":home -c ~
-    tmux set-environment -t "$session" TERMINAL_BG "$TERMINAL_BG"
+    tmux new-window -t "$session" -n home_agent -c ~
+    tmux set-option -w -t "$session":home_agent @cwd_hash "$home_hash"
     tmux select-window -t "$session":ansiblonomicon
-    tmux select-pane -t 0
+    (sleep 1.0 && \
+      pane_cmd=$(tmux list-panes -t "$session":ansiblonomicon -F '#{pane_current_command}' 2>/dev/null) && \
+      [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
+      tmux send-keys -t "$session":ansiblonomicon "nvim ." Enter
+    ) &!
+    (sleep 5.0 && \
+      pane_cmd=$(tmux list-panes -t "$session":home -F '#{pane_current_command}' 2>/dev/null) && \
+      [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
+      tmux send-keys -t "$session":home "nvim ." Enter
+    ) &!
     tmux attach -t "$session"
   fi
 }
@@ -180,28 +197,30 @@ Changes from current: `$ZELLIJ` check becomes `$TMUX` check.
 
 | Component                      | Before (Zellij)           | After (tmux)                                                                   |
 | ------------------------------ | ------------------------- | ------------------------------------------------------------------------------ |
-| `_detect_terminal_bg()`        | No change                 | No change — runs before tmux, OSC 11 works                                     |
+| `_detect_terminal_bg()`        | No change                 | Still runs before tmux, writes `~/.terminal-bg`, and seeds `TERMINAL_BG`       |
 | `_maybe_refresh_terminal_bg()` | Runs in precmd every 300s | **Removed** — OSC 11 can't round-trip inside tmux                              |
-| Source of truth                | `~/.terminal-bg` file     | `~/.terminal-bg` file (for nvim watcher) + `tmux set-environment` (for shells) |
-| nvim file watcher              | Watches `~/.terminal-bg`  | **Kept unchanged** — reacts to bglight/bgdark writes                           |
+| Theme helper                   | None                      | `terminal-theme-switch.py` updates `~/.terminal-bg` and Claude theme state     |
+| Source of truth                | `~/.terminal-bg` file     | `~/.terminal-bg` file + tmux env + Ghostty mode hooks                          |
+| nvim file watcher              | Watches `~/.terminal-bg`  | **Kept unchanged** — reacts to helper-driven writes                            |
 | nvim FocusGained               | Not used                  | Not needed — file watcher is more responsive                                   |
 
 #### `bglight` / `bgdark` Functions
 
-Manual override for mid-session theme changes. Each function updates all three consumers:
+Manual override for mid-session theme changes now goes through a single helper so the side effects stay centralized:
 
 ```zsh
-bglight() {
-  echo "light" > ~/.terminal-bg           # triggers nvim file watcher
-  tmux set-environment TERMINAL_BG light 2>/dev/null  # new shells inherit
-  export TERMINAL_BG=light                # current shell (delta/git)
+_set_theme() {
+  local mode="$1"
+  python3 ~/.local/bin/terminal-theme-switch.py "$mode"
+  export TERMINAL_BG="$mode"
+  if [[ -n "$TMUX" ]]; then
+    tmux set-environment TERMINAL_BG "$mode"
+    tmux source-file ~/.config/tmux/gruvbox-"$mode".conf
+  fi
 }
 
-bgdark() {
-  echo "dark" > ~/.terminal-bg
-  tmux set-environment TERMINAL_BG dark 2>/dev/null
-  export TERMINAL_BG=dark
-}
+bglight() { _set_theme light; }
+bgdark() { _set_theme dark; }
 ```
 
 #### Detection Flow
@@ -210,7 +229,7 @@ bgdark() {
 macOS theme changes → Ghostty updates colors →
   (next SSH connection) →
   zsh starts → _detect_terminal_bg() runs (no tmux yet, OSC 11 works) →
-  ideoc() sets tmux env + writes file →
+  writes ~/.terminal-bg and exports TERMINAL_BG →
   tmux attach → nvim watcher fires if file changed → vim.o.background updates
 ```
 
@@ -218,7 +237,8 @@ For mid-session changes (rare — typically once per day):
 
 ```psuedo
 User runs `bglight` or `bgdark` →
-  writes ~/.terminal-bg → nvim watcher fires immediately →
+  helper updates ~/.terminal-bg and ~/.claude.json →
+  nvim watcher fires immediately →
   sets tmux env → new shells get updated TERMINAL_BG →
   sets current shell env → next delta/git invocation uses new theme
 ```
@@ -228,7 +248,9 @@ User runs `bglight` or `bgdark` →
 | File                                                 | Action           | Notes                                                                                                               |
 | ---------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `chezmoi/dot_config/tmux/tmux.conf.tmpl`             | **Create**       | New tmux config                                                                                                     |
-| `chezmoi/dot_zshrc.tmpl`                             | **Modify**       | Replace ideoc/ide (zellij→tmux), drop `_maybe_refresh_terminal_bg`, add bglight/bgdark, change `$ZELLIJ` to `$TMUX` |
+| `chezmoi/dot_zshrc.tmpl`                             | **Modify**       | Replace ideoc/ide (zellij→tmux), drop `_maybe_refresh_terminal_bg`, detect theme before tmux, and wire helper funcs |
+| `chezmoi/dot_config/zsh/tmux-theme.zsh`              | **Create**       | Shared `bglight`/`bgdark` helper that updates tmux state via one function                                           |
+| `chezmoi/private_dot_local/private_bin/executable_terminal-theme-switch.py` | **Create** | Centralizes theme side effects for tmux hooks and zsh helper functions                                              |
 | `chezmoi/dot_config/zellij/`                         | **Keep for now** | Don't remove until tmux is validated; ignore via `.chezmoiignore` if needed                                         |
 | `chezmoi/dot_config/nvim/lua/config/autocmds.lua`    | **No change**    | File watcher on `~/.terminal-bg` stays as-is                                                                        |
 | `chezmoi/dot_config/nvim/lua/config/options.lua`     | **No change**    | `TERMINAL_BG` env var read at startup stays                                                                         |
@@ -284,7 +306,5 @@ The tmux config works on both platforms. Platform-specific differences:
 
 ### Open Questions
 
-- Should the Alt-key pane navigation (M-hjkl) coexist with vim-tmux-navigator's C-hjkl, or should one replace the other?
-- Should `ide()` on macOS also switch from Zellij to tmux, or keep Zellij where it works fine?
-- Pane border status (`pane-border-status top` with pane titles) — worth enabling for visual identification of editor vs agent panes?
-- Should TPM be used for vim-tmux-navigator's tmux-side bindings, or inline them directly in tmux.conf?
+- Whether pane border labels should stay enabled long-term, or be simplified once the workflow settles
+- Whether the theme helper should remain tmux/Claude-specific, or grow to manage more terminal-aware tools

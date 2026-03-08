@@ -176,6 +176,14 @@
       register: go_tool_result
       changed_when: go_tool_result.stderr | length > 0
 
+    - name: Install global Ruby gems
+      tags: ["ruby"]
+      ansible.builtin.command:
+        cmd: "{{ ansible_facts['env']['HOMEBREW_PREFIX'] | default('/opt/homebrew') }}/opt/ruby/bin/gem install {{ item }}"
+      loop: "{{ gem_packages }}"
+      register: gem_result
+      changed_when: "'Successfully installed' in gem_result.stdout"
+
     - name: Set hostname
       ansible.builtin.hostname:
         name: "{{ hostname }}"

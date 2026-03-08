@@ -32,11 +32,47 @@ return {
   {
     "sindrets/diffview.nvim",
     cmd = { "DiffviewOpen", "DiffviewClose", "DiffviewFileHistory" },
-    keys = {
-      { "<leader>gv", "<cmd>DiffviewOpen<cr>", desc = "Diff View (All Changes)" },
-      { "<leader>gV", "<cmd>DiffviewClose<cr>", desc = "Close Diff View" },
-      { "<leader>gH", "<cmd>DiffviewFileHistory %<cr>", desc = "File History (Current)" },
-    },
+    keys = function()
+      local function focus_or_open_diffview()
+        local api = vim.api
+        local lib = require("diffview.lib")
+        local DiffView = require("diffview.scene.views.diff.diff_view").DiffView
+
+        lib.dispose_stray_views()
+
+        local current_tab = api.nvim_get_current_tabpage()
+        local previous_tabnr = vim.fn.tabpagenr("#")
+        local fallback_tab
+
+        for _, view in ipairs(lib.views) do
+          if api.nvim_tabpage_is_valid(view.tabpage) and view:instanceof(DiffView) then
+            if view.tabpage == current_tab then
+              return
+            end
+
+            if previous_tabnr > 0 and api.nvim_tabpage_get_number(view.tabpage) == previous_tabnr then
+              api.nvim_set_current_tabpage(view.tabpage)
+              return
+            end
+
+            fallback_tab = fallback_tab or view.tabpage
+          end
+        end
+
+        if fallback_tab then
+          api.nvim_set_current_tabpage(fallback_tab)
+          return
+        end
+
+        vim.cmd("DiffviewOpen")
+      end
+
+      return {
+        { "<leader>gv", focus_or_open_diffview, desc = "Diff View (Open or Focus)" },
+        { "<leader>gV", "<cmd>DiffviewClose<cr>", desc = "Close Diff View" },
+        { "<leader>gH", "<cmd>DiffviewFileHistory %<cr>", desc = "File History (Current)" },
+      }
+    end,
     opts = function()
       local actions = require("diffview.actions")
       return {

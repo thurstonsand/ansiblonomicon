@@ -28,6 +28,7 @@ setopt NOTIFY               # report background job status immediately
 bindkey -e
 bindkey "^[[3~" delete-char
 bindkey "^U" backward-kill-line
+bindkey -r -M emacs '^[a'
 
 {{- if eq .chezmoi.os "darwin" }}
 # Autosuggestions (via Homebrew)
@@ -73,6 +74,7 @@ _evalcache openclaw completion --shell zsh
 alias ping='prettyping'
 alias top='htop'
 alias lg='lazygit'
+alias claude='claude --dangerously-skip-permissions'
 
 _detect_terminal_bg() {
   local raw_response="" char
@@ -137,7 +139,7 @@ ide() {
     tmux set-option -w -t "$session":agent @cwd_hash "$dir_hash"
     tmux select-window -t "$session":editor
     (sleep 1.0 && \
-      pane_cmd=$(tmux display-message -t "$session":editor -p '#{pane_current_command}') && \
+      pane_cmd=$(tmux list-panes -t "$session":editor -F '#{pane_current_command}' 2>/dev/null) && \
       [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
       tmux send-keys -t "$session":editor "nvim ." Enter
     ) &!
@@ -178,12 +180,12 @@ ideoc() {
     tmux set-option -w -t "$session":home_agent @cwd_hash "$home_hash"
     tmux select-window -t "$session":ansiblonomicon
     (sleep 1.0 && \
-      pane_cmd=$(tmux display-message -t "$session":ansiblonomicon -p '#{pane_current_command}') && \
+      pane_cmd=$(tmux list-panes -t "$session":ansiblonomicon -F '#{pane_current_command}' 2>/dev/null) && \
       [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
       tmux send-keys -t "$session":ansiblonomicon "nvim ." Enter
     ) &!
     (sleep 5.0 && \
-      pane_cmd=$(tmux display-message -t "$session":home -p '#{pane_current_command}') && \
+      pane_cmd=$(tmux list-panes -t "$session":home -F '#{pane_current_command}' 2>/dev/null) && \
       [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
       tmux send-keys -t "$session":home "nvim ." Enter
     ) &!

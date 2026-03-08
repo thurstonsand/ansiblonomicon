@@ -71,6 +71,8 @@ path=(
   "$HOME/.local/share/pnpm"
   "$HOME/go/bin"
 {{- if eq .chezmoi.os "darwin" }}
+  "/opt/homebrew/opt/ruby/bin"
+  "/opt/homebrew/lib/ruby/gems/{{ output "/opt/homebrew/opt/ruby/bin/ruby" "-e" "puts RbConfig::CONFIG['ruby_version']" | trim }}/bin"
   "/opt/homebrew/opt/rustup/bin"
 {{- end }}
 {{- if eq .chezmoi.hostname "clawdbot" }}

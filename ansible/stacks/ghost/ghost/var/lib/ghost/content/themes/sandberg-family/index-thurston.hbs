@@ -1,0 +1,62 @@
+{{!< default}}
+
+<style>
+    .section-thurston .section-header {
+        text-align: center;
+        padding: 72px 24px 48px;
+        max-width: 720px;
+        margin: 0 auto;
+    }
+
+    .section-thurston .section-header::after {
+        content: '';
+        display: block;
+        width: 40px;
+        height: 1.5px;
+        background: #2563eb;
+        margin: 32px auto 0;
+    }
+
+    .section-thurston .section-header h1 {
+        font-family: "Berkeley Mono", monospace;
+        font-size: clamp(2.2rem, 3vw, 3rem);
+        margin: 0 0 10px;
+        letter-spacing: -0.01em;
+        color: #1a1a1a;
+        font-weight: 500;
+        line-height: 1.1;
+    }
+
+    .section-thurston .section-header p {
+        font-size: 1rem;
+        color: #888;
+        margin: 0;
+        letter-spacing: 0.005em;
+    }
+
+    .section-thurston .section-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        object-fit: cover;
+        margin-bottom: 20px;
+    }
+</style>
+
+<div class="section-thurston">
+    <div class="section-header">
+        {{#get "users" filter="slug:thurstonsand" limit="1"}}
+            {{#foreach .}}
+                {{#if profile_image}}
+                    <img class="section-avatar" src="{{profile_image}}" alt="{{name}}">
+                {{/if}}
+            {{/foreach}}
+        {{/get}}
+        <h1>OK Computer</h1>
+        <p>Notes on technology, AI, and whatever else comes to mind.</p>
+    </div>
+
+    <main class="gh-main">
+        {{> "components/post-list" feed="index" postFeedStyle=@custom.post_feed_style showTitle=false}}
+    </main>
+</div>

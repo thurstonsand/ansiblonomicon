@@ -16,3 +16,6 @@ configure_macos_defaults: true
 # Additional npm packages for macOS (extends npm_global_packages_base)
 npm_global_packages_extra:
   - openclaw
+
+# Additional Ruby gems for macOS (extends gem_packages_base)
+gem_packages_extra: []

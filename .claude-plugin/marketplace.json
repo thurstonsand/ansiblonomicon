@@ -1,0 +1,68 @@
+{
+  "name": "ansiblonomicon",
+  "owner": {
+    "name": "Thurston Sandberg"
+  },
+  "metadata": {
+    "description": "Homelab infrastructure, development tooling, and device plugin skills",
+    "version": "1.0.0",
+    "pluginRoot": "./agents"
+  },
+  "plugins": [
+    {
+      "name": "amp",
+      "source": "./amp",
+      "description": "Amp-specific skill creation, tool building, permissions management, and tmux interactive sessions",
+      "version": "1.0.0",
+      "author": {
+        "name": "Thurston Sandberg"
+      },
+      "keywords": [
+        "amp",
+        "skills",
+        "toolbox",
+        "permissions",
+        "tmux",
+        "interactive-cli"
+      ]
+    },
+    {
+      "name": "homelab",
+      "source": "./homelab",
+      "description": "Skills for managing homelab infrastructure including remote server management",
+      "version": "3.0.0",
+      "author": {
+        "name": "Thurston Sandberg"
+      },
+      "keywords": [
+        "homelab",
+        "truenas",
+        "docker",
+        "tmux",
+        "interactive-cli",
+        "infrastructure",
+        "remote-management"
+      ]
+    },
+    {
+      "name": "project-management",
+      "source": "./project-management",
+      "description": "Project lifecycle management including git workflows, code review, and system architecture planning",
+      "version": "1.2.0",
+      "author": {
+        "name": "Thurston Sandberg"
+      },
+      "keywords": [
+        "git",
+        "commit",
+        "pr-review",
+        "code-review",
+        "architecture",
+        "project-management",
+        "workflow-automation",
+        "showboat",
+        "demo"
+      ]
+    }
+  ]
+}

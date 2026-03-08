@@ -347,6 +347,13 @@
       vars:
         docker_stack_name: ghost
 
+    - name: Restart ghost to pick up theme/routes changes
+      tags: [docker-stack-role, ghost]
+      ansible.builtin.command:
+        cmd: docker restart ghost
+      when: _docker_stack_changed | default(false)
+      changed_when: _docker_stack_changed | default(false)
+
     - name: Deploy homepage stack
       tags: [docker-stack-role, homepage]
       ansible.builtin.include_role:

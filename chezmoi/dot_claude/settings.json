@@ -1,20 +1,43 @@
 {
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "cleanupPeriodDays": 99999,
-  "includeCoAuthoredBy": false,
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  },
+  "outputStyle": "2B",
+  "showTurnDuration": true,
   "permissions": {
     "allow": [
+      "Bash(git *)",
       "mcp__parallel-search__web_search_preview",
       "mcp__parallel-search__web_fetch",
       "Skill(updating-documentation-for-changes)",
       "Skill(git-commit-helper)"
     ],
-    "deny": [],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)"
+    ],
     "defaultMode": "acceptEdits"
   },
   "statusLine": {
     "type": "command",
     "command": "bunx -y ccstatusline@latest",
     "padding": 0
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/guard-dangerous-commands.py"
+          }
+        ]
+      }
+    ]
   },
   "alwaysThinkingEnabled": true,
   "skipDangerousModePermissionPrompt": true

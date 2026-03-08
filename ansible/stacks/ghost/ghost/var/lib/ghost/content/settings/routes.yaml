@@ -1,0 +1,23 @@
+routes:
+  /: home
+
+collections:
+  /hikiking/:
+    permalink: /hikiking/{slug}/
+    template: index-hikiking
+    filter: primary_author:thehikiking
+    data: author.thehikiking
+  /thurston/:
+    permalink: /thurston/{slug}/
+    template: index-thurston
+    filter: primary_author:thurstonsand
+    data: author.thurstonsand
+  /bob/:
+    permalink: /bob/{slug}/
+    template: index-bob
+    filter: primary_author:bob
+    data: author.bob
+
+taxonomies:
+  tag: /tag/{slug}/
+  author: /author/{slug}/
