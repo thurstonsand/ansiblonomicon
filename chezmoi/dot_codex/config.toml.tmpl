@@ -1,9 +1,9 @@
 model = "{{ .models.openai.gpt.version }}"
 model_reasoning_effort = "high"
 model_reasoning_summary = "auto"
-approval_policy = "never"
+approval_policy = "on-request"
 sandbox_mode = "danger-full-access"
-personality = "pragmatic"
+personality = "friendly"
 web_search = "live"
 default_mode_request_user_input = true
 service_tier = "fast"
@@ -15,12 +15,17 @@ shell_snapshot = true
 multi_agent = true
 responses_websockets_v2 = true
 steer = true
+js_repl = true
+apps = true
+prevent_idle_sleep = true
 
 [history]
 persistence = "save-all"
 
 [tui]
 notifications = true
+theme = "gruvbox-{{ output "sh" "-c" "cat ~/.terminal-bg 2>/dev/null || echo dark" | trim }}"
+status_line = ["context-remaining", "model-with-reasoning", "project-root", "git-branch"]
 
 [projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/nixonomicon"]
 trust_level = "trusted"

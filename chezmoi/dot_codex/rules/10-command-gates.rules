@@ -1,0 +1,99 @@
+# Static command gates. Keep `default.rules` available for Codex to append
+# one-off allow-prefix approvals that you accept during a session.
+
+prefix_rule(
+    pattern = ["git", ["stash", "add", "commit", "push", "checkout", "reset", "clean", "rebase"]],
+    decision = "prompt",
+    justification = "Ask before mutating git state.",
+    match = [
+        "git stash push -u",
+        "git add .",
+        "git commit -m test",
+        "git push origin main",
+        "git checkout main",
+        "git reset --hard HEAD~1",
+        "git clean -fd",
+        "git rebase main",
+    ],
+    not_match = [
+        "git status",
+        "git diff --stat",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-C"],
+    decision = "prompt",
+    justification = "Ask before git commands that target another working tree via -C.",
+    match = [
+        "git -C /tmp/repo commit -m test",
+        "git -C /tmp/repo status",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "-c"],
+    decision = "prompt",
+    justification = "Ask before git commands that override config via -c.",
+    match = [
+        "git -c core.editor=true commit -m test",
+        "git -c color.ui=always status",
+    ],
+)
+
+prefix_rule(
+    pattern = ["rm", "-rf"],
+    decision = "prompt",
+    justification = "Ask before recursive forced removal.",
+    match = ["rm -rf tmp"],
+)
+
+prefix_rule(
+    pattern = ["rm", "-fr"],
+    decision = "prompt",
+    justification = "Ask before recursive forced removal.",
+    match = ["rm -fr tmp"],
+)
+
+prefix_rule(
+    pattern = ["rm", "-r", "-f"],
+    decision = "prompt",
+    justification = "Ask before recursive forced removal.",
+    match = ["rm -r -f tmp"],
+)
+
+prefix_rule(
+    pattern = ["rm", "-f", "-r"],
+    decision = "prompt",
+    justification = "Ask before recursive forced removal.",
+    match = ["rm -f -r tmp"],
+)
+
+prefix_rule(
+    pattern = ["rm", "--recursive", "--force"],
+    decision = "prompt",
+    justification = "Ask before recursive forced removal.",
+    match = ["rm --recursive --force tmp"],
+)
+
+prefix_rule(
+    pattern = ["rm", "--force", "--recursive"],
+    decision = "prompt",
+    justification = "Ask before recursive forced removal.",
+    match = ["rm --force --recursive tmp"],
+)
+
+# Execpolicy is prefix-only, so it cannot faithfully express Amp's
+# `find *-delete*`, `find *-exec*`, and `find *-execdir*` globs when those
+# flags appear later in argv. Prompting on `find` is the closest safe
+# translation.
+prefix_rule(
+    pattern = ["find"],
+    decision = "prompt",
+    justification = "Ask before running find because destructive variants cannot be matched precisely with prefix-only rules.",
+    match = [
+        "find . -delete",
+        "find . -type f -exec rm {} ;",
+        "find . -type f -execdir rm {} ;",
+    ],
+)

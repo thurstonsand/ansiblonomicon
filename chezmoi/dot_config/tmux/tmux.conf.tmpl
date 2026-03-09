@@ -3,7 +3,8 @@ set -g default-terminal "tmux-256color"
 set -g allow-passthrough all
 set -ga terminal-features ",*:hyperlinks:RGB"
 set -s set-clipboard on
-set -s extended-keys on
+set -s extended-keys always
+set -g extended-keys-format csi-u
 set -as terminal-features 'xterm*:extkeys'
 set -s escape-time 0
 set -g focus-events on
@@ -44,6 +45,10 @@ bind -n M-5 select-window -t :=5
 # Zoom toggle
 bind -n M-z resize-pane -Z
 
+# Splits
+bind - split-window -v
+bind \\ split-window -h
+
 # Floating scratch session (sends C-/ to nvim for Snacks terminal toggle)
 bind -n M-s if-shell -F '#{==:#{session_name},scratch}' {
     detach-client
@@ -58,19 +63,6 @@ bind -n M-s if-shell -F '#{==:#{session_name},scratch}' {
 # Copy mode
 bind -n M-[ copy-mode
 
-# Universal newline workaround for apps inside tmux.
-#
-# Most terminal apps treat Ctrl-J as "insert newline", so Shift-Enter is
-# remapped to Ctrl-J by default.
-#
-# Claude Code is the annoying exception: inside tmux it does not accept Ctrl-J
-# or Alt-Enter here, but it *does* treat a literal backslash followed by Enter
-# as "insert newline". Sending those two keys back-to-back is too fast and
-# Claude submits the prompt instead, so we add a tiny delay between them.
-#
-# Yes, this is cursed. But it works.
-bind-key -n S-Enter if-shell -F '#{==:#{pane_current_command},claude}' { send-keys -l '\' ; run-shell 'sleep 0.05' ; send-keys Enter } { send-keys C-j }
-
 # Plugins (TPM)
 set-environment -g TMUX_PLUGIN_MANAGER_PATH '~/.config/tmux/plugins'
 set -g @plugin 'tmux-plugins/tpm'
@@ -81,8 +73,8 @@ set -g @plugin 'sainnhe/tmux-fzf'
 if-shell "[ \"$(cat ~/.terminal-bg 2>/dev/null)\" = light ]" \
   "source-file ~/.config/tmux/gruvbox-light.conf" \
   "source-file ~/.config/tmux/gruvbox-dark.conf"
-set-hook -g client-dark-theme "run-shell 'python3 ~/.local/bin/terminal-theme-switch.py dark'; set-environment -g TERMINAL_BG dark; source-file ~/.config/tmux/gruvbox-dark.conf"
-set-hook -g client-light-theme "run-shell 'python3 ~/.local/bin/terminal-theme-switch.py light'; set-environment -g TERMINAL_BG light; source-file ~/.config/tmux/gruvbox-light.conf"
+set-hook -g client-dark-theme "run-shell '~/.local/bin/terminal-theme-switch.py dark'; set-environment -g TERMINAL_BG dark; source-file ~/.config/tmux/gruvbox-dark.conf"
+set-hook -g client-light-theme "run-shell '~/.local/bin/terminal-theme-switch.py light'; set-environment -g TERMINAL_BG light; source-file ~/.config/tmux/gruvbox-light.conf"
 
 # Initialize TPM (keep at bottom — TPM cloned via Ansible)
 run '~/.config/tmux/plugins/tpm/tpm'

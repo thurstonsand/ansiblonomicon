@@ -42,7 +42,8 @@ set -g default-terminal "tmux-256color"
 set -g allow-passthrough all
 set -ga terminal-features ",*:hyperlinks:RGB"
 set -s set-clipboard on
-set -s extended-keys on
+set -s extended-keys always
+set -g extended-keys-format csi-u
 set -as terminal-features 'xterm*:extkeys'
 set -s escape-time 0
 set -g focus-events on
@@ -66,7 +67,7 @@ set -g status-keys emacs
 
 #### Theme: Ghostty-Driven Gruvbox Sync
 
-Ghostty still drives light/dark mode, but tmux now loads explicit gruvbox config files and updates shared state through a helper script. That keeps tmux, delta, nvim, and Claude aligned when the terminal theme changes.
+Ghostty still drives light/dark mode, but tmux now loads explicit gruvbox config files and updates shared state through a helper script. That keeps tmux, delta, nvim, Claude, and Codex aligned when the terminal theme changes.
 
 ```tmux
 set -g status-position bottom
@@ -76,8 +77,8 @@ set -g pane-border-format " #{pane_index}: #{pane_current_command} "
 if-shell "[ \"$(cat ~/.terminal-bg 2>/dev/null)\" = light ]" \
   "source-file ~/.config/tmux/gruvbox-light.conf" \
   "source-file ~/.config/tmux/gruvbox-dark.conf"
-set-hook -g client-dark-theme "run-shell 'python3 ~/.local/bin/terminal-theme-switch.py dark'; set-environment -g TERMINAL_BG dark; source-file ~/.config/tmux/gruvbox-dark.conf"
-set-hook -g client-light-theme "run-shell 'python3 ~/.local/bin/terminal-theme-switch.py light'; set-environment -g TERMINAL_BG light; source-file ~/.config/tmux/gruvbox-light.conf"
+set-hook -g client-dark-theme "run-shell '~/.local/bin/terminal-theme-switch.py dark'; set-environment -g TERMINAL_BG dark; source-file ~/.config/tmux/gruvbox-dark.conf"
+set-hook -g client-light-theme "run-shell '~/.local/bin/terminal-theme-switch.py light'; set-environment -g TERMINAL_BG light; source-file ~/.config/tmux/gruvbox-light.conf"
 ```
 
 #### Key Bindings
@@ -199,7 +200,7 @@ Changes from current: `$ZELLIJ` check becomes `$TMUX` check.
 | ------------------------------ | ------------------------- | ------------------------------------------------------------------------------ |
 | `_detect_terminal_bg()`        | No change                 | Still runs before tmux, writes `~/.terminal-bg`, and seeds `TERMINAL_BG`       |
 | `_maybe_refresh_terminal_bg()` | Runs in precmd every 300s | **Removed** — OSC 11 can't round-trip inside tmux                              |
-| Theme helper                   | None                      | `terminal-theme-switch.py` updates `~/.terminal-bg` and Claude theme state     |
+| Theme helper                   | None                      | `terminal-theme-switch.py` updates `~/.terminal-bg`, Claude theme state, and Codex TUI theme |
 | Source of truth                | `~/.terminal-bg` file     | `~/.terminal-bg` file + tmux env + Ghostty mode hooks                          |
 | nvim file watcher              | Watches `~/.terminal-bg`  | **Kept unchanged** — reacts to helper-driven writes                            |
 | nvim FocusGained               | Not used                  | Not needed — file watcher is more responsive                                   |
@@ -211,7 +212,7 @@ Manual override for mid-session theme changes now goes through a single helper s
 ```zsh
 _set_theme() {
   local mode="$1"
-  python3 ~/.local/bin/terminal-theme-switch.py "$mode"
+  ~/.local/bin/terminal-theme-switch.py "$mode"
   export TERMINAL_BG="$mode"
   if [[ -n "$TMUX" ]]; then
     tmux set-environment TERMINAL_BG "$mode"
@@ -237,7 +238,7 @@ For mid-session changes (rare — typically once per day):
 
 ```psuedo
 User runs `bglight` or `bgdark` →
-  helper updates ~/.terminal-bg and ~/.claude.json →
+  helper updates ~/.terminal-bg, ~/.claude.json, and ~/.codex/config.toml →
   nvim watcher fires immediately →
   sets tmux env → new shells get updated TERMINAL_BG →
   sets current shell env → next delta/git invocation uses new theme

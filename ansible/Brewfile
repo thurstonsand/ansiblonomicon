@@ -120,6 +120,7 @@ cask "codex"
 cask "codex-app"
 cask "codexbar"
 cask "opencode-desktop"
+cask "t3-code"
 
 mas "Perplexity: Ask Anything", id: 6714467650
 

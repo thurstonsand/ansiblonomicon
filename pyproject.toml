@@ -244,6 +244,7 @@ dev = [
   "json-with-comments>=1.2.10",
   "pytest>=9.0.2",
   "python-dotenv>=1.2.1",
+  "tomlkit>=0.13.2",
 ]
 
 # Ruff configuration
