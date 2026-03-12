@@ -27,6 +27,7 @@
     delete: false
     rsync_opts:
       - "--exclude=*.j2"
+  become: false
   register: docker_stack_sync_rsync_result
 
 - name: Fix ownership on rsynced files

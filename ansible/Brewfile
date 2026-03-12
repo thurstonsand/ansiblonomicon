@@ -1,15 +1,6 @@
 # Homebrew Bundle file
 # Run with: brew bundle --file=Brewfile
 
-# Taps
-tap "cirruslabs/cli"
-tap "domt4/autoupdate"
-tap "nikitabobko/tap"
-tap "oven-sh/bun"
-tap "rfidresearchgroup/proxmark3"
-tap "sst/tap"
-tap "steipete/tap"
-
 # =============================================================================
 # Shell & Terminal
 # =============================================================================
