@@ -85,15 +85,15 @@ prefix_rule(
 
 # Execpolicy is prefix-only, so it cannot faithfully express Amp's
 # `find *-delete*`, `find *-exec*`, and `find *-execdir*` globs when those
-# flags appear later in argv. Prompting on `find` is the closest safe
-# translation.
-prefix_rule(
-    pattern = ["find"],
-    decision = "prompt",
-    justification = "Ask before running find because destructive variants cannot be matched precisely with prefix-only rules.",
-    match = [
-        "find . -delete",
-        "find . -type f -exec rm {} ;",
-        "find . -type f -execdir rm {} ;",
-    ],
-)
+# flags appear later in argv. Prompting on every `find` proved too noisy, so
+# this translation is disabled for now.
+# prefix_rule(
+#     pattern = ["find"],
+#     decision = "prompt",
+#     justification = "Ask before running find because destructive variants cannot be matched precisely with prefix-only rules.",
+#     match = [
+#         "find . -delete",
+#         "find . -type f -exec rm {} ;",
+#         "find . -type f -execdir rm {} ;",
+#     ],
+# )

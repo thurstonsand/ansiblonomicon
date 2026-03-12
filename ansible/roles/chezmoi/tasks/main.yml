@@ -7,15 +7,14 @@
     path: "{{ ansible_facts.env.HOME }}/.config/chezmoi/chezmoi.toml"
   register: chezmoi_config
 
-- name: Initialize chezmoi from local source
+- name: Initialize or refresh chezmoi config from local source
   ansible.builtin.command:
     argv:
       - chezmoi
       - init
       - "--source={{ chezmoi_source_dir }}"
   register: chezmoi_init
-  changed_when: chezmoi_init.rc == 0
-  when: not chezmoi_config.stat.exists
+  changed_when: not chezmoi_config.stat.exists
 
 - name: Check what chezmoi would change
   ansible.builtin.command:

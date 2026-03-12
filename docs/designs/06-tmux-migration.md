@@ -251,7 +251,7 @@ User runs `bglight` or `bgdark` →
 | `chezmoi/dot_config/tmux/tmux.conf.tmpl`             | **Create**       | New tmux config                                                                                                     |
 | `chezmoi/dot_zshrc.tmpl`                             | **Modify**       | Replace ideoc/ide (zellij→tmux), drop `_maybe_refresh_terminal_bg`, detect theme before tmux, and wire helper funcs |
 | `chezmoi/dot_config/zsh/tmux-theme.zsh`              | **Create**       | Shared `bglight`/`bgdark` helper that updates tmux state via one function                                           |
-| `chezmoi/private_dot_local/private_bin/executable_terminal-theme-switch.py` | **Create** | Centralizes theme side effects for tmux hooks and zsh helper functions                                              |
+| `chezmoi/dot_local/bin/executable_terminal-theme-switch.py` | **Create** | Centralizes theme side effects for tmux hooks and zsh helper functions                                              |
 | `chezmoi/dot_config/zellij/`                         | **Keep for now** | Don't remove until tmux is validated; ignore via `.chezmoiignore` if needed                                         |
 | `chezmoi/dot_config/nvim/lua/config/autocmds.lua`    | **No change**    | File watcher on `~/.terminal-bg` stays as-is                                                                        |
 | `chezmoi/dot_config/nvim/lua/config/options.lua`     | **No change**    | `TERMINAL_BG` env var read at startup stays                                                                         |

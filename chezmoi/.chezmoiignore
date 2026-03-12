@@ -31,6 +31,8 @@ Library/
 {{ end }}
 
 # App caches and generated files
+**/__pycache__/
+**/*.pyc
 Library/Application Support/PrusaSlicer/cache/
 **/node_modules/
 

@@ -33,6 +33,15 @@ trust_level = "trusted"
 [projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/anypod"]
 trust_level = "trusted"
 
+{{ if eq .chezmoi.hostname "clawdbot" -}}
+[projects."{{ .chezmoi.homeDir }}"]
+trust_level = "trusted"
+
+{{ end -}}
+
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/ansiblonomicon"]
+trust_level = "trusted"
+
 [notice]
 hide_gpt5_1_migration_prompt = true
 "hide_gpt-5.1-codex-max_migration_prompt" = true

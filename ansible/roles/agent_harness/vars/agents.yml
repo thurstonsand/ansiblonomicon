@@ -71,3 +71,18 @@ agent_harness_agents:
     transform_content: false
     instructions_file: AGENTS.md
     supports_skill_mcp: false
+
+  openclaw:
+    config_root: "{{ ansible_facts.env.HOME }}/.openclaw"
+    skills_dir: "{{ ansible_facts.env.HOME }}/.openclaw/skills"
+    agents_dir: null # OpenClaw agents work very differently
+    mcp_file: null
+    mcp_format: json
+    mcp_key: null
+    mcp_env_format: "${VAR}"
+    mcp_command_format: separate
+    name_transform: preserve
+    transform_content: false
+    instructions_file: AGENTS.md
+    supports_skill_mcp: false
+    cleanup_orphaned_skills: false # Preserve existing local OpenClaw skills outside Ansible's source list

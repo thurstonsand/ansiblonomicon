@@ -145,7 +145,7 @@ agent_harness_cache_dir: "{{ ansible_facts.env.HOME }}/.cache/ansiblonomicon-har
 
 #### Agent Configuration (`vars/agents.yml`)
 
-All five agents are configured:
+All six agents are configured:
 
 ```yaml
 agent_harness_agents:

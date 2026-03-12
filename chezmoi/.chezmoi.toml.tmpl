@@ -2,6 +2,7 @@
 # This file is a template that generates ~/.config/chezmoi/chezmoi.toml
 
 sourceDir = {{ .chezmoi.sourceDir | quote }}
+umask = 0o22
 
 [edit]
   command = "code"

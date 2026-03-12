@@ -7,6 +7,11 @@ vim.o.updatetime = 250
 -- sync yank with system clipboard
 vim.o.clipboard = "unnamedplus"
 
+-- readable soft wrapping for long lines
+vim.o.wrap = true
+vim.o.linebreak = true
+vim.o.breakindent = true
+
 -- honor pre-detected terminal background
 local terminal_bg = os.getenv("TERMINAL_BG")
 if terminal_bg == "light" or terminal_bg == "dark" then

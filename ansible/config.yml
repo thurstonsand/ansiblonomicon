@@ -55,13 +55,16 @@ agent_harness_target_agents:
   - codex
   - opencode
   - pi
+  - openclaw
 
 agent_harness_sources:
   - repo: anthropics/claude-plugins-official
     pull: true
     plugins:
-      - frontend-design
-      - code-simplifier
+      - name: frontend-design
+        target_agents: [claude, amp, codex, opencode, pi]
+      - name: code-simplifier
+        target_agents: [claude, amp, codex, opencode, pi]
   #   # for use in testing if needed
   #   - name: commit-commands
   #   target_agents: [claude] # commands only for Claude (testing)
@@ -92,10 +95,12 @@ agent_harness_sources:
     pull: true
     plugins:
       - name: agent-browser
+        target_agents: [claude, amp, codex, opencode, pi]
         skills: skills
         exclude_skills:
           - dogfood
           - slack
+          - vercel-sandbox
 
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
@@ -103,5 +108,12 @@ agent_harness_sources:
         target_agents: [amp]
         exclude_skills:
           - tmux-interactive-sessions
-      - project-management
+      - name: project-management
+        target_agents: [openclaw]
+        exclude_skills:
+          - designing-systems
+          - humanizer
+          - pr
+      - name: project-management
+        target_agents: [claude, amp, codex, opencode, pi]
       - homelab

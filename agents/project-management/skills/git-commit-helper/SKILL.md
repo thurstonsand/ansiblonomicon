@@ -1,215 +1,107 @@
 ---
 name: git-commit-helper
-description: Generate descriptive commit messages by analyzing git diffs. Use when the user asks for help writing commit messages or reviewing staged changes.
+description: Generate descriptive commit messages by analyzing git diffs. Use when the user asks for help commiting code, writing commit messages, or reviewing staged changes.
 ---
 
 # Git Commit Helper
 
-## Quick start
+## Purpose
 
-Analyze staged changes and generate commit message:
+Commit messages are trust artifacts. A well-written commit should give the reader enough context to decide whether they need to review the code at all. Capture intent, decisions, and verification — not just what files changed.
 
-```bash
-# View staged changes
-git diff --staged
+## Gather Context
 
-# Generate commit message based on changes
-# (Claude will analyze the diff and suggest a message)
-```
-
-## Commit message format
-
-Follow conventional commits format:
-
-```
-<type>(<scope>): <description>
-
-[optional body]
-
-[optional footer]
-```
-
-### Types
-
-- **feat**: New feature
-- **fix**: Bug fix
-- **docs**: Documentation changes
-- **style**: Code style changes (formatting, missing semicolons)
-- **refactor**: Code refactoring
-- **test**: Adding or updating tests
-- **chore**: Maintenance tasks
-
-### Examples
-
-**Feature commit:**
-
-```
-feat(auth): add JWT authentication
-
-Implement JWT-based authentication system with:
-- Login endpoint with token generation
-- Token validation middleware
-- Refresh token support
-```
-
-**Bug fix:**
-
-```
-fix(api): handle null values in user profile
-
-Prevent crashes when user profile fields are null.
-Add null checks before accessing nested properties.
-```
-
-**Refactor:**
-
-```
-refactor(database): simplify query builder
-
-Extract common query patterns into reusable functions.
-Reduce code duplication in database layer.
-```
-
-## Analyzing changes
-
-Review what's being committed:
+Before drafting the message, collect:
 
 ```bash
-# Show files changed
-git status
-
-# Show detailed changes
-git diff --staged
-
-# Show statistics
+# What's staged
 git diff --staged --stat
-
-# Show changes for specific file
-git diff --staged path/to/file
-```
-
-## Commit message guidelines
-
-**DO:**
-
-- Use imperative mood ("add feature" not "added feature")
-- Keep first line under 50 characters
-- Capitalize first letter
-- No period at end of summary
-- Explain WHY not just WHAT in body
-
-**DON'T:**
-
-- Use vague messages like "update" or "fix stuff"
-- Include technical implementation details in summary
-- Write paragraphs in summary line
-- Use past tense
-
-## Multi-file commits
-
-When committing multiple related changes:
-
-```
-refactor(core): restructure authentication module
-
-- Move auth logic from controllers to service layer
-- Extract validation into separate validators
-- Update tests to use new structure
-- Add integration tests for auth flow
-
-Breaking change: Auth service now requires config object
-```
-
-## Scope examples
-
-**Frontend:**
-
-- `feat(ui): add loading spinner to dashboard`
-- `fix(form): validate email format`
-
-**Backend:**
-
-- `feat(api): add user profile endpoint`
-- `fix(db): resolve connection pool leak`
-
-**Infrastructure:**
-
-- `chore(ci): update Node version to 20`
-- `feat(docker): add multi-stage build`
-
-## Breaking changes
-
-Indicate breaking changes clearly:
-
-```
-feat(api)!: restructure API response format
-
-BREAKING CHANGE: All API responses now follow JSON:API spec
-
-Previous format:
-{ "data": {...}, "status": "ok" }
-
-New format:
-{ "data": {...}, "meta": {...} }
-
-Migration guide: Update client code to handle new response structure
-```
-
-## Template workflow
-
-Before you start drafting, read the full text of a few recent commits
-(e.g., `git log -5`) so you can mirror the repository's tone and level of
-detail.
-
-1. **Review changes**: `git diff --staged`
-2. **Identify type**: Is it feat, fix, refactor, etc.?
-3. **Determine scope**: What part of the codebase?
-4. **Write summary**: Brief, imperative description
-5. **Add body**: Explain why and what impact
-6. **Note breaking changes**: If applicable
-
-## Interactive commit helper
-
-Use `git add -p` for selective staging:
-
-```bash
-# Stage changes interactively
-git add -p
-
-# Review what's staged
 git diff --staged
 
-# Commit with message
-git commit -m "type(scope): description"
+# Recent commits for tone and convention
+git log --oneline -5
 ```
 
-## Amending commits
+Read the diff carefully. Understand *why* the change was made, not just what changed. If you made the changes yourself, you already have this context — use it.
 
-Fix the last commit message:
+## Commit Message Format
+
+```
+<type>(<scope>): <summary>
+
+Why: <problem solved or request fulfilled>
+Approach: <what was done and key decisions made>
+Verified: <how correctness was confirmed>
+
+[Tradeoffs: <alternatives considered, things intentionally left out>]
+[Breaking: <what breaks and migration path>]
+```
+
+### The Header
+
+Follow conventional commits. Keep the summary under 50 characters, imperative mood.
+
+**Types:** feat, fix, docs, style, refactor, test, chore
+
+### Why
+
+One or two sentences explaining the motivation. What was broken, missing, or requested? This should make sense to someone who wasn't in the conversation where the work was discussed.
+
+### Approach
+
+What you did and, critically, *why you did it that way*. Include:
+
+- Design decisions that weren't obvious
+- Patterns chosen and why (especially if the codebase has multiple precedents)
+- Scope boundaries — what you intentionally didn't change
+
+This is where agent context gets preserved. If you chose approach A over approach B, say so. That reasoning exists in your working memory right now and will be lost after the session ends.
+
+### Verified
+
+How you know the change is correct. Be specific:
+
+- "Added 3 unit tests covering the new parsing logic, all passing"
+- "Ran the full test suite (142 tests), no regressions"
+- "Manually tested the endpoint with curl, confirmed 200 response with expected payload"
+- "Type-checked with tsc --noEmit, no errors"
+
+If verification was limited, say that too: "No existing test suite — verified by running the script against sample input." Honest verification is more useful than vague confidence.
+
+### Tradeoffs (optional)
+
+Include when you made a deliberate choice between reasonable alternatives. Skip for straightforward changes where there was one obvious path.
+
+### Breaking (optional)
+
+If the change breaks existing behavior, state what breaks and how to migrate. Use the `!` suffix in the header too: `feat(api)!: restructure response format`
+
+## Proportionality
+
+Match message depth to change significance. A dependency bump doesn't need a Tradeoffs section. A major architectural change deserves every section plus maybe an ADR. Use judgment.
+
+## Creating the Commit
 
 ```bash
-# Amend commit message only
-git commit --amend
-
-# Amend and add more changes
-git add forgotten-file.js
-git commit --amend --no-edit
+git commit -m "<header>" -m "<body>"
 ```
 
-## Best practices
+For longer messages, prefer writing to a temp file:
 
-1. **Atomic commits** - One logical change per commit
-2. **Test before commit** - Ensure code works
-3. **Reference issues** - Include issue numbers if applicable
-4. **Keep it focused** - Don't mix unrelated changes
-5. **Write for humans** - Future you will read this
+```bash
+cat > /tmp/commit-msg.txt << 'EOF'
+<full message>
+EOF
+git commit -F /tmp/commit-msg.txt
+```
 
-## Commit message checklist
+## Checklist
 
-- [ ] Type is appropriate (feat/fix/docs/etc.)
-- [ ] Scope is specific and clear
-- [ ] Summary is under 50 characters
-- [ ] Summary uses imperative mood
-- [ ] Body explains WHY not just WHAT
-- [ ] Breaking changes are clearly marked
-- [ ] Related issue numbers are included
+Before committing:
+
+- [ ] Header follows conventional commits format
+- [ ] Why section explains motivation, not just mechanics
+- [ ] Approach captures decisions that would otherwise be lost
+- [ ] Verified section is specific about what was tested and what passed
+- [ ] Message is proportional to the change size
+- [ ] Read the message as if you're seeing it in 6 months — does it make sense?

@@ -10,7 +10,7 @@ Model versions and identifiers are duplicated across multiple files:
 - `chezmoi/dot_config/opencode/opencode.jsonc.tmpl`
 - `chezmoi/private_dot_pi/agent/settings.json.tmpl`
 - `chezmoi/private_dot_pi/agent/models.json.tmpl`
-- `chezmoi/dot_codex/config.toml.tmpl`
+- `chezmoi/dot_codex/private_config.toml.tmpl`
 - Various VS Code/Cursor/Windsurf settings templates
 
 When model versions change (e.g., `claude-sonnet-4-5-20250929` → new dated release), updates must be made in multiple places.
@@ -82,7 +82,7 @@ anthropic:
 | Update `opencode/opencode.jsonc.tmpl`                   | ✅ Done    |                                                    |
 | Update `private_dot_pi/agent/settings.json.tmpl`        | ✅ Done    | Pi now reads centralized OpenAI model definitions  |
 | Update `private_dot_pi/agent/models.json.tmpl`          | ✅ Done    | Includes GPT Codex Spark in generated catalog      |
-| Update `dot_codex/config.toml.tmpl`                     | ✅ Done    | Uses centralized OpenAI defaults                   |
+| Update `dot_codex/private_config.toml.tmpl`             | ✅ Done    | Uses centralized OpenAI defaults                   |
 | Update `io.datasette.llm/extra-openai-models.yaml.tmpl` | ✅ Done    |                                                    |
 | Update Ansible playbooks                                | ✅ Done    | Added `include_vars: models.yml`                   |
 | Test `chezmoi apply`                                    | ❓ Pending | Verify templates render correctly                  |
@@ -116,7 +116,7 @@ anthropic:
 - `chezmoi/dot_config/opencode/opencode.jsonc.tmpl`
 - `chezmoi/private_dot_pi/agent/settings.json.tmpl`
 - `chezmoi/private_dot_pi/agent/models.json.tmpl`
-- `chezmoi/dot_codex/config.toml.tmpl`
+- `chezmoi/dot_codex/private_config.toml.tmpl`
 - `chezmoi/.chezmoitemplates/vscode-settings`
 - `chezmoi/private_Library/.../Code/User/settings.json.tmpl`
 - `chezmoi/private_Library/.../Cursor/User/settings.json.tmpl`
