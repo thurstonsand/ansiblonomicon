@@ -9,6 +9,9 @@ vim.keymap.set("n", "<leader>dc", function()
   vim.notify("Copied " .. #diagnostics .. " diagnostic(s)", vim.log.levels.INFO)
 end, { desc = "Copy Diagnostics to Clipboard" })
 
+vim.keymap.set("n", "gb", "<Cmd>bnext<CR>", { desc = "Next Buffer" })
+vim.keymap.set("n", "gB", "<Cmd>bprevious<CR>", { desc = "Prev Buffer" })
+
 -- remap background toggle from <leader>ub to <leader>uB so blame can use <leader>ub
 -- runs after VeryLazy to ensure Snacks keymaps are already registered
 vim.api.nvim_create_autocmd("User", {
