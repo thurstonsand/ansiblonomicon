@@ -7,14 +7,9 @@
     state: directory
     mode: "0755"
 
-- name: Clone skill repositories # noqa: latest[git]
-  ansible.builtin.git:
-    repo: "https://github.com/{{ item.repo }}.git"
-    dest: "{{ agent_harness_cache_dir }}/{{ item.repo | replace('/', '--') }}"
-    update: "{{ item.pull }}"
-    depth: 1
-    version: HEAD
-  loop: "{{ agent_harness_sources | agent_harness_get_git_sources }}"
+- name: Sync skill repositories # noqa: latest[git]
+  ansible.builtin.include_tasks: sync_single_git_repo.yml
+  loop: "{{ agent_harness_sources | selectattr('repo', 'defined') | list }}"
   loop_control:
-    label: "{{ item.repo }}"
-  diff: false
+    loop_var: agent_harness_git_source
+    label: "{{ agent_harness_git_source.repo }}"

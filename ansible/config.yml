@@ -49,20 +49,18 @@ cargo_packages: "{{ (cargo_packages_base | default([])) + (cargo_packages_extra 
 gem_packages: "{{ (gem_packages_base | default([])) + (gem_packages_extra | default([])) }}"
 
 # Agent Harness configuration
-agent_harness_target_agents:
+agent_harness_target_agents_base:
   - claude
   - amp
   - codex
   - opencode
   - pi
-  - openclaw
+agent_harness_target_agents: "{{ (agent_harness_target_agents_base | default([])) + (agent_harness_target_agents_extra | default([])) }}"
 
 agent_harness_sources:
   - repo: anthropics/claude-plugins-official
     pull: true
     plugins:
-      - name: frontend-design
-        target_agents: [claude, amp, codex, opencode, pi]
       - name: code-simplifier
         target_agents: [claude, amp, codex, opencode, pi]
   #   # for use in testing if needed
@@ -101,6 +99,31 @@ agent_harness_sources:
           - dogfood
           - slack
           - vercel-sandbox
+
+  - repo: pbakaus/impeccable
+    pull: true
+    plugins:
+      - name: impeccable
+        path: .claude
+        skills: skills
+        exclude_skills:
+          - adapt # adapt layouts/interaction patterns for other devices and contexts
+          - animate # add purposeful motion and transitions
+          - audit # perform structured UI quality/a11y/performance review
+          - bolder # push a timid design toward a stronger visual direction
+          - clarify # improve unclear UX copy and messaging
+          - colorize # introduce more strategic, intentional color
+          - critique # provide design/UX critique with strengths and weaknesses
+          - delight # add small moments of joy and personality
+          - distill # strip the interface down to its essential elements
+          - extract # pull repeated patterns into reusable components
+          - harden # improve resilience, edge cases, i18n, and error handling
+          - normalize # align the UI with design-system consistency
+          - onboard # design or improve onboarding flows
+          - optimize # improve performance and implementation efficiency
+          - polish # do a final refinement pass before shipping
+          - quieter # tone down an overly loud visual treatment
+  #          - teach-impeccable # gather design context and write persistent project guidance
 
   - local: "{{ playbook_dir }}/../../agents"
     plugins:

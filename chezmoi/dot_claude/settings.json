@@ -15,10 +15,7 @@
       "Skill(updating-documentation-for-changes)",
       "Skill(git-commit-helper)"
     ],
-    "deny": [
-      "Read(**/.env)",
-      "Read(**/.env.*)"
-    ],
+    "deny": ["Read(**/.env)", "Read(**/.env.*)"],
     "defaultMode": "acceptEdits"
   },
   "statusLine": {
@@ -40,5 +37,6 @@
     ]
   },
   "alwaysThinkingEnabled": true,
-  "skipDangerousModePermissionPrompt": true
+  "skipDangerousModePermissionPrompt": true,
+  "voiceEnabled": true
 }

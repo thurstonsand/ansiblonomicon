@@ -28,12 +28,18 @@ _evalcache() {
 }
 
 # =============================================================================
-# SECTION 2: Environment variables and PATH
+# SECTION 2: Environment variables, aliases, and PATH
 # =============================================================================
 
+# Start tmux from a clean direnv root so the server never inherits a project env.
+# Use a function rather than an alias so it also works in non-interactive zsh.
+tmux() {
+  direnv exec / "$(whence -p tmux)" "$@"
+}
 
 # Environment variables
 export XDG_CONFIG_HOME="$HOME/.config"
+export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
 {{- if eq .chezmoi.hostname "clawdbot" }}
 export EDITOR="vim"
 export DOCKER_HOST=ssh://admin@truenas.thurstons.house
@@ -46,7 +52,6 @@ export ELEVENLABS_API_KEY="{{ template "elevenlabs-api-key" . }}"
 export PARCEL_API_KEY="{{ template "parcel-api-key" . }}"
 # export CLAWDBOT_GATEWAY_PASSWORD="{{ template "clawdbot-gateway-password" . }}"
 export KAGI_API_KEY="{{ template "kagi-api-key" . }}"
-export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
 export VENICE_API_KEY="{{ template "venice-api-key" . }}"
 export VOYAGE_API_KEY="{{ template "voyage-api-key" . }}"
 

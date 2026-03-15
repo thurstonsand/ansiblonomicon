@@ -20,7 +20,7 @@ brew "nextdns"
 brew "pngpaste"
 brew "prettyping"
 brew "ripgrep"
-brew "softnet"
+brew "cirruslabs/cli/softnet"
 brew "sqlite-utils"
 brew "starship"
 brew "tldr"
@@ -46,7 +46,7 @@ brew "lazygit"
 cask "git-credential-manager"
 
 # Languages
-brew "bun"
+brew "oven-sh/bun/bun"
 brew "cmake"
 brew "deno"
 brew "go"
@@ -70,7 +70,7 @@ brew "rclone"
 brew "restic"
 brew "sshpass"
 brew "storj-uplink"
-brew "tart"
+brew "cirruslabs/cli/tart"
 
 cask "cloudflare-warp"
 cask "gcloud-cli"
@@ -160,6 +160,7 @@ cask "setapp"
 cask "wispr-flow"
 
 mas "Copilot", id: 1447330651
+mas "Current Reader", id: 6758530974
 mas "Mela", id: 1568924476
 mas "Parcel", id: 375589283
 mas "Remind Me Faster", id: 985555908

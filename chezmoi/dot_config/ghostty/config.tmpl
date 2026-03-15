@@ -15,6 +15,10 @@ quick-terminal-position = bottom
 quick-terminal-animation-duration = 0.08
 
 shell-integration-features = true
+window-inherit-working-directory = true
+tab-inherit-working-directory = true
+split-inherit-working-directory = true
+split-preserve-zoom = navigation
 
 macos-option-as-alt = true
 macos-non-native-fullscreen = visible-menu
@@ -29,3 +33,9 @@ keybind = global:control+option+.=toggle_quick_terminal
 keybind = cmd+enter=ignore
 keybind = shift+enter=unbind
 keybind = cmd+shift+p=toggle_command_palette
+
+# prefix-style pane actions (keeps top-level cmd bindings uncluttered)
+keybind = cmd+shift+a>z=toggle_split_zoom
+keybind = cmd+shift+a>-=new_split:down
+keybind = cmd+shift+a>minus=new_split:down
+keybind = cmd+shift+a>slash=new_split:right

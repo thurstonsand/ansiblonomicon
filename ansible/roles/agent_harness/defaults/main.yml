@@ -28,5 +28,9 @@ agent_harness_sources: []
 # true: always pull latest (use with -e agent_harness_update=true)
 agent_harness_update: false
 
+# Minimum time between remote update checks for git sources with pull enabled
+# Defaults to once per day
+agent_harness_update_interval_seconds: 86400
+
 # Where to cache git repos
 agent_harness_cache_dir: "{{ ansible_facts.env.HOME }}/.cache/ansiblonomicon-harness"

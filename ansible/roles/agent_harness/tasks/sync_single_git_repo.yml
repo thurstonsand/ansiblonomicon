@@ -1,0 +1,44 @@
+---
+- name: Check whether repository is already cached
+  ansible.builtin.stat:
+    path: "{{ agent_harness_cache_dir }}/{{ agent_harness_git_source.repo | replace('/', '--') }}/.git"
+  register: agent_harness_repo_git_dir
+
+- name: Check last repository update timestamp
+  ansible.builtin.stat:
+    path: "{{ agent_harness_cache_dir }}/{{ agent_harness_git_source.repo | replace('/', '--') }}.last_update"
+  register: agent_harness_repo_update_stamp
+
+- name: Compute repository update policy
+  ansible.builtin.set_fact:
+    agent_harness_repo_pull_enabled: "{{ agent_harness_git_source.pull | default(agent_harness_update) | bool }}"
+    agent_harness_repo_should_update: >-
+      {{
+        (agent_harness_git_source.pull | default(agent_harness_update) | bool)
+        and agent_harness_repo_git_dir.stat.exists
+        and (
+          (not agent_harness_repo_update_stamp.stat.exists)
+          or (
+            (ansible_date_time.epoch | int) - (agent_harness_repo_update_stamp.stat.mtime | int)
+            >= (agent_harness_update_interval_seconds | int)
+          )
+        )
+      }}
+
+- name: Clone or update skill repository # noqa: latest[git]
+  ansible.builtin.git:
+    repo: "https://github.com/{{ agent_harness_git_source.repo }}.git"
+    dest: "{{ agent_harness_cache_dir }}/{{ agent_harness_git_source.repo | replace('/', '--') }}"
+    update: "{{ agent_harness_repo_should_update }}"
+    depth: 1
+    version: HEAD
+  diff: false
+
+- name: Record repository sync timestamp
+  ansible.builtin.file:
+    path: "{{ agent_harness_cache_dir }}/{{ agent_harness_git_source.repo | replace('/', '--') }}.last_update"
+    state: touch
+    mode: "0644"
+  when:
+    - agent_harness_repo_pull_enabled
+    - not agent_harness_repo_git_dir.stat.exists or agent_harness_repo_should_update

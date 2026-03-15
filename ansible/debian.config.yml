@@ -142,6 +142,10 @@ bun_global_packages_extra:
 cargo_packages_extra:
   - bob-nvim
 
+# Additional agent harness targets for clawdbot (extends agent_harness_target_agents_base)
+agent_harness_target_agents_extra:
+  - openclaw
+
 # Additional Go CLI tools for clawdbot (extends go_tools_base)
 go_tools_extra:
   - github.com/steipete/gifgrep/cmd/gifgrep
