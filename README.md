@@ -82,12 +82,12 @@ See [nixonomicon/docs/designs/nix-to-chezmoi-ansible-migration.md](https://githu
 
 SSH aliases are configured via chezmoi (`~/.ssh/config`) and use `ssh-smart-proxy` to prefer LAN access with Cloudflare Access fallback:
 
-| Target                                                | Alias          | Description                                 |
-| ----------------------------------------------------- | -------------- | ------------------------------------------- |
-| `192.168.1.68:22` / `truenas-ssh.thurstons.house`     | `ssh truenas`  | TrueNAS SCALE server (Docker stacks, media) |
-| `192.168.1.90:22` / `clawdbot-ssh.thurstons.house`    | `ssh clawdbot` | OpenClaw AI agent VM                        |
-| `192.168.1.89:22222` / `haos-ssh.thurstons.house`     | `ssh haos`     | Home Assistant OS                           |
-| `192.168.1.1:22` / `udmp-ssh.thurstons.house`         | `ssh udmp`     | UniFi Dream Machine Pro                     |
+| Target                                             | Alias          | Description                                 |
+| -------------------------------------------------- | -------------- | ------------------------------------------- |
+| `192.168.1.68:22` / `truenas-ssh.thurstons.house`  | `ssh truenas`  | TrueNAS SCALE server (Docker stacks, media) |
+| `192.168.1.90:22` / `clawdbot-ssh.thurstons.house` | `ssh clawdbot` | OpenClaw AI agent VM                        |
+| `192.168.1.89:22222` / `haos-ssh.thurstons.house`  | `ssh haos`     | Home Assistant OS                           |
+| `192.168.1.1:22` / `udmp-ssh.thurstons.house`      | `ssh udmp`     | UniFi Dream Machine Pro                     |
 
 ## Platform Support
 

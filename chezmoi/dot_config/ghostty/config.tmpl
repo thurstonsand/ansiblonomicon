@@ -34,6 +34,17 @@ keybind = cmd+enter=ignore
 keybind = shift+enter=unbind
 keybind = cmd+shift+p=toggle_command_palette
 
+# ctrl-hjkl navigates Ghostty splits unless this surface is in the nvim key table
+keybind = ctrl+h=goto_split:left
+keybind = ctrl+j=goto_split:down
+keybind = ctrl+k=goto_split:up
+keybind = ctrl+l=goto_split:right
+keybind = nvim/
+keybind = nvim/ctrl+h=text:\x08
+keybind = nvim/ctrl+j=text:\x0a
+keybind = nvim/ctrl+k=text:\x0b
+keybind = nvim/ctrl+l=text:\x0c
+
 # prefix-style pane actions (keeps top-level cmd bindings uncluttered)
 keybind = cmd+shift+a>z=toggle_split_zoom
 keybind = cmd+shift+a>-=new_split:down

@@ -1,217 +1,279 @@
+import Foundation
 import AppKit
 
-// Four-char codes from Ghostty's scripting dictionary (sdef).
-// Suite code: Ghst
-
-// MARK: - FourCharCode helpers
-
-func fourCC(_ s: String) -> FourCharCode {
-    var result: FourCharCode = 0
-    for byte in s.utf8.prefix(4) {
-        result = (result << 8) | FourCharCode(byte)
-    }
-    return result
+func usage() -> Never {
+    fputs(
+        "usage: ghostty-nav activate <table> | deactivate | move <left|down|up|right> | tab-terminal-count | split <left|right|up|down> [--cwd <path>] [--command <string>] [--focus <new|original>] | resize <left|down|up|right> (--pixels <n> | --percent <n>) | toggle-zoom\n",
+        stderr
+    )
+    exit(2)
 }
-
-let kGhosttyBundleID = "com.mitchellh.ghostty"
-
-// Class codes
-let cWindow = fourCC("Gwnd")
-let cTab = fourCC("Gtab")
-let cTerminal = fourCC("Gtrm")
-
-// Property codes
-let pFrontWindow = fourCC("GFWn")
-let pSelectedTab = fourCC("GWsT")
-let pFocusedTerminal = fourCC("GTfT")
-let pName = fourCC("pnam")
-
-// Command codes
-let kPerformAction = AEEventID(fourCC("PfAc"))
-let kGhosttyEventClass = AEEventClass(fourCC("Ghst"))
-
-// Parameter codes
-let pOnTerminal = fourCC("GonT")
-
-// MARK: - Direction
 
 enum Direction: String {
-    case left, down, up, right
+    case left
+    case down
+    case up
+    case right
 }
 
-// MARK: - Apple Event helpers
-
-func ghosttyAddress() -> NSAppleEventDescriptor {
-    NSAppleEventDescriptor(bundleIdentifier: kGhosttyBundleID)
+enum FocusTarget: String {
+    case new
+    case original
 }
 
-/// Build the object specifier chain: focused terminal of selected tab of front window
-func focusedTerminalSpecifier() -> NSAppleEventDescriptor {
-    let frontWindow = NSAppleEventDescriptor(
-        descriptorType: typeObjectSpecifier,
-        data: packObjectSpecifier(
-            wantClass: cWindow,
-            container: NSAppleEventDescriptor.null(),
-            keyForm: FourCharCode(formPropertyID),
-            keyData: NSAppleEventDescriptor(typeCode: pFrontWindow)
-        )
-    )!
-
-    let selectedTab = NSAppleEventDescriptor(
-        descriptorType: typeObjectSpecifier,
-        data: packObjectSpecifier(
-            wantClass: cTab,
-            container: frontWindow,
-            keyForm: FourCharCode(formPropertyID),
-            keyData: NSAppleEventDescriptor(typeCode: pSelectedTab)
-        )
-    )!
-
-    return NSAppleEventDescriptor(
-        descriptorType: typeObjectSpecifier,
-        data: packObjectSpecifier(
-            wantClass: cTerminal,
-            container: selectedTab,
-            keyForm: FourCharCode(formPropertyID),
-            keyData: NSAppleEventDescriptor(typeCode: pFocusedTerminal)
-        )
-    )!
+enum ResizeAmount {
+    case pixels(Int)
+    case percent(Double)
 }
 
-func packObjectSpecifier(
-    wantClass: FourCharCode,
-    container: NSAppleEventDescriptor,
-    keyForm: FourCharCode,
-    keyData: NSAppleEventDescriptor
-) -> Data? {
-    let record = NSAppleEventDescriptor.record()
-    record.setDescriptor(NSAppleEventDescriptor(typeCode: wantClass), forKeyword: AEKeyword(keyAEDesiredClass))
-    record.setDescriptor(container, forKeyword: AEKeyword(keyAEContainer))
-    record.setDescriptor(NSAppleEventDescriptor(enumCode: keyForm), forKeyword: AEKeyword(keyAEKeyForm))
-    record.setDescriptor(keyData, forKeyword: AEKeyword(keyAEKeyData))
-    return record.coerce(toDescriptorType: typeObjectSpecifier)?.data
+enum Command {
+    case activate(String)
+    case deactivate
+    case move(Direction)
+    case tabTerminalCount
+    case split(Direction, cwd: String?, command: String?, focus: FocusTarget)
+    case resize(Direction, amount: ResizeAmount)
+    case toggleZoom
 }
 
-func sendEvent(_ event: NSAppleEventDescriptor) -> NSAppleEventDescriptor? {
-    let reply: NSAppleEventDescriptor
-    do {
-        reply = try event.sendEvent(
-            options: [.waitForReply],
-            timeout: TimeInterval(5)
-        )
-    } catch {
-        fputs("error: \(error.localizedDescription)\n", stderr)
-        exit(1)
+func parseDirection(_ rawValue: String) -> Direction {
+    guard let direction = Direction(rawValue: rawValue) else { usage() }
+    return direction
+}
+
+func parseFocusTarget(_ rawValue: String) -> FocusTarget {
+    guard let target = FocusTarget(rawValue: rawValue) else { usage() }
+    return target
+}
+
+func parseInt(_ rawValue: String) -> Int {
+    guard let value = Int(rawValue) else { usage() }
+    return value
+}
+
+func parseDouble(_ rawValue: String) -> Double {
+    guard let value = Double(rawValue) else { usage() }
+    return value
+}
+
+func parseCommand(_ args: [String]) -> Command {
+    guard args.count >= 2 else { usage() }
+
+    switch args[1] {
+    case "activate":
+        guard args.count == 3 else { usage() }
+        return .activate(args[2])
+    case "deactivate":
+        guard args.count == 2 else { usage() }
+        return .deactivate
+    case "move":
+        guard args.count == 3 else { usage() }
+        return .move(parseDirection(args[2]))
+    case "tab-terminal-count":
+        guard args.count == 2 else { usage() }
+        return .tabTerminalCount
+    case "split":
+        guard args.count >= 3 else { usage() }
+        let direction = parseDirection(args[2])
+        var cwd: String?
+        var command: String?
+        var focus: FocusTarget = .new
+
+        var index = 3
+        while index < args.count {
+            switch args[index] {
+            case "--cwd":
+                guard index + 1 < args.count else { usage() }
+                cwd = args[index + 1]
+                index += 2
+            case "--command":
+                guard index + 1 < args.count else { usage() }
+                command = args[index + 1]
+                index += 2
+            case "--focus":
+                guard index + 1 < args.count else { usage() }
+                focus = parseFocusTarget(args[index + 1])
+                index += 2
+            default:
+                usage()
+            }
+        }
+
+        return .split(direction, cwd: cwd, command: command, focus: focus)
+    case "resize":
+        guard args.count >= 5 else { usage() }
+        let direction = parseDirection(args[2])
+        var amount: ResizeAmount?
+
+        var index = 3
+        while index < args.count {
+            switch args[index] {
+            case "--pixels":
+                guard index + 1 < args.count, amount == nil else { usage() }
+                amount = .pixels(parseInt(args[index + 1]))
+                index += 2
+            case "--percent":
+                guard index + 1 < args.count, amount == nil else { usage() }
+                amount = .percent(parseDouble(args[index + 1]))
+                index += 2
+            default:
+                usage()
+            }
+        }
+
+        guard let amount else { usage() }
+        return .resize(direction, amount: amount)
+    case "toggle-zoom":
+        guard args.count == 2 else { usage() }
+        return .toggleZoom
+    default:
+        usage()
     }
-    if let errorNum = reply.paramDescriptor(forKeyword: AEKeyword(keyErrorNumber)),
-       errorNum.int32Value != 0
-    {
-        let errorMsg =
-            reply.paramDescriptor(forKeyword: AEKeyword(keyErrorString))?.stringValue
-                ?? "unknown error"
-        fputs("error: \(errorMsg) (\(errorNum.int32Value))\n", stderr)
-        exit(1)
-    }
-    return reply
 }
 
-// MARK: - Terminal name query
-
-func getTerminalName() -> String {
-    let terminal = focusedTerminalSpecifier()
-
-    // Build a "get name of <terminal>" event
-    let nameSpec = NSAppleEventDescriptor(
-        descriptorType: typeObjectSpecifier,
-        data: packObjectSpecifier(
-            wantClass: fourCC("prop"),
-            container: terminal,
-            keyForm: FourCharCode(formPropertyID),
-            keyData: NSAppleEventDescriptor(typeCode: pName)
+func executeAppleScript(_ source: String) throws -> NSAppleEventDescriptor {
+    var error: NSDictionary?
+    guard let script = NSAppleScript(source: source) else {
+        throw NSError(
+            domain: "ghostty-nav",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "failed to compile AppleScript"]
         )
-    )!
-
-    let event = NSAppleEventDescriptor.appleEvent(
-        withEventClass: AEEventClass(kAECoreSuite),
-        eventID: AEEventID(kAEGetData),
-        targetDescriptor: ghosttyAddress(),
-        returnID: AEReturnID(kAutoGenerateReturnID),
-        transactionID: AETransactionID(kAnyTransactionID)
-    )
-    event.setParam(nameSpec, forKeyword: keyDirectObject)
-
-    guard let reply = sendEvent(event),
-        let result = reply.paramDescriptor(forKeyword: keyDirectObject)?.stringValue
-    else {
-        return ""
     }
+
+    let result = script.executeAndReturnError(&error)
+    if let error {
+        throw NSError(domain: "ghostty-nav", code: 1, userInfo: error as? [String: Any])
+    }
+
     return result
 }
 
-// MARK: - Navigation commands
-
-func performAction(_ action: String, on terminal: NSAppleEventDescriptor) {
-    let event = NSAppleEventDescriptor.appleEvent(
-        withEventClass: kGhosttyEventClass,
-        eventID: kPerformAction,
-        targetDescriptor: ghosttyAddress(),
-        returnID: AEReturnID(kAutoGenerateReturnID),
-        transactionID: AETransactionID(kAnyTransactionID)
-    )
-    event.setParam(NSAppleEventDescriptor(string: action), forKeyword: keyDirectObject)
-    event.setParam(terminal, forKeyword: pOnTerminal)
-    _ = sendEvent(event)
+func escapeAppleScriptString(_ value: String) -> String {
+    value
+        .replacingOccurrences(of: "\\", with: "\\\\")
+        .replacingOccurrences(of: "\"", with: "\\\"")
 }
 
-func sendKeystroke(_ dir: Direction) {
-    let keys: [Direction: String] = [.left: "h", .down: "j", .up: "k", .right: "l"]
-    let sysEventsAddr = NSAppleEventDescriptor(bundleIdentifier: "com.apple.systemevents")
-    let event = NSAppleEventDescriptor.appleEvent(
-        withEventClass: AEEventClass(fourCC("prcs")),
-        eventID: AEEventID(fourCC("kprs")),
-        targetDescriptor: sysEventsAddr,
-        returnID: AEReturnID(kAutoGenerateReturnID),
-        transactionID: AETransactionID(kAnyTransactionID)
-    )
-    event.setParam(NSAppleEventDescriptor(string: keys[dir]!), forKeyword: keyDirectObject)
-    event.setParam(NSAppleEventDescriptor(enumCode: fourCC("Kctl")), forKeyword: fourCC("faal"))
-    _ = try? event.sendEvent(options: [.waitForReply], timeout: 5)
-}
-
-func gotoSplit(_ dir: Direction) {
-    performAction("goto_split:\(dir.rawValue)", on: focusedTerminalSpecifier())
-}
-
-func navigate(_ dir: Direction) {
-    let terminal = focusedTerminalSpecifier()
-    let name = getTerminalName()
-
-    // U+200B (zero-width space) is prepended to Neovim's titlestring.
-    // Invisible in the tab/title bar but detectable here.
-    if name.hasPrefix("\u{200B}") {
-        sendKeystroke(dir)
-    } else {
-        performAction("goto_split:\(dir.rawValue)", on: terminal)
+func intValue(from descriptor: NSAppleEventDescriptor) throws -> Int {
+    if let stringValue = descriptor.stringValue?.trimmingCharacters(in: .whitespacesAndNewlines),
+       let intValue = Int(stringValue) {
+        return intValue
     }
+
+    let int32Value = Int(descriptor.int32Value)
+    if int32Value != 0 || descriptor.stringValue == nil {
+        return int32Value
+    }
+
+    throw NSError(
+        domain: "ghostty-nav",
+        code: 1,
+        userInfo: [NSLocalizedDescriptionKey: "failed to decode AppleScript integer result"]
+    )
 }
 
-// MARK: - Main
-
-var args = Array(CommandLine.arguments.dropFirst())
-
-var ghosttyOnly = false
-if args.first == "--ghostty-only" {
-    ghosttyOnly = true
-    args.removeFirst()
+func runGhosttyAction(_ action: String) throws {
+    let escapedAction = escapeAppleScriptString(action)
+    let source = """
+    tell application "Ghostty"
+        set t to focused terminal of selected tab of front window
+        perform action "\(escapedAction)" on t
+    end tell
+    """
+    _ = try executeAppleScript(source)
 }
 
-guard let rawDir = args.first, let dir = Direction(rawValue: rawDir), args.count == 1 else {
-    fputs("usage: ghostty-nav [--ghostty-only] left|down|up|right\n", stderr)
+func tabTerminalCount() throws -> Int {
+    let source = """
+    tell application "Ghostty"
+        return count of terminals of selected tab of front window
+    end tell
+    """
+    return try intValue(from: executeAppleScript(source))
+}
+
+func frontWindowDimension(for direction: Direction) throws -> Int {
+    let axisIndex = (direction == .left || direction == .right) ? 1 : 2
+    let source = """
+    tell application "System Events"
+        tell process "Ghostty"
+            if (count of windows) is 0 then error "Ghostty has no windows"
+            set winSize to size of window 1
+            return item \(axisIndex) of winSize
+        end tell
+    end tell
+    """
+    return try intValue(from: executeAppleScript(source))
+}
+
+func split(direction: Direction, cwd: String?, command: String?, focus: FocusTarget) throws {
+    let escapedCwd = cwd.map(escapeAppleScriptString)
+    let escapedCommand = command.map(escapeAppleScriptString)
+    let focusTarget = focus.rawValue == FocusTarget.original.rawValue ? "targetTerminal" : "newTerminal"
+
+    let source = """
+    tell application "Ghostty"
+        set targetTerminal to focused terminal of selected tab of front window
+        set cfg to new surface configuration
+    \(escapedCwd.map { "    set initial working directory of cfg to \"\($0)\"" } ?? "")
+    \(escapedCommand.map { "    set command of cfg to \"\($0)\"" } ?? "")
+        set newTerminal to split targetTerminal direction \(direction.rawValue) with configuration cfg
+        focus \(focusTarget)
+    end tell
+    """
+
+    _ = try executeAppleScript(source)
+}
+
+func resize(direction: Direction, amount: ResizeAmount) throws {
+    let pixels: Int
+    switch amount {
+    case .pixels(let value):
+        pixels = value
+    case .percent(let value):
+        guard value > 0 else {
+            throw NSError(
+                domain: "ghostty-nav",
+                code: 1,
+                userInfo: [NSLocalizedDescriptionKey: "resize percent must be greater than 0"]
+            )
+        }
+        let dimension = try frontWindowDimension(for: direction)
+        pixels = max(Int(Double(dimension) * value / 100.0), 1)
+    }
+
+    guard pixels > 0 else {
+        throw NSError(
+            domain: "ghostty-nav",
+            code: 1,
+            userInfo: [NSLocalizedDescriptionKey: "resize pixels must be greater than 0"]
+        )
+    }
+
+    try runGhosttyAction("resize_split:\(direction.rawValue),\(pixels)")
+}
+
+let command = parseCommand(CommandLine.arguments)
+
+do {
+    switch command {
+    case .activate(let table):
+        try runGhosttyAction("activate_key_table:\(table)")
+    case .deactivate:
+        try runGhosttyAction("deactivate_key_table")
+    case .move(let direction):
+        try runGhosttyAction("goto_split:\(direction.rawValue)")
+    case .tabTerminalCount:
+        print(try tabTerminalCount())
+    case .split(let direction, let cwd, let command, let focus):
+        try split(direction: direction, cwd: cwd, command: command, focus: focus)
+    case .resize(let direction, let amount):
+        try resize(direction: direction, amount: amount)
+    case .toggleZoom:
+        try runGhosttyAction("toggle_split_zoom")
+    }
+} catch {
+    fputs("ghostty-nav: \(error.localizedDescription)\n", stderr)
     exit(1)
-}
-
-if ghosttyOnly {
-    gotoSplit(dir)
-} else {
-    navigate(dir)
 }

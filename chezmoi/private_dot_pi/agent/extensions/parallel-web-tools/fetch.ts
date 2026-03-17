@@ -56,19 +56,24 @@ const fetchWebParameters = Type.Object({
     minItems: 1,
     maxItems: 10,
   }),
-  objective: Type.String({
-    description: "What information you want from the provided URLs.",
-  }),
+  objective: Type.Optional(
+    Type.String({
+      description:
+        "Optional extraction goal. When provided, prioritize excerpts relevant to that objective.",
+    }),
+  ),
 });
 
 export const fetchWebTool: ToolDefinition<typeof fetchWebParameters, FetchWebDetails> = {
   name: "fetch_web",
   label: "Fetch Web",
   description:
-    "Extract content from one or more URLs: returns a concise summary and the contents of the payload to a file.",
-  promptSnippet: "Use for extracting the contents of specific web pages.",
+    "Fetch and extract content from one or more specific web pages, saving the extracted payload to temp files.",
+  promptSnippet:
+    "Use when you already have a specific public URL and need the page contents or targeted excerpts.",
   promptGuidelines: [
     "Use fetch_web after search_web or when the user already provided URLs.",
+    "Omit objective when you want broad page extraction; provide it when you want excerpts tailored to a specific question.",
     "Read or search/filter through the saved temp file if you need the full extracted content for deeper follow-up.",
   ],
   parameters: fetchWebParameters,

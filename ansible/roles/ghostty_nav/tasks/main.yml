@@ -1,17 +1,9 @@
 ---
-# Build ghostty-nav Swift binary and compile AppleScripts for BTT.
-# Binary: raw Apple Events for Neovim edge-fallback (--ghostty-only).
-# AppleScripts: pre-compiled .scpt for BTT's in-process runtime (context-aware nav).
+# Build ghostty-nav CLI for Ghostty split navigation.
 
 - name: Ensure ~/.local/bin directory exists
   ansible.builtin.file:
     path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
-    state: directory
-    mode: "0755"
-
-- name: Ensure ~/.local/share/ghostty-nav directory exists
-  ansible.builtin.file:
-    path: "{{ ansible_facts['env']['HOME'] }}/.local/share/ghostty-nav"
     state: directory
     mode: "0755"
 
@@ -45,15 +37,5 @@
     or ghostty_nav_stored is failed
     or (ghostty_nav_stored.content | default('') | b64decode | trim) != ghostty_nav_source.stat.checksum
   changed_when: true
-  notify: Store ghostty-nav build checksum
-
-- name: Compile AppleScripts for BTT
-  ansible.builtin.command:
-    argv:
-      - osacompile
-      - -o
-      - "{{ ansible_facts['env']['HOME'] }}/.local/share/ghostty-nav/{{ item | basename | regex_replace('\\.applescript$', '.scpt') }}"
-      - "{{ item }}"
-  loop: "{{ lookup('fileglob', role_path + '/files/nav-*.applescript', wantlist=True) }}"
-  register: ghostty_nav_compile
-  changed_when: true
+  notify:
+    - Store ghostty-nav build checksum

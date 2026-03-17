@@ -68,13 +68,13 @@ const searchWebParameters = Type.Object({
 export const searchWebTool: ToolDefinition<typeof searchWebParameters, SearchWebDetails> = {
   name: "search_web",
   label: "Search Web",
-  description: "Search the web and return search results with excerpts.",
+  description: "Search the web and return relevant results with excerpts.",
   promptSnippet:
-    "Use for current web search when built-in local tools or knowledge are insufficient, or if up-to-date information is important.",
+    "Use when you need to discover relevant public web sources or check current external information.",
   promptGuidelines: [
-    "Use search_web for up-to-date external information.",
     "Prefer a focused objective and 1-5 specific search queries.",
-    "Use fetch_web on promising URLs when you need extraction beyond snippets.",
+    "Set after_date when recent results matter.",
+    "Use fetch_web when you already have a specific URL and need more than search snippets.",
   ],
   parameters: searchWebParameters,
   execute: async (_toolCallId, params, _signal, onUpdate) => {

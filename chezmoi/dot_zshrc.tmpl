@@ -112,38 +112,68 @@ if [[ -z "$TMUX" && -t 0 ]]; then
   export TERMINAL_BG=$(_detect_terminal_bg)
 fi
 
+# Repair a stale Ghostty nvim key-table activation if Neovim dies badly.
+_ghostty_nav_sentinel_path() {
+  local tty=${TTY-}
+  [[ -n "$tty" ]] || return 1
+
+  local state_home=${XDG_STATE_HOME:-$HOME/.local/state}
+  local tty_key=${tty//\//_}
+  printf '%s/ghostty-nav/%s.active\n' "$state_home" "$tty_key"
+}
+
+_ghostty_nav_precmd() {
+  [[ ${TERM_PROGRAM-} == "ghostty" ]] || return
+  command -v ghostty-nav >/dev/null 2>&1 || return
+
+  local sentinel
+  sentinel=$(_ghostty_nav_sentinel_path) || return
+  [[ -e "$sentinel" ]] || return
+
+  ghostty-nav deactivate >/dev/null 2>&1 || true
+  rm -f -- "$sentinel"
+}
+
+_ide_zsh_ilc() {
+  local script=$1
+  local quoted_script
+  quoted_script=$(printf '%q' "$script")
+  printf '/bin/zsh -ilc %s' "$quoted_script"
+}
+
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _ghostty_nav_precmd
+
 ide() {
-  local dir_name="${PWD##*/}"
-  local dir_hash
-  dir_hash=$(printf '%s' "$PWD" | shasum | cut -c1-8)
-  local session="ide-${dir_name}-${dir_hash}"
-
-  if [[ -n "$TMUX" ]]; then
-    if [[ "$(tmux display-message -p '#{session_name}')" == "$session" ]]; then
-      echo "Already in session '$session'"
-    else
-      echo "Already inside tmux session '$(tmux display-message -p '#{session_name}')'. Detach first."
-    fi
+  [[ ${TERM_PROGRAM-} == "ghostty" ]] || {
+    echo "ide: Ghostty only. Open a Ghostty tab and try again."
     return 1
-  fi
+  }
 
-  if [[ "$1" == "--recreate" ]]; then
-    tmux kill-session -t "$session" 2>/dev/null
-  fi
+  command -v ghostty-nav >/dev/null 2>&1 || {
+    echo "ide: ghostty-nav is not installed."
+    return 1
+  }
 
-  if tmux has-session -t "$session" 2>/dev/null; then
-    tmux attach -t "$session"
-  else
-    tmux new-session -d -s "$session" -n editor -c "$PWD"
-    tmux new-window -t "$session" -n agent -c "$PWD"
-    tmux set-option -w -t "$session":agent @cwd_hash "$dir_hash"
-    tmux select-window -t "$session":editor
-    (sleep 1.0 && \
-      pane_cmd=$(tmux list-panes -t "$session":editor -F '#{pane_current_command}' 2>/dev/null) && \
-      [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
-      tmux send-keys -t "$session":editor "nvim ." Enter
-    ) &!
-    tmux attach -t "$session"
+  local terminal_count
+  terminal_count=$(ghostty-nav tab-terminal-count 2>/dev/null) || return 1
+  [[ "$terminal_count" == "1" ]] || {
+    echo "ide: expected a fresh Ghostty tab with exactly one terminal; open a new tab and try again."
+    return 1
+  }
+
+  local cwd
+  cwd=$(pwd -P) || return 1
+
+  local editor_cmd
+  editor_cmd=$(_ide_zsh_ilc 'nvim .; exec /bin/zsh -il')
+
+  ghostty-nav split left --cwd "$cwd" --command "$editor_cmd" --focus new || return 1
+  ghostty-nav resize right --percent 15 || return 1
+  ghostty-nav toggle-zoom || return 1
+
+  if (( $# )); then
+    "$@"
   fi
 }
 

@@ -7,11 +7,6 @@ vim.o.updatetime = 250
 -- sync yank with system clipboard
 vim.o.clipboard = "unnamedplus"
 
--- terminal title for ghostty-nav split navigation
--- zero-width space (U+200B) prefix is invisible but detectable by ghostty-nav
-vim.o.title = true
-vim.o.titlestring = "\xE2\x80\x8B%t"
-
 -- readable soft wrapping for long lines
 vim.o.wrap = true
 vim.o.linebreak = true

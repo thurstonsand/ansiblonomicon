@@ -40,6 +40,7 @@ tmux() {
 # Environment variables
 export XDG_CONFIG_HOME="$HOME/.config"
 export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
+export PI_LIBRARIAN_MODELS="openai/{{ .models.openai.gpt_codex_spark.version }}:high"
 {{- if eq .chezmoi.hostname "clawdbot" }}
 export EDITOR="vim"
 export DOCKER_HOST=ssh://admin@truenas.thurstons.house
