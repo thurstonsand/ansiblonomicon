@@ -1,40 +1,48 @@
-import { exec } from "node:child_process";
-import { promisify } from "node:util";
+import { watch, type FSWatcher } from "node:fs";
+import { readFile } from "node:fs/promises";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 
-const execAsync = promisify(exec);
+const themeFile = join(homedir(), ".terminal-bg");
 
-async function isDarkMode(): Promise<boolean> {
+type PiTheme = "gruvbox-dark-hard" | "gruvbox-light-hard";
+
+async function readTheme(): Promise<PiTheme> {
   try {
-    const { stdout } = await execAsync(
-      "osascript -e 'tell application \"System Events\" to tell appearance preferences to return dark mode'",
-    );
-    return stdout.trim() === "true";
+    const value = (await readFile(themeFile, "utf8")).trim();
+    return value === "light" ? "gruvbox-light-hard" : "gruvbox-dark-hard";
   } catch {
-    return false;
+    return "gruvbox-dark-hard";
   }
 }
 
 export default function (pi: ExtensionAPI) {
-  let intervalId: ReturnType<typeof setInterval> | null = null;
+  let watcher: FSWatcher | null = null;
+  let currentTheme: PiTheme | null = null;
 
   pi.on("session_start", async (_event, ctx) => {
-    let currentTheme = (await isDarkMode()) ? "dark" : "light";
-    ctx.ui.setTheme(currentTheme);
+    const applyTheme = async () => {
+      const nextTheme = await readTheme();
+      if (nextTheme === currentTheme) return;
+      currentTheme = nextTheme;
+      ctx.ui.setTheme(nextTheme);
+    };
 
-    intervalId = setInterval(async () => {
-      const newTheme = (await isDarkMode()) ? "dark" : "light";
-      if (newTheme !== currentTheme) {
-        currentTheme = newTheme;
-        ctx.ui.setTheme(currentTheme);
-      }
-    }, 2000);
+    await applyTheme();
+
+    watcher = watch(themeFile, async () => {
+      await applyTheme();
+    });
+
+    watcher.on("error", () => {
+      watcher?.close();
+      watcher = null;
+    });
   });
 
   pi.on("session_shutdown", () => {
-    if (intervalId) {
-      clearInterval(intervalId);
-      intervalId = null;
-    }
+    watcher?.close();
+    watcher = null;
   });
 }

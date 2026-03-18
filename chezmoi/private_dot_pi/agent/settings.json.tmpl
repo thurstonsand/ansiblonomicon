@@ -1,7 +1,7 @@
 {
   "defaultProvider": "openai",
   "defaultModel": "{{ .models.openai.gpt.version }}",
-  "defaultThinkingLevel": "medium",
+  "defaultThinkingLevel": "high",
   "compaction": {
     "enabled": true,
     "reserveTokens": 16384,
@@ -20,7 +20,7 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.57.1",
+  "lastChangelogVersion": "0.60.0",
   "enabledModels": [
     "anthropic/{{ .models.anthropic.opus.version }}",
     "openai/{{ .models.openai.gpt.version }}",
@@ -35,6 +35,15 @@
     "npm:pi-librarian",
     "git:github.com/davebcn87/pi-autoresearch",
     "npm:glimpseui",
+    {
+      "source": "git:github.com/hasit/pi-community-themes",
+      "themes": [
+        "!themes/*.json",
+        "+themes/gruvbox-dark-hard.json",
+        "+themes/gruvbox-light-hard.json"
+      ]
+    },
+    "npm:@benvargas/pi-openai-fast",
     {
       "source": "npm:shitty-extensions",
       "extensions": [
@@ -59,7 +68,7 @@
     }
   ],
   "hideThinkingBlock": true,
-  "theme": "dark",
+  "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",
   "transport": "websocket",
   "collapseChangelog": false,
   "quietStartup": true,

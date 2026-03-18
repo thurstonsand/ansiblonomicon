@@ -7,6 +7,9 @@ vim.o.updatetime = 250
 -- sync yank with system clipboard
 vim.o.clipboard = "unnamedplus"
 
+vim.o.title = true
+vim.o.titlestring = "nvim:%{fnamemodify(getcwd(), ':t')}"
+
 -- readable soft wrapping for long lines
 vim.o.wrap = true
 vim.o.linebreak = true

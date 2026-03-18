@@ -14,10 +14,13 @@ anup
 
 ### Sudo Access
 
-Ansible uses `op run` with `SUDO_ASKPASS` to get the sudo password from 1Password automatically.
-Just run `poe macos` — no manual password entry needed.
+Ansible uses `op run` with `SUDO_ASKPASS` to get the sudo password from 1Password automatically. Just run `poe macos` — no manual password entry needed.
 
 Interactive sudo still uses TouchID as normal, including inside tmux sessions.
+
+### Terminal theme sync
+
+On macOS, `dark-notify` now acts as the source of truth for terminal theme state. An Ansible-managed `terminal_theme` role installs a user LaunchAgent (`house.thurstons.terminal-theme-watch`), the `~/.local/bin/terminal-theme-watch` watcher, `~/.local/bin/terminal-theme-switch.py`, and the shared zsh helper at `~/.config/zsh/tmux-theme.zsh`. Together they keep `~/.terminal-bg`, Claude, and Codex theme state in sync while reloading the LaunchAgent only when the theme manager changes. Pi uses `pi-ansi-themes` and a file-watching extension, so it follows `~/.terminal-bg` and inherits the terminal's ANSI palette instead of hardcoded colors.
 
 ## Structure
 

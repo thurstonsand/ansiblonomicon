@@ -30,6 +30,8 @@ A reverse-tunnel + socat shim approach was considered and rejected as too much i
 
 ## Design
 
+> **Implementation note (2026-03-18):** the tmux migration itself still stands, but the theme-manager pieces described below are now owned by the Ansible `terminal_theme` role rather than chezmoi runtime scripts. Local macOS split navigation also moved to the Ghostty-native helper flow documented in `docs/designs/07-ghostty-btt-navigator.md`.
+
 ### tmux.conf
 
 Chezmoi-managed at `chezmoi/dot_config/tmux/tmux.conf.tmpl`. Platform-specific sections use chezmoi conditionals where needed.
@@ -111,19 +113,11 @@ bind -n M-s if-shell -F '#{==:#{session_name},scratch}' {
 bind -n M-[ copy-mode
 ```
 
-#### vim-tmux-navigator Integration
+#### Split Navigation
 
-Seamless C-hjkl navigation between nvim splits and tmux panes. Requires the nvim plugin (`christoomey/vim-tmux-navigator`) and corresponding tmux bindings. The standard integration uses `C-h/j/k/l` for navigation and `C-\` for previous pane.
+Remote tmux sessions still use tmux-native pane movement, but local macOS navigation has moved away from `vim-tmux-navigator` and into the Ghostty-native helper flow described in `docs/designs/07-ghostty-btt-navigator.md`.
 
-```tmux
-# Smart pane switching with awareness of Vim splits
-is_vim="ps -o state= -o comm= -t '#{pane_tty}' | grep -iqE '^[^TXZ ]+ +(\\S+\\/)?g?(view|l?n?vim?x?|fzf)(diff)?$'"
-bind -n C-h if-shell "$is_vim" 'send-keys C-h' 'select-pane -L'
-bind -n C-j if-shell "$is_vim" 'send-keys C-j' 'select-pane -D'
-bind -n C-k if-shell "$is_vim" 'send-keys C-k' 'select-pane -U'
-bind -n C-l if-shell "$is_vim" 'send-keys C-l' 'select-pane -R'
-bind -n C-\\ if-shell "$is_vim" 'send-keys C-\\\\' 'select-pane -l'
-```
+That means this design doc is now only current for the tmux side of the migration. The staged Neovim config disables `christoomey/vim-tmux-navigator` locally and routes `Ctrl-h/j/k/l` through `ghostty-nav` instead.
 
 ### Session Management: `ideoc()` Function
 
@@ -196,14 +190,14 @@ Changes from current: `$ZELLIJ` check becomes `$TMUX` check.
 
 #### What Changes
 
-| Component                      | Before (Zellij)           | After (tmux)                                                                   |
-| ------------------------------ | ------------------------- | ------------------------------------------------------------------------------ |
-| `_detect_terminal_bg()`        | No change                 | Still runs before tmux, writes `~/.terminal-bg`, and seeds `TERMINAL_BG`       |
-| `_maybe_refresh_terminal_bg()` | Runs in precmd every 300s | **Removed** — OSC 11 can't round-trip inside tmux                              |
+| Component                      | Before (Zellij)           | After (tmux)                                                                                 |
+| ------------------------------ | ------------------------- | -------------------------------------------------------------------------------------------- |
+| `_detect_terminal_bg()`        | No change                 | **Removed from zsh startup** — Ansible now seeds `~/.terminal-bg`, shells just read it      |
+| `_maybe_refresh_terminal_bg()` | Runs in precmd every 300s | **Removed** — OSC 11 can't round-trip inside tmux                                            |
 | Theme helper                   | None                      | `terminal-theme-switch.py` updates `~/.terminal-bg`, Claude theme state, and Codex TUI theme |
-| Source of truth                | `~/.terminal-bg` file     | `~/.terminal-bg` file + tmux env + Ghostty mode hooks                          |
-| nvim file watcher              | Watches `~/.terminal-bg`  | **Kept unchanged** — reacts to helper-driven writes                            |
-| nvim FocusGained               | Not used                  | Not needed — file watcher is more responsive                                   |
+| Source of truth                | `~/.terminal-bg` file     | `dark-notify` LaunchAgent → `terminal-theme-switch.py` → `~/.terminal-bg` and tool configs  |
+| nvim file watcher              | Watches `~/.terminal-bg`  | **Kept unchanged** — reacts to helper-driven writes                                          |
+| nvim FocusGained               | Not used                  | Not needed — file watcher is more responsive                                                 |
 
 #### `bglight` / `bgdark` Functions
 
@@ -227,11 +221,12 @@ bgdark() { _set_theme dark; }
 #### Detection Flow
 
 ```
-macOS theme changes → Ghostty updates colors →
-  (next SSH connection) →
-  zsh starts → _detect_terminal_bg() runs (no tmux yet, OSC 11 works) →
-  writes ~/.terminal-bg and exports TERMINAL_BG →
-  tmux attach → nvim watcher fires if file changed → vim.o.background updates
+macOS theme changes → dark-notify LaunchAgent fires →
+  ~/.local/bin/terminal-theme-watch reads light|dark →
+  ~/.local/bin/terminal-theme-switch.py updates ~/.terminal-bg, ~/.claude.json, and ~/.codex/config.toml →
+  new shells export TERMINAL_BG from ~/.terminal-bg →
+  tmux reads ~/.terminal-bg on attach/startup →
+  nvim watcher fires if file changed → vim.o.background updates
 ```
 
 For mid-session changes (rare — typically once per day):
@@ -249,13 +244,16 @@ User runs `bglight` or `bgdark` →
 | File                                                 | Action           | Notes                                                                                                               |
 | ---------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
 | `chezmoi/dot_config/tmux/tmux.conf.tmpl`             | **Create**       | New tmux config                                                                                                     |
-| `chezmoi/dot_zshrc.tmpl`                             | **Modify**       | Replace ideoc/ide (zellij→tmux), drop `_maybe_refresh_terminal_bg`, detect theme before tmux, and wire helper funcs |
-| `chezmoi/dot_config/zsh/tmux-theme.zsh`              | **Create**       | Shared `bglight`/`bgdark` helper that updates tmux state via one function                                           |
-| `chezmoi/dot_local/bin/executable_terminal-theme-switch.py` | **Create** | Centralizes theme side effects for tmux hooks and zsh helper functions                                              |
+| `chezmoi/dot_zshrc.tmpl`                             | **Modify**       | Replace ideoc/ide (zellij→tmux), drop `_maybe_refresh_terminal_bg`, and read `TERMINAL_BG` from `~/.terminal-bg`   |
+| `ansible/roles/terminal_theme/files/tmux-theme.zsh`  | **Create**       | Shared `bglight`/`bgdark` helper that updates tmux state via one function                                           |
+| `ansible/roles/terminal_theme/files/terminal-theme-switch.py` | **Create** | Centralizes theme side effects for tmux hooks and the LaunchAgent watcher                                            |
+| `ansible/roles/terminal_theme/files/terminal-theme-watch` | **Create**   | `dark-notify` wrapper that forwards appearance changes into the shared helper                                        |
+| `ansible/roles/terminal_theme/templates/house.thurstons.terminal-theme-watch.plist.j2` | **Create** | LaunchAgent that keeps the watcher running on macOS                                                                  |
+| `ansible/roles/terminal_theme/tasks/main.yml`        | **Create**       | Installs scripts, seeds `~/.terminal-bg`, and reloads the LaunchAgent when inputs change                            |
 | `chezmoi/dot_config/zellij/`                         | **Keep for now** | Don't remove until tmux is validated; ignore via `.chezmoiignore` if needed                                         |
 | `chezmoi/dot_config/nvim/lua/config/autocmds.lua`    | **No change**    | File watcher on `~/.terminal-bg` stays as-is                                                                        |
-| `chezmoi/dot_config/nvim/lua/config/options.lua`     | **No change**    | `TERMINAL_BG` env var read at startup stays                                                                         |
-| `chezmoi/dot_config/nvim/lua/plugins/`               | **Add**          | vim-tmux-navigator plugin spec                                                                                      |
+| `chezmoi/dot_config/nvim/lua/config/options.lua`     | **Modify**       | `TERMINAL_BG` env var read at startup stays; window title now reflects cwd                                           |
+| `chezmoi/dot_config/nvim/lua/plugins/ghostty-navigator.lua` | **Add**    | Local macOS navigation now goes through `ghostty-nav`; `vim-tmux-navigator` is disabled there                       |
 | `chezmoi/dot_config/git/config.tmpl`                 | **No change**    | `--${TERMINAL_BG:-dark}` delta config unchanged                                                                     |
 | `chezmoi/.chezmoi.toml.tmpl`                         | **No change**    | Delta pager config unchanged                                                                                        |
 | `chezmoi/.chezmoiignore`                             | **Maybe modify** | Add zellij config to ignore if removing from deployment                                                             |
@@ -263,49 +261,52 @@ User runs `bglight` or `bgdark` →
 
 ### nvim Plugin Addition
 
-Add vim-tmux-navigator to the LazyVim config:
+Remote tmux workflows still assume tmux-aware navigation, but the current local macOS config now loads a Ghostty-native navigator plugin instead:
 
 ```lua
--- chezmoi/dot_config/nvim/lua/plugins/tmux-navigator.lua
+-- chezmoi/dot_config/nvim/lua/plugins/ghostty-navigator.lua
+local ghostty_nav = require("lib.ghostty-nav")
+
+ghostty_nav.setup()
+
 return {
-  "christoomey/vim-tmux-navigator",
-  cmd = {
-    "TmuxNavigateLeft",
-    "TmuxNavigateDown",
-    "TmuxNavigateUp",
-    "TmuxNavigateRight",
-    "TmuxNavigatePrevious",
-  },
-  keys = {
-    { "<C-h>", "<cmd>TmuxNavigateLeft<cr>" },
-    { "<C-j>", "<cmd>TmuxNavigateDown<cr>" },
-    { "<C-k>", "<cmd>TmuxNavigateUp<cr>" },
-    { "<C-l>", "<cmd>TmuxNavigateRight<cr>" },
-    { "<C-\\>", "<cmd>TmuxNavigatePrevious<cr>" },
+  { "christoomey/vim-tmux-navigator", enabled = false },
+  {
+    dir = ".",
+    name = "ghostty-navigator",
+    keys = {
+      { "<C-h>", function() ghostty_nav.navigate("h", "left") end, desc = "Navigate Left" },
+      { "<C-j>", function() ghostty_nav.navigate("j", "down") end, desc = "Navigate Down" },
+      { "<C-k>", function() ghostty_nav.navigate("k", "up") end, desc = "Navigate Up" },
+      { "<C-l>", function() ghostty_nav.navigate("l", "right") end, desc = "Navigate Right" },
+    },
   },
 }
 ```
 
+See `docs/designs/07-ghostty-btt-navigator.md` for the full Ghostty-native design.
+
 ### macOS Considerations
 
-The tmux config works on both platforms. Platform-specific differences:
+The tmux config still works on both platforms. Platform-specific differences:
 
 - macOS already has tmux via Homebrew; clawdbot has it via apt
-- `_detect_terminal_bg()` runs locally on macOS (no SSH, always works)
-- The `ide()` function (macOS) follows the same tmux pattern as `ideoc()` (clawdbot)
-- vim-tmux-navigator works identically on both platforms
+- macOS theme state is now maintained by the Ansible-managed `terminal_theme` role and its LaunchAgent
+- The local macOS `ide()` flow now uses Ghostty-native split management via `ghostty-nav`
+- `ideoc()` on clawdbot remains tmux-based
+- local macOS navigation no longer depends on `vim-tmux-navigator`
 
 ### Migration Steps
 
 1. Create tmux.conf template in chezmoi
-2. Add vim-tmux-navigator nvim plugin
+2. Keep remote tmux navigation intact while local macOS navigation moves to `ghostty-nav`
 3. Modify `.zshrc` template (ideoc/ide rewrite, drop precmd hook, add bglight/bgdark)
-4. Deploy via `chezmoi apply` on clawdbot
+4. Deploy the macOS theme manager via the Ansible `terminal_theme` role
 5. Test: clipboard, links, theme detection, pane navigation, scratch popup
 6. If validated, add zellij config paths to `.chezmoiignore`
-7. Deploy to macOS and validate `ide()` function
+7. Deploy to macOS and validate both `ide()` and the LaunchAgent-driven theme sync
 
 ### Open Questions
 
 - Whether pane border labels should stay enabled long-term, or be simplified once the workflow settles
-- Whether the theme helper should remain tmux/Claude-specific, or grow to manage more terminal-aware tools
+- Whether the theme helper should remain Claude/Codex-specific, or grow to manage more terminal-aware tools such as Pi

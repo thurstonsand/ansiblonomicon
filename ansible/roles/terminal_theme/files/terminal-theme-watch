@@ -1,0 +1,11 @@
+#!/bin/zsh
+emulate -LR zsh
+setopt pipefail
+
+dark-notify | while IFS= read -r mode; do
+  case "$mode" in
+    dark|light)
+      terminal-theme-switch.py "$mode"
+      ;;
+  esac
+done

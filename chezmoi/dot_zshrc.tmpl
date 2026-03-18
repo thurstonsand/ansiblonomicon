@@ -76,40 +76,10 @@ alias top='htop'
 alias lg='lazygit'
 alias claude='claude --dangerously-skip-permissions'
 
-_detect_terminal_bg() {
-  local raw_response="" char
-  local old_stty
-  old_stty=$(stty -g 2>/dev/null)
-  stty raw -echo 2>/dev/null
-
-  printf '\e]11;?\e\\' > /dev/tty
-
-  while IFS= read -rs -t 0.5 -k 1 char < /dev/tty 2>/dev/null; do
-    raw_response+="$char"
-    [[ "$char" == $'\a' ]] && break
-    [[ "$raw_response" == *$'\e\\' ]] && break
-  done
-
-  stty "$old_stty" 2>/dev/null
-
-  local result="dark"
-  if [[ "$raw_response" =~ rgb:([0-9a-fA-F]+)/([0-9a-fA-F]+)/([0-9a-fA-F]+) ]]; then
-    local r=$((16#${match[1]:0:2}))
-    local g=$((16#${match[2]:0:2}))
-    local b=$((16#${match[3]:0:2}))
-    local luminance=$(( (r * 299 + g * 587 + b * 114) / 1000 ))
-    (( luminance >= 128 )) && result="light"
-  fi
-
-  echo "$result" > ~/.terminal-bg
-  echo "$result"
-}
-
 source ~/.config/zsh/tmux-theme.zsh 2>/dev/null || :
 
-# detect terminal background before tmux starts (tmux.conf reads ~/.terminal-bg)
-if [[ -z "$TMUX" && -t 0 ]]; then
-  export TERMINAL_BG=$(_detect_terminal_bg)
+if [[ -z "$TMUX" && -t 0 && -r ~/.terminal-bg ]]; then
+  export TERMINAL_BG=$(<~/.terminal-bg)
 fi
 
 # Repair a stale Ghostty nvim key-table activation if Neovim dies badly.

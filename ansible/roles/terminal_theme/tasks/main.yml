@@ -1,0 +1,88 @@
+---
+# Manage terminal theme helper scripts and LaunchAgent on macOS.
+
+- name: Ensure terminal theme directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+      mode: "0755"
+    - path: "{{ ansible_facts['env']['HOME'] }}/.config/zsh"
+      mode: "0755"
+    - path: "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents"
+      mode: "0755"
+
+- name: Install terminal theme watch script
+  ansible.builtin.copy:
+    src: terminal-theme-watch
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal-theme-watch"
+    mode: "0755"
+  register: terminal_theme_watch_script
+
+- name: Install terminal theme switch helper
+  ansible.builtin.copy:
+    src: terminal-theme-switch.py
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal-theme-switch.py"
+    mode: "0755"
+  register: terminal_theme_switch_script
+
+- name: Install tmux theme zsh helper
+  ansible.builtin.copy:
+    src: tmux-theme.zsh
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/zsh/tmux-theme.zsh"
+    mode: "0644"
+  register: terminal_theme_zsh_helper
+
+- name: Install terminal theme LaunchAgent
+  ansible.builtin.template:
+    src: house.thurstons.terminal-theme-watch.plist.j2
+    dest: "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents/house.thurstons.terminal-theme-watch.plist"
+    mode: "0600"
+  register: terminal_theme_launch_agent_plist
+
+- name: Check terminal background state file
+  ansible.builtin.stat:
+    path: "{{ ansible_facts['env']['HOME'] }}/.terminal-bg"
+  register: terminal_theme_state_file
+
+- name: Seed terminal theme state from current macOS appearance
+  ansible.builtin.shell: |
+    set -eu
+    if defaults read -g AppleInterfaceStyle >/dev/null 2>&1; then
+      mode=dark
+    else
+      mode=light
+    fi
+    "$HOME/.local/bin/terminal-theme-switch.py" "$mode"
+  args:
+    executable: /bin/sh
+  changed_when: true
+  when:
+    - not ansible_check_mode
+    - not terminal_theme_state_file.stat.exists
+
+- name: Detect whether terminal theme LaunchAgent needs reload
+  ansible.builtin.set_fact:
+    terminal_theme_reload_required: >-
+      {{
+        terminal_theme_watch_script.changed
+        or terminal_theme_switch_script.changed
+        or terminal_theme_zsh_helper.changed
+        or terminal_theme_launch_agent_plist.changed
+      }}
+
+- name: Ensure terminal theme LaunchAgent is enabled and running
+  community.general.launchd:
+    name: house.thurstons.terminal-theme-watch
+    enabled: true
+    state: started
+
+- name: Reload terminal theme LaunchAgent
+  community.general.launchd:
+    name: house.thurstons.terminal-theme-watch
+    state: reloaded
+  when:
+    - not ansible_check_mode
+    - terminal_theme_reload_required | default(false)
