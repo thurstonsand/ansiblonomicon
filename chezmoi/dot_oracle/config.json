@@ -1,0 +1,9 @@
+{
+  "model": "gpt-5.4-pro",
+  "engine": "browser",
+  "browser": {
+    "manualLogin": true,
+    "modelStrategy": "current",
+    "hideWindow": true
+  }
+}

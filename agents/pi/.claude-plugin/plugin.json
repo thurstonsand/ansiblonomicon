@@ -1,0 +1,9 @@
+{
+  "name": "pi",
+  "version": "1.0.0",
+  "description": "Pi-specific skills and behavior overlays",
+  "author": {
+    "name": "Thurston Sandberg"
+  },
+  "keywords": ["pi"]
+}

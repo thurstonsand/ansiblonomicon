@@ -1,4 +1,6 @@
 model = "{{ .models.openai.gpt.version }}"
+model_context_window = {{ .models.openai.gpt.max_input }}
+model_auto_compact_token_limit = {{ .models.openai.gpt.codex.auto_compact_token_limit }}
 model_reasoning_effort = "high"
 model_reasoning_summary = "auto"
 approval_policy = "on-request"

@@ -165,6 +165,23 @@ export const fetchWebTool: ToolDefinition<typeof fetchWebParameters, FetchWebDet
       };
     }
   },
+  renderCall(args, theme, context) {
+    let text = theme.fg("toolTitle", theme.bold("fetch_web"));
+
+    if (context.isPartial) {
+      const primaryUrl = args.urls.find((url: string) => url.trim())?.trim() ?? "";
+      const extraUrls = Math.max(args.urls.filter((url: string) => url.trim()).length - 1, 0);
+      if (primaryUrl) {
+        text += theme.fg("toolTitle", " ");
+        text += theme.fg("muted", primaryUrl);
+      }
+      if (extraUrls > 0) {
+        text += theme.fg("dim", ` +${extraUrls} more`);
+      }
+    }
+
+    return new Text(text, 0, 0);
+  },
   renderResult(result, { expanded, isPartial }, theme) {
     const renderedResult = result as RenderableToolResult<FetchWebDetails>;
     if (isPartial) return new Text(theme.fg("warning", "Fetching..."), 0, 0);
@@ -200,9 +217,12 @@ export const fetchWebTool: ToolDefinition<typeof fetchWebParameters, FetchWebDet
 
     if (details.files?.length) {
       for (const [index, file] of details.files.entries()) {
-        const title =
-          file.title?.trim() && file.title.trim() !== file.url ? file.title.trim() : file.url;
-        text += `\n${theme.fg("accent", `${index + 1}. ${title}`)}`;
+        const title = file.title?.trim();
+        if (title && title !== file.url) {
+          text += `\n${theme.fg("accent", `${index + 1}. ${title}`)}${theme.fg("muted", ` (${file.url})`)}`;
+        } else {
+          text += `\n${theme.fg("accent", `${index + 1}. ${file.url}`)}`;
+        }
         text += `\n${theme.fg("dim", file.path)}`;
         if (file.excerpt) {
           text += `\n${theme.fg("muted", expanded ? file.excerpt : summarizeExcerpt(file.excerpt, 120))}`;

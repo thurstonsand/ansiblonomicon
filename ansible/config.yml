@@ -20,6 +20,7 @@ uv_global_tools_base:
 # Global npm packages (base set for all hosts)
 npm_global_packages_base:
   - "@mariozechner/pi-coding-agent"
+  - "@steipete/oracle"
   - agent-browser
 
 # OpenClaw bundled extensions that need `npm install` after global install
@@ -123,7 +124,17 @@ agent_harness_sources:
           - optimize # improve performance and implementation efficiency
           - polish # do a final refinement pass before shipping
           - quieter # tone down an overly loud visual treatment
+          - arrange # improve layout, spacing, and visual hierarchy
+          - overdrive # push interfaces into technically ambitious territory
+          - typeset # refine typography, hierarchy, and readability
   #          - teach-impeccable # gather design context and write persistent project guidance
+
+  - repo: steipete/oracle
+    pull: true
+    plugins:
+      - name: oracle
+        path: skills
+        target_agents: [claude, codex, opencode, pi, openclaw]
 
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
@@ -131,6 +142,8 @@ agent_harness_sources:
         target_agents: [amp]
         exclude_skills:
           - tmux-interactive-sessions
+      - name: pi
+        target_agents: [pi]
       - name: project-management
         target_agents: [openclaw]
         exclude_skills:
@@ -138,5 +151,9 @@ agent_harness_sources:
           - humanizer
           - pr
       - name: project-management
-        target_agents: [claude, amp, codex, opencode, pi]
+        target_agents: [pi]
+        exclude_skills:
+          - grill-me
+      - name: project-management
+        target_agents: [claude, amp, codex, opencode]
       - homelab

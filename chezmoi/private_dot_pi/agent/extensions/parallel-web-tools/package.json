@@ -13,9 +13,9 @@
     "parallel-web": "^0.3.1"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.6",
-    "@mariozechner/pi-coding-agent": "^0.56.2",
-    "@types/node": "^25.3.5",
-    "typescript": "^5.9.3"
+    "@biomejs/biome": "^2.4.8",
+    "@mariozechner/pi-coding-agent": "^0.62.0",
+    "@types/node": "^25.5.0",
+    "typescript": "^6.0.2"
   }
 }

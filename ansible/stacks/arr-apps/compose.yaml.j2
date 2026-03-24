@@ -78,6 +78,38 @@ services:
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
+  swaparr-sonarr:
+    image: ghcr.io/thijmengthn/swaparr:latest
+    container_name: swaparr-sonarr
+    environment:
+      - BASEURL=http://{{ lan.personal.sonarr.ip }}:{{ lan.personal.sonarr.ports.web }}
+      - APIKEY={{ lookup('env', 'HOMEPAGE_SONARR_API_KEY') }}
+      - PLATFORM=sonarr
+      - MAX_STRIKES=6
+      - SCAN_INTERVAL=30m
+      - MAX_DOWNLOAD_TIME=6h
+      - IGNORE_ABOVE_SIZE=25GB
+      - REMOVE_FROM_CLIENT=true
+      - STRIKE_QUEUED=false
+      - DRY_RUN=false
+    restart: unless-stopped
+
+  swaparr-radarr:
+    image: ghcr.io/thijmengthn/swaparr:latest
+    container_name: swaparr-radarr
+    environment:
+      - BASEURL=http://{{ lan.personal.radarr.ip }}:{{ lan.personal.radarr.ports.web }}
+      - APIKEY={{ lookup('env', 'HOMEPAGE_RADARR_API_KEY') }}
+      - PLATFORM=radarr
+      - MAX_STRIKES=6
+      - SCAN_INTERVAL=30m
+      - MAX_DOWNLOAD_TIME=6h
+      - IGNORE_ABOVE_SIZE=25GB
+      - REMOVE_FROM_CLIENT=true
+      - STRIKE_QUEUED=false
+      - DRY_RUN=false
+    restart: unless-stopped
+
   recyclarr:
     image: ghcr.io/recyclarr/recyclarr
     container_name: recyclarr

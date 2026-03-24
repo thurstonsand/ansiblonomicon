@@ -20,21 +20,58 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.60.0",
+  "lastChangelogVersion": "0.62.0",
   "enabledModels": [
     "anthropic/{{ .models.anthropic.opus.version }}",
+    "anthropic/{{ .models.anthropic.haiku.version }}",
     "openai/{{ .models.openai.gpt.version }}",
-    "openai/{{ .models.openai.gpt_codex.version }}",
     "openai/{{ .models.openai.gpt_codex_spark.version }}",
-    "google/{{ .models.google.gemini_pro.version }}"
+    "google/{{ .models.google.gemini_pro.version }}",
+    "google/{{ .models.google.gemini_flash.version }}"
   ],
   "steeringMode": "all",
   "followUpMode": "all",
+  "powerline": "nerd",
+  "showLastPrompt": false,
+  "modelProfiles": [
+    {
+      "model": "anthropic/{{ .models.anthropic.opus.version }}",
+      "thinking": "medium",
+      "label": "smart"
+    },
+    {
+      "model": "openai/{{ .models.openai.gpt.version }}",
+      "thinking": "high",
+      "label": "deep"
+    }
+  ],
+  "workingVibe": "NieR:Automata / YoRHa / 2B",
+  "workingVibeMode": "generate",
+  "workingVibeModel": "anthropic/{{ .models.anthropic.haiku.version }}",
+  "workingVibeFallback": "Executing mission",
+  "workingVibeRefreshInterval": 30,
+  "workingVibeMaxLength": 48,
   "packages": [
-    "npm:pi-interactive-shell",
+    {
+      "source": "npm:pi-interactive-shell",
+      "skills": [
+        "-examples/skills/codex-5-3-prompting/SKILL.md",
+        "-examples/skills/codex-cli/SKILL.md",
+        "-examples/skills/gpt-5-4-prompting/SKILL.md"
+      ],
+      "prompts": [
+        "-examples/prompts/codex-implement-plan.md",
+        "-examples/prompts/codex-review-impl.md",
+        "-examples/prompts/codex-review-plan.md"
+      ]
+    },
     "npm:pi-librarian",
+    "npm:pi-verbosity-control",
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"git:github.com/thurstonsand/pi-powerline-footer@custom-preset"{{ end }},
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"git:github.com/thurstonsand/pi-sessions"{{ end }},
     "git:github.com/davebcn87/pi-autoresearch",
     "npm:glimpseui",
+    "npm:@plannotator/pi-extension",
     {
       "source": "git:github.com/hasit/pi-community-themes",
       "themes": [
@@ -50,11 +87,11 @@
         "-extensions/cost-tracker.ts",
         "-extensions/flicker-corp.ts",
         "-extensions/funny-working-message.ts",
-        "+extensions/handoff.ts",
+        "-extensions/handoff.ts",
         "-extensions/loop.ts",
         "-extensions/memory-mode.ts",
+        "-extensions/oracle.ts",
         "-extensions/plan-mode.ts",
-        "+extensions/oracle.ts",
         "-extensions/speedreading.ts",
         "-extensions/status-widget.ts",
         "-extensions/resistance.ts",

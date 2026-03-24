@@ -27,6 +27,7 @@ type SearchWarning = {
 };
 
 type SearchWebDetails = {
+  objective?: string;
   count?: number;
   results?: SearchResultItem[];
   warnings?: SearchWarning[] | null;
@@ -78,9 +79,11 @@ export const searchWebTool: ToolDefinition<typeof searchWebParameters, SearchWeb
   ],
   parameters: searchWebParameters,
   execute: async (_toolCallId, params, _signal, onUpdate) => {
+    const searchQueries = normalizeSearchQueries(params.search_queries, params.objective);
+
     onUpdate?.({
       content: [{ type: "text", text: `Searching the web for: ${params.objective}` }],
-      details: {},
+      details: { objective: params.objective },
     });
 
     try {
@@ -88,7 +91,7 @@ export const searchWebTool: ToolDefinition<typeof searchWebParameters, SearchWeb
       const afterDate = validateAfterDate(params.after_date);
       const result = await client.beta.search({
         objective: params.objective,
-        search_queries: normalizeSearchQueries(params.search_queries, params.objective),
+        search_queries: searchQueries,
         mode: DEFAULT_SEARCH_MODE,
         max_results: clampMaxResults(params.max_results),
         source_policy: afterDate ? { after_date: afterDate } : undefined,
@@ -98,7 +101,12 @@ export const searchWebTool: ToolDefinition<typeof searchWebParameters, SearchWeb
       const warnings = Array.isArray(result.warnings) ? (result.warnings as SearchWarning[]) : null;
       return {
         content: [{ type: "text", text: buildSearchSummary(results, warnings) }],
-        details: { count: results.length, results, warnings },
+        details: {
+          objective: params.objective,
+          count: results.length,
+          results,
+          warnings,
+        },
       };
     } catch (error) {
       return {
@@ -113,9 +121,23 @@ export const searchWebTool: ToolDefinition<typeof searchWebParameters, SearchWeb
       };
     }
   },
+  renderCall(args, theme) {
+    const primaryQuery = (args.search_queries?.find((query: string) => query.trim()) ?? args.objective)
+      .trim();
+    const extraQueries = Math.max((args.search_queries?.filter((query: string) => query.trim()).length ?? 1) - 1, 0);
+
+    let text = theme.fg("toolTitle", theme.bold("search_web "));
+    text += theme.fg("muted", primaryQuery);
+    if (extraQueries > 0) {
+      text += theme.fg("dim", ` +${extraQueries} more`);
+    }
+    return new Text(text, 0, 0);
+  },
   renderResult(result, { expanded, isPartial }, theme) {
     const renderedResult = result as RenderableToolResult<SearchWebDetails>;
-    if (isPartial) return new Text(theme.fg("warning", "Searching..."), 0, 0);
+    if (isPartial) {
+      return new Text(theme.fg("warning", "Searching..."), 0, 0);
+    }
     if (renderedResult.isError) {
       const text =
         renderedResult.content[0]?.type === "text"

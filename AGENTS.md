@@ -20,7 +20,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
   - **OpenClaw tags**: `agent-harness`, `apt`, `apt-repos`, `bun`, `cargo`, `chezmoi`/`dotfiles`, `claude-code`, `gateway-env`, `go`, `motd`, `neovim`, `npm`, `openclaw-monitors`/`monitors`, `openclaw-plugins`, `opencode`, `ruby`, `system-maintenance`/`timers`, `tmux`, `uv`, `xvfb`
-- `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes
+- `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes (`cz-diff` excludes lockfiles)
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)
 - `uv run poe pages-deploy` — Deploy Cloudflare Pages (tesla)
@@ -38,7 +38,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe lint` — Run all linters (Ansible, Python, Workers, and pi extensions)
 - `uv run poe lint:pi` — Lint and type-check pi extension packages
   - `--format` / `-f` — Apply Biome formatting/fixes before type-checking
-- `uv run poe pi:update-deps` — Update dependencies for all tracked pi extension packages (pins pi to the currently installed global version)
+- `uv run poe pi:update-deps` — Update dependencies for all tracked pi extension packages (pins pi to the currently installed version found on `PATH`)
 - `uv run ruff format --check .` — Check Python formatting
 - `uv run ruff check .` — Lint Python code
 - `uv run basedpyright` — Type check Python code

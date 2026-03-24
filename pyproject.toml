@@ -144,8 +144,8 @@ help = "Only run tasks with these tags (comma-separated)"
 
 # Chezmoi tasks
 [tool.poe.tasks.cz-diff]
-help = "Show what chezmoi would change (source → home)"
-cmd = "chezmoi diff"
+help = "Show what chezmoi would change (source → home), excluding lockfiles"
+cmd = "./scripts/chezmoi-diff.sh"
 
 [tool.poe.tasks.cz-status]
 help = "Show files that differ between source and home"

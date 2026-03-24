@@ -61,7 +61,7 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 - `poe openclaw` — Apply OpenClaw (Debian VM) Ansible playbook
 - `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe udmp` — Apply UDMP Ansible playbook
-- `poe cz-diff` — Preview dotfile changes (source → home)
+- `poe cz-diff` — Preview dotfile changes (source → home), excluding lockfiles
 - `poe cz-status` — Show files that differ between source and home
 - `poe cz-re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)
 - `poe cz-managed` — List all files managed by chezmoi
@@ -75,7 +75,7 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 - `poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker
 - `poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker
 - `poe lint:pi` — Lint and type-check pi extension packages (`--format` applies Biome formatting/fixes first)
-- `poe pi:update-deps` — Update dependencies for tracked pi extension packages
+- `poe pi:update-deps` — Update tracked pi extension packages to the currently installed pi version
 
 ## Design
 
