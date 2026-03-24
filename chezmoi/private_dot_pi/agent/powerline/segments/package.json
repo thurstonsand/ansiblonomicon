@@ -1,0 +1,13 @@
+{
+  "name": "pi-powerline-custom-segments",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@mariozechner/pi-coding-agent": "^0.62.0"
+  },
+  "devDependencies": {
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@types/node": "^24.3.0",
+    "pi-powerline-footer": "git+file:///Users/thurstonsand/Develop/pi-powerline-footer#452fb97a99996389826bb9fb6766af1a9bfd7b08"
+  }
+}
