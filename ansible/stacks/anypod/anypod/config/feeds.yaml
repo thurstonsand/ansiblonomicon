@@ -82,7 +82,7 @@ feeds:
             podcast_type: "episodic"
             explicit: "no"
     version-history:
-        url: "https://youtube.com/playlist?list=PL39u5ZEfYDEOqeEjmT9DTh3ADLX8Hs996&si=OXoVSCaWsScAdvNV"
+        url: "https://www.youtube.com/channel/UCsB9OH4ROgV3d_rotwICcoA"
         yt_args: >
             --format
             bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
