@@ -20,30 +20,51 @@ resource "cloudflare_ruleset" "firewall_custom" {
   rules {
     action = "skip"
     action_parameters {
-      # Skip SBFM and managed WAF for AI Gateway endpoints
+      # Skip SBFM and managed WAF for AI Gateway-related machine endpoints.
       phases = ["http_request_sbfm", "http_request_firewall_managed"]
     }
-    description = "allow llm clients on llms api (skip security for AI Gateway)"
+    description = "skip managed security on AI Gateway machine endpoints"
     enabled     = true
-    expression  = "(http.host in {\"llms.thurstons.house\" \"aig.thurstons.house\" \"cli-proxy-api.thurstons.house\" \"hooks.thurstons.house\" })"
+    expression  = "(http.host in {\"aig.thurstons.house\" \"cli-proxy-api.thurstons.house\" \"hooks.thurstons.house\" })"
     logging {
       enabled = true
     }
   }
 }
 
-resource "cloudflare_ruleset" "hsts" {
+resource "cloudflare_ruleset" "rate_limits" {
   kind    = "zone"
   name    = "default"
-  phase   = "http_request_late_transform"
+  phase   = "http_ratelimit"
   zone_id = local.zone_id
+
+  rules {
+    action = "block"
+    ratelimit {
+      characteristics     = ["cf.colo.id", "ip.src"]
+      period              = 10
+      requests_per_period = 10
+      mitigation_timeout  = 10
+    }
+    description = "block on Overseerr login bursts (free-plan fallback)"
+    enabled     = true
+    expression  = "(http.request.uri.path eq \"/login\")"
+  }
+}
+
+resource "cloudflare_ruleset" "response_headers" {
+  kind    = "zone"
+  name    = "default"
+  phase   = "http_response_headers_transform"
+  zone_id = local.zone_id
+
   rules {
     action = "rewrite"
     action_parameters {
       headers {
         name      = "Strict-Transport-Security"
         operation = "set"
-        value     = "max-age=31536000; preload"
+        value     = "max-age=31536000"
       }
       headers {
         name      = "X-Content-Type-Options"
@@ -51,8 +72,8 @@ resource "cloudflare_ruleset" "hsts" {
         value     = "nosniff"
       }
     }
-    description = "HSTS with mixed"
+    description = "host-scoped HSTS for public HTTPS hosts"
     enabled     = true
-    expression  = "(not http.host contains \"status\")"
+    expression  = format("(http.host in {%s})", join(" ", formatlist("\"%s\"", local.hsts_hosts)))
   }
 }

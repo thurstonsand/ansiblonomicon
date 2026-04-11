@@ -1,16 +1,13 @@
 {
-  "name": "pi-parallel-web-tools",
+  "name": "pi-amp-style-permission-gate",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Pi extension that adds Parallel-backed search_web and fetch_web tools",
+  "description": "Pi extension that adds Amp-style permission checks with /permissions controls",
   "pi": {
     "extensions": [
       "./index.ts"
     ]
-  },
-  "dependencies": {
-    "parallel-web": "^0.3.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",

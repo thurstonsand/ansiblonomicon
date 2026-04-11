@@ -17,16 +17,6 @@
     "command": "-workbench.action.terminal.chat.rerunRequest",
     "when": "chatIsEnabled && terminalChatFocus && terminalHasBeenCreated && !terminalChatActiveRequest || chatIsEnabled && terminalChatFocus && terminalProcessSupported && !terminalChatActiveRequest"
   },
-  {
-    "key": "ctrl+cmd+k",
-    "command": "runCommands",
-    "args": {
-      "commands": [
-        "amp.agent.addSelectionToPromptEditor",
-        "amp.agent.focusPromptEditor"
-      ]
-    }
-  },
 {{- else if $isCursor }}
   {
     "key": "shift+cmd+k",
@@ -75,11 +65,7 @@
   },
   {
     "key": "cmd+r",
-{{- if $isVSCode }}
-    "command": "amp.agent.toggleVisibility"
-{{- else }}
     "command": "workbench.action.toggleAuxiliaryBar"
-{{- end }}
   },
   {
     "key": "ctrl+alt+cmd+g",

@@ -30,4 +30,20 @@ locals {
     { host = "udmp-ssh", ip = "192.168.1.1", port = 22 },
     { host = "clawdbot-ssh", ip = "192.168.1.90", port = 22 },
   ]
+
+  # Public HTTPS hosts that should advertise host-scoped HSTS.
+  # Intentionally omit DNS-only / externally hosted records (for example ha.* via Nabu Casa)
+  # and omit includeSubDomains so sibling hosts can remain plain HTTP internally if needed.
+  hsts_hosts = [
+    local.zone_name,
+    "www.${local.zone_name}",
+    "blog.${local.zone_name}",
+    "overseerr.${local.zone_name}",
+    "podsync.${local.zone_name}",
+    "anypod.${local.zone_name}",
+    "cli-proxy-api.${local.zone_name}",
+    "clawdbot.${local.zone_name}",
+    "aig.${local.zone_name}",
+    "hooks.${local.zone_name}",
+  ]
 }

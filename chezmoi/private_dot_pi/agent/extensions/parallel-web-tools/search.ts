@@ -122,9 +122,13 @@ export const searchWebTool: ToolDefinition<typeof searchWebParameters, SearchWeb
     }
   },
   renderCall(args, theme) {
-    const primaryQuery = (args.search_queries?.find((query: string) => query.trim()) ?? args.objective)
-      .trim();
-    const extraQueries = Math.max((args.search_queries?.filter((query: string) => query.trim()).length ?? 1) - 1, 0);
+    const primaryQuery = (
+      args.search_queries?.find((query: string) => query.trim()) ?? args.objective
+    ).trim();
+    const extraQueries = Math.max(
+      (args.search_queries?.filter((query: string) => query.trim()).length ?? 1) - 1,
+      0,
+    );
 
     let text = theme.fg("toolTitle", theme.bold("search_web "));
     text += theme.fg("muted", primaryQuery);

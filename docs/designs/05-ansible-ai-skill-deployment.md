@@ -264,7 +264,7 @@ The filter plugin implements Claude's plugin discovery protocol:
 
 ### Deferred
 
-2. **MCP config merging** — MCP servers are a plugin-level feature, not skill-level. Since we deploy individual skills (not full plugins), MCP doesn't cleanly map. Users should configure MCP servers separately via `claude mcp add`.
+2. **MCP config merging** — MCP servers are a plugin-level feature, not skill-level. Since we deploy individual skills (not full plugins), MCP doesn't cleanly map. Users should configure MCP servers separately from `agent_harness` (for example via `claude mcp add` or a checked-in project `.mcp.json`).
 
 3. **LSP server deployment** — LSP servers are also plugin-scoped (configured via `.lsp.json` or inline in `plugin.json`). Claude Code has no user-level LSP config outside the plugin system. Users should install LSP plugins from the official marketplace (`/plugin` → Discover → search "lsp").
 

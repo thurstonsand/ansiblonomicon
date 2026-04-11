@@ -23,7 +23,7 @@ for dir in "${PACKAGE_DIRS[@]}"; do
     cd "$dir"
     mapfile -t files < <(find . -maxdepth 1 -type f \( -name '*.ts' -o -name 'package.json' -o -name 'tsconfig.json' -o -name 'biome.json' \) | sort)
     if [[ ${#files[@]} -gt 0 ]]; then
-      npx biome check $WRITE_FLAG --config-path . "${files[@]}"
+      npx biome check $WRITE_FLAG "${files[@]}"
     fi
     echo "==> tsc $dir"
     npx tsc --noEmit

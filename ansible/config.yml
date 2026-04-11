@@ -22,6 +22,7 @@ npm_global_packages_base:
   - "@mariozechner/pi-coding-agent"
   - "@steipete/oracle"
   - agent-browser
+  - diffity
 
 # OpenClaw bundled extensions that need `npm install` after global install
 openclaw_bundled_extensions:
@@ -73,17 +74,21 @@ agent_harness_sources:
   - repo: FrancyJGLisboa/agent-skill-creator
     pull: true
     plugins:
-      - name: agent-skill-creator-plugin
-        exclude_skills:
-          - article-to-prototype-cskill
+      - name: agent-skill-creator
+        path: .
+        skills: []
         exclude_data:
-          - references/examples
-          - references/templates
-          - references/tools
+          - .gitignore
+          - Dynamous
           - exports
-          - integrations
-          - article-to-prototype-cskill
           - README.md
+          - install.sh
+          - references/examples
+          - references/phase5-implementation.md
+          - references/templates
+          - registry
+          - scripts/bootstrap.sh
+          - scripts/install-skill.sh
 
   - repo: pchalasani/claude-code-tools
     pull: true
@@ -125,9 +130,10 @@ agent_harness_sources:
           - polish # do a final refinement pass before shipping
           - quieter # tone down an overly loud visual treatment
           - arrange # improve layout, spacing, and visual hierarchy
+          - frontend-design # deprecated; replaced by /impeccable
           - overdrive # push interfaces into technically ambitious territory
+          - teach-impeccable # deprecated; replaced by /impeccable teach
           - typeset # refine typography, hierarchy, and readability
-  #          - teach-impeccable # gather design context and write persistent project guidance
 
   - repo: steipete/oracle
     pull: true

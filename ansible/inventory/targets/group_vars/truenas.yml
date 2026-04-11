@@ -67,7 +67,6 @@ lan:
         antigravity_oauth: 51121
         iflow_oauth: 11451
       domain: cli-proxy-api.thurstons.house
-      domain_public: llms.thurstons.house
 
   personal:
     homepage:

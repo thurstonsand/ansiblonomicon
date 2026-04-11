@@ -20,17 +20,23 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.62.0",
+  "lastChangelogVersion": "0.66.1",
   "enabledModels": [
     "anthropic/{{ .models.anthropic.opus.version }}",
     "anthropic/{{ .models.anthropic.haiku.version }}",
     "openai/{{ .models.openai.gpt.version }}",
     "openai/{{ .models.openai.gpt_codex_spark.version }}",
+    "openai/{{ .models.openai.gpt_mini.version }}",
     "google/{{ .models.google.gemini_pro.version }}",
     "google/{{ .models.google.gemini_flash.version }}"
   ],
   "steeringMode": "all",
   "followUpMode": "all",
+  "sessions": {
+    "autoTitle": {
+      "model": "google/{{ .models.google.gemini_flash.version }}"
+    }
+  },
   "powerline": {
     "preset": "custom",
     "showLastPrompt": false,
@@ -62,17 +68,23 @@
       }
     ],
     "vibe": {
-      "theme": "NieR:Automata / YoRHa / 2B",
+      "theme": "NieR:Automata - 2B",
       "mode": "generate",
-      "model": "anthropic/{{ .models.anthropic.haiku.version }}",
+      "model": "openai/{{ .models.openai.gpt_mini.version }}",
       "fallback": "Executing mission",
       "refreshInterval": 30,
       "maxLength": 48
     },
     "custom": {
       "separator": "powerline-thin",
-      "leftSegments": ["model", "path", "git"],
-      "rightSegments": ["context_pct"],
+      "leftSegments": [
+        "model",
+        "path",
+        "git"
+      ],
+      "rightSegments": [
+        "context_pct"
+      ],
       "secondarySegments": [],
       "options": {
         "model": {
@@ -90,6 +102,11 @@
           "showStaged": false,
           "showUnstaged": false,
           "showUntracked": false
+        },
+        "context_pct": {
+          "maxTokens": 400000,
+          "warnAt": 50,
+          "errorAt": 80
         }
       }
     }
@@ -110,10 +127,11 @@
     },
     "npm:pi-librarian",
     "npm:pi-verbosity-control",
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"git:github.com/thurstonsand/pi-powerline-footer@custom-preset"{{ end }},
+    {{ if eq .chezmoi.os "darwin" }}"npm:@thurstonsand/pi-powerline-footer"{{ else }}"npm:@thurstonsand/pi-powerline-footer"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"git:github.com/thurstonsand/pi-sessions"{{ end }},
     "git:github.com/davebcn87/pi-autoresearch",
     "npm:glimpseui",
+    "npm:pi-mcp-adapter",
     "npm:@plannotator/pi-extension",
     {
       "source": "git:github.com/hasit/pi-community-themes",
@@ -123,29 +141,7 @@
         "+themes/gruvbox-light-hard.json"
       ]
     },
-    "npm:@benvargas/pi-openai-fast",
-    {
-      "source": "npm:shitty-extensions",
-      "extensions": [
-        "-extensions/cost-tracker.ts",
-        "-extensions/flicker-corp.ts",
-        "-extensions/funny-working-message.ts",
-        "-extensions/handoff.ts",
-        "-extensions/loop.ts",
-        "-extensions/memory-mode.ts",
-        "-extensions/oracle.ts",
-        "-extensions/plan-mode.ts",
-        "-extensions/speedreading.ts",
-        "-extensions/status-widget.ts",
-        "-extensions/resistance.ts",
-        "-extensions/teletext.ts",
-        "+extensions/usage-bar.ts",
-        "-extensions/ultrathink.ts"
-      ],
-      "skills": [
-        "-skills/a-nach-b/SKILL.md"
-      ]
-    }
+    "npm:@benvargas/pi-openai-fast"
   ],
   "hideThinkingBlock": true,
   "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",

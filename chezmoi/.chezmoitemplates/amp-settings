@@ -1,13 +1,9 @@
   "amp.url": "https://aig.thurstons.house",
-{{- if eq .mode "ide" }}
-  "amp.tab.enabled": false,
-  "amp.tab.experimental.showHotStreakProgress": true,
-  "amp.tab.hoverDiagnosticSuggestions": true,
-{{- end }}
   "amp.experimental.dojoMode": true,
   "amp.experimental.codeReviewSkill": true,
   "amp.git.commit.ampThread.enabled": false,
   "amp.git.commit.coauthor.enabled": false,
+  "amp.agent.deepReasoningEffort": "high",
   "amp.mcpServers": {
 {{- if ne .hostname "clawdbot" }}
     "macos_automator": {
@@ -24,41 +20,7 @@
     "~/.config/amp/*",
     "/Users/thurstonsand/Library/Application Support/Code - Insiders/User/keybindings.json",
   ],
-{{- if eq .mode "ide" }}
-  "amp.tools.disable": [
-    "evaluate_script",
-    "get_console_message",
-    "get_network_request",
-    "handle_dialog",
-    "list_console_messages",
-    "list_network_requests",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__click",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__close_page",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__drag",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__emulate",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__fill",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__fill_form",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__hover",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__list_pages",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__new_page",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__press_key",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__resize_page",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__select_page",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__upload_file",
-    "mcp__io.github.ChromeDevTools/chrome_devtools_mcp__wait_for",
-    "navigate_page",
-    "performance_analyze_insight",
-    "performance_start_trace",
-    "performance_stop_trace",
-    "take_screenshot",
-    "take_snapshot",
-    "mcp__parallel_search__web_fetch",
-    "mcp__parallel_search__web_search_preview",
-    "sa__code-reviewer",
-  ],
-{{- else }}
   "amp.tools.disable": [],
-{{- end }}
   "amp.permissions": [
     {
       "tool": "Bash",

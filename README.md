@@ -45,7 +45,8 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 │       └── udmp.yml         # UDMP playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
-├── agents/                   # Local AI agent skills (source for agent_harness role)
+├── agents/                   # Reusable AI agent bundles (source for agent_harness role)
+├── .agents/                  # Project-local Claude/Pi skills for this repo
 ├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 ├── wrangler/                 # Cloudflare Workers (deployed via wrangler)
 └── scripts/
@@ -70,8 +71,7 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 - `poe tfp` — Terraform plan (Cloudflare)
 - `poe tfa` — Terraform apply (Cloudflare)
 - `poe pages-deploy` — Deploy Cloudflare Pages (tesla)
-- `poe wrangler` — Deploy all Workers (llms + aig)
-- `poe wrangler:llms` — Deploy llms Worker via Wrangler (includes secrets)
+- `poe wrangler` — Deploy all Workers (aig + hooks)
 - `poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker
 - `poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker
 - `poe lint:pi` — Lint and type-check pi extension packages (`--format` applies Biome formatting/fixes first)

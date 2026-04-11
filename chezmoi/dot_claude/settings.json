@@ -1,12 +1,12 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
-  "cleanupPeriodDays": 99999,
+  "env": {
+    "CLAUDE_CODE_NO_FLICKER": "1"
+  },
   "attribution": {
     "commit": "",
     "pr": ""
   },
-  "outputStyle": "2B",
-  "showTurnDuration": true,
   "permissions": {
     "allow": [
       "Bash(git *)",
@@ -36,7 +36,11 @@
       }
     ]
   },
+  "cleanupPeriodDays": 99999,
+  "outputStyle": "2B",
   "alwaysThinkingEnabled": true,
+  "autoDreamEnabled": true,
+  "showTurnDuration": true,
   "skipDangerousModePermissionPrompt": true,
   "voiceEnabled": true
 }

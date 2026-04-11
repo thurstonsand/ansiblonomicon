@@ -14,7 +14,7 @@
 - name: Build rsync exclude options
   ansible.builtin.set_fact:
     agent_harness_skill_rsync_opts: >-
-      {{ ['--exclude=.git', '--exclude=.claude-plugin']
+      {{ ['--exclude=.git', '--exclude=.claude-plugin', '--delete-excluded']
          + (agent_harness_skill_info.exclude_data | default([]) | map('regex_replace', '^(.*)$', '--exclude=\1') | list) }}
 
 - name: Sync skill directory

@@ -3,7 +3,6 @@
 # aig.thurstons.house → Worker → AI Gateway → custom-cli-proxy-api → cli-proxy-api tunnel
 #
 # AI Gateway provides: analytics, logging, caching, rate limiting
-# This is an experiment before potentially promoting to llms.thurstons.house
 
 name = "aig"
 main = "worker.ts"

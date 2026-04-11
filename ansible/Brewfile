@@ -187,7 +187,7 @@ mas "Wipr", id: 1662217862
 # Communication
 # =============================================================================
 cask "beeper"
-cask "clay"
+cask "mesh"
 cask "legcord"
 cask "localsend"
 cask "mimestream"

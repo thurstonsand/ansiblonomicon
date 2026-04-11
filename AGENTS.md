@@ -24,9 +24,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)
 - `uv run poe pages-deploy` — Deploy Cloudflare Pages (tesla)
-- `uv run poe wrangler` — Deploy all Workers (llms + aig)
-- `uv run poe wrangler:llms` — Deploy llms Worker via Wrangler (includes secrets, observability)
-  - `--force-secret` / `-f` — Update API_KEY secret even if it exists
+- `uv run poe wrangler` — Deploy all Workers (aig + hooks)
 - `uv run poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker via Wrangler
   - `--force-secret` / `-f` — Update secrets even if they exist
 - `uv run poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker via Wrangler
@@ -58,7 +56,9 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 - `wrangler/` — Cloudflare Workers (deployed via wrangler, not Terraform)
 - `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
-- `agents/` — Local AI agent skills deployed via `agent_harness` role
+- `agents/` — Reusable AI agent bundles deployed via `agent_harness`
+- `.agents/` / `.claude/skills/` — Project-local Claude/Pi skill sources and Claude symlinks for this repo
+- `.mcp.json` / `.pi/mcp.json` — Project-scoped Cloudflare MCP configs for Claude and Pi
 
 ## OpenClaw
 
@@ -76,24 +76,6 @@ On TrueNAS, Docker stacks use two separate paths:
 
 - **Compose files**: `/mnt/performance/docker/stacks/{stack}/compose.yaml`
 - **Config data**: `/mnt/performance/docker/{stack}/{container}/config`
-
-## Cloudflare Worker Logs
-
-**Real-time tail** (requires terminal that stays open):
-
-```sh
-cd terraform/cloudflare && wrangler tail llms --format pretty
-```
-
-**Historical logs via CLI** (requires cached secrets):
-
-```sh
-./scripts/worker-logs.sh             # Query last 60 minutes
-./scripts/worker-logs.sh -m 30       # Query last 30 minutes
-./scripts/worker-logs.sh --list-queries  # List saved queries
-```
-
-**Historical logs via Dashboard**: Cloudflare Dashboard → Workers & Pages → select worker → Logs tab
 
 ## Code Style
 

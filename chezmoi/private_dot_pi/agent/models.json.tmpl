@@ -67,6 +67,15 @@
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.openai.gpt_codex_spark.max_input }},
           "maxTokens": {{ .models.openai.gpt_codex_spark.max_output }}
+        },
+        {
+          "id": "{{ .models.openai.gpt_mini.version }}",
+          "name": "{{ .models.openai.gpt_mini.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "contextWindow": {{ .models.openai.gpt_mini.max_input }},
+          "maxTokens": {{ .models.openai.gpt_mini.max_output }}
         }
       ]
     },
