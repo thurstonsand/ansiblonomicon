@@ -1,0 +1,123 @@
+# Homebrew Bundle file (work macOS)
+# Run with: brew bundle --file=Brewfile.work
+
+# Local overrides (corporate taps, gitignored)
+Dir.glob(File.join(__dir__, "Brewfile.work.*")).sort.each do |f|
+  instance_eval(File.read(f))
+end
+
+# =============================================================================
+# Shell & Terminal
+# =============================================================================
+brew "autojump"
+brew "bat"
+brew "direnv"
+brew "duti"
+brew "fd"
+brew "fzf"
+brew "htop"
+brew "jq"
+brew "ripgrep"
+brew "starship"
+brew "tldr"
+brew "tmux"
+brew "tree"
+brew "unzip"
+brew "vim"
+brew "zsh-autocomplete"
+brew "zsh-syntax-highlighting"
+
+# =============================================================================
+# Software Engineering
+# =============================================================================
+# Git
+brew "git"
+brew "git-delta"
+brew "glab"
+brew "jujutsu"
+brew "lazygit"
+
+# Languages & build tools
+brew "go"
+brew "just"
+brew "libpq"
+brew "node@22"
+brew "oven-sh/bun/bun"
+brew "pnpm"
+brew "poetry"
+brew "uv"
+
+# Go tools
+brew "delve"
+brew "goimports"
+brew "golang-migrate"
+brew "golangci-lint"
+brew "gopls"
+
+# Linters
+brew "hadolint"
+brew "markdownlint-cli"
+brew "pyright"
+brew "ruff"
+
+# Containers
+brew "colima"
+brew "docker"
+brew "docker-buildx"
+brew "docker-compose"
+brew "docker-credential-helper"
+brew "skopeo"
+
+# Kubernetes
+brew "kubernetes-cli"
+brew "kubectx"
+brew "stern"
+
+# Infra
+brew "chezmoi"
+brew "cormacrelf/tap/dark-notify"
+brew "openssh"
+
+# Editors/Terminals
+brew "neovim"
+cask "ghostty"
+cask "visual-studio-code"
+cask "zed"
+
+# =============================================================================
+# Productivity
+# =============================================================================
+cask "bettertouchtool"
+cask "obsidian"
+cask "rectangle-pro"
+cask "setapp"
+
+# JetBrains
+cask "goland"
+cask "pycharm"
+
+# Fonts
+cask "font-blex-mono-nerd-font"
+cask "font-liberation-nerd-font"
+cask "font-mononoki-nerd-font"
+cask "font-montserrat"
+
+# Hardware
+cask "bazecor"
+cask "monitorcontrol"
+
+# =============================================================================
+# Possibly corporate-managed (uncomment if not provided by IT)
+# =============================================================================
+cask "1password-cli"
+cask "google-chrome"
+cask "google-drive"
+# cask "iterm2"
+# cask "slack"
+# cask "zoom"
+
+# =============================================================================
+# Voice
+# =============================================================================
+brew "whisper-cpp"
+cask "whispering"

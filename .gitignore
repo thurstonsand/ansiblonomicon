@@ -29,5 +29,8 @@ node_modules
 .env
 .dev.vars
 
+# Machine-local Brewfile overrides
+ansible/Brewfile.work.*
+
 # Wrangler build output
 wrangler/*/dist/

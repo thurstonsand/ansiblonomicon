@@ -2,4 +2,6 @@
 # Work macOS-specific configuration (corporate laptop)
 
 # Feature flags
+configure_homebrew: true
 configure_macos_defaults: true
+configure_pam_reattach: false

@@ -1,0 +1,110 @@
+---
+- name: Validate homebrew_brewfile_path is set
+  ansible.builtin.assert:
+    that: homebrew_brewfile_path is defined and homebrew_brewfile_path | length > 0
+    fail_msg: "homebrew_brewfile_path must be provided when including the homebrew role"
+
+# --- Check mode: determine what would change ---
+- name: Check brew bundle (dry run)
+  when: ansible_check_mode
+  check_mode: false
+  ansible.builtin.command:
+    argv:
+      - brew
+      - bundle
+      - check
+      - "--file={{ homebrew_brewfile_path }}"
+      - --verbose
+  register: homebrew_bundle_check
+  changed_when: homebrew_bundle_check.rc != 0
+  failed_when: false
+
+- name: Check outdated packages (dry run)
+  when: ansible_check_mode
+  check_mode: false
+  ansible.builtin.command:
+    argv:
+      - brew
+      - outdated
+  register: homebrew_outdated_check
+  changed_when: homebrew_outdated_check.stdout | length > 0
+
+- name: Set check mode results
+  when: ansible_check_mode
+  vars:
+    stdout: "{{ homebrew_bundle_check.stdout_lines | default([]) }}"
+    stderr: "{{ homebrew_bundle_check.stderr_lines | default([]) }}"
+  ansible.builtin.set_fact:
+    homebrew_bundle_changes: "{{ (stdout + stderr) | select('search', 'needs to be') | list }}"
+    homebrew_dep_changes: "{{ homebrew_outdated_check.stdout_lines | default([]) }}"
+
+# --- Real mode: apply changes ---
+- name: Check upgrade stamp
+  when: not ansible_check_mode
+  ansible.builtin.stat:
+    path: "{{ homebrew_cache_dir }}/upgrade.stamp"
+  register: homebrew_upgrade_stamp
+
+- name: Determine if upgrade is due
+  when: not ansible_check_mode
+  ansible.builtin.set_fact:
+    homebrew_upgrade_due: >-
+      {{
+        (not homebrew_upgrade_stamp.stat.exists)
+        or (
+          (ansible_date_time.epoch | int) - (homebrew_upgrade_stamp.stat.mtime | int)
+          >= (homebrew_upgrade_interval_seconds | int)
+        )
+      }}
+
+- name: Run brew bundle
+  when: not ansible_check_mode
+  ansible.builtin.command:
+    argv: >-
+      {{ ['brew', 'bundle', '--file=' + homebrew_brewfile_path]
+         + (['--cleanup', '--upgrade'] if homebrew_upgrade_due else []) }}
+  environment:
+    SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
+  register: homebrew_result
+  changed_when: "'Installing' in homebrew_result.stdout or 'Upgrading' in homebrew_result.stdout or 'Uninstalling' in homebrew_result.stdout"
+
+- name: Upgrade transitive dependencies
+  when: not ansible_check_mode and homebrew_upgrade_due
+  community.general.homebrew:
+    upgrade_all: true
+  register: homebrew_deps_result
+
+- name: Ensure cache directory exists
+  when: not ansible_check_mode and homebrew_upgrade_due
+  ansible.builtin.file:
+    path: "{{ homebrew_cache_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Record upgrade timestamp
+  when: not ansible_check_mode and homebrew_upgrade_due
+  ansible.builtin.file:
+    path: "{{ homebrew_cache_dir }}/upgrade.stamp"
+    state: touch
+    mode: "0644"
+
+- name: Set real mode results
+  when: not ansible_check_mode
+  vars:
+    stdout: "{{ homebrew_result.stdout_lines | default([]) }}"
+    stderr: "{{ homebrew_result.stderr_lines | default([]) }}"
+    noise: '^==>|^Adjust how often|^Hide these hints|^Updated |^You have \d+ outdated|JSON API'
+  ansible.builtin.set_fact:
+    homebrew_bundle_changes: >-
+      {{ (stdout | select('search', 'Installing|Upgrading|Uninstalling|Skipping') | list)
+         + (stderr | reject('search', noise) | list) }}
+    homebrew_dep_changes: "{{ (homebrew_deps_result.changed_pkgs | default([])) if homebrew_upgrade_due else [] }}"
+
+# --- Unified output ---
+- name: Show brew changes
+  ansible.builtin.debug:
+    msg:
+      brewfile: "{{ homebrew_bundle_changes if homebrew_bundle_changes | length > 0 else 'Up to date' }}"
+      transitive_deps: "{{ homebrew_dep_changes if homebrew_dep_changes | length > 0 else 'Up to date' }}"
+      upgrade_status: "{{ 'Ran cleanup + upgrade' if (homebrew_upgrade_due | default(false)) else 'Skipped (last run < 24h ago)' }}"
+  when: (homebrew_bundle_changes | length > 0) or (homebrew_dep_changes | length > 0) or not (homebrew_upgrade_due | default(true))

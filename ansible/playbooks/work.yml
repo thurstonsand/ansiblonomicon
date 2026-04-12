@@ -16,6 +16,16 @@
       tags: ["always"]
 
   tasks:
+    - name: Install packages with brew bundle
+      ansible.builtin.include_role:
+        name: homebrew
+        apply:
+          tags: ["homebrew"]
+      vars:
+        homebrew_brewfile_path: "{{ playbook_dir }}/../Brewfile.work"
+      when: configure_homebrew | default(true)
+      tags: ["homebrew"]
+
     - name: Apply macOS system defaults
       ansible.builtin.include_role:
         name: macos_defaults

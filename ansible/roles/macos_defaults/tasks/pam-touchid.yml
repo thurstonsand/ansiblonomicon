@@ -5,6 +5,7 @@
 # pam_reattach restores Touch ID support inside tmux sessions
 
 - name: Enable pam_reattach for tmux Touch ID support
+  when: configure_pam_reattach | default(true)
   become: true
   ansible.builtin.lineinfile:
     path: /etc/pam.d/sudo_local
