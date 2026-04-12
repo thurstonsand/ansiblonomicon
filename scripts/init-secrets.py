@@ -6,6 +6,7 @@ Also generates .dev.vars files for Cloudflare Workers based on WORKER_DEV_VARS m
 
 from datetime import UTC, datetime
 from io import StringIO
+import json
 from pathlib import Path
 import subprocess
 import sys
@@ -16,6 +17,7 @@ import jsonc  # pyright: ignore[reportMissingTypeStubs]
 ROOT_DIR = Path(__file__).parent.parent
 SECRETS_CONFIG = ROOT_DIR / ".secrets.jsonc"
 SECRETS_CACHE = ROOT_DIR / ".env"
+OP_ACCOUNT_PREFIX = "PQ7X5"
 
 # Map worker directories to their .dev.vars secrets
 # Format: { "worker/path": { "WORKER_VAR": "ENV_VAR_NAME" } }
@@ -34,6 +36,24 @@ WORKER_DEV_VARS: dict[str, dict[str, str]] = {
         "ELEVENLABS_VOICE_TOKEN": "ELEVENLABS_VOICE_TOKEN",
     },
 }
+
+
+def resolve_op_account() -> str:
+    result = subprocess.run(
+        ["op", "account", "list", "--format=json"],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        print(f"Error listing 1Password accounts: {result.stderr.strip()}", file=sys.stderr)
+        sys.exit(1)
+    accounts: list[dict[str, str]] = json.loads(result.stdout)
+    for acct in accounts:
+        if acct["account_uuid"].startswith(OP_ACCOUNT_PREFIX):
+            return acct["account_uuid"]
+    print(f"No 1Password account matching prefix {OP_ACCOUNT_PREFIX}", file=sys.stderr)
+    sys.exit(1)
 
 
 def main() -> None:
@@ -69,7 +89,7 @@ def main() -> None:
 
     # Run op inject to resolve all secrets at once
     result = subprocess.run(
-        ["op", "inject"],
+        ["op", "inject", "--account", resolve_op_account()],
         input=template,
         capture_output=True,
         text=True,

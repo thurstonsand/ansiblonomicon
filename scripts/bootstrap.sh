@@ -6,6 +6,13 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+GALAXY_IGNORE_CERTS=""
+for arg in "$@"; do
+    case "$arg" in
+        --ignore-certs) GALAXY_IGNORE_CERTS="--ignore-certs" ;;
+    esac
+done
+
 echo "==> ansiblonomicon bootstrap"
 echo "    Repo: $REPO_DIR"
 
@@ -111,14 +118,21 @@ echo "==> 1Password CLI signed in"
 # Install Ansible Galaxy requirements (if requirements.yml exists)
 if [[ -f "$REPO_DIR/ansible/requirements.yml" ]]; then
     echo "==> Installing Ansible Galaxy requirements..."
-    ansible-galaxy install -r "$REPO_DIR/ansible/requirements.yml"
+    if ! ansible-galaxy install -r "$REPO_DIR/ansible/requirements.yml" $GALAXY_IGNORE_CERTS; then
+        echo ""
+        echo "ERROR: Failed to install Ansible Galaxy requirements."
+        echo ""
+        echo "If this is an SSL/certificate error (e.g. corporate proxy or Zscaler),"
+        echo "re-run with:"
+        echo "    ./scripts/bootstrap.sh --ignore-certs"
+        exit 1
+    fi
 fi
-
-# Run the playbook
-echo "==> Running Ansible playbook..."
-cd "$REPO_DIR/ansible"
-ansible-playbook main.yml -K
 
 echo "==> Bootstrap complete!"
 echo ""
-echo "Future runs: just run 'anup'"
+echo "Next step: run the appropriate playbook, e.g.:"
+echo "    uv run poe macos"
+echo "    uv run poe truenas"
+echo "    uv run poe openclaw"
+echo "    uv run poe work"

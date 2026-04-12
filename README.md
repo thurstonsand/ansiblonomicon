@@ -5,8 +5,10 @@ System configuration via Ansible + Chezmoi, replacing nix-darwin + home-manager.
 ## Quick Start
 
 ```bash
-# First time setup (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI, runs playbook)
+# First time setup (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI)
 ./scripts/bootstrap.sh
+# Use --ignore-certs if behind a corporate proxy (e.g. Zscaler)
+./scripts/bootstrap.sh --ignore-certs
 
 # After changes
 anup
@@ -14,7 +16,7 @@ anup
 
 ### Sudo Access
 
-Ansible uses `op run` with `SUDO_ASKPASS` to get the sudo password from 1Password automatically. Just run `poe macos` — no manual password entry needed.
+Ansible uses `SUDO_ASKPASS` to get the sudo password from 1Password automatically. Just run `poe macos` or `poe work` — no manual password entry needed.
 
 Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 
@@ -30,6 +32,7 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 │   ├── inventory/           # Host definitions (localhost, truenas)
 │   ├── config.yml           # Shared configuration variables
 │   ├── darwin.config.yml    # macOS-specific config
+│   ├── work.config.yml     # Work macOS-specific config
 │   ├── debian.config.yml    # Debian-specific config (openclaw)
 │   ├── archlinux.config.yml # Arch Linux-specific config
 │   ├── Brewfile             # Homebrew packages, casks, and MAS apps
@@ -40,6 +43,7 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 │   ├── stacks/              # Docker Compose stacks for TrueNAS
 │   └── playbooks/
 │       ├── macos.yml        # macOS playbook
+│       ├── work.yml         # Work macOS playbook
 │       ├── openclaw.yml     # OpenClaw (Debian VM) playbook
 │       ├── truenas.yml      # TrueNAS playbook
 │       └── udmp.yml         # UDMP playbook
@@ -59,6 +63,7 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 - `anup` — Apply macOS Ansible playbook (alias set up by this playbook)
 - `anup --check` — Dry-run mode (shows what would change without applying)
 - `poe macos` — Apply macOS Ansible playbook (same as `anup`)
+- `poe work` — Apply work macOS Ansible playbook
 - `poe openclaw` — Apply OpenClaw (Debian VM) Ansible playbook
 - `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe udmp` — Apply UDMP Ansible playbook

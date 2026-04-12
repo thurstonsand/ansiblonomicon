@@ -5,6 +5,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 ## Commands
 
 - `./scripts/bootstrap.sh` — First-time setup on a brand new machine (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI)
+  - `--ignore-certs` — Skip SSL verification for `ansible-galaxy install` (for corporate proxies)
 - `./scripts/test-bootstrap.sh` — Test bootstrap in clean macOS VM via Tart
   - `--reuse` reuses existing VM; `--uninstall-xcode` tests fresh Xcode install; `--full-brew-bundle` uses real Brewfile
 - `uv run poe macos` — Apply macOS Ansible playbook
@@ -12,6 +13,8 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
   - **macOS tags**: `agent-harness`, `bun`, `chezmoi`/`dotfiles`, `claude-code`, `ghostty-nav`, `go`, `homebrew`/`mas`, `npm`, `opencode`, `ruby`, `sysconfig`/`hostname`, `terminal-theme`, `tmux`, `uv`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
+- `uv run poe work` — Apply work macOS Ansible playbook
+  - **Work tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `crabwalk`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
 - `uv run poe udmp` — Apply UDMP Ansible playbook (same options as macos)
@@ -45,10 +48,10 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 
 ## Architecture
 
-- `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/openclaw.yml` — OpenClaw (Debian VM) playbook; `ansible/playbooks/udmp.yml` — UDMP playbook
+- `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/work.yml` — Work macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/openclaw.yml` — OpenClaw (Debian VM) playbook; `ansible/playbooks/udmp.yml` — UDMP playbook
 - `ansible/roles/` — Custom roles
 - `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS (`.j2` templates use centralized config)
-- `ansible/config.yml` — Shared vars; `darwin.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS-specific
+- `ansible/config.yml` — Shared vars; `darwin.config.yml` / `work.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS/host-specific
 - `ansible/models.yml` — Centralized model definitions (versions, aliases, vscode/zed config); symlinked to `chezmoi/.chezmoidata/models.yaml`
 - `ansible/inventory/group_vars/truenas.yml` — TrueNAS host vars (Docker config, network IPs/ports/domains)
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)

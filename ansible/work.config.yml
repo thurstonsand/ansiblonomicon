@@ -1,0 +1,5 @@
+---
+# Work macOS-specific configuration (corporate laptop)
+
+# Feature flags
+configure_macos_defaults: true

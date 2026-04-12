@@ -1,0 +1,32 @@
+---
+# Work macOS configuration playbook (corporate laptop)
+# Run with: uv run poe work
+
+- name: Configure work host
+  hosts: 127.0.0.1
+
+  pre_tasks:
+    - name: Load work-specific config
+      ansible.builtin.include_vars: ../work.config.yml
+      tags: ["always"]
+
+    - name: Display system info
+      ansible.builtin.debug:
+        msg: "Configuring work macOS ({{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }})"
+      tags: ["always"]
+
+  tasks:
+    - name: Apply macOS system defaults
+      ansible.builtin.include_role:
+        name: macos_defaults
+      when: configure_macos_defaults | default(true)
+      tags:
+        [
+          "sysconfig",
+          "dock",
+          "finder",
+          "nsglobaldomain",
+          "menubar",
+          "desktop-services",
+          "permissions",
+        ]
