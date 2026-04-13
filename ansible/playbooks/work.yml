@@ -48,3 +48,11 @@
           tags: ["uvc-util"]
       when: configure_uvc_util | default(true)
       tags: ["uvc-util"]
+
+    - name: Build ghostty-nav for split navigation
+      ansible.builtin.include_role:
+        name: ghostty_nav
+        apply:
+          tags: ["ghostty-nav"]
+      when: ansible_facts['os_family'] == "Darwin"
+      tags: ["ghostty-nav"]
