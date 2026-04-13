@@ -46,7 +46,10 @@ def resolve_op_account() -> str:
         check=False,
     )
     if result.returncode != 0:
-        print(f"Error listing 1Password accounts: {result.stderr.strip()}", file=sys.stderr)
+        print(
+            f"Error listing 1Password accounts: {result.stderr.strip()}",
+            file=sys.stderr,
+        )
         sys.exit(1)
     accounts: list[dict[str, str]] = json.loads(result.stdout)
     for acct in accounts:

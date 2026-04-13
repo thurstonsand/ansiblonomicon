@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 from typing import Literal, cast
 
-from tomlkit import document, parse, table
+from tomlkit import parse, table
 
 Mode = Literal["dark", "light"]
 VALID_MODES: set[Mode] = {"dark", "light"}
@@ -63,16 +63,17 @@ def hunk_theme_name(mode: Mode) -> str:
 
 
 def set_hunk_theme(text: str, mode: Mode) -> str:
-    root = parse(text) if text.strip() else document()
+    root = parse(text)
     root["theme"] = hunk_theme_name(mode)
     return root.as_string()
 
 
 def update_hunk_theme(mode: Mode) -> None:
     hunk_toml = Path.home() / ".config" / "hunk" / "config.toml"
-    hunk_toml.parent.mkdir(parents=True, exist_ok=True)
-    existing = hunk_toml.read_text() if hunk_toml.exists() else ""
-    updated = set_hunk_theme(existing, mode)
+    if not hunk_toml.exists():
+        return
+
+    updated = set_hunk_theme(hunk_toml.read_text(), mode)
     hunk_toml.write_text(updated)
 
 

@@ -10,7 +10,9 @@ REQUEST_TIMEOUT = 5
 
 
 def get_json(path: str):
-    with urllib.request.urlopen(f"{BASE_URL}{path}", timeout=REQUEST_TIMEOUT) as response:
+    with urllib.request.urlopen(
+        f"{BASE_URL}{path}", timeout=REQUEST_TIMEOUT
+    ) as response:
         return json.load(response)
 
 

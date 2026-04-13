@@ -70,6 +70,18 @@ const cases = [
   // rm: simple rm should pass
   ["rm foo.txt", "pass", "rm single file"],
 
+  // allowlisted: rename-session should pass
+  [
+    'python3 ~/.claude/scripts/rename-session.py "$PPID" "my session"',
+    "pass",
+    "rename-session with ~ path",
+  ],
+  [
+    'python3 {{ .chezmoi.homeDir }}/.claude/scripts/rename-session.py "$PPID" "test"',
+    "pass",
+    "rename-session with absolute path",
+  ],
+
   // non-Bash tools should pass
   [
     null,

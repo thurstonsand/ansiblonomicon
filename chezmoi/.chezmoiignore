@@ -43,6 +43,7 @@ Library/
 .config/rclone/
 .config/amp/
 .config/gh/
+.config/hunk/
 .config/linearmouse/
 .config/nextdns.conf
 .config/nvim/lua/plugins/amp.lua

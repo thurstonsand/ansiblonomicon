@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 
 // ==============================================================
-// ALLOWLIST: safe patterns — checked first, short-circuits to pass
+// ALLOWLIST: safe patterns — actively approved, skip permission prompt
 // ==============================================================
 const ALLOW_PATTERNS = [
   /find\s+.*\s(-exec|-execdir)\s+(grep|ls|cat|head|tail|file|stat|wc|basename|dirname|readlink|sha256sum|md5sum)\b/,
+  /python3\s+.*rename-session\.py\b/,
 ];
 
 // ==============================================================
@@ -51,6 +52,15 @@ async function main() {
 
   for (const pattern of ALLOW_PATTERNS) {
     if (pattern.test(command)) {
+      console.log(
+        JSON.stringify({
+          hookSpecificOutput: {
+            hookEventName: "PreToolUse",
+            permissionDecision: "allow",
+            permissionDecisionReason: `Matched allow pattern: ${pattern}`,
+          },
+        }),
+      );
       process.exit(0);
     }
   }

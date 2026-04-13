@@ -38,6 +38,11 @@
     ]
   },
   "cleanupPeriodDays": 99999,
+  "sandbox": {
+    "excludedCommands": [
+      "python3 ~/.claude/scripts/rename-session.py:*"
+    ]
+  },
   "outputStyle": "2B",
   "alwaysThinkingEnabled": true,
   "autoDreamEnabled": true,
