@@ -3,7 +3,7 @@ import AppKit
 
 func usage() -> Never {
     fputs(
-        "usage: ghostty-nav activate <table> | deactivate | move <left|down|up|right> | tab-terminal-count | split <left|right|up|down> [--cwd <path>] [--command <string>] [--focus <new|original>] | resize <left|down|up|right> (--pixels <n> | --percent <n>) | toggle-zoom\n",
+        "usage: ghostty-nav activate <table> | deactivate | move <left|down|up|right> | tab-terminal-count | split <left|right|up|down> [--cwd <path>] [--command <string>] [--focus <new|original>] | resize <left|down|up|right> (--pixels <n> | --percent <n>) | toggle-zoom | title <text>\n",
         stderr
     )
     exit(2)
@@ -34,6 +34,7 @@ enum Command {
     case split(Direction, cwd: String?, command: String?, focus: FocusTarget)
     case resize(Direction, amount: ResizeAmount)
     case toggleZoom
+    case title(String)
 }
 
 func parseDirection(_ rawValue: String) -> Direction {
@@ -126,9 +127,30 @@ func parseCommand(_ args: [String]) -> Command {
     case "toggle-zoom":
         guard args.count == 2 else { usage() }
         return .toggleZoom
+    case "title":
+        guard args.count == 3 else { usage() }
+        return .title(args[2])
     default:
         usage()
     }
+}
+
+func sanitizeTitle(_ value: String) -> String {
+    let scalars = value.unicodeScalars.filter { !CharacterSet.controlCharacters.contains($0) }
+    return String(String.UnicodeScalarView(scalars))
+}
+
+func emitTitle(_ value: String) throws {
+    let title = sanitizeTitle(value)
+    let data = Data("\u{1B}]2;\(title)\u{07}".utf8)
+
+    if let tty = try? FileHandle(forWritingTo: URL(fileURLWithPath: "/dev/tty")) {
+        defer { try? tty.close() }
+        tty.write(data)
+        return
+    }
+
+    FileHandle.standardOutput.write(data)
 }
 
 func executeAppleScript(_ source: String) throws -> NSAppleEventDescriptor {
@@ -272,6 +294,8 @@ do {
         try resize(direction: direction, amount: amount)
     case .toggleZoom:
         try runGhosttyAction("toggle_split_zoom")
+    case .title(let value):
+        try emitTitle(value)
     }
 } catch {
     fputs("ghostty-nav: \(error.localizedDescription)\n", stderr)

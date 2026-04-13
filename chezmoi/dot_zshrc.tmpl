@@ -82,11 +82,15 @@ if command -v prettyping &>/dev/null; then
 fi
 alias top='htop'
 alias lg='lazygit'
+
+claude() {
+  ghostty-nav title "claude:${PWD:t}"
 {{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-alias claude='claude --plugin-dir ~/code/claude-code-plugin-sourcegraph'
+  command claude --plugin-dir ~/code/claude-code-plugin-sourcegraph "$@"
 {{- else }}
-alias claude='claude --dangerously-skip-permissions'
+  command claude --dangerously-skip-permissions "$@"
 {{- end }}
+}
 
 source ~/.config/zsh/tmux-theme.zsh 2>/dev/null || :
 

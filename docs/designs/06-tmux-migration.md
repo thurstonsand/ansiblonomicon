@@ -69,7 +69,7 @@ set -g status-keys emacs
 
 #### Theme: Ghostty-Driven Gruvbox Sync
 
-Ghostty still drives light/dark mode, but tmux now loads explicit gruvbox config files and updates shared state through a helper script. That keeps tmux, delta, nvim, Claude, and Codex aligned when the terminal theme changes.
+Ghostty still drives light/dark mode, but tmux now loads explicit gruvbox config files and updates shared state through a helper script. That keeps tmux, delta, nvim, Claude, Codex, and Hunk aligned when the terminal theme changes.
 
 ```tmux
 set -g status-position bottom
@@ -194,7 +194,7 @@ Changes from current: `$ZELLIJ` check becomes `$TMUX` check.
 | ------------------------------ | ------------------------- | -------------------------------------------------------------------------------------------- |
 | `_detect_terminal_bg()`        | No change                 | **Removed from zsh startup** — Ansible now seeds `~/.terminal-bg`, shells just read it      |
 | `_maybe_refresh_terminal_bg()` | Runs in precmd every 300s | **Removed** — OSC 11 can't round-trip inside tmux                                            |
-| Theme helper                   | None                      | `terminal-theme-switch.py` updates `~/.terminal-bg`, Claude theme state, and Codex TUI theme |
+| Theme helper                   | None                      | `terminal-theme-switch.py` updates `~/.terminal-bg`, Claude theme state, Codex TUI theme, and Hunk theme |
 | Source of truth                | `~/.terminal-bg` file     | `dark-notify` LaunchAgent → `terminal-theme-switch.py` → `~/.terminal-bg` and tool configs  |
 | nvim file watcher              | Watches `~/.terminal-bg`  | **Kept unchanged** — reacts to helper-driven writes                                          |
 | nvim FocusGained               | Not used                  | Not needed — file watcher is more responsive                                                 |
@@ -223,7 +223,7 @@ bgdark() { _set_theme dark; }
 ```
 macOS theme changes → dark-notify LaunchAgent fires →
   ~/.local/bin/terminal-theme-watch reads light|dark →
-  ~/.local/bin/terminal-theme-switch.py updates ~/.terminal-bg, ~/.claude.json, and ~/.codex/config.toml →
+  ~/.local/bin/terminal-theme-switch.py updates ~/.terminal-bg, ~/.claude.json, ~/.codex/config.toml, and ~/.config/hunk/config.toml →
   new shells export TERMINAL_BG from ~/.terminal-bg →
   tmux reads ~/.terminal-bg on attach/startup →
   nvim watcher fires if file changed → vim.o.background updates
@@ -233,7 +233,7 @@ For mid-session changes (rare — typically once per day):
 
 ```psuedo
 User runs `bglight` or `bgdark` →
-  helper updates ~/.terminal-bg, ~/.claude.json, and ~/.codex/config.toml →
+  helper updates ~/.terminal-bg, ~/.claude.json, ~/.codex/config.toml, and ~/.config/hunk/config.toml →
   nvim watcher fires immediately →
   sets tmux env → new shells get updated TERMINAL_BG →
   sets current shell env → next delta/git invocation uses new theme
@@ -309,4 +309,4 @@ The tmux config still works on both platforms. Platform-specific differences:
 ### Open Questions
 
 - Whether pane border labels should stay enabled long-term, or be simplified once the workflow settles
-- Whether the theme helper should remain Claude/Codex-specific, or grow to manage more terminal-aware tools such as Pi
+- Whether the theme helper should eventually grow beyond Claude/Codex/Hunk to manage more terminal-aware tools such as Pi

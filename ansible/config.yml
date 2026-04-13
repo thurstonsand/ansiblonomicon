@@ -22,7 +22,7 @@ npm_global_packages_base:
   - "@mariozechner/pi-coding-agent"
   - "@steipete/oracle"
   - agent-browser
-  - diffity
+  - hunkdiff
 
 # OpenClaw bundled extensions that need `npm install` after global install
 openclaw_bundled_extensions:
@@ -141,6 +141,12 @@ agent_harness_sources:
       - name: oracle
         path: skills
         target_agents: [claude, codex, opencode, pi, openclaw]
+
+  - repo: modem-dev/hunk
+    pull: true
+    plugins:
+      - name: hunk
+        path: skills
 
   - local: "{{ playbook_dir }}/../../agents"
     plugins:

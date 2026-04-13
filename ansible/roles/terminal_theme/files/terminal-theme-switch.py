@@ -14,7 +14,7 @@ from pathlib import Path
 import sys
 from typing import Literal, cast
 
-from tomlkit import parse, table
+from tomlkit import document, parse, table
 
 Mode = Literal["dark", "light"]
 VALID_MODES: set[Mode] = {"dark", "light"}
@@ -58,6 +58,24 @@ def update_codex_theme(mode: Mode) -> None:
     codex_toml.write_text(updated)
 
 
+def hunk_theme_name(mode: Mode) -> str:
+    return "paper" if mode == "light" else "graphite"
+
+
+def set_hunk_theme(text: str, mode: Mode) -> str:
+    root = parse(text) if text.strip() else document()
+    root["theme"] = hunk_theme_name(mode)
+    return root.as_string()
+
+
+def update_hunk_theme(mode: Mode) -> None:
+    hunk_toml = Path.home() / ".config" / "hunk" / "config.toml"
+    hunk_toml.parent.mkdir(parents=True, exist_ok=True)
+    existing = hunk_toml.read_text() if hunk_toml.exists() else ""
+    updated = set_hunk_theme(existing, mode)
+    hunk_toml.write_text(updated)
+
+
 def main() -> None:
     if len(sys.argv) != 2 or sys.argv[1] not in VALID_MODES:
         print(f"Usage: python3 {sys.argv[0]} <dark|light>", file=sys.stderr)
@@ -67,6 +85,7 @@ def main() -> None:
     update_terminal_bg(mode)
     update_claude_theme(mode)
     update_codex_theme(mode)
+    update_hunk_theme(mode)
 
 
 if __name__ == "__main__":

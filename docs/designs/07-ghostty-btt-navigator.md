@@ -67,8 +67,9 @@ Normal shell prompts do only a file existence check.
 - `ghostty-nav split <left|right|up|down> [--cwd <path>] [--command <string>] [--focus <new|original>]`
 - `ghostty-nav resize <left|down|up|right> (--pixels <n> | --percent <n>)`
 - `ghostty-nav toggle-zoom`
+- `ghostty-nav title <text>`
 
-On macOS it talks to Ghostty via `NSAppleScript`, so the shell and Neovim code only need to call a single helper instead of embedding their own `osascript` blocks.
+On macOS the split/navigation actions talk to Ghostty via `NSAppleScript`, while `title` writes OSC 2 directly to the current TTY so shell wrappers can retitle the active Ghostty surface without carrying their own escape-sequence logic.
 
 ### Local IDE Flow
 

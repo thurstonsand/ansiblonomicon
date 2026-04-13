@@ -15,9 +15,15 @@ git:
   log:
     order: "topo-order"
     showGraph: always
+{{- if lookPath "hunk" }}
+  pagers:
+    - pager: hunk pager
+      colorArg: always
+{{- else if lookPath "delta" }}
   pagers:
     - pager: delta --paging=never --$(cat ~/.terminal-bg 2>/dev/null || echo dark)
       colorArg: always
+{{- end }}
   autoFetch: false
   overrideGpg: true
 
