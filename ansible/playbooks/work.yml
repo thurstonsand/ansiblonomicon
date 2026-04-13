@@ -49,6 +49,14 @@
       when: configure_uvc_util | default(true)
       tags: ["uvc-util"]
 
+    - name: Configure terminal theme manager
+      ansible.builtin.include_role:
+        name: terminal_theme
+        apply:
+          tags: ["terminal-theme"]
+      when: ansible_facts['os_family'] == "Darwin" and configure_terminal_theme | default(true)
+      tags: ["terminal-theme"]
+
     - name: Build ghostty-nav for split navigation
       ansible.builtin.include_role:
         name: ghostty_nav
