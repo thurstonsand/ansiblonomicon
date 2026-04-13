@@ -118,7 +118,7 @@ def main() -> int:
         print(f"Error: uvc-util not found at {uvc_util}", file=sys.stderr)
         return 1
 
-    script_dir = os.path.dirname(os.path.abspath(__file__))
+    script_dir = os.path.dirname(os.path.realpath(__file__))
     settings_path = os.environ.get(
         "UVC_SETTINGS_FILE", os.path.join(script_dir, "camera_settings.json")
     )
@@ -151,7 +151,6 @@ def main() -> int:
                 print(f"Failed configuring {name}: {exc}", file=sys.stderr)
 
     if not any_applied:
-        # List devices for the user to extend mapping
         print("No known devices connected. Detected devices:")
         for device in devices:
             print(f"- {device['name']} ({device['vendor_product']})")

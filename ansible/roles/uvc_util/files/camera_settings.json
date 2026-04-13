@@ -7,7 +7,7 @@
                 "auto-focus": false,
                 "auto-white-balance-temp": false,
                 "focus-abs": 85,
-                "white-balance-temp": 4900,
+                "white-balance-temp": 6400,
                 "zoom-abs": 130,
                 "brightness": 50,
                 "saturation": 50,
@@ -33,6 +33,22 @@
                 "zoom-abs": 105,
                 "gain": 18,
                 "exposure-time-abs": 167
+            }
+        },
+        "0x0fd9:0x0079": {
+            "name": "Elgato FaceCam Pro",
+            "controls": {
+                "brightness": 0,
+                "white-balance-temp": 5000,
+                "zoom-abs": 145,
+                "exposure-time-abs": 312,
+                "auto-focus": false,
+                "gain": 8,
+                "saturation": 64,
+                "auto-exposure-mode": 4,
+                "contrast": 37,
+                "auto-white-balance-temp": false,
+                "focus-abs": 180
             }
         }
     }

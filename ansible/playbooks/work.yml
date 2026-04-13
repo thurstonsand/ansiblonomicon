@@ -40,3 +40,11 @@
           "desktop-services",
           "permissions",
         ]
+
+    - name: Build uvc-util for camera control
+      ansible.builtin.include_role:
+        name: uvc_util
+        apply:
+          tags: ["uvc-util"]
+      when: configure_uvc_util | default(true)
+      tags: ["uvc-util"]

@@ -2,9 +2,11 @@
 
 ## Project Layout
 
+All files live under `~/.local/opt/uvc-util/`:
+
 - `src/uvc-util`: compiled CLI for UVC controls (uses IOKit on macOS)
-- `~/.local/bin/configure_camera.py`: Python script that detects devices and applies settings
-- `~/.local/bin/camera_settings.json`: per-camera configuration file
+- `configure_camera.py`: Python script that detects devices and applies settings (symlinked to `~/.local/bin/`)
+- `camera_settings.json`: per-camera configuration file
 - `uvc-util.xcodeproj/` and `src/*.m`: sources for building `uvc-util`
 
 ## uvc-util CLI

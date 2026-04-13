@@ -1,6 +1,5 @@
 ---
-# Clone uvc-util for UVC camera control on macOS
-# Build step TBD - investigate Xcode project after first run
+# Clone uvc-util, build the binary, and deploy camera configuration scripts
 
 - name: Ensure ~/.local/opt directory exists
   ansible.builtin.file:
@@ -44,3 +43,28 @@
     chdir: "{{ ansible_facts['env']['HOME'] }}/.local/opt/uvc-util/src"
   when: uvc_util_clone.changed or not uvc_util_binary.stat.exists
   changed_when: true
+
+- name: Ensure ~/.local/bin directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+    state: directory
+    mode: "0755"
+
+- name: Copy configure_camera.py to uvc-util directory
+  ansible.builtin.copy:
+    src: configure_camera.py
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/opt/uvc-util/configure_camera.py"
+    mode: "0755"
+
+- name: Copy camera_settings.json to uvc-util directory
+  ansible.builtin.copy:
+    src: camera_settings.json
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/opt/uvc-util/camera_settings.json"
+    mode: "0644"
+
+- name: Symlink configure_camera.py to ~/.local/bin
+  ansible.builtin.file:
+    src: "{{ ansible_facts['env']['HOME'] }}/.local/opt/uvc-util/configure_camera.py"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/configure_camera.py"
+    state: link
+    force: true
