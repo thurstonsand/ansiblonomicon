@@ -32,5 +32,9 @@ agent_harness_update: false
 # Defaults to once per day
 agent_harness_update_interval_seconds: 86400
 
+# Global cleanup toggles (can be overridden per-agent in vars/agents.yml)
+agent_harness_cleanup_orphaned_skills: true
+agent_harness_cleanup_orphaned_agents: true
+
 # Where to cache git repos
 agent_harness_cache_dir: "{{ ansible_facts.env.HOME }}/.cache/ansiblonomicon-harness"

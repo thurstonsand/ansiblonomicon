@@ -74,3 +74,11 @@
         chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
       when: configure_chezmoi | default(true)
       tags: ["chezmoi", "dotfiles"]
+
+    - name: Deploy AI agent resources
+      ansible.builtin.include_role:
+        name: agent_harness
+        apply:
+          tags: ["agent-harness"]
+      when: configure_agent_harness | default(true)
+      tags: ["agent-harness"]

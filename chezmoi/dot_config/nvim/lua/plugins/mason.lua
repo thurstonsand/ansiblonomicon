@@ -1,4 +1,10 @@
+local venv_bin = vim.fn.getcwd() .. "/.venv/bin"
+
 return {
+  {
+    "mason-org/mason.nvim",
+    opts = { ensure_installed = {} },
+  },
   {
     "neovim/nvim-lspconfig",
     opts = {
@@ -9,13 +15,16 @@ return {
             ansible = {
               path = "ansible",
               python = { activationScript = "" },
+              validation = {
+                lint = { path = venv_bin .. "/ansible-lint" },
+              },
             },
             executionEnvironment = {
               enabled = false,
             },
           },
           cmd_env = {
-            PATH = vim.fn.getcwd() .. "/.venv/bin:" .. vim.env.PATH,
+            PATH = venv_bin .. ":" .. vim.env.PATH,
           },
         },
         biome = { mason = false },

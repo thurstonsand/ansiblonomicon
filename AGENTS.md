@@ -14,7 +14,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - **macOS tags**: `agent-harness`, `bun`, `chezmoi`/`dotfiles`, `claude-code`, `ghostty-nav`, `go`, `homebrew`/`mas`, `npm`, `opencode`, `ruby`, `sysconfig`/`hostname`, `terminal-theme`, `tmux`, `uv`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe work` — Apply work macOS Ansible playbook
-  - **Work tags**: `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `terminal-theme`, `uvc-util`, `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
+  - **Work tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `terminal-theme`, `uvc-util`, `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `crabwalk`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
 - `uv run poe udmp` — Apply UDMP Ansible playbook (same options as macos)

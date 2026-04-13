@@ -7,3 +7,26 @@ configure_macos_defaults: true
 configure_uvc_util: true
 configure_chezmoi: true
 configure_pam_reattach: false
+configure_agent_harness: true
+
+# Agent Harness - only deploy to Claude on work machine
+agent_harness_target_agents:
+  - claude
+
+# Don't delete unmanaged skills (some exist outside git)
+agent_harness_cleanup_orphaned_skills: false
+agent_harness_cleanup_orphaned_agents: false
+
+agent_harness_sources:
+  - repo: anthropics/claude-plugins-official
+    pull: true
+    plugins:
+      - name: code-simplifier
+        target_agents: [claude]
+
+  - local: "{{ playbook_dir }}/../../agents"
+    plugins:
+      - name: project-management
+        target_agents: [claude]
+        exclude_skills:
+          - showboat
