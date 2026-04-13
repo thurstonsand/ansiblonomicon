@@ -54,9 +54,16 @@ brew "golang-migrate"
 brew "golangci-lint"
 brew "gopls"
 
+# LSP / Formatters
+brew "ansible-language-server"
+brew "biome"
+brew "prettier"
+brew "vtsls"
+brew "yaml-language-server"
+
 # Linters
 brew "hadolint"
-brew "markdownlint-cli"
+brew "markdownlint-cli2"
 brew "pyright"
 brew "ruff"
 

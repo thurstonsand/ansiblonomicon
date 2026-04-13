@@ -1,6 +1,9 @@
 [alias]
 	cone = "commit --amend --no-edit"
+	count = "rev-list --count main..HEAD"
+	gone = "!git fetch -p && git branch -vv | grep ': gone]' | awk '{print $1}' | xargs -r git branch -D"
 	pushf = "push --force-with-lease"
+	undo = "reset HEAD~"
 
 [color]
 	ui = "auto"
@@ -13,6 +16,7 @@
 {{- if eq .chezmoi.os "darwin" }}
 
 [core]
+	editor = /Users/tsandberg/.local/bin/codeEditor
 	pager = delta
 
 [interactive]
@@ -39,6 +43,8 @@
 [credential]
 	helper = "git-credential-manager"
 
+{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+
 [credential "https://gist.github.com"]
 	helper = ""
 	helper = "gh auth git-credential"
@@ -46,6 +52,10 @@
 [credential "https://github.com"]
 	helper = ""
 	helper = "gh auth git-credential"
+{{- end }}
+
+[diff]
+	algorithm = "histogram"
 
 [diff "lockb"]
 	binary = true
@@ -56,6 +66,10 @@
 	process = "git-lfs filter-process"
 	required = true
 	smudge = "git-lfs smudge -- %f"
+
+[fetch]
+	prune = true
+	pruneTags = true
 
 [gpg]
 	format = "ssh"
@@ -81,10 +95,23 @@
 	autoStash = true
 	updateRefs = true
 
+[rerere]
+	enabled = true
+
 [tag]
 	gpgSign = true
 
 [user]
-	email = "thurstonsand@gmail.com"
+	email = "{{ .email }}"
 	name = "Thurston Sandberg"
-	signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
+	signingKey = "{{ .signingKey }}"
+{{- if .bitbucketDomain }}
+
+[url "ssh://git@{{ .bitbucketDomain }}:7999"]
+	insteadOf = "https://{{ .bitbucketDomain }}/scm"
+{{- end }}
+{{- if .gitlabDomain }}
+
+[url "ssh://git@{{ .gitlabDomain }}"]
+	insteadOf = "https://{{ .gitlabDomain }}"
+{{- end }}

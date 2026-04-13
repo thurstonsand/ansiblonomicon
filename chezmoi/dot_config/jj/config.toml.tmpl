@@ -23,7 +23,7 @@ program = "code"
 [signing]
 backend = "ssh"
 behavior = "drop"
-key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
+key = "{{ .signingKey }}"
 
 {{ if eq .chezmoi.os "darwin" -}}
 [signing.backends.ssh]
@@ -45,5 +45,5 @@ style = "curved"
 edit = true
 
 [user]
-email = "thurstonsand@gmail.com"
+email = "{{ .email }}"
 name = "Thurston Sandberg"

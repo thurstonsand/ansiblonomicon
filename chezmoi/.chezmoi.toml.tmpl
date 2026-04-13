@@ -29,7 +29,11 @@ umask = 0o22
 {{- else if eq .chezmoi.hostname "Thurstons-MacBook-Pro" }}
   developDir = "Develop"
   aigEnabled = true
+  email = "thurstonsand@gmail.com"
+  signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
 {{- else if eq .chezmoi.os "linux" }}
   developDir = "code"
   aigEnabled = true
+  email = "thurstonsand@gmail.com"
+  signingKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
 {{- end }}

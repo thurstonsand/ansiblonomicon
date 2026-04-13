@@ -70,12 +70,11 @@ Library/Application Support/Antigravity/
 # VS Code MCP — hardcoded personal plugin paths
 Library/Application Support/Code/User/mcp.json
 
-# Phase 1: templates that need conditionals before deploying
-.zshenv
-.zshrc
-.zprofile
-.config/git/config
-.config/jj/
+{{ end }}
+
+# Mason workaround
+{{ if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+.config/nvim/lua/plugins/mason.lua
 {{ end }}
 
 # App caches and generated files

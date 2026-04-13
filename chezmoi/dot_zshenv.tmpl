@@ -39,8 +39,10 @@ tmux() {
 
 # Environment variables
 export XDG_CONFIG_HOME="$HOME/.config"
+{{- if .aigEnabled }}
 export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
 export PI_LIBRARIAN_MODELS="openai/{{ .models.openai.gpt_codex_spark.version }}:high"
+{{- end }}
 {{- if eq .chezmoi.hostname "clawdbot" }}
 export EDITOR="vim"
 export DOCKER_HOST=ssh://admin@truenas.thurstons.house
@@ -62,6 +64,11 @@ export TWITTER_CT0="{{ template "twitter-ct0" . }}"
 {{- else }}
 export EDITOR="codeEditor --wait"
 {{- end }}
+{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+
+# 1Password SSH agent
+export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
+{{- end }}
 
 # PATH additions (available to all shells including scripts)
 {{- if eq .chezmoi.os "darwin" }}
@@ -71,15 +78,24 @@ typeset -U path
 path=(
   "$HOME/.bun/bin"
   "$HOME/.npm-global/bin"
+{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
   "$HOME/.opencode/bin"
+{{- end }}
   "$HOME/.cargo/bin"
-  "$HOME/.bun/bin"
   "$HOME/.local/share/pnpm"
   "$HOME/go/bin"
 {{- if eq .chezmoi.os "darwin" }}
+{{- if lookPath "/opt/homebrew/opt/ruby/bin/ruby" }}
   "/opt/homebrew/opt/ruby/bin"
   "/opt/homebrew/lib/ruby/gems/{{ output "/opt/homebrew/opt/ruby/bin/ruby" "-e" "puts RbConfig::CONFIG['ruby_version']" | trim }}/bin"
+{{- end }}
+{{- if lookPath "/opt/homebrew/opt/rustup/bin/rustup" }}
   "/opt/homebrew/opt/rustup/bin"
+{{- end }}
+{{- end }}
+{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+  "$HOME/.go/current/bin"
+  "$HOME/scripts"
 {{- end }}
 {{- if eq .chezmoi.hostname "clawdbot" }}
   "$HOME/bin"
@@ -90,3 +106,6 @@ path=(
 {{- end }}
   $path
 )
+
+# Machine-local overrides
+[[ -f ~/.zshenv.local ]] && source ~/.zshenv.local
