@@ -67,7 +67,8 @@ Code should be self-documenting. If a comment explains what the code does, the c
 
 Reserve comments for non-obvious decisions. Explain why, not what.
 
-{{ if ne .hostname "ML-DFC6YK6VJQ" }}
+{{- if ne .hostname "ML-DFC6YK6VJQ" }}
+
 ## Environment Files
 
 Direct `.env` access is blocked. Use `env-safe`:
@@ -76,6 +77,7 @@ Direct `.env` access is blocked. Use `env-safe`:
 env-safe list           # List keys
 env-safe check KEY_NAME # Check existence
 ```
-{{ end -}}
+
+{{- end }}
 
 @~/.agents/local.md

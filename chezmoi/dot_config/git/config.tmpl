@@ -105,13 +105,15 @@
 	email = "{{ .email }}"
 	name = "Thurston Sandberg"
 	signingKey = "{{ .signingKey }}"
-{{- if .bitbucketDomain }}
+{{- $bitbucketDomain := index . "bitbucketDomain" }}
+{{- if $bitbucketDomain }}
 
-[url "ssh://git@{{ .bitbucketDomain }}:7999"]
-	insteadOf = "https://{{ .bitbucketDomain }}/scm"
+[url "ssh://git@{{ $bitbucketDomain }}:7999"]
+	insteadOf = "https://{{ $bitbucketDomain }}/scm"
 {{- end }}
-{{- if .gitlabDomain }}
+{{- $gitlabDomain := index . "gitlabDomain" }}
+{{- if $gitlabDomain }}
 
-[url "ssh://git@{{ .gitlabDomain }}"]
-	insteadOf = "https://{{ .gitlabDomain }}"
+[url "ssh://git@{{ $gitlabDomain }}"]
+	insteadOf = "https://{{ $gitlabDomain }}"
 {{- end }}

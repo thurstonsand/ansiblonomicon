@@ -1,6 +1,6 @@
 // Zed tasks configuration
 [
-{{- if .bitbucketDomain }}
+{{- if index . "bitbucketDomain" }}
   {
     "label": "Open Bitbucket Permalink",
     "command": "{{ .chezmoi.homeDir }}/.local/bin/bb-open.py",
