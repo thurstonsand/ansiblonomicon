@@ -29,8 +29,9 @@ node_modules
 .env
 .dev.vars
 
-# Machine-local Brewfile overrides
+# Machine-local
 ansible/Brewfile.work.*
+chezmoi/.chezmoidata/local.toml
 
 # Wrangler build output
 wrangler/*/dist/

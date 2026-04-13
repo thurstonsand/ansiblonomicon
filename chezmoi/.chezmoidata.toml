@@ -13,6 +13,11 @@
 #
 codeEditor = "code"
 
+# Defaults for machine-local overrides (see .chezmoidata.local.toml)
+bitbucketDomain = ""
+goLocalImports = ""
+goplsBuildFlags = ""
+
 # Font configuration - centralized for all apps
 # Store full variant names so templates don't need to append suffixes
 [fonts]

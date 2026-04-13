@@ -5,4 +5,5 @@
 configure_homebrew: true
 configure_macos_defaults: true
 configure_uvc_util: true
+configure_chezmoi: true
 configure_pam_reattach: false

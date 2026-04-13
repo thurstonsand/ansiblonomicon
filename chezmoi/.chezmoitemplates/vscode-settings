@@ -1,5 +1,5 @@
 {{- /* Template for VSCode-alike settings.json files */ -}}
-{{- /* Usage: {{ template "vscode-settings" (dict "editor" "vscode" "models" .models "fonts" .fonts) }} */ -}}
+{{- /* Usage: {{ template "vscode-settings" (dict "editor" "vscode" "models" .models "fonts" .fonts "hostname" .chezmoi.hostname "aigEnabled" .aigEnabled "goLocalImports" .goLocalImports "goplsBuildFlags" .goplsBuildFlags) }} */ -}}
 {{- /* Valid editors: vscode, insiders, cursor, windsurf, antigravity */ -}}
 {{- $editor := .editor -}}
 {{- $isVSCode := or (eq $editor "vscode") (eq $editor "insiders") -}}
@@ -23,18 +23,18 @@
 {{- end }}
 {{- if $isVSCode }}
   // ============================================================================
-  // GEMINI CODE ASSIST
-  // ============================================================================
-  "geminicodeassist.project": "seraphic-orb-99jrc",
-  "geminicodeassist.inlineSuggestions.enableAuto": false,
-  "geminicodeassist.displayInlineContextHint": false,
-
-  // ============================================================================
   // CLAUDE CODE
   // ============================================================================
   "claudeCode.selectedModel": "opus",
   "claudeCode.useTerminal": true,
   "claudeCode.preferredLocation": "sidebar",
+{{- if .aigEnabled }}
+  // ============================================================================
+  // GEMINI CODE ASSIST
+  // ============================================================================
+  "geminicodeassist.project": "seraphic-orb-99jrc",
+  "geminicodeassist.inlineSuggestions.enableAuto": false,
+  "geminicodeassist.displayInlineContextHint": false,
 
   // ============================================================================
   // CODEX
@@ -81,6 +81,7 @@
 {{- template "vscode-models" .models }}
   },
 
+{{- end }}
 {{- end }}
   // ============================================================================
   // CORE UI & APPEARANCE
@@ -164,7 +165,7 @@
   // GITLENS
   // ============================================================================
   "gitlens.mode.active": "zen",
-{{- if $isVSCode }}
+{{- if and .aigEnabled $isVSCode }}
   "gitlens.ai.model": "vscode",
   "gitlens.ai.vscode.model": "customOAIModels:{{ $m.anthropic.haiku.version }}",
   "gitlens.ai.experimental.composer.enabled": true,
@@ -300,11 +301,46 @@
 
   // --- GO ---
   "go.toolsManagement.autoUpdate": true,
+  "go.useLanguageServer": true,
+  "go.lintTool": "golangci-lint-v2",
+  "go.lintOnSave": "package",
+  "go.lintFlags": [
+    "--path-mode=abs",
+    "--fast",
+    "--config=${workspaceFolder}/.golangci.yml",
+  ],
+  "go.formatTool": "goimports",
+  "go.diagnostic.vulncheck": "Imports",
+  "go.inlayHints.parameterNames": true,
+  "go.inlayHints.rangeVariableTypes": true,
+  "gopls": {
+    "usePlaceholders": true,
+    "staticcheck": false,
+    "completeUnimported": true,
+    "deepCompletion": true,
+    "ui.semanticTokens": true{{ if .goLocalImports }},
+    "local": "{{ .goLocalImports }}"{{ end }}{{ if .goplsBuildFlags }},
+    "buildFlags": [
+      "{{ .goplsBuildFlags }}",
+    ]{{ end }}
+  },
+{{- if .goLocalImports }}
+  "go.formatFlags": [
+    "-local",
+    "{{ .goLocalImports }}",
+  ],
+{{- end }}
+{{- if .aigEnabled }}
 
   // ============================================================================
   // CODERABBIT
   // ============================================================================
   "coderabbit.autoReviewMode": "disabled",
+{{- end }}
+
+  // ============================================================================
+  // Accessibility
+  // ============================================================================
   "accessibility.signals.lineHasBreakpoint": {
     "sound": "off",
     "announcement": "auto",

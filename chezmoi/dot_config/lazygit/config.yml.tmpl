@@ -22,3 +22,8 @@ git:
   overrideGpg: true
 
 promptToReturnFromSubprocess: false
+{{- if .bitbucketDomain }}
+
+services:
+  '{{ .bitbucketDomain }}': 'bitbucketServer:{{ .bitbucketDomain }}'
+{{- end }}

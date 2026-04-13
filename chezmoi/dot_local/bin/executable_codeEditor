@@ -1,6 +1,6 @@
 #!/bin/bash
 # Smart editor wrapper - detects IDE terminal and uses matching editor,
-# otherwise falls back to vim
+# otherwise falls back to nvim
 #
 # Bundle IDs:
 #   com.microsoft.VSCode         - VS Code
@@ -9,6 +9,21 @@
 #   com.exafunction.windsurf     - Windsurf
 #   com.google.antigravity       - Antigravity
 #   dev.zed.Zed                  - Zed
+
+_nvim() {
+  local args=()
+  for arg in "$@"; do
+    [[ "$arg" != "--wait" ]] && args+=("$arg")
+  done
+  exec nvim "${args[@]}"
+}
+
+# __CFBundleIdentifier persists in multiplexers after reattaching from a
+# different terminal, causing false matches (e.g. Zed's bundle ID
+# sticking around in a tmux session reattached from Ghostty).
+case "$TERM_PROGRAM" in
+  tmux|screen|zellij) _nvim "$@" ;;
+esac
 
 case "$__CFBundleIdentifier" in
   com.microsoft.VSCode)
@@ -23,16 +38,10 @@ case "$__CFBundleIdentifier" in
     exec antigravity "$@" ;;
   dev.zed.Zed)
     exec zed "$@" ;;
-  *)
-    # Also check VSCODE env vars for nested terminals
-    if [[ "$TERM_PROGRAM" == "vscode" ]] || [[ -n "$VSCODE_GIT_ASKPASS_NODE" ]]; then
-      exec code "$@"
-    fi
-    # vim blocks by default, strip --wait flag
-    args=()
-    for arg in "$@"; do
-      [[ "$arg" != "--wait" ]] && args+=("$arg")
-    done
-    exec vim "${args[@]}"
-    ;;
 esac
+
+if [[ "$TERM_PROGRAM" == "vscode" ]] || [[ -n "$VSCODE_GIT_ASKPASS_NODE" ]]; then
+  exec code "$@"
+fi
+
+_nvim "$@"

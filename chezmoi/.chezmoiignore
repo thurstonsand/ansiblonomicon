@@ -28,6 +28,56 @@ Library/
 .ssh/id_ed25519_nas.pub
 {{ end }}
 
+# Work Mac
+{{ if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+# SSH — personal home lab configs
+.ssh/
+.local/bin/ssh-smart-proxy
+
+# Claude Code — managed locally (auth tokens, corporate permissions)
+.claude/settings.json
+
+# Tools not installed on work Mac
+.config/opencode/
+.config/eightctl/
+.config/rclone/
+.config/amp/
+.config/gh/
+.config/linearmouse/
+.config/nextdns.conf
+.config/nvim/lua/plugins/amp.lua
+.mactop/
+.pi/
+
+# Personal agent configs
+.codex/
+.oracle/
+.gemini/
+.rustup/
+
+# Personal home-lab scripts
+.local/bin/btt-paste-image.sh
+
+# Library — exclude personal/unavailable apps
+Library/Application Support/io.datasette.llm/
+Library/Application Support/Storj/
+Library/Application Support/PrusaSlicer/
+Library/Application Support/Code - Insiders/
+Library/Application Support/Cursor/
+Library/Application Support/Windsurf/
+Library/Application Support/Antigravity/
+
+# VS Code MCP — hardcoded personal plugin paths
+Library/Application Support/Code/User/mcp.json
+
+# Phase 1: templates that need conditionals before deploying
+.zshenv
+.zshrc
+.zprofile
+.config/git/config
+.config/jj/
+{{ end }}
+
 # App caches and generated files
 **/__pycache__/
 **/*.pyc

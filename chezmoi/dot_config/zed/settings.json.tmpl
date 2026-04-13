@@ -8,6 +8,7 @@
 // command palette (cmd-shift-p / ctrl-shift-p)
 {{- $m := .models }}
 {
+{{- if .aigEnabled }}
   "context_servers": {
     "Parallel Search": {
       "settings": {},
@@ -17,6 +18,7 @@
       "headers": { "Authorization": "Bearer {{ template "parallel-api-key" . }}" }
     }
   },
+{{- end }}
   "colorize_brackets": true,
   "audio": {
     "experimental.rodio_audio": true
@@ -26,6 +28,7 @@
       "show_commit_summary": true
     }
   },
+{{- if .aigEnabled }}
   "language_models": {
     "openai": {
       "available_models": [
@@ -73,6 +76,7 @@
       }
     }
   },
+{{- end }}
   "collaboration_panel": {
     "button": true
   },
@@ -112,6 +116,7 @@
       "default_mode": "full-access"
     }
   },
+{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
   "ssh_connections": [
     {
       "host": "truenas",
@@ -122,6 +127,7 @@
       ]
     }
   ],
+{{- end }}
   "theme": {
     "mode": "system",
     "light": "Catppuccin Latte",
@@ -131,6 +137,10 @@
     "mode": "system",
     "light": "Catppuccin Latte",
     "dark": "Catppuccin Mocha"
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
   },
   "base_keymap": "VSCode",
   "buffer_font_family": "{{ .fonts.mono }}",
@@ -159,6 +169,7 @@
   },
   "agent": {
     "always_allow_tool_actions": true,
+{{- if .aigEnabled }}
     "default_model": {
       "provider": "anthropic",
       "model": "{{ $m.anthropic.opus.version }}"
@@ -175,6 +186,7 @@
       "provider": "google",
       "model": "{{ $m.google.gemini_flash.version }}"
     },
+{{- end }}
     "model_parameters": []
   },
   "inlay_hints": {
@@ -219,7 +231,11 @@
           }
         }
       ]
+    }{{ if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }},
+    "JSON": {
+      "format_on_save": "off"
     }
+{{- end }}
   },
   "lsp": {
     "pylsp": {

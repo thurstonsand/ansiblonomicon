@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/guard-dangerous-commands.py"
+            "command": "node ~/.claude/hooks/force-ask-patterns.mjs"
           }
         ]
       }

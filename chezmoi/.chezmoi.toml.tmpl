@@ -23,8 +23,13 @@ umask = 0o22
 
 [data]
   # Machine-specific variables (OS-dependent)
-{{- if eq .chezmoi.os "darwin" }}
+{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+  developDir = "code"
+  aigEnabled = false
+{{- else if eq .chezmoi.hostname "Thurstons-MacBook-Pro" }}
   developDir = "Develop"
+  aigEnabled = true
 {{- else if eq .chezmoi.os "linux" }}
   developDir = "code"
+  aigEnabled = true
 {{- end }}

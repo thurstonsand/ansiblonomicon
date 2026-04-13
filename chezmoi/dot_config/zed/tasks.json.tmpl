@@ -1,0 +1,36 @@
+// Zed tasks configuration
+[
+{{- if .bitbucketDomain }}
+  {
+    "label": "Open Bitbucket Permalink",
+    "command": "{{ .chezmoi.homeDir }}/.local/bin/bb-open.py",
+    "args": ["$ZED_FILE", "-L", "$ZED_ROW"],
+    "reveal": "never",
+    "hide": "on_success",
+    "show_summary": false,
+    "show_command": false
+  },
+  {
+    "label": "Copy Bitbucket Permalink",
+    "command": "{{ .chezmoi.homeDir }}/.local/bin/bb-open.py",
+    "args": ["$ZED_FILE", "-L", "$ZED_ROW", "--copy"],
+    "reveal": "never",
+    "hide": "on_success",
+    "show_summary": false,
+    "show_command": false
+  },
+{{- end }}
+  {
+    "label": "LazyGit",
+    "command": "lazygit",
+    "shell": {
+      "program": "sh"
+    },
+    "hide": "on_success",
+    "reveal_target": "center",
+    "show_summary": false,
+    "show_command": false,
+    "allow_concurrent_runs": true,
+    "use_new_terminal": true
+  }
+]

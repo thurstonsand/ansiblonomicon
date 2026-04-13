@@ -6,6 +6,33 @@
 // To see the default key bindings run `zed: open default keymap`
 // from the command palette.
 [
+{{- if .bitbucketDomain }}
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-alt-cmd-o": [
+        "task::Spawn",
+        { "task_name": "Copy Bitbucket Permalink", "reevaluate_context": true }
+      ],
+      "ctrl-alt-cmd-shift-o": [
+        "task::Spawn",
+        { "task_name": "Open Bitbucket Permalink", "reevaluate_context": true }
+      ]
+    }
+  },
+{{- end }}
+  {
+    "context": "Editor && mode == full",
+    "bindings": {
+      "ctrl-alt-cmd-l": "agent::QuoteSelection"
+    }
+  },
+  {
+    "context": "Workspace",
+    "bindings": {
+      "ctrl-alt-cmd-shift-n": "agent::NewExternalAgentThread"
+    }
+  },
   {
     "context": "Workspace",
     "bindings": {

@@ -20,7 +20,7 @@ echo "Setting {{ $bundleId }} as default for code files..."
 
 # File extensions
 for ext in .txt .md .json .js .ts .tsx .jsx .py .rb .go .rs .toml .yaml .yml .xml .css .sh .bash .zsh .nix; do
-  duti -s {{ $bundleId }} "$ext" all
+  duti -s {{ $bundleId }} "$ext" all 2>/dev/null || true
 done
 
 # UTI types

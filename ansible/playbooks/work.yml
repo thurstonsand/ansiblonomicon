@@ -56,3 +56,13 @@
           tags: ["ghostty-nav"]
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["ghostty-nav"]
+
+    - name: Apply chezmoi dotfiles
+      ansible.builtin.include_role:
+        name: chezmoi
+        apply:
+          tags: ["chezmoi", "dotfiles"]
+      vars:
+        chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
+      when: configure_chezmoi | default(true)
+      tags: ["chezmoi", "dotfiles"]

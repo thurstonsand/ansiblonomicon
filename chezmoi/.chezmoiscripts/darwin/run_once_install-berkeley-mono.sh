@@ -5,14 +5,23 @@
 set -euo pipefail
 
 FONT_DIR="$HOME/Library/Fonts"
-TEMP_DIR=$(mktemp -d)
-trap 'rm -rf "$TEMP_DIR"' EXIT
+OP_ACCOUNT_PREFIX="PQ7X5"
 
-# Check if all font variants are installed
-VARIANTS=("Regular" "Bold" "Oblique" "Bold Oblique")
+resolve_op_account() {
+  op account list --format=json \
+    | jq -re --arg prefix "$OP_ACCOUNT_PREFIX" '[.[] | select(.account_uuid | startswith($prefix))][0].account_uuid'
+}
+
+# Check if font files are already present
+EXPECTED_FILES=(
+  "BerkeleyMonoNerdFontMono-Regular.otf"
+  "BerkeleyMonoNerdFontMono-Bold.otf"
+  "BerkeleyMonoNerdFontMono-Oblique.otf"
+  "BerkeleyMonoNerdFontMono-BoldOblique.otf"
+)
 MISSING=0
-for variant in "${VARIANTS[@]}"; do
-  if ! fc-list | grep -q "BerkeleyMono Nerd Font Mono:style=$variant"; then
+for f in "${EXPECTED_FILES[@]}"; do
+  if [[ ! -f "$FONT_DIR/$f" ]]; then
     MISSING=1
     break
   fi
@@ -23,12 +32,21 @@ if [[ $MISSING -eq 0 ]]; then
   exit 0
 fi
 
+# Verify 1Password item exists before attempting download
+OP_ACCOUNT=$(resolve_op_account)
+if ! op item get "Berkeley Mono Font" --vault Private --account "$OP_ACCOUNT" > /dev/null 2>&1; then
+  echo "Warning: 1Password item 'Private/Berkeley Mono Font' not available — skipping font install."
+  exit 0
+fi
+
 echo "Installing BerkeleyMono Nerd Font Mono from 1Password..."
 
-# Download font zip from 1Password (Secure Note attachment)
-op read "op://Private/Berkeley Mono Font/nerd-font" --out-file "$TEMP_DIR/berkeley-mono.zip"
+TEMP_DIR=$(mktemp -d)
+trap 'rm -rf "$TEMP_DIR"' EXIT
 
-# Extract and install
+op read "op://Private/Berkeley Mono Font/nerd-font" --account "$OP_ACCOUNT" --out-file "$TEMP_DIR/berkeley-mono.zip"
+
+mkdir -p "$FONT_DIR"
 unzip -q "$TEMP_DIR/berkeley-mono.zip" -d "$TEMP_DIR"
 cp "$TEMP_DIR"/*.otf "$FONT_DIR/"
 
