@@ -1,3 +1,16 @@
+-- prevent LSP from attaching to non-file buffers (e.g. diffview://)
+vim.api.nvim_create_autocmd("LspAttach", {
+  group = vim.api.nvim_create_augroup("detach_lsp_from_non_file", { clear = true }),
+  callback = function(args)
+    local uri = vim.uri_from_bufnr(args.buf)
+    if uri and not vim.startswith(uri, "file://") then
+      vim.schedule(function()
+        vim.lsp.buf_detach_client(args.buf, args.data.client_id)
+      end)
+    end
+  end,
+})
+
 -- auto-save when focus is lost or cursor is idle
 vim.api.nvim_create_autocmd({ "FocusLost", "CursorHold", "CursorHoldI" }, {
   group = vim.api.nvim_create_augroup("auto_save", { clear = true }),
