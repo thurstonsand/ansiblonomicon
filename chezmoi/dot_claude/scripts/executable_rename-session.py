@@ -20,12 +20,26 @@ def find_jsonl(session_id: str, projects_dir: str) -> str | None:
 
 def main():
     if len(sys.argv) < 3:
-        print("Usage: rename-session.py <claude_pid> <name>", file=sys.stderr)
-        print("  claude_pid: pass $PPID from the calling shell", file=sys.stderr)
+        print(
+            "Usage: rename-session.py [-r] <claude_pid> <name>",
+            file=sys.stderr,
+        )
+        print("  -r          retitle an already-named session", file=sys.stderr)
+        print("  claude_pid  pass $PPID from the calling shell", file=sys.stderr)
         sys.exit(1)
 
-    pid = sys.argv[1]
-    name = sys.argv[2]
+    args = sys.argv[1:]
+    retitle = False
+    if args[0] == "-r":
+        retitle = True
+        args = args[1:]
+
+    if len(args) < 2:
+        print("Error: missing <claude_pid> or <name>", file=sys.stderr)
+        sys.exit(1)
+
+    pid = args[0]
+    name = args[1]
     session_file = os.path.expanduser(f"~/.claude/sessions/{pid}.json")
 
     if not os.path.isfile(session_file):
@@ -34,6 +48,18 @@ def main():
 
     with open(session_file) as f:
         data = json.load(f)
+
+    existing_name = data.get("name", "")
+    if existing_name and not retitle:
+        print(
+            f"Error: session already titled '{existing_name}'. "
+            "This probably means a title was already set earlier in this "
+            "session. If you are a subagent, do not rename — this is not "
+            "your responsibility. Only pass -r if you are intentionally "
+            "retitling.",
+            file=sys.stderr,
+        )
+        sys.exit(1)
 
     session_id = data.get("sessionId", "")
     data["name"] = name

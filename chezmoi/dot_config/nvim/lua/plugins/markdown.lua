@@ -1,5 +1,16 @@
 return {
   {
+    "mfussenegger/nvim-lint",
+    optional = true,
+    opts = {
+      linters = {
+        ["markdownlint-cli2"] = {
+          prepend_args = { "--config", vim.env.HOME .. "/.markdownlint-cli2.yaml" },
+        },
+      },
+    },
+  },
+  {
     "neovim/nvim-lspconfig",
     opts = function(_, opts)
       local marksman = opts.servers and opts.servers.marksman

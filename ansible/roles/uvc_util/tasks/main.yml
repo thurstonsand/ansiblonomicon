@@ -9,9 +9,9 @@
 
 - name: Clone uvc-util repository
   ansible.builtin.git:
-    repo: https://github.com/jtfrey/uvc-util.git
+    repo: https://github.com/thurstonsand/uvc-util.git
     dest: "{{ ansible_facts['env']['HOME'] }}/.local/opt/uvc-util"
-    version: master
+    version: main
     update: true
   register: uvc_util_clone
 

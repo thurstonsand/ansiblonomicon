@@ -10,6 +10,7 @@ window-vsync = false
 window-save-state = always
 
 confirm-close-surface = false
+clipboard-paste-protection = false
 
 quick-terminal-position = bottom
 quick-terminal-animation-duration = 0.08
@@ -48,6 +49,7 @@ keybind = cmd+shift+a>n=activate_key_table:nvim
 
 # prefix-style pane actions (keeps top-level cmd bindings uncluttered)
 keybind = cmd+shift+a>z=toggle_split_zoom
-keybind = cmd+shift+a>-=new_split:down
-keybind = cmd+shift+a>minus=new_split:down
-keybind = cmd+shift+a>slash=new_split:right
+keybind = cmd+shift+a>h=new_split:left
+keybind = cmd+shift+a>j=new_split:down
+keybind = cmd+shift+a>k=new_split:up
+keybind = cmd+shift+a>l=new_split:right

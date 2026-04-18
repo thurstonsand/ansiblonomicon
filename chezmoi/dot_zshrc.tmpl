@@ -125,13 +125,6 @@ _ghostty_nav_sentinel_path() {
 autoload -Uz add-zsh-hook
 # add-zsh-hook precmd _ghostty_nav_precmd
 
-_ide_zsh_ilc() {
-  local script=$1
-  local quoted_script
-  quoted_script=$(printf '%q' "$script")
-  printf '/bin/zsh -ilc %s' "$quoted_script"
-}
-
 ide() {
   [[ ${TERM_PROGRAM-} == "ghostty" ]] || {
     echo "ide: Ghostty only. Open a Ghostty tab and try again."
@@ -150,15 +143,7 @@ ide() {
     return 1
   }
 
-  local cwd
-  cwd=$(pwd -P) || return 1
-
-  local editor_cmd
-  editor_cmd=$(_ide_zsh_ilc 'nvim .; exec /bin/zsh -il')
-
-  ghostty-nav split left --cwd "$cwd" --command "$editor_cmd" --focus new || return 1
-  ghostty-nav resize right --percent 15 || return 1
-  ghostty-nav toggle-zoom || return 1
+  ghostty-ide "$(pwd -P)"
 
   if (( $# )); then
     "$@"

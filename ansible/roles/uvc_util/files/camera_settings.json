@@ -1,55 +1,55 @@
 {
-    "keep_running": true,
-    "cameras": {
-        "0x2e1a:0x4c04": {
-            "name": "Insta360 Link 2",
-            "controls": {
-                "auto-focus": false,
-                "auto-white-balance-temp": false,
-                "focus-abs": 85,
-                "white-balance-temp": 6400,
-                "zoom-abs": 130,
-                "brightness": 50,
-                "saturation": 50,
-                "contrast": 50,
-                "sharpness": 50,
-                "hue": 0,
-                "roll-abs": 0,
-                "power-line-frequency": 3,
-                "pan-tilt-abs": {
-                    "pan": -7200,
-                    "tilt": -64440
-                }
-            }
-        },
-        "0x1532:0x0e08": {
-            "name": "Razer Kiyo Pro Ultra",
-            "controls": {
-                "auto-exposure-mode": 1,
-                "auto-white-balance-temp": false,
-                "white-balance-temp": 5000,
-                "auto-focus": false,
-                "focus-abs": 119,
-                "zoom-abs": 105,
-                "gain": 18,
-                "exposure-time-abs": 167
-            }
-        },
-        "0x0fd9:0x0079": {
-            "name": "Elgato FaceCam Pro",
-            "controls": {
-                "brightness": 0,
-                "white-balance-temp": 5000,
-                "zoom-abs": 145,
-                "exposure-time-abs": 312,
-                "auto-focus": false,
-                "gain": 8,
-                "saturation": 64,
-                "auto-exposure-mode": 4,
-                "contrast": 37,
-                "auto-white-balance-temp": false,
-                "focus-abs": 180
-            }
+  "keep_running": true,
+  "cameras": {
+    "0x2e1a:0x4c04": {
+      "name": "Insta360 Link 2",
+      "controls": {
+        "auto-focus": false,
+        "auto-white-balance-temp": false,
+        "focus-abs": 85,
+        "white-balance-temp": 6400,
+        "zoom-abs": 130,
+        "brightness": 50,
+        "saturation": 50,
+        "contrast": 50,
+        "sharpness": 50,
+        "hue": 0,
+        "roll-abs": 0,
+        "power-line-frequency": 3,
+        "pan-tilt-abs": {
+          "pan": -7200,
+          "tilt": -64440
         }
+      }
+    },
+    "0x1532:0x0e08": {
+      "name": "Razer Kiyo Pro Ultra",
+      "controls": {
+        "auto-exposure-mode": 1,
+        "auto-white-balance-temp": false,
+        "white-balance-temp": 5000,
+        "auto-focus": false,
+        "focus-abs": 119,
+        "zoom-abs": 105,
+        "gain": 18,
+        "exposure-time-abs": 167
+      }
+    },
+    "0x0fd9:0x0079": {
+      "name": "Elgato FaceCam Pro",
+      "controls": {
+        "auto-exposure-mode": 1,
+        "auto-focus": false,
+        "auto-white-balance-temp": false,
+        "brightness": 0,
+        "white-balance-temp": 5000,
+        "zoom-abs": 145,
+        "exposure-time-abs": 625,
+        "gain": 8,
+        "saturation": 64,
+        "contrast": 30,
+        "focus-abs": 180
+      }
     }
+  }
 }

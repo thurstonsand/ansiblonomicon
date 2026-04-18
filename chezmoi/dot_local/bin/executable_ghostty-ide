@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Opens an IDE-style Ghostty split: nvim on the left, shell on the right.
+# Usage: ghostty-ide [cwd]
+
+cwd=${1:-.}
+editor_cmd=$(/bin/zsh -c "printf '%q' 'nvim .; exec /bin/zsh -il'")
+
+ghostty-nav split left --cwd "$cwd" --command "/bin/zsh -ilc $editor_cmd" --focus new
+ghostty-nav resize right --percent 15
+ghostty-nav toggle-zoom
