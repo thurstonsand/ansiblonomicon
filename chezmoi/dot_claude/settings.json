@@ -1,5 +1,6 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "cleanupPeriodDays": 99999,
   "env": {
     "CLAUDE_CODE_NO_FLICKER": "1",
     "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
@@ -16,12 +17,11 @@
       "Skill(updating-documentation-for-changes)",
       "Skill(git-commit-helper)"
     ],
-    "deny": ["Read(**/.env)", "Read(**/.env.*)"],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)"
+    ],
     "defaultMode": "acceptEdits"
-  },
-  "statusLine": {
-    "type": "command",
-    "command": "~/.claude/scripts/statusline.sh --gauge --folder --branch --model --style"
   },
   "hooks": {
     "PreToolUse": [
@@ -36,16 +36,27 @@
       }
     ]
   },
-  "cleanupPeriodDays": 99999,
+  "statusLine": {
+    "type": "command",
+    "command": "~/.claude/scripts/statusline.sh --gauge --folder --branch --model --style"
+  },
+  "outputStyle": "2B",
   "sandbox": {
     "excludedCommands": [
       "python3 ~/.claude/scripts/rename-session.py:*"
     ]
   },
-  "outputStyle": "2B",
   "alwaysThinkingEnabled": true,
   "autoDreamEnabled": true,
-  "showTurnDuration": true,
   "skipDangerousModePermissionPrompt": true,
-  "voiceEnabled": true
+  "voiceEnabled": true,
+  "showTurnDuration": true,
+  "extraKnownMarketplaces": {
+    "claude-plugins-official": {
+      "source": {
+        "source": "github",
+        "repo": "anthropics/claude-plugins-official"
+      }
+    }
+  }
 }

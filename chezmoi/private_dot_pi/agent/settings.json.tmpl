@@ -20,7 +20,7 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.66.1",
+  "lastChangelogVersion": "0.67.68",
   "enabledModels": [
     "anthropic/{{ .models.anthropic.opus.version }}",
     "anthropic/{{ .models.anthropic.haiku.version }}",
@@ -143,11 +143,12 @@
     },
     "npm:@benvargas/pi-openai-fast"
   ],
-  "hideThinkingBlock": true,
+  "hideThinkingBlock": false,
   "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",
-  "transport": "websocket",
+  "transport": "auto",
   "collapseChangelog": false,
   "quietStartup": true,
   "doubleEscapeAction": "tree",
-  "treeFilterMode": "default"
+  "treeFilterMode": "default",
+  "autcompleteMaxVisible": 7
 }
