@@ -74,14 +74,25 @@ export function getVerbosityStyle(options: ModelSegmentOptions | undefined): Ver
   return options?.verbosity?.style ?? "compact";
 }
 
+function getVerbosityLetter(level: Verbosity): string {
+  switch (level) {
+    case "high":
+      return "H";
+    case "medium":
+      return "M";
+    default:
+      return "L";
+  }
+}
+
 export function formatVerbosity(level: Verbosity, style: VerbosityStyle): string {
   switch (style) {
-    case "labelled":
-      return `verbosity:${level}`;
     case "icon":
-      return `🗣 ${level}`;
+      return `🗣${getVerbosityLetter(level)}`;
+    case "text":
+      return level;
     default:
-      return `verb:${level}`;
+      return `🗣 ${level}`;
   }
 }
 

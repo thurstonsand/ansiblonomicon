@@ -10,8 +10,8 @@ export const FAST_CONFIG_PATH = path.join(AGENT_DIR, "extensions", FAST_CONFIG_B
 export const VERBOSITY_LEVELS = ["low", "medium", "high"] as const;
 
 export type Verbosity = typeof VERBOSITY_LEVELS[number];
-export type VerbosityStyle = "compact" | "labelled" | "icon";
-export type FastStyle = "compact" | "labelled" | "icon";
+export type VerbosityStyle = "compact" | "text" | "icon";
+export type FastStyle = "compact" | "text" | "icon";
 export type VerbosityConfig = Record<string, Verbosity>;
 
 export type FastConfigFile = {

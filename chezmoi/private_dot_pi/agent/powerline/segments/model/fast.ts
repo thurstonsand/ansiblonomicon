@@ -9,7 +9,7 @@ import {
   type FastStyle,
   type ModelSegmentOptions,
 } from "./constants.js";
-import { applyColor, getFastIcon } from "./theme.js";
+import { applyColor, getFastIcon, withIcon } from "./theme.js";
 import { createFileWatcher } from "./watcher.js";
 
 let cachedFastConfig: FastConfig = {
@@ -96,12 +96,12 @@ export function getFastStyle(options: ModelSegmentOptions | undefined): FastStyl
 
 export function formatFast(style: FastStyle): string {
   switch (style) {
-    case "compact":
+    case "icon":
+      return getFastIcon();
+    case "text":
       return "fast";
-    case "labelled":
-      return "fast:on";
     default:
-      return `${getFastIcon()}fast`;
+      return withIcon(getFastIcon(), "fast");
   }
 }
 

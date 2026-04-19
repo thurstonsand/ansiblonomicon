@@ -16,13 +16,18 @@ const THINKING_TEXT_NERD: Record<string, string> = {
   xhigh: "\u{F06D} xhi",
 };
 
+const PROVIDER_MODEL_ICONS: Record<string, string> = {
+  openai: "❁",
+  anthropic: "✴️",
+  google: "✨",
+};
 const NERD_MODEL_ICON = "\uEC19";
 const ASCII_MODEL_ICON = "◈";
 const NERD_FAST_ICON = "\u{F0068}";
 const ASCII_FAST_ICON = "⚡";
 
 export function withIcon(icon: string, text: string): string {
-  return icon ? `${icon}${text}` : text;
+  return icon ? `${icon} ${text}` : text;
 }
 
 export function hasNerdFonts(): boolean {
@@ -35,7 +40,12 @@ export function hasNerdFonts(): boolean {
   return nerdTerms.some((value) => term.includes(value));
 }
 
-export function getModelIcon(): string {
+export function getModelIcon(provider?: string): string {
+  const normalizedProvider = provider?.trim().toLowerCase();
+  if (normalizedProvider && PROVIDER_MODEL_ICONS[normalizedProvider]) {
+    return PROVIDER_MODEL_ICONS[normalizedProvider];
+  }
+
   return hasNerdFonts() ? NERD_MODEL_ICON : ASCII_MODEL_ICON;
 }
 
