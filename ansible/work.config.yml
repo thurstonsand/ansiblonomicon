@@ -30,3 +30,5 @@ agent_harness_sources:
         target_agents: [claude]
         exclude_skills:
           - showboat
+      - name: claude
+        target_agents: [claude]

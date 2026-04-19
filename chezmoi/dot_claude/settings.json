@@ -49,8 +49,10 @@
   "alwaysThinkingEnabled": true,
   "autoDreamEnabled": true,
   "skipDangerousModePermissionPrompt": true,
+  "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
   "showTurnDuration": true,
+  "effortLevel": "high",
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
       "source": {

@@ -168,4 +168,6 @@ agent_harness_sources:
           - grill-me
       - name: project-management
         target_agents: [claude, amp, codex, opencode]
+      - name: claude
+        target_agents: [claude]
       - homelab

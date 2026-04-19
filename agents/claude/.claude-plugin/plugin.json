@@ -1,0 +1,13 @@
+{
+  "name": "claude",
+  "version": "1.0.0",
+  "description": "Claude-only utility skills",
+  "author": {
+    "name": "Thurston Sandberg"
+  },
+  "keywords": [
+    "claude",
+    "handoff",
+    "workflow"
+  ]
+}

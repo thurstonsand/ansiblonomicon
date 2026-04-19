@@ -1,10 +1,33 @@
 ---
 name: grill-me
-description: Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree. Use when user wants to stress-test a plan, get grilled on their design, or mentions "grill me".
+description: Interview the user relentlessly about a plan or design until reaching shared understanding, resolving the decision tree one question at a time, stress-testing assumptions against the codebase. Use when user wants to stress-test a plan, get grilled on their design, or mentions "grill me".
 ---
 
 # Grill Me
 
-Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+Interview me relentlessly about every aspect of this plan until we reach a shared understanding.
 
-If a question can be answered by exploring the codebase, explore the codebase instead.
+## Operating mode
+
+- Walk the decision tree in dependency order. Resolve upstream decisions before downstream ones.
+- You may ask multiple questions in one turn when they depend on the same resolved premise.
+- At branching decision points, stop and get my answer before exploring divergent branches.
+- For each question or question set, provide your recommended answers.
+- If a question can be answered by exploring the codebase or existing documentation, do that instead of asking me.
+
+## During the session
+
+- Cross-check my claims against the code, tests, configuration, and existing docs. Surface contradictions immediately.
+- When I use vague, overloaded, or inconsistent language, stop and force a sharper definition.
+- Stress-test ideas with concrete scenarios and edge cases, not paraphrases of what I just said.
+- Track unresolved assumptions, constraints, and follow-up branches so nothing gets lost.
+- Prefer blunt accuracy over agreeable momentum. If something looks weak, say so plainly.
+
+## End condition
+
+When the major branches are resolved, summarize:
+
+- decisions made
+- open risks
+- unresolved questions
+- your recommended next step
