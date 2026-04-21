@@ -18,6 +18,7 @@ node_modules
 
 # ai
 /.claude/settings.local.json
+chezmoi/.chezmoidata/claude-settings.local.json
 
 # Terraform
 **/.terraform/

@@ -28,9 +28,10 @@ git:
   overrideGpg: true
 
 promptToReturnFromSubprocess: false
-{{- $bitbucketDomain := index . "bitbucketDomain" }}
-{{- if $bitbucketDomain }}
+{{- if .scm }}
 
 services:
-  '{{ $bitbucketDomain }}': 'bitbucketServer:{{ $bitbucketDomain }}'
+{{-   range .scm }}
+  '{{ .host }}': '{{ .type }}:{{ .host }}'
+{{-   end }}
 {{- end }}

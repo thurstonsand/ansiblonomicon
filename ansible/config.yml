@@ -64,7 +64,7 @@ agent_harness_sources:
     pull: true
     plugins:
       - name: code-simplifier
-        target_agents: [claude, amp, codex, opencode, pi]
+        target_agents: [amp, codex, opencode, pi]
   #   # for use in testing if needed
   #   - name: commit-commands
   #   target_agents: [claude] # commands only for Claude (testing)

@@ -5,7 +5,6 @@
 // ==============================================================
 const ALLOW_PATTERNS = [
   /find\s+.*\s(-exec|-execdir)\s+(grep|ls|cat|head|tail|file|stat|wc|basename|dirname|readlink|sha256sum|md5sum)\b/,
-  /python3\s+.*rename-session\.py\b/,
 ];
 
 // ==============================================================

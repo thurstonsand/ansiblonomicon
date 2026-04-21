@@ -1,17 +1,5 @@
 {{- if eq .agent "claude" -}}
 # CLAUDE.md
-
-## Session Naming
-
-> **Subagents: skip this section entirely.** Only the top-level interactive session should rename.
-
-Before doing anything else, name this session by running:
-
-```bash
-python3 ~/.claude/scripts/rename-session.py "$PPID" "<short descriptive title>"
-```
-
-Derive the title from the user's first message — keep it under 80 chars, specific enough to distinguish from other sessions.
 {{- else -}}
 # AGENTS.md
 

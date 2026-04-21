@@ -18,12 +18,6 @@ agent_harness_cleanup_orphaned_skills: false
 agent_harness_cleanup_orphaned_agents: false
 
 agent_harness_sources:
-  - repo: anthropics/claude-plugins-official
-    pull: true
-    plugins:
-      - name: code-simplifier
-        target_agents: [claude]
-
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management

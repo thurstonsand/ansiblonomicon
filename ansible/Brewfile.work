@@ -40,7 +40,7 @@ brew "lazygit"
 # Languages & build tools
 brew "go"
 brew "just"
-brew "libpq"
+brew "libpq", link: true
 brew "node@22"
 brew "oven-sh/bun/bun"
 brew "pnpm"

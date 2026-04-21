@@ -34,9 +34,6 @@ Library/
 .ssh/
 .local/bin/ssh-smart-proxy
 
-# Claude Code — managed locally (auth tokens, corporate permissions)
-.claude/settings.json
-
 # Tools not installed on work Mac
 .config/opencode/
 .config/eightctl/

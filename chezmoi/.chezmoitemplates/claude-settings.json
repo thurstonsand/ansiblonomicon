@@ -24,6 +24,16 @@
     "defaultMode": "acceptEdits"
   },
   "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/auto-title.sh"
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Bash",
@@ -34,24 +44,33 @@
           }
         ]
       }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "~/.claude/hooks/ensure-session-name.sh"
+          }
+        ]
+      }
     ]
   },
   "statusLine": {
     "type": "command",
     "command": "~/.claude/scripts/statusline.sh --gauge --folder --branch --model --style"
   },
+  "model": "opus",
   "outputStyle": "2B",
   "sandbox": {
-    "excludedCommands": [
-      "python3 ~/.claude/scripts/rename-session.py:*"
-    ]
+    "excludedCommands": []
   },
   "alwaysThinkingEnabled": true,
   "autoDreamEnabled": true,
   "skipDangerousModePermissionPrompt": true,
   "skipAutoPermissionPrompt": true,
   "voiceEnabled": true,
-  "showTurnDuration": true,
+  "showClearContextOnPlanAccept": true,
   "effortLevel": "high",
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
