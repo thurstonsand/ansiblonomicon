@@ -75,6 +75,12 @@ Library/Application Support/Code/User/mcp.json
 .config/nvim/lua/plugins/mason.lua
 {{ end }}
 
+# Data-driven: skip uv/pip config when no indexes defined
+{{ if not .pypiIndex }}
+.config/uv/
+.config/pip/
+{{ end }}
+
 # App caches and generated files
 **/__pycache__/
 **/*.pyc

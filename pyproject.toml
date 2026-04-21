@@ -186,6 +186,22 @@ help = "Edit a managed file in source dir"
 cmd = "chezmoi edit"
 args = [{ name = "file", positional = true, required = true }]
 
+# Git tasks
+[tool.poe.tasks.pull]
+help = "Git pull (handles uv.lock local-only conflicts on work machine)"
+shell = """
+if [ "$(hostname -s)" = "ML-DFC6YK6VJQ" ]; then
+  git update-index --no-skip-worktree uv.lock
+  git checkout -- uv.lock
+  git pull
+  uv sync --dev
+  git update-index --skip-worktree uv.lock
+else
+  git pull
+fi
+"""
+interpreter = "bash"
+
 # Terraform tasks
 [tool.poe.tasks.tfi]
 help = "Terraform init"

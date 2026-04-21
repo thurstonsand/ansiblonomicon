@@ -34,5 +34,8 @@ chezmoi/.chezmoidata/claude-settings.local.json
 ansible/Brewfile.work.*
 chezmoi/.chezmoidata/local.toml
 
+# uv (project-level override)
+uv.toml
+
 # Wrangler build output
 wrangler/*/dist/

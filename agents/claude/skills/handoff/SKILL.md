@@ -9,7 +9,7 @@ Your goal is to prepare a prompt for a new thread based on the work done so far,
 ## Template
 
 ```markdown
-<title>handoff: {a short, specific headline (under 80 chars) that distinguishes this handoff from any other. Capture the specific change, feature, or goal — not a generic label. Avoid vague words like "work", "updates", or "changes".}</title>
+`<title>handoff: {a short, specific headline (under 80 chars) that distinguishes this handoff from any other. Capture the specific change, feature, or goal — not a generic label. Avoid vague words like "work", "updates", or "changes".}</title>`
 
 Continuing work from previous conversation. When you lack specific information, you can first establish the context you need by searching for and reading the necessary files.
 

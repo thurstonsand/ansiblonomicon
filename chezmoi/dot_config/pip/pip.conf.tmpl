@@ -1,0 +1,14 @@
+{{- $default := "" -}}
+{{- $extras := list -}}
+{{- range .pypiIndex -}}
+{{-   if index . "default" -}}
+{{-     $default = .url -}}
+{{-   else -}}
+{{-     $extras = append $extras .url -}}
+{{-   end -}}
+{{- end -}}
+[global]
+index-url = {{ $default }}
+{{- range $extras }}
+extra-index-url = {{ . }}
+{{- end }}

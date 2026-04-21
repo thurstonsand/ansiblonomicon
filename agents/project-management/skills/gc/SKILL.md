@@ -5,7 +5,7 @@ description: Review local docs and create a git commit. Use when the user wants 
 
 # Git Commit with Documentation Review
 
-A composite workflow that ensures documentation is up-to-date before committing changes.
+A composite workflow that ensures documentation is up-to-date before committing changes. You MUST invoke each skill as instructed.
 
 ## Workflow
 
@@ -13,13 +13,14 @@ Execute these steps in order:
 
 ### 1. Review Documentation
 
-Load and follow the `updating-documentation-for-changes` skill to review all relevant documentation for the staged changes.
+- Load the `updating-documentation-for-changes` skill
+- Review all relevant documentation for the staged changes per the skill
 
 ### 2. Stage Documentation Updates
 
 After reviewing and updating documentation:
 
-```bash
+```sh
 git add <updated-docs-only>
 ```
 
@@ -27,10 +28,6 @@ git add <updated-docs-only>
 
 ### 3. Create the Commit
 
-Load and follow the `git-commit-helper` skill to generate an appropriate commit message and create the commit.
-
-## When to Use
-
-- After making code changes that may affect documentation
-- Before creating a pull request
-- When you want a thorough commit workflow with documentation checks
+- Load the `git-commit-helper` skill
+- Feel free to skip any steps already completed as part of step 1
+- Generate an appropriate commit message per the skill and create the commit

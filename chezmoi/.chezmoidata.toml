@@ -17,6 +17,8 @@ codeEditor = "code"
 goLocalImports = ""
 goplsBuildFlags = ""
 scm = []
+pypiIndex = []
+uvIndexStrategy = ""
 
 # Font configuration - centralized for all apps
 # Store full variant names so templates don't need to append suffixes

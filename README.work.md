@@ -44,6 +44,23 @@ Note: The `permissions.allow` array in the overlay **replaces** the base entirel
 
 `Brewfile.work` **is** committed. The `.local` variant is for tools that are not publicly available.
 
+## Python Package Indexes (uv + pip)
+
+| File                                             | Purpose                                                                      |
+| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| `~/.local/share/chezmoi/.chezmoidata/local.toml` | System-level indexes (`pypiIndex`, `uvIndexStrategy`) → `~/.config/uv/uv.toml` and `~/.config/pip/pip.conf` |
+| `./uv.toml`                                      | Project-level override for this repo (gitignored, non-CICD endpoint)         |
+
+Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `local.toml`. The default index becomes `global.index-url` in pip; non-default entries become `extra-index-url`. System-level config defaults to CICD Artifactory (correct for most work projects). This repo overrides to the enterprise endpoint since it's a personal repo not deployed through CICD.
+
+### uv.lock handling
+
+`uv sync` rewrites `uv.lock` with mirror URLs. To prevent committing these:
+
+- `.envrc` sets `skip-worktree` on `uv.lock` — git ignores local changes, `git add` silently skips it
+- **Use `poe pull` instead of `git pull`** — lifts the mask, restores the canonical lock, pulls, re-syncs, and re-masks
+- Dependency updates must be committed from a personal machine (where the lock resolves against `pypi.org`)
+
 ## Setup Checklist
 
 When setting up a new work Mac:

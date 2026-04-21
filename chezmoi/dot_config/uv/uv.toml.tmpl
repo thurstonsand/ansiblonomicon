@@ -1,0 +1,13 @@
+{{- range .pypiIndex }}
+[[index]]
+url = "{{ .url }}"
+{{ if index . "default" -}}
+default = {{ .default }}
+{{ end -}}
+{{ if index . "name" -}}
+name = "{{ .name }}"
+{{ end }}
+{{- end -}}
+{{ if .uvIndexStrategy }}
+index-strategy = "{{ .uvIndexStrategy }}"
+{{ end -}}
