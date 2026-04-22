@@ -90,11 +90,10 @@ export const fetchWebTool: ToolDefinition<typeof fetchWebParameters, FetchWebDet
 
     try {
       const client = getParallelClient();
-      const result = await client.beta.extract({
+      const result = await client.extract({
         urls: params.urls,
         objective: params.objective,
-        excerpts: true,
-        full_content: true,
+        advanced_settings: { full_content: true },
       });
 
       const results = Array.isArray(result.results) ? (result.results as FetchResultItem[]) : [];

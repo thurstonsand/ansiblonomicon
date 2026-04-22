@@ -10,7 +10,7 @@
     ]
   },
   "dependencies": {
-    "parallel-web": "^0.3.1"
+    "parallel-web": "^0.4.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.8",

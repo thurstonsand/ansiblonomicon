@@ -89,12 +89,14 @@ export const searchWebTool: ToolDefinition<typeof searchWebParameters, SearchWeb
     try {
       const client = getParallelClient();
       const afterDate = validateAfterDate(params.after_date);
-      const result = await client.beta.search({
+      const result = await client.search({
         objective: params.objective,
         search_queries: searchQueries,
         mode: DEFAULT_SEARCH_MODE,
-        max_results: clampMaxResults(params.max_results),
-        source_policy: afterDate ? { after_date: afterDate } : undefined,
+        advanced_settings: {
+          max_results: clampMaxResults(params.max_results),
+          source_policy: afterDate ? { after_date: afterDate } : undefined,
+        },
       });
 
       const results = Array.isArray(result.results) ? (result.results as SearchResultItem[]) : [];

@@ -3,7 +3,7 @@ import path from "node:path";
 import Parallel from "parallel-web";
 
 export const API_KEY_ENV = "PARALLEL_API_KEY";
-export const DEFAULT_SEARCH_MODE = "agentic";
+export const DEFAULT_SEARCH_MODE: "basic" | "advanced" = "advanced";
 export const DEFAULT_MAX_RESULTS = 5;
 export const MAX_MAX_RESULTS = 8;
 export const TMP_DIR = "/tmp/pi-parallel-fetch";
