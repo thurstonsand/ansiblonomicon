@@ -68,6 +68,10 @@ Library/Application Support/Antigravity/
 # VS Code MCP — hardcoded personal plugin paths
 Library/Application Support/Code/User/mcp.json
 
+# Claude Code — handled by plugin on this machine
+.claude/hooks/derive-title.sh
+.claude/hooks/set-title.sh
+
 {{ end }}
 
 # Mason workaround

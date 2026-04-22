@@ -87,6 +87,7 @@ brew "openssh"
 
 # Editors/Terminals
 brew "neovim"
+brew "pngpaste"
 cask "ghostty"
 cask "visual-studio-code"
 cask "zed"

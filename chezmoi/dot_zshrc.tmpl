@@ -88,7 +88,10 @@ alias vim='nvim'
 claude() {
   ghostty-nav title "claude:${PWD:t}"
 {{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-  command claude --plugin-dir ~/code/claude-code-plugin-sourcegraph "$@"
+  command claude \
+    --plugin-dir ~/code/claude-code-plugin-auto-title \
+    --plugin-dir ~/code/claude-code-plugin-sourcegraph \
+    "$@"
 {{- else }}
   command claude --dangerously-skip-permissions "$@"
 {{- end }}

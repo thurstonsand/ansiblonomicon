@@ -23,7 +23,7 @@ context=$(jq -cs '
 [[ -n "$context" ]] || exit 0
 
 # Generate title via Anthropic API (Sonnet)
-model="$ANTHROPIC_DEFAULT_SONNET_MODEL"
+model="${ANTHROPIC_DEFAULT_SONNET_MODEL:-$ANTHROPIC_DEFAULT_HAIKU_MODEL}"
 
 response=$(curl -s --max-time 10 \
   -H "Authorization: Bearer ${ANTHROPIC_API_KEY}" \
