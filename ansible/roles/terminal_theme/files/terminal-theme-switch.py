@@ -9,7 +9,6 @@ Called by tmux hooks (Mode 2031) and zsh helper functions.
 """
 
 from collections.abc import MutableMapping
-import json
 from pathlib import Path
 import sys
 from typing import Literal, cast
@@ -23,15 +22,6 @@ TomlMapping = MutableMapping[str, object]
 
 def update_terminal_bg(mode: Mode) -> None:
     Path.home().joinpath(".terminal-bg").write_text(mode + "\n")
-
-
-def update_claude_theme(mode: Mode) -> None:
-    claude_json = Path.home() / ".claude.json"
-    if not claude_json.exists():
-        return
-    config: dict[str, object] = json.loads(claude_json.read_text())
-    config["theme"] = mode
-    claude_json.write_text(json.dumps(config, indent=2) + "\n")
 
 
 def codex_theme_name(mode: Mode) -> str:
@@ -84,7 +74,6 @@ def main() -> None:
 
     mode: Mode = sys.argv[1]  # type: ignore[assignment]
     update_terminal_bg(mode)
-    update_claude_theme(mode)
     update_codex_theme(mode)
     update_hunk_theme(mode)
 

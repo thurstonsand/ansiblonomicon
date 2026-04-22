@@ -4,7 +4,7 @@ import tomllib
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "chezmoi/dot_local/bin/executable_terminal-theme-switch.py"
+    / "ansible/roles/terminal_theme/files/terminal-theme-switch.py"
 )
 SPEC = spec_from_file_location("terminal_theme_switch", MODULE_PATH)
 assert SPEC is not None

@@ -20,7 +20,7 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.67.68",
+  "lastChangelogVersion": "0.68.1",
   "enabledModels": [
     "anthropic/{{ .models.anthropic.opus.version }}",
     "anthropic/{{ .models.anthropic.haiku.version }}",
@@ -142,7 +142,8 @@
         "+themes/gruvbox-light-hard.json"
       ]
     },
-    "npm:@benvargas/pi-openai-fast"
+    "npm:@benvargas/pi-openai-fast",
+    "git:github.com/earendil-works/pi-review"
   ],
   "hideThinkingBlock": false,
   "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",

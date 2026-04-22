@@ -319,6 +319,7 @@
           tags: [docker-stack-role, cli-proxy-api]
       vars:
         docker_stack_name: cli-proxy-api
+        docker_stack_pull_policy: always
 
     - name: Deploy cloudflared stack
       tags: [docker-stack-role, cloudflared]
