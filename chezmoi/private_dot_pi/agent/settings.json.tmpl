@@ -20,21 +20,21 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.68.1",
+  "lastChangelogVersion": "0.70.0",
   "enabledModels": [
-    "anthropic/{{ .models.anthropic.opus.version }}",
-    "anthropic/{{ .models.anthropic.haiku.version }}",
-    "openai/{{ .models.openai.gpt.version }}",
-    "openai/{{ .models.openai.gpt_codex_spark.version }}",
-    "openai/{{ .models.openai.gpt_mini.version }}",
-    "google/{{ .models.google.gemini_pro.version }}",
-    "google/{{ .models.google.gemini_flash.version }}"
+    "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
+    "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}",
+    "{{ .models.openai.gpt.agent_harness.aliases.pi }}",
+    "{{ .models.openai.gpt_codex_spark.agent_harness.aliases.pi }}",
+    "{{ .models.openai.gpt_mini.agent_harness.aliases.pi }}",
+    "{{ .models.google.gemini_pro.agent_harness.aliases.pi }}",
+    "{{ .models.google.gemini_flash.agent_harness.aliases.pi }}"
   ],
   "steeringMode": "all",
   "followUpMode": "all",
   "sessions": {
     "autoTitle": {
-      "model": "google/{{ .models.google.gemini_flash.version }}"
+      "model": "{{ .models.google.gemini_flash.agent_harness.aliases.pi }}"
     }
   },
   "powerline": {
@@ -42,27 +42,27 @@
     "showLastPrompt": false,
     "profiles": [
       {
-        "model": "anthropic/{{ .models.anthropic.opus.version }}",
+        "model": "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
         "thinking": "medium",
         "label": "smart"
       },
       {
-        "model": "anthropic/{{ .models.anthropic.opus.version }}",
+        "model": "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
         "thinking": "high",
         "label": "smart"
       },
       {
-        "model": "openai/{{ .models.openai.gpt.version }}",
+        "model": "{{ .models.openai.gpt.agent_harness.aliases.pi }}",
         "thinking": "medium",
         "label": "deep"
       },
       {
-        "model": "openai/{{ .models.openai.gpt.version }}",
+        "model": "{{ .models.openai.gpt.agent_harness.aliases.pi }}",
         "thinking": "high",
         "label": "deep"
       },
       {
-        "model": "openai/{{ .models.openai.gpt.version }}",
+        "model": "{{ .models.openai.gpt.agent_harness.aliases.pi }}",
         "thinking": "xhigh",
         "label": "deep"
       }
@@ -70,7 +70,7 @@
     "vibe": {
       "theme": "NieR:Automata - 2B",
       "mode": "generate",
-      "model": "openai/{{ .models.openai.gpt_mini.version }}",
+      "model": "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}",
       "fallback": "Executing mission",
       "refreshInterval": 30,
       "maxLength": 48

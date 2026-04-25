@@ -1,0 +1,84 @@
+local function ansible_root_dir(bufnr, on_dir)
+  -- Diffview buffers are synthetic; ansible-language-server tries to lint them and reports missing tools.
+  for _, win in ipairs(vim.fn.win_findbuf(bufnr)) do
+    if vim.wo[win].diff then
+      return
+    end
+  end
+
+  local root = vim.fs.root(bufnr, { "ansible.cfg", ".ansible-lint" })
+  if root then
+    on_dir(root)
+  end
+end
+
+{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+return {
+  {
+    "mason-org/mason.nvim",
+    opts = { ensure_installed = {} },
+  },
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      servers = {
+        ansiblels = { mason = false, root_dir = ansible_root_dir },
+        biome = { mason = false },
+        vtsls = { mason = false },
+        yamlls = { mason = false },
+      },
+    },
+  },
+}
+{{- else }}
+local mason_tools = {
+  "ansible-language-server",
+  "ansible-lint",
+  "basedpyright",
+  "bash-language-server",
+  "biome",
+  "debugpy",
+  "delve",
+  "gofumpt",
+  "goimports",
+  "golangci-lint",
+  "gopls",
+  "js-debug-adapter",
+  "json-lsp",
+  "lua-language-server",
+  "markdown-toc",
+  "markdownlint-cli2",
+  "marksman",
+  "prettier",
+  "ruff",
+  "shellcheck",
+  "shfmt",
+  "stylua",
+  "taplo",
+  "tree-sitter-cli",
+  "vtsls",
+  "yaml-language-server",
+}
+
+return {
+  {
+    "mason-org/mason.nvim",
+    opts = { ensure_installed = mason_tools },
+  },
+  {
+    "WhoIsSethDaniel/mason-tool-installer.nvim",
+    opts = {
+      ensure_installed = mason_tools,
+      auto_update = true,
+    },
+  },
+  {
+    "neovim/nvim-lspconfig",
+    opts = {
+      servers = {
+        ansiblels = { root_dir = ansible_root_dir },
+      },
+    },
+  },
+}
+{{- end }}

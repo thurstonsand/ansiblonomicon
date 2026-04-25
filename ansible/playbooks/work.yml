@@ -75,6 +75,13 @@
       when: configure_chezmoi | default(true)
       tags: ["chezmoi", "dotfiles"]
 
+    - name: Upgrade Neovim dependencies
+      ansible.builtin.include_tasks:
+        file: ../tasks/neovim_deps.yml
+        apply:
+          tags: ["neovim", "nvim-deps"]
+      tags: ["neovim", "nvim-deps"]
+
     - name: Deploy AI agent resources
       ansible.builtin.include_role:
         name: agent_harness

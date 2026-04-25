@@ -1,0 +1,37 @@
+---
+- name: Update Lazy.nvim plugins
+  when: not ansible_check_mode
+  ansible.builtin.command:
+    argv:
+      - nvim
+      - --headless
+      - "+Lazy! update"
+      - +qa
+  changed_when: true
+
+- name: Update declared Mason tools
+  when:
+    - not ansible_check_mode
+    - ansible_facts['hostname'] != "ML-DFC6YK6VJQ"
+  ansible.builtin.command:
+    argv:
+      - nvim
+      - --headless
+      - "+MasonToolsUpdateSync"
+      - +qa
+  changed_when: true
+
+- name: Update Treesitter parsers
+  when: not ansible_check_mode
+  ansible.builtin.command:
+    argv:
+      - nvim
+      - --headless
+      - "+TSUpdateSync"
+      - +qa
+  changed_when: true
+
+- name: Report skipped Neovim dependency update in check mode
+  when: ansible_check_mode
+  ansible.builtin.debug:
+    msg: "Skipped Neovim dependency updates in check mode"

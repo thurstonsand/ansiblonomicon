@@ -127,11 +127,6 @@ lan:
       ports:
         web: 3552
       domain: arcane.thurstons.house
-    crabwalk:
-      ip: 192.168.6.238
-      ports:
-        web: 3000
-      domain: crabwalk.thurstons.house
     caddy:
       ip: 192.168.6.239
       ports:

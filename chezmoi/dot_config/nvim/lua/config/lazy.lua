@@ -30,11 +30,11 @@ require("lazy").setup({
     { import = "lazyvim.plugins.extras.util.dot" },
 
     -- formatting extras
-    { import = "lazyvim.plugins.extras.lang.typescript.biome" },
     { import = "lazyvim.plugins.extras.formatting.prettier" },
 
     -- language extras
     { import = "lazyvim.plugins.extras.lang.typescript" },
+    { import = "lazyvim.plugins.extras.lang.typescript.biome" },
     { import = "lazyvim.plugins.extras.lang.python" },
     { import = "lazyvim.plugins.extras.lang.go" },
     { import = "lazyvim.plugins.extras.lang.json" },

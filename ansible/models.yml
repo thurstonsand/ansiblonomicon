@@ -24,6 +24,7 @@ models:
         aliases:
           claude: "haiku"
           opencode: "anthropic/claude-haiku-4-5-20251001"
+          pi: "anthropic/claude-haiku-4-5-20251001"
       vscode:
         include: true
         thinking: false
@@ -41,6 +42,7 @@ models:
         aliases:
           claude: "sonnet"
           opencode: "anthropic/claude-sonnet-4-5-20250929"
+          pi: "anthropic/claude-sonnet-4-5-20250929"
       vscode:
         include: true
         thinking: true
@@ -58,6 +60,7 @@ models:
         aliases:
           claude: "opus"
           opencode: "anthropic/claude-opus-4-6"
+          pi: "anthropic/claude-opus-4-6"
       vscode:
         include: true
         thinking: true
@@ -68,30 +71,38 @@ models:
   # ===========================================================================
   openai:
     gpt:
-      version: "gpt-5.4"
-      display_name: "GPT 5.4"
-      max_input: 1050000
+      version: "gpt-5.5"
+      display_name: "GPT 5.5"
+      # Codex GPT-5.5 is advertised as a 400K total window: 272K input + 128K output.
+      # Restore max_input to 1050000 when Codex exposes GPT-5.5's 1M API context window.
+      max_input: 272000
       max_output: 128000
       vision: true
       codex:
-        auto_compact_token_limit: 950000
+        # 95% of the input window leaves room for compaction.
+        # Restore to 950000 with the 1M context window.
+        auto_compact_token_limit: 258000
+      agent_harness:
+        aliases:
+          pi: "openai/gpt-5.5"
+          pi_openai_fast_codex: "openai-codex/gpt-5.5"
       vscode:
         include: true
         thinking: true
       zed: true
       variants:
         medium:
-          id: "gpt-5.4(medium)"
-          display_name: "GPT 5.4 Medium"
+          id: "gpt-5.5(medium)"
+          display_name: "GPT 5.5 Medium"
           vscode: true
         high:
-          id: "gpt-5.4(high)"
-          display_name: "GPT 5.4 High"
+          id: "gpt-5.5(high)"
+          display_name: "GPT 5.5 High"
           vscode: true
           zed: true
         xhigh:
-          id: "gpt-5.4(xhigh)"
-          display_name: "GPT 5.4 XHigh"
+          id: "gpt-5.5(xhigh)"
+          display_name: "GPT 5.5 XHigh"
           vscode: true
 
     gpt_codex:
@@ -100,6 +111,9 @@ models:
       max_input: 400000
       max_output: 128000
       vision: true
+      agent_harness:
+        aliases:
+          pi: "openai/gpt-5.3-codex"
       vscode:
         include: true
         thinking: true
@@ -124,6 +138,9 @@ models:
       max_input: 128000
       max_output: 128000
       vision: true
+      agent_harness:
+        aliases:
+          pi: "openai/gpt-5.3-codex-spark"
       vscode:
         include: true
         thinking: true
@@ -135,6 +152,9 @@ models:
       max_input: 400000
       max_output: 128000
       vision: true
+      agent_harness:
+        aliases:
+          pi: "openai/gpt-5.4-mini"
       vscode:
         include: true
         thinking: true
@@ -152,6 +172,7 @@ models:
       agent_harness:
         aliases:
           opencode: google/gemini-3.1-pro-high
+          pi: google/gemini-3.1-pro-high
       vscode:
         include: true
         thinking: true
@@ -166,6 +187,7 @@ models:
       agent_harness:
         aliases:
           opencode: google/gemini-3-flash-preview
+          pi: google/gemini-3-flash-preview
       vscode:
         include: true
         thinking: true

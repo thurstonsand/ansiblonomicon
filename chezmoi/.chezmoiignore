@@ -74,11 +74,6 @@ Library/Application Support/Code/User/mcp.json
 
 {{ end }}
 
-# Mason workaround
-{{ if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-.config/nvim/lua/plugins/mason.lua
-{{ end }}
-
 # Data-driven: skip uv/pip config when no indexes defined
 {{ if not .pypiIndex }}
 .config/uv/
