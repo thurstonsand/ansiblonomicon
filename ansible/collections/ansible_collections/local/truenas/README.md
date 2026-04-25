@@ -16,15 +16,16 @@ Thin Ansible wrappers around TrueNAS SCALE's `midclt` CLI.
 
 ## Modules
 
-| Module               | midclt resource      | Description               |
-| -------------------- | -------------------- | ------------------------- |
-| `initshutdownscript` | `initshutdownscript` | Init/shutdown scripts     |
-| `pool_snapshottask`  | `pool.snapshottask`  | Periodic snapshot tasks   |
-| `pool_scrub`         | `pool.scrub`         | Pool scrub tasks          |
-| `sharing_smb`        | `sharing.smb`        | SMB shares                |
-| `sharing_nfs`        | `sharing.nfs`        | NFS shares                |
-| `service`            | `service`            | Service enable/start/stop |
-| `smart_test`         | `smart.test`         | SMART test schedules      |
+| Module               | midclt resource      | Description                            |
+| -------------------- | -------------------- | -------------------------------------- |
+| `initshutdownscript` | `initshutdownscript` | Init/shutdown scripts                  |
+| `pool_snapshottask`  | `pool.snapshottask`  | Periodic snapshot tasks                |
+| `pool_scrub`         | `pool.scrub`         | Pool scrub tasks                       |
+| `sharing_smb`        | `sharing.smb`        | SMB shares                             |
+| `sharing_nfs`        | `sharing.nfs`        | NFS shares                             |
+| `service`            | `service`            | Service enable/start/stop              |
+| `smart_test`         | `smart.test`         | SMART test schedules                   |
+| `vm`                 | `vm`, `vm.device`    | Opinionated VM definitions and devices |
 
 ## Usage
 
@@ -111,7 +112,8 @@ plugins/
 │   ├── service.py
 │   ├── sharing_nfs.py
 │   ├── sharing_smb.py
-│   └── smart_test.py
+│   ├── smart_test.py
+│   └── vm.py
 ├── modules/               # Docs-only stubs
 │   └── *.py
 └── plugin_utils/
@@ -122,9 +124,12 @@ Action plugins run locally on the controller with full Python 3.12+ features.
 Only raw `midclt call` commands execute on TrueNAS via SSH.
 
 The `MidcltClient` class provides typed methods for all midclt operations:
+
 - `query(resource, filters)` → `list[ResourceRecord]`
 - `query_one(resource, filters)` → `ResourceRecord | None`
 - `create(resource, payload)` → `CreateResult` (with `.id` and optional `.record`)
+- `create_dataset(payload)` → `ResourceRecord` for dataset/zvol creation, where IDs are strings
 - `update(resource, id, changes)` → `None`
 - `delete(resource, id)` → `None`
 - Service-specific: `service_query`, `service_start`, `service_stop`, `service_restart`
+- VM-specific: `vm_start`, `vm_stop`, `vm_restart`

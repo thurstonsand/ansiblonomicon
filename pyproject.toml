@@ -3,11 +3,7 @@ name = "ansiblonomicon"
 version = "0.1.0"
 description = "Ansible configuration for macOS systems"
 requires-python = ">=3.14"
-dependencies = [
-    "ansible>=12.3.0",
-    "httpx>=0.28.1",
-    "python-frontmatter>=1.1.0",
-]
+dependencies = ["ansible>=12.3.0", "httpx>=0.28.1", "python-frontmatter>=1.1.0"]
 
 [tool.poe]
 verbosity = -1
@@ -143,9 +139,12 @@ options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"
 
 [tool.poe.tasks.openclaw]
-help = "Run the openclaw ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "ansible-playbook -i inventory/control/linux.ini playbooks/openclaw.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
+help = "Run the OpenClaw ansible playbook"
+shell = """
+ansible-playbook -i inventory/targets/openclaw.yml playbooks/openclaw.yml --diff ${check:+--check} ${tags:+--tags ${tags}} ${target:+-e openclaw_target=${target}}
+"""
 cwd = "ansible"
+interpreter = "bash"
 
 [[tool.poe.tasks.openclaw.args]]
 name = "check"
@@ -157,6 +156,11 @@ help = "Dry-run mode (no changes made)"
 name = "tags"
 options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"
+
+[[tool.poe.tasks.openclaw.args]]
+name = "target"
+options = ["--target"]
+help = "Override play target, e.g. openclaw_local or openclaw_remote"
 
 # Chezmoi tasks
 [tool.poe.tasks.cz-diff]
@@ -304,7 +308,14 @@ indent-style = "space"
 
 # Basedpyright configuration
 [tool.basedpyright]
-exclude = ["**/node_modules", "**/__pycache__", ".venv", "build", "dist", "stubs"]
+exclude = [
+  "**/node_modules",
+  "**/__pycache__",
+  ".venv",
+  "build",
+  "dist",
+  "stubs",
+]
 # Ansible filter plugins aren't proper Python packages; this lets tests import them
 extraPaths = ["ansible/roles/agent_harness/filter_plugins"]
 stubPath = "stubs"
@@ -321,6 +332,4 @@ minversion = "7.0"
 testpaths = ["ansible/roles/agent_harness/tests"]
 addopts = "-ra -q --tb=short --strict-markers"
 filterwarnings = ["error"]
-markers = [
-    "unit: marks tests as unit tests (fast, no external dependencies)",
-]
+markers = ["unit: marks tests as unit tests (fast, no external dependencies)"]

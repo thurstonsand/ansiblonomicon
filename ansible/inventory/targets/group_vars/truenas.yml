@@ -22,6 +22,12 @@ lan:
         plex: 32400
         storj_node: 20909
       domain: truenas.thurstons.house
+    openclaw:
+      ip: 192.168.1.90
+      ports:
+        gateway: 18789
+        ssh: 22
+      domain: openclaw.thurstons.house
 
   iot:
     homeassistant:
@@ -140,3 +146,95 @@ arcane_override:
   build_from_source: true
   source_repo: https://github.com/thurstonsand/arcane.git
   source_branch: fix/network-mode-stale-id
+
+# TrueNAS VM definitions. Opinionated: model stable core fields and selected devices only.
+truenas_vms:
+  openclaw:
+    name: OpenClaw
+    description: Fresh OpenClaw Debian VM
+    autostart: true
+    memory: 12288
+    min_memory: 12288
+    vcpus: 1
+    cores: 2
+    threads: 1
+    cpu_mode: HOST-PASSTHROUGH
+    cpuset: ""
+    nodeset: ""
+    bootloader: UEFI
+    ensure_display_device: true
+    zvols:
+      - name: performance/openclaw
+        volsize: 107374182400
+        volblocksize: 16K
+        comments: OpenClaw VM boot disk
+    devices:
+      - dtype: DISK
+        order: 1001
+        attributes:
+          path: /dev/zvol/performance/openclaw
+          type: VIRTIO
+          iotype: THREADS
+      - dtype: NIC
+        order: 1002
+        attributes:
+          type: VIRTIO
+          mac: 00:a0:98:26:3f:c2
+          nic_attach: br0
+          trust_guest_rx_filters: false
+      - dtype: DISPLAY
+        order: 1004
+        attributes:
+          type: SPICE
+          port: 5906
+          web_port: 5907
+          bind: 0.0.0.0
+          web: true
+          resolution: 1024x768
+          wait: false
+
+  homeassistant:
+    name: HAOS
+    description: HomeAssistant OS
+    autostart: true
+    memory: 8192
+    min_memory: 4096
+    vcpus: 1
+    cores: 4
+    threads: 1
+    cpu_mode: HOST-PASSTHROUGH
+    cpuset: ""
+    nodeset: ""
+    bootloader: UEFI
+    ensure_display_device: true
+    devices:
+      - dtype: DISK
+        order: 1001
+        attributes:
+          path: /dev/zvol/performance/homeassistant
+          type: VIRTIO
+          iotype: THREADS
+      - dtype: DISK
+        identity: /dev/zvol/performance/haos-config
+        order: 1001
+        attributes:
+          path: /dev/zvol/performance/haos-config
+          type: VIRTIO
+          iotype: THREADS
+      - dtype: NIC
+        order: 1002
+        attributes:
+          type: VIRTIO
+          mac: 00:a0:98:70:3e:8b
+          nic_attach: br0
+          trust_guest_rx_filters: false
+      - dtype: DISPLAY
+        order: 1003
+        attributes:
+          type: SPICE
+          port: 5900
+          web_port: 5904
+          bind: 0.0.0.0
+          web: true
+          resolution: 1024x768
+          wait: false

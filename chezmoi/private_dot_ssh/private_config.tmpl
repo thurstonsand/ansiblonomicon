@@ -33,13 +33,13 @@ Host truenas-dev
   HostName 192.168.6.227
   SetEnv TERM="xterm-256color"
 
-{{- if ne .chezmoi.hostname "clawdbot" }}
+{{- if ne .chezmoi.hostname "openclaw" }}
 
-Host clawdbot
+Host openclaw
   ForwardAgent yes
   User thurstonsand
-  HostKeyAlias clawdbot
-  ProxyCommand ssh-smart-proxy clawdbot 192.168.1.90 22 clawdbot-ssh.thurstons.house
+  HostKeyAlias openclaw
+  ProxyCommand ssh-smart-proxy openclaw 192.168.1.90 22 openclaw-ssh.thurstons.house
 
 {{- end }}
 

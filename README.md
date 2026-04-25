@@ -29,11 +29,11 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 ```
 ├── ansible/
 │   ├── ansible.cfg          # Ansible configuration
-│   ├── inventory/           # Host definitions (localhost, truenas)
+│   ├── inventory/           # Host definitions (localhost, truenas, openclaw)
 │   ├── config.yml           # Shared configuration variables
 │   ├── darwin.config.yml    # macOS-specific config
 │   ├── work.config.yml     # Work macOS-specific config
-│   ├── debian.config.yml    # Debian-specific config (openclaw)
+│   ├── openclaw.config.yml  # Fresh OpenClaw Debian VM config
 │   ├── archlinux.config.yml # Arch Linux-specific config
 │   ├── Brewfile             # Homebrew packages, casks, and MAS apps
 │   ├── requirements.yml     # Ansible Galaxy dependencies
@@ -93,12 +93,14 @@ SSH aliases are configured via chezmoi (`~/.ssh/config`) and use `ssh-smart-prox
 | Target                                             | Alias          | Description                                 |
 | -------------------------------------------------- | -------------- | ------------------------------------------- |
 | `192.168.1.68:22` / `truenas-ssh.thurstons.house`  | `ssh truenas`  | TrueNAS SCALE server (Docker stacks, media) |
-| `192.168.1.90:22` / `clawdbot-ssh.thurstons.house` | `ssh clawdbot` | OpenClaw AI agent VM                        |
+| `openclaw.thurstons.house` (Cloudflare Tunnel)     | Web UI         | OpenClaw AI agent VM                        |
+| `192.168.1.90:22` / `openclaw-ssh.thurstons.house` | `ssh openclaw` | OpenClaw Debian VM                          |
 | `192.168.1.89:22222` / `haos-ssh.thurstons.house`  | `ssh haos`     | Home Assistant OS                           |
 | `192.168.1.1:22` / `udmp-ssh.thurstons.house`      | `ssh udmp`     | UniFi Dream Machine Pro                     |
 
 ## Platform Support
 
 - **macOS** (Darwin) — Primary, fully supported
-- **Debian** (openclaw) — OpenClaw VM, fully supported
+- **Debian** (openclaw) — Fresh OpenClaw VM playbook; auto-selects local on the VM or remote over SSH
+- **TrueNAS** — Docker stacks plus first-class VM modeling via the in-repo `local.truenas` collection
 - **Arch Linux** (omarchy) — Future, structure ready

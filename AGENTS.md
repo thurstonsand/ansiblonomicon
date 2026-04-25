@@ -16,13 +16,13 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe work` — Apply work macOS Ansible playbook
   - **Work tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `neovim`/`nvim-deps`, `terminal-theme`, `uvc-util`, `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
-  - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all stacks), or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
+  - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all Docker stacks), `vm`/`truenas-vm`, `openclaw-vm`, `homeassistant-vm`, or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
 - `uv run poe udmp` — Apply UDMP Ansible playbook (same options as macos)
   - **UDMP tags**: `multicast-querier`, `nextdns`
-- `uv run poe openclaw` — Apply OpenClaw Ansible playbook (run from openclaw itself)
+- `uv run poe openclaw` — Apply OpenClaw Ansible playbook (playbook selects local on hostname `openclaw`, otherwise remote over SSH; override with `--target openclaw_local|openclaw_remote`)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **OpenClaw tags**: `agent-harness`, `apt`, `apt-repos`, `bun`, `cargo`, `chezmoi`/`dotfiles`, `claude-code`, `gateway-env`, `go`, `motd`, `neovim`, `npm`, `openclaw-monitors`/`monitors`, `openclaw-plugins`, `opencode`, `ruby`, `system-maintenance`/`timers`, `tmux`, `uv`, `xvfb`
+  - **OpenClaw tags**: `apt`, `apt-repos`, `uv`, `secrets`/`onepassword`/`op`, `chezmoi`/`dotfiles`, `claude-code`, `opencode`, `system-maintenance`/`timers`, `npm`, `openclaw-plugins`, `bun`, `go`, `cargo`, `neovim`, `ruby`, `tmux`, `motd`, `agent-harness`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes (`cz-diff` excludes lockfiles)
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)
@@ -51,7 +51,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/work.yml` — Work macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/openclaw.yml` — OpenClaw (Debian VM) playbook; `ansible/playbooks/udmp.yml` — UDMP playbook
 - `ansible/roles/` — Custom roles
 - `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS (`.j2` templates use centralized config)
-- `ansible/config.yml` — Shared vars; `darwin.config.yml` / `work.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS/host-specific
+- `ansible/config.yml` — Shared vars; `darwin.config.yml` / `work.config.yml` / `openclaw.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS/host-specific
 - `ansible/models.yml` — Centralized model definitions (versions, aliases, vscode/zed config); symlinked to `chezmoi/.chezmoidata/models.yaml`
 - `ansible/inventory/group_vars/truenas.yml` — TrueNAS host vars (Docker config, network IPs/ports/domains)
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
@@ -65,13 +65,13 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 
 ## OpenClaw
 
-OpenClaw is a Debian VM running as a remote AI agent instance, reached over LAN when available and through Cloudflare Access when it is not.
+OpenClaw is being rebuilt fresh as a TrueNAS-hosted Debian VM. The old Debian VM (`clawdbot`) and the temporary Docker stack are legacy reference state only.
 
-- **SSH**: `ssh clawdbot` (tries `192.168.1.90:22` first, falls back to `clawdbot-ssh.thurstons.house` as `thurstonsand`)
 - **Web UI**: `openclaw.thurstons.house` (behind Zero Trust)
-- **Ansible**: Run `uv run poe openclaw` from openclaw itself (not remote)
-- **Config**: `ansible/debian.config.yml` for apt packages and feature flags
-- **Chezmoi**: Uses `{{ .chezmoi.hostname "openclaw" }}` conditionals; 1Password via `~/.local/bin/op` wrapper (chezmoi-managed)
+- **VM target IP**: `192.168.1.90` (`clawdbot` is permanently retired; this address is reused)
+- **TrueNAS VM modeling**: use `local.truenas.vm` from the in-repo collection; manage stable VM core fields and selected devices only
+- **Guest playbook**: `uv run poe openclaw` or direct `ansible-playbook -i ansible/inventory/targets/openclaw.yml ansible/playbooks/openclaw.yml`; target auto-selects local on hostname `openclaw`, otherwise remote
+- **Secrets direction**: scoped 1Password `agent` vault via service-account token and `op` SecretRefs; do not restore legacy plaintext gateway env drop-ins
 
 ## TrueNAS Docker Directory Layout
 

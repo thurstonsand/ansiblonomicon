@@ -1,0 +1,87 @@
+---
+# OpenClaw VM configuration.
+# Clawdbot remains legacy reference material; do not copy its runtime state here.
+
+hostname: openclaw
+
+configure_chezmoi: true
+configure_apt: true
+configure_agent_harness: false
+
+# Start small. Add runtime tools when the new OpenClaw actually needs them.
+apt_packages:
+  - ansible
+  - btop
+  - ca-certificates
+  - curl
+  - direnv
+  - eza
+  - fd-find
+  - fzf
+  - git
+  - git-delta
+  - gh
+  - jq
+  - openssh-client
+  - openssh-server
+  - cargo
+  - python3-venv
+  - ripgrep
+  - rsync
+  - sqlite3
+  - sudo
+  - tmux
+  - tree
+  - unzip
+  - vim
+  - zsh
+
+apt_external_repos:
+  - name: 1password
+    url: https://downloads.1password.com/linux/debian/amd64
+    suites: stable
+    components: main
+    key_url: https://downloads.1password.com/linux/keys/1password.asc
+    key_path: /usr/share/keyrings/1password-archive-keyring.gpg
+    packages:
+      - 1password-cli
+
+  - name: nodesource
+    url: https://deb.nodesource.com/node_22.x
+    suites: nodistro
+    components: main
+    key_url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    key_path: /usr/share/keyrings/nodesource.gpg
+    packages:
+      - nodejs
+
+  - name: mise
+    url: https://mise.jdx.dev/deb
+    suites: stable
+    components: main
+    key_url: https://mise.jdx.dev/gpg-key.pub
+    key_path: /etc/apt/keyrings/mise-archive-keyring.pub
+    packages:
+      - mise
+
+# Override shared workstation defaults. The new VM starts with OpenClaw only;
+# add agent/developer tools intentionally after onboarding.
+npm_global_packages_base: []
+uv_global_tools_base: []
+bun_global_packages_base: []
+cargo_packages_base: []
+go_tools_base: []
+gem_packages_base: []
+agent_harness_target_agents_base: []
+
+npm_global_packages_extra:
+  - openclaw
+
+bun_global_packages_extra: []
+cargo_packages_extra:
+  - bob-nvim
+go_tools_extra: []
+uv_global_tools_extra: []
+gem_packages_extra: []
+agent_harness_target_agents_extra: []
+openclaw_bundled_extensions: []

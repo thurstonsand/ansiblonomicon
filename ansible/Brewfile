@@ -70,6 +70,7 @@ brew "opentofu"
 brew "rclone"
 brew "restic"
 brew "sshpass"
+brew "spice-gtk"
 brew "storj-uplink"
 brew "cirruslabs/cli/tart"
 

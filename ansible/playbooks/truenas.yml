@@ -373,6 +373,14 @@
       vars:
         docker_stack_name: isponsorblocktv
 
+    - name: OpenClaw VM
+      tags: [vm, truenas-vm, openclaw-vm, openclaw]
+      local.truenas.vm: "{{ truenas_vms.openclaw }}"
+
+    - name: Home Assistant VM
+      tags: [vm, truenas-vm, homeassistant-vm]
+      local.truenas.vm: "{{ truenas_vms.homeassistant }}"
+
     - name: Deploy scrypted stack
       tags: [docker-stack-role, scrypted]
       ansible.builtin.include_role:

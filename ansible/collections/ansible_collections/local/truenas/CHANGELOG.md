@@ -2,6 +2,12 @@
 
 All notable changes to this collection will be documented in this file.
 
+## Unreleased
+
+### Added
+
+- `vm` module for opinionated TrueNAS SCALE VM definitions, zvol creation, selected device management, and optional power state management
+
 ## [0.2.0] - 2025-12-27
 
 ### Added

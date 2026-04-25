@@ -12,7 +12,7 @@ declare namespace Cloudflare {
 		TELEGRAM_WEBHOOK_9S_SERVICE: Fetcher;
 		TELEGRAM_WEBHOOK_2B_SERVICE: Fetcher;
 		GOG_GMAIL_URL: "http://192.168.1.90:8788/gmail-pubsub";
-		OPENCLAW_HOOKS_URL: "https://clawdbot.thurstons.house/hooks";
+		OPENCLAW_HOOKS_URL: "https://openclaw.thurstons.house/hooks";
 		GOOGLE_PUBSUB_AUDIENCE: "https://hooks.thurstons.house/gmail/pubsub";
 		GOOGLE_PUBSUB_SERVICE_ACCOUNT: "pubsub-push@gen-lang-client-0166268742.iam.gserviceaccount.com";
 		GITHUB_WEBHOOK_SECRET: "";

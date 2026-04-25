@@ -6,7 +6,7 @@ Executes midclt commands remotely and parses JSON locally.
 
 from dataclasses import dataclass
 import json
-from typing import Any
+from typing import Any, cast
 
 type ResourceRecord = dict[str, Any]
 
@@ -75,6 +75,21 @@ class MidcltClient:
         result = self._call("service.restart", service_name)
         return bool(result)
 
+    def vm_start(self, vm_id: int) -> bool:
+        """Start a VM. Returns True on success."""
+        result = self._call("vm.start", vm_id)
+        return bool(result)
+
+    def vm_stop(self, vm_id: int) -> bool:
+        """Stop a VM. Returns True on success."""
+        result = self._call("vm.stop", vm_id)
+        return bool(result)
+
+    def vm_restart(self, vm_id: int) -> bool:
+        """Restart a VM. Returns True on success."""
+        result = self._call("vm.restart", vm_id)
+        return bool(result)
+
     def _call(self, method: str, *args: ResourceRecord | list[Any] | int | str) -> Any:
         """Execute a midclt call and return parsed JSON output."""
         cmd_parts = ["midclt", "call", method]
@@ -130,11 +145,16 @@ class MidcltClient:
         return results[0] if results else None
 
     def create(self, resource: str, payload: ResourceRecord) -> CreateResult:
-        """Create a resource. Returns ID and optionally the full record."""
+        """Create a resource. Returns integer ID and optionally the full record."""
         result: ResourceRecord | int = self._call(f"{resource}.create", payload)
         if isinstance(result, dict):
             return CreateResult(id=int(result["id"]), record=result)
         return CreateResult(id=int(result))
+
+    def create_dataset(self, payload: ResourceRecord) -> ResourceRecord:
+        """Create a dataset or zvol. Dataset IDs are strings, not integer IDs."""
+        result = self._call("pool.dataset.create", payload)
+        return cast(ResourceRecord, result) if isinstance(result, dict) else {}
 
     def update(self, resource: str, resource_id: int, changes: ResourceRecord) -> None:
         """Update a resource by ID."""

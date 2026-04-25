@@ -373,7 +373,7 @@ async function handleHealth(request: Request, env: Env, analytics: Analytics): P
 
   try {
     // Forward via VPC service binding
-    const forwardResponse = await env.OPENCLAW_SERVICE.fetch("http://clawdbot.thurstons.house/hooks/health", {
+    const forwardResponse = await env.OPENCLAW_SERVICE.fetch("http://openclaw.thurstons.house/hooks/health", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -427,7 +427,7 @@ async function handleTelegramWebhook(request: Request, env: Env, analytics: Anal
 
   try {
     const forwardResponse = await service.fetch(
-      `http://clawdbot.thurstons.house${forwardPath}`,
+      `http://openclaw.thurstons.house${forwardPath}`,
       {
         method: "POST",
         headers: request.headers,

@@ -16,19 +16,17 @@ locals {
     { host = "anypod", service = "http://192.168.5.231:8024" },
     { host = "blog", service = "http://192.168.5.233:2368" },
     { host = "cli-proxy-api", service = "http://192.168.5.235:8317" },
-    { host = "clawdbot", service = "http://192.168.1.90:18789" },
+    { host = "openclaw", service = "http://192.168.1.90:18789" },
   ]
 
-  internal_tunnel_apps = [
-    { host = "clawdbot-hooks", service = "http://192.168.1.90:8788" },
-  ]
+  internal_tunnel_apps = []
 
   # SSH endpoints exposed via Cloudflare Tunnel (WARP-only access)
   ssh_tunnel_apps = [
     { host = "truenas-ssh", ip = "192.168.1.68", port = 22 },
     { host = "haos-ssh", ip = "192.168.1.89", port = 22222 },
     { host = "udmp-ssh", ip = "192.168.1.1", port = 22 },
-    { host = "clawdbot-ssh", ip = "192.168.1.90", port = 22 },
+    { host = "openclaw-ssh", ip = "192.168.1.90", port = 22 },
   ]
 
   # Public HTTPS hosts that should advertise host-scoped HSTS.
@@ -42,7 +40,7 @@ locals {
     "podsync.${local.zone_name}",
     "anypod.${local.zone_name}",
     "cli-proxy-api.${local.zone_name}",
-    "clawdbot.${local.zone_name}",
+    "openclaw.${local.zone_name}",
     "aig.${local.zone_name}",
     "hooks.${local.zone_name}",
   ]

@@ -19,7 +19,7 @@ routes = [{ pattern = "hooks.thurstons.house", custom_domain = true }]
 GOG_GMAIL_URL = "http://192.168.1.90:8788/gmail-pubsub"
 # GOG_GMAIL_TOKEN set via `wrangler secret put GOG_GMAIL_TOKEN` (pushToken from openclaw.json hooks.gmail.pushToken)
 # OpenClaw gateway hooks endpoint for future GitHub webhooks
-OPENCLAW_HOOKS_URL = "https://clawdbot.thurstons.house/hooks"
+OPENCLAW_HOOKS_URL = "https://openclaw.thurstons.house/hooks"
 # Google Pub/Sub OIDC config
 GOOGLE_PUBSUB_AUDIENCE = "https://hooks.thurstons.house/gmail/pubsub"
 GOOGLE_PUBSUB_SERVICE_ACCOUNT = "pubsub-push@gen-lang-client-0166268742.iam.gserviceaccount.com"
@@ -48,9 +48,9 @@ service_id = "019bf22a-39a7-7191-9721-e17c3bdf212d"
 binding = "OPENCLAW_SERVICE"
 service_id = "019bf380-8c74-7da0-8e8e-3a11fabeda32"
 
-# openclaw telegram webhook listeners - created via Cloudflare Connectivity Directory API
+# Legacy clawdbot telegram webhook listeners - remove after confirming no callers remain.
 # POST /accounts/{account_id}/connectivity/directory/services
-# Separate ports per account (openclaw creates one HTTP server per bot)
+# Separate ports per account (legacy OpenClaw created one HTTP server per bot)
 [[vpc_services]]
 binding = "TELEGRAM_WEBHOOK_9S_SERVICE"
 service_id = "019c8e1e-b11c-7d90-ab9b-5c5eba9d9897"

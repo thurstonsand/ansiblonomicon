@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+vm_name="${1:-OpenClaw}"
+truenas_host="${TRUENAS_SSH_HOST:-truenas}"
+
+if ! command -v jq >/dev/null 2>&1; then
+  echo "jq is required." >&2
+  exit 1
+fi
+
+if ! command -v spicy >/dev/null 2>&1; then
+  echo "spicy is required. Install it with: brew install spice-gtk" >&2
+  exit 1
+fi
+
+query="$(jq -cn --arg name "$vm_name" '[[ "name", "=", $name ]]')"
+json="$(
+  printf '%s' "$query" |
+    ssh "$truenas_host" 'query="$(cat)"; midclt call vm.query "$query"'
+)"
+
+spice_port="$(
+  jq -er '
+    .[0] as $vm
+    | if $vm == null then
+        error("VM not found")
+      else
+        first(
+          $vm.devices[]?
+          | select(.dtype == "DISPLAY")
+          | .attributes.port
+          | select(. != null and . != "")
+        ) // error("VM has no display device with a SPICE port")
+      end
+  ' <<<"$json"
+)"
+
+spice_password="$(
+  jq -r '
+    first(
+      .[0].devices[]?
+      | select(.dtype == "DISPLAY")
+      | .attributes.password
+      | select(. != null)
+    ) // ""
+  ' <<<"$json"
+)"
+
+local_port="${OPENCLAW_SPICE_LOCAL_PORT:-$spice_port}"
+
+echo "Opening SSH tunnel: 127.0.0.1:${local_port} -> ${truenas_host}:127.0.0.1:${spice_port}" >&2
+if ! ssh -fN -L "127.0.0.1:${local_port}:127.0.0.1:${spice_port}" "$truenas_host" 2>/dev/null; then
+  echo "Could not create tunnel; continuing in case it already exists." >&2
+fi
+
+if [[ -n "$spice_password" ]]; then
+  if command -v pbcopy >/dev/null 2>&1; then
+    printf '%s' "$spice_password" | pbcopy
+    echo "SPICE password copied to clipboard." >&2
+  else
+    echo "SPICE password: $spice_password" >&2
+  fi
+fi
+
+spicy_args=(-h 127.0.0.1 -p "$local_port")
+if [[ -n "$spice_password" ]]; then
+  spicy_args+=(-w "$spice_password")
+fi
+
+exec spicy "${spicy_args[@]}"

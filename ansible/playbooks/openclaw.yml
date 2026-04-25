@@ -1,17 +1,18 @@
 ---
 # OpenClaw (Debian VM) configuration playbook
-# Run with: uv run poe openclaw
+# Run locally on the VM or remotely over SSH with: uv run poe openclaw
 
 - name: Configure openclaw
-  hosts: 127.0.0.1
+  hosts: >-
+    {{ openclaw_target | default(((lookup('ansible.builtin.pipe', 'hostname -s') | trim) == 'openclaw') | ternary('openclaw_local', 'openclaw_remote')) }}
 
   vars_files:
     - ../config.yml
     - ../models.yml
 
   pre_tasks:
-    - name: Load Debian-specific config
-      ansible.builtin.include_vars: ../debian.config.yml
+    - name: Load OpenClaw-specific config
+      ansible.builtin.include_vars: ../openclaw.config.yml
       tags: ["always"]
 
     - name: Display system info
@@ -67,12 +68,40 @@
         state: present
       tags: ["apt"]
 
+    - name: Ensure user local bin directory exists
+      ansible.builtin.file:
+        path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+        state: directory
+        mode: "0755"
+      tags: ["apt", "uv", "chezmoi", "claude-code", "opencode"]
+
     - name: Create fd symlink (Debian uses fdfind)
       ansible.builtin.file:
         src: /usr/bin/fdfind
         dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/fd"
         state: link
       tags: ["apt"]
+
+    - name: Install uv for local self-management
+      tags: ["uv"]
+      block:
+        - name: Check if uv is installed
+          ansible.builtin.stat:
+            path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/uv"
+          register: uv_binary
+
+        - name: Download uv installer
+          when: not uv_binary.stat.exists
+          ansible.builtin.get_url:
+            url: https://astral.sh/uv/install.sh
+            dest: /tmp/uv-install.sh
+            mode: "0755"
+
+        - name: Run uv installer
+          when: not uv_binary.stat.exists
+          ansible.builtin.command:
+            cmd: /tmp/uv-install.sh
+            creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/uv"
 
     - name: Configure external apt repositories
       tags: ["apt", "apt-repos"]
@@ -132,6 +161,54 @@
           ansible.builtin.apt:
             name: "{{ apt_external_repos | map(attribute='packages') | flatten }}"
             state: present
+
+    - name: Configure OpenClaw 1Password service account bootstrap
+      tags: ["secrets", "onepassword", "op"]
+      block:
+        - name: Ensure OpenClaw secret directory exists
+          ansible.builtin.file:
+            path: "{{ ansible_facts['env']['HOME'] }}/.config/openclaw/secrets"
+            state: directory
+            mode: "0700"
+
+        - name: Check existing OpenClaw service account token file
+          ansible.builtin.stat:
+            path: "{{ ansible_facts['env']['HOME'] }}/.config/openclaw/secrets/op-service-account-token"
+          register: openclaw_op_token_file
+          no_log: true
+
+        - name: Require OpenClaw service account bootstrap token
+          ansible.builtin.assert:
+            that:
+              - lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') | length > 0 or openclaw_op_token_file.stat.exists
+            fail_msg: >-
+              OP_SERVICE_ACCOUNT_TOKEN must be exported for first OpenClaw provisioning.
+              Later local runs can reuse the existing token file on the VM.
+          no_log: true
+
+        - name: Configure OpenClaw service account token file
+          when: lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') | length > 0
+          ansible.builtin.copy:
+            dest: "{{ ansible_facts['env']['HOME'] }}/.config/openclaw/secrets/op-service-account-token"
+            mode: "0600"
+            content: "{{ lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') }}\n"
+          no_log: true
+
+        - name: Install 1Password service account wrapper
+          ansible.builtin.copy:
+            dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/op"
+            mode: "0755"
+            content: |
+              #!/usr/bin/env bash
+              set -euo pipefail
+              token_file="${OP_SERVICE_ACCOUNT_TOKEN_FILE:-$HOME/.config/openclaw/secrets/op-service-account-token}"
+              if [[ ! -r "$token_file" ]]; then
+                echo "op: missing service account token file: $token_file" >&2
+                exit 1
+              fi
+              export OP_SERVICE_ACCOUNT_TOKEN
+              OP_SERVICE_ACCOUNT_TOKEN="$(tr -d '\r\n' < "$token_file")"
+              exec /usr/bin/op "$@"
 
     - name: Install chezmoi via curl
       tags: ["chezmoi"]
@@ -212,6 +289,7 @@
 
     - name: Install OpenClaw bundled extension dependencies
       tags: ["npm", "openclaw-plugins"]
+      when: openclaw_bundled_extensions | length > 0
       ansible.builtin.command:
         cmd: npm install --no-fund --no-audit
         chdir: "{{ ansible_facts['env']['HOME'] }}/.npm-global/lib/node_modules/openclaw/extensions/{{ item }}"
@@ -325,94 +403,6 @@
       ansible.builtin.include_tasks:
         file: ../tasks/tmux_plugins.yml
 
-    - name: Configure OpenClaw monitors
-      ansible.builtin.include_role:
-        name: openclaw_monitors
-        apply:
-          tags: ["openclaw-monitors", "monitors"]
-      tags: ["openclaw-monitors", "monitors"]
-
-    - name: Configure Xvfb virtual display
-      tags: ["xvfb"]
-      block:
-        - name: Create Xvfb systemd user service
-          ansible.builtin.copy:
-            dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/xvfb.service"
-            mode: "0644"
-            content: |
-              [Unit]
-              Description=Xvfb virtual display
-              Before=openclaw-gateway.service
-
-              [Service]
-              ExecStart=/usr/bin/Xvfb :99 -screen 0 1920x1080x24 -ac -nolisten tcp
-              Restart=always
-              RestartSec=3
-
-              [Install]
-              WantedBy=default.target
-
-        - name: Reload systemd user daemon
-          ansible.builtin.systemd:
-            daemon_reload: true
-            scope: user
-
-        - name: Enable and start Xvfb service
-          ansible.builtin.systemd:
-            name: xvfb.service
-            enabled: true
-            state: started
-            scope: user
-
-        - name: Ensure openclaw-gateway drop-in directory exists
-          ansible.builtin.file:
-            path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/openclaw-gateway.service.d"
-            state: directory
-            mode: "0755"
-
-        - name: Create gateway DISPLAY drop-in
-          ansible.builtin.copy:
-            dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/openclaw-gateway.service.d/display.conf"
-            mode: "0644"
-            content: |
-              [Unit]
-              After=xvfb.service
-              Wants=xvfb.service
-
-              [Service]
-              Environment="DISPLAY=:99"
-          notify: Reload openclaw gateway
-
-    - name: Configure openclaw gateway environment
-      tags: ["gateway-env"]
-      block:
-        - name: Ensure openclaw-gateway drop-in directory exists
-          ansible.builtin.file:
-            path: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/openclaw-gateway.service.d"
-            state: directory
-            mode: "0755"
-
-        - name: Create gateway env drop-in
-          ansible.builtin.copy:
-            dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/openclaw-gateway.service.d/env.conf"
-            mode: "0600"
-            content: |
-              [Service]
-              Environment="PATH={{ ansible_facts['env']['HOME'] }}/go/bin:{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['HOME'] }}/.npm-global/bin:{{ ansible_facts['env']['HOME'] }}/.bun/bin:{{ ansible_facts['env']['HOME'] }}/.local/share/pnpm:{{ ansible_facts['env']['HOME'] }}/clawd/bin:/usr/local/bin:/usr/bin:/bin"
-              Environment="CLI_PROXY_API_KEY={{ lookup('env', 'CLI_PROXY_API_KEY') }}"
-              Environment="GIPHY_API_KEY={{ lookup('env', 'GIPHY_API_KEY') }}"
-              Environment="GOG_KEYRING_PASSWORD={{ lookup('env', 'GOG_KEYRING_PASSWORD') }}"
-              Environment="ELEVENLABS_API_KEY={{ lookup('env', 'ELEVENLABS_API_KEY') }}"
-              Environment="PARCEL_API_KEY={{ lookup('env', 'PARCEL_API_KEY') }}"
-              Environment="OPENCLAW_GATEWAY_PASSWORD={{ lookup('env', 'OPENCLAW_GATEWAY_PASSWORD') }}"
-              Environment="KAGI_API_KEY={{ lookup('env', 'KAGI_API_KEY') }}"
-              Environment="PARALLEL_API_KEY={{ lookup('env', 'PARALLEL_API_KEY') }}"
-              Environment="VENICE_API_KEY={{ lookup('env', 'VENICE_API_KEY') }}"
-              Environment="VOYAGE_API_KEY={{ lookup('env', 'VOYAGE_API_KEY') }}"
-              Environment="TWITTER_AUTH_TOKEN={{ lookup('env', 'TWITTER_AUTH_TOKEN') }}"
-              Environment="TWITTER_CT0={{ lookup('env', 'TWITTER_CT0') }}"
-          notify: Reload openclaw gateway
-
     - name: Configure MOTD
       ansible.builtin.include_role:
         name: motd
@@ -427,11 +417,3 @@
           tags: ["agent-harness"]
       when: configure_agent_harness | default(true)
       tags: ["agent-harness"]
-
-  handlers:
-    - name: Reload openclaw gateway
-      ansible.builtin.systemd:
-        name: openclaw-gateway.service
-        daemon_reload: true
-        state: restarted
-        scope: user
