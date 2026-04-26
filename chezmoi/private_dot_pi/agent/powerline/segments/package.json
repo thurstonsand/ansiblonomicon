@@ -3,11 +3,11 @@
   "private": true,
   "type": "module",
   "dependencies": {
-    "@mariozechner/pi-coding-agent": "^0.63.1"
+    "@mariozechner/pi-coding-agent": "^0.70.2"
   },
   "devDependencies": {
     "@modelcontextprotocol/sdk": "^1.27.1",
     "@types/node": "^24.3.0",
-    "pi-powerline-footer": "git+file:///Users/thurstonsand/Develop/pi-powerline-footer#452fb97a99996389826bb9fb6766af1a9bfd7b08"
+    "pi-powerline-footer": "npm:@thurstonsand/pi-powerline-footer@latest"
   }
 }

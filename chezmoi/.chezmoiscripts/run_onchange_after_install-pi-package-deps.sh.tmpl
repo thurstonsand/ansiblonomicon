@@ -1,0 +1,18 @@
+{{- $packageFinder := print .chezmoi.workingTree "/scripts/pi-package-json-paths.sh" -}}
+{{- $sourceExtensions := print .chezmoi.sourceDir "/private_dot_pi/agent/extensions" -}}
+{{- $sourcePowerline := print .chezmoi.sourceDir "/private_dot_pi/agent/powerline" -}}
+#!/bin/sh
+set -eu
+
+PACKAGE_FINDER={{ $packageFinder | quote }}
+
+# Dependency trigger: {{ output $packageFinder "--hash" $sourceExtensions $sourcePowerline | trim }}
+
+"$PACKAGE_FINDER" "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/powerline" | while IFS= read -r package_json; do
+  package_dir=$(dirname "$package_json")
+  if [ -f "$package_dir/package-lock.json" ]; then
+    npm --prefix "$package_dir" ci
+  else
+    npm --prefix "$package_dir" install
+  fi
+done

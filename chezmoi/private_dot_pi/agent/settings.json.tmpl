@@ -131,7 +131,9 @@
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
     "git:github.com/davebcn87/pi-autoresearch",
     "npm:pi-interview",
+{{- if eq .chezmoi.os "darwin" }}
     "npm:glimpseui",
+{{- end }}
     "npm:pi-mcp-adapter",
     "npm:@plannotator/pi-extension",
     {
@@ -146,7 +148,9 @@
     "git:github.com/earendil-works/pi-review"
   ],
   "extensions": [
+{{- if eq .chezmoi.os "darwin" }}
     "{{ output "npm" "root" "-g" | trim }}/glimpseui/examples/companion/index.ts"
+{{- end }}
   ],
   "hideThinkingBlock": false,
   "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",

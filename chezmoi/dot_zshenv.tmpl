@@ -39,6 +39,12 @@ tmux() {
 
 # Environment variables
 export XDG_CONFIG_HOME="$HOME/.config"
+
+# SSH strips local terminal metadata, but rendering still happens client-side.
+# Force icon-capable Pi powerline output when using Nerd Fonts locally.
+if [[ -n "${SSH_CONNECTION:-}" ]]; then
+  export POWERLINE_NERD_FONTS=1
+fi
 {{- if .aigEnabled }}
 export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
 export PI_LIBRARIAN_MODELS="openai/{{ .models.openai.gpt_codex_spark.version }}:high"

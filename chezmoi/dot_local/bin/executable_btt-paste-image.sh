@@ -4,7 +4,7 @@ set -euo pipefail
 # BetterTouchTool runs actions with a stripped environment.
 export PATH="$HOME/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
 
-PRIMARY_HOST="clawdbot"
+PRIMARY_HOST="openclaw"
 SECONDARY_HOST="truenas"
 
 pass_through_option_v() {
@@ -40,39 +40,13 @@ require_cmd() {
   fi
 }
 
-for cmd in osascript pgrep ssh scp pngpaste nc; do
+for cmd in osascript pgrep ssh scp pngpaste; do
   require_cmd "$cmd"
 done
 
-lan_endpoint_for_host() {
-  local host="$1"
-  case "$host" in
-    clawdbot)
-      printf '%s' 'thurstonsand@192.168.1.90'
-      ;;
-    truenas)
-      printf '%s' 'admin@192.168.1.68'
-      ;;
-    *)
-      return 1
-      ;;
-  esac
-}
-
 resolve_transfer_target() {
   local host="$1"
-  local endpoint
-  local lan_ip
-
-  if endpoint=$(lan_endpoint_for_host "$host"); then
-    lan_ip="${endpoint#*@}"
-    if nc -z -w2 "$lan_ip" 22 >/dev/null 2>&1; then
-      printf '%s|%s|%s' "$endpoint" "$host" 'lan'
-      return 0
-    fi
-  fi
-
-  printf '%s|%s|%s' "$host" '' 'proxy'
+  printf '%s|%s' "$host" 'ssh-config'
 }
 
 has_active_ssh_to_host() {
@@ -99,12 +73,9 @@ if ! REMOTE_HOST=$(select_remote_host); then
   exit 0
 fi
 
-IFS='|' read -r REMOTE_TARGET REMOTE_HOSTKEY_ALIAS REMOTE_TARGET_MODE <<<"$(resolve_transfer_target "$REMOTE_HOST")"
+IFS='|' read -r REMOTE_TARGET REMOTE_TARGET_MODE <<<"$(resolve_transfer_target "$REMOTE_HOST")"
 
 SSH_OPTS=(-o ConnectTimeout=10)
-if [ -n "$REMOTE_HOSTKEY_ALIAS" ]; then
-  SSH_OPTS+=(-o "HostKeyAlias=${REMOTE_HOSTKEY_ALIAS}")
-fi
 
 # Check clipboard for image data and extract
 TMPFILE=$(mktemp /tmp/clipboard-XXXXXX.png)
