@@ -77,6 +77,13 @@
         state: present
       tags: ["apt"]
 
+    - name: Use zsh as the login shell
+      become: true
+      ansible.builtin.user:
+        name: "{{ ansible_user_id }}"
+        shell: /usr/bin/zsh
+      tags: ["apt", "zsh"]
+
     - name: Ensure user local bin directory exists
       ansible.builtin.file:
         path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"

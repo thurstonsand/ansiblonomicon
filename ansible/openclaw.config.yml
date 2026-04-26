@@ -33,8 +33,12 @@ apt_packages:
   - tmux
   - tree
   - unzip
+  - starship
   - vim
+  - zoxide
   - zsh
+  - zsh-autosuggestions
+  - zsh-syntax-highlighting
 
 apt_external_repos:
   - name: 1password

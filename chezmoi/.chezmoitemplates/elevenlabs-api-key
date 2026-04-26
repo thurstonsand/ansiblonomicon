@@ -1,1 +1,1 @@
-{{- template "op-secret" list "ELEVENLABS_API_KEY" "op://Private/ElevenLabs/HomeAssistant API Key" -}}
+{{- template "op-secret" list "ELEVENLABS_API_KEY" "op://agent/cmi23o4fiidhzdgclf6dyuzxaq/HomeAssistant API Key" -}}

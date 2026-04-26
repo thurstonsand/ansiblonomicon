@@ -85,17 +85,24 @@ alias lg='lazygit'
 alias vi='nvim'
 alias vim='nvim'
 
+{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
 claude() {
   ghostty-nav title "claude:${PWD:t}"
-{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
   command claude \
     --plugin-dir ~/code/claude-code-plugin-auto-title \
     --plugin-dir ~/code/claude-code-plugin-sourcegraph \
     "$@"
-{{- else }}
-  command claude --dangerously-skip-permissions "$@"
-{{- end }}
 }
+{{- else if eq .chezmoi.hostname "openclaw" }}
+claude() {
+  command claude --dangerously-skip-permissions "$@"
+}
+{{- else }}
+claude() {
+  ghostty-nav title "claude:${PWD:t}"
+  command claude --dangerously-skip-permissions "$@"
+}
+{{- end }}
 
 source ~/.config/zsh/tmux-theme.zsh 2>/dev/null || :
 
@@ -103,6 +110,7 @@ if [[ -z "$TMUX" && -t 0 && -r ~/.terminal-bg ]]; then
   export TERMINAL_BG=$(<~/.terminal-bg)
 fi
 
+{{- if ne .chezmoi.hostname "openclaw" }}
 # Repair a stale Ghostty nvim key-table activation if Neovim dies badly.
 _ghostty_nav_sentinel_path() {
   local tty=${TTY-}
@@ -152,6 +160,7 @@ ide() {
     "$@"
   fi
 }
+{{- end }}
 
 {{- if eq .chezmoi.hostname "clawdbot" }}
 ideoc() {

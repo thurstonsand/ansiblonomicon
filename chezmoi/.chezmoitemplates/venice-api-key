@@ -1,1 +1,1 @@
-{{- template "op-secret" list "VENICE_API_KEY" "op://Private/Venice AI/apikey" -}}
+{{- template "op-secret" list "VENICE_API_KEY" "op://agent/oq6e66g5yvocq6o6jbxvng4oii/apikey" -}}

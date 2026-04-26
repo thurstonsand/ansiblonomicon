@@ -1,1 +1,1 @@
-{{- template "op-secret" list "VOYAGE_API_KEY" "op://Private/Voyage AI/secret key" -}}
+{{- template "op-secret" list "VOYAGE_API_KEY" "op://agent/x5csplokh2unnkxffzm33dqbha/secret key" -}}

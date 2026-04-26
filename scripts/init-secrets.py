@@ -7,7 +7,9 @@ Also generates .dev.vars files for Cloudflare Workers based on WORKER_DEV_VARS m
 from datetime import UTC, datetime
 from io import StringIO
 import json
+import os
 from pathlib import Path
+import socket
 import subprocess
 import sys
 
@@ -18,6 +20,12 @@ ROOT_DIR = Path(__file__).parent.parent
 SECRETS_CONFIG = ROOT_DIR / ".secrets.jsonc"
 SECRETS_CACHE = ROOT_DIR / ".env"
 OP_ACCOUNT_PREFIX = "PQ7X5"
+PERSONAL_HOSTNAME = "Thurstons-MacBook-Pro"
+WORK_HOSTNAME = "ML-DFC6YK6VJQ"
+MACHINE_SECRET_KEYS = {
+    "SUDO_ASKPASS_PASS": {PERSONAL_HOSTNAME},
+    "SUDO_ASKPASS_PASS_WORK": {WORK_HOSTNAME},
+}
 
 # Map worker directories to their .dev.vars secrets
 # Format: { "worker/path": { "WORKER_VAR": "ENV_VAR_NAME" } }
@@ -38,12 +46,31 @@ WORKER_DEV_VARS: dict[str, dict[str, str]] = {
 }
 
 
-def resolve_op_account() -> str:
+def op_command() -> str:
+    if socket.gethostname().split(".")[0] == "openclaw":
+        wrapper = Path.home() / ".local/bin/op"
+        if wrapper.exists():
+            return str(wrapper)
+    return "op"
+
+
+def op_environment() -> dict[str, str]:
+    env = os.environ.copy()
+    if socket.gethostname().split(".")[0] != "openclaw":
+        env.pop("OP_SERVICE_ACCOUNT_TOKEN", None)
+    return env
+
+
+def resolve_op_account() -> str | None:
+    if socket.gethostname().split(".")[0] == "openclaw":
+        return None
+
     result = subprocess.run(
-        ["op", "account", "list", "--format=json"],
+        [op_command(), "account", "list", "--format=json"],
         capture_output=True,
         text=True,
         check=False,
+        env=op_environment(),
     )
     if result.returncode != 0:
         print(
@@ -74,7 +101,13 @@ def main() -> None:
 
     print("Resolving secrets from 1Password (one-time auth)...")
 
+    hostname = socket.gethostname().split(".")[0]
     config: dict[str, str] = jsonc.loads(SECRETS_CONFIG.read_text())
+    config = {
+        key: value
+        for key, value in config.items()
+        if key not in MACHINE_SECRET_KEYS or hostname in MACHINE_SECRET_KEYS[key]
+    }
 
     # Build a template for op inject to resolve all secrets in one call
     # Format: KEY="{{ op://... }}" for op:// refs, KEY="literal" for literals
@@ -91,12 +124,18 @@ def main() -> None:
     template = "\n".join(template_lines)
 
     # Run op inject to resolve all secrets at once
+    op_inject_cmd = [op_command(), "inject"]
+    op_account = resolve_op_account()
+    if op_account is not None:
+        op_inject_cmd.extend(["--account", op_account])
+
     result = subprocess.run(
-        ["op", "inject", "--account", resolve_op_account()],
+        op_inject_cmd,
         input=template,
         capture_output=True,
         text=True,
         check=False,
+        env=op_environment(),
     )
 
     if result.returncode != 0:

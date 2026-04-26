@@ -4,7 +4,7 @@
 
 set -euo pipefail
 
-KEY_REF="op://Private/Git SSH Key/private key"
+KEY_REF="op://agent/xvusqt5rhadejhfjjp7crgyrp4/private key"
 TEMP_KEY=$(mktemp)
 trap 'rm -f "$TEMP_KEY" "${TEMP_KEY}.pub"' EXIT
 

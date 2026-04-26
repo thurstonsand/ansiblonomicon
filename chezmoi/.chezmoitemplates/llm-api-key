@@ -1,1 +1,1 @@
-{{- template "op-secret" list "CLI_PROXY_API_KEY" "op://For The Family/CLI Proxy API/apikey" -}}
+{{- template "op-secret" list "CLI_PROXY_API_KEY" "op://agent/vf3jsatixwtzauzoebt66xkiqe/apikey" -}}

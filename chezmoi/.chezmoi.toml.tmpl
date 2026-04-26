@@ -15,10 +15,11 @@ umask = 0o22
   pager = "delta --${TERMINAL_BG:-dark}"
 {{- end }}
 
-{{- if or (eq .chezmoi.hostname "clawdbot") (eq .chezmoi.hostname "openclaw") }}
+{{- if eq .chezmoi.hostname "openclaw" }}
 [onepassword]
   command = "/home/thurstonsand/.local/bin/op"
   prompt = false
+  mode = "service"
 {{- end }}
 
 [data]

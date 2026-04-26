@@ -61,6 +61,8 @@ export VOYAGE_API_KEY="{{ template "voyage-api-key" . }}"
 # Twitter/X cookies for bird CLI
 export TWITTER_AUTH_TOKEN="{{ template "twitter-auth-token" . }}"
 export TWITTER_CT0="{{ template "twitter-ct0" . }}"
+{{- else if eq .chezmoi.hostname "openclaw" }}
+export EDITOR="nvim"
 {{- else }}
 export EDITOR="codeEditor --wait"
 {{- end }}
@@ -97,7 +99,7 @@ path=(
   "$HOME/.go/current/bin"
   "$HOME/scripts"
 {{- end }}
-{{- if eq .chezmoi.hostname "clawdbot" }}
+{{- if eq .chezmoi.hostname "openclaw" }}
   "$HOME/bin"
   "$HOME/.local/share/bob/nvim-bin"
 {{- end }}

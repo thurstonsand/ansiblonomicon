@@ -1,1 +1,1 @@
-{{- template "op-secret" list "TWITTER_AUTH_TOKEN" "op://Private/tcpok6crtgekix4re2ca3fl2wa/auth_token" -}}
+{{- template "op-secret" list "TWITTER_AUTH_TOKEN" "op://agent/ff6yfimcdtwk3anoauzkbonwty/auth_token" -}}

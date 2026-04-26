@@ -1,1 +1,1 @@
-{{- template "op-secret" list "EIGHTCTL_EMAIL" "op://Private/Eight Sleep/username" -}}
+{{- template "op-secret" list "EIGHTCTL_EMAIL" "op://agent/fxseiurccsgzesskccvfvihsgm/username" -}}

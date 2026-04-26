@@ -1,1 +1,1 @@
-{{- template "op-secret" list "TWITTER_CT0" "op://Private/tcpok6crtgekix4re2ca3fl2wa/ct0" -}}
+{{- template "op-secret" list "TWITTER_CT0" "op://agent/ff6yfimcdtwk3anoauzkbonwty/ct0" -}}

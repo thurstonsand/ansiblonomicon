@@ -1,1 +1,1 @@
-{{- template "op-secret" list "RCLONE_STORJ_ACCESS_KEY_ID" "op://Private/rclone storj/access key id" -}}
+{{- template "op-secret" list "RCLONE_STORJ_ACCESS_KEY_ID" "op://agent/4x7rextk7rbmdxps3uft2nt5qu/access key id" -}}
