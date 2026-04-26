@@ -110,7 +110,7 @@ cask "chatgpt"
 cask "chatgpt-atlas"
 cask "claude"
 cask "codex"
-cask "codex-app"
+cask "codex-app", greedy: true
 cask "codexbar"
 cask "opencode-desktop"
 cask "t3-code"

@@ -3,7 +3,7 @@
 model = "{{ .models.openai.gpt.version }}"
 model_context_window = {{ .models.openai.gpt.max_input }}
 model_auto_compact_token_limit = {{ .models.openai.gpt.codex.auto_compact_token_limit }}
-model_reasoning_effort = "high"
+model_reasoning_effort = "medium"
 model_reasoning_summary = "auto"
 approval_policy = "on-request"
 sandbox_mode = "danger-full-access"
@@ -17,11 +17,16 @@ unified_exec = true
 apply_patch_freeform = true
 shell_snapshot = true
 multi_agent = true
-responses_websockets_v2 = true
-steer = true
-js_repl = true
 apps = true
 prevent_idle_sleep = true
+memories = true
+chronicle = true
+remote_connections = true
+remote_control = true
+undo = true
+default_mode_request_user_input = true
+artifact = true
+child_agents_md = true
 
 [history]
 persistence = "save-all"
@@ -69,4 +74,19 @@ enabled = true
 enabled = true
 
 [plugins."google-drive@openai-curated"]
+enabled = true
+
+[plugins."browser-use@openai-bundled"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
 enabled = true

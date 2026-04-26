@@ -18,10 +18,14 @@ apt_packages:
   - eza
   - fd-find
   - fzf
+  - ffmpeg
+  - gifsicle
   - git
   - git-delta
   - gh
+  - golang-go
   - jq
+  - libasound2-dev
   - openssh-client
   - openssh-server
   - rustup
@@ -80,12 +84,24 @@ agent_harness_target_agents_base: []
 
 npm_global_packages_extra:
   - openclaw
+  - "@mariozechner/pi-coding-agent"
+  - mcporter
+  - "@steipete/summarize"
+  - "@xdevplatform/xurl"
+  - nostr-tools
 
 bun_global_packages_extra: []
 cargo_packages_extra:
   - bob-nvim
-go_tools_extra: []
+go_tools_extra:
+  - github.com/steipete/eightctl/cmd/eightctl
+  - github.com/steipete/gifgrep/cmd/gifgrep
+  - github.com/steipete/gogcli/cmd/gog
+  - github.com/steipete/sag/cmd/sag
+  - github.com/Yakitrak/notesmd-cli
 uv_global_tools_extra: []
 gem_packages_extra: []
 agent_harness_target_agents_extra: []
 openclaw_bundled_extensions: []
+pi_local_extension_package_dirs:
+  - parallel-web-tools

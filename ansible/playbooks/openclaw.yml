@@ -243,6 +243,63 @@
               OP_SERVICE_ACCOUNT_TOKEN="$(tr -d '\r\n' < "$token_file")"
               exec /usr/bin/op "$@"
 
+        - name: Install OpenClaw 1Password SecretRef resolver
+          ansible.builtin.copy:
+            dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/openclaw-op-secret"
+            mode: "0755"
+            content: |
+              #!/usr/bin/env python3
+              import json
+              import os
+              import pwd
+              import subprocess
+              import sys
+
+              def user_home() -> str:
+                  return os.environ.get("HOME") or pwd.getpwuid(os.getuid()).pw_dir
+
+              request = json.load(sys.stdin)
+              ids = request.get("ids")
+              if request.get("protocolVersion") != 1 or not isinstance(ids, list):
+                  print(json.dumps({"protocolVersion": 1, "values": {}, "errors": {"request": {"message": "invalid request"}}}))
+                  sys.exit(0)
+
+              home = user_home()
+              token_file = os.environ.get(
+                  "OP_SERVICE_ACCOUNT_TOKEN_FILE",
+                  os.path.join(home, ".config", "openclaw", "secrets", "op-service-account-token"),
+              )
+              try:
+                  with open(token_file, encoding="utf-8") as handle:
+                      token = handle.read().strip()
+              except OSError as exc:
+                  print(json.dumps({"protocolVersion": 1, "values": {}, "errors": {str(secret_id): {"message": str(exc)} for secret_id in ids}}))
+                  sys.exit(0)
+
+              values = {}
+              errors = {}
+              env = {"OP_SERVICE_ACCOUNT_TOKEN": token, "HOME": home}
+              for secret_id in ids:
+                  if not isinstance(secret_id, str) or not secret_id.startswith("op://"):
+                      errors[str(secret_id)] = {"message": "id must be an op:// reference"}
+                      continue
+                  try:
+                      result = subprocess.run(
+                          ["/usr/bin/op", "read", secret_id],
+                          check=True,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE,
+                          text=True,
+                          timeout=20,
+                          env=env,
+                      )
+                  except Exception as exc:
+                      errors[secret_id] = {"message": str(exc)}
+                      continue
+                  values[secret_id] = result.stdout.rstrip("\r\n")
+
+              print(json.dumps({"protocolVersion": 1, "values": values, "errors": errors}))
+
     - name: Install chezmoi via curl
       tags: ["chezmoi"]
       block:
@@ -363,6 +420,14 @@
       register: update_go_result
       changed_when: update_go_result.stderr | length > 0
 
+    - name: Provide obsidian-cli compatibility shim for OpenClaw skill
+      tags: ["go", "openclaw-skills", "obsidian"]
+      ansible.builtin.file:
+        src: "{{ ansible_facts['env']['HOME'] }}/go/bin/notesmd-cli"
+        dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/obsidian-cli"
+        state: link
+        force: true
+
     - name: Configure Rust stable toolchain
       tags: ["cargo", "neovim"]
       when: cargo_packages | length > 0
@@ -451,6 +516,19 @@
           tags: ["chezmoi", "dotfiles"]
       when: configure_chezmoi | default(false)
       tags: ["chezmoi", "dotfiles"]
+
+    - name: Install local Pi extension dependencies
+      tags: ["chezmoi", "dotfiles", "npm", "pi-extensions"]
+      when: pi_local_extension_package_dirs | default([]) | length > 0
+      ansible.builtin.command:
+        cmd: npm install --omit=dev --no-fund --no-audit
+        chdir: "{{ ansible_facts['env']['HOME'] }}/.pi/agent/extensions/{{ item }}"
+      loop: "{{ pi_local_extension_package_dirs | default([]) }}"
+      register: pi_extension_deps_result
+      changed_when: >-
+        'added' in pi_extension_deps_result.stdout or
+        'changed' in pi_extension_deps_result.stdout or
+        'removed' in pi_extension_deps_result.stdout
 
     - name: Install tmux plugin manager and plugins
       tags: ["tmux"]

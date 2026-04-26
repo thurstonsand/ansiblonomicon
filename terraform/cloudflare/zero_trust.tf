@@ -30,7 +30,7 @@ resource "cloudflare_zero_trust_access_policy" "home_network_bypass" {
   decision   = "bypass"
 
   include {
-    ip = [local.home_ip, var.parent_home_ip]
+    ip = ["${local.home_ip}/32", "${var.parent_home_ip}/32"]
   }
 
   lifecycle {
