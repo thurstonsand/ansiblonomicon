@@ -254,8 +254,8 @@ User runs `bglight` or `bgdark` →
 | `chezmoi/dot_config/nvim/lua/config/autocmds.lua`    | **No change**    | File watcher on `~/.terminal-bg` stays as-is                                                                        |
 | `chezmoi/dot_config/nvim/lua/config/options.lua`     | **Modify**       | `TERMINAL_BG` env var read at startup stays; window title now reflects cwd                                           |
 | `chezmoi/dot_config/nvim/lua/plugins/ghostty-navigator.lua` | **Add**    | Local macOS navigation now goes through `ghostty-nav`; `vim-tmux-navigator` is disabled there                       |
-| `chezmoi/dot_config/git/config.tmpl`                 | **No change**    | `--${TERMINAL_BG:-dark}` delta config unchanged                                                                     |
-| `chezmoi/.chezmoi.toml.tmpl`                         | **No change**    | Delta pager config unchanged                                                                                        |
+| `chezmoi/dot_config/git/config.tmpl`                 | **Updated**      | Git now calls the `~/.local/bin/delta` wrapper directly; the wrapper reads `~/.terminal-bg`                         |
+| `chezmoi/.chezmoi.toml.tmpl`                         | **No change**    | Delta pager config remains `pager = "delta"`                                                                       |
 | `chezmoi/.chezmoiignore`                             | **Maybe modify** | Add zellij config to ignore if removing from deployment                                                             |
 | `chezmoi/dot_config/zellij/layouts/openclaw-ide.kdl` | **Keep**         | Don't delete until tmux is fully validated                                                                          |
 

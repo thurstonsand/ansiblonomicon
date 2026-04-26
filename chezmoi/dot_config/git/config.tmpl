@@ -13,22 +13,11 @@
 
 {{- if lookPath "delta" }}
 
-{{- if eq .chezmoi.os "darwin" }}
-
 [core]
-	editor = /Users/tsandberg/.local/bin/codeEditor
 	pager = delta
 
 [interactive]
 	diffFilter = delta --color-only
-{{- else }}
-
-[core]
-	pager = "delta --$(cat ~/.terminal-bg 2>/dev/null || echo dark)"
-
-[interactive]
-	diffFilter = "delta --color-only --$(cat ~/.terminal-bg 2>/dev/null || echo dark)"
-{{- end }}
 
 [delta]
 	navigate = true

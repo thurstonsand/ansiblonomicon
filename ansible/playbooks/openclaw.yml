@@ -300,61 +300,19 @@
 
               print(json.dumps({"protocolVersion": 1, "values": values, "errors": errors}))
 
-    - name: Install chezmoi via curl
-      tags: ["chezmoi"]
-      block:
-        - name: Check if chezmoi is installed
-          ansible.builtin.stat:
-            path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/chezmoi"
-          register: chezmoi_binary
-
-        - name: Install chezmoi
-          when: not chezmoi_binary.stat.exists
-          ansible.builtin.shell:
-            cmd: sh -c "$(curl -fsLS get.chezmoi.io)" -- -b ~/.local/bin
-            creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/chezmoi"
-
-    - name: Install Claude Code via curl
+    - name: Install Claude Code
+      ansible.builtin.include_role:
+        name: claude_code
+        apply:
+          tags: ["claude-code"]
       tags: ["claude-code"]
-      block:
-        - name: Check if Claude Code is installed
-          ansible.builtin.stat:
-            path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
-          register: claude_binary
 
-        - name: Download Claude Code install script
-          when: not claude_binary.stat.exists
-          ansible.builtin.get_url:
-            url: https://claude.ai/install.sh
-            dest: /tmp/claude-install.sh
-            mode: "0755"
-
-        - name: Run Claude Code install script
-          when: not claude_binary.stat.exists
-          ansible.builtin.command:
-            cmd: /tmp/claude-install.sh
-            creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
-
-    - name: Install opencode via curl
+    - name: Install opencode
+      ansible.builtin.include_role:
+        name: opencode
+        apply:
+          tags: ["opencode"]
       tags: ["opencode"]
-      block:
-        - name: Check if opencode is installed
-          ansible.builtin.stat:
-            path: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
-          register: opencode_binary
-
-        - name: Download opencode install script
-          when: not opencode_binary.stat.exists
-          ansible.builtin.get_url:
-            url: https://opencode.ai/install
-            dest: /tmp/opencode-install.sh
-            mode: "0755"
-
-        - name: Run opencode install script
-          when: not opencode_binary.stat.exists
-          ansible.builtin.command:
-            cmd: /tmp/opencode-install.sh
-            creates: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
 
     - name: Configure system maintenance timers
       ansible.builtin.include_role:
@@ -362,63 +320,6 @@
         apply:
           tags: ["system-maintenance", "timers"]
       tags: ["system-maintenance", "timers"]
-
-    - name: Update global npm packages
-      tags: ["npm"]
-      when: npm_global_packages | length > 0
-      ansible.builtin.command:
-        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-npm-global"
-      register: update_npm_result
-      changed_when: >-
-        'added' in update_npm_result.stdout or
-        'changed' in update_npm_result.stdout or
-        'removed' in update_npm_result.stdout or
-        'added' in update_npm_result.stderr or
-        'changed' in update_npm_result.stderr or
-        'removed' in update_npm_result.stderr
-
-    - name: Install OpenClaw bundled extension dependencies
-      tags: ["npm", "openclaw-plugins"]
-      when: openclaw_bundled_extensions | length > 0
-      ansible.builtin.command:
-        cmd: npm install --no-fund --no-audit
-        chdir: "{{ ansible_facts['env']['HOME'] }}/.npm-global/lib/node_modules/openclaw/extensions/{{ item }}"
-      loop: "{{ openclaw_bundled_extensions }}"
-      register: openclaw_ext_result
-      changed_when: "'added' in openclaw_ext_result.stdout"
-
-    - name: Update uv and uv tools
-      tags: ["uv"]
-      when: uv_global_tools | length > 0
-      ansible.builtin.command:
-        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-uv"
-      register: update_uv_result
-      changed_when: >-
-        'Installed' in update_uv_result.stderr or
-        'Updated' in update_uv_result.stderr or
-        'updated' in update_uv_result.stdout or
-        'successfully upgraded' in update_uv_result.stdout or
-        'successfully upgraded' in update_uv_result.stderr
-
-    - name: Update bun and global bun packages
-      tags: ["bun"]
-      when: bun_global_packages | length > 0
-      ansible.builtin.command:
-        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-bun"
-      register: update_bun_result
-      changed_when: >-
-        'installed' in update_bun_result.stdout or
-        'upgraded' in update_bun_result.stdout or
-        'Installed' in update_bun_result.stderr or
-        'Upgraded' in update_bun_result.stderr
-
-    - name: Update global Go tools
-      tags: ["go", "system-maintenance", "timers"]
-      when: go_tools | length > 0
-      ansible.builtin.command:
-        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-go-tools"
-      register: update_go_result
-      changed_when: update_go_result.stderr | length > 0
 
     - name: Provide obsidian-cli compatibility shim for OpenClaw skill
       tags: ["go", "openclaw-skills", "obsidian"]
@@ -428,87 +329,13 @@
         state: link
         force: true
 
-    - name: Configure Rust stable toolchain
-      tags: ["cargo", "neovim"]
-      when: cargo_packages | length > 0
-      block:
-        - name: Check active Rust toolchain
-          ansible.builtin.command:
-            cmd: rustup show active-toolchain
-          environment:
-            PATH: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['PATH'] }}"
-          register: rustup_active_toolchain
-          changed_when: false
-          failed_when: false
+    - name: Install global language tools
+      ansible.builtin.include_role:
+        name: language_tools
+        apply:
+          tags: ["language-tools"]
+      tags: ["language-tools"]
 
-        - name: Install Rust stable toolchain
-          when: rustup_active_toolchain.rc != 0 or not rustup_active_toolchain.stdout.startswith('stable-')
-          ansible.builtin.command:
-            cmd: rustup default stable
-          environment:
-            PATH: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['PATH'] }}"
-          changed_when: true
-
-    - name: Update cargo packages
-      tags: ["cargo", "system-maintenance", "timers", "neovim"]
-      when: cargo_packages | length > 0
-      ansible.builtin.command:
-        cmd: "{{ ansible_facts['env']['HOME'] }}/.local/bin/update-cargo-packages"
-      register: update_cargo_result
-      changed_when: >-
-        'Installing' in update_cargo_result.stdout or
-        'installed' in update_cargo_result.stdout or
-        'Updated' in update_cargo_result.stdout or
-        'Replaced' in update_cargo_result.stdout or
-        'Installing' in update_cargo_result.stderr or
-        'Updated' in update_cargo_result.stderr or
-        'Replaced' in update_cargo_result.stderr
-
-    - name: Install Neovim via bob
-      tags: ["neovim"]
-      block:
-        - name: Check if Neovim is installed via bob
-          ansible.builtin.stat:
-            path: "{{ ansible_facts['env']['HOME'] }}/.local/share/bob/nvim-bin/nvim"
-          register: bob_nvim_binary
-
-        - name: Install stable Neovim via bob
-          when: not bob_nvim_binary.stat.exists
-          ansible.builtin.command:
-            cmd: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin/bob use stable"
-            creates: "{{ ansible_facts['env']['HOME'] }}/.local/share/bob/nvim-bin/nvim"
-
-    - name: Install global npm packages
-      tags: ["npm"]
-      community.general.npm:
-        name: "{{ item }}"
-        global: true
-        state: latest
-      loop: "{{ npm_global_packages }}"
-
-    - name: Install global uv tools
-      tags: ["uv"]
-      ansible.builtin.command:
-        cmd: uv tool install --upgrade {{ item }}
-      loop: "{{ uv_global_tools }}"
-      register: uv_tool_result
-      changed_when: "'Installed' in uv_tool_result.stderr or 'Updated' in uv_tool_result.stderr"
-
-    - name: Install global bun packages
-      tags: ["bun"]
-      ansible.builtin.command:
-        cmd: bun install --global {{ item }}
-      loop: "{{ bun_global_packages }}"
-      register: bun_result
-      changed_when: "'installed' in bun_result.stdout or 'Installed' in bun_result.stderr"
-
-    - name: Install global Ruby gems
-      tags: ["ruby"]
-      ansible.builtin.command:
-        cmd: gem install {{ item }}
-      loop: "{{ gem_packages }}"
-      register: gem_result
-      changed_when: "'Successfully installed' in gem_result.stdout"
     - name: Apply chezmoi dotfiles
       ansible.builtin.include_role:
         name: chezmoi

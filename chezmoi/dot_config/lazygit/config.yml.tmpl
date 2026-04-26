@@ -21,7 +21,7 @@ git:
       colorArg: always
 {{- else if lookPath "delta" }}
   pagers:
-    - pager: delta --paging=never --$(cat ~/.terminal-bg 2>/dev/null || echo dark)
+    - pager: delta --paging=never
       colorArg: always
 {{- end }}
   autoFetch: false

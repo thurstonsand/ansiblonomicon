@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="$HOME/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin:$PATH"
+
+{% for tool in mise_global_tools %}
+spec="{{ tool }}"
+echo "Updating: ${spec}"
+/usr/bin/mise use --global --yes "$spec" || echo "  Failed"
+{% endfor %}
+
+echo "Done."

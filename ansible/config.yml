@@ -17,6 +17,9 @@ uv_global_tools_base:
   - claude-code-tools
   - showboat
 
+# Global mise tools (base set for all hosts)
+mise_global_tools_base: []
+
 # Global npm packages (base set for all hosts)
 npm_global_packages_base:
   - "@mariozechner/pi-coding-agent"
@@ -24,16 +27,11 @@ npm_global_packages_base:
   - agent-browser
   - hunkdiff
 
-# OpenClaw bundled extensions that need `npm install` after global install
-openclaw_bundled_extensions:
-  - diffs
-
 # Global bun packages (base set for all hosts)
 bun_global_packages_base: []
 
-# Cargo packages installed via cargo-binstall (base set for all hosts)
-cargo_packages_base:
-  - cargo-binstall
+# Cargo packages
+cargo_packages_base: []
 
 # Global Ruby gems (base set for all hosts)
 gem_packages_base: []
@@ -45,6 +43,7 @@ go_tools_base:
 # Combined lists (base + host-specific extras)
 go_tools: "{{ (go_tools_base | default([])) + (go_tools_extra | default([])) }}"
 uv_global_tools: "{{ (uv_global_tools_base | default([])) + (uv_global_tools_extra | default([])) }}"
+mise_global_tools: "{{ (mise_global_tools_base | default([])) + (mise_global_tools_extra | default([])) }}"
 npm_global_packages: "{{ (npm_global_packages_base | default([])) + (npm_global_packages_extra | default([])) }}"
 bun_global_packages: "{{ (bun_global_packages_base | default([])) + (bun_global_packages_extra | default([])) }}"
 cargo_packages: "{{ (cargo_packages_base | default([])) + (cargo_packages_extra | default([])) }}"

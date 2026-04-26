@@ -1,0 +1,103 @@
+---
+- name: Install global npm packages
+  when: npm_global_packages | length > 0
+  community.general.npm:
+    name: "{{ item }}"
+    global: true
+    state: latest
+  loop: "{{ npm_global_packages }}"
+
+- name: Install global uv tools
+  when: uv_global_tools | length > 0
+  ansible.builtin.command:
+    cmd: uv tool install --upgrade {{ item }}
+  loop: "{{ uv_global_tools }}"
+  register: language_tools_uv_result
+  changed_when: "'Installed' in language_tools_uv_result.stderr or 'Updated' in language_tools_uv_result.stderr"
+
+- name: Install mise-managed tools
+  when: mise_global_tools | length > 0
+  ansible.builtin.command:
+    argv:
+      - mise
+      - use
+      - --global
+      - --yes
+      - "{{ item }}"
+  loop: "{{ mise_global_tools }}"
+  register: language_tools_mise_result
+  changed_when: >-
+    'installed' in (language_tools_mise_result.stdout | lower) or
+    'updated' in (language_tools_mise_result.stdout | lower) or
+    'upgraded' in (language_tools_mise_result.stdout | lower) or
+    'installed' in (language_tools_mise_result.stderr | lower) or
+    'updated' in (language_tools_mise_result.stderr | lower) or
+    'upgraded' in (language_tools_mise_result.stderr | lower)
+
+- name: Install global bun packages
+  when: bun_global_packages | length > 0
+  ansible.builtin.command:
+    cmd: bun install --global {{ item }}
+  loop: "{{ bun_global_packages }}"
+  register: language_tools_bun_result
+  changed_when: "'installed' in language_tools_bun_result.stdout or 'Installed' in language_tools_bun_result.stderr"
+
+- name: Install global Go tools
+  when: go_tools | length > 0
+  ansible.builtin.command:
+    cmd: go install {{ item }}@latest
+  loop: "{{ go_tools }}"
+  register: language_tools_go_result
+  changed_when: language_tools_go_result.stderr | length > 0
+
+- name: Select Rust stable toolchain
+  when: cargo_packages | length > 0
+  ansible.builtin.command:
+    cmd: rustup default stable
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['PATH'] }}"
+  changed_when: true
+
+- name: Install cargo-binstall
+  when: cargo_packages | length > 0
+  ansible.builtin.command:
+    cmd: cargo install cargo-binstall
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['PATH'] }}"
+  register: language_tools_cargo_binstall_result
+  changed_when: >-
+    'Installing' in language_tools_cargo_binstall_result.stderr or
+    'Installed' in language_tools_cargo_binstall_result.stderr or
+    'Replacing' in language_tools_cargo_binstall_result.stderr
+
+- name: Install cargo packages
+  when: cargo_packages | length > 0
+  ansible.builtin.command:
+    cmd: cargo binstall --no-confirm {{ item }}
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin:{{ ansible_facts['env']['PATH'] }}"
+  loop: "{{ cargo_packages }}"
+  register: language_tools_cargo_result
+  changed_when: >-
+    'installing' in (language_tools_cargo_result.stdout | lower) or
+    'installed' in (language_tools_cargo_result.stdout | lower)
+
+- name: Install Neovim via bob
+  when: "'bob-nvim' in cargo_packages"
+  ansible.builtin.command:
+    cmd: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin/bob use stable"
+  changed_when: true
+
+- name: Install global Ruby gems
+  when: gem_packages | length > 0
+  vars:
+    language_tools_gem_command: >-
+      {{
+        (ansible_facts['os_family'] == 'Darwin')
+        | ternary((ansible_facts['env']['HOMEBREW_PREFIX'] | default('/opt/homebrew')) ~ '/opt/ruby/bin/gem', 'gem')
+      }}
+  ansible.builtin.command:
+    cmd: "{{ language_tools_gem_command }} install {{ item }}"
+  loop: "{{ gem_packages }}"
+  register: language_tools_gem_result
+  changed_when: "'Successfully installed' in language_tools_gem_result.stdout"

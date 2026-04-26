@@ -6,7 +6,7 @@ hostname: openclaw
 
 configure_chezmoi: true
 configure_apt: true
-configure_agent_harness: false
+configure_agent_harness: true
 
 # Start small. Add runtime tools when the new OpenClaw actually needs them.
 apt_packages:
@@ -72,19 +72,8 @@ apt_external_repos:
     packages:
       - mise
 
-# Override shared workstation defaults. The new VM starts with OpenClaw only;
-# add agent/developer tools intentionally after onboarding.
-npm_global_packages_base: []
-uv_global_tools_base: []
-bun_global_packages_base: []
-cargo_packages_base: []
-go_tools_base: []
-gem_packages_base: []
-agent_harness_target_agents_base: []
-
 npm_global_packages_extra:
   - openclaw
-  - "@mariozechner/pi-coding-agent"
   - mcporter
   - "@steipete/summarize"
   - "@xdevplatform/xurl"
@@ -94,14 +83,16 @@ bun_global_packages_extra: []
 cargo_packages_extra:
   - bob-nvim
 go_tools_extra:
-  - github.com/steipete/eightctl/cmd/eightctl
   - github.com/steipete/gifgrep/cmd/gifgrep
   - github.com/steipete/gogcli/cmd/gog
   - github.com/steipete/sag/cmd/sag
   - github.com/Yakitrak/notesmd-cli
 uv_global_tools_extra: []
+mise_global_tools_extra:
+  - chezmoi@latest
 gem_packages_extra: []
 agent_harness_target_agents_extra: []
-openclaw_bundled_extensions: []
+#   TODO: we need to reconfigure where this gets installed first
+#   - openclaw
 pi_local_extension_package_dirs:
   - parallel-web-tools

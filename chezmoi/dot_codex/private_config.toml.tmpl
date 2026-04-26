@@ -90,3 +90,13 @@ enabled = true
 
 [plugins."computer-use@openai-bundled"]
 enabled = true
+
+[marketplaces.openai-bundled]
+last_updated = "2026-04-26T06:46:03Z"
+source_type = "local"
+source = "{{ .chezmoi.homeDir }}/.codex/.tmp/bundled-marketplaces/openai-bundled"
+
+[marketplaces.openai-primary-runtime]
+last_updated = "2026-04-26T06:03:40Z"
+source_type = "local"
+source = "{{ .chezmoi.homeDir }}/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"

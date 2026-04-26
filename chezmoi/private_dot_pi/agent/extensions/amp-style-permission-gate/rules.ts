@@ -92,7 +92,7 @@ export const PERMISSION_RULES: PermissionRule[] = [
   {
     toolName: BASH_TOOL_NAME,
     label: "destructive find",
-    matcher: /find\s+.*(-delete|-exec|-execdir)/i,
+    matcher: /find\s+.*-delete/i,
   },
 ];
 

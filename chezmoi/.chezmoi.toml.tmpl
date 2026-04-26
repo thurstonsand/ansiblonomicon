@@ -9,11 +9,7 @@ umask = 0o22
   args = ["--wait"]
 
 [diff]
-{{- if eq .chezmoi.os "darwin" }}
   pager = "delta"
-{{- else }}
-  pager = "delta --${TERMINAL_BG:-dark}"
-{{- end }}
 
 {{- if eq .chezmoi.hostname "openclaw" }}
 [onepassword]

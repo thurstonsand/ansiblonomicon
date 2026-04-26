@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+case "$(uname -s)" in
+  Darwin)
+    real_delta="/opt/homebrew/bin/delta"
+    ;;
+  Linux)
+    real_delta="/usr/bin/delta"
+    ;;
+  *)
+    echo "Unsupported platform for delta wrapper: $(uname -s)" >&2
+    exit 1
+    ;;
+esac
+
+if [[ ! -x "$real_delta" ]]; then
+  echo "delta not found at $real_delta" >&2
+  exit 1
+fi
+
+terminal_bg="$(cat ~/.terminal-bg 2>/dev/null || echo dark)"
+
+exec "$real_delta" --"$terminal_bg" "$@"

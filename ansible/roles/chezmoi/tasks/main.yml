@@ -6,8 +6,16 @@
   ansible.builtin.set_fact:
     chezmoi_effective_source_dir: >-
       {{
-        (ansible_connection | default('ssh')) == 'local'
+        ((ansible_connection | default('ssh')) == 'local')
         | ternary(chezmoi_source_dir, ansible_facts.env.HOME ~ '/.cache/ansible/chezmoi-source')
+      }}
+
+- name: Select chezmoi binary path
+  ansible.builtin.set_fact:
+    chezmoi_bin: >-
+      {{
+        (ansible_facts['os_family'] == 'Darwin')
+        | ternary('/opt/homebrew/bin/chezmoi', ansible_facts.env.HOME ~ '/.local/share/mise/shims/chezmoi')
       }}
 
 - name: Stage chezmoi source on remote hosts
@@ -27,7 +35,7 @@
 - name: Initialize or refresh chezmoi config from source
   ansible.builtin.command:
     argv:
-      - "{{ ansible_facts.env.HOME }}/.local/bin/chezmoi"
+      - "{{ chezmoi_bin }}"
       - init
       - "--source={{ chezmoi_effective_source_dir }}"
   register: chezmoi_init
@@ -36,7 +44,11 @@
 
 - name: Check what chezmoi would change
   ansible.builtin.command:
-    cmd: "{{ ansible_facts.env.HOME }}/.local/bin/chezmoi diff --no-pager --color=false"
+    argv:
+      - "{{ chezmoi_bin }}"
+      - diff
+      - --no-pager
+      - --color=false
   register: chezmoi_diff
   changed_when: false
   failed_when: false
@@ -49,7 +61,10 @@
 
 - name: Apply chezmoi dotfiles
   ansible.builtin.command:
-    cmd: "{{ ansible_facts.env.HOME }}/.local/bin/chezmoi apply --force"
+    argv:
+      - "{{ chezmoi_bin }}"
+      - apply
+      - --force
   register: chezmoi_apply
   changed_when: chezmoi_diff.stdout | length > 0
   when:

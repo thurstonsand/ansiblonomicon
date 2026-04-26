@@ -3,7 +3,11 @@ set -euo pipefail
 
 {% for pkg in gem_packages %}
 echo "Updating: {{ pkg }}"
+{% if ansible_facts['os_family'] == 'Darwin' -%}
+{{ ansible_facts['env']['HOMEBREW_PREFIX'] | default('/opt/homebrew') }}/opt/ruby/bin/gem install "{{ pkg }}" || echo "  Failed"
+{% else -%}
 gem install "{{ pkg }}" || echo "  Failed"
+{% endif -%}
 {% endfor %}
 
 echo "Done."

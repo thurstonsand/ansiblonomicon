@@ -36,86 +36,26 @@
       when: ansible_facts['os_family'] == "Darwin" and configure_homebrew
       tags: ["homebrew", "mas"]
 
-    - name: Install opencode via curl
+    - name: Install opencode
+      ansible.builtin.include_role:
+        name: opencode
+        apply:
+          tags: ["opencode"]
       tags: ["opencode"]
-      block:
-        - name: Check if opencode is installed
-          ansible.builtin.stat:
-            path: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
-          register: opencode_binary
 
-        - name: Download opencode install script
-          when: not opencode_binary.stat.exists
-          ansible.builtin.get_url:
-            url: https://opencode.ai/install
-            dest: /tmp/opencode-install.sh
-            mode: "0755"
-
-        - name: Run opencode install script
-          when: not opencode_binary.stat.exists
-          ansible.builtin.command:
-            cmd: /tmp/opencode-install.sh
-            creates: "{{ ansible_facts['env']['HOME'] }}/.opencode/bin/opencode"
-
-    - name: Install Claude Code via curl
+    - name: Install Claude Code
+      ansible.builtin.include_role:
+        name: claude_code
+        apply:
+          tags: ["claude-code"]
       tags: ["claude-code"]
-      block:
-        - name: Check if Claude Code is installed
-          ansible.builtin.stat:
-            path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
-          register: claude_binary
 
-        - name: Download Claude Code install script
-          when: not claude_binary.stat.exists
-          ansible.builtin.get_url:
-            url: https://claude.ai/install.sh
-            dest: /tmp/claude-install.sh
-            mode: "0755"
-
-        - name: Run Claude Code install script
-          when: not claude_binary.stat.exists
-          ansible.builtin.command:
-            cmd: /tmp/claude-install.sh
-            creates: "{{ ansible_facts['env']['HOME'] }}/.local/bin/claude"
-
-    - name: Install global npm packages
-      tags: ["npm"]
-      community.general.npm:
-        name: "{{ item }}"
-        global: true
-        state: latest
-      loop: "{{ npm_global_packages }}"
-
-    - name: Install global bun packages
-      tags: ["bun"]
-      ansible.builtin.command:
-        cmd: bun install --global {{ item }}
-      loop: "{{ bun_global_packages | default([]) }}"
-      changed_when: true
-
-    - name: Install global uv tools
-      tags: ["uv"]
-      ansible.builtin.command:
-        cmd: uv tool install --upgrade {{ item }}
-      loop: "{{ uv_global_tools }}"
-      register: uv_tool_result
-      changed_when: "'Installed' in uv_tool_result.stderr or 'Updated' in uv_tool_result.stderr"
-
-    - name: Install global Go tools
-      tags: ["go"]
-      ansible.builtin.command:
-        cmd: go install {{ item }}@latest
-      loop: "{{ go_tools }}"
-      register: go_tool_result
-      changed_when: go_tool_result.stderr | length > 0
-
-    - name: Install global Ruby gems
-      tags: ["ruby"]
-      ansible.builtin.command:
-        cmd: "{{ ansible_facts['env']['HOMEBREW_PREFIX'] | default('/opt/homebrew') }}/opt/ruby/bin/gem install {{ item }}"
-      loop: "{{ gem_packages }}"
-      register: gem_result
-      changed_when: "'Successfully installed' in gem_result.stdout"
+    - name: Install global language tools
+      ansible.builtin.include_role:
+        name: language_tools
+        apply:
+          tags: ["language-tools"]
+      tags: ["language-tools"]
 
     - name: Set hostname
       ansible.builtin.hostname:

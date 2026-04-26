@@ -1,7 +1,7 @@
 {
   "defaultProvider": "openai",
   "defaultModel": "{{ .models.openai.gpt.version }}",
-  "defaultThinkingLevel": "high",
+  "defaultThinkingLevel": "medium",
   "compaction": {
     "enabled": true,
     "reserveTokens": 16384,
@@ -14,7 +14,8 @@
   },
   "terminal": {
     "showImages": true,
-    "clearOnShrink": true
+    "clearOnShrink": true,
+    "showTerminalProgress": false
   },
   "images": {
     "autoResize": true,
@@ -152,12 +153,12 @@
     "{{ output "npm" "root" "-g" | trim }}/glimpseui/examples/companion/index.ts"
 {{- end }}
   ],
-  "hideThinkingBlock": false,
+  "hideThinkingBlock": true,
   "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",
   "transport": "auto",
   "collapseChangelog": false,
   "quietStartup": true,
   "doubleEscapeAction": "tree",
   "treeFilterMode": "default",
-  "autcompleteMaxVisible": 7
+  "autocompleteMaxVisible": 7
 }

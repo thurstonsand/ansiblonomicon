@@ -26,6 +26,13 @@
     dest: "{{ system_maintenance_bin_dir }}/update-uv"
     mode: "0755"
 
+- name: Deploy update-mise script
+  when: mise_global_tools | length > 0
+  ansible.builtin.template:
+    src: update-mise.sh.j2
+    dest: "{{ system_maintenance_bin_dir }}/update-mise"
+    mode: "0755"
+
 - name: Deploy update-bun script
   when: bun_global_packages | length > 0
   ansible.builtin.template:
@@ -33,18 +40,18 @@
     dest: "{{ system_maintenance_bin_dir }}/update-bun"
     mode: "0755"
 
-- name: Deploy update-cargo-packages script
-  when: cargo_packages | length > 0
-  ansible.builtin.template:
-    src: update-cargo-packages.sh.j2
-    dest: "{{ system_maintenance_bin_dir }}/update-cargo-packages"
-    mode: "0755"
-
 - name: Deploy update-gems script
   when: gem_packages | length > 0
   ansible.builtin.template:
     src: update-gems.sh.j2
     dest: "{{ system_maintenance_bin_dir }}/update-gems"
+    mode: "0755"
+
+- name: Deploy update-cargo-packages script
+  when: cargo_packages | length > 0
+  ansible.builtin.template:
+    src: update-cargo-packages.sh.j2
+    dest: "{{ system_maintenance_bin_dir }}/update-cargo-packages"
     mode: "0755"
 
 - name: Deploy systemd service units
@@ -63,6 +70,9 @@
     - name: update-uv
       enabled: "{{ uv_global_tools | length > 0 }}"
       path: "{{ system_maintenance_home }}/.local/bin"
+    - name: update-mise
+      enabled: "{{ mise_global_tools | length > 0 }}"
+      path: "{{ system_maintenance_home }}/.local/share/mise/shims"
     - name: update-bun
       enabled: "{{ bun_global_packages | length > 0 }}"
       path: "{{ system_maintenance_home }}/.bun/bin"
@@ -95,6 +105,9 @@
     - name: update-uv
       enabled: "{{ uv_global_tools | length > 0 }}"
       description: Update uv and uv tools
+    - name: update-mise
+      enabled: "{{ mise_global_tools | length > 0 }}"
+      description: Update mise-managed tools
     - name: update-bun
       enabled: "{{ bun_global_packages | length > 0 }}"
       description: Update global bun packages
@@ -129,6 +142,8 @@
       enabled: "{{ npm_global_packages | length > 0 }}"
     - name: update-uv
       enabled: "{{ uv_global_tools | length > 0 }}"
+    - name: update-mise
+      enabled: "{{ mise_global_tools | length > 0 }}"
     - name: update-bun
       enabled: "{{ bun_global_packages | length > 0 }}"
     - name: update-cargo-packages
