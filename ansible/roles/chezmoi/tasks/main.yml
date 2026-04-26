@@ -1,24 +1,42 @@
 ---
 # Chezmoi dotfile management
-# This role initializes chezmoi and applies dotfiles from the local source
+# This role initializes chezmoi and applies dotfiles from the configured source.
+
+- name: Select effective chezmoi source path
+  ansible.builtin.set_fact:
+    chezmoi_effective_source_dir: >-
+      {{
+        (ansible_connection | default('ssh')) == 'local'
+        | ternary(chezmoi_source_dir, ansible_facts.env.HOME ~ '/.cache/ansible/chezmoi-source')
+      }}
+
+- name: Stage chezmoi source on remote hosts
+  when: (ansible_connection | default('ssh')) != 'local'
+  ansible.builtin.copy:
+    src: "{{ chezmoi_source_dir }}/"
+    dest: "{{ chezmoi_effective_source_dir }}/"
+    mode: preserve
+    local_follow: true
+  check_mode: false
 
 - name: Check if chezmoi is initialized
   ansible.builtin.stat:
     path: "{{ ansible_facts.env.HOME }}/.config/chezmoi/chezmoi.toml"
   register: chezmoi_config
 
-- name: Initialize or refresh chezmoi config from local source
+- name: Initialize or refresh chezmoi config from source
   ansible.builtin.command:
     argv:
-      - chezmoi
+      - "{{ ansible_facts.env.HOME }}/.local/bin/chezmoi"
       - init
-      - "--source={{ chezmoi_source_dir }}"
+      - "--source={{ chezmoi_effective_source_dir }}"
   register: chezmoi_init
   changed_when: not chezmoi_config.stat.exists
+  check_mode: false
 
 - name: Check what chezmoi would change
   ansible.builtin.command:
-    cmd: chezmoi diff --no-pager --color=false
+    cmd: "{{ ansible_facts.env.HOME }}/.local/bin/chezmoi diff --no-pager --color=false"
   register: chezmoi_diff
   changed_when: false
   failed_when: false
@@ -31,7 +49,7 @@
 
 - name: Apply chezmoi dotfiles
   ansible.builtin.command:
-    cmd: chezmoi apply --force
+    cmd: "{{ ansible_facts.env.HOME }}/.local/bin/chezmoi apply --force"
   register: chezmoi_apply
   changed_when: chezmoi_diff.stdout | length > 0
   when:

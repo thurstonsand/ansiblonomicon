@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+export PATH="$HOME/.cargo/bin:$PATH"
+
 if ! command -v cargo-binstall &>/dev/null; then
   echo "Installing cargo-binstall..."
   cargo install cargo-binstall || { echo "Failed to install cargo-binstall"; exit 1; }

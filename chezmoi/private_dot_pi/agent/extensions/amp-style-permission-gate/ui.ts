@@ -5,9 +5,9 @@ import type {
 } from "@mariozechner/pi-coding-agent";
 import {
   CURSOR_MARKER,
+  type Focusable,
   getKeybindings,
   matchesKey,
-  type Focusable,
   visibleWidth,
   wrapTextWithAnsi,
 } from "@mariozechner/pi-tui";
@@ -97,7 +97,10 @@ function getPreviousGraphemeLength(text: string, index: number): number {
 }
 
 function sanitizeDraftInput(text: string): string {
-  return text.replace(/\x1b\[200~|\x1b\[201~/g, "").replace(/[\r\n]+/g, " ");
+  return text
+    .replaceAll("\x1b[200~", "")
+    .replaceAll("\x1b[201~", "")
+    .replace(/[\r\n]+/g, " ");
 }
 
 function wrapDraftText(text: string, width: number): WrappedLine[] {
@@ -276,7 +279,7 @@ class PermissionGateComponent implements Focusable {
     const innerWidth = Math.max(20, width - 2);
     const bodyWidth = Math.max(1, innerWidth - 1);
     const border = (text: string) => this.theme.fg("border", text);
-    const row = (content = "") => border("│") + " " + padRight(content, bodyWidth) + border("│");
+    const row = (content = "") => `${border("│")} ${padRight(content, bodyWidth)}${border("│")}`;
     const lines = [
       border(`╭${"─".repeat(innerWidth)}╮`),
       row(this.theme.fg("accent", this.theme.bold(this.title))),
@@ -301,11 +304,15 @@ class PermissionGateComponent implements Focusable {
   }
 
   private isUp(data: string, allowVimKeys = true): boolean {
-    return getKeybindings().matches(data, "tui.select.up") || (allowVimKeys && matchesKey(data, "k"));
+    return (
+      getKeybindings().matches(data, "tui.select.up") || (allowVimKeys && matchesKey(data, "k"))
+    );
   }
 
   private isDown(data: string, allowVimKeys = true): boolean {
-    return getKeybindings().matches(data, "tui.select.down") || (allowVimKeys && matchesKey(data, "j"));
+    return (
+      getKeybindings().matches(data, "tui.select.down") || (allowVimKeys && matchesKey(data, "j"))
+    );
   }
 
   private isConfirm(data: string): boolean {

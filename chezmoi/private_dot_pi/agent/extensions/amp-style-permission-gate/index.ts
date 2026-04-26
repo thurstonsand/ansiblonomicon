@@ -5,11 +5,7 @@ import {
 } from "@mariozechner/pi-coding-agent";
 import { BASH_TOOL_NAME, findMatchingRule, PERMISSION_RULES } from "./rules.js";
 import { persistPermissionGateState, restorePermissionGateState } from "./state.js";
-import {
-  showPermissionGate,
-  showPermissionsSummary,
-  syncPermissionsStatus,
-} from "./ui.js";
+import { showPermissionGate, showPermissionsSummary, syncPermissionsStatus } from "./ui.js";
 
 export default function ampStylePermissionGate(pi: ExtensionAPI) {
   let checksEnabled = true;

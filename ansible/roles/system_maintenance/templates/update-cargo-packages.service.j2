@@ -7,7 +7,6 @@ Wants=network-online.target
 Type=oneshot
 User={{ system_maintenance_user }}
 Environment="HOME={{ system_maintenance_home }}"
-Environment="PATH={{ item.path }}:/usr/local/bin:/usr/bin:/bin"
 ExecStart={{ system_maintenance_bin_dir }}/update-cargo-packages
 StandardOutput=journal
 StandardError=journal

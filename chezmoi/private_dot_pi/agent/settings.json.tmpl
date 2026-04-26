@@ -20,7 +20,7 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.70.0",
+  "lastChangelogVersion": "0.70.2",
   "enabledModels": [
     "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
     "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}",
@@ -144,6 +144,9 @@
     },
     "npm:@benvargas/pi-openai-fast",
     "git:github.com/earendil-works/pi-review"
+  ],
+  "extensions": [
+    "{{ output "npm" "root" "-g" | trim }}/glimpseui/examples/companion/index.ts"
   ],
   "hideThinkingBlock": false,
   "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",

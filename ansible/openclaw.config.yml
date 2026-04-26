@@ -24,7 +24,7 @@ apt_packages:
   - jq
   - openssh-client
   - openssh-server
-  - cargo
+  - rustup
   - python3-venv
   - ripgrep
   - rsync
