@@ -1,215 +1,129 @@
 ---
 name: updating-documentation-for-changes
-description: Use before committing staged changes when you need to verify all related documentation is current - systematically checks README, CLAUDE.md, CHANGELOG, API docs, package metadata, and cross-references rather than spot-checking only obvious files
+description: Use at the end of a unit of work, before commit or PR, to verify related documentation matches the new state
 ---
 
 # Updating Documentation for Changes
 
-## Overview
+Use this when wrapping up a unit of work. The mission is narrow: verify related documentation matches the new state before commit or PR, without turning the change into a general documentation cleanup.
 
-**Before committing staged changes, systematically verify ALL documentation that might reference those changes.**
+## Scope
 
-The problem: We naturally check the "obvious" doc (README.md) but miss CLAUDE.md, CHANGELOG, API documentation, package metadata, and cross-references in related docs.
-
-## When to Use
-
-Use this skill when:
-
-- You have staged changes ready to commit
-- You're about to create a PR
-- You've modified functionality, added features, or changed behavior
-- Any code change that users or other agents interact with
-
-**Required trigger**: Before every commit with functional changes.
-
-## Core Principle
-
-**This skill checks documentation consistency for STAGED changes only.**
-
-Do NOT stage additional files during this process. Only verify if documentation for your staged changes is current.
-
-## The Systematic Documentation Sweep
-
-Follow this checklist in order. No skipping "obvious" items.
-
-### 1. Identify What's Staged
+Check documentation against the staged diff only.
 
 ```bash
 git diff --staged --name-only
 git diff --staged
 ```
 
-Note: What was added? Modified? What does it affect?
+If nothing is staged, stop and ask for the intended diff or for changes to be staged first.
 
-**If nothing is staged:** Stop. Tell user to stage their changes first, then return to this skill.
+Do not fix unrelated stale documentation in this pass. After completing updates, flag it to the user as potentially needing addressing.
 
-### 2. Core Documentation Files (Check if they exist)
+## Documentation Categories
 
-Check EVERY one that exists in the repo (no rationalization):
+### Design docs
 
-- [ ] **README.md** (root and subdirectories)
-- [ ] **CLAUDE.md** (project conventions, architecture, patterns)
-- [ ] **DESIGN_DOC.md** or **ARCHITECTURE.md** (system design)
-- [ ] **CONTRIBUTING.md** (contribution guidelines)
-- [ ] **API.md** or **docs/api/** (API documentation)
-- [ ] **CHANGELOG.md** or **HISTORY.md** (version history)
+Design docs are historical records by default. Do not update old design documents just because implementation has moved on.
 
-**This list is not comprehensive.** If the project has other documentation, check those too. Examples: TESTING.md, DEPLOYMENT.md, SECURITY.md, project-specific guides.
+Update a design doc only when both are true:
 
-**If a core doc doesn't exist:** Note its absence but don't create it as part of this commit.
+- the staged work is actively implementing that design
+- implementation required changes to decisions, constraints, or details that were originally specified in that design
 
-**IMPORTANT: When you find a documentation file, read it in its entirety.** Do not skim or spot-check - read the complete file to understand its full context and identify all potential references to your changes.
+When updating an active design doc, write it as the design that was intended. Do not preserve obsolete state or explain that something used to work differently.
 
-### 3. Project-Specific Documentation
+### Agent docs
 
-Check documentation specific to this project type:
+Agent docs describe how future agents should operate in the repo. This includes files like `CLAUDE.md`, `AGENTS.md`, skill files, local agent instructions, and similar guidance.
 
-**For libraries/packages:**
+Update them when the staged change affects:
 
-- [ ] **Package metadata** (package.json, pyproject.toml, setup.py, Cargo.toml - check if exports/APIs changed)
-- [ ] **docs/** directory (API docs, guides, examples)
+- commands agents should run
+- repo conventions or workflows
+- architecture or deployment assumptions agents rely on
+- known hazards, required skills, or operational procedures
 
-**For web services:**
+Keep these docs directive and practical.
 
-- [ ] **OpenAPI/Swagger specs** (if API changed)
-- [ ] **docker-compose.yaml** comments (if deployment changed)
-- [ ] **Config examples** (if config structure changed)
+### User docs
 
-**For other projects:**
+User docs are everything meant to help the human configure, deploy, or understand the project: READMEs, guides, API docs, examples, changelogs, package metadata, deployment notes, and similar files.
 
-- Identify key documentation by searching for \*.md files
-- Check files in `docs/`, `documentation/`, or similar directories
+Update them when the staged change affects user-visible behavior, configuration, commands, APIs, installation, deployment, examples, or troubleshooting.
 
-**Consistency check:** If you find multiple related files (like `package.json` and `README.md` version numbers), verify they're consistent.
+Do not add internal architecture detail to user-facing docs unless users need it to make correct decisions.
 
-### 4. Related Documentation Search
+## Pass 1: Find Expected Docs
 
-Search for files that might reference your changes:
+From the staged diff, identify the feature, command, API, config, workflow, or behavior being changed. Then inspect the documentation locations that are likely to describe it.
+
+Common places:
+
+- nearby docs in the changed package, role, app, or module
+- repo-level docs
+- docs directories
+- examples and config templates
+- package metadata or manifests that expose commands, APIs, descriptions, or entry points
+- agent instruction files when agent behavior is affected
+- active design docs when the change implements that design
+
+Read each relevant document to understand its purpose, audience, current style, and level of detail to ensure updates match.
+
+## Pass 2: Search for Unexpected Docs
+
+After checking the obvious places, search for references that may live elsewhere.
+
+Use terms from the diff: feature names, command names, flags, config keys, API paths, class/module names, service names, and user-facing concepts.
+
+Example patterns:
 
 ```bash
-# Search for direct feature name
-grep -r "exact-feature-name" --include="*.md" --include="*.json"
-
-# Search for related terms (if changing auth, search: auth, login, session)
-grep -r "related-concept" --include="*.md" --include="*.json"
-
-# Search for command names if you modified commands
-grep -r "command-name" --include="*.md" --include="*.json"
+rg "feature-or-command-name" -g "*.md" -g "*.mdx" -g "*.rst" -g "*.txt" -g "*.json" -g "*.yaml" -g "*.yml"
+rg "config_key|related concept|old behavior" docs .github agents .agents 2>/dev/null
 ```
 
-Check cross-references:
+Follow direct cross-references if clearly related.
 
-- Do other documentation files reference this feature?
-- Does the architecture documentation describe this pattern?
-- Do examples or tutorials use this functionality?
-- Are there related features that should be updated together?
+## Deciding What to Change
 
-**Search depth limit**: Check one level of cross-references. If doc A references feature B, check doc B. Don't recursively check doc B's references.
+Update documentation when a reader relying on the current docs would be misled, surprised, or missing important information because of the staged change.
 
-### 5. Determine Update Significance
+Usually update docs for:
 
-Update higher-level docs (README, package metadata, CHANGELOG) if your change:
+- new or changed commands, flags, APIs, configuration, workflows, or deployment steps
+- removed or renamed behavior that docs still mention
+- examples that no longer work
+- agent instructions that would cause future agents to do the wrong thing
+- active design docs whose implementation details changed during the work
 
-- **Adds** new user-facing commands, flags, features, or APIs
-- **Changes** existing behavior in a way users will notice
-- **Removes** functionality mentioned in high-level descriptions
-- **Expands** core capabilities described in the summary
-- **Modifies** configuration structure or deployment steps
+Usually do not update docs for:
 
-Do NOT update higher-level docs if your change:
+- internal refactors with no documented behavior change
+- bug fixes that restore documented behavior
+- implementation details that do not belong to the doc's audience
+- unrelated stale content found during the sweep
+- historical design docs that are not the design currently being implemented
 
-- Adds implementation details or internal techniques
-- Improves existing behavior without changing interface
-- Refactors internal code without external impact
-- Adds examples or clarifications to existing docs
-- Fixes bugs without changing documented behavior
+## Writing Updates
 
-**When in doubt:** Check if a user relying on current high-level docs would be surprised by your change. Surprised = update needed.
+Match the document you are editing.
 
-### 6. Update What's Outdated
+- Preserve its audience, tone, structure, and level of detail.
+- Put information where that document's reader would look for it.
+- Prefer concise corrections over broad rewrites.
+- Describe the current state directly. Do not add changelog language like "previously X, now Y" unless the document is explicitly a changelog.
+- Verify examples, commands, links, and cross-references still make sense.
 
-For each outdated doc:
+If the right update would be large or contentious, stop and report the documentation gap instead of guessing.
 
-1. **Read the entire file** (not just the section that mentions it)
-2. Update to match new behavior
-3. Check examples still work
-4. Verify cross-references are accurate
+## Finish
 
-**Stage updates after sweep:** Note what needs updating during the sweep, then stage those documentation changes after you've completed the full checklist.
+After updating docs:
 
-### 7. Handle Unrelated Outdated Documentation
+1. Review the doc diff against the staged code diff.
+2. Confirm the documentation change is related to the staged work.
+3. Note unrelated stale docs separately, if found.
+4. Stage only the documentation updates that belong with this change.
 
-If you discover unrelated outdated docs during your sweep:
-
-- **Note it** for later (mention to user after sweep)
-- **Don't fix it** in this commit (keeps changes focused)
-- **Don't skip the rest of the sweep** (finding one issue doesn't mean you're done)
-
-## Common Rationalizations - STOP
-
-If you're thinking any of these, you're about to skip necessary docs:
-
-| Rationalization                                       | Reality                                                                  |
-| ----------------------------------------------------- | ------------------------------------------------------------------------ |
-| "It's just a small change"                            | Small changes break outdated examples. Check anyway.                     |
-| "Nothing actually changed"                            | Even if smaller than expected, complete the sweep to verify consistency. |
-| "If related docs existed, I'd know"                   | You don't know until you search. Search systematically.                  |
-| "That file is technical config"                       | Plugin manifests ARE user-facing. Check them.                            |
-| "User is waiting"                                     | 3 minutes now saves 30 minutes debugging confusion later.                |
-| "I already checked the main README"                   | README ≠ all documentation. Follow the full checklist.                   |
-| "Other skills wouldn't reference this"                | They might. Search, don't assume.                                        |
-| "The change is in the code itself"                    | Code ≠ documentation. Users read docs, not your diff.                    |
-| "I found unrelated outdated docs, I should fix those" | Note for later. Stay focused on staged changes.                          |
-| "Found one issue, good enough"                        | One issue doesn't mean you're done. Complete the sweep.                  |
-| "I'll just skim the file for relevant parts"          | Skimming misses context. Read the entire file to catch all references.   |
-
-**All of these mean: Continue with the systematic sweep.**
-
-## Red Flags - You're Skipping Something
-
-- Checked only README.md
-- Didn't search for cross-references
-- Skipped plugin manifest as "just config"
-- Assumed other skills are independent
-- Used time pressure to justify incomplete check
-- Thought "minor change doesn't need full sweep"
-- Started staging additional documentation before completing the sweep
-- Stopped after finding first inconsistency
-
-**Any red flag = Start over with full checklist.**
-
-## Real-World Impact
-
-**Without systematic sweep:**
-
-- Users miss new features (not in README)
-- API consumers hit undocumented breaking changes (package metadata stale)
-- Examples break (outdated patterns in docs)
-- Cross-references dangle (related docs out of sync)
-- Inconsistent information across README, CHANGELOG, and package files
-- Support burden increases (users confused by outdated docs)
-
-**With systematic sweep:**
-
-- All entry points updated (README, API docs, CHANGELOG)
-- Discovery works (accurate package metadata, search results)
-- Examples current and runnable
-- Cross-references intact
-- Consistent information across all documentation
-- Reduced support questions and confusion
-
-## Summary Checklist
-
-Before committing, have you:
-
-- [ ] Identified what's staged (`git diff --staged`)
-- [ ] Checked all core documentation files that exist (README, CLAUDE.md/AGENTS.md, DESIGN_DOC, CONTRIBUTING, API docs, CHANGELOG)
-- [ ] Checked project-specific documentation (package metadata, API specs, config examples, etc.)
-- [ ] Verified consistency between related files (e.g., package.json version vs README version)
-- [ ] Searched for cross-references (grep with feature name and related terms)
-- [ ] Determined update significance (does behavior change warrant high-level doc updates?)
-- [ ] Updated outdated docs (or noted what needs updating)
-- [ ] Noted any unrelated outdated docs for later
-- [ ] Completed the full sweep without rationalizing shortcuts
-
-**All checked?** You're ready to commit or stage documentation updates.
+The end state: related docs are current, historical docs stay historical, and the commit remains focused.

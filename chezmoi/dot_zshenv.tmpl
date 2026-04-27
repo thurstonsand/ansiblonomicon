@@ -45,6 +45,7 @@ export XDG_CONFIG_HOME="$HOME/.config"
 if [[ -n "${SSH_CONNECTION:-}" ]]; then
   export POWERLINE_NERD_FONTS=1
 fi
+
 {{- if .aigEnabled }}
 export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
 export PI_LIBRARIAN_MODELS="openai/{{ .models.openai.gpt_codex_spark.version }}:high"

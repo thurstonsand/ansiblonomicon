@@ -25,7 +25,9 @@
 
 - name: Build expected skills list
   ansible.builtin.set_fact:
-    agent_harness_expected_skills: "{{ agent_harness_agent_specific_skills | map(attribute='name') | list }}"
+    agent_harness_expected_skills: >-
+      {{ (agent_harness_agent_specific_skills | map(attribute='name') | list)
+         + (agent_harness_agent_config.cleanup_preserved_skills | default([])) }}
   when: agent_harness_agent_config.cleanup_orphaned_skills | default(agent_harness_cleanup_orphaned_skills)
 
 - name: Identify orphaned skills
