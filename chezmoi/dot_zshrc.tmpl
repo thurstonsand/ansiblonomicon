@@ -106,10 +106,6 @@ claude() {
 
 source ~/.config/zsh/tmux-theme.zsh 2>/dev/null || :
 
-if [[ -z "$TMUX" && -t 0 && -r ~/.terminal-bg ]]; then
-  export TERMINAL_BG=$(<~/.terminal-bg)
-fi
-
 {{- if ne .chezmoi.hostname "openclaw" }}
 # Repair a stale Ghostty nvim key-table activation if Neovim dies badly.
 _ghostty_nav_sentinel_path() {

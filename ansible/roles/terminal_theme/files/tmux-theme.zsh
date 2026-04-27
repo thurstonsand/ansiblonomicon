@@ -6,9 +6,7 @@ _apply_tmux_gruvbox() {
 _set_theme() {
   local mode="$1"
   ~/.local/bin/terminal-theme-switch.py "$mode"
-  export TERMINAL_BG="$mode"
   if [[ -n "$TMUX" ]]; then
-    tmux set-environment TERMINAL_BG "$mode"
     _apply_tmux_gruvbox "$mode"
   fi
 }

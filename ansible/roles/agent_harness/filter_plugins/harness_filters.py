@@ -85,7 +85,7 @@ class ResolvedPlugin:
         return self.config is not None and self.plugin_path is not None
 
     @classmethod
-    def empty(cls) -> "ResolvedPlugin":
+    def empty(cls) -> ResolvedPlugin:
         """Create an empty/invalid result."""
         return cls(config=None, plugin_path=None)
 
@@ -99,7 +99,7 @@ class GitSourceConfig:
     plugins: list[str | PluginLongForm] = field(default_factory=list)
 
     @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> "GitSourceConfig":
+    def from_dict(cls, d: dict[str, Any]) -> GitSourceConfig:
         """Create from a raw dict (e.g., from Ansible YAML)."""
         return cls(
             repo=d["repo"],

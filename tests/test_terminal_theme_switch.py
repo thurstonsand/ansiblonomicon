@@ -1,11 +1,13 @@
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+import sys
 import tomllib
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
     / "ansible/roles/terminal_theme/files/terminal-theme-switch.py"
 )
+sys.path.insert(0, str(MODULE_PATH.parent))
 SPEC = spec_from_file_location("terminal_theme_switch", MODULE_PATH)
 assert SPEC is not None
 assert SPEC.loader is not None

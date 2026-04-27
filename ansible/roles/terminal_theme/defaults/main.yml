@@ -1,0 +1,5 @@
+---
+terminal_theme_profile: "{{ (ansible_facts['os_family'] == 'Darwin') | ternary('detector', 'mirror') }}"
+terminal_theme_mirrors: []
+terminal_theme_lease_ttl_seconds: 90
+terminal_theme_lease_refresh_seconds: 30

@@ -1,0 +1,7 @@
+# Managed by Ansible. Registers active SSH sessions for terminal theme mirroring.
+{% for host in terminal_theme_mirrors %}
+Host {{ host }}
+  PermitLocalCommand yes
+  LocalCommand sh -lc '{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal-theme-ssh-lease.py --host {{ host }} --ssh-pid "$PPID" --ttl {{ terminal_theme_lease_ttl_seconds }} --refresh {{ terminal_theme_lease_refresh_seconds }} >/dev/null 2>&1 &'
+
+{% endfor %}

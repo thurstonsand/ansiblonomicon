@@ -336,6 +336,14 @@
           tags: ["language-tools"]
       tags: ["language-tools"]
 
+    - name: Configure terminal theme mirror
+      ansible.builtin.include_role:
+        name: terminal_theme
+        apply:
+          tags: ["terminal-theme"]
+      when: configure_terminal_theme | default(true)
+      tags: ["terminal-theme"]
+
     - name: Apply chezmoi dotfiles
       ansible.builtin.include_role:
         name: chezmoi

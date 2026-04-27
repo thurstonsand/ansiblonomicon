@@ -17,7 +17,17 @@
       {{ ['--exclude=.git', '--exclude=.claude-plugin', '--delete-excluded']
          + (agent_harness_skill_info.exclude_data | default([]) | map('regex_replace', '^(.*)$', '--exclude=\1') | list) }}
 
-- name: Sync skill directory
+- name: Sync skill directory locally
+  ansible.posix.synchronize:
+    src: "{{ agent_harness_skill_info.source }}/"
+    dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/"
+    delete: true
+    recursive: true
+    checksum: true
+    rsync_opts: "{{ agent_harness_skill_rsync_opts }}"
+  when: ansible_connection | default('ssh') == 'local'
+
+- name: Sync skill directory remotely
   ansible.posix.synchronize:
     src: "{{ agent_harness_skill_info.source }}/"
     dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/"
@@ -26,6 +36,7 @@
     checksum: true
     rsync_opts: "{{ agent_harness_skill_rsync_opts }}"
   delegate_to: localhost
+  when: ansible_connection | default('ssh') != 'local'
 
 - name: Transform SKILL.md for target agent
   ansible.builtin.set_fact:

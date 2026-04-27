@@ -1,7 +1,7 @@
 ---
-# Manage terminal theme helper scripts and LaunchAgent on macOS.
+# Manage terminal theme detection and mirroring helpers.
 
-- name: Ensure terminal theme directories exist
+- name: Ensure terminal theme common directories exist
   ansible.builtin.file:
     path: "{{ item.path }}"
     state: directory
@@ -11,15 +11,15 @@
       mode: "0755"
     - path: "{{ ansible_facts['env']['HOME'] }}/.config/zsh"
       mode: "0755"
-    - path: "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents"
+    - path: "{{ ansible_facts['env']['HOME'] }}/.local/state/terminal-theme/leases"
       mode: "0755"
 
-- name: Install terminal theme watch script
+- name: Install terminal theme shared Python helper
   ansible.builtin.copy:
-    src: terminal-theme-watch
-    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal-theme-watch"
-    mode: "0755"
-  register: terminal_theme_watch_script
+    src: terminal_theme_common.py
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal_theme_common.py"
+    mode: "0644"
+  register: terminal_theme_common_script
 
 - name: Install terminal theme switch helper
   ansible.builtin.copy:
@@ -35,17 +35,64 @@
     mode: "0644"
   register: terminal_theme_zsh_helper
 
+- name: Ensure detector SSH config directory exists
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ ansible_facts['env']['HOME'] }}/.ssh"
+      mode: "0700"
+    - path: "{{ ansible_facts['env']['HOME'] }}/.ssh/config.d"
+      mode: "0700"
+  when: terminal_theme_profile == 'detector'
+
+- name: Install terminal theme SSH lease helper
+  ansible.builtin.copy:
+    src: terminal-theme-ssh-lease.py
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal-theme-ssh-lease.py"
+    mode: "0755"
+  register: terminal_theme_ssh_lease_script
+  when: terminal_theme_profile == 'detector'
+
+- name: Install terminal theme SSH config snippet
+  ansible.builtin.template:
+    src: terminal-theme-ssh.conf.j2
+    dest: "{{ ansible_facts['env']['HOME'] }}/.ssh/config.d/terminal-theme.conf"
+    mode: "0600"
+  when: terminal_theme_profile == 'detector'
+
+- name: Ensure macOS detector directories exist
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    mode: "{{ item.mode }}"
+  loop:
+    - path: "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents"
+      mode: "0755"
+  when: terminal_theme_profile == 'detector'
+
+- name: Install terminal theme watch script
+  ansible.builtin.copy:
+    src: terminal-theme-watch
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal-theme-watch"
+    mode: "0755"
+  register: terminal_theme_watch_script
+  when: terminal_theme_profile == 'detector'
+
 - name: Install terminal theme LaunchAgent
   ansible.builtin.template:
     src: house.thurstons.terminal-theme-watch.plist.j2
     dest: "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents/house.thurstons.terminal-theme-watch.plist"
     mode: "0600"
   register: terminal_theme_launch_agent_plist
+  when: terminal_theme_profile == 'detector'
 
 - name: Check terminal background state file
   ansible.builtin.stat:
     path: "{{ ansible_facts['env']['HOME'] }}/.terminal-bg"
   register: terminal_theme_state_file
+  when: terminal_theme_profile == 'detector'
 
 - name: Seed terminal theme state from current macOS appearance
   ansible.builtin.shell: |
@@ -60,6 +107,7 @@
     executable: /bin/sh
   changed_when: true
   when:
+    - terminal_theme_profile == 'detector'
     - not ansible_check_mode
     - not terminal_theme_state_file.stat.exists
 
@@ -67,22 +115,26 @@
   ansible.builtin.set_fact:
     terminal_theme_reload_required: >-
       {{
-        terminal_theme_watch_script.changed
-        or terminal_theme_switch_script.changed
-        or terminal_theme_zsh_helper.changed
-        or terminal_theme_launch_agent_plist.changed
+        terminal_theme_watch_script.changed | default(false)
+        or terminal_theme_common_script.changed | default(false)
+        or terminal_theme_switch_script.changed | default(false)
+        or terminal_theme_zsh_helper.changed | default(false)
+        or terminal_theme_launch_agent_plist.changed | default(false)
       }}
+  when: terminal_theme_profile == 'detector'
 
 - name: Ensure terminal theme LaunchAgent is enabled and running
   community.general.launchd:
     name: house.thurstons.terminal-theme-watch
     enabled: true
     state: started
+  when: terminal_theme_profile == 'detector'
 
 - name: Reload terminal theme LaunchAgent
   community.general.launchd:
     name: house.thurstons.terminal-theme-watch
     state: reloaded
   when:
+    - terminal_theme_profile == 'detector'
     - not ansible_check_mode
     - terminal_theme_reload_required | default(false)

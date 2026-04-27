@@ -13,6 +13,9 @@ configure_homebrew: true
 configure_mas: true
 configure_macos_defaults: true
 configure_terminal_theme: true
+terminal_theme_profile: detector
+terminal_theme_mirrors:
+  - openclaw
 
 # Additional npm packages for macOS (extends npm_global_packages_base)
 npm_global_packages_extra:

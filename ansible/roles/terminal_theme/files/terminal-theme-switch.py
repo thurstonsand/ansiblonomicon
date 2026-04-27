@@ -5,18 +5,18 @@
 # ///
 """Applies side effects when the terminal switches between dark and light mode.
 
-Called by tmux hooks (Mode 2031) and zsh helper functions.
+Called by dark-notify, tmux hooks (Mode 2031), zsh helper functions, and SSH
+mirror syncs.
 """
 
+import argparse
 from collections.abc import MutableMapping
 from pathlib import Path
-import sys
-from typing import Literal, cast
+from typing import cast
 
+from terminal_theme_common import VALID_MODES, Mode, ThemeLease, sync_mirror
 from tomlkit import parse, table
 
-Mode = Literal["dark", "light"]
-VALID_MODES: set[Mode] = {"dark", "light"}
 TomlMapping = MutableMapping[str, object]
 
 
@@ -67,15 +67,26 @@ def update_hunk_theme(mode: Mode) -> None:
     hunk_toml.write_text(updated)
 
 
-def main() -> None:
-    if len(sys.argv) != 2 or sys.argv[1] not in VALID_MODES:
-        print(f"Usage: python3 {sys.argv[0]} <dark|light>", file=sys.stderr)
-        sys.exit(1)
+def sync_active_mirrors(mode: Mode) -> None:
+    for host in sorted(ThemeLease.active_hosts()):
+        sync_mirror(host, mode)
 
-    mode: Mode = sys.argv[1]  # type: ignore[assignment]
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--no-mirror-sync", action="store_true")
+    parser.add_argument("mode", choices=sorted(VALID_MODES))
+    return parser.parse_args()
+
+
+def main() -> None:
+    args = parse_args()
+    mode = cast(Mode, args.mode)
     update_terminal_bg(mode)
     update_codex_theme(mode)
     update_hunk_theme(mode)
+    if not args.no_mirror_sync:
+        sync_active_mirrors(mode)
 
 
 if __name__ == "__main__":

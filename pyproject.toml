@@ -276,7 +276,7 @@ dev = [
 # Ruff configuration
 [tool.ruff]
 line-length = 88
-target-version = "py312"
+target-version = "py314"
 extend-exclude = [".venv", ".git", "build", "stubs"]
 
 [tool.ruff.lint]
@@ -320,7 +320,7 @@ exclude = [
 extraPaths = ["ansible/roles/agent_harness/filter_plugins"]
 stubPath = "stubs"
 typeCheckingMode = "strict"
-pythonVersion = "3.12"
+pythonVersion = "3.14"
 pythonPlatform = "Linux"
 reportMissingImports = "error"
 reportMissingTypeStubs = "error"
@@ -329,7 +329,7 @@ reportUnusedVariable = "warning"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = ["ansible/roles/agent_harness/tests"]
+testpaths = ["ansible/roles/agent_harness/tests", "tests"]
 addopts = "-ra -q --tb=short --strict-markers"
 filterwarnings = ["error"]
 markers = ["unit: marks tests as unit tests (fast, no external dependencies)"]

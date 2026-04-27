@@ -40,29 +40,3 @@ vim.api.nvim_create_autocmd("FileType", {
   end,
 })
 
--- theme sync: watch ~/.terminal-bg for changes (written by tmux hooks or bgdark/bglight)
-local bg_file = vim.fn.expand("~/.terminal-bg")
-local bg_watcher = vim.uv.new_fs_event()
-if bg_watcher then
-  local function watch_bg()
-    bg_watcher:start(bg_file, {}, function(err)
-      if err then
-        return
-      end
-      vim.schedule(function()
-        local f = io.open(bg_file, "r")
-        if not f then
-          return
-        end
-        local bg = vim.trim(f:read("*l") or "")
-        f:close()
-        if (bg == "light" or bg == "dark") and bg ~= vim.o.background then
-          vim.o.background = bg
-        end
-      end)
-      bg_watcher:stop()
-      watch_bg()
-    end)
-  end
-  watch_bg()
-end

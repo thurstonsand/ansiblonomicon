@@ -15,10 +15,37 @@ vim.o.wrap = true
 vim.o.linebreak = true
 vim.o.breakindent = true
 
--- honor pre-detected terminal background
-local terminal_bg = os.getenv("TERMINAL_BG")
-if terminal_bg == "light" or terminal_bg == "dark" then
-  vim.o.background = terminal_bg
+-- keep Neovim background aligned with the persisted terminal background
+local terminal_bg_path = vim.fn.expand("~/.terminal-bg")
+local function apply_terminal_bg()
+  local terminal_bg_file = io.open(terminal_bg_path, "r")
+  if not terminal_bg_file then
+    return
+  end
+  local terminal_bg = vim.trim(terminal_bg_file:read("*l") or "")
+  terminal_bg_file:close()
+  if (terminal_bg == "light" or terminal_bg == "dark") and terminal_bg ~= vim.o.background then
+    vim.o.background = terminal_bg
+  end
+end
+
+apply_terminal_bg()
+
+local terminal_bg_watcher = vim.uv.new_fs_event()
+if terminal_bg_watcher then
+  local function watch_terminal_bg()
+    terminal_bg_watcher:start(terminal_bg_path, {}, function(err)
+      if err then
+        return
+      end
+      vim.schedule(function()
+        apply_terminal_bg()
+        terminal_bg_watcher:stop()
+        watch_terminal_bg()
+      end)
+    end)
+  end
+  watch_terminal_bg()
 end
 
 -- OSC 52 clipboard for remote/SSH sessions

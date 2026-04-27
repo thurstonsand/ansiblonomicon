@@ -148,11 +148,11 @@
     "npm:@benvargas/pi-openai-fast",
     "git:github.com/earendil-works/pi-review"
   ],
-  "extensions": [
 {{- if eq .chezmoi.os "darwin" }}
+  "extensions": [
     "{{ output "npm" "root" "-g" | trim }}/glimpseui/examples/companion/index.ts"
-{{- end }}
   ],
+{{- end }}
   "hideThinkingBlock": true,
   "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",
   "transport": "auto",
