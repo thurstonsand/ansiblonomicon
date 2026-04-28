@@ -22,7 +22,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe openclaw` — Apply OpenClaw Ansible playbook (playbook selects local on hostname `openclaw`, otherwise remote over SSH; override with `--target openclaw_local|openclaw_remote`)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **OpenClaw tags**: `apt`, `apt-repos`, `uv`, `mise`, `secrets`/`onepassword`/`op`, `chezmoi`/`dotfiles`, `claude-code`, `opencode`, `system-maintenance`/`timers`, `language-tools`, `pi-extensions`, `openclaw-plugins`, `openclaw-skills`, `obsidian`, `tmux`, `motd`, `agent-harness`
+  - **OpenClaw tags**: `apt`, `apt-repos`, `uv`, `mise`, `secrets`/`onepassword`/`op`, `chezmoi`/`dotfiles`, `claude-code`, `opencode`, `system-maintenance`/`timers`, `language-tools`, `shpool`, `pi-extensions`, `openclaw-plugins`, `openclaw-skills`, `obsidian`, `tmux`, `motd`, `agent-harness`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes (`cz-diff` excludes lockfiles)
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)

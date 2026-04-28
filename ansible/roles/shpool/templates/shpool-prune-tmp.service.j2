@@ -1,0 +1,6 @@
+[Unit]
+Description=Prune disconnected temporary shpool sessions
+
+[Service]
+Type=oneshot
+ExecStart={{ ansible_facts['env']['HOME'] }}/.local/bin/shpool-prune-tmp --idle-hours 48

@@ -1,0 +1,58 @@
+---
+- name: Ensure shpool directories exist
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    mode: "0755"
+  loop:
+    - "{{ ansible_facts['env']['HOME'] }}/.config/shpool"
+    - "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user"
+    - "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+
+- name: Deploy shpool config
+  ansible.builtin.template:
+    src: config.toml.j2
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/shpool/config.toml"
+    mode: "0644"
+
+- name: Deploy shpool user units
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/systemd/user/{{ item }}"
+    mode: "0644"
+  loop:
+    - shpool.service
+    - shpool.socket
+    - shpool-prune-tmp.service
+    - shpool-prune-tmp.timer
+  notify: Reload user systemd
+
+- name: Deploy shpool temporary session prune script
+  ansible.builtin.template:
+    src: shpool-prune-tmp.j2
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/shpool-prune-tmp"
+    mode: "0755"
+
+- name: Enable lingering for OpenClaw user
+  become: true
+  ansible.builtin.command:
+    argv:
+      - loginctl
+      - enable-linger
+      - "{{ ansible_user_id }}"
+    creates: "/var/lib/systemd/linger/{{ ansible_user_id }}"
+
+- name: Flush handlers to reload user systemd
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start shpool user units
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    scope: user
+    enabled: true
+    state: started
+  environment:
+    XDG_RUNTIME_DIR: "/run/user/{{ ansible_facts['user_uid'] }}"
+  loop:
+    - shpool.socket
+    - shpool-prune-tmp.timer

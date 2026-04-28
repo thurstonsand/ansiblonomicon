@@ -1,0 +1,85 @@
+#!/usr/bin/env python3
+from __future__ import annotations
+
+import argparse
+import json
+import subprocess
+import sys
+import time
+from typing import Literal, TypedDict, cast
+
+SHPOOL = "{{ ansible_facts['env']['HOME'] }}/.cargo/bin/shpool"
+
+
+class Session(TypedDict):
+    name: str
+    started_at_unix_ms: int
+    last_connected_at_unix_ms: int | None
+    last_disconnected_at_unix_ms: int | None
+    status: Literal["Attached", "Disconnected"]
+
+
+class ListReply(TypedDict):
+    sessions: list[Session]
+
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Prune disconnected temporary shpool sessions."
+    )
+    parser.add_argument("--idle-hours", type=float, default=48.0)
+    parser.add_argument("--prefix", default="tmp-")
+    parser.add_argument("--dry-run", action="store_true")
+    return parser.parse_args()
+
+
+def run_json() -> ListReply:
+    result = subprocess.run(
+        [SHPOOL, "list", "--json"],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return cast("ListReply", json.loads(result.stdout))
+
+
+def is_disconnected(session: Session) -> bool:
+    return session["status"] == "Disconnected"
+
+
+def main() -> int:
+    args = parse_args()
+    cutoff_ms = int((time.time() - (args.idle_hours * 3600)) * 1000)
+
+    try:
+        payload = run_json()
+    except subprocess.CalledProcessError as exc:
+        if "could not connect to daemon" in exc.stderr.lower():
+            return 0
+        print(exc.stderr, file=sys.stderr, end="")
+        return exc.returncode
+
+    killed = 0
+    for session in payload.get("sessions", []):
+        name = session["name"]
+        disconnected_at = session["last_disconnected_at_unix_ms"]
+        if not name.startswith(args.prefix):
+            continue
+        if not is_disconnected(session):
+            continue
+        if disconnected_at is None:
+            continue
+        if disconnected_at >= cutoff_ms:
+            continue
+
+        print(f"killing idle shpool session {name}")
+        killed += 1
+        if not args.dry_run:
+            subprocess.run([SHPOOL, "kill", name], check=False)
+
+    print(f"pruned {killed} session(s)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

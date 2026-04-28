@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Opens a Ghostty split backed by stable shpool sessions on OpenClaw.
+# Usage: ideo <ansiblonomicon|openclaw> [agent-command...]
+
+quote() {
+  printf '%q' "$1"
+}
+
+join_command() {
+  local out
+  printf -v out '%q ' "$@"
+  printf '%s' "${out% }"
+}
+
+usage() {
+  cat >&2 <<'EOF'
+usage: ideo <ansiblonomicon|openclaw> [agent-command...]
+
+Environment:
+  SHPOOL_IDE_HOST  SSH host to use (default: openclaw)
+EOF
+}
+
+remote_dir_for_project() {
+  case "$1" in
+    ansiblonomicon)
+      printf '%s' "/home/thurstonsand/code/ansiblonomicon"
+      ;;
+    openclaw)
+      printf '%s' "/home/thurstonsand/code/openclaw"
+      ;;
+    *)
+      echo "ideo: unsupported project: $1" >&2
+      usage
+      return 1
+      ;;
+  esac
+}
+
+wrap_interactive_cmd() {
+  local cmd
+  local zsh_cmd
+  cmd=$(join_command "$@")
+  zsh_cmd="$cmd; exec /usr/bin/zsh -il"
+  printf '/usr/bin/zsh -ilc %s' "$(quote "$zsh_cmd")"
+}
+
+remote_attach_command() {
+  local session=$1
+  local dir=$2
+  shift 2
+
+  local remote
+  remote="shpool attach -f -d $(quote "$dir")"
+  if (( $# > 0 )); then
+    remote+=" --cmd $(quote "$(wrap_interactive_cmd "$@")")"
+  fi
+  remote+=" $(quote "$session")"
+  printf '%s' "$remote"
+}
+
+attach_session() {
+  local project=$1
+  local kind=$2
+  shift 2
+
+  local host=${SHPOOL_IDE_HOST:-openclaw}
+  local remote_dir
+  remote_dir=$(remote_dir_for_project "$project")
+
+  local session="${kind}-${project}"
+  local remote
+  if [[ "$kind" == "edit" && $# -eq 0 ]]; then
+    remote=$(remote_attach_command "$session" "$remote_dir" nvim .)
+  else
+    remote=$(remote_attach_command "$session" "$remote_dir" "$@")
+  fi
+
+  exec ssh -t "$host" "$remote"
+}
+
+self_path() {
+  if [[ $0 == */* ]]; then
+    printf '%s' "$0"
+  else
+    command -v -- "$0"
+  fi
+}
+
+if [[ ${1:-} == "--attach" ]]; then
+  if (( $# < 3 )); then
+    echo "ideo: --attach requires project and kind." >&2
+    exit 1
+  fi
+  shift
+  attach_session "$@"
+fi
+
+if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+if (( $# < 1 )); then
+  echo "ideo: missing required project." >&2
+  usage
+  exit 1
+fi
+
+if [[ ${TERM_PROGRAM:-} != "ghostty" ]]; then
+  echo "ideo: Ghostty only. Open a Ghostty tab and try again." >&2
+  exit 1
+fi
+
+if ! command -v ghostty-nav >/dev/null 2>&1; then
+  echo "ideo: ghostty-nav is not installed." >&2
+  exit 1
+fi
+
+terminal_count=$(ghostty-nav tab-terminal-count 2>/dev/null)
+if [[ "$terminal_count" != "1" ]]; then
+  echo "ideo: expected a fresh Ghostty tab with exactly one terminal; open a new tab and try again." >&2
+  exit 1
+fi
+
+project=$1
+shift
+remote_dir_for_project "$project" >/dev/null
+
+script_path=$(self_path)
+editor_local="exec $(quote "$script_path") --attach $(quote "$project") edit"
+
+ghostty-nav split left --command "/bin/zsh -ilc $(quote "$editor_local")" --focus new
+ghostty-nav resize right --percent 15
+ghostty-nav toggle-zoom
+
+attach_session "$project" agent "$@"

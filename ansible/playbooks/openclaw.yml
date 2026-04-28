@@ -336,6 +336,13 @@
           tags: ["language-tools"]
       tags: ["language-tools"]
 
+    - name: Configure shpool shell persistence
+      ansible.builtin.include_role:
+        name: shpool
+        apply:
+          tags: ["shpool"]
+      tags: ["shpool"]
+
     - name: Configure terminal theme mirror
       ansible.builtin.include_role:
         name: terminal_theme

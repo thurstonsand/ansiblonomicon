@@ -32,6 +32,11 @@ Library/
 .local/bin/ghostty-ide
 {{ end }}
 
+# ideo is a personal workstation wrapper for this Mac's OpenClaw SSH workflow.
+{{ if ne .chezmoi.hostname "Thurstons-MacBook-Pro" }}
+.local/bin/ideo
+{{ end }}
+
 # Work Mac
 {{ if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
 # SSH — personal home lab configs
