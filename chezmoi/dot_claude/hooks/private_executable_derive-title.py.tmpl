@@ -4,23 +4,43 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 import sys
 from typing import TypedDict, cast
 import urllib.error
 import urllib.request
 
-from _common import HookInput, has_custom_title, write_title
+from _common import HookInput, has_custom_title, log, write_title
 
 _API_URL = "https://aig.thurstons.house/v1/messages"
 _MODEL = "{{ .models.anthropic.sonnet.version }}"
 _TOKEN = "{{ template "llm-api-key" . }}"
 
-_TITLE_PROMPT = (
-    "Name this coding session (under 80 chars). Be specific to what "
-    "was discussed. Your exact output will be displayed to the user, "
-    "so make sure that it contains ONLY the title itself and nothing "
-    "else.\n\n"
-)
+_TITLE_PROMPT = """\
+You're generating a single title for a Claude Code session, given the session log as JSONL below.
+
+# Style
+
+Titles should evoke the aesthetic of NieR: Automata's in-game documents and archive entries. Bureaucratic, mechanical, terse. The title should tell the reader what the session was about, and the aesthetic is just on the surface. No game specific phrases (character names, factions, etc).
+
+# Syntactic palette
+
+Decorative elements drawn from the source material. Use sparingly -- one or two per title, not stacked.
+
+- Bracketed letter prefixes that pun on a task verb: [S]can, [B]uild, [A]ssert, [RE]vert, [DE]ploy, [UN]bind, [RE]quest
+- Production-code suffixes: 022-A, 110-C, etc (do NOT use those suffixes specifically)
+- Four-digit record numbers: _0017, _0042 (do NOT use those numbers specifically)
+- Status tags in square brackets: [Internal], [Excerpt], [Detached], [Coupled], [Partitioned], etc
+
+These don't need to encode specific meanings, they're just flavor.
+
+A bare descriptive title is also valid, decoration is optional
+
+# Output
+
+The exact output will be displayed to the user, so make sure that it contains ONLY the title itself and nothing else. No quotes, no preamble or explanation."""
+
+_MAX_CONTEXT_BYTES = 2_000_000
 
 
 class ApiContentBlock(TypedDict):
@@ -37,33 +57,35 @@ class TitleRequestError(Exception):
 
 
 def _post_title_request(context: str) -> str:
+    headers = {
+        "Authorization": f"Bearer {_TOKEN}",
+        "anthropic-version": "2023-06-01",
+        "content-type": "application/json",
+        "User-Agent": "claude-code-auto-title",
+    }
+
     body = json.dumps(
         {
             "model": _MODEL,
             "max_tokens": 60,
-            "messages": [{"role": "user", "content": _TITLE_PROMPT + context}],
+            "messages": [{"role": "user", "content": f"{_TITLE_PROMPT}\n\n{context}"}],
         }
     ).encode()
 
     req = urllib.request.Request(
         _API_URL,
         data=body,
-        headers={
-            "Authorization": f"Bearer {_TOKEN}",
-            "anthropic-version": "2023-06-01",
-            "content-type": "application/json",
-            "User-Agent": "claude",
-        },
+        headers=headers,
         method="POST",
     )
 
     try:
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        with urllib.request.urlopen(req, timeout=60) as resp:
             result = cast(ApiResponse, json.loads(resp.read()))
     except (urllib.error.URLError, OSError, json.JSONDecodeError) as exc:
         raise TitleRequestError(f"API request failed: {exc}") from exc
 
-    for block in (result.get("content") or []):
+    for block in result.get("content") or []:
         if block["type"] == "text":
             text = block.get("text")
             if text is not None:
@@ -79,8 +101,15 @@ def main() -> None:
         return
 
     transcript = hook["transcript_path"]
+
+    if not Path(transcript).is_file():
+        return
+
     if has_custom_title(transcript):
         return
+
+    session_id = hook["session_id"]
+    cwd = hook["cwd"]
 
     lines: list[str] = []
     found_user = False
@@ -103,13 +132,17 @@ def main() -> None:
     if not context:
         return
 
+    context = context[-_MAX_CONTEXT_BYTES:]
+
     try:
         title = _post_title_request(context)
     except TitleRequestError as e:
+        log(session_id, cwd, str(e))
         print(f"auto-title: {e}", file=sys.stderr)
         sys.exit(1)
 
-    write_title(hook["session_id"], title)
+    write_title(session_id, title)
+    log(session_id, cwd, f'generated title "{title}" (model={_MODEL})')
 
 
 if __name__ == "__main__":

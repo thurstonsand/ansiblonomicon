@@ -9,7 +9,7 @@ import re
 import sys
 from typing import cast
 
-from _common import HookInput, has_custom_title, read_title
+from _common import HookInput, has_custom_title, log, read_title
 
 _TITLE_TAG_RE = re.compile(r"<title>([^<]+)</title>")
 
@@ -18,7 +18,7 @@ class PromptHookInput(HookInput):
     prompt: str
 
 
-def _emit_title(title: str) -> None:
+def _emit_title(title: str, session_id: str, cwd: str, source: str) -> None:
     json.dump(
         {
             "hookSpecificOutput": {
@@ -28,6 +28,7 @@ def _emit_title(title: str) -> None:
         },
         sys.stdout,
     )
+    log(session_id, cwd, f'emitted title "{title}" (source={source})')
 
 
 def main() -> None:
@@ -36,12 +37,15 @@ def main() -> None:
     if hook.get("agent_id"):
         return
 
+    session_id = hook["session_id"]
+    cwd = hook["cwd"]
+
     match = _TITLE_TAG_RE.search(hook["prompt"])
     if match:
-        _emit_title(match.group(1))
+        _emit_title(match.group(1), session_id, cwd, "tag")
         return
 
-    title = read_title(hook["session_id"])
+    title = read_title(session_id)
     if not title:
         return
 
@@ -49,7 +53,7 @@ def main() -> None:
     if os.path.isfile(transcript) and has_custom_title(transcript):
         return
 
-    _emit_title(title)
+    _emit_title(title, session_id, cwd, "generated")
 
 
 if __name__ == "__main__":
