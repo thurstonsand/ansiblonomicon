@@ -30,6 +30,7 @@ OpenClaw will deploy a small `~/.config/shpool/config.toml`:
 
 ```toml
 nodaemonize = true
+forward_env = ["SSH_CONNECTION", "SSH_CLIENT", "SSH_TTY", "COLORTERM"]
 default_dir = "."
 session_restore_mode = { lines = 200 }
 output_spool_lines = 10000
@@ -42,13 +43,15 @@ action = "detach"
 
 Rationale:
 
+- forwarding SSH markers preserves remote-host prompt detection inside shpool sessions.
+- forwarding `COLORTERM` preserves truecolor detection for terminal-aware tools.
 - `default_dir = "."` makes explicit attach directories work naturally.
 - restoring 200 lines gives useful reconnect context without flooding the terminal.
 - keeping 10000 spool lines preserves deeper restoration capacity without replaying it by default.
 - `prompt_prefix = ""` avoids fighting starship/zsh prompt styling; `$SHPOOL_SESSION_NAME` remains available.
 - `Ctrl-b d` detaches shpool. `Ctrl-d` remains shell EOF and exits the underlying shell session.
 
-No extra `forward_env` entries are configured initially. Shpool already forwards `TERM`, `DISPLAY`, `LANG`, and `SSH_AUTH_SOCK`, starts a login shell, and reads `/etc/environment`. Additional terminal metadata can be added later only if a concrete rendering issue appears.
+The forwarded environment is intentionally narrow. SSH markers are needed for tools such as Starship and zsh startup logic to detect remote sessions after shpool creates the persistent shell. `COLORTERM` is forwarded so truecolor-capable terminal metadata survives the attach path. Secrets and broad project environment are not forwarded.
 
 ### 5. Add automatic pruning only for temporary sessions
 
