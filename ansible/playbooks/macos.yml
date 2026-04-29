@@ -102,6 +102,14 @@
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["ghostty-nav"]
 
+    - name: Build shp for shpool SSH sessions
+      ansible.builtin.include_role:
+        name: shp
+        apply:
+          tags: ["shp"]
+      when: hostname == "Thurstons-MacBook-Pro"
+      tags: ["shp"]
+
     - name: Configure terminal theme manager
       ansible.builtin.include_role:
         name: terminal_theme

@@ -1,0 +1,87 @@
+---
+- name: Ensure ~/.local/bin directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+    state: directory
+    mode: "0755"
+
+- name: Ensure shp cache directory exists
+  ansible.builtin.file:
+    path: "{{ shp_cache_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Check shp dependency upgrade stamp
+  ansible.builtin.stat:
+    path: "{{ shp_cache_dir }}/upgrade.stamp"
+  register: shp_upgrade_stamp
+
+- name: Determine if shp dependency upgrade is due
+  ansible.builtin.set_fact:
+    shp_upgrade_due: >-
+      {{
+        (not shp_upgrade_stamp.stat.exists)
+        or (
+          (ansible_date_time.epoch | int) - (shp_upgrade_stamp.stat.mtime | int)
+          >= (shp_upgrade_interval_seconds | int)
+        )
+      }}
+
+- name: Update shp Go dependencies and tools
+  when: shp_upgrade_due
+  ansible.builtin.command:
+    argv:
+      - just
+      - update-deps
+    chdir: "{{ role_path }}/files/shp"
+  register: shp_update_deps
+  changed_when: shp_update_deps.stdout | length > 0 or shp_update_deps.stderr | length > 0
+
+- name: Record shp dependency upgrade timestamp
+  when: shp_upgrade_due
+  ansible.builtin.file:
+    path: "{{ shp_cache_dir }}/upgrade.stamp"
+    state: touch
+    mode: "0644"
+
+- name: Compute shp source checksum
+  ansible.builtin.shell: |
+    set -euo pipefail
+    find . -type f \( -name '*.go' -o -name 'go.mod' -o -name 'go.sum' -o -name '.golangci.yml' -o -name 'justfile' \) -print0 \
+      | sort -z \
+      | xargs -0 shasum -a 256 \
+      | shasum -a 256 \
+      | awk '{print $1}'
+  args:
+    chdir: "{{ role_path }}/files/shp"
+    executable: /bin/bash
+  register: shp_source_checksum
+  changed_when: false
+
+- name: Check installed shp binary
+  ansible.builtin.stat:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/shp"
+  register: shp_binary
+
+- name: Read last shp build checksum
+  ansible.builtin.slurp:
+    src: "{{ role_path }}/.build-checksum"
+  register: shp_stored_checksum
+  failed_when: false
+
+- name: Build shp
+  ansible.builtin.command:
+    argv:
+      - go
+      - build
+      - -o
+      - "{{ ansible_facts['env']['HOME'] }}/.local/bin/shp"
+      - .
+    chdir: "{{ role_path }}/files/shp"
+  when: >-
+    not shp_binary.stat.exists
+    or shp_stored_checksum is failed
+    or (shp_stored_checksum.content | default('') | b64decode | trim) != shp_source_checksum.stdout
+  changed_when: true
+  notify:
+    - Store shp build checksum

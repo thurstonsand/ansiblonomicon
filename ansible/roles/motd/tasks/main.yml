@@ -12,14 +12,6 @@
     path: /etc/update-motd.d/10-uname
     state: absent
 
-- name: Disable PrintLastLog in sshd
-  become: true
-  ansible.builtin.lineinfile:
-    path: /etc/ssh/sshd_config
-    regexp: "^#?PrintLastLog"
-    line: "PrintLastLog no"
-  notify: Reload sshd
-
 - name: Configure openclaw MOTD
   when: motd_openclaw_enabled
   block:

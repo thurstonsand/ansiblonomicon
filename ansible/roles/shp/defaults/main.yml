@@ -1,0 +1,3 @@
+---
+shp_upgrade_interval_seconds: 86400
+shp_cache_dir: "{{ ansible_facts['env']['HOME'] }}/.cache/ansiblonomicon/shp"

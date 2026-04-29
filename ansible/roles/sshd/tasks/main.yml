@@ -1,0 +1,15 @@
+---
+- name: Ensure sshd config drop-in directory exists
+  become: true
+  ansible.builtin.file:
+    path: /etc/ssh/sshd_config.d
+    state: directory
+    mode: "0755"
+
+- name: Configure OpenClaw sshd settings
+  become: true
+  ansible.builtin.template:
+    src: 99-openclaw.conf.j2
+    dest: /etc/ssh/sshd_config.d/99-openclaw.conf
+    mode: "0644"
+  notify: Validate and reload sshd

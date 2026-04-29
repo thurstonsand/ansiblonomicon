@@ -1,0 +1,10 @@
+---
+- name: Validate and reload sshd
+  become: true
+  ansible.builtin.shell: |
+    set -euo pipefail
+    sshd -t
+    systemctl reload sshd
+  args:
+    executable: /bin/bash
+  changed_when: true

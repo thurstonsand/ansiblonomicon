@@ -84,6 +84,13 @@
         shell: /usr/bin/zsh
       tags: ["apt", "zsh"]
 
+    - name: Configure sshd
+      ansible.builtin.include_role:
+        name: sshd
+        apply:
+          tags: ["sshd", "ssh"]
+      tags: ["sshd", "ssh"]
+
     - name: Ensure user local bin directory exists
       ansible.builtin.file:
         path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
