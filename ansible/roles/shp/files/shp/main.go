@@ -36,12 +36,14 @@ type listReply struct {
 type app struct {
 	listSessions bool
 	force        bool
+	dir          string
+	command      string
 }
 
 func main() {
 	application := &app{}
 	cmd := &cobra.Command{
-		Use:   "shp [-l] <host> [session]",
+		Use:   "shp [-l] [--dir DIR] [--cmd COMMAND] <host> [session]",
 		Short: "Attach to shpool sessions over SSH",
 		Long:  "Attach to named shpool sessions over SSH. Without a session name, reuse the most recently disconnected tmp-* session or create a new temporary session.",
 		Args:  application.validateArgs,
@@ -60,6 +62,8 @@ func main() {
 
 	cmd.Flags().BoolVarP(&application.listSessions, "list", "l", false, "list remote shpool sessions")
 	cmd.Flags().BoolVarP(&application.force, "force", "f", false, "detach any existing client before attaching")
+	cmd.Flags().StringVarP(&application.dir, "dir", "d", "", "remote working directory for newly created sessions")
+	cmd.Flags().StringVarP(&application.command, "cmd", "c", "", "remote command for newly created sessions")
 
 	ctx := context.Background()
 	cmd.SetContext(ctx)
@@ -72,6 +76,9 @@ func (a *app) validateArgs(_ *cobra.Command, args []string) error {
 	if a.listSessions {
 		if len(args) != 1 {
 			return errors.New("-l requires exactly one host")
+		}
+		if a.force || a.dir != "" || a.command != "" {
+			return errors.New("-l cannot be combined with attach options")
 		}
 		return nil
 	}
@@ -102,12 +109,19 @@ func (a *app) run(cmd *cobra.Command, args []string) error {
 		sessionName = chosen
 	}
 
-	sshArgs := []string{"-t", host, "shpool", "attach"}
+	remoteArgs := []string{"shpool", "attach"}
 	if a.force {
-		sshArgs = append(sshArgs, "--force")
+		remoteArgs = append(remoteArgs, "--force")
 	}
-	sshArgs = append(sshArgs, sessionName)
-	return runInteractive(cmd.Context(), "ssh", sshArgs...)
+	if a.dir != "" {
+		remoteArgs = append(remoteArgs, "--dir", a.dir)
+	}
+	if a.command != "" {
+		remoteArgs = append(remoteArgs, "--cmd", a.command)
+	}
+	remoteArgs = append(remoteArgs, sessionName)
+
+	return runInteractive(cmd.Context(), "ssh", "-t", host, shellCommand(remoteArgs))
 }
 
 func chooseTemporarySession(ctx context.Context, host string) (string, error) {
@@ -344,6 +358,21 @@ func randomHex(bytes int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(buf), nil
+}
+
+func shellCommand(args []string) string {
+	quoted := make([]string, 0, len(args))
+	for _, arg := range args {
+		quoted = append(quoted, shellQuote(arg))
+	}
+	return strings.Join(quoted, " ")
+}
+
+func shellQuote(arg string) string {
+	if arg == "" {
+		return "''"
+	}
+	return "'" + strings.ReplaceAll(arg, "'", "'\\''") + "'"
 }
 
 func runInteractive(ctx context.Context, name string, args ...string) error {

@@ -47,18 +47,24 @@ wrap_interactive_cmd() {
   printf '/usr/bin/zsh -ilc %s' "$(quote "$zsh_cmd")"
 }
 
-remote_attach_command() {
+exec_shp_attach() {
   local session=$1
   local dir=$2
   shift 2
 
-  local remote
-  remote="shpool attach -f -d $(quote "$dir")"
-  if (( $# > 0 )); then
-    remote+=" --cmd $(quote "$(wrap_interactive_cmd "$@")")"
+  if ! command -v shp >/dev/null 2>&1; then
+    echo "ideo: shp is not installed." >&2
+    exit 1
   fi
-  remote+=" $(quote "$session")"
-  printf '%s' "$remote"
+
+  local host=${SHPOOL_IDE_HOST:-openclaw}
+  local args=("$host" --force --dir "$dir")
+  if (( $# > 0 )); then
+    args+=(--cmd "$(wrap_interactive_cmd "$@")")
+  fi
+  args+=("$session")
+
+  exec shp "${args[@]}"
 }
 
 attach_session() {
@@ -66,19 +72,15 @@ attach_session() {
   local kind=$2
   shift 2
 
-  local host=${SHPOOL_IDE_HOST:-openclaw}
   local remote_dir
   remote_dir=$(remote_dir_for_project "$project")
 
   local session="${kind}-${project}"
-  local remote
   if [[ "$kind" == "edit" && $# -eq 0 ]]; then
-    remote=$(remote_attach_command "$session" "$remote_dir" nvim .)
+    exec_shp_attach "$session" "$remote_dir" nvim .
   else
-    remote=$(remote_attach_command "$session" "$remote_dir" "$@")
+    exec_shp_attach "$session" "$remote_dir" "$@"
   fi
-
-  exec ssh -t "$host" "$remote"
 }
 
 self_path() {
