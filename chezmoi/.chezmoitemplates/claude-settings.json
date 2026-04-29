@@ -29,7 +29,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/set-title.sh"
+            "command": "~/.claude/hooks/set-title.py"
           }
         ]
       }
@@ -50,7 +50,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/derive-title.sh"
+            "command": "~/.claude/hooks/derive-title.py"
           }
         ]
       }
@@ -58,7 +58,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/scripts/statusline.sh --gauge --folder --branch --model --style"
+    "command": "~/.claude/scripts/statusline.sh --gauge --folder --branch --model --style --usage"
   },
   "model": "opus",
   "outputStyle": "2B",

@@ -14,7 +14,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - **macOS tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `ghostty-nav`, `homebrew`/`mas`, `language-tools`, `neovim`/`nvim-deps`, `opencode`, `shp`, `sysconfig`/`hostname`, `terminal-theme`, `tmux`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe work` — Apply work macOS Ansible playbook
-  - **Work tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `neovim`/`nvim-deps`, `terminal-theme`, `uvc-util`, `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
+  - **Work tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `local`, `neovim`/`nvim-deps`, `terminal-theme`, `uvc-util`, `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all Docker stacks), `vm`/`truenas-vm`, `openclaw-vm`, `homeassistant-vm`, or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
 - `uv run poe udmp` — Apply UDMP Ansible playbook (same options as macos)

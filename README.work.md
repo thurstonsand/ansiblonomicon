@@ -46,10 +46,10 @@ Note: The `permissions.allow` array in the overlay **replaces** the base entirel
 
 ## Python Package Indexes (uv + pip)
 
-| File                                             | Purpose                                                                      |
-| ------------------------------------------------ | ---------------------------------------------------------------------------- |
+| File                                             | Purpose                                                                                                     |
+| ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------- |
 | `~/.local/share/chezmoi/.chezmoidata/local.toml` | System-level indexes (`pypiIndex`, `uvIndexStrategy`) → `~/.config/uv/uv.toml` and `~/.config/pip/pip.conf` |
-| `./uv.toml`                                      | Project-level override for this repo (gitignored, non-CICD endpoint)         |
+| `./uv.toml`                                      | Project-level override for this repo (gitignored, non-CICD endpoint)                                        |
 
 Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `local.toml`. The default index becomes `global.index-url` in pip; non-default entries become `extra-index-url`. System-level config defaults to CICD Artifactory (correct for most work projects). This repo overrides to the enterprise endpoint since it's a personal repo not deployed through CICD.
 
@@ -60,6 +60,14 @@ Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `lo
 - `.envrc` sets `skip-worktree` on `uv.lock` — git ignores local changes, `git add` silently skips it
 - **Use `poe pull` instead of `git pull`** — lifts the mask, restores the canonical lock, pulls, re-syncs, and re-masks
 - Dependency updates must be committed from a personal machine (where the lock resolves against `pypi.org`)
+
+## Ansible Local Tasks
+
+| File                           | Purpose                                                                                           |
+| ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| `ansible/tasks/work.local.yml` | Machine-local Ansible tasks included by `work.yml` (gitignored, runs via `poe work --tags local`) |
+
+The work playbook conditionally includes this file if it exists. Place any work-specific automation here that shouldn't live in git.
 
 ## Setup Checklist
 

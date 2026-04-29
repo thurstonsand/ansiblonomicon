@@ -18,7 +18,6 @@ node_modules
 
 # ai
 /.claude/settings.local.json
-chezmoi/.chezmoidata/claude-settings.local.json
 
 # Terraform
 **/.terraform/
@@ -32,7 +31,9 @@ chezmoi/.chezmoidata/claude-settings.local.json
 
 # Machine-local
 ansible/Brewfile.work.*
+ansible/tasks/work.local.yml
 chezmoi/.chezmoidata/local.toml
+chezmoi/.chezmoitemplates/local/
 
 # uv (project-level override)
 uv.toml

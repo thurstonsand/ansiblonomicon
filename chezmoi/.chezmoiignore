@@ -78,8 +78,9 @@ Library/Application Support/Antigravity/
 Library/Application Support/Code/User/mcp.json
 
 # Claude Code — handled by plugin on this machine
-.claude/hooks/derive-title.sh
-.claude/hooks/set-title.sh
+.claude/hooks/_common.py
+.claude/hooks/derive-title.py
+.claude/hooks/set-title.py
 
 {{ end }}
 

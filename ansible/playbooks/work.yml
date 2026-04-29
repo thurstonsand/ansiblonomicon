@@ -89,3 +89,11 @@
           tags: ["agent-harness"]
       when: configure_agent_harness | default(true)
       tags: ["agent-harness"]
+
+    - name: Include machine-local tasks
+      ansible.builtin.include_tasks:
+        file: ../tasks/work.local.yml
+        apply:
+          tags: ["local"]
+      when: lookup('file', playbook_dir ~ '/../tasks/work.local.yml', errors='ignore') | length > 0
+      tags: ["local"]

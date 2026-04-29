@@ -1,0 +1,116 @@
+#!/usr/bin/env python3
+"""Stop hook: derive a session title from the transcript via the Anthropic API."""
+
+from __future__ import annotations
+
+import json
+import sys
+from typing import TypedDict, cast
+import urllib.error
+import urllib.request
+
+from _common import HookInput, has_custom_title, write_title
+
+_API_URL = "https://aig.thurstons.house/v1/messages"
+_MODEL = "{{ .models.anthropic.sonnet.version }}"
+_TOKEN = "{{ template "llm-api-key" . }}"
+
+_TITLE_PROMPT = (
+    "Name this coding session (under 80 chars). Be specific to what "
+    "was discussed. Your exact output will be displayed to the user, "
+    "so make sure that it contains ONLY the title itself and nothing "
+    "else.\n\n"
+)
+
+
+class ApiContentBlock(TypedDict):
+    type: str
+    text: str | None
+
+
+class ApiResponse(TypedDict):
+    content: list[ApiContentBlock] | None
+
+
+class TitleRequestError(Exception):
+    pass
+
+
+def _post_title_request(context: str) -> str:
+    body = json.dumps(
+        {
+            "model": _MODEL,
+            "max_tokens": 60,
+            "messages": [{"role": "user", "content": _TITLE_PROMPT + context}],
+        }
+    ).encode()
+
+    req = urllib.request.Request(
+        _API_URL,
+        data=body,
+        headers={
+            "Authorization": f"Bearer {_TOKEN}",
+            "anthropic-version": "2023-06-01",
+            "content-type": "application/json",
+            "User-Agent": "claude",
+        },
+        method="POST",
+    )
+
+    try:
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            result = cast(ApiResponse, json.loads(resp.read()))
+    except (urllib.error.URLError, OSError, json.JSONDecodeError) as exc:
+        raise TitleRequestError(f"API request failed: {exc}") from exc
+
+    for block in (result.get("content") or []):
+        if block["type"] == "text":
+            text = block.get("text")
+            if text is not None:
+                return text.strip()
+
+    raise TitleRequestError("API response contained no text content")
+
+
+def main() -> None:
+    hook = cast(HookInput, json.load(sys.stdin))
+
+    if hook.get("agent_id"):
+        return
+
+    transcript = hook["transcript_path"]
+    if has_custom_title(transcript):
+        return
+
+    lines: list[str] = []
+    found_user = False
+    with open(transcript) as f:
+        for raw in f:
+            stripped = raw.strip()
+            if not stripped:
+                continue
+            if not found_user:
+                try:
+                    entry = json.loads(stripped)
+                except json.JSONDecodeError:
+                    continue
+                if entry.get("type") != "user":
+                    continue
+                found_user = True
+            lines.append(stripped)
+
+    context = "\n".join(lines)
+    if not context:
+        return
+
+    try:
+        title = _post_title_request(context)
+    except TitleRequestError as e:
+        print(f"auto-title: {e}", file=sys.stderr)
+        sys.exit(1)
+
+    write_title(hook["session_id"], title)
+
+
+if __name__ == "__main__":
+    main()
