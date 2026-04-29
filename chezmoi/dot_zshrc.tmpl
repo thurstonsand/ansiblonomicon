@@ -215,9 +215,6 @@ fi
 {{- if eq .chezmoi.os "darwin" }}
 alias bd='brew desc'
 alias bh='brew home'
-{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-alias opencode='$HOME/.opencode/bin/opencode'
-{{- end }}
 anup() {
   (cd ~/{{ .developDir }}/ansiblonomicon && poe play "$@")
 }
@@ -225,3 +222,31 @@ anup() {
 
 # Machine-local overrides (work integrations, extra aliases)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+
+# Agent CLI integrations
+alias opencode='$HOME/.opencode/bin/opencode'
+
+# >>> forge initialize >>>
+# !! Contents within this block are managed by 'forge zsh setup' !!
+# !! Do not edit manually - changes will be overwritten !!
+
+# Add required zsh plugins if not already present
+if [[ ! " ${plugins[@]} " =~ " zsh-autosuggestions " ]]; then
+    plugins+=(zsh-autosuggestions)
+fi
+if [[ ! " ${plugins[@]} " =~ " zsh-syntax-highlighting " ]]; then
+    plugins+=(zsh-syntax-highlighting)
+fi
+
+# Load forge shell plugin (commands, completions, keybindings) if not already loaded
+if command -v forge >/dev/null 2>&1 && [[ -z "$_FORGE_PLUGIN_LOADED" ]]; then
+    eval "$(forge zsh plugin)"
+fi
+
+# Load forge shell theme (prompt with AI context) if not already loaded
+if command -v forge >/dev/null 2>&1 && [[ -z "$_FORGE_THEME_LOADED" ]]; then
+    eval "$(forge zsh theme)"
+fi
+# <<< forge initialize <<<
+{{- end }}

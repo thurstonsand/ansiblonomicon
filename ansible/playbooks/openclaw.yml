@@ -96,7 +96,7 @@
         path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
         state: directory
         mode: "0755"
-      tags: ["apt", "uv", "chezmoi", "claude-code", "opencode"]
+      tags: ["apt", "uv", "chezmoi", "claude-code", "forge-code", "opencode"]
 
     - name: Create fd symlink (Debian uses fdfind)
       ansible.builtin.file:
@@ -320,6 +320,13 @@
         apply:
           tags: ["opencode"]
       tags: ["opencode"]
+
+    - name: Install Forge Code
+      ansible.builtin.include_role:
+        name: forge_code
+        apply:
+          tags: ["forge-code"]
+      tags: ["forge-code"]
 
     - name: Configure system maintenance timers
       ansible.builtin.include_role:
