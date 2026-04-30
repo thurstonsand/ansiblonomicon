@@ -33,6 +33,8 @@ Update a design doc only when both are true:
 
 When updating an active design doc, write it as the design that was intended. Do not preserve obsolete state or explain that something used to work differently.
 
+If staged work materially replaces an accepted design, mark the older design doc status as superseded. Keep the rest of the superseded doc intact.
+
 ### Agent docs
 
 Agent docs describe how future agents should operate in the repo. This includes files like `CLAUDE.md`, `AGENTS.md`, skill files, local agent instructions, and similar guidance.

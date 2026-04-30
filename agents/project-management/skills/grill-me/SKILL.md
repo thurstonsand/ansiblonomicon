@@ -1,33 +1,117 @@
 ---
 name: grill-me
-description: Interview the user relentlessly about a plan or design until reaching shared understanding, resolving the decision tree one question at a time, stress-testing assumptions against the codebase. Use when user wants to stress-test a plan, get grilled on their design, or mentions "grill me".
+description: Grilling and design session that challenges your plan against the existing codebase, domain model, and documented decisions; sharpens terminology; updates documentation (CONTEXT.md, design docs) inline as decisions crystallize; and produces committable implementation plans. Use when user wants to stress-test, design, or plan a feature against their project's language and documented decisions.
 ---
 
 # Grill Me
 
-Interview me relentlessly about every aspect of this plan until we reach a shared understanding.
+Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
 
-## Operating mode
+This skill uses three gates:
 
-- Walk the decision tree in dependency order. Resolve upstream decisions before downstream ones.
-- You may ask multiple questions in one turn when they depend on the same resolved premise.
+1. **Grill** — challenge the plan until assumptions, terminology, constraints, and branches are resolved.
+2. **Design** — turn the resolved decisions into a design document.
+3. **Execution planning** — break the design into committable implementation units.
+
+Start at Gate 1 unless the user explicitly says a gate is already complete.
+
+## Gate 1: Grill
+
+Walk the decision tree in dependency order. Resolve upstream decisions before downstream ones. You may ask multiple questions in one turn when they depend on the same resolved premise.
+
+If a question can be answered by exploring the codebase or existing documentation, explore instead of asking.
+
+### Explore before asking
+
+During codebase exploration, inspect:
+
+- code, tests, configuration, and existing docs relevant to the plan
+- existing relevant design docs in `docs/designs/`
+- existing domain docs: `CONTEXT.md`, `CONTEXT-MAP.md` (if exists), and nested `CONTEXT.md` files when relevant
+- public documentation or source code for major libraries or platforms when the design depends on their behavior
+
+Cross-check the user's claims against the code, tests, configuration, and existing docs. Surface contradictions immediately.
+
+### Walk the decision tree
+
 - At branching decision points, stop and get my answer before exploring divergent branches.
-- For each question or question set, provide your recommended answers.
-- If a question can be answered by exploring the codebase or existing documentation, do that instead of asking me.
-
-## During the session
-
-- Cross-check my claims against the code, tests, configuration, and existing docs. Surface contradictions immediately.
-- When I use vague, overloaded, or inconsistent language, stop and force a sharper definition.
-- Stress-test ideas with concrete scenarios and edge cases, not paraphrases of what I just said.
 - Track unresolved assumptions, constraints, and follow-up branches so nothing gets lost.
 - Prefer blunt accuracy over agreeable momentum. If something looks weak, say so plainly.
 
-## End condition
+### Challenge against the glossary
 
-When the major branches are resolved, summarize:
+When the user uses a term that conflicts with existing language in `CONTEXT.md`, call it out immediately.
+
+> Your glossary defines "cancellation" as X, but you seem to mean Y — which is it?
+
+### Sharpen fuzzy language
+
+When the user uses vague, overloaded, or inconsistent language, stop and force a sharper definition. Propose a precise canonical term.
+
+> You're saying "account" — do you mean the Customer or the User? Those are different things.
+
+### Discuss concrete scenarios
+
+Stress-test ideas with concrete scenarios and edge cases, not paraphrases of what the user just said. Invent scenarios that probe boundaries between concepts and force precision.
+
+### Cross-reference with code
+
+When the user states how something works, check whether the code agrees. If you find a contradiction, surface it.
+
+> Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?
+
+### Update CONTEXT.md inline
+
+When a term is resolved, update `CONTEXT.md` right there. Don't batch these up — capture terms as they happen. Use the format in [context-format.md](./references/context-format.md).
+
+Don't couple `CONTEXT.md` to implementation details. Only include terms that are meaningful to domain experts.
+
+Create context files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If `CONTEXT-MAP.md` exists, use it to find the relevant context. When multiple contexts exist, infer which one the current topic relates to; if unclear, ask.
+
+### Gate 1 exit
+
+Gate 1 is complete when the major branches are resolved enough to summarize:
 
 - decisions made
 - open risks
 - unresolved questions
+- terminology/context updates made
 - your recommended next step
+
+Do not move to Gate 2 until the user agrees the design direction is ready.
+
+## Gate 2: Design
+
+Create a design doc unless the user explicitly says not to.
+
+Write the design doc to `docs/designs/NN-<slug>.md`, where `NN` is the next sequential number. Use the format in [design-format.md](./references/design-format.md).
+
+Design docs record what was decided, why, and the tradeoff that made the decision worth writing down.
+
+### Design doc status
+
+Use these statuses only:
+
+- `Draft` — still being shaped
+- `Accepted` — agreed path; normal terminal state
+- `Deferred` — valid, but not being pursued now
+- `Rejected` — explored and intentionally declined
+- `Superseded by docs/designs/NN-name.md` — old decision replaced by a newer design
+
+Once a design doc reaches `Accepted`, treat it as a historical artifact. Do not keep editing it into current-state documentation. If the design changes materially, create a new design doc or mark the old one superseded.
+
+### Gate 2 exit
+
+Gate 2 is complete when:
+
+- the design doc exists
+- the decision summary is clear
+- the major design decisions and tradeoffs are recorded
+- rejected alternatives worth remembering are captured
+- the user agrees the design is ready for planning
+
+## Gate 3: Execution Planning
+
+Add the implementation plan to the end of the design doc. Use the implementation-plan structure and rules in [design-format.md](./references/design-format.md).
+
+Gate 3 is complete when the design doc contains a handoff-safe implementation plan.
