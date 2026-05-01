@@ -4,11 +4,11 @@ This documents all files that live **only** on the work Mac and are not tracked 
 
 ## Chezmoi Data Layer
 
-| File                                             | Purpose                                                                     |
-| ------------------------------------------------ | --------------------------------------------------------------------------- |
-| `~/.local/share/chezmoi/.chezmoidata/local.toml` | Git identity, SCM hosts (as `[[scm]]` array), Go import/build configuration |
+| File                                             | Purpose                                                                                        |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
+| `~/.local/share/chezmoi/.chezmoidata/local.toml` | Git identity, SCM hosts (as `[[scm]]` array), Go import/build config, Claude Code model config |
 
-Defaults for `goLocalImports` and `goplsBuildFlags` are declared in `.chezmoidata.toml` (empty strings). `scm` defaults to an empty array. The work machine populates all keys in `local.toml` which chezmoi reads automatically but is gitignored.
+Defaults for `goLocalImports` and `goplsBuildFlags` are declared in `.chezmoidata.toml` (empty strings). `scm` defaults to an empty array.
 
 ## Shell Extras
 
@@ -21,13 +21,14 @@ These are sourced by the chezmoi-managed `.zshenv.tmpl` and `.zshrc.tmpl` if the
 
 ## Claude Code
 
-| File                                                             | Purpose                                                         |
-| ---------------------------------------------------------------- | --------------------------------------------------------------- |
-| `~/.local/share/chezmoi/.chezmoidata/claude-settings.local.json` | Machine-local overrides merged onto base during `chezmoi apply` |
+| File                                                           | Purpose                                                        |
+| -------------------------------------------------------------- | -------------------------------------------------------------- |
+| `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json` | Work-machine overrides merged onto base during `chezmoi apply` |
+| `chezmoi/.chezmoitemplates/local/resolve-overlay.py`           | Script that merges overlay with base                           |
 
 ### Merge Semantics
 
-The chezmoi template `dot_claude/settings.json.tmpl` deep-merges the overlay onto the base (`claude-settings.json`) using `jq` with `.chezmoitemplates/deepmerge.jq`. If the overlay file doesn't exist, the base is used as-is. Rules:
+The chezmoi template `dot_claude/settings.json.tmpl` delegates to `resolve-overlay.py` when the work overlay exists, which deep-merges with the base (`.chezmoitemplates/claude-settings.json`). If the resolver doesn't exist, the base is used as-is. Rules:
 
 - Object fields are recursively merged (overlay keys win)
 - Scalar/array fields in the overlay **replace** the base
@@ -35,12 +36,18 @@ The chezmoi template `dot_claude/settings.json.tmpl` deep-merges the overlay ont
 
 Note: The `permissions.allow` array in the overlay **replaces** the base entirely (array merge is not recursive). The base defines personal permissions; the work overlay provides the full work set.
 
+### Model Configuration
+
+`local.toml` defines Claude Code model IDs under `[claude_code_models]`:
+
+These should be used instead of hard-coding model values.
+
 ## Homebrew
 
-| File                          | Purpose                                                     |
-| ----------------------------- | ----------------------------------------------------------- |
-| `ansible/Brewfile.work`       | Work-specific brews, casks, and taps (committed to git)     |
-| `ansible/Brewfile.work.local` | Machine-local additions not appropriate for git (if needed) |
+| File                          | Purpose                                                  |
+| ----------------------------- | -------------------------------------------------------- |
+| `ansible/Brewfile.work`       | Work-specific brews, casks, and taps (committed to git)  |
+| `ansible/Brewfile.work.local` | Machine-local additions not committed to git (if needed) |
 
 `Brewfile.work` **is** committed. The `.local` variant is for tools that are not publicly available.
 
@@ -69,13 +76,22 @@ Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `lo
 
 The work playbook conditionally includes this file if it exists. Place any work-specific automation here that shouldn't live in git.
 
+Currently deploys a LaunchAgent to manage claude model versions.
+
+## fd / File Picker Visibility
+
+`.fdignore` at repo root uses negation patterns (`!path`) to unhide work-only files from `fd` (and LazyVim's file picker) despite them being in `.gitignore`. When adding a new gitignored work file, add a corresponding `!` entry to `.fdignore`.
+
 ## Setup Checklist
 
-When setting up a new work Mac:
+When setting up a new work Mac, copy these files from the old machine:
 
-1. Run `chezmoi init` with the repo
-2. Create `~/.local/share/chezmoi/.chezmoidata/local.toml` with identity vars
-3. Create `~/.zshenv.local` and `~/.zshrc.local` for corporate shell config
-4. Create `~/.local/share/chezmoi/.chezmoidata/claude-settings.local.json` with machine-local overrides (env, permissions, sandbox, hooks, plugins)
-5. Run `chezmoi apply`
-6. Run `uv run poe work` from the repo
+- `~/.local/share/chezmoi/.chezmoidata/local.toml`
+- `~/.zshenv.local`
+- `~/.zshrc.local`
+- `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json`
+- `chezmoi/.chezmoitemplates/local/resolve-overlay.py`
+- `ansible/tasks/work.local.yml`
+- `./uv.toml`
+
+Then run `chezmoi apply` and `uv run poe work`.

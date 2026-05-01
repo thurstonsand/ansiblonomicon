@@ -262,7 +262,7 @@ help = "Update secrets even if they exist"
 [dependency-groups]
 dev = [
   "ansible-lint>=25.12.1",
-  "poethepoet>=0.38.0",
+  "poethepoet>=0.34.0",
   "pre-commit>=4.5.1",
   "ruff>=0.11.7",
   "basedpyright>=1.31.7",

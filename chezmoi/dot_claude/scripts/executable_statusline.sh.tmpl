@@ -303,7 +303,8 @@ mapfile -t _jq_fields < <(
         (.output_style.name // ""),
         (.worktree.branch // ""),
         ((.context_window.used_percentage // "") | tostring),
-        (.context_window.context_window_size | tostring)
+        (.context_window.context_window_size | tostring),
+        (.effort.level // "")
     '
 )
 session_id="${_jq_fields[0]}"
@@ -314,12 +315,20 @@ output_style="${_jq_fields[4]}"
 worktree_branch="${_jq_fields[5]}"
 USED_PCT_RAW="${_jq_fields[6]}"
 WINDOW_SIZE="${_jq_fields[7]}"
+effort_level="${_jq_fields[8]}"
 
 for var in session_id model_id model_display current_dir output_style worktree_branch; do
   printf -v "$var" '%s' "$(printf '%s' "${!var}" | tr -d '\000-\037\177')"
 done
 
 model_display=$(enrich_model_display "$model_id" "$model_display")
+
+case "$effort_level" in
+  low)    model_display="${model_display}⁻¹" ;;
+  high)   model_display="${model_display}²" ;;
+  xhigh)  model_display="${model_display}³" ;;
+  max)    model_display="${model_display}⁴" ;;
+esac
 
 git_branch="$worktree_branch"
 if [[ -z "$git_branch" && -n "$current_dir" ]]; then

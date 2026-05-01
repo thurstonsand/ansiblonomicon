@@ -1,8 +1,8 @@
-{{- $base := joinPath .chezmoi.sourceDir ".chezmoitemplates/claude-settings.json" -}}
-{{- $jqfile := joinPath .chezmoi.sourceDir ".chezmoitemplates/deepmerge.jq" -}}
-{{- $overlay := joinPath .chezmoi.sourceDir ".chezmoitemplates/local/claude-settings-overlay.json" -}}
-{{- if stat $overlay -}}
-{{- output "jq" "-s" "-f" $jqfile $base $overlay -}}
+{{- $baseRel := ".chezmoitemplates/claude-settings.json" -}}
+{{- $base := joinPath .chezmoi.sourceDir $baseRel -}}
+{{- $resolver := joinPath .chezmoi.sourceDir ".chezmoitemplates/local/resolve-overlay.py" -}}
+{{- if stat $resolver -}}
+{{-   output "python3" $resolver $base -}}
 {{- else -}}
-{{- include ".chezmoitemplates/claude-settings.json" -}}
+{{-   include $baseRel -}}
 {{- end -}}

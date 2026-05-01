@@ -43,7 +43,6 @@ brew "just"
 brew "libpq", link: true
 brew "node@22"
 brew "oven-sh/bun/bun"
-brew "pnpm"
 brew "poetry"
 brew "uv"
 

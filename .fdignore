@@ -1,0 +1,5 @@
+# Unhide work-only files from fd (overrides .gitignore)
+!ansible/Brewfile.work.*
+!ansible/tasks/work.local.yml
+!chezmoi/.chezmoidata/local.toml
+!chezmoi/.chezmoitemplates/local/
