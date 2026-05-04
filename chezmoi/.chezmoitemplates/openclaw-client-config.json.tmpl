@@ -1,0 +1,27 @@
+{
+  "gateway": {
+    "mode": "remote",
+    "remote": {
+      "url": "wss://openclaw.thurstons.house",
+      "token": {
+        "source": "exec",
+        "provider": "op",
+        "id": "op://agent/7j6q76jedrrd22m7i3ukeciady/k77eqgdusyr4sdil44smq7etnu"
+      }
+    }
+  },
+  "secrets": {
+    "providers": {
+      "op": {
+        "source": "exec",
+        "command": "{{ .chezmoi.homeDir }}/.local/bin/openclaw-op-secret",
+        "timeoutMs": 30000,
+        "maxOutputBytes": 65536,
+        "jsonOnly": true,
+        "trustedDirs": [
+          "{{ .chezmoi.homeDir }}/.local/bin"
+        ]
+      }
+    }
+  }
+}

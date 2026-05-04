@@ -31,36 +31,36 @@ models:
       zed: true
 
     sonnet:
-      version: "claude-sonnet-4-5-20250929"
-      display_name: "Claude Sonnet 4.5"
-      max_input: 200000
+      version: "claude-sonnet-4-6"
+      display_name: "Claude Sonnet 4.6"
+      max_input: 1000000
       max_output: 64000
       vision: true
       cli_proxy_api:
-        pattern: "^claude-sonnet-4-5"
+        pattern: "^claude-sonnet-4-6"
       agent_harness:
         aliases:
           claude: "sonnet"
-          opencode: "anthropic/claude-sonnet-4-5-20250929"
-          pi: "anthropic/claude-sonnet-4-5-20250929"
+          opencode: "anthropic/claude-sonnet-4-6"
+          pi: "anthropic/claude-sonnet-4-6"
       vscode:
         include: true
         thinking: true
       zed: true
 
     opus:
-      version: "claude-opus-4-6"
-      display_name: "Claude Opus 4.6"
+      version: "claude-opus-4-7"
+      display_name: "Claude Opus 4.7"
       max_input: 1000000
       max_output: 128000
       vision: true
       cli_proxy_api:
-        pattern: "^claude-opus-4-6"
+        pattern: "^claude-opus-4-7"
       agent_harness:
         aliases:
           claude: "opus"
-          opencode: "anthropic/claude-opus-4-6"
-          pi: "anthropic/claude-opus-4-6"
+          opencode: "anthropic/claude-opus-4-7"
+          pi: "anthropic/claude-opus-4-7"
       vscode:
         include: true
         thinking: true
@@ -74,7 +74,10 @@ models:
       version: "gpt-5.5"
       display_name: "GPT 5.5"
       # Codex GPT-5.5 is advertised as a 400K total window: 272K input + 128K output.
+      # Check current subscription-backed Codex limits with:
+      # codex debug models | jq -r '.models[] | select(.slug=="gpt-5.5") | {slug, context_window, max_context_window, effective_context_window_percent}'
       # Restore max_input to 1050000 when Codex exposes GPT-5.5's 1M API context window.
+      # GPT-5.4 currently reports max_context_window=1000000, but GPT-5.5 does not.
       max_input: 272000
       max_output: 128000
       vision: true
@@ -103,33 +106,6 @@ models:
         xhigh:
           id: "gpt-5.5(xhigh)"
           display_name: "GPT 5.5 XHigh"
-          vscode: true
-
-    gpt_codex:
-      version: "gpt-5.3-codex"
-      display_name: "GPT 5.3 Codex"
-      max_input: 400000
-      max_output: 128000
-      vision: true
-      agent_harness:
-        aliases:
-          pi: "openai/gpt-5.3-codex"
-      vscode:
-        include: true
-        thinking: true
-      zed: true
-      variants:
-        medium:
-          id: "gpt-5.3-codex(medium)"
-          display_name: "GPT 5.3 Codex Medium"
-          vscode: true
-        high:
-          id: "gpt-5.3-codex(high)"
-          display_name: "GPT 5.3 Codex High"
-          vscode: true
-        xhigh:
-          id: "gpt-5.3-codex(xhigh)"
-          display_name: "GPT 5.3 Codex XHigh"
           vscode: true
 
     gpt_codex_spark:
@@ -164,15 +140,15 @@ models:
   # ===========================================================================
   google:
     gemini_pro:
-      version: "gemini-3.1-pro-high"
+      version: "gemini-3.1-pro-preview"
       display_name: "Gemini 3.1 Pro"
       max_input: 1000000
       max_output: 65536
       vision: true
       agent_harness:
         aliases:
-          opencode: google/gemini-3.1-pro-high
-          pi: google/gemini-3.1-pro-high
+          opencode: google/gemini-3.1-pro-preview
+          pi: google/gemini-3.1-pro-preview
       vscode:
         include: true
         thinking: true
@@ -188,6 +164,21 @@ models:
         aliases:
           opencode: google/gemini-3-flash-preview
           pi: google/gemini-3-flash-preview
+      vscode:
+        include: true
+        thinking: true
+      zed: true
+
+    gemini_flash_lite:
+      version: "gemini-3.1-flash-lite-preview"
+      display_name: "Gemini 3.1 Flash Lite"
+      max_input: 1000000
+      max_output: 65536
+      vision: true
+      agent_harness:
+        aliases:
+          opencode: google/gemini-3.1-flash-lite-preview
+          pi: google/gemini-3.1-flash-lite-preview
       vscode:
         include: true
         thinking: true
@@ -257,8 +248,6 @@ cli_proxy_api:
   oauth_model_alias:
     anthropic:
       # Dateless aliases
-      - name: claude-sonnet-4-5-20250929
-        alias: claude-sonnet-4-5
       - name: claude-haiku-4-5-20251001
         alias: claude-haiku-4-5
     antigravity:
@@ -296,6 +285,8 @@ cli_proxy_api:
       - claude-opus-4-20250514
       - claude-opus-4-1-20250805
       - claude-opus-4-5-20251101
+      - claude-sonnet-4-5-20250929
+      - claude-opus-4-6
     gemini-cli:
       - gemini-2.5-computer-use-preview-10-2025
       - gemini-2.0-*
@@ -317,3 +308,4 @@ cli_proxy_api:
       - gpt-5-codex-mini
       - gpt-5.1-codex
       - gpt-5.2-codex
+      - gpt-5.3-codex

@@ -110,7 +110,7 @@ dev = [
     { name = "basedpyright", specifier = ">=1.31.7" },
     { name = "json-with-comments", specifier = ">=1.2.10" },
     { name = "mypy", specifier = ">=1.19.1" },
-    { name = "poethepoet", specifier = ">=0.38.0" },
+    { name = "poethepoet", specifier = ">=0.34.0" },
     { name = "pre-commit", specifier = ">=4.5.1" },
     { name = "pytest", specifier = ">=9.0.2" },
     { name = "python-dotenv", specifier = ">=1.2.1" },

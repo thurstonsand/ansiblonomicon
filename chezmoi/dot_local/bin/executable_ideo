@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Opens a Ghostty split backed by stable shpool sessions on OpenClaw.
-# Usage: ideo <ansiblonomicon|openclaw> [agent-command...]
-
 quote() {
   printf '%q' "$1"
 }
@@ -16,11 +13,23 @@ join_command() {
 
 usage() {
   cat >&2 <<'EOF'
-usage: ideo <ansiblonomicon|openclaw> [agent-command...]
+usage: ideo [host] <ansiblonomicon|openclaw> [agent-command...]
+
+Examples:
+  ideo ansiblonomicon
+  ideo openclaw ansiblonomicon
+  ideo openclaw openclaw pi
 
 Environment:
-  SHPOOL_IDE_HOST  SSH host to use (default: openclaw)
+  SHPOOL_IDE_HOST  SSH host to use when host is omitted (default: openclaw)
 EOF
+}
+
+is_project() {
+  case "$1" in
+    ansiblonomicon | openclaw) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 remote_dir_for_project() {
@@ -39,6 +48,19 @@ remote_dir_for_project() {
   esac
 }
 
+parse_target() {
+  if (( $# >= 2 )) && is_project "$2"; then
+    IDEO_HOST=$1
+    IDEO_PROJECT=$2
+    IDEO_AGENT_ARGS=("${@:3}")
+    return 0
+  fi
+
+  IDEO_HOST=${SHPOOL_IDE_HOST:-openclaw}
+  IDEO_PROJECT=$1
+  IDEO_AGENT_ARGS=("${@:2}")
+}
+
 wrap_interactive_cmd() {
   local cmd
   local zsh_cmd
@@ -47,39 +69,61 @@ wrap_interactive_cmd() {
   printf '/usr/bin/zsh -ilc %s' "$(quote "$zsh_cmd")"
 }
 
-exec_shp_attach() {
-  local session=$1
-  local dir=$2
-  shift 2
+run_shp_attach() {
+  local host=$1
+  local session=$2
+  local dir=$3
+  shift 3
 
   if ! command -v shp >/dev/null 2>&1; then
     echo "ideo: shp is not installed." >&2
     exit 1
   fi
 
-  local host=${SHPOOL_IDE_HOST:-openclaw}
   local args=("$host" --force --dir "$dir")
   if (( $# > 0 )); then
     args+=(--cmd "$(wrap_interactive_cmd "$@")")
   fi
   args+=("$session")
 
-  exec shp "${args[@]}"
+  while true; do
+    set +e
+    shp "${args[@]}"
+    local status=$?
+    set -e
+
+    if (( status == 0 )); then
+      exit 0
+    fi
+
+    if [[ ! -t 0 ]]; then
+      exit "$status"
+    fi
+
+    printf '\nideo: %s on %s disconnected (exit %s). Press Enter to reconnect, q to quit.\n' "$session" "$host" "$status" >&2
+    local reply
+    IFS= read -rsn1 reply || exit "$status"
+    if [[ "$reply" == "q" ]]; then
+      printf '\n' >&2
+      exit "$status"
+    fi
+  done
 }
 
 attach_session() {
-  local project=$1
-  local kind=$2
-  shift 2
+  local host=$1
+  local project=$2
+  local kind=$3
+  shift 3
 
   local remote_dir
   remote_dir=$(remote_dir_for_project "$project")
 
   local session="${kind}-${project}"
   if [[ "$kind" == "edit" && $# -eq 0 ]]; then
-    exec_shp_attach "$session" "$remote_dir" nvim .
+    run_shp_attach "$host" "$session" "$remote_dir" nvim .
   else
-    exec_shp_attach "$session" "$remote_dir" "$@"
+    run_shp_attach "$host" "$session" "$remote_dir" "$@"
   fi
 }
 
@@ -92,8 +136,8 @@ self_path() {
 }
 
 if [[ ${1:-} == "--attach" ]]; then
-  if (( $# < 3 )); then
-    echo "ideo: --attach requires project and kind." >&2
+  if (( $# < 4 )); then
+    echo "ideo: --attach requires host, project, and kind." >&2
     exit 1
   fi
   shift
@@ -127,15 +171,16 @@ if [[ "$terminal_count" != "1" ]]; then
   exit 1
 fi
 
-project=$1
-shift
-remote_dir_for_project "$project" >/dev/null
+declare IDEO_HOST IDEO_PROJECT
+declare -a IDEO_AGENT_ARGS
+parse_target "$@"
+remote_dir_for_project "$IDEO_PROJECT" >/dev/null
 
 script_path=$(self_path)
-editor_local="exec $(quote "$script_path") --attach $(quote "$project") edit"
+editor_local="exec $(quote "$script_path") --attach $(quote "$IDEO_HOST") $(quote "$IDEO_PROJECT") edit"
 
 ghostty-nav split left --command "/bin/zsh -ilc $(quote "$editor_local")" --focus new
 ghostty-nav resize right --percent 15
 ghostty-nav toggle-zoom
 
-attach_session "$project" agent "$@"
+attach_session "$IDEO_HOST" "$IDEO_PROJECT" agent "${IDEO_AGENT_ARGS[@]}"

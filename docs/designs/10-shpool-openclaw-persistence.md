@@ -111,10 +111,10 @@ Remote Neovim-to-local-Ghostty key-table synchronization is intentionally deferr
 Initial interface:
 
 ```sh
-ideo <project> [agent-command...]
+ideo [host] <project> [agent-command...]
 ```
 
-Supported projects start hard-coded. Unknown or omitted projects fail fast.
+When the first two positional arguments are `host` and a known project, the first argument selects the SSH host. Otherwise the host defaults to `SHPOOL_IDE_HOST`, then `openclaw`. Supported projects start hard-coded. Unknown or omitted projects fail fast.
 
 - `ansiblonomicon` -> `~/code/ansiblonomicon`
 - `openclaw` -> `~/code/openclaw`
@@ -124,7 +124,7 @@ The helper opens two stable remote shpool sessions:
 - `edit-<project>` in the project directory, creating it with `nvim .` through an interactive zsh login shell
 - `agent-<project>` in the project directory, optionally creating it with the provided agent command through an interactive zsh login shell
 
-The helper invokes `shp` with `--force`, `--dir`, and optional `--cmd` rather than building raw SSH commands itself. `Host openclaw` remains the only SSH target.
+The helper invokes `shp` with `--force`, `--dir`, and optional `--cmd` rather than building raw SSH commands itself. If `shp` exits non-zero from a dropped SSH connection, `ideo` keeps the local Ghostty split alive and prompts to reconnect or quit.
 
 ## Edge Cases
 

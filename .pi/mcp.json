@@ -5,6 +5,11 @@
       "auth": "bearer",
       "bearerTokenEnv": "CLOUDFLARE_API_TOKEN",
       "directTools": true
+    },
+    "home-assistant": {
+      "url": "https://ha.thurstons.house/api/mcp",
+      "auth": "bearer",
+      "bearerTokenEnv": "HOMEPAGE_HOMEASSISTANT_API_KEY"
     }
   }
 }

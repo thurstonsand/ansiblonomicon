@@ -56,7 +56,7 @@ export default function ampStylePermissionGate(pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => restoreState(ctx));
   pi.on("session_tree", async (_event, ctx) => restoreState(ctx));
-  pi.on("session_fork", async (_event, ctx) => restoreState(ctx));
+  pi.on("session_before_fork", async (_event, ctx) => restoreState(ctx));
   pi.on("turn_end", () => pendingApprovedNotes.clear());
   pi.on("tool_result", async (event) => {
     const note = pendingApprovedNotes.get(event.toolCallId);

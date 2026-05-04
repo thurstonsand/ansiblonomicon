@@ -48,7 +48,7 @@ These are managed as dotfiles via chezmoi, then applied by Ansible through the c
 
 - Pi config / extension sources: `chezmoi/private_dot_pi/agent/settings.json.tmpl`
 - Local pi extension packages: `chezmoi/private_dot_pi/agent/extensions/`
-- Pi powerline custom segments: `chezmoi/private_dot_pi/agent/powerline/segments/`
+- Pi custom footer/status behavior: `chezmoi/private_dot_pi/agent/extensions/pi-powerline-footer-custom/`
 - How chezmoi is applied: `ansible/roles/chezmoi/tasks/main.yml`
 - Pi extension maintenance scripts: `scripts/pi-lint.sh`, `scripts/pi-extension-deps.sh`
 

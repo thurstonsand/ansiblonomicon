@@ -1,10 +1,17 @@
 {
   "name": "pi-extensions",
   "private": true,
+  "scripts": {
+    "preview:gauge": "npm run preview:gauge:shapes --",
+    "preview:gauge:colors": "jiti pi-powerline-footer-custom/context-gauge-colors-preview.ts",
+    "preview:gauge:shapes": "jiti pi-powerline-footer-custom/context-gauge-shapes-preview.ts"
+  },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.8",
-    "@mariozechner/pi-coding-agent": "^0.63.1",
-    "@types/node": "^25.5.0",
-    "typescript": "^6.0.2"
+    "@biomejs/biome": "^2.4.14",
+    "@mariozechner/pi-agent-core": "^0.72.1",
+    "@mariozechner/pi-ai": "^0.72.1",
+    "@mariozechner/pi-coding-agent": "^0.72.1",
+    "@types/node": "^25.6.0",
+    "typescript": "^6.0.3"
   }
 }

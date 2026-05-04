@@ -17,10 +17,7 @@
       "Skill(updating-documentation-for-changes)",
       "Skill(git-commit-helper)"
     ],
-    "deny": [
-      "Read(**/.env)",
-      "Read(**/.env.*)"
-    ],
+    "deny": ["Read(**/.env)", "Read(**/.env.*)"],
     "defaultMode": "acceptEdits"
   },
   "hooks": {
@@ -58,7 +55,7 @@
   },
   "statusLine": {
     "type": "command",
-    "command": "~/.claude/scripts/statusline.sh --gauge --folder --branch --model --style --usage"
+    "command": "~/.claude/scripts/statusline.sh"
   },
   "model": "opus",
   "outputStyle": "2B",

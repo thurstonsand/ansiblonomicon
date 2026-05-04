@@ -32,9 +32,11 @@ Library/
 .local/bin/ghostty-ide
 {{ end }}
 
-# ideo is a personal workstation wrapper for this Mac's OpenClaw SSH workflow.
+# ideo and local OpenClaw CLI remote config are personal to this Mac.
 {{ if ne .chezmoi.hostname "Thurstons-MacBook-Pro" }}
 .local/bin/ideo
+.local/bin/openclaw-op-secret
+.openclaw/
 {{ end }}
 
 # Work Mac

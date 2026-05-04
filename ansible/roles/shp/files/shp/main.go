@@ -43,11 +43,12 @@ type app struct {
 func main() {
 	application := &app{}
 	cmd := &cobra.Command{
-		Use:   "shp [-l] [--dir DIR] [--cmd COMMAND] <host> [session]",
-		Short: "Attach to shpool sessions over SSH",
-		Long:  "Attach to named shpool sessions over SSH. Without a session name, reuse the most recently disconnected tmp-* session or create a new temporary session.",
-		Args:  application.validateArgs,
-		RunE:  application.run,
+		Use:          "shp [-l] [--dir DIR] [--cmd COMMAND] <host> [session]",
+		Short:        "Attach to shpool sessions over SSH",
+		Long:         "Attach to named shpool sessions over SSH. Without a session name, reuse the most recently disconnected tmp-* session or create a new temporary session.",
+		Args:         application.validateArgs,
+		RunE:         application.run,
+		SilenceUsage: true,
 		ValidArgsFunction: func(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 			switch len(args) {
 			case 0:

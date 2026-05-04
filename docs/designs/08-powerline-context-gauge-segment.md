@@ -1,5 +1,7 @@
 # Powerline Context Gauge Segment Plan
 
+Status: Superseded by `chezmoi/private_dot_pi/agent/extensions/pi-powerline-footer-custom/`, which uses Pi's extension status updates instead of the old custom segment loader.
+
 ## Problem Statement
 
 Replace the built-in `context_pct` powerline segment with a custom segment that preserves the built-in calculation logic but renders it as a fixed-width gauge instead of `icon + percent/max` text.

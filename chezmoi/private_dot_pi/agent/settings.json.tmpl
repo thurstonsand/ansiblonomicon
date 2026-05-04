@@ -21,7 +21,7 @@
     "autoResize": true,
     "blockImages": false
   },
-  "lastChangelogVersion": "0.70.6",
+  "lastChangelogVersion": "0.72.1",
   "enabledModels": [
     "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
     "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}",
@@ -38,62 +38,21 @@
       "model": "{{ .models.google.gemini_flash.agent_harness.aliases.pi }}"
     }
   },
+  "showLastPrompt": false,
   "powerline": {
     "preset": "custom",
-    "showLastPrompt": false,
-    "profiles": [
-      {
-        "model": "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
-        "thinking": "medium",
-        "label": "smart"
-      },
-      {
-        "model": "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
-        "thinking": "high",
-        "label": "smart"
-      },
-      {
-        "model": "{{ .models.openai.gpt.agent_harness.aliases.pi }}",
-        "thinking": "medium",
-        "label": "deep"
-      },
-      {
-        "model": "{{ .models.openai.gpt.agent_harness.aliases.pi }}",
-        "thinking": "high",
-        "label": "deep"
-      },
-      {
-        "model": "{{ .models.openai.gpt.agent_harness.aliases.pi }}",
-        "thinking": "xhigh",
-        "label": "deep"
-      }
-    ],
-    "vibe": {
-      "theme": "NieR:Automata - 2B",
-      "mode": "generate",
-      "model": "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}",
-      "fallback": "Executing mission",
-      "refreshInterval": 30,
-      "maxLength": 48
-    },
     "custom": {
-      "separator": "powerline-thin",
+      "separator": "slash",
       "leftSegments": [
-        "model",
-        "path",
-        "git"
+        "custom:model_display",
+        "custom:workspace_folder",
+        "custom:workspace_branch"
       ],
       "rightSegments": [
-        "context_pct"
+        "custom:context_gauge"
       ],
       "secondarySegments": [],
       "options": {
-        "model": {
-          "showThinkingLevel": false,
-          "verbosity": {
-            "style": "icon"
-          }
-        },
         "path": {
           "mode": "basename",
           "maxLength": 60
@@ -103,14 +62,29 @@
           "showStaged": false,
           "showUnstaged": false,
           "showUntracked": false
-        },
-        "context_pct": {
-          "maxTokens": 400000,
-          "warnAt": 50,
-          "errorAt": 80
         }
       }
-    }
+    },
+    "customItems": [
+      {
+        "id": "model_display",
+        "position": "left",
+        "hideWhenMissing": false
+      },
+      {
+        "id": "workspace_folder",
+        "position": "left",
+        "hideWhenMissing": false
+      },
+      {
+        "id": "workspace_branch",
+        "position": "left"
+      },
+      {
+        "id": "context_gauge",
+        "position": "right"
+      }
+    ]
   },
   "packages": [
     {
@@ -128,7 +102,7 @@
     },
     "npm:pi-librarian",
     "npm:pi-verbosity-control",
-    {{ if eq .chezmoi.os "darwin" }}"npm:@thurstonsand/pi-powerline-footer"{{ else }}"npm:@thurstonsand/pi-powerline-footer"{{ end }},
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:pi-powerline-footer"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
     "git:github.com/davebcn87/pi-autoresearch",
     "npm:pi-interview",
@@ -146,7 +120,8 @@
       ]
     },
     "npm:@benvargas/pi-openai-fast",
-    "git:github.com/earendil-works/pi-review"
+    "git:github.com/earendil-works/pi-review",
+    "npm:pi-btw"
   ],
 {{- if eq .chezmoi.os "darwin" }}
   "extensions": [

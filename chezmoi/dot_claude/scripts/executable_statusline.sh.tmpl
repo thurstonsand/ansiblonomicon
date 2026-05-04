@@ -7,7 +7,9 @@ trap 'echo "[statusline error]" >&2' ERR
 # CONFIGURATION
 # =============================================================================
 
-BAR_LENGTH=20
+BAR_LENGTH=21
+GAUGE_WARN_AT=50
+GAUGE_ERROR_AT=80
 MAX_TOKENS_CAP=400000 # artificial cap; 1M-window models still gauge against this
 CACHE_DIR="${HOME}/.cache/claude-statusline"
 
@@ -20,35 +22,35 @@ CACHE_DIR="${HOME}/.cache/claude-statusline"
 CURRENT_THEME=$(cat ~/.terminal-bg 2>/dev/null || echo "dark")
 RESET='\033[0m'
 
-BG_GREEN='\033[48;5;143m'  # #98971a (neutral)
-BG_YELLOW='\033[48;5;179m' # #d79921 (neutral)
-BG_RED='\033[48;5;167m'    # #cc241d (neutral)
+rgb_fg() { printf '\\033[38;2;%s;%s;%sm' "$1" "$2" "$3"; }
 
 if [[ "$CURRENT_THEME" == "light" ]]; then
-  BG_DIM='\033[48;5;187m'      # #d5c4a1
-  FG_CONTRAST='\033[38;5;16m'  # fixed black
-  FG_GREEN='\033[38;5;100m'    # #79740e (faded green)
-  SILVER='\033[38;5;241m'      # #626262 (bright — high contrast on light bg)
+  FG_GREEN=$(rgb_fg 121 116 14)  # gruvbox-light-hard green #79740e
+  FG_YELLOW=$(rgb_fg 181 118 20) # gruvbox-light-hard yellow #b57614
+  FG_RED=$(rgb_fg 157 0 6)       # gruvbox-light-hard red #9d0006
+  FG_ORANGE=$(rgb_fg 175 58 3)   # gruvbox-light-hard orange #af3a03
+  FG_MUTED=$(rgb_fg 102 92 84)   # gruvbox-light-hard muted #665c54
   STYLE_PALETTE=(
-    '\033[38;5;126m' # #8f3f71 purple (faded)
-    '\033[38;5;65m'  # #427b58 aqua (faded)
-    '\033[38;5;136m' # #af8700 yellow (faded)
-    '\033[38;5;100m' # #79740e green (faded)
-    '\033[38;5;124m' # #9d0006 red (faded)
-    '\033[38;5;130m' # #af3a03 orange (faded)
+    "$(rgb_fg 143 63 113)" # purple #8f3f71
+    "$(rgb_fg 66 123 88)"  # cyan/green #427b58
+    "$(rgb_fg 181 118 20)" # yellow #b57614
+    "$(rgb_fg 121 116 14)" # green #79740e
+    "$(rgb_fg 157 0 6)"    # red #9d0006
+    "$(rgb_fg 175 58 3)"   # orange #af3a03
   )
 else
-  BG_DIM='\033[48;5;239m'       # #504945
-  FG_CONTRAST='\033[38;5;255m'  # fixed white
-  FG_GREEN='\033[38;5;142m'     # #b8bb26 (bright green)
-  SILVER='\033[38;5;246m'       # #a89984 (light gray for dark bg)
+  FG_GREEN=$(rgb_fg 184 187 38)  # gruvbox-dark-hard green #b8bb26
+  FG_YELLOW=$(rgb_fg 250 189 47) # gruvbox-dark-hard yellow #fabd2f
+  FG_RED=$(rgb_fg 251 73 52)     # gruvbox-dark-hard red #fb4934
+  FG_ORANGE=$(rgb_fg 254 128 25) # gruvbox-dark-hard orange #fe8019
+  FG_MUTED=$(rgb_fg 189 174 147) # gruvbox-dark-hard muted #bdae93
   STYLE_PALETTE=(
-    '\033[38;5;175m' # #d3869b light purple
-    '\033[38;5;108m' # #8ec07c light aqua
-    '\033[38;5;214m' # #fabd2f bright yellow
-    '\033[38;5;142m' # #b8bb26 bright green
-    '\033[38;5;203m' # #fb4934 bright red
-    '\033[38;5;208m' # #fe8019 bright orange
+    "$(rgb_fg 211 134 155)" # purple #d3869b
+    "$(rgb_fg 142 192 124)" # cyan/green #8ec07c
+    "$(rgb_fg 250 189 47)"  # yellow #fabd2f
+    "$(rgb_fg 184 187 38)"  # green #b8bb26
+    "$(rgb_fg 251 73 52)"   # red #fb4934
+    "$(rgb_fg 254 128 25)"  # orange #fe8019
   )
 fi
 
@@ -58,7 +60,7 @@ fi
 
 SECTION_ORDER=()
 if [[ $# -eq 0 ]]; then
-  SECTION_ORDER=(gauge folder branch style)
+  SECTION_ORDER=(model folder branch gauge style)
 else
   for arg in "$@"; do
     case "$arg" in
@@ -159,75 +161,73 @@ write_cache() {
 # RENDER
 # =============================================================================
 
-get_bg_color() {
+get_gauge_color() {
   local used_pct=$1
-  if [[ $used_pct -lt 50 ]]; then
-    echo "$BG_GREEN"
-  elif [[ $used_pct -lt 75 ]]; then
-    echo "$BG_YELLOW"
+  local over_cap=$2
+  if [[ $over_cap -eq 1 || $used_pct -ge $GAUGE_ERROR_AT ]]; then
+    echo "$FG_RED"
+  elif [[ $used_pct -ge $GAUGE_WARN_AT ]]; then
+    echo "$FG_YELLOW"
   else
-    echo "$BG_RED"
+    echo "$FG_MUTED"
   fi
 }
 
 build_gauge() {
   local used_pct=$1
   local over_cap=$2
-
-  local bg_fill
+  local label
   if [[ $over_cap -eq 1 ]]; then
-    bg_fill=$BG_RED
+    printf -v label '%02d!' "$used_pct"
   else
-    bg_fill=$(get_bg_color "$used_pct")
+    printf -v label '%02d%%' "$used_pct"
   fi
 
-  local label="${used_pct}%"
-  local pad_label=" ${label} "
-  local pad_len=${#pad_label}
+  local label_len=${#label}
+  local visible_bar_width=$((BAR_LENGTH - label_len))
+  [[ $visible_bar_width -lt 0 ]] && visible_bar_width=0
 
-  local filled=$((used_pct * BAR_LENGTH / 100))
-
-  local label_start=$(((BAR_LENGTH - pad_len) / 2))
-  [[ $label_start -lt 0 ]] && label_start=0
+  local filled=$(((used_pct * visible_bar_width + 50) / 100))
+  [[ $filled -lt 0 ]] && filled=0
+  [[ $filled -gt $visible_bar_width ]] && filled=$visible_bar_width
+  local empty=$((visible_bar_width - filled))
 
   local bar=""
-  for ((i = 0; i < BAR_LENGTH; i++)); do
-    if [[ $i -ge $label_start && $i -lt $((label_start + pad_len)) ]]; then
-      local li=$((i - label_start))
-      bar="${bar}${pad_label:$li:1}"
-    else
-      bar="${bar} "
-    fi
+  for ((i = 0; i < filled; i++)); do
+    bar="${bar}━"
+  done
+  bar="${bar}${label}"
+  for ((i = 0; i < empty; i++)); do
+    bar="${bar}─"
   done
 
-  local filled_part="${bar:0:$filled}"
-  local empty_part="${bar:$filled}"
-
-  local gauge=""
-  [[ -n "$filled_part" ]] && gauge="${FG_CONTRAST}${bg_fill}${filled_part}${RESET}"
-  [[ -n "$empty_part" ]] && gauge="${gauge}${FG_CONTRAST}${BG_DIM}${empty_part}${RESET}"
-
-  [[ $over_cap -eq 1 ]] && gauge="🔥 ${gauge}"
-
-  printf '%b' "${gauge}"
+  local color
+  color=$(get_gauge_color "$used_pct" "$over_cap")
+  printf '%b' "${color}[${bar}]${RESET}"
 }
 
 render_section_model() {
-  printf '%b' "${SILVER}$1${RESET}"
+  printf '%b' "${FG_ORANGE}$1${RESET}"
 }
 
 render_section_folder() {
-  printf '%b' "${SILVER}📁 $1${RESET}"
+  printf '%b' "${FG_GREEN}\uf115 $1${RESET}"
 }
 
 render_section_branch() {
   local branch="$1"
   local worktree="${2:-0}"
   [[ -n "$branch" ]] || return
+
+  local color="$FG_MUTED"
+  case "$branch" in
+    main|master) color="$FG_YELLOW" ;;
+  esac
+
   if [[ "$worktree" -eq 1 ]]; then
-    printf '%b' "${SILVER}\uf126 \ue725 $branch${RESET}"
+    printf '%b' "${color}\uf126 \ue725 $branch${RESET}"
   else
-    printf '%b' "${SILVER}\ue725 $branch${RESET}"
+    printf '%b' "${color}\uf126 $branch${RESET}"
   fi
 }
 
@@ -274,8 +274,9 @@ output_line() {
   done
 
   local out=""
+  local separator=" ${FG_MUTED}▸${RESET} "
   for ((i = 0; i < ${#sections[@]}; i++)); do
-    [[ $i -gt 0 ]] && out+=" │ "
+    [[ $i -gt 0 ]] && out+="$separator"
     out+="${sections[$i]}"
   done
   printf '%b\n' "$out"
@@ -388,7 +389,7 @@ else
 fi
 
 OVER_CAP=0
-if [[ $TOKENS_USED -gt $EFFECTIVE_MAX ]]; then
+if [[ $COMPACTION_TOKENS -gt $EFFECTIVE_MAX && $TOKENS_USED -gt $EFFECTIVE_MAX ]]; then
   OVER_CAP=1
   DISPLAY_PCT=$((TOKENS_USED * 100 / COMPACTION_TOKENS))
 else
