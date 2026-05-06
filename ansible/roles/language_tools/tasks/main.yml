@@ -45,7 +45,7 @@
 - name: Install global Go tools
   when: go_tools | length > 0
   ansible.builtin.command:
-    cmd: go install {{ item }}@latest
+    cmd: "go install {{ item if '@' in item else item + '@latest' }}"
   loop: "{{ go_tools }}"
   register: language_tools_go_result
   changed_when: language_tools_go_result.stderr | length > 0

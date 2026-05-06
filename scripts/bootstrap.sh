@@ -122,7 +122,7 @@ if [[ -f "$REPO_DIR/ansible/requirements.yml" ]]; then
         echo ""
         echo "ERROR: Failed to install Ansible Galaxy requirements."
         echo ""
-        echo "If this is an SSL/certificate error (e.g. corporate proxy or Zscaler),"
+        echo "If this is an SSL/certificate error (e.g. corporate proxy with TLS inspection),"
         echo "re-run with:"
         echo "    ./scripts/bootstrap.sh --ignore-certs"
         exit 1
@@ -132,7 +132,6 @@ fi
 echo "==> Bootstrap complete!"
 echo ""
 echo "Next step: run the appropriate playbook, e.g.:"
-echo "    uv run poe macos"
+echo "    uv run poe laptop"
 echo "    uv run poe truenas"
 echo "    uv run poe openclaw"
-echo "    uv run poe work"

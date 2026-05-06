@@ -1,6 +1,9 @@
 ---
 # Work macOS-specific configuration (corporate laptop)
 
+# Machine identity (used by playbook guard)
+hostname_prefix: "ML-"
+
 # Feature flags
 configure_homebrew: true
 configure_macos_defaults: true
@@ -8,6 +11,10 @@ configure_uvc_util: true
 configure_chezmoi: true
 configure_pam_reattach: false
 configure_agent_harness: true
+
+# Go tools (work-specific)
+go_tools_extra:
+  - github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
 
 # Agent Harness - only deploy to Claude on work machine
 agent_harness_target_agents:

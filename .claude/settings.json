@@ -1,4 +1,9 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(ansible-lint:*)"
+    ]
+  },
   "sandbox": {
     "excludedCommands": ["uv run poe:*"]
   }

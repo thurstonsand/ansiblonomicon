@@ -58,34 +58,25 @@ help = "Apply Biome formatting/fixes before type-checking"
 help = "Update dependencies for all tracked pi extension packages"
 cmd = "./scripts/pi-extension-deps.sh"
 
-[tool.poe.tasks.macos]
-help = "Run the macOS ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "ansible-playbook -i inventory/control/macos.ini playbooks/macos.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
+[tool.poe.tasks.laptop]
+help = "Run the correct macOS playbook for this machine (auto-detects work vs personal)"
+shell = """
+if [[ "$(hostname)" == ML-* ]]; then
+  PLAYBOOK=work.yml
+else
+  PLAYBOOK=macos.yml
+fi
+ansible-playbook -i inventory/control/macos.ini "playbooks/$PLAYBOOK" --diff ${check:+--check} ${tags:+--tags ${tags}}
+"""
 cwd = "ansible"
 
-[[tool.poe.tasks.macos.args]]
+[[tool.poe.tasks.laptop.args]]
 name = "check"
 type = "boolean"
 options = ["--check", "-c"]
 help = "Dry-run mode (no changes made)"
 
-[[tool.poe.tasks.macos.args]]
-name = "tags"
-options = ["--tags", "-t"]
-help = "Only run tasks with these tags (comma-separated)"
-
-[tool.poe.tasks.work]
-help = "Run the work macOS ansible playbook (pass --check for dry-run, --tags for specific tags)"
-cmd = "ansible-playbook -i inventory/control/macos.ini playbooks/work.yml --diff ${check:+--check} ${tags:+--tags ${tags}}"
-cwd = "ansible"
-
-[[tool.poe.tasks.work.args]]
-name = "check"
-type = "boolean"
-options = ["--check", "-c"]
-help = "Dry-run mode (no changes made)"
-
-[[tool.poe.tasks.work.args]]
+[[tool.poe.tasks.laptop.args]]
 name = "tags"
 options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"

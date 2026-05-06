@@ -8,13 +8,12 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - `--ignore-certs` — Skip SSL verification for `ansible-galaxy install` (for corporate proxies)
 - `./scripts/test-bootstrap.sh` — Test bootstrap in clean macOS VM via Tart
   - `--reuse` reuses existing VM; `--uninstall-xcode` tests fresh Xcode install; `--full-brew-bundle` uses real Brewfile
-- `uv run poe macos` — Apply macOS Ansible playbook
+- `uv run poe laptop` — Apply macOS Ansible playbook (auto-detects work vs personal by hostname)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
   - **macOS tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `forge-code`, `ghostty-nav`, `homebrew`/`mas`, `language-tools`, `neovim`/`nvim-deps`, `opencode`, `shp`, `sysconfig`/`hostname`, `terminal-theme`, `tmux`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
-- `uv run poe work` — Apply work macOS Ansible playbook
-  - **Work tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `local`, `neovim`/`nvim-deps`, `terminal-theme`, `uvc-util`, `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
+  - **Work-only tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `local`, `neovim`/`nvim-deps`, `terminal-theme`, `uvc-util`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all Docker stacks), `vm`/`truenas-vm`, `openclaw-vm`, `homeassistant-vm`, or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
 - `uv run poe udmp` — Apply UDMP Ansible playbook (same options as macos)

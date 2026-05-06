@@ -1,3 +1,4 @@
+{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
 {{- $packageFinder := print .chezmoi.workingTree "/scripts/pi-package-json-paths.sh" -}}
 {{- $sourceExtensions := print .chezmoi.sourceDir "/private_dot_pi/agent/extensions" -}}
 {{- $sourcePowerline := print .chezmoi.sourceDir "/private_dot_pi/agent/powerline" -}}
@@ -16,3 +17,4 @@ PACKAGE_FINDER={{ $packageFinder | quote }}
     npm --prefix "$package_dir" install
   fi
 done
+{{- end -}}

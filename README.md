@@ -7,7 +7,7 @@ System configuration via Ansible + Chezmoi, replacing nix-darwin + home-manager.
 ```bash
 # First time setup (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI)
 ./scripts/bootstrap.sh
-# Use --ignore-certs if behind a corporate proxy (e.g. Zscaler)
+# Use --ignore-certs if behind a corporate proxy that intercepts TLS
 ./scripts/bootstrap.sh --ignore-certs
 
 # After changes
@@ -16,7 +16,7 @@ anup
 
 ### Sudo Access
 
-Ansible uses `SUDO_ASKPASS` to get the sudo password from 1Password automatically. Just run `poe macos` or `poe work` — no manual password entry needed.
+Ansible uses `SUDO_ASKPASS` to get the sudo password from 1Password automatically. Just run `poe laptop` — no manual password entry needed.
 
 Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 
@@ -62,8 +62,7 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 
 - `anup` — Apply macOS Ansible playbook (alias set up by this playbook)
 - `anup --check` — Dry-run mode (shows what would change without applying)
-- `poe macos` — Apply macOS Ansible playbook (same as `anup`)
-- `poe work` — Apply work macOS Ansible playbook
+- `poe laptop` — Apply macOS Ansible playbook (auto-detects work vs personal)
 - `poe openclaw` — Apply OpenClaw (Debian VM) Ansible playbook
 - `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe udmp` — Apply UDMP Ansible playbook

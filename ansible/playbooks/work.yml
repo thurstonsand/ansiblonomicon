@@ -1,6 +1,6 @@
 ---
 # Work macOS configuration playbook (corporate laptop)
-# Run with: uv run poe work
+# Run with: uv run poe laptop
 
 - name: Configure work host
   hosts: 127.0.0.1
@@ -8,6 +8,14 @@
   pre_tasks:
     - name: Load work-specific config
       ansible.builtin.include_vars: ../work.config.yml
+      tags: ["always"]
+
+    - name: Verify this is the work machine
+      ansible.builtin.assert:
+        that: ansible_hostname is match(hostname_prefix)
+        fail_msg: >-
+          This playbook is for the work laptop (hostname prefix '{{ hostname_prefix }}').
+          Current host: '{{ ansible_hostname }}'. Use 'poe laptop' instead.
       tags: ["always"]
 
     - name: Display system info
@@ -23,6 +31,8 @@
           tags: ["homebrew"]
       vars:
         homebrew_brewfile_path: "{{ playbook_dir }}/../Brewfile.work"
+        homebrew_link_conflicts:
+          pn: [pnpm]
       when: configure_homebrew | default(true)
       tags: ["homebrew"]
 

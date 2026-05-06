@@ -62,17 +62,41 @@
   ansible.builtin.command:
     argv: >-
       {{ ['brew', 'bundle', '--file=' + homebrew_brewfile_path]
-         + (['--cleanup', '--upgrade'] if homebrew_upgrade_due else []) }}
+         + (['--cleanup'] if homebrew_upgrade_due else []) }}
   environment:
     SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
   register: homebrew_result
   changed_when: "'Installing' in homebrew_result.stdout or 'Upgrading' in homebrew_result.stdout or 'Uninstalling' in homebrew_result.stdout"
 
-- name: Upgrade transitive dependencies
+- name: Pin conflicting formulas before upgrade
+  when: not ansible_check_mode and homebrew_upgrade_due and homebrew_link_conflicts | length > 0
+  ansible.builtin.command:
+    argv: ["brew", "pin", "{{ item }}"]
+  loop: "{{ homebrew_link_conflicts.values() | flatten }}"
+  changed_when: false
+  failed_when: false
+
+- name: Upgrade all formulas
   when: not ansible_check_mode and homebrew_upgrade_due
-  community.general.homebrew:
-    upgrade_all: true
+  ansible.builtin.command:
+    argv: ["brew", "upgrade"]
   register: homebrew_deps_result
+  changed_when: "'Pouring' in homebrew_deps_result.stdout"
+
+- name: Unpin conflicting formulas
+  when: not ansible_check_mode and homebrew_upgrade_due and homebrew_link_conflicts | length > 0
+  ansible.builtin.command:
+    argv: ["brew", "unpin", "{{ item }}"]
+  loop: "{{ homebrew_link_conflicts.values() | flatten }}"
+  changed_when: false
+  failed_when: false
+
+- name: Upgrade conflicting formulas
+  when: not ansible_check_mode and homebrew_upgrade_due and homebrew_link_conflicts | length > 0
+  ansible.builtin.include_tasks: upgrade_conflicting.yml
+  loop: "{{ homebrew_link_conflicts | dict2items }}"
+  loop_control:
+    loop_var: conflict
 
 - name: Ensure cache directory exists
   when: not ansible_check_mode and homebrew_upgrade_due
@@ -98,7 +122,7 @@
     homebrew_bundle_changes: >-
       {{ (stdout | select('search', 'Installing|Upgrading|Uninstalling|Skipping') | list)
          + (stderr | reject('search', noise) | list) }}
-    homebrew_dep_changes: "{{ (homebrew_deps_result.changed_pkgs | default([])) if homebrew_upgrade_due else [] }}"
+    homebrew_dep_changes: "{{ (homebrew_deps_result.stdout_lines | default([]) | select('search', 'Upgrading|Pouring') | reject('search', '^==>') | list) if homebrew_upgrade_due else [] }}"
 
 # --- Unified output ---
 - name: Show brew changes

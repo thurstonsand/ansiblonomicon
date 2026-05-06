@@ -1,6 +1,6 @@
 ---
 # macOS configuration playbook
-# Run with: uv run poe macos
+# Run with: uv run poe laptop
 
 - name: Configure host
   hosts: 127.0.0.1
@@ -18,6 +18,15 @@
     - name: Load Arch Linux-specific config
       ansible.builtin.include_vars: ../archlinux.config.yml
       when: ansible_facts['os_family'] == "Archlinux"
+      tags: ["always"]
+
+    - name: Verify this is the personal machine
+      ansible.builtin.assert:
+        that: ansible_hostname == hostname
+        fail_msg: >-
+          This playbook is for the personal machine ('{{ hostname }}').
+          Current host: '{{ ansible_hostname }}'. Use 'poe laptop' instead.
+      when: ansible_facts['os_family'] == "Darwin"
       tags: ["always"]
 
     - name: Display system info

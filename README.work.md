@@ -72,7 +72,7 @@ Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `lo
 
 | File                           | Purpose                                                                                           |
 | ------------------------------ | ------------------------------------------------------------------------------------------------- |
-| `ansible/tasks/work.local.yml` | Machine-local Ansible tasks included by `work.yml` (gitignored, runs via `poe work --tags local`) |
+| `ansible/tasks/work.local.yml` | Machine-local Ansible tasks included by `work.yml` (gitignored, runs via `poe laptop --tags local`) |
 
 The work playbook conditionally includes this file if it exists. Place any work-specific automation here that shouldn't live in git.
 
@@ -94,4 +94,4 @@ When setting up a new work Mac, copy these files from the old machine:
 - `ansible/tasks/work.local.yml`
 - `./uv.toml`
 
-Then run `chezmoi apply` and `uv run poe work`.
+Then run `chezmoi apply` and `uv run poe laptop`.
