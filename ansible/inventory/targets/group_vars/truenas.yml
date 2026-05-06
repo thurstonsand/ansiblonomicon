@@ -128,11 +128,6 @@ lan:
     isponsorblocktv:
       ip: 192.168.6.235
       ports: {}
-    arcane:
-      ip: 192.168.6.236
-      ports:
-        web: 3552
-      domain: arcane.thurstons.house
     caddy:
       ip: 192.168.6.239
       ports:
@@ -140,12 +135,110 @@ lan:
         https: 443
       domain: thurstons.house
 
-# Override: build Arcane from source (forked fix for network_mode dependency bug)
-# Set to false to revert to upstream image
-arcane_override:
-  build_from_source: true
-  source_repo: https://github.com/thurstonsand/arcane.git
-  source_branch: fix/network-mode-stale-id
+# TrueNAS app definitions. Manage durable app config only; Docker containers are rendered by TrueNAS.
+truenas_apps:
+  plex:
+    name: plex
+    catalog_app: plex
+    train: stable
+    version: latest
+    values:
+      TZ: America/New_York
+      labels:
+        - key: com.centurylinklabs.watchtower.enable
+          value: "false"
+          containers: [plex]
+      network:
+        dns_opts: []
+        host_network: true
+      plex:
+        additional_envs: []
+        allowed_networks: []
+        claim_token: "{{ lookup('env', 'PLEX_CLAIM_TOKEN') }}"
+        devices: []
+        image_selector: plex_pass_image
+      resources:
+        gpus:
+          nvidia_gpu_selection: {}
+          use_all_gpus: true
+        limits:
+          cpus: 4
+          memory: 4096
+      run_as:
+        group: 3001
+        user: 3001
+      storage:
+        additional_storage: []
+        config:
+          type: host_path
+          host_path_config:
+            acl_enable: false
+            path: /mnt/performance/apps/plex/config
+        data:
+          type: host_path
+          host_path_config:
+            acl_enable: false
+            path: /mnt/capacity/watch/media
+        logs:
+          type: host_path
+          host_path_config:
+            acl_enable: false
+            path: /mnt/performance/apps/plex/logs
+        transcode:
+          type: host_path
+          host_path_config:
+            acl_enable: false
+            path: /mnt/capacity/watch/transcode
+
+  storj_node:
+    name: storj-node
+    catalog_app: storj
+    train: stable
+    version: latest
+    values:
+      labels:
+        - key: com.centurylinklabs.watchtower.enable
+          value: "false"
+          containers: [storj]
+      network:
+        dns_opts: []
+        host_network: false
+        p2p_port:
+          bind_mode: published
+          host_ips: []
+          port_number: 28967
+        web_port:
+          bind_mode: published
+          host_ips: []
+          port_number: 20909
+      resources:
+        limits:
+          cpus: 4
+          memory: 8192
+      run_as:
+        group: 568
+        user: 568
+      storage:
+        additional_storage: []
+        data:
+          type: host_path
+          host_path_config:
+            acl_enable: false
+            path: /mnt/capacity/storj-node/config
+        identity:
+          type: host_path
+          host_path_config:
+            acl_enable: false
+            path: /mnt/capacity/storj-node/identity
+      storj:
+        additional_envs: []
+        domain_address: storj.thurstons.house:28967
+        email: thurstonsand@hey.com
+        stop_grace_period: 30
+        storage_size_gb: 5120
+        wallet_address: "{{ lookup('env', 'STORJ_WALLET_ADDRESS') }}"
+        wallets:
+          - zksync-era
 
 # TrueNAS VM definitions. Opinionated: model stable core fields and selected devices only.
 truenas_vms:

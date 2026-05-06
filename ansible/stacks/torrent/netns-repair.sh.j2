@@ -1,0 +1,87 @@
+{% raw %}
+#!/bin/sh
+set -eu
+
+STACK_FILE=${STACK_FILE:-/stack/compose.yaml}
+PROJECT=${COMPOSE_PROJECT_NAME:-torrent}
+GLUETUN=${GLUETUN_CONTAINER:-gluetun}
+DEPENDENTS=${DEPENDENTS:-qbittorrent mam-updater}
+INTERVAL=${INTERVAL:-60}
+
+container_id() {
+  docker inspect -f '{{.Id}}' "$1" 2>/dev/null || true
+}
+
+health_status() {
+  docker inspect -f '{{if .State.Health}}{{.State.Health.Status}}{{else}}{{.State.Status}}{{end}}' "$1" 2>/dev/null || true
+}
+
+network_mode() {
+  docker inspect -f '{{.HostConfig.NetworkMode}}' "$1" 2>/dev/null || true
+}
+
+repair() {
+  service=$1
+  echo "repairing $service via compose force-recreate"
+  docker compose -p "$PROJECT" -f "$STACK_FILE" up -d --force-recreate --no-deps "$service" || true
+}
+
+# This could become a hybrid docker-events watcher later for faster reaction to
+# health_status/recreate events. Polling every 60s is intentionally boring and
+# survives missed events, daemon reconnects, and watcher restarts.
+while :; do
+  gluetun_id=$(container_id "$GLUETUN")
+  gluetun_health=$(health_status "$GLUETUN")
+
+  if [ -z "$gluetun_id" ]; then
+    echo "gluetun missing; attempting compose start"
+    docker compose -p "$PROJECT" -f "$STACK_FILE" up -d --no-deps "$GLUETUN" || true
+    sleep "$INTERVAL"
+    continue
+  fi
+
+  if [ "$gluetun_health" = "starting" ]; then
+    echo "gluetun healthcheck still starting; deferring repair"
+    sleep "$INTERVAL"
+    continue
+  fi
+
+  if [ "$gluetun_health" != "healthy" ]; then
+    echo "gluetun not healthy (${gluetun_health:-missing}); restarting gluetun"
+    docker restart "$GLUETUN" >/dev/null || true
+    sleep "$INTERVAL"
+    continue
+  fi
+
+  for dependent in $DEPENDENTS; do
+    dependent_id=$(container_id "$dependent")
+
+    if [ -z "$dependent_id" ]; then
+      echo "$dependent missing; attempting compose start"
+      repair "$dependent"
+      continue
+    fi
+
+    mode=$(network_mode "$dependent")
+    health=$(health_status "$dependent")
+
+    case "$mode" in
+      container:*)
+        attached_id=${mode#container:}
+        if [ "$attached_id" != "$gluetun_id" ] && [ "$attached_id" != "$GLUETUN" ] && [ "$attached_id" != "/$GLUETUN" ]; then
+          echo "$dependent has stale network namespace: $mode != container:$gluetun_id"
+          repair "$dependent"
+          continue
+        fi
+        ;;
+    esac
+
+    if [ "$health" = "unhealthy" ]; then
+      echo "$dependent is unhealthy while gluetun is healthy"
+      repair "$dependent"
+    fi
+  done
+
+  sleep "$INTERVAL"
+done
+{% endraw %}

@@ -6,6 +6,7 @@ Executes midclt commands remotely and parses JSON locally.
 
 from dataclasses import dataclass
 import json
+import re
 from typing import Any, cast
 
 type ResourceRecord = dict[str, Any]
@@ -90,9 +91,27 @@ class MidcltClient:
         result = self._call("vm.restart", vm_id)
         return bool(result)
 
-    def _call(self, method: str, *args: ResourceRecord | list[Any] | int | str) -> Any:
+    def call(self, method: str, *args: ResourceRecord | list[Any] | int | str) -> Any:
         """Execute a midclt call and return parsed JSON output."""
-        cmd_parts = ["midclt", "call", method]
+        return self._call(method, *args)
+
+    def call_job(
+        self, method: str, *args: ResourceRecord | list[Any] | int | str
+    ) -> Any:
+        """Execute a midclt job call, wait for completion, and return parsed JSON output."""
+        return self._call(method, *args, job=True)
+
+    def _call(
+        self,
+        method: str,
+        *args: ResourceRecord | list[Any] | int | str,
+        job: bool = False,
+    ) -> Any:
+        """Execute a midclt call and return parsed JSON output."""
+        cmd_parts = ["midclt", "call"]
+        if job:
+            cmd_parts.extend(["-j", "true"])
+        cmd_parts.append(method)
         for arg in args:
             if isinstance(arg, str):
                 cmd_parts.append(self._shell_quote(arg))
@@ -111,6 +130,8 @@ class MidcltClient:
 
         output = stdout.strip()
         if output:
+            if job:
+                output = self._extract_job_result(output)
             # midclt sometimes returns Python literals (True/False/None) instead of JSON
             if output in ("True", "False", "None"):
                 return {"True": True, "False": False, "None": None}[output]
@@ -121,6 +142,20 @@ class MidcltClient:
                     method, f"Invalid JSON: {e}\nOutput: {output}", rc
                 ) from e
         return None
+
+    @staticmethod
+    def _extract_job_result(output: str) -> str:
+        """Return the final JSON/Python literal from midclt job progress output."""
+        clean = re.sub(r"\x1b\[[0-9;]*[A-Za-z]", "", output)
+        for line in reversed(clean.splitlines()):
+            candidate = line.strip()
+            if candidate.startswith(("{", "[")) or candidate in (
+                "True",
+                "False",
+                "None",
+            ):
+                return candidate
+        return clean.strip()
 
     @staticmethod
     def _shell_quote(s: str) -> str:

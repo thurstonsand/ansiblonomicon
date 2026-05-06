@@ -9,17 +9,6 @@
           key: "{{ lookup('env', 'HOMEPAGE_TRUENAS_API_KEY') }}"
           nasType: scale
           enablePools: true
-    - Arcane:
-        icon: arcane.png
-        href: https://{{ lan.personal.arcane.domain }}
-        server: docker-proxy
-        container: arcane
-        widget:
-          type: arcane
-          url: http://{{ lan.personal.arcane.domain }}:{{ lan.personal.arcane.ports.web }}
-          env: "0"
-          key: "{{ lookup('env', 'HOMEPAGE_ARCANE_API_KEY') }}"
-          fields: ["running", "stopped", "total", "image_updates"]
     - Cloudflare DNS:
         icon: cloudflare.svg
         href: https://dash.cloudflare.com/{{ lookup('env', 'CLOUDFLARE_ACCOUNT_ID') }}/thurstons.house

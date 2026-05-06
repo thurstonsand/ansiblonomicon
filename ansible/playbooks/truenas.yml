@@ -266,24 +266,6 @@
       vars:
         docker_stack_name: anypod
 
-    - name: Deploy arcane stack
-      tags: [docker-stack-role, arcane]
-      ansible.builtin.include_role:
-        name: docker_stack
-        apply:
-          tags: [docker-stack-role, arcane]
-      vars:
-        docker_stack_name: arcane
-        docker_stack_build_on_change: "{{ arcane_override.build_from_source | default(false) }}"
-        docker_stack_source: >-
-          {{
-            (arcane_override.build_from_source | default(false))
-            | ternary(
-                {'repo': arcane_override.source_repo, 'version': arcane_override.source_branch, 'dest': 'source'},
-                omit
-              )
-          }}
-
     - name: Deploy arr-apps stack
       tags: [docker-stack-role, arr-apps]
       ansible.builtin.include_role:
@@ -381,6 +363,20 @@
       tags: [vm, truenas-vm, homeassistant-vm]
       local.truenas.vm: "{{ truenas_vms.homeassistant }}"
 
+    - name: TrueNAS apps
+      tags: [truenas-apps]
+      become: false
+      local.truenas.app:
+        name: "{{ truenas_app.value.name }}"
+        catalog_app: "{{ truenas_app.value.catalog_app }}"
+        train: "{{ truenas_app.value.train }}"
+        version: "{{ truenas_app.value.version }}"
+        values: "{{ truenas_app.value['values'] }}"
+      loop: "{{ truenas_apps | dict2items }}"
+      loop_control:
+        loop_var: truenas_app
+        label: "{{ truenas_app.value.name }}"
+
     - name: Deploy scrypted stack
       tags: [docker-stack-role, scrypted]
       ansible.builtin.include_role:
@@ -398,3 +394,13 @@
           tags: [docker-stack-role, torrent]
       vars:
         docker_stack_name: torrent
+
+    - name: Deploy watchtower stack
+      tags: [docker-stack-role, watchtower]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          tags: [docker-stack-role, watchtower]
+      vars:
+        docker_stack_name: watchtower
+        docker_stack_pull_policy: always

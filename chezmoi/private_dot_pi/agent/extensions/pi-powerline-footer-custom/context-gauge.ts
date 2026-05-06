@@ -5,6 +5,11 @@ import { colorForPercent, renderGauge } from "./gauge.js";
 const STATUS_KEY = "context_gauge";
 const SOFT_MAX_TOKENS = 400_000;
 
+interface ContextGauge {
+  percent: number;
+  overSoftMax: boolean;
+}
+
 export class ContextGaugeStatus {
   private readonly settingsManager: SettingsManager;
 
@@ -14,10 +19,7 @@ export class ContextGaugeStatus {
 
   update(ctx: ExtensionContext): void {
     const usage = ctx.getContextUsage();
-    if (!usage || usage.contextWindow <= 0 || usage.tokens === null) {
-      ctx.ui.setStatus(STATUS_KEY, undefined);
-      return;
-    }
+    if (!usage || usage.tokens === null) return;
 
     const gauge = calculateContextGauge(
       usage.tokens,
@@ -39,11 +41,12 @@ export function calculateContextGauge(
   tokens: number,
   contextWindow: number,
   reserveTokens: number,
-): { percent: number; overSoftMax: boolean } {
-  const compactionTokens = Math.max(1, contextWindow - reserveTokens);
-  const softMax = Math.min(compactionTokens, SOFT_MAX_TOKENS);
-  const overSoftMax = compactionTokens > softMax && tokens > softMax;
-  const percent = (tokens / (overSoftMax ? compactionTokens : softMax)) * 100;
+): ContextGauge {
+  const compactionThreshold = contextWindow - reserveTokens;
+  const softMax = Math.min(compactionThreshold, SOFT_MAX_TOKENS);
+  const overSoftMax = compactionThreshold > softMax && tokens > softMax;
+  const denominator = overSoftMax ? compactionThreshold : softMax;
+  const percent = (tokens / denominator) * 100;
 
   return { percent, overSoftMax };
 }

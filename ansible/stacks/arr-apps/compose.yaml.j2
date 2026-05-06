@@ -111,7 +111,7 @@ services:
     restart: unless-stopped
 
   recyclarr:
-    image: ghcr.io/recyclarr/recyclarr
+    image: ghcr.io/recyclarr/recyclarr:8
     container_name: recyclarr
     user: "{{ docker.user.id }}"
     volumes:

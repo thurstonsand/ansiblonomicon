@@ -15,7 +15,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
   - **Work-only tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `local`, `neovim`/`nvim-deps`, `terminal-theme`, `uvc-util`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
-  - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all Docker stacks), `vm`/`truenas-vm`, `openclaw-vm`, `homeassistant-vm`, or individual stacks: `anypod`, `arcane`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`
+  - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all Docker stacks), `truenas-apps`, `vm`/`truenas-vm`, `openclaw-vm`, `homeassistant-vm`, or individual stacks: `anypod`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`, `watchtower`
 - `uv run poe udmp` — Apply UDMP Ansible playbook (same options as macos)
   - **UDMP tags**: `multicast-querier`, `nextdns`
 - `uv run poe openclaw` — Apply OpenClaw Ansible playbook (playbook selects local on hostname `openclaw`, otherwise remote over SSH; override with `--target openclaw_local|openclaw_remote`)
@@ -50,6 +50,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `ansible/playbooks/macos.yml` — macOS playbook; `ansible/playbooks/work.yml` — Work macOS playbook; `ansible/playbooks/truenas.yml` — TrueNAS playbook; `ansible/playbooks/openclaw.yml` — OpenClaw (Debian VM) playbook; `ansible/playbooks/udmp.yml` — UDMP playbook
 - `ansible/roles/` — Custom roles
 - `ansible/stacks/` — Docker Compose stacks deployed to TrueNAS (`.j2` templates use centralized config)
+- `truenas_apps` in `ansible/inventory/targets/group_vars/truenas.yml` — TrueNAS catalog apps managed through the in-repo `local.truenas.app` module
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `work.config.yml` / `openclaw.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS/host-specific
 - `ansible/models.yml` — Centralized model definitions (versions, aliases, vscode/zed config); symlinked to `chezmoi/.chezmoidata/models.yaml`
 - `ansible/inventory/group_vars/truenas.yml` — TrueNAS host vars (Docker config, network IPs/ports/domains)

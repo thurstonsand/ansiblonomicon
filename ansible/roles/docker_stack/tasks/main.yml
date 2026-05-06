@@ -12,7 +12,7 @@
     mode: "0750"
 
 - name: Clone/update source repository
-  when: docker_stack_source is defined
+  when: docker_stack_source is defined and docker_stack_source.repo is defined
   ansible.builtin.git:
     repo: "{{ docker_stack_source.repo }}"
     dest: "{{ docker_stack_dest }}/{{ docker_stack_source.dest | default('source') }}"
@@ -21,7 +21,7 @@
   register: _docker_stack_git_result
 
 - name: Track source repository changes  # noqa: var-naming[no-role-prefix] - internal tracking fact
-  when: docker_stack_source is defined and _docker_stack_git_result is changed
+  when: _docker_stack_git_result is defined and _docker_stack_git_result is changed
   ansible.builtin.set_fact:
     _docker_stack_changed: true
 

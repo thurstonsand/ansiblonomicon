@@ -5,8 +5,16 @@ import time
 import urllib.request
 
 BASE_URL = "http://127.0.0.1:80/api/v2"
+MULLVAD_URL = "https://am.i.mullvad.net/connected"
 GRACE_SECONDS = 600
 REQUEST_TIMEOUT = 5
+
+
+def check_vpn() -> None:
+    with urllib.request.urlopen(MULLVAD_URL, timeout=REQUEST_TIMEOUT) as response:
+        body = response.read().decode("utf-8", errors="replace")
+    if "You are connected" not in body:
+        raise RuntimeError("Mullvad connectivity check failed")
 
 
 def get_json(path: str):
@@ -15,6 +23,12 @@ def get_json(path: str):
     ) as response:
         return json.load(response)
 
+
+try:
+    check_vpn()
+except Exception as exc:
+    print(f"unhealthy: VPN connectivity unavailable: {exc}")
+    sys.exit(1)
 
 try:
     transfer = get_json("/transfer/info")

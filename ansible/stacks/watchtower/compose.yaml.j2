@@ -1,0 +1,13 @@
+services:
+  watchtower:
+    image: nickfedor/watchtower:latest
+    container_name: watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_SCHEDULE: "0 0 4 * * *"
+      WATCHTOWER_USE_COMPOSE_DEPENDS_ON: "true"
+      WATCHTOWER_LABEL_TAKE_PRECEDENCE: "true"
+      WATCHTOWER_NO_STARTUP_MESSAGE: "true"
+    restart: unless-stopped
