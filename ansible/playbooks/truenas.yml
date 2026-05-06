@@ -266,6 +266,8 @@
       vars:
         docker_stack_name: anypod
 
+    # Torrent seeding/removal policy is documented in docs/operations/media-torrent-seeding.md.
+    # Do not use global qBittorrent seed limits to force Arr cleanup; private trackers need long-lived seeds.
     - name: Deploy arr-apps stack
       tags: [docker-stack-role, arr-apps]
       ansible.builtin.include_role:
@@ -386,6 +388,8 @@
       vars:
         docker_stack_name: scrypted
 
+    # Torrent seeding/removal policy is documented in docs/operations/media-torrent-seeding.md.
+    # Do not use global qBittorrent seed limits to force Arr cleanup; private trackers need long-lived seeds.
     - name: Deploy torrent stack
       tags: [docker-stack-role, torrent]
       ansible.builtin.include_role:
