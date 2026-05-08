@@ -1,0 +1,16 @@
+{{- if .mcp_servers -}}
+#!/bin/bash
+# Register user-scope MCP servers (idempotent — claude mcp add overwrites)
+# Data source: .chezmoidata/local.toml [[mcp_servers]]
+set -euo pipefail
+
+command -v claude >/dev/null 2>&1 || exit 0
+
+{{ range .mcp_servers -}}
+{{ if eq .transport "http" -}}
+claude mcp add --scope user --transport http {{ .name }} {{ .url }} 2>/dev/null || true
+{{ else -}}
+claude mcp add --scope user {{ .name }} -- {{ .command }} {{ range .args }}{{ . }} {{ end }}2>/dev/null || true
+{{ end -}}
+{{ end -}}
+{{ end -}}

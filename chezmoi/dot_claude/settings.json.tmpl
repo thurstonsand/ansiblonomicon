@@ -1,8 +1,3 @@
-{{- $baseRel := ".chezmoitemplates/claude-settings.json" -}}
-{{- $base := joinPath .chezmoi.sourceDir $baseRel -}}
-{{- $resolver := joinPath .chezmoi.sourceDir ".chezmoitemplates/local/resolve-overlay.py" -}}
-{{- if stat $resolver -}}
-{{-   output "python3" $resolver $base -}}
-{{- else -}}
-{{-   include $baseRel -}}
-{{- end -}}
+{{- $base := joinPath .chezmoi.sourceDir ".chezmoitemplates/claude-settings.json" -}}
+{{- $resolver := joinPath .chezmoi.sourceDir ".chezmoitemplates/resolve-overlay.py" -}}
+{{- output "python3" $resolver $base -}}

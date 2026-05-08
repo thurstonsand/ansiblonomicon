@@ -4,9 +4,8 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
+import re
 from typing import Any, TypedDict, cast
-
-import frontmatter
 
 
 class PluginLongForm(TypedDict, total=False):
@@ -20,6 +19,7 @@ class PluginLongForm(TypedDict, total=False):
     exclude_agents: list[str]
     exclude_data: list[str]  # rsync --exclude patterns for deployed files
     target_agents: list[str]
+    hooks: bool  # deploy hooks from this plugin (default: true)
 
 
 @dataclass
@@ -29,6 +29,7 @@ class ResourceInfo:
     name: str
     source: str
     origin: str
+    plugin_root: str = ""
     target_agents: list[str] = field(default_factory=list)
     exclude_data: list[str] = field(default_factory=list)
 
@@ -38,6 +39,7 @@ class ResourceInfo:
             "name": self.name,
             "source": self.source,
             "origin": self.origin,
+            "plugin_root": self.plugin_root,
             "target_agents": list(self.target_agents),
             "exclude_data": list(self.exclude_data),
         }
@@ -78,6 +80,7 @@ class ResolvedPlugin:
     exclude_agents: list[str] = field(default_factory=list)
     exclude_data: list[str] = field(default_factory=list)
     target_agents: list[str] = field(default_factory=list)
+    include_hooks: bool = True
 
     @property
     def is_valid(self) -> bool:
@@ -117,6 +120,20 @@ class GitSourceConfig:
 
 
 SourceConfig = dict[str, Any]  # Union of git/local source dicts from Ansible
+
+
+def _repo_to_cache_name(repo: str) -> str:
+    """Normalize a repo identifier into a filesystem-safe cache directory name.
+
+    Handles both short form (owner/name) and full URLs (https:// or git@).
+    """
+    name = repo
+    name = re.sub(r"^https?://", "", name)
+    name = re.sub(r"^git@", "", name)
+    name = re.sub(r"\.git$", "", name)
+    name = re.sub(r"[/:.]+", "--", name)
+    name = re.sub(r"-{2,}", "--", name)
+    return name.strip("-")
 
 
 def _get_skills_paths(config: Mapping[str, str | list[str] | None]) -> list[str]:
@@ -431,6 +448,7 @@ def _resolve_plugin_from_repo(
     exclude_agents: list[str] = []
     exclude_data: list[str] = []
     target_agents: list[str] = []
+    include_hooks = True
 
     skills_override: str | list[str] | None = None
     agents_override: str | list[str] | None = None
@@ -447,6 +465,7 @@ def _resolve_plugin_from_repo(
         exclude_agents = list(plugin_spec.get("exclude_agents", []))
         exclude_data = list(plugin_spec.get("exclude_data", []))
         target_agents = list(plugin_spec.get("target_agents", []))
+        include_hooks = plugin_spec.get("hooks", True)
 
     def _apply_overrides(config: PluginConfig) -> PluginConfig:
         """Apply skills/agents path overrides from the plugin spec."""
@@ -486,6 +505,7 @@ def _resolve_plugin_from_repo(
             exclude_agents=exclude_agents,
             exclude_data=exclude_data,
             target_agents=target_agents,
+            include_hooks=include_hooks,
         )
 
     # Try marketplace lookup
@@ -500,6 +520,7 @@ def _resolve_plugin_from_repo(
             exclude_agents=exclude_agents,
             exclude_data=exclude_data,
             target_agents=target_agents,
+            include_hooks=include_hooks,
         )
 
     # Try standalone plugin
@@ -513,6 +534,7 @@ def _resolve_plugin_from_repo(
             exclude_agents=exclude_agents,
             exclude_data=exclude_data,
             target_agents=target_agents,
+            include_hooks=include_hooks,
         )
 
     return ResolvedPlugin.empty()
@@ -534,6 +556,7 @@ def _resolve_plugin_from_local(
     exclude_agents: list[str] = []
     exclude_data: list[str] = []
     target_agents: list[str] = []
+    include_hooks = True
     skills_override: str | list[str] | None = None
     agents_override: str | list[str] | None = None
     base_path = Path(local_path)
@@ -550,6 +573,7 @@ def _resolve_plugin_from_local(
         exclude_agents = list(plugin_spec.get("exclude_agents", []))
         exclude_data = list(plugin_spec.get("exclude_data", []))
         target_agents = list(plugin_spec.get("target_agents", []))
+        include_hooks = plugin_spec.get("hooks", True)
 
     # Determine plugin path
     if explicit_path:
@@ -588,6 +612,7 @@ def _resolve_plugin_from_local(
         exclude_agents=exclude_agents,
         exclude_data=exclude_data,
         target_agents=target_agents,
+        include_hooks=include_hooks,
     )
 
 
@@ -610,7 +635,7 @@ def agent_harness_build_plugin_resources(
         if "repo" in source:
             # Git source
             repo = source["repo"]
-            repo_cache_name = repo.replace("/", "--")
+            repo_cache_name = _repo_to_cache_name(repo)
             repo_path = Path(cache_dir) / repo_cache_name
             plugins = source.get("plugins", [])
 
@@ -643,6 +668,7 @@ def agent_harness_build_plugin_resources(
                                 name=skill_name,
                                 source=source_path,
                                 origin=repo,
+                                plugin_root=str(plugin_path),
                                 target_agents=resolved.target_agents,
                                 exclude_data=resolved.exclude_data,
                             )
@@ -659,11 +685,13 @@ def agent_harness_build_plugin_resources(
                         plugin_path, agent_name, config.agents_paths
                     )
                     if source_path:
+                        prefixed_name = f"{config.name}-{agent_name}"
                         agents.append(
                             ResourceInfo(
-                                name=agent_name,
+                                name=prefixed_name,
                                 source=source_path,
                                 origin=repo,
+                                plugin_root=str(plugin_path),
                                 target_agents=resolved.target_agents,
                                 exclude_data=resolved.exclude_data,
                             )
@@ -716,9 +744,10 @@ def agent_harness_build_plugin_resources(
                         plugin_path, agent_name, config.agents_paths
                     )
                     if source_path:
+                        prefixed_name = f"{config.name}-{agent_name}"
                         agents.append(
                             ResourceInfo(
-                                name=agent_name,
+                                name=prefixed_name,
                                 source=source_path,
                                 origin="local",
                                 target_agents=resolved.target_agents,
@@ -727,6 +756,11 @@ def agent_harness_build_plugin_resources(
                         )
 
     return PluginResources(skills=skills, agents=agents).to_dict()
+
+
+def agent_harness_repo_to_cache_name(repo: str) -> str:
+    """Public filter: normalize a repo identifier to a filesystem-safe cache name."""
+    return _repo_to_cache_name(repo)
 
 
 def agent_harness_get_git_sources(sources: list[SourceConfig]) -> list[dict[str, Any]]:
@@ -841,40 +875,26 @@ def _deep_convert_to_dict(obj: Any) -> Any:
     return obj
 
 
-def _serialize_frontmatter(metadata: dict[str, Any], content: str) -> str:
-    """Serialize frontmatter manually to avoid Ansible's YAML representer pollution.
-
-    Ansible modifies PyYAML's global representers which can cause issues with
-    frontmatter.dumps(). This function builds the output manually.
-    """
-    import yaml
-
-    yaml_content = yaml.dump(
-        dict(metadata),
-        Dumper=yaml.SafeDumper,
-        default_flow_style=False,
-        allow_unicode=True,
-        sort_keys=True,
-    )
-    return f"---\n{yaml_content}---\n\n{content}"
-
-
 def agent_harness_transform_skill(
-    source_path: str, target_agent: str, models_config: dict[str, Any]
+    source_path: str,
+    target_agent: str,
+    models_config: dict[str, Any],
+    plugin_root: str = "",
+    name_override: str = "",
 ) -> dict[str, Any]:
-    """Transform a skill's frontmatter model field for the target agent.
+    """Transform a skill/agent .md file for the target agent.
 
-    Skills may specify a model alias (e.g., "sonnet") in their frontmatter.
-    Different agents use different model naming conventions:
-    - Claude/Amp: "sonnet", "haiku", "opus"
-    - OpenCode: "anthropic/claude-sonnet-4-5-20250929"
-
-    This function rewrites the model field based on the target agent.
+    Applies up to three transformations:
+    1. Model alias replacement in frontmatter (e.g., "sonnet" → provider-specific ID)
+    2. ${CLAUDE_PLUGIN_ROOT} substitution with the absolute plugin path
+    3. Frontmatter name rewrite (for agent namespace prefixing)
 
     Args:
-        source_path: Path to the source skill file (SKILL.md)
+        source_path: Path to the source .md file (SKILL.md or agent .md)
         target_agent: Target agent name (e.g., "opencode", "claude", "amp")
         models_config: The 'models' section from models.yml
+        plugin_root: Absolute path to substitute for ${CLAUDE_PLUGIN_ROOT}
+        name_override: If set, rewrite the frontmatter name field to this value
 
     Returns:
         Dict with 'content' (transformed file content) and 'modified' (bool)
@@ -884,23 +904,110 @@ def agent_harness_transform_skill(
         return SkillTransformResult(content="", modified=False).to_dict()
 
     content = path.read_text()
-    post = frontmatter.loads(content)
+    modified = False
 
-    model_value = post.metadata.get("model")
-    if not model_value or not isinstance(model_value, str):
-        return SkillTransformResult(content=content, modified=False).to_dict()
+    # Model alias replacement — regex on the model: line in frontmatter
+    model_match = re.search(r"^model:\s*(.+)$", content, flags=re.MULTILINE)
+    if model_match:
+        model_value = model_match.group(1).strip()
+        plain_config = _deep_convert_to_dict(models_config)
+        alias_map = _build_model_alias_map(plain_config)
+        replacement = alias_map.get(model_value, {}).get(target_agent)
+        if replacement and replacement != model_value:
+            content = re.sub(
+                r"^(model:\s*).+$",
+                rf"\g<1>{replacement}",
+                content,
+                count=1,
+                flags=re.MULTILINE,
+            )
+            modified = True
 
-    plain_config = _deep_convert_to_dict(models_config)
-    alias_map = _build_model_alias_map(plain_config)
+    # Plugin root substitution
+    if plugin_root and "${CLAUDE_PLUGIN_ROOT}" in content:
+        content = content.replace("${CLAUDE_PLUGIN_ROOT}", plugin_root)
+        modified = True
 
-    replacement = alias_map.get(model_value, {}).get(target_agent)
-    if not replacement or replacement == model_value:
-        return SkillTransformResult(content=content, modified=False).to_dict()
+    # Frontmatter name rewrite — uses regex to avoid re-serializing the full
+    # frontmatter block. Some agent descriptions contain colons and other YAML
+    # metacharacters that cause the frontmatter library to choke on parsing.
+    if name_override:
+        content = re.sub(
+            r"^(name:\s*).+$",
+            rf"\g<1>{name_override}",
+            content,
+            count=1,
+            flags=re.MULTILINE,
+        )
+        modified = True
 
-    new_metadata = _deep_convert_to_dict(dict(post.metadata))
-    new_metadata["model"] = str(replacement)
-    serialized = _serialize_frontmatter(new_metadata, post.content)
-    return SkillTransformResult(content=serialized, modified=True).to_dict()
+    return SkillTransformResult(content=content, modified=modified).to_dict()
+
+
+@dataclass
+class HookFragment:
+    """A resolved hook fragment ready for deployment."""
+
+    name: str
+    content: str
+
+    def to_dict(self) -> dict[str, str]:
+        return {"name": self.name, "content": self.content}
+
+
+def _resolve_hook_eligible_plugins(
+    source: SourceConfig, cache_dir: str
+) -> list[tuple[str, Path]]:
+    """Get (plugin_name, plugin_path) pairs for plugins with hooks enabled."""
+    results: list[tuple[str, Path]] = []
+
+    if "repo" in source:
+        repo = source["repo"]
+        repo_cache_name = _repo_to_cache_name(repo)
+        repo_path = Path(cache_dir) / repo_cache_name
+
+        for plugin_spec in source.get("plugins", []):
+            resolved = _resolve_plugin_from_repo(repo_path, plugin_spec)
+            if resolved.is_valid and resolved.include_hooks and resolved.config and resolved.plugin_path:
+                results.append((resolved.config.name, resolved.plugin_path))
+
+    elif "local" in source:
+        local_path = source["local"]
+        for plugin_spec in source.get("plugins", []):
+            resolved = _resolve_plugin_from_local(local_path, plugin_spec)
+            if resolved.is_valid and resolved.include_hooks and resolved.config and resolved.plugin_path:
+                results.append((resolved.config.name, resolved.plugin_path))
+
+    return results
+
+
+def agent_harness_find_plugin_hooks(
+    sources: list[SourceConfig], cache_dir: str
+) -> list[dict[str, str]]:
+    """Find hooks.json files in plugins and return resolved fragments.
+
+    For each plugin that has a hooks/hooks.json file, reads it and replaces
+    ${CLAUDE_PLUGIN_ROOT} with the absolute plugin path.
+
+    Returns list of dicts with 'name' and 'content' keys.
+    """
+    fragments: list[HookFragment] = []
+
+    for source in sources:
+        for plugin_name, plugin_path in _resolve_hook_eligible_plugins(source, cache_dir):
+            hooks_file = plugin_path / "hooks" / "hooks.json"
+            if not hooks_file.exists():
+                continue
+
+            try:
+                content = hooks_file.read_text()
+            except OSError:
+                continue
+
+            content = content.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_path))
+            fragments.append(HookFragment(name=plugin_name, content=content))
+
+    return [f.to_dict() for f in fragments]
 
 
 class FilterModule:
@@ -912,4 +1019,6 @@ class FilterModule:
             "agent_harness_get_git_sources": agent_harness_get_git_sources,
             "agent_harness_filter_resources": agent_harness_filter_resources,
             "agent_harness_transform_skill": agent_harness_transform_skill,
+            "agent_harness_repo_to_cache_name": agent_harness_repo_to_cache_name,
+            "agent_harness_find_plugin_hooks": agent_harness_find_plugin_hooks,
         }

@@ -365,6 +365,14 @@
       when: configure_terminal_theme | default(true)
       tags: ["terminal-theme"]
 
+    - name: Deploy AI agent resources
+      ansible.builtin.include_role:
+        name: agent_harness
+        apply:
+          tags: ["agent-harness"]
+      when: configure_agent_harness | default(true)
+      tags: ["agent-harness"]
+
     - name: Apply chezmoi dotfiles
       ansible.builtin.include_role:
         name: chezmoi
@@ -397,11 +405,3 @@
         apply:
           tags: ["motd"]
       tags: ["motd"]
-
-    - name: Deploy AI agent resources
-      ansible.builtin.include_role:
-        name: agent_harness
-        apply:
-          tags: ["agent-harness"]
-      when: configure_agent_harness | default(true)
-      tags: ["agent-harness"]

@@ -23,6 +23,9 @@
   loop_control:
     loop_var: agent_harness_target_agent
 
+- name: Deploy hook fragments
+  ansible.builtin.include_tasks: deploy_hooks.yml
+
 - name: Deploy agents to target agents
   ansible.builtin.include_tasks: deploy_agents.yml
   loop: "{{ agent_harness_target_agents }}"

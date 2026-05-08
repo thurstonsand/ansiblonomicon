@@ -42,9 +42,10 @@
   ansible.builtin.set_fact:
     agent_harness_transformed_skill: >-
       {{ (agent_harness_skill_info.source ~ '/SKILL.md')
-         | agent_harness_transform_skill(agent_harness_target_agent, agent_harness_models.models) }}
+         | agent_harness_transform_skill(agent_harness_target_agent, agent_harness_models.models,
+                                         agent_harness_skill_info.plugin_root | default('')) }}
 
-- name: Update SKILL.md if model was transformed
+- name: Update SKILL.md if transformed
   ansible.builtin.copy:
     content: "{{ agent_harness_transformed_skill.content }}"
     dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/SKILL.md"

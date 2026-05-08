@@ -17,14 +17,11 @@ go_tools_extra:
   - github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.11.4
 
 # Agent Harness - only deploy to Claude on work machine
-agent_harness_target_agents:
+agent_harness_target_agents_base:
   - claude
+agent_harness_target_agents: "{{ (agent_harness_target_agents_base | default([])) + (agent_harness_target_agents_extra | default([])) }}"
 
-# Don't delete unmanaged skills (some exist outside git)
-agent_harness_cleanup_orphaned_skills: false
-agent_harness_cleanup_orphaned_agents: false
-
-agent_harness_sources:
+agent_harness_sources_base:
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management
@@ -33,3 +30,7 @@ agent_harness_sources:
           - showboat
       - name: claude
         target_agents: [claude]
+      - name: work
+        target_agents: [claude]
+
+agent_harness_sources: "{{ (agent_harness_sources_base | default([])) + (agent_harness_sources_extra | default([])) }}"

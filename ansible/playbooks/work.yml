@@ -10,6 +10,11 @@
       ansible.builtin.include_vars: ../work.config.yml
       tags: ["always"]
 
+    - name: Load work-local agent sources
+      ansible.builtin.include_vars: ../sources.work.local.yml
+      when: lookup('file', playbook_dir ~ '/../sources.work.local.yml', errors='ignore') | length > 0
+      tags: ["always"]
+
     - name: Verify this is the work machine
       ansible.builtin.assert:
         that: ansible_hostname is match(hostname_prefix)
@@ -75,6 +80,14 @@
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["ghostty-nav"]
 
+    - name: Deploy AI agent resources
+      ansible.builtin.include_role:
+        name: agent_harness
+        apply:
+          tags: ["agent-harness"]
+      when: configure_agent_harness | default(true)
+      tags: ["agent-harness"]
+
     - name: Apply chezmoi dotfiles
       ansible.builtin.include_role:
         name: chezmoi
@@ -91,14 +104,6 @@
         apply:
           tags: ["neovim", "nvim-deps"]
       tags: ["neovim", "nvim-deps"]
-
-    - name: Deploy AI agent resources
-      ansible.builtin.include_role:
-        name: agent_harness
-        apply:
-          tags: ["agent-harness"]
-      when: configure_agent_harness | default(true)
-      tags: ["agent-harness"]
 
     - name: Include machine-local tasks
       ansible.builtin.include_tasks:

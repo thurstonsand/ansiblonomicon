@@ -3,9 +3,9 @@
 agent_harness_target_agents:
   - claude
 
-# Sources for plugins containing skills
+# Extra sources appended to agent_harness_sources_base
 # Supports both git repos and local paths
-agent_harness_sources: []
+agent_harness_sources_extra: []
 #   # Git sources - clone from GitHub
 #   - repo: anthropics/claude-code
 #     pull: false  # override global pull setting per-repo

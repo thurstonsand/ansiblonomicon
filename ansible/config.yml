@@ -58,7 +58,7 @@ agent_harness_target_agents_base:
   - pi
 agent_harness_target_agents: "{{ (agent_harness_target_agents_base | default([])) + (agent_harness_target_agents_extra | default([])) }}"
 
-agent_harness_sources:
+agent_harness_sources_base:
   - repo: anthropics/claude-plugins-official
     pull: true
     plugins:
@@ -176,3 +176,5 @@ agent_harness_sources:
       - name: claude
         target_agents: [claude]
       - homelab
+
+agent_harness_sources: "{{ (agent_harness_sources_base | default([])) + (agent_harness_sources_extra | default([])) }}"

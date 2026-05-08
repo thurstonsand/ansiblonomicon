@@ -28,7 +28,12 @@ These are sourced by the chezmoi-managed `.zshenv.tmpl` and `.zshrc.tmpl` if the
 
 ### Merge Semantics
 
-The chezmoi template `dot_claude/settings.json.tmpl` delegates to `resolve-overlay.py` when the work overlay exists, which deep-merges with the base (`.chezmoitemplates/claude-settings.json`). If the resolver doesn't exist, the base is used as-is. Rules:
+The chezmoi template `dot_claude/settings.json.tmpl` calls `resolve-overlay.py` which:
+
+1. Deep-merges the work overlay (`.chezmoitemplates/local/claude-settings-overlay.json`) onto the base if the overlay exists
+2. Aggregates hook fragments from `~/.cache/ansiblonomicon-harness/hooks/*.json` into the hooks section
+
+Rules:
 
 - Object fields are recursively merged (overlay keys win)
 - Scalar/array fields in the overlay **replace** the base
@@ -51,6 +56,44 @@ These should be used instead of hard-coding model values.
 
 `Brewfile.work` **is** committed. The `.local` variant is for tools that are not publicly available.
 
+## Agent Harness Sources
+
+| File                             | Purpose                                                       |
+| -------------------------------- | ------------------------------------------------------------- |
+| `ansible/sources.work.local.yml` | Work-specific plugin git sources (internal repos, gitignored) |
+
+The work playbook conditionally includes this file if it exists. It defines `agent_harness_sources_extra` which gets appended to `agent_harness_sources_base` (defined in `work.config.yml`).
+
+Structure:
+
+```yaml
+---
+agent_harness_sources_extra:
+  - repo: https://scm.internal/scm/proj/plugin-marketplace.git
+    pull: true
+    plugins:
+      - name: my-plugin
+      - name: another-plugin
+```
+
+The `repo` field accepts full git URLs (ending in `.git`) or the short `owner/name` form (auto-expanded to GitHub). Use `exclude_skills` on any plugin entry to skip specific skills.
+
+## Agent Harness Local Plugin
+
+| File           | Purpose                                           |
+| -------------- | ------------------------------------------------- |
+| `agents/work/` | Gitignored local plugin with work-specific skills |
+
+Added to `agent_harness_sources_base` in `work.config.yml`.
+
+## MCP Servers
+
+| File                                             | Purpose                                                   |
+| ------------------------------------------------ | --------------------------------------------------------- |
+| `~/.local/share/chezmoi/.chezmoidata/local.toml` | `[[mcp_servers]]` entries for user-scope MCP registration |
+
+The chezmoi `run_onchange_after_register-mcp-servers.sh` script reads `[[mcp_servers]]` from `local.toml` and runs `claude mcp add --scope user` for each entry. Supports `transport = "http"` (URL-based) and `transport = "stdio"` (command + args).
+
 ## Python Package Indexes (uv + pip)
 
 | File                                             | Purpose                                                                                                     |
@@ -70,8 +113,8 @@ Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `lo
 
 ## Ansible Local Tasks
 
-| File                           | Purpose                                                                                           |
-| ------------------------------ | ------------------------------------------------------------------------------------------------- |
+| File                           | Purpose                                                                                             |
+| ------------------------------ | --------------------------------------------------------------------------------------------------- |
 | `ansible/tasks/work.local.yml` | Machine-local Ansible tasks included by `work.yml` (gitignored, runs via `poe laptop --tags local`) |
 
 The work playbook conditionally includes this file if it exists. Place any work-specific automation here that shouldn't live in git.
@@ -82,6 +125,12 @@ Currently deploys a LaunchAgent to manage claude model versions.
 
 `.fdignore` at repo root uses negation patterns (`!path`) to unhide work-only files from `fd` (and LazyVim's file picker) despite them being in `.gitignore`. When adding a new gitignored work file, add a corresponding `!` entry to `.fdignore`.
 
+## Prettier Formatting
+
+Prettier skips gitignored paths by default. The project-local `.nvim.lua` (`exrc`) tells conform to pass `--ignore-path .prettierignore` to prettier, making it read _only_ that file instead of `.gitignore`. This means all files — including gitignored work-only paths — get formatted on save.
+
+`.prettierignore` exists as an empty file to satisfy the `--ignore-path` flag. Add explicit exclusions there only if a file should never be formatted.
+
 ## Setup Checklist
 
 When setting up a new work Mac, copy these files from the old machine:
@@ -90,8 +139,9 @@ When setting up a new work Mac, copy these files from the old machine:
 - `~/.zshenv.local`
 - `~/.zshrc.local`
 - `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json`
-- `chezmoi/.chezmoitemplates/local/resolve-overlay.py`
+- `ansible/sources.work.local.yml`
 - `ansible/tasks/work.local.yml`
+- `agents/work/`
 - `./uv.toml`
 
 Then run `chezmoi apply` and `uv run poe laptop`.

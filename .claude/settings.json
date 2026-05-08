@@ -1,8 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(ansible-lint:*)"
-    ]
+    "allow": ["Bash(ansible-lint:*)", "Bash(chezmoi execute-template:*)"]
   },
   "sandbox": {
     "excludedCommands": ["uv run poe:*"]

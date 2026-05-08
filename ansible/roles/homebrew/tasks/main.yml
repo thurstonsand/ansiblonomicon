@@ -57,6 +57,14 @@
         )
       }}
 
+- name: Pin keg-only conflicting formulas
+  when: not ansible_check_mode and homebrew_link_conflicts | length > 0
+  ansible.builtin.command:
+    argv: ["brew", "pin", "{{ item }}"]
+  loop: "{{ homebrew_link_conflicts.values() | flatten }}"
+  changed_when: false
+  failed_when: false
+
 - name: Run brew bundle
   when: not ansible_check_mode
   ansible.builtin.command:
@@ -68,14 +76,6 @@
   register: homebrew_result
   changed_when: "'Installing' in homebrew_result.stdout or 'Upgrading' in homebrew_result.stdout or 'Uninstalling' in homebrew_result.stdout"
 
-- name: Pin conflicting formulas before upgrade
-  when: not ansible_check_mode and homebrew_upgrade_due and homebrew_link_conflicts | length > 0
-  ansible.builtin.command:
-    argv: ["brew", "pin", "{{ item }}"]
-  loop: "{{ homebrew_link_conflicts.values() | flatten }}"
-  changed_when: false
-  failed_when: false
-
 - name: Upgrade all formulas
   when: not ansible_check_mode and homebrew_upgrade_due
   ansible.builtin.command:
@@ -83,8 +83,8 @@
   register: homebrew_deps_result
   changed_when: "'Pouring' in homebrew_deps_result.stdout"
 
-- name: Unpin conflicting formulas
-  when: not ansible_check_mode and homebrew_upgrade_due and homebrew_link_conflicts | length > 0
+- name: Unpin keg-only conflicting formulas
+  when: not ansible_check_mode and homebrew_link_conflicts | length > 0
   ansible.builtin.command:
     argv: ["brew", "unpin", "{{ item }}"]
   loop: "{{ homebrew_link_conflicts.values() | flatten }}"

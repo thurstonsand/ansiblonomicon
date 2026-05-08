@@ -30,7 +30,9 @@ node_modules
 .dev.vars
 
 # Machine-local
+agents/work/
 ansible/Brewfile.work.*
+ansible/sources.work.local.yml
 ansible/tasks/work.local.yml
 chezmoi/.chezmoidata/local.toml
 chezmoi/.chezmoitemplates/local/

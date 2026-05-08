@@ -18,6 +18,7 @@ goLocalImports = ""
 goplsBuildFlags = ""
 scm = []
 pypiIndex = []
+mcp_servers = []
 uvIndexStrategy = ""
 
 # Font configuration - centralized for all apps

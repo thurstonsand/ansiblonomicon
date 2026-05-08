@@ -17,11 +17,14 @@ from harness_filters import (
     _get_skill_source_path,
     _get_skills_paths,
     _load_plugin_json,
+    _repo_to_cache_name,
     _resolve_plugin_from_local,
     _resolve_plugin_from_repo,
     agent_harness_build_plugin_resources,
     agent_harness_filter_resources,
+    agent_harness_find_plugin_hooks,
     agent_harness_get_git_sources,
+    agent_harness_repo_to_cache_name,
     agent_harness_transform_skill,
 )
 import pytest
@@ -1036,7 +1039,7 @@ def test_agent_harness_build_plugin_resources_git_discovers_agents(
 
     assert len(result["agents"]) == 2
     names = sorted(a["name"] for a in result["agents"])
-    assert names == ["agent-a", "agent-b"]
+    assert names == ["my-plugin-agent-a", "my-plugin-agent-b"]
 
 
 @pytest.mark.unit
@@ -1063,7 +1066,7 @@ def test_agent_harness_build_plugin_resources_git_with_exclude_agents(
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
 
     assert len(result["agents"]) == 1
-    assert result["agents"][0]["name"] == "keep-agent"
+    assert result["agents"][0]["name"] == "my-plugin-keep-agent"
 
 
 @pytest.mark.unit
@@ -1081,7 +1084,7 @@ def test_agent_harness_build_plugin_resources_local_discovers_agents(
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
 
     assert len(result["agents"]) == 1
-    assert result["agents"][0]["name"] == "local-agent"
+    assert result["agents"][0]["name"] == "my-plugin-local-agent"
     assert result["agents"][0]["origin"] == "local"
 
 
@@ -1106,7 +1109,7 @@ def test_agent_harness_build_plugin_resources_local_with_exclude_agents(
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
 
     assert len(result["agents"]) == 1
-    assert result["agents"][0]["name"] == "keep"
+    assert result["agents"][0]["name"] == "my-plugin-keep"
 
 
 @pytest.mark.unit
@@ -1131,7 +1134,7 @@ def test_agent_harness_build_plugin_resources_mixed_skills_and_agents(
     assert len(result["skills"]) == 1
     assert result["skills"][0]["name"] == "my-skill"
     assert len(result["agents"]) == 1
-    assert result["agents"][0]["name"] == "my-agent"
+    assert result["agents"][0]["name"] == "mixed-plugin-my-agent"
 
 
 @pytest.mark.unit
@@ -1553,4 +1556,181 @@ def test_transform_skill_preserves_body_content(
     )
 
     assert "# test-skill" in result["content"]
-    assert "This is the body content." in result["content"]
+
+
+@pytest.mark.unit
+def test_transform_skill_replaces_plugin_root(
+    tmp_path: Path,
+    sample_models_config: dict[str, Any],
+) -> None:
+    skill_file = tmp_path / "SKILL.md"
+    skill_file.write_text("""---
+name: my-skill
+allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/bin/run.sh:*)
+---
+
+Run: ${CLAUDE_PLUGIN_ROOT}/bin/run.sh
+""")
+
+    result = agent_harness_transform_skill(
+        str(skill_file), "claude", sample_models_config, "/cache/my-plugin"
+    )
+
+    assert result["modified"] is True
+    assert "${CLAUDE_PLUGIN_ROOT}" not in result["content"]
+    assert "/cache/my-plugin/bin/run.sh" in result["content"]
+
+
+@pytest.mark.unit
+def test_transform_skill_no_plugin_root_when_empty(
+    tmp_path: Path,
+    sample_models_config: dict[str, Any],
+) -> None:
+    skill_file = tmp_path / "SKILL.md"
+    skill_file.write_text("""---
+name: my-skill
+---
+
+Run: ${CLAUDE_PLUGIN_ROOT}/bin/run.sh
+""")
+
+    result = agent_harness_transform_skill(
+        str(skill_file), "claude", sample_models_config, ""
+    )
+
+    assert result["modified"] is False
+    assert "${CLAUDE_PLUGIN_ROOT}" in result["content"]
+
+
+@pytest.mark.unit
+def test_transform_skill_both_model_and_plugin_root(
+    tmp_path: Path,
+    sample_models_config: dict[str, Any],
+) -> None:
+    skill_file = tmp_path / "SKILL.md"
+    skill_file.write_text("""---
+name: my-skill
+model: sonnet
+allowed-tools: Bash(${CLAUDE_PLUGIN_ROOT}/bin/run.sh:*)
+---
+
+Content here.
+""")
+
+    result = agent_harness_transform_skill(
+        str(skill_file), "opencode", sample_models_config, "/cache/plugin"
+    )
+
+    assert result["modified"] is True
+    assert "model: anthropic/claude-sonnet-4-5" in result["content"]
+    assert "/cache/plugin/bin/run.sh" in result["content"]
+    assert "${CLAUDE_PLUGIN_ROOT}" not in result["content"]
+
+
+class TestRepoToCacheName:
+    def test_owner_name_form(self) -> None:
+        assert _repo_to_cache_name("anthropics/claude-plugins-official") == "anthropics--claude-plugins-official"
+
+    def test_https_url(self) -> None:
+        assert _repo_to_cache_name("https://scm.example.com/scm/proj/my-plugin.git") == "scm--example--com--scm--proj--my-plugin"
+
+    def test_https_url_without_git_suffix(self) -> None:
+        assert _repo_to_cache_name("https://github.com/owner/repo") == "github--com--owner--repo"
+
+    def test_ssh_url(self) -> None:
+        assert _repo_to_cache_name("git@gitlab.example.com:user/repo.git") == "gitlab--example--com--user--repo"
+
+    def test_public_filter_matches_private(self) -> None:
+        url = "https://scm.example.com/scm/proj/my-plugin.git"
+        assert agent_harness_repo_to_cache_name(url) == _repo_to_cache_name(url)
+
+    def test_no_leading_or_trailing_dashes(self) -> None:
+        result = _repo_to_cache_name("https://host.com/repo.git")
+        assert not result.startswith("-")
+        assert not result.endswith("-")
+
+
+# =============================================================================
+# Tests for plugin_root in ResourceInfo
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_includes_plugin_root(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    """plugin_root is populated with the resolved plugin directory."""
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    marketplace = {"plugins": [{"name": "my-plugin", "source": "./plugins/my-plugin"}]}
+    (plugin_dir / "marketplace.json").write_text(json.dumps(marketplace))
+
+    skill_dir = repo_path / "plugins" / "my-plugin" / "skills" / "my-skill"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text("# My Skill")
+
+    agent_dir = repo_path / "plugins" / "my-plugin" / "agents"
+    agent_dir.mkdir(parents=True)
+    (agent_dir / "my-agent.md").write_text("# Agent")
+
+    sources: list[Any] = [{"repo": "owner/repo", "plugins": ["my-plugin"]}]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    expected_root = str(repo_path / "plugins" / "my-plugin")
+    assert result["skills"][0]["plugin_root"] == expected_root
+    assert result["agents"][0]["plugin_root"] == expected_root
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_local_omits_plugin_root(
+    tmp_path: Path, cache_dir: Path
+) -> None:
+    """plugin_root is empty for local sources (no CLAUDE_PLUGIN_ROOT substitution)."""
+    local_path = tmp_path / "local"
+    plugin_path = local_path / "plugins" / "my-plugin"
+    skill_dir = plugin_path / "skills" / "local-skill"
+    skill_dir.mkdir(parents=True)
+    (skill_dir / "SKILL.md").write_text("# Skill")
+
+    sources: list[Any] = [{"local": str(local_path), "plugins": ["my-plugin"]}]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert result["skills"][0]["plugin_root"] == ""
+
+
+class TestFindPluginHooks:
+    def test_finds_hooks_in_local_plugin(self, tmp_path: Path) -> None:
+        plugin_dir = tmp_path / "plugins" / "my-plugin"
+        plugin_dir.mkdir(parents=True)
+        (plugin_dir / ".claude-plugin").mkdir()
+        (plugin_dir / ".claude-plugin" / "plugin.json").write_text(
+            json.dumps({"name": "my-plugin"})
+        )
+        (plugin_dir / "skills").mkdir()
+        hooks_dir = plugin_dir / "hooks"
+        hooks_dir.mkdir()
+        hooks_dir.joinpath("hooks.json").write_text(json.dumps({
+            "hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/setup.sh"}]}]}
+        }))
+
+        sources: list[dict[str, Any]] = [{"local": str(tmp_path), "plugins": ["my-plugin"]}]
+        result = agent_harness_find_plugin_hooks(sources, str(tmp_path / "cache"))
+
+        assert len(result) == 1
+        assert result[0]["name"] == "my-plugin"
+        assert str(plugin_dir) in result[0]["content"]
+        assert "${CLAUDE_PLUGIN_ROOT}" not in result[0]["content"]
+
+    def test_skips_plugins_without_hooks(self, tmp_path: Path) -> None:
+        plugin_dir = tmp_path / "plugins" / "no-hooks"
+        plugin_dir.mkdir(parents=True)
+        (plugin_dir / ".claude-plugin").mkdir()
+        (plugin_dir / ".claude-plugin" / "plugin.json").write_text(
+            json.dumps({"name": "no-hooks"})
+        )
+        (plugin_dir / "skills").mkdir()
+
+        sources: list[dict[str, Any]] = [{"local": str(tmp_path), "plugins": ["no-hooks"]}]
+        result = agent_harness_find_plugin_hooks(sources, str(tmp_path / "cache"))
+
+        assert result == []
