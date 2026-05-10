@@ -335,14 +335,6 @@
           tags: ["system-maintenance", "timers"]
       tags: ["system-maintenance", "timers"]
 
-    - name: Provide obsidian-cli compatibility shim for OpenClaw skill
-      tags: ["go", "openclaw-skills", "obsidian"]
-      ansible.builtin.file:
-        src: "{{ ansible_facts['env']['HOME'] }}/go/bin/notesmd-cli"
-        dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/obsidian-cli"
-        state: link
-        force: true
-
     - name: Install global language tools
       ansible.builtin.include_role:
         name: language_tools

@@ -82,8 +82,6 @@
     - name: update-gems
       enabled: "{{ gem_packages | length > 0 }}"
       path: /usr/local/bin
-    - name: memory-monthly-digest
-      enabled: true
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled
@@ -117,9 +115,6 @@
     - name: update-gems
       enabled: "{{ gem_packages | length > 0 }}"
       description: Update Ruby gems
-    - name: memory-monthly-digest
-      enabled: true
-      src: memory-monthly-digest.timer.j2
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled
@@ -150,8 +145,6 @@
       enabled: "{{ cargo_packages | length > 0 }}"
     - name: update-gems
       enabled: "{{ gem_packages | length > 0 }}"
-    - name: memory-monthly-digest
-      enabled: true
   loop_control:
     label: "{{ item.name }}"
   when: item.enabled

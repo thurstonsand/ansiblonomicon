@@ -76,7 +76,6 @@ apt_external_repos:
       - mise
 
 npm_global_packages_extra:
-  - openclaw
   - mcporter
   - pdfjs-dist
   - "@steipete/summarize"
@@ -91,7 +90,6 @@ go_tools_extra:
   - github.com/steipete/gifgrep/cmd/gifgrep
   - github.com/steipete/gogcli/cmd/gog
   - github.com/steipete/sag/cmd/sag
-  - github.com/Yakitrak/notesmd-cli
 uv_global_tools_extra: []
 mise_global_tools_extra:
   - chezmoi@latest
