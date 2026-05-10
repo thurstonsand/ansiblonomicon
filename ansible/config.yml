@@ -18,11 +18,15 @@ uv_global_tools_base:
   - showboat
 
 # Global mise tools (base set for all hosts)
-mise_global_tools_base: []
+# Keep Node on active LTS. Homebrew's unversioned node formula tracks current release,
+# which can outrun native npm packages used by global CLI tools.
+mise_global_tools_base:
+  - node@lts
+  - golangci-lint@latest
 
 # Global npm packages (base set for all hosts)
 npm_global_packages_base:
-  - "@mariozechner/pi-coding-agent"
+  - "@earendil-works/pi-coding-agent"
   - "@steipete/oracle"
   - agent-browser
   - hunkdiff

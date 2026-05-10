@@ -1629,16 +1629,28 @@ Content here.
 
 class TestRepoToCacheName:
     def test_owner_name_form(self) -> None:
-        assert _repo_to_cache_name("anthropics/claude-plugins-official") == "anthropics--claude-plugins-official"
+        assert (
+            _repo_to_cache_name("anthropics/claude-plugins-official")
+            == "anthropics--claude-plugins-official"
+        )
 
     def test_https_url(self) -> None:
-        assert _repo_to_cache_name("https://scm.example.com/scm/proj/my-plugin.git") == "scm--example--com--scm--proj--my-plugin"
+        assert (
+            _repo_to_cache_name("https://scm.example.com/scm/proj/my-plugin.git")
+            == "scm--example--com--scm--proj--my-plugin"
+        )
 
     def test_https_url_without_git_suffix(self) -> None:
-        assert _repo_to_cache_name("https://github.com/owner/repo") == "github--com--owner--repo"
+        assert (
+            _repo_to_cache_name("https://github.com/owner/repo")
+            == "github--com--owner--repo"
+        )
 
     def test_ssh_url(self) -> None:
-        assert _repo_to_cache_name("git@gitlab.example.com:user/repo.git") == "gitlab--example--com--user--repo"
+        assert (
+            _repo_to_cache_name("git@gitlab.example.com:user/repo.git")
+            == "gitlab--example--com--user--repo"
+        )
 
     def test_public_filter_matches_private(self) -> None:
         url = "https://scm.example.com/scm/proj/my-plugin.git"
@@ -1709,11 +1721,28 @@ class TestFindPluginHooks:
         (plugin_dir / "skills").mkdir()
         hooks_dir = plugin_dir / "hooks"
         hooks_dir.mkdir()
-        hooks_dir.joinpath("hooks.json").write_text(json.dumps({
-            "hooks": {"SessionStart": [{"hooks": [{"type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/bin/setup.sh"}]}]}
-        }))
+        hooks_dir.joinpath("hooks.json").write_text(
+            json.dumps(
+                {
+                    "hooks": {
+                        "SessionStart": [
+                            {
+                                "hooks": [
+                                    {
+                                        "type": "command",
+                                        "command": "${CLAUDE_PLUGIN_ROOT}/bin/setup.sh",
+                                    }
+                                ]
+                            }
+                        ]
+                    }
+                }
+            )
+        )
 
-        sources: list[dict[str, Any]] = [{"local": str(tmp_path), "plugins": ["my-plugin"]}]
+        sources: list[dict[str, Any]] = [
+            {"local": str(tmp_path), "plugins": ["my-plugin"]}
+        ]
         result = agent_harness_find_plugin_hooks(sources, str(tmp_path / "cache"))
 
         assert len(result) == 1
@@ -1730,7 +1759,9 @@ class TestFindPluginHooks:
         )
         (plugin_dir / "skills").mkdir()
 
-        sources: list[dict[str, Any]] = [{"local": str(tmp_path), "plugins": ["no-hooks"]}]
+        sources: list[dict[str, Any]] = [
+            {"local": str(tmp_path), "plugins": ["no-hooks"]}
+        ]
         result = agent_harness_find_plugin_hooks(sources, str(tmp_path / "cache"))
 
         assert result == []

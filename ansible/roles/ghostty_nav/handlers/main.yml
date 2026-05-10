@@ -1,6 +1,6 @@
 ---
 - name: Store ghostty-nav build checksum
   ansible.builtin.copy:
-    content: "{{ ghostty_nav_source.stat.checksum }}"
+    content: "{{ ghostty_nav_source_checksum.stdout }}"
     dest: "{{ role_path }}/.build-checksum"
     mode: "0644"

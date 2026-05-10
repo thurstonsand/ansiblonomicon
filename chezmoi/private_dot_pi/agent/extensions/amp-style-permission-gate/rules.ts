@@ -8,7 +8,7 @@ import {
   type ReadToolCallEvent,
   type ToolCallEvent,
   type WriteToolCallEvent,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 
 export type BuiltInToolName =
   | BashToolCallEvent["toolName"]

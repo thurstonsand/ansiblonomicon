@@ -13,8 +13,8 @@ help = "Resolve 1Password secrets to .env and worker .dev.vars files (force rege
 shell = "rm -f .env && uv run scripts/init-secrets.py"
 
 [tool.poe.tasks.lint]
-help = "Lint all code (ansible + python + workers + pi)"
-sequence = ["lint:ansible", "lint:python", "lint:workers", "lint:pi"]
+help = "Lint all code (ansible + python + workers + pi + ghostty-nav)"
+sequence = ["lint:ansible", "lint:python", "lint:nvim", "lint:workers", "lint:pi", "lint:cli-tools"]
 
 [tool.poe.tasks."lint:ansible"]
 cmd = "ansible-lint"
@@ -32,6 +32,11 @@ cmd = "ruff check --fix --unsafe-fixes ."
 [tool.poe.tasks."lint:types"]
 cmd = "basedpyright"
 
+[tool.poe.tasks."lint:nvim"]
+help = "Check Neovim Lua formatting with StyLua"
+cmd = "stylua --check ."
+cwd = "chezmoi/dot_config/nvim"
+
 [tool.poe.tasks."lint:workers"]
 help = "Type-check Cloudflare Workers via wrangler"
 sequence = ["lint:workers:aig", "lint:workers:hooks"]
@@ -47,6 +52,26 @@ cwd = "wrangler/hooks"
 [tool.poe.tasks."lint:pi"]
 help = "Lint and type-check pi extensions (pass --format to apply formatting)"
 cmd = "./scripts/pi-lint.sh ${format:+--format}"
+
+[tool.poe.tasks."lint:cli-tools"]
+help = "Format, lint, test, and build in-repo CLI tools"
+sequence = ["lint:shp", "lint:ghostty-nav"]
+
+[tool.poe.tasks."lint:shp"]
+cmd = "just check"
+cwd = "ansible/roles/shp/files/shp"
+
+[tool.poe.tasks."lint:ghostty-nav"]
+help = "Format, lint, test, and build ghostty-nav client and daemon"
+sequence = ["lint:ghostty-nav:client", "lint:ghostty-nav:daemon"]
+
+[tool.poe.tasks."lint:ghostty-nav:client"]
+cmd = "just check"
+cwd = "ansible/roles/ghostty_nav/files/ghostty-nav"
+
+[tool.poe.tasks."lint:ghostty-nav:daemon"]
+cmd = "just check"
+cwd = "ansible/roles/ghostty_nav/files/ghostty-navd"
 
 [[tool.poe.tasks."lint:pi".args]]
 name = "format"

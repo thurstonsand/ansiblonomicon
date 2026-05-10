@@ -1,6 +1,6 @@
 import path from "node:path";
-import type { Api, Model } from "@mariozechner/pi-ai";
-import { getAgentDir } from "@mariozechner/pi-coding-agent";
+import type { Api, Model } from "@earendil-works/pi-ai";
+import { getAgentDir } from "@earendil-works/pi-coding-agent";
 
 import { FileBackedStateWatcher } from "./file-backed-state-watcher.js";
 import { readJsonFile } from "./json-file.js";

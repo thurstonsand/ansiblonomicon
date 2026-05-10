@@ -2,7 +2,7 @@ import { type FSWatcher, watch } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join } from "node:path";
-import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
+import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
 const themeFile = join(homedir(), ".terminal-bg");
 

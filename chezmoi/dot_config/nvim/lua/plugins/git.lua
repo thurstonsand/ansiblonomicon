@@ -101,7 +101,14 @@ return {
           file_panel = {
             { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diff View" } },
             { "n", "x", actions.restore_entry, { desc = "Restore entry (discard changes)" } },
-            { "n", "u", function() Snacks.notifier.show_history() end, { desc = "Notification history (undo info)" } },
+            {
+              "n",
+              "u",
+              function()
+                Snacks.notifier.show_history()
+              end,
+              { desc = "Notification history (undo info)" },
+            },
           },
           file_history_panel = {
             { "n", "q", "<cmd>DiffviewClose<cr>", { desc = "Close Diff View" } },

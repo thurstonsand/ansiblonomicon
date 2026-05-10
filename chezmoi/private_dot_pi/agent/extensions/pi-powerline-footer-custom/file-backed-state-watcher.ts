@@ -1,5 +1,5 @@
 import { type FSWatcher, watch } from "node:fs";
-import type { Api, Model } from "@mariozechner/pi-ai";
+import type { Api, Model } from "@earendil-works/pi-ai";
 
 export abstract class FileBackedStateWatcher<TConfig, TValue> {
   private watcher: FSWatcher | undefined;

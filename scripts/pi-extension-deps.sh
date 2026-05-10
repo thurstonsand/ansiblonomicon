@@ -40,8 +40,8 @@ for dir in "${PACKAGE_DIRS[@]}"; do
   (
     cd "$dir"
     npm install
-    if node -e 'const pkg=require("./package.json"); process.exit((pkg.dependencies?.["@mariozechner/pi-coding-agent"] || pkg.devDependencies?.["@mariozechner/pi-coding-agent"]) ? 0 : 1)'; then
-      npm install --save-dev "@mariozechner/pi-coding-agent@${PI_VERSION}" @types/node@latest typescript@latest @biomejs/biome@latest
+    if node -e 'const pkg=require("./package.json"); process.exit((pkg.dependencies?.["@earendil-works/pi-coding-agent"] || pkg.devDependencies?.["@earendil-works/pi-coding-agent"]) ? 0 : 1)'; then
+      npm install --save-dev "@earendil-works/pi-coding-agent@${PI_VERSION}" @types/node@latest typescript@latest @biomejs/biome@latest
     fi
     npm update
   )

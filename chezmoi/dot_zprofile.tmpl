@@ -7,9 +7,9 @@
 # Homebrew shell environment
 _evalcache /opt/homebrew/bin/brew shellenv
 
-# Ensure local bin takes precedence over homebrew
+# Ensure local bins and mise shims take precedence over Homebrew formulas.
 typeset -U path
-path=("$HOME/.local/bin" $path)
+path=("$HOME/.local/bin" "$HOME/.local/share/mise/shims" $path)
 {{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
 
 # OrbStack shell integration

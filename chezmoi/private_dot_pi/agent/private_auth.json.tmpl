@@ -1,3 +1,31 @@
+{{- $authPath := joinPath .chezmoi.homeDir ".pi" "agent" "auth.json" -}}
+{{- $preserveUnmanagedAuth := `import json
+import pathlib
+import sys
+
+path = pathlib.Path(sys.argv[1])
+managed_keys = set(sys.argv[2:])
+try:
+    existing = json.loads(path.read_text())
+except FileNotFoundError:
+    existing = {}
+except json.JSONDecodeError as exc:
+    raise SystemExit(f"{path}: invalid JSON; refusing to overwrite unmanaged auth: {exc}") from exc
+
+if not isinstance(existing, dict):
+    raise SystemExit(f"{path}: expected top-level JSON object")
+
+unmanaged = [
+    (key, value)
+    for key, value in existing.items()
+    if key not in managed_keys
+]
+
+for key, value in unmanaged:
+    rendered = json.dumps({key: value}, indent=2).splitlines()
+    print(",")
+    print("\n".join(rendered[1:-1]), end="")
+` -}}
 {
   "anthropic": {
     "type": "api_key",
@@ -10,5 +38,5 @@
   "google": {
     "type": "api_key",
     "key": "{{ template "llm-api-key" . }}"
-  }
+  }{{ output "python3" "-c" $preserveUnmanagedAuth $authPath "anthropic" "openai" "google" }}
 }

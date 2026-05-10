@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
 
-import { Theme, type ThemeColor } from "@mariozechner/pi-coding-agent";
+import { Theme, type ThemeColor } from "@earendil-works/pi-coding-agent";
 
 type ThemeBg =
   | "selectedBg"
@@ -146,7 +146,7 @@ function resolveThemePath(themeNameOrPath: string, cwd: string): string {
     ),
     join(repoRoot, "chezmoi", "private_dot_pi", "agent", "themes", `${themeNameOrPath}.json`),
     join(
-      "/opt/homebrew/lib/node_modules/@mariozechner/pi-coding-agent/dist/modes/interactive/theme",
+      "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/modes/interactive/theme",
       `${themeNameOrPath}.json`,
     ),
   ];

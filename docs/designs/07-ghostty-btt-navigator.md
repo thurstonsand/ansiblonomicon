@@ -60,9 +60,10 @@ Normal shell prompts do only a file existence check.
 
 `ghostty-nav` is a small argv-based Swift CLI that owns Ghostty-side actions for both navigation and local tab shaping:
 
-- `ghostty-nav activate nvim`
-- `ghostty-nav deactivate`
-- `ghostty-nav move left|down|up|right`
+- `ghostty-nav terminal-id`
+- `ghostty-nav [--terminal-id <id>] activate nvim`
+- `ghostty-nav [--terminal-id <id>] deactivate`
+- `ghostty-nav [--terminal-id <id>] move left|down|up|right`
 - `ghostty-nav tab-terminal-count`
 - `ghostty-nav split <left|right|up|down> [--cwd <path>] [--command <string>] [--focus <new|original>]`
 - `ghostty-nav resize <left|down|up|right> (--pixels <n> | --percent <n>)`
@@ -70,6 +71,8 @@ Normal shell prompts do only a file existence check.
 - `ghostty-nav title <text>`
 
 On macOS the split/navigation actions talk to Ghostty via `NSAppleScript`, while `title` writes OSC 2 directly to the current TTY so shell wrappers can retitle the active Ghostty surface without carrying their own escape-sequence logic.
+
+Neovim captures Ghostty's terminal `id` on activation and passes it back with `--terminal-id` for later activate/deactivate/move calls. That prevents a background Neovim exit from deactivating whichever Ghostty surface happens to be focused at the time.
 
 ### Local IDE Flow
 

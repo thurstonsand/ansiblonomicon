@@ -2,7 +2,7 @@ import {
   type ExtensionAPI,
   type ExtensionContext,
   isToolCallEventType,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import { BASH_TOOL_NAME, findMatchingRule, PERMISSION_RULES } from "./rules.js";
 import { persistPermissionGateState, restorePermissionGateState } from "./state.js";
 import { showPermissionGate, showPermissionsSummary, syncPermissionsStatus } from "./ui.js";

@@ -1,0 +1,3 @@
+---
+ghostty_nav_cache_dir: "{{ ansible_facts['env']['HOME'] }}/.cache/ghostty-nav"
+ghostty_nav_upgrade_interval_seconds: 604800

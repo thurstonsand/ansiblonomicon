@@ -1,41 +1,155 @@
 ---
-# Build ghostty-nav CLI for Ghostty split navigation.
+# Build ghostty-nav client and daemon for Ghostty split navigation.
 
-- name: Ensure ~/.local/bin directory exists
+- name: Determine ghostty-nav platform support
+  ansible.builtin.set_fact:
+    ghostty_nav_is_darwin: "{{ ansible_facts['system'] == 'Darwin' }}"
+
+- name: Ensure ghostty-nav directories exist
   ansible.builtin.file:
-    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+    path: "{{ item.path }}"
     state: directory
-    mode: "0755"
+    mode: "{{ item.mode }}"
+  loop: >-
+    {{
+      [
+        {'path': ansible_facts['env']['HOME'] + '/.local/bin', 'mode': '0755'},
+        {'path': ghostty_nav_cache_dir, 'mode': '0755'}
+      ]
+      + (
+        [
+          {'path': ansible_facts['env']['HOME'] + '/.local/run/ghostty-nav', 'mode': '0700'},
+          {'path': ansible_facts['env']['HOME'] + '/.local/state/ghostty-nav', 'mode': '0700'},
+          {'path': ansible_facts['env']['HOME'] + '/Library/LaunchAgents', 'mode': '0755'}
+        ]
+        if ghostty_nav_is_darwin else []
+      )
+    }}
 
-- name: Get Swift source checksum
+- name: Check ghostty-nav dependency upgrade stamp
   ansible.builtin.stat:
-    path: "{{ role_path }}/files/ghostty-nav.swift"
-    checksum_algorithm: sha256
-  register: ghostty_nav_source
+    path: "{{ ghostty_nav_cache_dir }}/upgrade.stamp"
+  register: ghostty_nav_upgrade_stamp
 
-- name: Check installed binary
+- name: Determine if ghostty-nav dependency upgrade is due
+  ansible.builtin.set_fact:
+    ghostty_nav_upgrade_due: >-
+      {{
+        (not ghostty_nav_upgrade_stamp.stat.exists)
+        or (
+          (ansible_date_time.epoch | int) - (ghostty_nav_upgrade_stamp.stat.mtime | int)
+          >= (ghostty_nav_upgrade_interval_seconds | int)
+        )
+      }}
+
+- name: Update ghostty-nav Go dependencies and tools
+  when: ghostty_nav_upgrade_due
+  ansible.builtin.command:
+    argv:
+      - just
+      - update-deps
+    chdir: "{{ role_path }}/files/ghostty-nav"
+  register: ghostty_nav_update_deps
+  changed_when: ghostty_nav_update_deps.stdout | length > 0 or ghostty_nav_update_deps.stderr | length > 0
+
+- name: Record ghostty-nav dependency upgrade timestamp
+  when: ghostty_nav_upgrade_due
+  ansible.builtin.file:
+    path: "{{ ghostty_nav_cache_dir }}/upgrade.stamp"
+    state: touch
+    mode: "0644"
+
+- name: Compute ghostty-nav source checksum
+  ansible.builtin.shell: |
+    set -euo pipefail
+    {
+      find files/ghostty-nav -type f \( -name '*.go' -o -name 'go.mod' -o -name 'go.sum' -o -name '.golangci.yml' -o -name 'justfile' \) -print0
+      if [[ "{{ ghostty_nav_is_darwin }}" == "True" ]]; then
+        find files/ghostty-navd -type f \( -name '*.swift' -o -name '.swiftformat' -o -name '.swiftlint.yml' -o -name 'justfile' \) -print0
+        find templates -type f -name 'house.thurstons.ghostty-navd.plist.j2' -print0
+      fi
+    } \
+      | sort -z \
+      | xargs -0 shasum -a 256 \
+      | shasum -a 256 \
+      | awk '{print $1}'
+  args:
+    chdir: "{{ role_path }}"
+    executable: /bin/bash
+  register: ghostty_nav_source_checksum
+  changed_when: false
+
+- name: Check installed ghostty-nav client
   ansible.builtin.stat:
     path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/ghostty-nav"
-  register: ghostty_nav_binary
+  register: ghostty_nav_client_binary
 
-- name: Read last build checksum
+- name: Check installed ghostty-nav daemon
+  when: ghostty_nav_is_darwin
+  ansible.builtin.stat:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/ghostty-navd"
+  register: ghostty_nav_daemon_binary
+
+- name: Read last ghostty-nav build checksum
   ansible.builtin.slurp:
     src: "{{ role_path }}/.build-checksum"
   register: ghostty_nav_stored
   failed_when: false
 
-- name: Build ghostty-nav
+- name: Determine whether ghostty-nav binaries need rebuild
+  ansible.builtin.set_fact:
+    ghostty_nav_rebuild_required: >-
+      {{
+        not ghostty_nav_client_binary.stat.exists
+        or (ghostty_nav_is_darwin and not ghostty_nav_daemon_binary.stat.exists)
+        or ghostty_nav_stored is failed
+        or (ghostty_nav_stored.content | default('') | b64decode | trim) != ghostty_nav_source_checksum.stdout
+      }}
+
+- name: Build ghostty-nav client
   ansible.builtin.command:
     argv:
-      - swiftc
-      - -O
-      - -o
-      - "{{ ansible_facts['env']['HOME'] }}/.local/bin/ghostty-nav"
-      - "{{ role_path }}/files/ghostty-nav.swift"
-  when: >-
-    not ghostty_nav_binary.stat.exists
-    or ghostty_nav_stored is failed
-    or (ghostty_nav_stored.content | default('') | b64decode | trim) != ghostty_nav_source.stat.checksum
+      - just
+      - install
+    chdir: "{{ role_path }}/files/ghostty-nav"
+  when: ghostty_nav_rebuild_required
   changed_when: true
+  register: ghostty_nav_client_build
+
+- name: Build ghostty-nav daemon
+  ansible.builtin.command:
+    argv:
+      - just
+      - install
+    chdir: "{{ role_path }}/files/ghostty-navd"
+  when:
+    - ghostty_nav_is_darwin
+    - ghostty_nav_rebuild_required
+  changed_when: true
+  register: ghostty_nav_daemon_build
   notify:
     - Store ghostty-nav build checksum
+
+- name: Install ghostty-navd LaunchAgent
+  when: ghostty_nav_is_darwin
+  ansible.builtin.template:
+    src: house.thurstons.ghostty-navd.plist.j2
+    dest: "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents/house.thurstons.ghostty-navd.plist"
+    mode: "0600"
+  register: ghostty_nav_launch_agent_plist
+
+- name: Ensure ghostty-navd LaunchAgent is enabled and running
+  when: ghostty_nav_is_darwin
+  community.general.launchd:
+    name: house.thurstons.ghostty-navd
+    enabled: true
+    state: started
+
+- name: Reload ghostty-navd LaunchAgent
+  when:
+    - ghostty_nav_is_darwin
+    - not ansible_check_mode
+    - ghostty_nav_rebuild_required or ghostty_nav_launch_agent_plist.changed | default(false)
+  community.general.launchd:
+    name: house.thurstons.ghostty-navd
+    state: reloaded

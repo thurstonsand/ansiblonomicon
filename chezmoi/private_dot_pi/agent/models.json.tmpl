@@ -1,5 +1,7 @@
 {
   "providers": {
+    // All provider entries route through the in-house Cloudflare AI Gateway proxy.
+    // Costs are set to zero here because billing/accounting happens at the gateway layer.
     "anthropic": {
       "baseUrl": "https://aig.thurstons.house",
       "apiKey": "{{ template "llm-api-key" . }}",
@@ -35,6 +37,7 @@
         }
       ]
     },
+    // Standard OpenAI Responses path through AIG. This path is SSE; use built-in openai-codex for Pi's WebSocket transport.
     "openai": {
       "baseUrl": "https://aig.thurstons.house/v1",
       "apiKey": "{{ template "llm-api-key" . }}",

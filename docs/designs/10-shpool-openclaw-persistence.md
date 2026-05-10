@@ -106,7 +106,7 @@ ClientAliveCountMax 3
 
 The local `ideo` helper will be Ghostty-specific and use the existing `ghostty-nav` split machinery.
 
-Remote Neovim-to-local-Ghostty key-table synchronization is intentionally deferred. The planned design is captured in [11-ghostty-ssh-nvim-bridge.md](11-ghostty-ssh-nvim-bridge.md) and waits for a Ghostty stable release that exposes each terminal surface's controlling TTY through AppleScript.
+Remote Neovim-to-local-Ghostty key-table synchronization is intentionally deferred. The planned design is captured in [12-ghostty-ssh-nvim-bridge.md](12-ghostty-ssh-nvim-bridge.md) and waits for a Ghostty stable release that exposes each terminal surface's controlling TTY through AppleScript.
 
 Initial interface:
 

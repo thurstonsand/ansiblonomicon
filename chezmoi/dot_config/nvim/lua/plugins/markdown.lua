@@ -38,7 +38,9 @@ return {
     keys = {
       {
         "<leader>mi",
-        function() require("img-clip").paste_image() end,
+        function()
+          require("img-clip").paste_image()
+        end,
         desc = "Paste Image",
         mode = { "n" },
       },

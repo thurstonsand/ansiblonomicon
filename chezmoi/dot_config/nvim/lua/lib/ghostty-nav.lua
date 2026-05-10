@@ -1,7 +1,7 @@
 local M = {}
 
 local setup_done = false
-local key_table_active = false
+local cached_tty = nil
 
 local FloatWinBehavior = {
   previous = "previous",
@@ -22,42 +22,63 @@ local function helper_available()
   return in_ghostty() and vim.fn.executable(helper_path()) == 1
 end
 
-local function tty_key()
-  local tty = vim.env.TTY
-  if not tty or tty == "" then
+local function tui_pid()
+  for _, ui in ipairs(vim.api.nvim_list_uis()) do
+    local ok, info = pcall(vim.api.nvim_get_chan_info, ui.chan)
+    local client = ok and info.client or nil
+    local attrs = client and client.attributes or nil
+    local pid = attrs and tonumber(attrs.pid) or nil
+    if client and client.name == "nvim-tui" and pid then
+      return pid
+    end
+  end
+  return nil
+end
+
+local function tty_for_pid(pid)
+  local result = vim
+    .system({
+      "ps",
+      "-p",
+      tostring(pid),
+      "-o",
+      "tty=",
+    }, { text = true })
+    :wait()
+
+  if result.code ~= 0 then
     return nil
   end
-  return tty:gsub("/", "_")
-end
 
-local function sentinel_path()
-  local key = tty_key()
-  if not key then
+  local tty = vim.trim(result.stdout or "")
+  if tty == "" or tty == "?" or tty == "??" then
     return nil
   end
 
-  local state_home = vim.env.XDG_STATE_HOME or (vim.env.HOME .. "/.local/state")
-  return state_home .. "/ghostty-nav/" .. key .. ".active"
+  if not tty:match("^/") then
+    tty = "/dev/" .. tty
+  end
+
+  return tty
 end
 
-local function touch_sentinel()
-  local path = sentinel_path()
-  if not path then
-    return
+local function current_tty()
+  if cached_tty then
+    return cached_tty
   end
 
-  vim.fn.mkdir(vim.fn.fnamemodify(path, ":h"), "p")
-  local file = io.open(path, "w")
-  if file then
-    file:close()
+  local pid = tui_pid()
+  if not pid then
+    return nil
   end
-end
 
-local function clear_sentinel()
-  local path = sentinel_path()
-  if path then
-    vim.fn.delete(path)
+  local tty = tty_for_pid(pid)
+  if not tty then
+    return nil
   end
+
+  cached_tty = tty
+  return cached_tty
 end
 
 local function run(args)
@@ -65,7 +86,13 @@ local function run(args)
     return false
   end
 
-  local argv = vim.list_extend({ helper_path() }, args)
+  local argv = { helper_path() }
+  local tty = current_tty()
+  if tty then
+    vim.list_extend(argv, { "--tty", tty })
+  end
+  vim.list_extend(argv, args)
+
   local result = vim.system(argv, { text = true }):wait()
   if result.code ~= 0 then
     local stderr = vim.trim(result.stderr or "")
@@ -79,22 +106,11 @@ local function run(args)
 end
 
 local function activate_key_table()
-  if key_table_active then
-    return
-  end
-
-  if run({ "activate", "nvim" }) then
-    touch_sentinel()
-    key_table_active = true
-  end
+  run({ "activate", "nvim" })
 end
 
 local function deactivate_key_table()
-  if key_table_active then
-    run({ "deactivate" })
-  end
-  clear_sentinel()
-  key_table_active = false
+  run({ "deactivate" })
 end
 
 local function is_floating_window(win)
@@ -202,12 +218,7 @@ function M.setup()
 
   local group = vim.api.nvim_create_augroup("ghostty_nav", { clear = true })
 
-  vim.api.nvim_create_autocmd("VimEnter", {
-    group = group,
-    callback = activate_key_table,
-  })
-
-  vim.api.nvim_create_autocmd("VimResume", {
+  vim.api.nvim_create_autocmd({ "VimEnter", "VimResume", "FocusGained" }, {
     group = group,
     callback = activate_key_table,
   })

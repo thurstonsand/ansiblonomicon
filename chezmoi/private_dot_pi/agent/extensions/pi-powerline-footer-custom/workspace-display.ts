@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
 import { basename } from "node:path";
-import type { ExtensionContext, ThemeColor } from "@mariozechner/pi-coding-agent";
+import type { ExtensionContext, ThemeColor } from "@earendil-works/pi-coding-agent";
 
 const FOLDER_STATUS_KEY = "workspace_folder";
 const BRANCH_STATUS_KEY = "workspace_branch";

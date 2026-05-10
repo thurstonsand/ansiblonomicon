@@ -47,7 +47,9 @@ def load_substitutions() -> dict[str, str]:
         return {}
     data = tomllib.loads(CHEZMOI_DATA.read_text())
     models = data.get("claude_code_models", {})
-    return {f"claude_code_models.{k}": v for k, v in models.items() if isinstance(v, str)}
+    return {
+        f"claude_code_models.{k}": v for k, v in models.items() if isinstance(v, str)
+    }
 
 
 def resolve_overlay(subs: dict[str, str]) -> str:

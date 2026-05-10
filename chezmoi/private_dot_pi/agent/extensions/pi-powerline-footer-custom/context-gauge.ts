@@ -1,4 +1,4 @@
-import { type ExtensionContext, getAgentDir, SettingsManager } from "@mariozechner/pi-coding-agent";
+import { type ExtensionContext, getAgentDir, SettingsManager } from "@earendil-works/pi-coding-agent";
 
 import { colorForPercent, renderGauge } from "./gauge.js";
 

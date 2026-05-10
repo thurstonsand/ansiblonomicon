@@ -2,7 +2,7 @@ import type {
   ExtensionCommandContext,
   ExtensionContext,
   Theme,
-} from "@mariozechner/pi-coding-agent";
+} from "@earendil-works/pi-coding-agent";
 import {
   CURSOR_MARKER,
   type Focusable,
@@ -10,7 +10,7 @@ import {
   matchesKey,
   visibleWidth,
   wrapTextWithAnsi,
-} from "@mariozechner/pi-tui";
+} from "@earendil-works/pi-tui";
 import type { PermissionRule } from "./rules.js";
 
 export type PermissionGateResult =

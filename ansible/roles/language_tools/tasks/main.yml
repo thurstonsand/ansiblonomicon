@@ -1,20 +1,4 @@
 ---
-- name: Install global npm packages
-  when: npm_global_packages | length > 0
-  community.general.npm:
-    name: "{{ item }}"
-    global: true
-    state: latest
-  loop: "{{ npm_global_packages }}"
-
-- name: Install global uv tools
-  when: uv_global_tools | length > 0
-  ansible.builtin.command:
-    cmd: uv tool install --upgrade {{ item }}
-  loop: "{{ uv_global_tools }}"
-  register: language_tools_uv_result
-  changed_when: "'Installed' in language_tools_uv_result.stderr or 'Updated' in language_tools_uv_result.stderr"
-
 - name: Install mise-managed tools
   when: mise_global_tools | length > 0
   ansible.builtin.command:
@@ -33,6 +17,24 @@
     'installed' in (language_tools_mise_result.stderr | lower) or
     'updated' in (language_tools_mise_result.stderr | lower) or
     'upgraded' in (language_tools_mise_result.stderr | lower)
+
+- name: Install global npm packages
+  when: npm_global_packages | length > 0
+  community.general.npm:
+    name: "{{ item }}"
+    global: true
+    state: latest
+  loop: "{{ npm_global_packages }}"
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['PATH'] }}"
+
+- name: Install global uv tools
+  when: uv_global_tools | length > 0
+  ansible.builtin.command:
+    cmd: uv tool install --upgrade {{ item }}
+  loop: "{{ uv_global_tools }}"
+  register: language_tools_uv_result
+  changed_when: "'Installed' in language_tools_uv_result.stderr or 'Updated' in language_tools_uv_result.stderr"
 
 - name: Install global bun packages
   when: bun_global_packages | length > 0

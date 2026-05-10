@@ -1,0 +1,29 @@
+set shell := ["bash", "-euo", "pipefail", "-c"]
+
+binary := "ghostty-nav"
+install_dir := env_var_or_default("HOME", ".") + "/.local/bin"
+
+_default:
+    just --list
+
+fmt:
+    gofmt -w main.go internal/**/*.go
+
+lint:
+    golangci-lint run ./...
+
+test:
+    go test ./...
+
+check: fmt lint test
+
+build:
+    go build -o {{binary}} .
+
+install:
+    mkdir -p {{install_dir}}
+    go build -o {{install_dir}}/{{binary}} .
+
+update-deps:
+    go get -u -t ./...
+    go mod tidy

@@ -18,7 +18,9 @@ end
 
 function M:update_status()
   local lines = vim.fn.systemlist({ "tmux", "list-windows", "-F", "#{window_active}\t#{window_name}" })
-  if vim.v.shell_error ~= 0 then return "" end
+  if vim.v.shell_error ~= 0 then
+    return ""
+  end
 
   local parts = {}
   for _, line in ipairs(lines) do
@@ -29,7 +31,9 @@ function M:update_status()
     end
   end
 
-  if #parts == 0 then return "" end
+  if #parts == 0 then
+    return ""
+  end
   return table.concat(parts, "  ") .. self:get_default_hl()
 end
 

@@ -968,14 +968,24 @@ def _resolve_hook_eligible_plugins(
 
         for plugin_spec in source.get("plugins", []):
             resolved = _resolve_plugin_from_repo(repo_path, plugin_spec)
-            if resolved.is_valid and resolved.include_hooks and resolved.config and resolved.plugin_path:
+            if (
+                resolved.is_valid
+                and resolved.include_hooks
+                and resolved.config
+                and resolved.plugin_path
+            ):
                 results.append((resolved.config.name, resolved.plugin_path))
 
     elif "local" in source:
         local_path = source["local"]
         for plugin_spec in source.get("plugins", []):
             resolved = _resolve_plugin_from_local(local_path, plugin_spec)
-            if resolved.is_valid and resolved.include_hooks and resolved.config and resolved.plugin_path:
+            if (
+                resolved.is_valid
+                and resolved.include_hooks
+                and resolved.config
+                and resolved.plugin_path
+            ):
                 results.append((resolved.config.name, resolved.plugin_path))
 
     return results
@@ -994,7 +1004,9 @@ def agent_harness_find_plugin_hooks(
     fragments: list[HookFragment] = []
 
     for source in sources:
-        for plugin_name, plugin_path in _resolve_hook_eligible_plugins(source, cache_dir):
+        for plugin_name, plugin_path in _resolve_hook_eligible_plugins(
+            source, cache_dir
+        ):
             hooks_file = plugin_path / "hooks" / "hooks.json"
             if not hooks_file.exists():
                 continue
