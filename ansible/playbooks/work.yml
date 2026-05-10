@@ -94,7 +94,7 @@
         apply:
           tags: ["chezmoi", "dotfiles"]
       vars:
-        chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
+        chezmoi_source_dir: "{{ playbook_dir }}/../../chezmoi"
       when: configure_chezmoi | default(true)
       tags: ["chezmoi", "dotfiles"]
 

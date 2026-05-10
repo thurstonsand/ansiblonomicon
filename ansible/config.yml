@@ -10,7 +10,7 @@ configure_chezmoi: true
 configure_agent_harness: true
 
 # Chezmoi configuration
-chezmoi_source_dir: "{{ playbook_dir }}/../chezmoi"
+chezmoi_source_dir: "{{ playbook_dir }}/../../chezmoi"
 
 # Global uv tools (base set for all hosts)
 uv_global_tools_base:

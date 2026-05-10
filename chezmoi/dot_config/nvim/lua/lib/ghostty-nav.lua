@@ -11,7 +11,17 @@ local FloatWinBehavior = {
 local float_win_behavior = FloatWinBehavior.previous
 
 local function in_ghostty()
-  return vim.env.TERM_PROGRAM == "ghostty"
+  if vim.env.TERM_PROGRAM == "ghostty" then
+    return true
+  end
+
+  for _, ui in ipairs(vim.api.nvim_list_uis()) do
+    if tostring(ui.term_name or ""):find("ghostty", 1, true) then
+      return true
+    end
+  end
+
+  return false
 end
 
 local function helper_path()
@@ -64,6 +74,11 @@ end
 
 local function current_tty()
   if cached_tty then
+    return cached_tty
+  end
+
+  if vim.env.GHOSTTY_NAV_TTY and vim.env.GHOSTTY_NAV_TTY ~= "" then
+    cached_tty = vim.env.GHOSTTY_NAV_TTY
     return cached_tty
   end
 

@@ -342,6 +342,13 @@
           tags: ["language-tools"]
       tags: ["language-tools"]
 
+    - name: Build ghostty-nav client for split navigation
+      ansible.builtin.include_role:
+        name: ghostty_nav
+        apply:
+          tags: ["ghostty-nav"]
+      tags: ["ghostty-nav"]
+
     - name: Configure shpool shell persistence
       ansible.builtin.include_role:
         name: shpool

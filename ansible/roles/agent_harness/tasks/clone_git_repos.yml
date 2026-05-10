@@ -3,9 +3,10 @@
 
 - name: Ensure cache directory exists
   ansible.builtin.file:
-    path: "{{ agent_harness_cache_dir }}"
+    path: "{{ agent_harness_effective_cache_dir }}"
     state: directory
     mode: "0755"
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
 
 - name: Sync skill repositories # noqa: latest[git]
   ansible.builtin.include_tasks: sync_single_git_repo.yml

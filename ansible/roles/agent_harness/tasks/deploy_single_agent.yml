@@ -4,6 +4,7 @@
 - name: Check if agent source exists
   ansible.builtin.stat:
     path: "{{ agent_harness_agent_info.source }}"
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
   register: agent_harness_agent_source_stat
 
 - name: Fail if agent source not found

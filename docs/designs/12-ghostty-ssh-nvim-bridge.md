@@ -2,14 +2,16 @@
 
 ## Status
 
-Deferred until Ghostty exposes each terminal surface's controlling TTY through AppleScript in a stable release.
+Superseded by the daemon-backed `ghostty-nav` bridge.
 
-The design assumes Ghostty AppleScript `terminal` objects provide:
+The implemented path uses the portable Go `ghostty-nav` client on OpenClaw, SSH `RemoteForward` for the daemon Unix socket, and `GHOSTTY_NAV_TTY` propagation through zsh/SSH environment forwarding. It avoids Ghostty AppleScript terminal-id matching entirely, so the deferred `terminal.tty` dependency below is no longer the active implementation plan.
+
+The historical design assumed Ghostty AppleScript `terminal` objects would provide:
 
 - `id`: stable terminal surface id
 - `tty`: controlling PTY path or basename for that surface
 
-Do not implement a focus-based fallback. It targets the wrong surface as soon as panes, tabs, or automation are involved.
+Do not revive the focus-based fallback. It targets the wrong surface as soon as panes, tabs, or automation are involved.
 
 ## Problem Statement
 

@@ -20,17 +20,46 @@
 
 - name: Stage chezmoi source on remote hosts
   when: (ansible_connection | default('ssh')) != 'local'
-  ansible.builtin.copy:
+  ansible.posix.synchronize:
     src: "{{ chezmoi_source_dir }}/"
     dest: "{{ chezmoi_effective_source_dir }}/"
-    mode: preserve
-    local_follow: true
+    delete: true
+    recursive: true
+    checksum: true
+    rsync_opts:
+      - --delete-excluded
+      - --exclude=.git
+      - --exclude=node_modules/
+      - --exclude=**/node_modules/
+      - --exclude=__pycache__/
+      - --exclude=**/__pycache__/
+      - --exclude=**/*.pyc
+  delegate_to: localhost
+  check_mode: false
+
+- name: Remove generated artifacts from staged chezmoi source
+  when: (ansible_connection | default('ssh')) != 'local'
+  ansible.builtin.shell: |
+    set -euo pipefail
+    find {{ chezmoi_effective_source_dir | quote }} -type d \( -name .git -o -name node_modules -o -name __pycache__ \) -prune -exec rm -rf {} +
+    find {{ chezmoi_effective_source_dir | quote }} -type f -name '*.pyc' -delete
+  args:
+    executable: /bin/bash
+  changed_when: false
   check_mode: false
 
 - name: Check if chezmoi is initialized
   ansible.builtin.stat:
     path: "{{ ansible_facts.env.HOME }}/.config/chezmoi/chezmoi.toml"
   register: chezmoi_config
+
+- name: Read OpenClaw 1Password service account token for chezmoi
+  when: ansible_facts['hostname'] == 'openclaw'
+  ansible.builtin.slurp:
+    src: "{{ ansible_facts.env.HOME }}/.config/openclaw/secrets/op-service-account-token"
+  register: chezmoi_op_service_account_token
+  failed_when: false
+  no_log: true
 
 - name: Initialize or refresh chezmoi config from source
   ansible.builtin.command:
@@ -46,10 +75,13 @@
   ansible.builtin.command:
     argv:
       - "{{ chezmoi_bin }}"
+      - "--source={{ chezmoi_effective_source_dir }}"
       - diff
       - --no-pager
       - --color=false
   register: chezmoi_diff
+  environment:
+    OP_SERVICE_ACCOUNT_TOKEN: "{{ chezmoi_op_service_account_token.content | default('') | b64decode | trim }}"
   changed_when: false
   failed_when: false
   check_mode: false
@@ -63,9 +95,12 @@
   ansible.builtin.command:
     argv:
       - "{{ chezmoi_bin }}"
+      - "--source={{ chezmoi_effective_source_dir }}"
       - apply
       - --force
   register: chezmoi_apply
+  environment:
+    OP_SERVICE_ACCOUNT_TOKEN: "{{ chezmoi_op_service_account_token.content | default('') | b64decode | trim }}"
   changed_when: chezmoi_diff.stdout | length > 0
   when:
     - not ansible_check_mode

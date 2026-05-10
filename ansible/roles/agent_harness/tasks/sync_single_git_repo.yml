@@ -9,12 +9,14 @@
 
 - name: Check whether repository is already cached
   ansible.builtin.stat:
-    path: "{{ agent_harness_cache_dir }}/{{ agent_harness_repo_cache_name }}/.git"
+    path: "{{ agent_harness_effective_cache_dir }}/{{ agent_harness_repo_cache_name }}/.git"
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
   register: agent_harness_repo_git_dir
 
 - name: Check last repository update timestamp
   ansible.builtin.stat:
-    path: "{{ agent_harness_cache_dir }}/{{ agent_harness_repo_cache_name }}.last_update"
+    path: "{{ agent_harness_effective_cache_dir }}/{{ agent_harness_repo_cache_name }}.last_update"
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
   register: agent_harness_repo_update_stamp
 
 - name: Compute repository update policy
@@ -36,17 +38,19 @@
 - name: Clone or update skill repository # noqa: latest[git]
   ansible.builtin.git:
     repo: "{{ agent_harness_repo_url }}"
-    dest: "{{ agent_harness_cache_dir }}/{{ agent_harness_repo_cache_name }}"
+    dest: "{{ agent_harness_effective_cache_dir }}/{{ agent_harness_repo_cache_name }}"
     update: "{{ agent_harness_repo_should_update }}"
     depth: 1
     version: HEAD
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
   diff: false
 
 - name: Record repository sync timestamp
   ansible.builtin.file:
-    path: "{{ agent_harness_cache_dir }}/{{ agent_harness_repo_cache_name }}.last_update"
+    path: "{{ agent_harness_effective_cache_dir }}/{{ agent_harness_repo_cache_name }}.last_update"
     state: touch
     mode: "0644"
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
   when:
     - agent_harness_repo_pull_enabled
     - not agent_harness_repo_git_dir.stat.exists or agent_harness_repo_should_update

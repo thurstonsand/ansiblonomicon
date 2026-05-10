@@ -5,7 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // Normalize returns value as an absolute /dev path.
@@ -24,19 +26,22 @@ func Current() (string, error) {
 	}
 	defer func() { _ = file.Close() }()
 
-	fd := file.Fd()
-	candidates := []string{
-		fmt.Sprintf("/dev/fd/%d", fd),
-		fmt.Sprintf("/proc/self/fd/%d", fd),
+	return ttyCommand(file)
+}
+
+func ttyCommand(stdin *os.File) (string, error) {
+	cmd := exec.Command("tty")
+	cmd.Stdin = stdin
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
 	}
-	for _, candidate := range candidates {
-		path, err := os.Readlink(candidate)
-		if err == nil && path != "" {
-			if !filepath.IsAbs(path) {
-				return Normalize(path), nil
-			}
-			return path, nil
-		}
+	path := strings.TrimSpace(string(output))
+	if path == "" || path == "not a tty" {
+		return "", errors.New("tty command did not return a tty")
 	}
-	return "", errors.New("resolve controlling tty path")
+	if !filepath.IsAbs(path) {
+		return Normalize(path), nil
+	}
+	return path, nil
 }

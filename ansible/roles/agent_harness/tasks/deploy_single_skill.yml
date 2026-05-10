@@ -4,6 +4,7 @@
 - name: Check if skill source exists
   ansible.builtin.stat:
     path: "{{ agent_harness_skill_info.source }}"
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
   register: agent_harness_skill_source_stat
 
 - name: Fail if skill source not found
