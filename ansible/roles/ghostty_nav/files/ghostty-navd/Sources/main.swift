@@ -10,19 +10,19 @@ final class GhosttyNavDaemon {
         _ = NSApplication.shared
         logger.log("starting")
         let server = try NetworkServer(logger: logger) { [weak self] request in
-            guard let self else { return .failure("daemon unavailable") }
+            guard let self else { return .json(NavResponse.failure("daemon unavailable")) }
             return commandQueue.sync { self.process(request) }
         }
         server.start()
     }
 
-    private func process(_ request: any NavRequest) -> NavResponse {
+    private func process(_ request: any NavRequest) -> NavResponseBody {
         do {
             return try request.response(using: RequestContext(cache: cache, logger: logger))
         } catch {
             cache.clearAfterFailure(tty: request.tty)
             logger.log("\(request.logSummary) failed error=\(error.localizedDescription)")
-            return .failure(error.localizedDescription)
+            return .json(NavResponse.failure(error.localizedDescription))
         }
     }
 }

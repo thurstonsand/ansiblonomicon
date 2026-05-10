@@ -9,10 +9,10 @@ final class NetworkServer {
     private let listener: NWListener
     private let queue = DispatchQueue(label: "ghostty-navd.network")
     private let logger: NavLogger
-    private let handler: (any NavRequest) -> NavResponse
+    private let handler: (any NavRequest) -> NavResponseBody
     private var connections: [UUID: ClientConnection] = [:]
 
-    init(logger: NavLogger, handler: @escaping (any NavRequest) -> NavResponse) throws {
+    init(logger: NavLogger, handler: @escaping (any NavRequest) -> NavResponseBody) throws {
         self.logger = logger
         self.handler = handler
 
@@ -67,7 +67,7 @@ private final class ClientConnection {
     private let connection: NWConnection
     private let queue: DispatchQueue
     private let logger: NavLogger
-    private let handler: (any NavRequest) -> NavResponse
+    private let handler: (any NavRequest) -> NavResponseBody
     private var buffer = Data()
     private var stopped = false
 
@@ -76,7 +76,7 @@ private final class ClientConnection {
         connection: NWConnection,
         queue: DispatchQueue,
         logger: NavLogger,
-        handler: @escaping (any NavRequest) -> NavResponse
+        handler: @escaping (any NavRequest) -> NavResponseBody
     ) {
         self.id = id
         self.connection = connection
@@ -142,7 +142,7 @@ private final class ClientConnection {
     }
 
     private func handle(data: Data) {
-        let response: NavResponse
+        let response: NavResponseBody
         let wantsReply: Bool
         do {
             let request = try decodeNavRequest(from: data)
@@ -151,7 +151,7 @@ private final class ClientConnection {
         } catch {
             wantsReply = true
             logger.log("request failed before process error=\(error.localizedDescription)")
-            response = .failure(error.localizedDescription)
+            response = .json(NavResponse.failure(error.localizedDescription))
         }
 
         if wantsReply {
@@ -161,22 +161,119 @@ private final class ClientConnection {
         }
     }
 
-    private func send(_ response: NavResponse) {
+    private func send(_ response: NavResponseBody) {
+        switch response {
+        case let .json(jsonResponse):
+            sendJSON(jsonResponse, isComplete: true) { [weak self] in self?.stop() }
+        case let .stream(streamResponse):
+            send(streamResponse)
+        }
+    }
+
+    private func send(_ response: PasteStreamResponse) {
+        sendJSON(response.header, isComplete: response.streams.isEmpty) { [weak self] in
+            guard let self else { return }
+            if response.streams.isEmpty {
+                stop()
+                return
+            }
+            sendStreams(response.streams, index: 0)
+        }
+    }
+
+    private func sendJSON(_ response: any Encodable, isComplete: Bool, complete: @escaping () -> Void) {
         do {
             let responseData = try encodeJSONLine(response)
             connection.send(
                 content: responseData,
-                contentContext: .finalMessage,
-                isComplete: true,
+                contentContext: .defaultMessage,
+                isComplete: isComplete,
                 completion: .contentProcessed { [weak self] error in
                     if let error {
                         self?.logger.log("send failed error=\(error)")
+                        self?.stop()
+                        return
                     }
-                    self?.stop()
+                    complete()
                 }
             )
         } catch {
             logger.log("response encode failed error=\(error.localizedDescription)")
+            stop()
+        }
+    }
+
+    private func sendStreams(_ streams: [PasteByteStream], index: Int) {
+        if index >= streams.count {
+            connection.send(
+                content: nil,
+                contentContext: .finalMessage,
+                isComplete: true,
+                completion: .contentProcessed { [weak self] _ in
+                    self?.stop()
+                }
+            )
+            return
+        }
+
+        switch streams[index] {
+        case let .data(data):
+            sendData(data) { [weak self] in self?.sendStreams(streams, index: index + 1) }
+        case let .file(url):
+            sendFile(url) { [weak self] in self?.sendStreams(streams, index: index + 1) }
+        }
+    }
+
+    private func sendData(_ data: Data, complete: @escaping () -> Void) {
+        connection.send(
+            content: data,
+            contentContext: .defaultMessage,
+            isComplete: false,
+            completion: .contentProcessed { [weak self] error in
+                if let error {
+                    self?.logger.log("stream data send failed error=\(error)")
+                    self?.stop()
+                    return
+                }
+                complete()
+            }
+        )
+    }
+
+    private func sendFile(_ url: URL, complete: @escaping () -> Void) {
+        do {
+            let handle = try FileHandle(forReadingFrom: url)
+            sendFileChunk(handle, complete: complete)
+        } catch {
+            logger.log("stream file open failed error=\(error.localizedDescription)")
+            stop()
+        }
+    }
+
+    private func sendFileChunk(_ handle: FileHandle, complete: @escaping () -> Void) {
+        do {
+            guard let chunk = try handle.read(upToCount: 1024 * 1024), !chunk.isEmpty else {
+                try? handle.close()
+                complete()
+                return
+            }
+            connection.send(
+                content: chunk,
+                contentContext: .defaultMessage,
+                isComplete: false,
+                completion: .contentProcessed { [weak self] error in
+                    if let error {
+                        self?.logger.log("stream file send failed error=\(error)")
+                        try? handle.close()
+                        self?.stop()
+                        return
+                    }
+                    self?.sendFileChunk(handle, complete: complete)
+                }
+            )
+        } catch {
+            logger.log("stream file read failed error=\(error.localizedDescription)")
+            try? handle.close()
             stop()
         }
     }
@@ -189,4 +286,13 @@ private final class ClientConnection {
         didStop?(id)
         didStop = nil
     }
+}
+
+func ensureParentDirectory(for path: String) throws {
+    let parent = URL(fileURLWithPath: path).deletingLastPathComponent()
+    try FileManager.default.createDirectory(
+        at: parent,
+        withIntermediateDirectories: true,
+        attributes: [.posixPermissions: 0o700]
+    )
 }

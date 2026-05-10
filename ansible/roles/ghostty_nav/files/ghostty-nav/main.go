@@ -39,12 +39,16 @@ func main() {
 		splitCmd(opts),
 		resizeCmd(opts),
 		toggleZoomCmd(opts),
+		pasteCmd(opts),
 		clearCacheCmd(opts),
 		titleCmd(),
 	)
 
 	if err := root.Execute(); err != nil {
 		fmt.Fprintln(os.Stderr, "ghostty-nav:", err)
+		if coded, ok := errors.AsType[exitError](err); ok {
+			os.Exit(coded.code)
+		}
 		os.Exit(1)
 	}
 }
@@ -224,6 +228,21 @@ func toggleZoomCmd(opts *options) *cobra.Command {
 			})
 		},
 	}
+}
+
+func pasteCmd(opts *options) *cobra.Command {
+	var outputDir string
+	var jsonOutput bool
+	cmd := &cobra.Command{
+		Use:  "paste",
+		Args: cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, _ []string) error {
+			return runPaste(cmd.OutOrStdout(), opts, outputDir, jsonOutput)
+		},
+	}
+	cmd.Flags().StringVar(&outputDir, "output-dir", "/tmp/pi-paste-file", "directory for materialized clipboard files")
+	cmd.Flags().BoolVar(&jsonOutput, "json", false, "print structured paste metadata")
+	return cmd
 }
 
 func clearCacheCmd(opts *options) *cobra.Command {

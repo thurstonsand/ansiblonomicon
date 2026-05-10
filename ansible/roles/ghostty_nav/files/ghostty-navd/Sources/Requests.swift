@@ -4,7 +4,7 @@ protocol NavRequest: Decodable {
     var command: String { get }
     var reply: Bool { get }
     var tty: String? { get }
-    func response(using context: RequestContext) throws -> NavResponse
+    func response(using context: RequestContext) throws -> NavResponseBody
 }
 
 extension NavRequest {
@@ -38,8 +38,8 @@ struct PingRequest: NavRequest {
         nil
     }
 
-    func response(using _: RequestContext) throws -> NavResponse {
-        .ok("pong")
+    func response(using _: RequestContext) throws -> NavResponseBody {
+        .json(NavResponse.ok("pong"))
     }
 }
 
@@ -58,12 +58,12 @@ struct TerminalIDRequest: NavRequest {
         rawTTY.map(normalizeTTY)
     }
 
-    func response(using context: RequestContext) throws -> NavResponse {
+    func response(using context: RequestContext) throws -> NavResponseBody {
         let id = try focusedTerminalID()
         if let tty {
             context.cache.store(terminalID: id, for: tty)
         }
-        return .ok(id)
+        return .json(NavResponse.ok(id))
     }
 }
 
@@ -75,8 +75,9 @@ struct TabTerminalCountRequest: NavRequest {
         nil
     }
 
-    func response(using _: RequestContext) throws -> NavResponse {
-        try .ok(String(tabTerminalCount()))
+    func response(using _: RequestContext) throws -> NavResponseBody {
+        let count = try tabTerminalCount()
+        return .json(NavResponse.ok(String(count)))
     }
 }
 
@@ -100,9 +101,9 @@ struct ClearCacheRequest: NavRequest {
         return "command=\(command) tty=\(tty ?? "")"
     }
 
-    func response(using context: RequestContext) throws -> NavResponse {
+    func response(using context: RequestContext) throws -> NavResponseBody {
         context.cache.clear(tty: tty)
-        return .ok()
+        return .json(NavResponse.ok())
     }
 }
 
@@ -127,10 +128,10 @@ struct ActivateRequest: NavRequest {
         "command=\(command) tty=\(tty ?? "") table=\(table)"
     }
 
-    func response(using context: RequestContext) throws -> NavResponse {
+    func response(using context: RequestContext) throws -> NavResponseBody {
         let terminalID = try context.cache.terminalID(for: normalizeTTY(rawTTY))
         try runGhosttyAction("activate_key_table:\(table)", terminalID: terminalID)
-        return .ok()
+        return .json(NavResponse.ok())
     }
 }
 
@@ -149,10 +150,10 @@ struct DeactivateRequest: NavRequest {
         normalizeTTY(rawTTY)
     }
 
-    func response(using context: RequestContext) throws -> NavResponse {
+    func response(using context: RequestContext) throws -> NavResponseBody {
         let terminalID = try context.cache.terminalID(for: normalizeTTY(rawTTY))
         try runGhosttyAction("deactivate_key_table", terminalID: terminalID)
-        return .ok()
+        return .json(NavResponse.ok())
     }
 }
 
@@ -177,11 +178,11 @@ struct MoveRequest: NavRequest {
         "command=\(command) tty=\(tty ?? "") direction=\(direction)"
     }
 
-    func response(using context: RequestContext) throws -> NavResponse {
+    func response(using context: RequestContext) throws -> NavResponseBody {
         let terminalID = try context.cache.terminalID(for: normalizeTTY(rawTTY))
         let parsedDirection = try parseDirection(direction)
         try runGhosttyAction("goto_split:\(parsedDirection.rawValue)", terminalID: terminalID)
-        return .ok()
+        return .json(NavResponse.ok())
     }
 }
 
@@ -212,7 +213,7 @@ struct SplitRequest: NavRequest {
         "command=\(command) tty=\(tty ?? "") direction=\(direction)"
     }
 
-    func response(using context: RequestContext) throws -> NavResponse {
+    func response(using context: RequestContext) throws -> NavResponseBody {
         let terminalID = try context.cache.terminalID(for: normalizeTTY(rawTTY))
         let parsedDirection = try parseDirection(direction)
         let parsedFocus = try parseFocus(focus)
@@ -223,7 +224,7 @@ struct SplitRequest: NavRequest {
             focus: parsedFocus,
             terminalID: terminalID
         )
-        return .ok()
+        return .json(NavResponse.ok())
     }
 }
 
@@ -250,11 +251,11 @@ struct ResizeCommandRequest: NavRequest {
         "command=\(command) tty=\(tty ?? "") direction=\(direction)"
     }
 
-    func response(using context: RequestContext) throws -> NavResponse {
+    func response(using context: RequestContext) throws -> NavResponseBody {
         let terminalID = try context.cache.terminalID(for: normalizeTTY(rawTTY))
         let parsedDirection = try parseDirection(direction)
         try resize(direction: parsedDirection, amount: amount, terminalID: terminalID)
-        return .ok()
+        return .json(NavResponse.ok())
     }
 }
 
@@ -273,11 +274,36 @@ struct ToggleZoomRequest: NavRequest {
         normalizeTTY(rawTTY)
     }
 
-    func response(using context: RequestContext) throws -> NavResponse {
+    func response(using context: RequestContext) throws -> NavResponseBody {
         let terminalID = try context.cache.terminalID(for: normalizeTTY(rawTTY))
         try runGhosttyAction("toggle_split_zoom", terminalID: terminalID)
-        return .ok()
+        return .json(NavResponse.ok())
     }
+}
+
+struct PasteRequest: NavRequest {
+    let command: String
+    let reply: Bool
+    let rawTTY: String?
+
+    enum CodingKeys: String, CodingKey {
+        case command
+        case reply
+        case rawTTY = "tty"
+    }
+
+    var tty: String? {
+        rawTTY.map(normalizeTTY)
+    }
+
+    func response(using _: RequestContext) throws -> NavResponseBody {
+        try .stream(readPasteboardContent())
+    }
+}
+
+enum NavResponseBody {
+    case json(any Encodable)
+    case stream(PasteStreamResponse)
 }
 
 struct NavResponse: Encodable {
@@ -293,11 +319,59 @@ struct NavResponse: Encodable {
     }
 }
 
+struct PasteFileResponse: Encodable {
+    let fileName: String?
+    let mediaType: String?
+    let bytes: Int
+    let source: String?
+}
+
+struct PasteResponse: Encodable {
+    let value: String?
+    let error: String?
+    let kind: String?
+    let text: String?
+    let files: [PasteFileResponse]?
+    let bytes: Int?
+
+    static func text(_ text: String) -> PasteResponse {
+        PasteResponse(
+            value: nil,
+            error: nil,
+            kind: "text",
+            text: text,
+            files: nil,
+            bytes: nil
+        )
+    }
+
+    static func files(_ files: [PasteFileResponse]) -> PasteResponse {
+        PasteResponse(
+            value: nil,
+            error: nil,
+            kind: "files",
+            text: nil,
+            files: files,
+            bytes: files.reduce(0) { $0 + $1.bytes }
+        )
+    }
+}
+
+enum PasteByteStream {
+    case data(Data)
+    case file(URL)
+}
+
+struct PasteStreamResponse {
+    let header: PasteResponse
+    let streams: [PasteByteStream]
+}
+
 func normalizeTTY(_ tty: String) -> String {
     tty.hasPrefix("/dev/") ? tty : "/dev/\(tty)"
 }
 
-func encodeJSONLine(_ value: some Encodable) throws -> Data {
+func encodeJSONLine(_ value: any Encodable) throws -> Data {
     var data = try JSONEncoder().encode(value)
     data.append(0x0A)
     return data
@@ -326,7 +400,8 @@ private let requestDecoders: [String: (Data) throws -> any NavRequest] = [
     "move": { try JSONDecoder().decode(MoveRequest.self, from: $0) },
     "split": { try JSONDecoder().decode(SplitRequest.self, from: $0) },
     "resize": { try JSONDecoder().decode(ResizeCommandRequest.self, from: $0) },
-    "toggle-zoom": { try JSONDecoder().decode(ToggleZoomRequest.self, from: $0) }
+    "toggle-zoom": { try JSONDecoder().decode(ToggleZoomRequest.self, from: $0) },
+    "paste": { try JSONDecoder().decode(PasteRequest.self, from: $0) }
 ]
 
 private func linePayload(from data: Data) -> Data {

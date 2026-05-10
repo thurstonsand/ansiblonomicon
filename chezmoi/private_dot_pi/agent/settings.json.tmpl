@@ -21,6 +21,9 @@
     "autoResize": true,
     "blockImages": false
   },
+  "pasteFile": {
+    "shortcut": "alt+p"
+  },
   "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.loads(p.read_text()).get('lastChangelogVersion','0.74.0') if p.exists() else '0.74.0')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
   "enabledModels": [
     "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
@@ -102,7 +105,7 @@
     },
     "npm:pi-librarian",
     "npm:pi-verbosity-control",
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:pi-powerline-footer"{{ end }},
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:@thurstonsand/pi-powerline-footer"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
     "git:github.com/davebcn87/pi-autoresearch",
     "npm:pi-interview",

@@ -25,8 +25,8 @@ func SocketPath() string {
 	return filepath.Join(home, ".local/run/ghostty-nav/ghostty-navd.sock")
 }
 
-// Send writes one request to the daemon and reads a response when the request asks for one.
-func Send(socketPath string, request protocol.Request) (*protocol.Response, error) {
+// Dial connects to a ghostty-navd Unix socket.
+func Dial(socketPath string) (*net.UnixConn, error) {
 	if socketPath == "" {
 		return nil, errors.New("socket path is empty")
 	}
@@ -36,25 +36,43 @@ func Send(socketPath string, request protocol.Request) (*protocol.Response, erro
 	if err != nil {
 		return nil, fmt.Errorf("connect %s: %w", socketPath, err)
 	}
-	defer func() { _ = conn.Close() }()
+	return conn, nil
+}
 
+// WriteRequest writes one request to the daemon and closes the write side of the connection.
+func WriteRequest(conn *net.UnixConn, request protocol.Request) error {
 	if err := json.NewEncoder(conn).Encode(request); err != nil {
-		return nil, fmt.Errorf("send request: %w", err)
+		return fmt.Errorf("send request: %w", err)
 	}
 	if err := conn.CloseWrite(); err != nil {
-		return nil, fmt.Errorf("close write: %w", err)
+		return fmt.Errorf("close write: %w", err)
+	}
+	return nil
+}
+
+// Send writes one request to the daemon and reads a response when the request asks for one.
+func Send(socketPath string, request protocol.Request) (*protocol.Response, error) {
+	conn, err := Dial(socketPath)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	if err := WriteRequest(conn, request); err != nil {
+		return nil, err
 	}
 
+	reader := bufio.NewReader(conn)
 	if !request.WantsReply() {
 		// No-reply requests still wait for EOF so the daemon has accepted and processed the request.
-		if _, err := bufio.NewReader(conn).ReadByte(); err != nil {
+		if _, err := reader.ReadByte(); err != nil {
 			return &protocol.Response{}, nil
 		}
 		return nil, errors.New("daemon sent unexpected data for no-reply request")
 	}
 
 	var response protocol.Response
-	if err := json.NewDecoder(bufio.NewReader(conn)).Decode(&response); err != nil {
+	if err := json.NewDecoder(reader).Decode(&response); err != nil {
 		return nil, fmt.Errorf("read response: %w", err)
 	}
 	if response.Error != "" {

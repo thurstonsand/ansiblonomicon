@@ -89,6 +89,66 @@ type ToggleZoomRequest struct {
 	TTY string `json:"tty"`
 }
 
+// PasteRequest asks the daemon to read the local clipboard for text or file-like content.
+type PasteRequest struct {
+	Envelope
+	TTY string `json:"tty,omitempty"`
+}
+
+// PasteKind is the paste response variant.
+type PasteKind string
+
+const (
+	// PasteKindText carries plain clipboard text in Text.
+	PasteKindText PasteKind = "text"
+	// PasteKindFiles carries one or more materialized file entries in Files.
+	PasteKindFiles PasteKind = "files"
+)
+
+// PasteFile is one file-like clipboard item returned by the daemon or written by the client.
+type PasteFile struct {
+	Path      string `json:"path,omitempty"`
+	FileName  string `json:"fileName,omitempty"`
+	MediaType string `json:"mediaType,omitempty"`
+	Bytes     int64  `json:"bytes,omitempty"`
+	Source    string `json:"source,omitempty"`
+}
+
+// PasteHeader is the JSON header sent before any streamed paste bytes.
+type PasteHeader struct {
+	Response
+	Kind  PasteKind   `json:"kind,omitempty"`
+	Text  string      `json:"text,omitempty"`
+	Files []PasteFile `json:"files,omitempty"`
+	Bytes int64       `json:"bytes,omitempty"`
+}
+
+// PasteResponse is a validated paste response returned by the client after file materialization.
+type PasteResponse interface {
+	PasteKind() PasteKind
+}
+
+// PasteTextResponse is a text paste response.
+type PasteTextResponse struct {
+	Text string
+}
+
+// PasteKind reports the response variant.
+func (PasteTextResponse) PasteKind() PasteKind {
+	return PasteKindText
+}
+
+// PasteFilesResponse is a file paste response.
+type PasteFilesResponse struct {
+	Files []PasteFile
+	Bytes int64
+}
+
+// PasteKind reports the response variant.
+func (PasteFilesResponse) PasteKind() PasteKind {
+	return PasteKindFiles
+}
+
 // Response is the daemon response for requests with Reply set. Empty Error means success.
 type Response struct {
 	Value string `json:"value,omitempty"`
