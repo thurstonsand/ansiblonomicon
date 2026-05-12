@@ -29,20 +29,6 @@
 [merge]
 	conflictStyle = zdiff3
 
-[credential]
-	helper = "git-credential-manager"
-
-{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-
-[credential "https://gist.github.com"]
-	helper = ""
-	helper = "gh auth git-credential"
-
-[credential "https://github.com"]
-	helper = ""
-	helper = "gh auth git-credential"
-{{- end }}
-
 [diff]
 	algorithm = "histogram"
 
