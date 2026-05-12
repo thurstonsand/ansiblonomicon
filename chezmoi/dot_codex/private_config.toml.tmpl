@@ -29,6 +29,8 @@ web_search = "live"
 default_mode_request_user_input = true
 service_tier = "fast"
 
+notify = ["{{ .chezmoi.homeDir }}/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended"]
+
 [features]
 unified_exec = true
 apply_patch_freeform = true
@@ -74,6 +76,9 @@ trust_level = "trusted"
 [projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/pi-sessions"]
 trust_level = "trusted"
 
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/mtool"]
+trust_level = "trusted"
+
 [notice]
 hide_gpt5_1_migration_prompt = true
 "hide_gpt-5.1-codex-max_migration_prompt" = true
@@ -90,9 +95,6 @@ enabled = true
 [plugins."google-drive@openai-curated"]
 enabled = true
 
-[plugins."browser-use@openai-bundled"]
-enabled = true
-
 [plugins."documents@openai-primary-runtime"]
 enabled = true
 
@@ -103,6 +105,9 @@ enabled = true
 enabled = true
 
 [plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."browser-use@openai-bundled"]
 enabled = true
 
 [marketplaces.openai-bundled]

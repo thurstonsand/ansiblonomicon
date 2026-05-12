@@ -49,7 +49,7 @@ remote_dir_for_project() {
 }
 
 parse_target() {
-  if (( $# >= 2 )) && is_project "$2"; then
+  if (($# >= 2)) && is_project "$2"; then
     IDEO_HOST=$1
     IDEO_PROJECT=$2
     IDEO_AGENT_ARGS=("${@:3}")
@@ -81,7 +81,7 @@ run_shp_attach() {
   fi
 
   local args=("$host" --force --dir "$dir")
-  if (( $# > 0 )); then
+  if (($# > 0)); then
     args+=(--cmd "$(wrap_interactive_cmd "$@")")
   fi
   args+=("$session")
@@ -92,7 +92,7 @@ run_shp_attach() {
     local status=$?
     set -e
 
-    if (( status == 0 )); then
+    if ((status == 0)); then
       exit 0
     fi
 
@@ -135,8 +135,19 @@ self_path() {
   fi
 }
 
+wait_for_ready() {
+  local label=$1
+
+  if read -r -t 8 _ready <&3; then
+    return 0
+  fi
+
+  echo "ideo: timed out waiting for $label." >&2
+  return 1
+}
+
 if [[ ${1:-} == "--attach" ]]; then
-  if (( $# < 4 )); then
+  if (($# < 4)); then
     echo "ideo: --attach requires host, project, and kind." >&2
     exit 1
   fi
@@ -149,7 +160,7 @@ if [[ ${1:-} == "-h" || ${1:-} == "--help" ]]; then
   exit 0
 fi
 
-if (( $# < 1 )); then
+if (($# < 1)); then
   echo "ideo: missing required project." >&2
   usage
   exit 1
@@ -176,10 +187,18 @@ declare -a IDEO_AGENT_ARGS
 parse_target "$@"
 remote_dir_for_project "$IDEO_PROJECT" >/dev/null
 
+ready_fifo=$(mktemp -t ideo-editor-ready.XXXXXX)
+rm -f "$ready_fifo"
+mkfifo "$ready_fifo"
+exec 3<>"$ready_fifo"
+trap 'exec 3>&- 3<&-; rm -f "$ready_fifo"' EXIT
+
 script_path=$(self_path)
-editor_local="exec $(quote "$script_path") --attach $(quote "$IDEO_HOST") $(quote "$IDEO_PROJECT") edit"
+editor_attach="exec $(quote "$script_path") --attach $(quote "$IDEO_HOST") $(quote "$IDEO_PROJECT") edit"
+editor_local="if ghostty-nav terminal-id >/dev/null; then printf 'ready\\n' > $(quote "$ready_fifo"); else echo 'ideo: failed to register editor Ghostty terminal' >&2; fi; $editor_attach"
 
 ghostty-nav split left --command "/bin/zsh -ilc $(quote "$editor_local")" --focus new
+wait_for_ready "editor terminal registration"
 ghostty-nav resize right --percent 15
 ghostty-nav toggle-zoom
 

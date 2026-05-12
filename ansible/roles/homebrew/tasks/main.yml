@@ -73,6 +73,8 @@
          + (['--cleanup'] if homebrew_upgrade_due else []) }}
   environment:
     SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
+    HOMEBREW_SUDO_ASKPASS_PASS: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS'] | default(omit) }}"
+    HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
   register: homebrew_result
   changed_when: "'Installing' in homebrew_result.stdout or 'Upgrading' in homebrew_result.stdout or 'Uninstalling' in homebrew_result.stdout"
 
@@ -80,6 +82,10 @@
   when: not ansible_check_mode and homebrew_upgrade_due
   ansible.builtin.command:
     argv: ["brew", "upgrade"]
+  environment:
+    SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
+    HOMEBREW_SUDO_ASKPASS_PASS: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS'] | default(omit) }}"
+    HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
   register: homebrew_deps_result
   changed_when: "'Pouring' in homebrew_deps_result.stdout"
 

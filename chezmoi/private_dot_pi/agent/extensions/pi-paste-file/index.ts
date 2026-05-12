@@ -8,7 +8,7 @@ export default function piPasteFile(pi: ExtensionAPI): void {
   async function paste(ctx: ExtensionContext): Promise<void> {
     try {
       const result = await runGhosttyPaste(async (command, args) => {
-        const execResult = await pi.exec(command, args, { timeout: 30_000 });
+        const execResult = await pi.exec(command, args, { timeout: 120_000 });
         return {
           stdout: execResult.stdout,
           stderr: execResult.stderr,
