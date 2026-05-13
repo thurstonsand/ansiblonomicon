@@ -56,18 +56,24 @@ These should be used instead of hard-coding model values.
 
 `Brewfile.work` **is** committed. The `.local` variant is for tools that are not publicly available.
 
-## Agent Harness Sources
+## Work-Local Config
 
-| File                             | Purpose                                                       |
-| -------------------------------- | ------------------------------------------------------------- |
-| `ansible/sources.work.local.yml` | Work-specific plugin git sources (internal repos, gitignored) |
+| File                             | Purpose                                                                           |
+| -------------------------------- | --------------------------------------------------------------------------------- |
+| `ansible/work.config.local.yml`  | Work-specific extras: agent harness sources, private language tools (gitignored)   |
 
-The work playbook conditionally includes this file if it exists. It defines `agent_harness_sources_extra` which gets appended to `agent_harness_sources_base` (defined in `work.config.yml`).
+The work playbook conditionally includes this file if it exists. It defines `_extra` vars that get appended to their respective `_base` lists (defined in `work.config.yml`).
 
 Structure:
 
 ```yaml
 ---
+uv_global_tools_extra:
+  - some-private-tool
+
+go_tools_extra:
+  - gitlab.internal/org/tool
+
 agent_harness_sources_extra:
   - repo: https://scm.internal/scm/proj/plugin-marketplace.git
     pull: true
@@ -139,7 +145,7 @@ When setting up a new work Mac, copy these files from the old machine:
 - `~/.zshenv.local`
 - `~/.zshrc.local`
 - `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json`
-- `ansible/sources.work.local.yml`
+- `ansible/work.config.local.yml`
 - `ansible/tasks/work.local.yml`
 - `agents/work/`
 - `./uv.toml`

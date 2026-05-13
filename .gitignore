@@ -32,8 +32,8 @@ node_modules
 # Machine-local
 agents/work/
 ansible/Brewfile.work.*
-ansible/sources.work.local.yml
 ansible/tasks/work.local.yml
+ansible/work.config.local.yml
 chezmoi/.chezmoidata/local.toml
 chezmoi/.chezmoitemplates/local/
 

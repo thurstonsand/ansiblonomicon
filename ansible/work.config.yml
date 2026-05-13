@@ -24,9 +24,31 @@ agent_harness_sources_base:
         target_agents: [claude]
         exclude_skills:
           - showboat
+          - pr
       - name: claude
         target_agents: [claude]
       - name: work
         target_agents: [claude]
 
 agent_harness_sources: "{{ (agent_harness_sources_base | default([])) + (agent_harness_sources_extra | default([])) }}"
+
+uv_global_tools_base:
+  - basedpyright
+
+# language_tools role inputs (base + local extras)
+uv_global_tools: "{{ (uv_global_tools_base | default([])) + (uv_global_tools_extra | default([])) }}"
+mise_global_tools: "{{ (mise_global_tools_base | default([])) + (mise_global_tools_extra | default([])) }}"
+go_tools: "{{ (go_tools_base | default([])) + (go_tools_extra | default([])) }}"
+npm_global_packages: "{{ (npm_global_packages_base | default([])) + (npm_global_packages_extra | default([])) }}"
+bun_global_packages: "{{ (bun_global_packages_base | default([])) + (bun_global_packages_extra | default([])) }}"
+cargo_packages: "{{ (cargo_packages_base | default([])) + (cargo_packages_extra | default([])) }}"
+gem_packages: "{{ (gem_packages_base | default([])) + (gem_packages_extra | default([])) }}"
+
+mise_global_tools_base:
+  - node@lts
+  - golangci-lint@latest
+go_tools_base: []
+npm_global_packages_base: []
+bun_global_packages_base: []
+cargo_packages_base: []
+gem_packages_base: []

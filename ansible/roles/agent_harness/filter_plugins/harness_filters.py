@@ -923,9 +923,10 @@ def agent_harness_transform_skill(
             )
             modified = True
 
-    # Plugin root substitution
-    if plugin_root and "${CLAUDE_PLUGIN_ROOT}" in content:
+    # Plugin root substitution (handle both ${VAR} and $VAR syntax)
+    if plugin_root and "CLAUDE_PLUGIN_ROOT" in content:
         content = content.replace("${CLAUDE_PLUGIN_ROOT}", plugin_root)
+        content = content.replace("$CLAUDE_PLUGIN_ROOT", plugin_root)
         modified = True
 
     # Frontmatter name rewrite — uses regex to avoid re-serializing the full
@@ -1017,6 +1018,7 @@ def agent_harness_find_plugin_hooks(
                 continue
 
             content = content.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_path))
+            content = content.replace("$CLAUDE_PLUGIN_ROOT", str(plugin_path))
             fragments.append(HookFragment(name=plugin_name, content=content))
 
     return [f.to_dict() for f in fragments]

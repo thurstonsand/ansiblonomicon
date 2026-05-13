@@ -41,6 +41,7 @@ brew "lazygit"
 brew "go"
 brew "just"
 brew "libpq", link: true
+brew "mise"
 brew "oven-sh/bun/bun"
 brew "poetry"
 brew "uv"

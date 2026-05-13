@@ -13,7 +13,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
   - **macOS tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `forge-code`, `ghostty-nav`, `homebrew`/`mas`, `language-tools`, `neovim`/`nvim-deps`, `opencode`, `shp`, `sysconfig`/`hostname`, `terminal-theme`, `tmux`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
-  - **Work-only tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `local`, `neovim`/`nvim-deps`, `terminal-theme`, `uvc-util`
+  - **Work-only tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `language-tools`, `local`, `neovim`/`nvim-deps`, `terminal-theme`, `uvc-util`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all Docker stacks), `truenas-apps`, `vm`/`truenas-vm`, `openclaw-vm`, `homeassistant-vm`, or individual stacks: `anypod`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`, `watchtower`
 - `uv run poe udmp` — Apply UDMP Ansible playbook (same options as macos)

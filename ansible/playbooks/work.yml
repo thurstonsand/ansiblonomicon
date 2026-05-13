@@ -10,9 +10,9 @@
       ansible.builtin.include_vars: ../work.config.yml
       tags: ["always"]
 
-    - name: Load work-local agent sources
-      ansible.builtin.include_vars: ../sources.work.local.yml
-      when: lookup('file', playbook_dir ~ '/../sources.work.local.yml', errors='ignore') | length > 0
+    - name: Load work-local config overrides
+      ansible.builtin.include_vars: ../work.config.local.yml
+      when: lookup('file', playbook_dir ~ '/../work.config.local.yml', errors='ignore') | length > 0
       tags: ["always"]
 
     - name: Verify this is the work machine
@@ -79,6 +79,13 @@
           tags: ["ghostty-nav"]
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["ghostty-nav"]
+
+    - name: Install global language tools
+      ansible.builtin.include_role:
+        name: language_tools
+        apply:
+          tags: ["language-tools"]
+      tags: ["language-tools"]
 
     - name: Deploy AI agent resources
       ansible.builtin.include_role:

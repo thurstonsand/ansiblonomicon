@@ -20,6 +20,7 @@ SCRIPT_DIR = Path(__file__).parent
 CHEZMOI_DATA = SCRIPT_DIR.parent / ".chezmoidata" / "local.toml"
 OVERLAY = SCRIPT_DIR / "local" / "claude-settings-overlay.json"
 HARNESS_HOOKS_DIR = Path.home() / ".cache" / "ansiblonomicon-harness" / "hooks"
+TARGET = Path.home() / ".claude" / "settings.json"
 
 
 def deepmerge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
@@ -57,6 +58,24 @@ def resolve_overlay(subs: dict[str, str]) -> str:
     for key, val in subs.items():
         raw = raw.replace("${" + key + "}", val)
     return raw
+
+
+def preserve_key_order(
+    desired: dict[str, Any], existing: dict[str, Any]
+) -> dict[str, Any]:
+    """Reorder desired to match existing key order; new keys go at the end."""
+    ordered: dict[str, Any] = {}
+    for key in existing:
+        if key in desired:
+            val = desired[key]
+            existing_val = existing[key]
+            if isinstance(val, dict) and isinstance(existing_val, dict):
+                val = preserve_key_order(val, existing_val)
+            ordered[key] = val
+    for key in desired:
+        if key not in ordered:
+            ordered[key] = desired[key]
+    return ordered
 
 
 def merge_harness_hooks(settings: dict[str, Any]) -> dict[str, Any]:
@@ -113,6 +132,13 @@ def main() -> None:
         merged = base
 
     merged = merge_harness_hooks(merged)
+
+    if TARGET.exists():
+        try:
+            existing = json.loads(TARGET.read_text())
+            merged = preserve_key_order(merged, existing)
+        except (json.JSONDecodeError, OSError):
+            pass
 
     json.dump(merged, sys.stdout, indent=2)
     sys.stdout.write("\n")

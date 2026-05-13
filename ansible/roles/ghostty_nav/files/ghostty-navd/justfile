@@ -2,7 +2,6 @@ set shell := ["bash", "-euo", "pipefail", "-c"]
 
 binary := "ghostty-navd"
 install_dir := env_var_or_default("HOME", ".") + "/.local/bin"
-codesign_identity := "Apple Development: thurstonsand@gmail.com (STSAYQLS39)"
 codesign_identifier := "house.thurstons.ghostty-navd"
 
 _default:
@@ -26,8 +25,6 @@ install:
     just sign {{install_dir}}/{{binary}}
 
 sign path:
-    identity='{{codesign_identity}}'; \
-    if ! security find-identity -v -p codesigning | grep -Fq "$identity"; then \
-        identity='-'; \
-    fi; \
+    identity=$(security find-identity -p codesigning | awk '/^  [0-9]+\)/{print $2; exit}'); \
+    if [ -z "$identity" ]; then identity='-'; fi; \
     codesign --force --sign "$identity" --identifier '{{codesign_identifier}}' {{path}}
