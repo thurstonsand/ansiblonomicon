@@ -28,8 +28,8 @@ type WrappedLine = {
 const CHOICES: PermissionChoice[] = ["yes", "no"];
 
 const OPTION_LABELS: Record<PermissionChoice, string> = {
-  yes: "Yes",
-  no: "No",
+  yes: "Authorize",
+  no: "Abort",
 };
 
 const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
@@ -468,11 +468,11 @@ class PermissionGateComponent implements Focusable {
 
   private renderLegend(): string {
     return [
-      hint(this.theme, "↑↓", "move"),
-      hint(this.theme, "enter", "choose"),
+      hint(this.theme, "↑↓", "select"),
+      hint(this.theme, "enter", "confirm"),
       hint(this.theme, "tab", "add note"),
-      hint(this.theme, "shift+tab", "close note"),
-      hint(this.theme, "esc", "reject"),
+      hint(this.theme, "shift+tab", "close"),
+      hint(this.theme, "esc", "abort"),
     ].join("  ");
   }
 }

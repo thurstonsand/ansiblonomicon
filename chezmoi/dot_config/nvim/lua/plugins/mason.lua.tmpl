@@ -25,6 +25,26 @@ return {
         ansiblels = { mason = false, root_dir = ansible_root_dir },
         basedpyright = { mason = false },
         biome = { mason = false },
+        gopls = {
+          mason = false,
+          settings = {
+            gopls = {
+              semanticTokens = true,
+              hints = {
+                assignVariableTypes = true,
+                compositeLiteralFields = true,
+                parameterNames = true,
+                rangeVariableTypes = true,
+              },
+              analyses = {
+                shadow = true,
+              },
+              codelenses = {
+                test = true,
+              },
+            },
+          },
+        },
         vtsls = { mason = false },
         yamlls = { mason = false },
       },
@@ -78,6 +98,27 @@ return {
     opts = {
       servers = {
         ansiblels = { root_dir = ansible_root_dir },
+        gopls = {
+          settings = {
+            gopls = {
+              gofumpt = true,
+              staticcheck = true,
+              semanticTokens = true,
+              hints = {
+                assignVariableTypes = true,
+                compositeLiteralFields = true,
+                parameterNames = true,
+                rangeVariableTypes = true,
+              },
+              analyses = {
+                shadow = true,
+              },
+              codelenses = {
+                test = true,
+              },
+            },
+          },
+        },
       },
     },
   },

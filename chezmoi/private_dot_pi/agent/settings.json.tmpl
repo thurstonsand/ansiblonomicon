@@ -38,7 +38,8 @@
   "followUpMode": "all",
   "sessions": {
     "autoTitle": {
-      "model": "{{ .models.google.gemini_flash.agent_harness.aliases.pi }}"
+      "model": "{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}",
+      "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
     }
   },
   "showLastPrompt": false,
@@ -88,6 +89,20 @@
         "position": "right"
       }
     ]
+  },
+  "powerlineShortcuts": {
+    "stashHistory": "alt+h",
+    "copyEditor": "ctrl+alt+shift+9",
+    "cutEditor": "alt+x",
+    "jumpPreviousUserMessage": "ctrl+shift+k",
+    "jumpNextUserMessage": "ctrl+shift+j",
+    "jumpPreviousLlmMessage": "ctrl+alt+shift+8",
+    "jumpNextLlmMessage": "ctrl+alt+shift+7",
+    "jumpChatBottom": "ctrl+shift+g",
+    "scrollChatUp": "alt+k",
+    "scrollChatDown": "alt+j",
+    "editorStart": "ctrl+alt+shift+6",
+    "editorEnd": "ctrl+alt+shift+5"
   },
   "packages": [
     {

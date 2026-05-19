@@ -43,6 +43,7 @@ gem_packages_base: []
 # Global Go tools (base set for all hosts)
 go_tools_base:
   - github.com/steipete/eightctl/cmd/eightctl
+  - mvdan.cc/gofumpt@latest
 
 # Combined lists (base + host-specific extras)
 go_tools: "{{ (go_tools_base | default([])) + (go_tools_extra | default([])) }}"

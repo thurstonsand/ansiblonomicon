@@ -8,6 +8,33 @@
       - "+Lazy! update"
       - +qa
   changed_when: true
+  async: 600
+  poll: 5
+
+- name: Remove Mason packages with broken Python virtualenvs
+  when: not ansible_check_mode
+  ansible.builtin.shell: |
+    set -euo pipefail
+    mason_dir="{{ ansible_user_dir }}/.local/share/nvim/mason"
+    packages_dir="${mason_dir}/packages"
+    bin_dir="${mason_dir}/bin"
+    [[ -d "${packages_dir}" ]] || exit 0
+
+    find "${mason_dir}" -type l ! -exec test -e {} \; -delete 2>/dev/null || true
+
+    shopt -s nullglob
+    for python in "${packages_dir}"/*/venv/bin/python; do
+      [[ -e "${python}" && -x "${python}" ]] && continue
+      package_dir="$(dirname "$(dirname "$(dirname "${python}")")")"
+      package_name="$(basename "${package_dir}")"
+      find "${mason_dir}" -type l -lname "*/packages/${package_name}/*" -delete 2>/dev/null || true
+      rm -rf "${package_dir}"
+      printf '%s\n' "${package_name}"
+    done
+  args:
+    executable: /bin/bash
+  register: mason_repaired_packages
+  changed_when: mason_repaired_packages.stdout != ""
 
 - name: Update declared Mason tools
   when:
@@ -20,6 +47,8 @@
       - "+MasonToolsUpdateSync"
       - +qa
   changed_when: true
+  async: 600
+  poll: 5
 
 - name: Update Treesitter parsers
   when: not ansible_check_mode
@@ -30,6 +59,8 @@
       - "+TSUpdateSync"
       - +qa
   changed_when: true
+  async: 600
+  poll: 5
 
 - name: Report skipped Neovim dependency update in check mode
   when: ansible_check_mode

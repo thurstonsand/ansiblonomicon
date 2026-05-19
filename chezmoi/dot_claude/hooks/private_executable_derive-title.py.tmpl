@@ -16,29 +16,9 @@ _API_URL = "https://aig.thurstons.house/v1/messages"
 _MODEL = "{{ .models.anthropic.sonnet.version }}"
 _TOKEN = "{{ template "llm-api-key" . }}"
 
-_TITLE_PROMPT = """\
-You're generating a single title for a Claude Code session, given the session log as JSONL below.
-
-# Style
-
-Titles should evoke the aesthetic of NieR: Automata's in-game documents and archive entries. Bureaucratic, mechanical, terse. The title should tell the reader what the session was about, and the aesthetic is just on the surface. No game specific phrases (character names, factions, etc).
-
-# Syntactic palette
-
-Decorative elements drawn from the source material. Use sparingly -- one or two per title, not stacked.
-
-- Bracketed letter prefixes that pun on a task verb: [S]can, [B]uild, [A]ssert, [RE]vert, [DE]ploy, [UN]bind, [RE]quest
-- Production-code suffixes: 022-A, 110-C, etc (do NOT use those suffixes specifically)
-- Four-digit record numbers: _0017, _0042 (do NOT use those numbers specifically)
-- Status tags in square brackets: [Internal], [Excerpt], [Detached], [Coupled], [Partitioned], etc
-
-These don't need to encode specific meanings, they're just flavor.
-
-A bare descriptive title is also valid, decoration is optional
-
-# Output
-
-The exact output will be displayed to the user, so make sure that it contains ONLY the title itself and nothing else. No quotes, no preamble or explanation."""
+_TITLE_PROMPT = """
+{{ includeTemplate "session-title-prompt" . | trim }}
+"""
 
 _MAX_CONTEXT_BYTES = 2_000_000
 

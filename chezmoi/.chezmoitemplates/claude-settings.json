@@ -18,7 +18,7 @@
       "Skill(git-commit-helper)"
     ],
     "deny": ["Read(**/.env)", "Read(**/.env.*)"],
-    "defaultMode": "acceptEdits"
+    "defaultMode": "auto"
   },
   "hooks": {
     "UserPromptSubmit": [
@@ -53,6 +53,9 @@
       }
     ]
   },
+  "worktree": {
+    "baseRef": "head"
+  },
   "statusLine": {
     "type": "command",
     "command": "~/.claude/scripts/statusline.sh"
@@ -68,6 +71,7 @@
   "skipAutoPermissionPrompt": true,
   "theme": "auto",
   "remoteControlAtStartup": true,
+  "inputNeededNotifEnabled": true,
   "agentPushNotifEnabled": true,
   "voiceEnabled": true,
   "showClearContextOnPlanAccept": true,

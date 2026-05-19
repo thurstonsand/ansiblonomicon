@@ -6,14 +6,14 @@ The current permission gate in `chezmoi/private_dot_pi/agent/extensions/amp-styl
 
 Required changes:
 
-- Reword the key legend.
+- Reword the key legend around authorization language.
 - `Esc` must reject the tool call **and abort the current assistant turn**.
 - `Tab` on the highlighted choice must open an inline corrective-message draft inside the same gate UI.
 - Drafts must wrap visually and grow vertically as needed.
-- Drafts for `Yes` and `No` must be preserved independently.
-- `Yes + note` must allow the tool call, wait for that tool call to finish, then surface the note inline with the resulting tool output before the assistant continues.
-- `No + note` must reject the tool call, continue the turn with a rejection, and include the note inline in the rejection message.
-- `No` without a note should reject the tool call and abort the turn.
+- Drafts for `Authorize` and `Abort` must be preserved independently.
+- `Authorize + note` must allow the tool call, wait for that tool call to finish, then surface the note inline with the resulting tool output before the assistant continues.
+- `Abort + note` must reject the tool call, continue the turn with a rejection, and include the note inline in the rejection message.
+- `Abort` without a note should reject the tool call and abort the turn.
 
 ## Design Decisions
 
@@ -26,7 +26,7 @@ The built-in selector cannot support, as-is:
 - inline per-option drafts
 - custom `Esc` semantics
 - per-option preserved note state
-- distinct post-action behavior for `Yes + note` vs `No + note`
+- distinct post-action behavior for `Authorize + note` vs `Abort + note`
 - a custom legend
 - hybrid numeric-key behavior
 
@@ -37,15 +37,15 @@ So the extension should still use `ctx.ui.custom(...)`, but the implementation s
 The gate starts in a compact state:
 
 ```text
-1. Yes
-2. No
+1. Authorize
+2. Abort
 ```
 
 If `Tab` is pressed on the selected option, that option becomes editable inline:
 
 ```text
-1. Yes
-2. No, and _
+1. Authorize
+2. Abort, and _
 ```
 
 If text grows, the same line wraps and the gate expands vertically. This is still the same pane, not a second mode or overlay.
@@ -61,8 +61,8 @@ Final user direction:
 
 The gate tracks two independent drafts:
 
-- `yesDraft`
-- `noDraft`
+- `authorizeDraft`
+- `abortDraft`
 
 Only the selected option is ever submitted, but both drafts are preserved while the gate is open.
 
@@ -82,8 +82,8 @@ This keeps navigation and editing in one surface without separate subflows.
 If the non-selected option has a preserved draft, do not render the full text inline. Show a compact indicator such as:
 
 ```text
-1. Yes, and...
-2. No, and _
+1. Authorize, and...
+2. Abort, and _
 ```
 
 When the user re-selects that option, restore full text and put the cursor at the end.
@@ -101,21 +101,21 @@ This is more complex than visual-only numbering, but it matches the desired inte
 
 ### 8. Post-action behavior differs by branch
 
-#### `Yes` without note
+#### `Authorize` without note
 - Allow tool call.
 - No further action.
 
-#### `Yes` with note
+#### `Authorize` with note
 - Allow tool call.
 - Wait for that tool call to complete.
-- Prepend a note block to the tool result content so the assistant sees the user's approval note before responding.
+- Append an authorization note block to the tool result content so the assistant sees the user's note before responding.
 
-#### `No` without note
+#### `Abort` without note
 - Reject tool call.
 - Abort the turn.
 - Do not inject any user message.
 
-#### `No` with note
+#### `Abort` with note
 - Reject tool call.
 - Do not abort the turn.
 - Include the drafted note directly in the block reason so the assistant sees it in the same rejection message.
@@ -140,14 +140,14 @@ Reasoning:
 
 ## Edge Cases
 
-- If the selected option has an empty draft and the user presses `Enter`, it should behave like a plain `Yes` or `No` selection.
+- If the selected option has an empty draft and the user presses `Enter`, it should behave like a plain `Authorize` or `Abort` selection.
 - If the selected option has a non-empty draft and the user presses `Enter`, it should immediately commit that selection plus note.
 - If the user switches between options repeatedly, both drafts must remain stable.
 - Numeric hotkeys must be ignored while text input is active.
 - `Shift+Tab` should exit inline editing without discarding the preserved draft.
-- `Yes + note` text must appear inline with the approved tool result, not as a later asynchronous user message.
-- `No + note` text must appear inline with the rejection reason, without aborting the turn.
-- `No` without note must abort after rejection.
+- `Authorize + note` text must appear inline with the authorized tool result, not as a later asynchronous user message.
+- `Abort + note` text must appear inline with the rejection reason, without aborting the turn.
+- `Abort` without note must abort after rejection.
 - `Esc` must not merely block the tool call; it must also call `ctx.abort()` so the assistant cannot continue.
 
 ## Rejected Alternatives
@@ -165,7 +165,7 @@ Rejected. Implementation should focus on the new gate only; the old path is bein
 Rejected because the user wants the interaction to stay in one pane.
 
 ### Treat drafting as a separate mode with separate controls
-Rejected. The desired interaction is a lightweight inline augmentation of `Yes`/`No`, not a mode switch.
+Rejected. The desired interaction is a lightweight inline augmentation of `Authorize`/`Abort`, not a mode switch.
 
 ### Show full preserved draft text for both options at once
 Rejected in favor of compact indicators for the non-selected option. Full text for both would make the gate noisy and unstable in height.
@@ -182,7 +182,7 @@ Rejected to reduce noise. `j/k` may still exist as undocumented bindings.
   - replace direct `ctx.ui.confirm(...)` usage with a custom gate flow
   - map gate result to one of: allow, reject+abort, allow+note-in-tool-result, reject+note-in-block-reason
   - use `ctx.abort()` for `Esc`
-  - store approved notes until the matching `tool_result`, then prepend explanatory text to the returned content
+  - store approved notes until the matching `tool_result`, then append explanatory text to the returned content
   - embed rejected notes directly into the block reason
 - `ui.ts`
   - add a dedicated permission gate component
@@ -199,7 +199,7 @@ Rejected to reduce noise. `j/k` may still exist as undocumented bindings.
 
 - [ ] Add a dedicated gate result model in `chezmoi/private_dot_pi/agent/extensions/amp-style-permission-gate/ui.ts`
 - [ ] Implement a custom gate component with:
-  - [ ] numbered `Yes` / `No` rows
+  - [ ] numbered `Authorize` / `Abort` rows
   - [ ] inline per-option drafts
   - [ ] wrapping/growing input layout
   - [ ] compact preserved-draft indicator for the non-selected option
@@ -215,21 +215,21 @@ Rejected to reduce noise. `j/k` may still exist as undocumented bindings.
   - [ ] optional undocumented `j/k`
 - [x] Replace `ctx.ui.confirm(...)` in `index.ts` with `ctx.ui.custom(...)`
 - [x] Define execution outcomes for:
-  - [x] plain `Yes`
-  - [x] plain `No`
-  - [x] `Yes + note`
-  - [x] `No + note`
+  - [x] plain `Authorize`
+  - [x] plain `Abort`
+  - [x] `Authorize + note`
+  - [x] `Abort + note`
   - [x] `Esc`
 - [x] Use `ctx.abort()` for the `Esc` path
-- [x] Surface `Yes + note` text by prepending it to the matching `tool_result`
-- [x] Ensure plain `No` rejects first, then aborts
-- [x] Surface `No + note` text by embedding it in the block reason without aborting
+- [x] Surface `Authorize + note` text by appending it to the matching `tool_result`
+- [x] Ensure plain `Abort` rejects first, then aborts
+- [x] Surface `Abort + note` text by embedding it in the block reason without aborting
 - [x] Update legend copy to remove `Ctrl+C`, keep `j/k` undocumented, and keep the legend identical across states
 - [ ] Manually verify behavior in interactive mode with at least:
-  - [ ] plain `Yes`
-  - [ ] plain `No`
+  - [ ] plain `Authorize`
+  - [ ] plain `Abort`
   - [ ] `Esc`
-  - [ ] `Yes + note`
-  - [ ] `No + note`
+  - [ ] `Authorize + note`
+  - [ ] `Abort + note`
   - [ ] switching between preserved drafts
   - [ ] wrapped long draft text

@@ -24,16 +24,14 @@ Do not fix unrelated stale documentation in this pass. After completing updates,
 
 ### Design docs
 
-Design docs are historical records by default. Do not update old design documents just because implementation has moved on.
+Design docs are decision artifacts, not evergreen current-state documentation. Once accepted, they record what was decided at the time; do not edit the body just because implementation has drifted.
 
-Update a design doc only when both are true:
+Only update a design doc body when the staged work is the first-pass implementation of that specific design and the implementation changes the intended decision before the design settles.
 
-- the staged work is actively implementing that design
-- implementation required changes to decisions, constraints, or details that were originally specified in that design
+For older design docs, status is the only normal update:
 
-When updating an active design doc, write it as the design that was intended. Do not preserve obsolete state or explain that something used to work differently.
-
-If staged work materially replaces an accepted design, mark the older design doc status as superseded. Keep the rest of the superseded doc intact.
+- `Rejected` when the documented path was explored and intentionally declined
+- `Superseded by <newer design>` when a newer design replaces it
 
 ### Agent docs
 
@@ -97,7 +95,8 @@ Usually update docs for:
 - removed or renamed behavior that docs still mention
 - examples that no longer work
 - agent instructions that would cause future agents to do the wrong thing
-- active design docs whose implementation details changed during the work
+- active first-pass design docs whose intended decisions changed during implementation
+- older design docs only when their status should become `Rejected` or `Superseded by ...`
 
 Usually do not update docs for:
 
@@ -105,6 +104,7 @@ Usually do not update docs for:
 - bug fixes that restore documented behavior
 - implementation details that do not belong to the doc's audience
 - unrelated stale content found during the sweep
+- accepted design docs, except for status-only `Rejected` or `Superseded by ...` updates
 - historical design docs that are not the design currently being implemented
 
 ## Writing Updates
