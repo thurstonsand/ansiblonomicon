@@ -36,6 +36,7 @@ ansible/tasks/work.local.yml
 ansible/work.config.local.yml
 chezmoi/.chezmoidata/local.toml
 chezmoi/.chezmoitemplates/local/
+chezmoi/dot_claude/hooks/local/
 
 # uv (project-level override)
 uv.toml

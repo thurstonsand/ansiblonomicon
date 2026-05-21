@@ -4,6 +4,22 @@ set -euo pipefail
 # Opens an IDE-style Ghostty split: nvim on the left, shell on the right.
 # Usage: ghostty-ide [cwd]
 
+[[ ${TERM_PROGRAM-} == "ghostty" ]] || {
+  echo "ghostty-ide: Ghostty only." >&2
+  exit 1
+}
+
+command -v ghostty-nav >/dev/null 2>&1 || {
+  echo "ghostty-ide: ghostty-nav is not installed." >&2
+  exit 1
+}
+
+terminal_count=$(ghostty-nav tab-terminal-count 2>/dev/null) || exit 1
+[[ "$terminal_count" == "1" ]] || {
+  echo "ide: expected a fresh tab with exactly one terminal." >&2
+  exit 1
+}
+
 quote() {
   printf '%q' "$1"
 }

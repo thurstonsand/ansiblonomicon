@@ -29,7 +29,7 @@ Library/
 # OpenClaw is headless; Ghostty helpers are workstation-only.
 {{ if eq .chezmoi.hostname "openclaw" }}
 .config/ghostty/
-.local/bin/ghostty-ide
+.local/bin/ide
 {{ end }}
 
 # ideo and local OpenClaw CLI remote config are personal to this Mac.

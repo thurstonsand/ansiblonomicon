@@ -90,7 +90,6 @@ alias vim='nvim'
 
 {{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
 claude() {
-  ghostty-nav title "claude:${PWD:t}"
   command claude \
     --plugin-dir ~/code/claude-code-plugin-auto-title \
     --plugin-dir ~/code/claude-code-plugin-sourcegraph \
@@ -102,7 +101,6 @@ claude() {
 }
 {{- else }}
 claude() {
-  ghostty-nav title "claude:${PWD:t}"
   command claude --dangerously-skip-permissions "$@"
 }
 {{- end }}
@@ -134,31 +132,6 @@ _ghostty_nav_sentinel_path() {
 
 autoload -Uz add-zsh-hook
 # add-zsh-hook precmd _ghostty_nav_precmd
-
-ide() {
-  [[ ${TERM_PROGRAM-} == "ghostty" ]] || {
-    echo "ide: Ghostty only. Open a Ghostty tab and try again."
-    return 1
-  }
-
-  command -v ghostty-nav >/dev/null 2>&1 || {
-    echo "ide: ghostty-nav is not installed."
-    return 1
-  }
-
-  local terminal_count
-  terminal_count=$(ghostty-nav tab-terminal-count 2>/dev/null) || return 1
-  [[ "$terminal_count" == "1" ]] || {
-    echo "ide: expected a fresh Ghostty tab with exactly one terminal; open a new tab and try again."
-    return 1
-  }
-
-  ghostty-ide "$(pwd -P)"
-
-  if (( $# )); then
-    "$@"
-  fi
-}
 {{- end }}
 
 {{- if eq .chezmoi.hostname "clawdbot" }}

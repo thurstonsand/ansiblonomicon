@@ -25,6 +25,7 @@ These are sourced by the chezmoi-managed `.zshenv.tmpl` and `.zshrc.tmpl` if the
 | -------------------------------------------------------------- | -------------------------------------------------------------- |
 | `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json` | Work-machine overrides merged onto base during `chezmoi apply` |
 | `chezmoi/.chezmoitemplates/local/resolve-overlay.py`           | Script that merges overlay with base                           |
+| `chezmoi/dot_claude/hooks/local/`                              | Work-only hook scripts deployed to `~/.claude/hooks/local/`    |
 
 ### Merge Semantics
 
@@ -58,9 +59,9 @@ These should be used instead of hard-coding model values.
 
 ## Work-Local Config
 
-| File                             | Purpose                                                                           |
-| -------------------------------- | --------------------------------------------------------------------------------- |
-| `ansible/work.config.local.yml`  | Work-specific extras: agent harness sources, private language tools (gitignored)   |
+| File                            | Purpose                                                                          |
+| ------------------------------- | -------------------------------------------------------------------------------- |
+| `ansible/work.config.local.yml` | Work-specific extras: agent harness sources, private language tools (gitignored) |
 
 The work playbook conditionally includes this file if it exists. It defines `_extra` vars that get appended to their respective `_base` lists (defined in `work.config.yml`).
 
