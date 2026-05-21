@@ -12,37 +12,6 @@ const HOOK = join(
 const cases = [
   // [command, expected("ask" | "pass"), description]
 
-  // find: -exec/-execdir/-delete as flags should ask
-  ['find . -name "*.go" -exec rm {} ;', "ask", "-exec with unsafe command"],
-  ["find /tmp -name '*.log' -delete", "ask", "-delete flag"],
-  ['find . -execdir chmod 777 {} ;', "ask", "-execdir with unsafe command"],
-
-  // find: -exec with safe commands should pass (allowlisted)
-  [
-    'find . -name "*.go" -exec grep -l TODO {} ;',
-    "pass",
-    "-exec grep (allowlisted)",
-  ],
-  ['find . -exec ls -la {} ;', "pass", "-exec ls (allowlisted)"],
-  ['find . -exec stat {} ;', "pass", "-exec stat (allowlisted)"],
-
-  // find: -exec as substring in paths should pass
-  [
-    'find /path/DATAPLAT-32087--execute-command -name "*test.go"',
-    "pass",
-    "--execute-command in path",
-  ],
-  ['find /tmp/my-executor -name "*.go"', "pass", "-executor in path"],
-  ['find /tmp/exec-logs -type f', "pass", "exec- prefix in path"],
-
-  // find: plain find without dangerous flags should pass
-  [
-    'find . -name "*.go" -path "*/cmd/*"',
-    "pass",
-    "find with -name and -path only",
-  ],
-  ['find . -type f -name "*.ts"', "pass", "find with -type"],
-
   // git: destructive operations should ask
   ["git stash", "ask", "git stash"],
   ["git add .", "ask", "git add"],
@@ -62,12 +31,9 @@ const cases = [
   ["git branch --list", "pass", "git branch --list"],
   ["git remote -v", "pass", "git remote -v"],
 
-  // rm: dangerous recursive/force combos should ask
-  ["rm -rf /tmp/foo", "ask", "rm -rf"],
-  ["rm -fr /tmp/foo", "ask", "rm -fr"],
-  ["rm --recursive --force /tmp/foo", "ask", "rm --recursive --force"],
-
-  // rm: simple rm should pass
+  // non-git commands should pass (delegated to auto mode)
+  ["rm -rf /tmp/foo", "pass", "rm -rf (auto mode handles)"],
+  ['find . -name "*.go" -exec rm {} ;', "pass", "find -exec (auto mode handles)"],
   ["rm foo.txt", "pass", "rm single file"],
 
   // non-Bash tools should pass

@@ -1,27 +1,18 @@
 #!/usr/bin/env node
 
 // ==============================================================
-// ALLOWLIST: safe patterns — actively approved, skip permission prompt
-// ==============================================================
-const ALLOW_PATTERNS = [
-  /find\s+.*\s(-exec|-execdir)\s+(grep|ls|cat|head|tail|file|stat|wc|basename|dirname|readlink|sha256sum|md5sum)\b/,
-];
-
-// ==============================================================
-// BLOCKLIST: patterns that force "ask" permission
+// BLOCKLIST: git mutations that force "ask" permission
 // ==============================================================
 const FORCE_ASK_PATTERNS = [
-  /\bgit\s+(\S+\s+)*?stash\b/,
-  /\bgit\s+(\S+\s+)*?add\b/,
-  /\bgit\s+(\S+\s+)*?commit\b/,
-  /\bgit\s+(\S+\s+)*?push\b/,
-  /\bgit\s+(\S+\s+)*?checkout\b/,
-  /\bgit\s+(\S+\s+)*?reset\b/,
-  /\bgit\s+(\S+\s+)*?clean\b/,
-  /\bgit\s+(\S+\s+)*?rebase\b/,
-  /\bgit\s+(\S+\s+)*?branch\s+(\S+\s+)*?-[dD]\b/,
-  /rm\s+.*(-[rf].*-[rf]|-[rf]{2,}|--recursive.*--force|--force.*--recursive)/,
-  /find\s+.*\s(-delete|-exec|-execdir)\b/,
+  { label: "git stash", pattern: /\bgit\s+(\S+\s+)*?stash\b/ },
+  { label: "git add", pattern: /\bgit\s+(\S+\s+)*?add\b/ },
+  { label: "git commit", pattern: /\bgit\s+(\S+\s+)*?commit\b/ },
+  { label: "git push", pattern: /\bgit\s+(\S+\s+)*?push\b/ },
+  { label: "git checkout", pattern: /\bgit\s+(\S+\s+)*?checkout\b/ },
+  { label: "git reset", pattern: /\bgit\s+(\S+\s+)*?reset\b/ },
+  { label: "git clean", pattern: /\bgit\s+(\S+\s+)*?clean\b/ },
+  { label: "git rebase", pattern: /\bgit\s+(\S+\s+)*?rebase\b/ },
+  { label: "git branch -d/-D", pattern: /\bgit\s+(\S+\s+)*?branch\s+(\S+\s+)*?-[dD]\b/ },
 ];
 
 async function main() {
@@ -49,29 +40,14 @@ async function main() {
 
   const command = toolInput.command || "";
 
-  for (const pattern of ALLOW_PATTERNS) {
-    if (pattern.test(command)) {
-      console.log(
-        JSON.stringify({
-          hookSpecificOutput: {
-            hookEventName: "PreToolUse",
-            permissionDecision: "allow",
-            permissionDecisionReason: `Matched allow pattern: ${pattern}`,
-          },
-        }),
-      );
-      process.exit(0);
-    }
-  }
-
-  for (const pattern of FORCE_ASK_PATTERNS) {
+  for (const { label, pattern } of FORCE_ASK_PATTERNS) {
     if (pattern.test(command)) {
       console.log(
         JSON.stringify({
           hookSpecificOutput: {
             hookEventName: "PreToolUse",
             permissionDecision: "ask",
-            permissionDecisionReason: `Command matches pattern: ${pattern}`,
+            permissionDecisionReason: `Authorization required: git mutation (${label})`,
           },
         }),
       );
