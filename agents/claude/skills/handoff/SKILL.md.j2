@@ -10,14 +10,20 @@ Your goal is to prepare a prompt for a new thread based on the work done so far,
 
 ## Title Prompt
 
-Use the following prompt to guide the title inside the `<title>` tag. The title must be prefixed with `handoff:` and must be enclosed in ``.
+Use the following prompt to guide the title inside the `{title}` tag. The title must be prefixed with `handoff:`.
 
-> !`jq -r '.prompt // empty' ~/.cache/claude-code-auto-title/config.json 2>/dev/null || echo "A short, specific headline (under 80 chars) that distinguishes this handoff from any other. Capture the specific change, feature, or goal — not a generic label. Avoid vague words like work, updates, or changes."`
+```md
+{% if ansible_hostname is match('ML-') %}
+!`jq -r '.prompt' ~/.cache/claude-code-auto-title/config.json`
+{% else %}
+{{ lookup('file', playbook_dir ~ '/../session-title-prompt.txt') }}
+{% endif %}
+```
 
 ## Template
 
-```markdown
-`<title>handoff: {title derived from prompt above}</title>`
+```md
+{title}handoff: {title derived from prompt above}{/title}
 
 Continuing work from previous conversation. When you lack specific information, you can first establish the context you need by searching for and reading the necessary files.
 

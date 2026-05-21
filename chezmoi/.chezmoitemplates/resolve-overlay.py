@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 import sys
 import tomllib
-from typing import Any
+from typing import Any, cast
 
 SCRIPT_DIR = Path(__file__).parent
 CHEZMOI_DATA = SCRIPT_DIR.parent / ".chezmoidata" / "local.toml"
@@ -70,7 +70,9 @@ def preserve_key_order(
             val = desired[key]
             existing_val = existing[key]
             if isinstance(val, dict) and isinstance(existing_val, dict):
-                val = preserve_key_order(val, existing_val)
+                val = preserve_key_order(
+                    cast(dict[str, Any], val), cast(dict[str, Any], existing_val)
+                )
             ordered[key] = val
     for key in desired:
         if key not in ordered:

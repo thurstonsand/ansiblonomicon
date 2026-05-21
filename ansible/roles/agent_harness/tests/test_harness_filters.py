@@ -1750,6 +1750,80 @@ class TestFindPluginHooks:
         assert str(plugin_dir) in result[0]["content"]
         assert "${CLAUDE_PLUGIN_ROOT}" not in result[0]["content"]
 
+    def test_finds_inline_hooks_from_plugin_json(self, tmp_path: Path) -> None:
+        plugin_dir = tmp_path / "plugins" / "inline-hooks"
+        plugin_dir.mkdir(parents=True)
+        (plugin_dir / ".claude-plugin").mkdir()
+        (plugin_dir / ".claude-plugin" / "plugin.json").write_text(
+            json.dumps(
+                {
+                    "name": "inline-hooks",
+                    "hooks": {
+                        "WorktreeCreate": [
+                            {
+                                "hooks": [
+                                    {
+                                        "type": "command",
+                                        "command": "${CLAUDE_PLUGIN_ROOT}/scripts/create.sh",
+                                    }
+                                ]
+                            }
+                        ]
+                    },
+                }
+            )
+        )
+        (plugin_dir / "skills").mkdir()
+
+        sources: list[dict[str, Any]] = [
+            {"local": str(tmp_path), "plugins": ["inline-hooks"]}
+        ]
+        result = agent_harness_find_plugin_hooks(sources, str(tmp_path / "cache"))
+
+        assert len(result) == 1
+        assert result[0]["name"] == "inline-hooks"
+        assert str(plugin_dir) in result[0]["content"]
+        assert "${CLAUDE_PLUGIN_ROOT}" not in result[0]["content"]
+
+    def test_standalone_hooks_file_takes_precedence(self, tmp_path: Path) -> None:
+        """plugin.json hooks key overrides hooks/hooks.json (mirrors Claude Code)."""
+        plugin_dir = tmp_path / "plugins" / "both"
+        plugin_dir.mkdir(parents=True)
+        (plugin_dir / ".claude-plugin").mkdir()
+        (plugin_dir / ".claude-plugin" / "plugin.json").write_text(
+            json.dumps(
+                {
+                    "name": "both",
+                    "hooks": {
+                        "SessionStart": [
+                            {"hooks": [{"type": "command", "command": "inline"}]}
+                        ]
+                    },
+                }
+            )
+        )
+        (plugin_dir / "skills").mkdir()
+        hooks_dir = plugin_dir / "hooks"
+        hooks_dir.mkdir()
+        hooks_dir.joinpath("hooks.json").write_text(
+            json.dumps(
+                {
+                    "hooks": {
+                        "SessionStart": [
+                            {"hooks": [{"type": "command", "command": "standalone"}]}
+                        ]
+                    }
+                }
+            )
+        )
+
+        sources: list[dict[str, Any]] = [{"local": str(tmp_path), "plugins": ["both"]}]
+        result = agent_harness_find_plugin_hooks(sources, str(tmp_path / "cache"))
+
+        assert len(result) == 1
+        assert "inline" in result[0]["content"]
+        assert "standalone" not in result[0]["content"]
+
     def test_skips_plugins_without_hooks(self, tmp_path: Path) -> None:
         plugin_dir = tmp_path / "plugins" / "no-hooks"
         plugin_dir.mkdir(parents=True)
@@ -1765,3 +1839,65 @@ class TestFindPluginHooks:
         result = agent_harness_find_plugin_hooks(sources, str(tmp_path / "cache"))
 
         assert result == []
+
+    def test_hooks_string_path_reference(self, tmp_path: Path) -> None:
+        plugin_dir = tmp_path / "plugins" / "path-ref"
+        plugin_dir.mkdir(parents=True)
+        (plugin_dir / ".claude-plugin").mkdir()
+        (plugin_dir / ".claude-plugin" / "plugin.json").write_text(
+            json.dumps({"name": "path-ref", "hooks": "./config/my-hooks.json"})
+        )
+        (plugin_dir / "skills").mkdir()
+        config_dir = plugin_dir / "config"
+        config_dir.mkdir()
+        config_dir.joinpath("my-hooks.json").write_text(
+            json.dumps(
+                {
+                    "SessionStart": [
+                        {"hooks": [{"type": "command", "command": "from-path"}]}
+                    ]
+                }
+            )
+        )
+
+        sources: list[dict[str, Any]] = [
+            {"local": str(tmp_path), "plugins": ["path-ref"]}
+        ]
+        result = agent_harness_find_plugin_hooks(sources, str(tmp_path / "cache"))
+
+        assert len(result) == 1
+        assert "from-path" in result[0]["content"]
+
+    def test_hooks_array_merges_multiple_files(self, tmp_path: Path) -> None:
+        plugin_dir = tmp_path / "plugins" / "multi"
+        plugin_dir.mkdir(parents=True)
+        (plugin_dir / ".claude-plugin").mkdir()
+        (plugin_dir / ".claude-plugin" / "plugin.json").write_text(
+            json.dumps(
+                {
+                    "name": "multi",
+                    "hooks": ["./hooks/a.json", "./hooks/b.json"],
+                }
+            )
+        )
+        (plugin_dir / "skills").mkdir()
+        hooks_dir = plugin_dir / "hooks"
+        hooks_dir.mkdir()
+        hooks_dir.joinpath("a.json").write_text(
+            json.dumps(
+                {"SessionStart": [{"hooks": [{"type": "command", "command": "a"}]}]}
+            )
+        )
+        hooks_dir.joinpath("b.json").write_text(
+            json.dumps(
+                {"WorktreeCreate": [{"hooks": [{"type": "command", "command": "b"}]}]}
+            )
+        )
+
+        sources: list[dict[str, Any]] = [{"local": str(tmp_path), "plugins": ["multi"]}]
+        result = agent_harness_find_plugin_hooks(sources, str(tmp_path / "cache"))
+
+        assert len(result) == 1
+        content = json.loads(result[0]["content"])
+        assert "SessionStart" in content
+        assert "WorktreeCreate" in content

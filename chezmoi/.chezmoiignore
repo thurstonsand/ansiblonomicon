@@ -82,7 +82,9 @@ Library/Application Support/Code/User/mcp.json
 
 # Claude Code — handled by plugin on this machine
 .claude/hooks/_common.py
+.claude/hooks/_config.py
 .claude/hooks/derive-title.py
+.claude/hooks/retitle.py
 .claude/hooks/set-title.py
 
 {{ end }}
@@ -103,3 +105,4 @@ Library/Application Support/PrusaSlicer/cache/
 .ssh/README.md
 
 # Extension dev artifacts (for IDE type checking, not deployed)
+**/*.pyi

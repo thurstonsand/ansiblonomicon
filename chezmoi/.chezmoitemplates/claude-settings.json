@@ -47,7 +47,8 @@
         "hooks": [
           {
             "type": "command",
-            "command": "~/.claude/hooks/derive-title.py"
+            "command": "~/.claude/hooks/derive-title.py",
+            "async": true
           }
         ]
       }

@@ -27,6 +27,8 @@ agent_harness_sources_base:
           - pr
       - name: claude
         target_agents: [claude]
+        exclude_skills:
+          - retitle
       - name: work
         target_agents: [claude]
 

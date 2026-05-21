@@ -1,17 +1,16 @@
 #!/usr/bin/env python3
-"""UserPromptSubmit hook: apply explicit <title> tags or pick up auto-generated titles."""
+"""UserPromptSubmit hook: apply explicit {title} tags or pick up auto-generated titles."""
 
 from __future__ import annotations
 
 import json
-import os
 import re
 import sys
 from typing import cast
 
-from _common import HookInput, has_custom_title, log, read_title
+from _common import HookInput, consume_pending_title, log
 
-_TITLE_TAG_RE = re.compile(r"<title>([^<]+)</title>")
+_TITLE_TAG_RE = re.compile(r"\{title\}(.+?)\{/title\}")
 
 
 class PromptHookInput(HookInput):
@@ -40,20 +39,12 @@ def main() -> None:
     session_id = hook["session_id"]
     cwd = hook["cwd"]
 
+    pending = consume_pending_title(session_id)
     match = _TITLE_TAG_RE.search(hook["prompt"])
-    if match:
-        _emit_title(match.group(1), session_id, cwd, "tag")
-        return
 
-    title = read_title(session_id)
-    if not title:
-        return
-
-    transcript = hook["transcript_path"]
-    if os.path.isfile(transcript) and has_custom_title(transcript):
-        return
-
-    _emit_title(title, session_id, cwd, "generated")
+    title, source = (match.group(1), "tag") if match else (pending, "generated")
+    if title:
+        _emit_title(title, session_id, cwd, source)
 
 
 if __name__ == "__main__":

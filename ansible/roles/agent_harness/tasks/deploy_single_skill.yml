@@ -15,7 +15,7 @@
 - name: Build rsync exclude options
   ansible.builtin.set_fact:
     agent_harness_skill_rsync_opts: >-
-      {{ ['--exclude=.git', '--exclude=.claude-plugin', '--delete-excluded']
+      {{ ['--exclude=.git', '--exclude=.claude-plugin', '--exclude=*.j2', '--delete-excluded']
          + (agent_harness_skill_info.exclude_data | default([]) | map('regex_replace', '^(.*)$', '--exclude=\1') | list) }}
 
 - name: Sync skill directory locally
@@ -39,10 +39,28 @@
   delegate_to: localhost
   when: ansible_connection | default('ssh') != 'local'
 
+- name: Check for SKILL.md.j2 template
+  ansible.builtin.stat:
+    path: "{{ agent_harness_skill_info.source }}/SKILL.md.j2"
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
+  register: agent_harness_skill_j2_stat
+
+- name: Render SKILL.md.j2 template
+  ansible.builtin.template:
+    src: "{{ agent_harness_skill_info.source }}/SKILL.md.j2"
+    dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/SKILL.md"
+    mode: "0644"
+  when: agent_harness_skill_j2_stat.stat.exists
+
+- name: Set deployed SKILL.md path
+  ansible.builtin.set_fact:
+    agent_harness_deployed_skill_md: >-
+      {{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/SKILL.md
+
 - name: Transform SKILL.md for target agent
   ansible.builtin.set_fact:
     agent_harness_transformed_skill: >-
-      {{ (agent_harness_skill_info.source ~ '/SKILL.md')
+      {{ agent_harness_deployed_skill_md
          | agent_harness_transform_skill(agent_harness_target_agent, agent_harness_models.models,
                                          agent_harness_skill_info.plugin_root | default('')) }}
 

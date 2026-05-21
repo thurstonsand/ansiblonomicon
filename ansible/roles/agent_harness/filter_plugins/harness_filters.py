@@ -198,7 +198,7 @@ def _load_plugin_json(plugin_path: Path) -> dict[str, str | list[str] | None] | 
     try:
         with plugin_json_path.open() as f:
             return json.load(f)  # type: ignore[no-any-return]
-    except (json.JSONDecodeError, OSError):
+    except json.JSONDecodeError, OSError:
         return None
 
 
@@ -225,7 +225,7 @@ def _find_plugin_in_marketplace(
     try:
         with marketplace_path.open() as f:
             marketplace = json.load(f)
-    except (json.JSONDecodeError, OSError):
+    except json.JSONDecodeError, OSError:
         return None
 
     plugins = marketplace.get("plugins", [])
@@ -311,14 +311,14 @@ def _check_standalone_plugin(repo_path: Path, plugin_name: str) -> PluginConfig 
 
 
 def _find_skill_md(directory: Path) -> Path | None:
-    """Find SKILL.md in a directory, case-insensitive.
+    """Find SKILL.md or SKILL.md.j2 in a directory, case-insensitive.
 
     Returns the path to the skill file if found, or None if not found.
     """
     if not directory.exists():
         return None
     for entry in directory.iterdir():
-        if entry.is_file() and entry.name.lower() == "skill.md":
+        if entry.is_file() and entry.name.lower() in ("skill.md", "skill.md.j2"):
             return entry
     return None
 
@@ -995,10 +995,13 @@ def _resolve_hook_eligible_plugins(
 def agent_harness_find_plugin_hooks(
     sources: list[SourceConfig], cache_dir: str
 ) -> list[dict[str, str]]:
-    """Find hooks.json files in plugins and return resolved fragments.
+    """Find hook definitions in plugins and return resolved fragments.
 
-    For each plugin that has a hooks/hooks.json file, reads it and replaces
-    ${CLAUDE_PLUGIN_ROOT} with the absolute plugin path.
+    Checks two locations per plugin (first match wins):
+    1. hooks/hooks.json — standalone hook file
+    2. .claude-plugin/plugin.json "hooks" key — inline hooks
+
+    Replaces ${CLAUDE_PLUGIN_ROOT} with the absolute plugin path.
 
     Returns list of dicts with 'name' and 'content' keys.
     """
@@ -1008,13 +1011,8 @@ def agent_harness_find_plugin_hooks(
         for plugin_name, plugin_path in _resolve_hook_eligible_plugins(
             source, cache_dir
         ):
-            hooks_file = plugin_path / "hooks" / "hooks.json"
-            if not hooks_file.exists():
-                continue
-
-            try:
-                content = hooks_file.read_text()
-            except OSError:
+            content = _read_plugin_hooks(plugin_path)
+            if content is None:
                 continue
 
             content = content.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_path))
@@ -1022,6 +1020,53 @@ def agent_harness_find_plugin_hooks(
             fragments.append(HookFragment(name=plugin_name, content=content))
 
     return [f.to_dict() for f in fragments]
+
+
+def _read_plugin_hooks(plugin_path: Path) -> str | None:
+    """Read hook definitions from a plugin.
+
+    plugin.json "hooks" key takes precedence (mirrors Claude Code behavior).
+    Falls back to hooks/hooks.json only when plugin.json has no hooks field.
+    """
+    plugin_json = plugin_path / ".claude-plugin" / "plugin.json"
+    if plugin_json.exists():
+        try:
+            data: dict[str, Any] = json.loads(plugin_json.read_text())
+        except (OSError, json.JSONDecodeError):
+            data = {}
+        hooks = data.get("hooks")
+        match hooks:
+            case dict():
+                return json.dumps(hooks)
+            case str():
+                return _read_hooks_file(plugin_path / hooks)
+            case list():
+                merged: dict[str, Any] = {}
+                for path_ref in cast(list[Any], hooks):
+                    if isinstance(path_ref, str):
+                        content = _read_hooks_file(plugin_path / path_ref)
+                        if content:
+                            try:
+                                fragment: dict[str, Any] = json.loads(content)
+                                merged.update(fragment)
+                            except json.JSONDecodeError:
+                                continue
+                return json.dumps(merged) if merged else None
+            case _:
+                pass
+
+    return _read_hooks_file(plugin_path / "hooks" / "hooks.json")
+
+
+def _read_hooks_file(path: Path) -> str | None:
+    """Read a hooks file, resolving relative paths."""
+    resolved = path.resolve()
+    if resolved.exists():
+        try:
+            return resolved.read_text()
+        except OSError:
+            pass
+    return None
 
 
 class FilterModule:

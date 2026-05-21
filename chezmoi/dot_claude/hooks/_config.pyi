@@ -1,0 +1,5 @@
+API_URL: str
+MODEL: str
+TOKEN: str
+MAX_CONTEXT_BYTES: int
+TITLE_PROMPT: str

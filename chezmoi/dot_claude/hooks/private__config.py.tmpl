@@ -1,0 +1,10 @@
+"""Rendered configuration for auto-title hooks."""
+
+API_URL = "https://aig.thurstons.house/v1/messages"
+MODEL = "{{ .models.anthropic.sonnet.version }}"
+TOKEN = "{{ template "llm-api-key" . }}"
+MAX_CONTEXT_BYTES = 2_000_000
+
+TITLE_PROMPT = """
+{{ includeTemplate "session-title-prompt" . | trim }}
+"""

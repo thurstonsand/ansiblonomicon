@@ -53,13 +53,14 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `truenas_apps` in `ansible/inventory/targets/group_vars/truenas.yml` — TrueNAS catalog apps managed through the in-repo `local.truenas.app` module
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `work.config.yml` / `openclaw.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS/host-specific
 - `ansible/models.yml` — Centralized model definitions (versions, aliases, vscode/zed config); symlinked to `chezmoi/.chezmoidata/models.yaml`
+- `ansible/session-title-prompt.txt` — Session title prompt shared by chezmoi and agent_harness skills; symlinked to `chezmoi/.chezmoitemplates/session-title-prompt`
 - `ansible/inventory/group_vars/truenas.yml` — TrueNAS host vars (Docker config, network IPs/ports/domains)
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps
 - `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 - `wrangler/` — Cloudflare Workers (deployed via wrangler, not Terraform)
 - `cloudflare-pages/` — Static sites deployed via Cloudflare Pages (wrangler)
-- `agents/` — Reusable AI agent bundles deployed via `agent_harness`
+- `agents/` — Reusable AI agent bundles deployed via `agent_harness`; skills may use `SKILL.md.j2` for Jinja2 templating at deploy time
 - `.agents/` / `.claude/skills/` — Project-local Claude/Pi skill sources and Claude symlinks for this repo
 - `.mcp.json` / `.pi/mcp.json` — Project-scoped Cloudflare MCP configs for Claude and Pi
 
