@@ -11,7 +11,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe laptop` — Apply macOS Ansible playbook (auto-detects work vs personal by hostname)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **macOS tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `forge-code`, `ghostty-nav`, `homebrew`/`mas`, `language-tools`, `neovim`/`nvim-deps`, `opencode`, `shp`, `sysconfig`/`hostname`, `terminal-theme`, `tmux`, `uvc-util`
+  - **macOS tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `ghostty-nav`, `homebrew`/`mas`, `language-tools`, `neovim`/`nvim-deps`, `opencode`, `shp`, `sysconfig`/`hostname`, `terminal-theme`, `tmux`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
   - **Work-only tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `language-tools`, `local`, `neovim`/`nvim-deps`, `terminal-theme`, `uvc-util`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
@@ -21,7 +21,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe openclaw` — Apply OpenClaw Ansible playbook (playbook selects local on hostname `openclaw`, otherwise remote over SSH; override with `--target openclaw_local|openclaw_remote`)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **OpenClaw tags**: `apt`, `apt-repos`, `uv`, `mise`, `secrets`/`onepassword`/`op`, `chezmoi`/`dotfiles`, `claude-code`, `forge-code`, `ghostty-nav`, `opencode`, `system-maintenance`/`timers`, `language-tools`, `sshd`/`ssh`, `shpool`, `pi-extensions`, `tmux`, `motd`, `agent-harness`
+  - **OpenClaw tags**: `apt`, `apt-repos`, `uv`, `mise`, `secrets`/`onepassword`/`op`, `chezmoi`/`dotfiles`, `claude-code`, `ghostty-nav`, `opencode`, `system-maintenance`/`timers`, `language-tools`, `sshd`/`ssh`, `shpool`, `pi-extensions`, `tmux`, `motd`, `agent-harness`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes (`cz-diff` excludes lockfiles)
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)

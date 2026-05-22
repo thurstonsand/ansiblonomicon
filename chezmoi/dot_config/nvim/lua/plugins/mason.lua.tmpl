@@ -29,7 +29,9 @@ return {
           mason = false,
           settings = {
             gopls = {
-              semanticTokens = true,
+              -- Re-enable once gopls/Mason ships a gopls that advertises a matching
+              -- semanticTokensProvider, or LazyVim/Neovim handles gopls' v0.22+ custom modifiers.
+              semanticTokens = false,
               hints = {
                 assignVariableTypes = true,
                 compositeLiteralFields = true,
@@ -103,7 +105,9 @@ return {
             gopls = {
               gofumpt = true,
               staticcheck = true,
-              semanticTokens = true,
+              -- Re-enable once gopls/Mason ships a gopls that advertises a matching
+              -- semanticTokensProvider, or LazyVim/Neovim handles gopls' v0.22+ custom modifiers.
+              semanticTokens = false,
               hints = {
                 assignVariableTypes = true,
                 compositeLiteralFields = true,
@@ -121,6 +125,34 @@ return {
         },
       },
     },
+  },
+  {
+    "mfussenegger/nvim-lint",
+    optional = true,
+    opts = function(_, opts)
+      opts.linters = opts.linters or {}
+      opts.linters.golangcilint = opts.linters.golangcilint or {}
+      opts.linters.golangcilint.args = {
+        "run",
+        "--output.json.path=stdout",
+        "--output.text.path=",
+        "--output.tab.path=",
+        "--output.html.path=",
+        "--output.checkstyle.path=",
+        "--output.code-climate.path=",
+        "--output.junit-xml.path=",
+        "--output.teamcity.path=",
+        "--output.sarif.path=",
+        "--issues-exit-code=0",
+        "--show-stats=false",
+        "--path-mode=abs",
+        function()
+          -- nvim-lint treats go.work roots as standalone files because `go env GOMOD`
+          -- returns /dev/null there. Lint the package directory instead.
+          return vim.fn.fnamemodify(vim.api.nvim_buf_get_name(0), ":h")
+        end,
+      }
+    end,
   },
 }
 {{- end }}

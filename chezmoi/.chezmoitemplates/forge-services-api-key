@@ -1,1 +1,0 @@
-{{- template "op-secret" list "FORGE_SERVICES_API_KEY" "op://agent/Forge code/credential" -}}

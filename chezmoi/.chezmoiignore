@@ -60,7 +60,6 @@ Library/
 
 # Personal agent configs
 .codex/
-.forge/
 .oracle/
 .gemini/
 .rustup/

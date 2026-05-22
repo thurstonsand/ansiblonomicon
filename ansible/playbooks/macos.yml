@@ -59,13 +59,6 @@
           tags: ["claude-code"]
       tags: ["claude-code"]
 
-    - name: Install Forge Code
-      ansible.builtin.include_role:
-        name: forge_code
-        apply:
-          tags: ["forge-code"]
-      tags: ["forge-code"]
-
     - name: Install global language tools
       ansible.builtin.include_role:
         name: language_tools
