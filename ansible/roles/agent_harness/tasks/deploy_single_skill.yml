@@ -25,6 +25,8 @@
     delete: true
     recursive: true
     checksum: true
+    owner: false
+    group: false
     rsync_opts: "{{ agent_harness_skill_rsync_opts }}"
   when: ansible_connection | default('ssh') == 'local'
 
@@ -35,6 +37,8 @@
     delete: true
     recursive: true
     checksum: true
+    owner: false
+    group: false
     rsync_opts: "{{ agent_harness_skill_rsync_opts }}"
   delegate_to: localhost
   when: ansible_connection | default('ssh') != 'local'

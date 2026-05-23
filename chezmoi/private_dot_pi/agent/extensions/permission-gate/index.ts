@@ -1,26 +1,25 @@
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { PendingApprovalNotes } from "./pending-approvals.js";
+import { permissionSubjectFromToolCall } from "./pi-tools.js";
 import {
-  type ExtensionAPI,
-  type ExtensionContext,
-  isToolCallEventType,
-} from "@earendil-works/pi-coding-agent";
-import { BASH_TOOL_NAME, findMatchingRule, PERMISSION_RULES } from "./rules.js";
+  formatApprovalNotification,
+  formatApprovalResultNote,
+  formatNoUiBlockReason,
+  formatPermissionPrompt,
+  formatRejectionNotification,
+  formatRejectionResultReason,
+  type PermissionPromptInput,
+} from "./presentation.js";
+import { findMatchingRule, PERMISSION_RULES } from "./rules.js";
 import { persistPermissionGateState, restorePermissionGateState } from "./state.js";
 import { showPermissionGate, showPermissionsSummary, syncPermissionsStatus } from "./ui.js";
 
-export default function ampStylePermissionGate(pi: ExtensionAPI) {
+export default function permissionGate(pi: ExtensionAPI) {
   let checksEnabled = true;
-  const pendingApprovedNotes = new Map<string, { ruleLabel: string; note: string }>();
-
-  function formatApprovalNote(ruleLabel: string, note: string): string {
-    return `---\nOperation authorized (${ruleLabel})\n\nUser note:\n${note}`;
-  }
-
-  function formatRejectionNote(note: string): string {
-    return `Log:\n${note}`;
-  }
+  const pendingApprovalNotes = new PendingApprovalNotes();
 
   function restoreState(ctx: ExtensionContext): void {
-    pendingApprovedNotes.clear();
+    pendingApprovalNotes.discardOutstandingNotes();
     checksEnabled = restorePermissionGateState(ctx);
     syncPermissionsStatus(ctx, checksEnabled);
   }
@@ -59,16 +58,18 @@ export default function ampStylePermissionGate(pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => restoreState(ctx));
   pi.on("session_tree", async (_event, ctx) => restoreState(ctx));
   pi.on("session_before_fork", async (_event, ctx) => restoreState(ctx));
-  pi.on("turn_end", () => pendingApprovedNotes.clear());
+  pi.on("turn_end", () => pendingApprovalNotes.discardOutstandingNotes());
   pi.on("tool_result", async (event) => {
-    const approval = pendingApprovedNotes.get(event.toolCallId);
+    const approval = pendingApprovalNotes.consumeForToolResult(event.toolCallId);
     if (!approval) return undefined;
 
-    pendingApprovedNotes.delete(event.toolCallId);
     return {
       content: [
+        {
+          type: "text" as const,
+          text: formatApprovalResultNote(approval),
+        },
         ...event.content,
-        { type: "text" as const, text: formatApprovalNote(approval.ruleLabel, approval.note) },
       ],
     };
   });
@@ -76,36 +77,45 @@ export default function ampStylePermissionGate(pi: ExtensionAPI) {
   pi.on("tool_call", async (event, ctx) => {
     if (!checksEnabled) return undefined;
 
-    const rule = findMatchingRule(event);
-    if (!rule) return undefined;
+    const subject = permissionSubjectFromToolCall(event);
+    if (!subject) return undefined;
 
-    const promptDetail = isToolCallEventType(BASH_TOOL_NAME, event)
-      ? String(event.input.command ?? "")
-      : `${rule.toolName} tool call`;
+    const match = findMatchingRule(subject);
+    if (!match) return undefined;
+
+    const { rule } = match;
+    const promptInput: PermissionPromptInput = {
+      ruleLabel: rule.label,
+      toolName: subject.toolName,
+      detail: subject.detail,
+    };
 
     if (!ctx.hasUI) {
       return {
         block: true,
-        reason: `Blocked ${rule.toolName} (${rule.label}): user confirmation required but no UI available.`,
+        reason: formatNoUiBlockReason(promptInput),
       };
     }
 
-    const decision = await showPermissionGate(
-      ctx,
-      `⚠ Authorization required: ${rule.label}`,
-      `Confirm.\n\n${rule.toolName}: ${promptDetail}`,
-    );
+    const prompt = formatPermissionPrompt(promptInput);
+    const decision = await showPermissionGate(ctx, prompt.title, prompt.body);
 
     switch (decision.kind) {
       case "allow":
         return undefined;
       case "allow_with_note":
-        pendingApprovedNotes.set(event.toolCallId, { ruleLabel: rule.label, note: decision.note });
+        ctx.ui.notify(
+          formatApprovalNotification({ ruleLabel: rule.label, note: decision.note }),
+          "warning",
+        );
+        pendingApprovalNotes.rememberForToolResult(event.toolCallId, {
+          ruleLabel: rule.label,
+          note: decision.note,
+        });
         return undefined;
       case "reject": {
-        const reason = decision.note
-          ? `Operation aborted (${rule.label})\n\n${formatRejectionNote(decision.note)}`
-          : `Operation aborted (${rule.label})`;
+        const reason = formatRejectionResultReason(rule.label, decision.note);
+        ctx.ui.notify(formatRejectionNotification(rule.label, decision.note), "warning");
         if (decision.abort) {
           // Defer so the block result propagates before the turn is torn down.
           setTimeout(() => ctx.abort(), 0);

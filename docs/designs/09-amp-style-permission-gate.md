@@ -102,25 +102,30 @@ This is more complex than visual-only numbering, but it matches the desired inte
 ### 8. Post-action behavior differs by branch
 
 #### `Authorize` without note
+
 - Allow tool call.
 - No further action.
 
 #### `Authorize` with note
+
 - Allow tool call.
 - Wait for that tool call to complete.
 - Append an authorization note block to the tool result content so the assistant sees the user's note before responding.
 
 #### `Abort` without note
+
 - Reject tool call.
 - Abort the turn.
 - Do not inject any user message.
 
 #### `Abort` with note
+
 - Reject tool call.
 - Do not abort the turn.
 - Include the drafted note directly in the block reason so the assistant sees it in the same rejection message.
 
 #### `Esc`
+
 - Reject tool call.
 - Abort the turn.
 - Do not inject any user message.
@@ -153,27 +158,35 @@ Reasoning:
 ## Rejected Alternatives
 
 ### Keep using `ctx.ui.confirm()` unchanged
+
 Rejected because the stock implementation cannot support inline drafts or custom control flow.
 
 ### Rebuild the interaction without reference to the existing confirm implementation
+
 Rejected. The better path is to start from the existing confirm/selector behavior and extend it so the new gate still feels native to pi.
 
 ### Spend time fixing the old permission gate or old confirm helper first
+
 Rejected. Implementation should focus on the new gate only; the old path is being replaced.
 
 ### Separate note entry into another overlay/editor
+
 Rejected because the user wants the interaction to stay in one pane.
 
 ### Treat drafting as a separate mode with separate controls
+
 Rejected. The desired interaction is a lightweight inline augmentation of `Authorize`/`Abort`, not a mode switch.
 
 ### Show full preserved draft text for both options at once
+
 Rejected in favor of compact indicators for the non-selected option. Full text for both would make the gate noisy and unstable in height.
 
 ### Make `Esc` during drafting only clear text
+
 Rejected by user. `Esc` should always reject + abort.
 
 ### Keep `Ctrl+C` and `j/k` in the legend
+
 Rejected to reduce noise. `j/k` may still exist as undocumented bindings.
 
 ## Integration Points

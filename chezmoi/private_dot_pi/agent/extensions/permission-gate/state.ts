@@ -2,7 +2,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 
 type PermissionGateState = { enabled: boolean };
 
-const STATE_TYPE = "amp-style-permission-gate";
+const STATE_TYPE = "permission-gate";
 
 export function persistPermissionGateState(pi: ExtensionAPI, enabled: boolean): void {
   pi.appendEntry<PermissionGateState>(STATE_TYPE, { enabled });

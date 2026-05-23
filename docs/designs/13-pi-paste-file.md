@@ -69,7 +69,7 @@ With `--json`, the command prints structured metadata for the Pi extension. Text
 Example text result:
 
 ```json
-{"kind":"text","text":"clipboard text"}
+{ "kind": "text", "text": "clipboard text" }
 ```
 
 Example single-file result:

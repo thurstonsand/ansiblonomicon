@@ -34,18 +34,19 @@ const OPTION_LABELS: Record<PermissionChoice, string> = {
 
 const segmenter = new Intl.Segmenter(undefined, { granularity: "grapheme" });
 
+function formatRuleTools(rule: PermissionRule): string {
+  return rule.toolNames.join(", ");
+}
+
 function formatPlainSummary(enabled: boolean, rules: PermissionRule[]): string {
   const lines = [`Permission checks: ${enabled ? "enabled" : "disabled"}`, ""];
 
-  for (const [toolName, toolRules] of Map.groupBy(rules, (r) => r.toolName)) {
-    lines.push(toolName.toUpperCase());
-    for (const rule of toolRules) {
-      lines.push(`  ${rule.label}`);
-      lines.push(`    ${rule.matcher}`);
-    }
-    lines.push("");
+  for (const rule of rules) {
+    lines.push(`${formatRuleTools(rule)}: ${rule.label}`);
+    lines.push(`  ${rule.description}`);
   }
 
+  lines.push("");
   lines.push("Usage: /permissions [enable|disable]");
   return lines.join("\n");
 }
@@ -56,15 +57,13 @@ function formatStyledSummary(theme: Theme, enabled: boolean, rules: PermissionRu
     : theme.fg("warning", theme.bold("Permission checks disabled"));
   const lines = [statusLine, ""];
 
-  for (const [toolName, toolRules] of Map.groupBy(rules, (r) => r.toolName)) {
-    lines.push(theme.fg("toolTitle", theme.bold(toolName.toUpperCase())));
-    for (const rule of toolRules) {
-      lines.push(`  ${theme.fg("accent", rule.label)}`);
-      lines.push(`    ${theme.fg("dim", `↳ ${rule.matcher}`)}`);
-    }
-    lines.push("");
+  for (const rule of rules) {
+    const tools = theme.fg("toolTitle", theme.bold(formatRuleTools(rule)));
+    lines.push(`${tools}: ${theme.fg("accent", rule.label)}`);
+    lines.push(`  ${theme.fg("dim", `↳ ${rule.description}`)}`);
   }
 
+  lines.push("");
   lines.push(theme.fg("muted", "Usage: /permissions [enable|disable]"));
   lines.push(theme.fg("dim", "Enter or Esc to close"));
   return lines.join("\n");

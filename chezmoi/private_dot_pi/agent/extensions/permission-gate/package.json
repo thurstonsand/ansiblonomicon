@@ -1,9 +1,9 @@
 {
-  "name": "pi-amp-style-permission-gate",
+  "name": "pi-permission-gate",
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Pi extension that adds Amp-style permission checks with /permissions controls",
+  "description": "Pi extension that adds risky tool permission checks with /permissions controls",
   "pi": {
     "extensions": [
       "./index.ts"

@@ -25,6 +25,8 @@
     dest: "{{ sync_dest }}/"
     recursive: "{{ sync_recurse | default(true) }}"
     delete: false
+    owner: false
+    group: false
     rsync_opts:
       - "--exclude=*.j2"
   become: false
