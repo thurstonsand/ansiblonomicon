@@ -18,6 +18,16 @@ agent_harness_target_agents_base:
 agent_harness_target_agents: "{{ (agent_harness_target_agents_base | default([])) + (agent_harness_target_agents_extra | default([])) }}"
 
 agent_harness_sources_base:
+  - repo: nicobailon/visual-explainer
+    pull: true
+    plugins:
+      - name: visual-explainer
+        path: plugins/visual-explainer
+        target_agents: [claude]
+        exclude_data:
+          - commands
+          - scripts
+
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management

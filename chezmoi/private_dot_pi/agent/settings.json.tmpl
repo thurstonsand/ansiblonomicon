@@ -93,7 +93,7 @@
   "powerlineShortcuts": {
     "stashHistory": "alt+h",
     "copyEditor": "ctrl+alt+shift+9",
-    "cutEditor": "alt+x",
+    "cutEditor": "ctrl+alt+shift+0",
     "jumpPreviousUserMessage": "ctrl+shift+k",
     "jumpNextUserMessage": "ctrl+shift+j",
     "jumpPreviousLlmMessage": "ctrl+alt+shift+8",
@@ -119,7 +119,7 @@
       ]
     },
     "npm:pi-librarian",
-    "npm:pi-verbosity-control",
+    "npm:@howaboua/pi-codex-conversion",
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:@thurstonsand/pi-powerline-footer"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
     "git:github.com/davebcn87/pi-autoresearch",
@@ -137,9 +137,8 @@
         "+themes/gruvbox-light-hard.json"
       ]
     },
-    "npm:@benvargas/pi-openai-fast",
     "git:github.com/earendil-works/pi-review",
-    "npm:pi-btw"
+    "npm:@howaboua/pi-smart-btw"
   ],
 {{- if eq .chezmoi.os "darwin" }}
   "extensions": [

@@ -1,0 +1,3 @@
+---
+plannotator_version: latest
+plannotator_install_dir: "{{ ansible_facts['env']['HOME'] }}/.local/bin"

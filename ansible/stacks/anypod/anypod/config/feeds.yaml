@@ -95,6 +95,24 @@ feeds:
         since: "20251004"
         metadata:
             category: Technology
+    state-of-agentic-coding:
+        url: "https://www.youtube.com/playlist?list=PLg3sejGUAdUZMKADp-KCcC6m5qKjD88bT"
+        yt_args: >
+            --format
+            bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]
+            --extractor-args
+            youtubetab:skip=authcheck
+            --embed-thumbnail
+            --exec
+            after_move:'convert_video.sh %(filepath)q'
+        schedule: "0 4 * * *"
+        transcript_lang: en
+        metadata:
+            title: "State of Agentic Coding"
+            description: "Agentic coding updates with Armin Ronacher from Earendil and Ben Vinegar from Modem, covering AI coding agents, models, developer tools, and the changing software workflow."
+            category: Technology
+            podcast_type: "episodic"
+            explicit: "no"
     lemonade-stand:
         url: "https://youtube.com/playlist?list=PLYkjTdVaDaTDv86TQEWq8EDG3iIqoj3em&si=cReR1vJ-ro9fHPIe"
         yt_args: >

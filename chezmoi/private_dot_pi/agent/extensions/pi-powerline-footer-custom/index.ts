@@ -3,17 +3,15 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 
 import { ContextGaugeStatus } from "./context-gauge.js";
 import { DebouncedTask } from "./debounced-task.js";
-import { FastStateWatcher } from "./fast-config.js";
+import { CodexConversionConfigWatcher } from "./codex-conversion-config.js";
 import { updateModelDisplayStatus } from "./model-display.js";
-import { VerbosityStateWatcher } from "./verbosity-config.js";
 import { updateWorkspaceDisplayStatuses } from "./workspace-display.js";
 
 const CONTEXT_STATUS_UPDATE_MS = 250;
 
 export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   let contextGaugeStatus: ContextGaugeStatus | undefined;
-  let verbosityWatcher: VerbosityStateWatcher | undefined;
-  let fastWatcher: FastStateWatcher | undefined;
+  let codexConversionWatcher: CodexConversionConfigWatcher | undefined;
   let modelDisplayDirty = false;
 
   const contextGaugeSetTask = new DebouncedTask<ExtensionContext>(CONTEXT_STATUS_UPDATE_MS, (ctx) =>
@@ -21,12 +19,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   );
 
   const setModelDisplay = (ctx: ExtensionContext): void => {
-    updateModelDisplayStatus(
-      ctx,
-      pi.getThinkingLevel(),
-      verbosityWatcher?.get(),
-      fastWatcher?.get() ?? false,
-    );
+    updateModelDisplayStatus(ctx, pi.getThinkingLevel(), codexConversionWatcher?.get());
     modelDisplayDirty = false;
   };
 
@@ -46,16 +39,13 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
 
   const setModel = (ctx: ExtensionContext): void => {
     const model = requireModel(ctx);
-    verbosityWatcher?.setModel(model);
-    fastWatcher?.setModel(model);
+    codexConversionWatcher?.setModel(model);
     setModelDisplay(ctx);
   };
 
   const disposeModelWatchers = (): void => {
-    verbosityWatcher?.dispose();
-    fastWatcher?.dispose();
-    verbosityWatcher = undefined;
-    fastWatcher = undefined;
+    codexConversionWatcher?.dispose();
+    codexConversionWatcher = undefined;
   };
 
   pi.on("session_start", (_event, ctx) => {
@@ -64,10 +54,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
     disposeModelWatchers();
 
     const model = requireModel(ctx);
-    verbosityWatcher = new VerbosityStateWatcher(model, () => {
-      modelDisplayDirty = true;
-    });
-    fastWatcher = new FastStateWatcher(model, () => {
+    codexConversionWatcher = new CodexConversionConfigWatcher(model, () => {
       modelDisplayDirty = true;
     });
     setCustomFooter(ctx);
@@ -101,8 +88,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   pi.registerCommand("custom-footer-refresh", {
     description: "Refresh pi-powerline-footer-custom status items.",
     handler: async (_args, ctx) => {
-      verbosityWatcher?.refreshFromFile();
-      fastWatcher?.refreshFromFile();
+      codexConversionWatcher?.refreshFromFile();
       setCustomFooter(ctx);
       ctx.ui.notify("Custom footer statuses refreshed", "info");
     },

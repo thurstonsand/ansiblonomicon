@@ -75,12 +75,6 @@ agent_harness_sources_base:
     plugins:
       - name: code-simplification
         path: skills/code-simplification
-  #   # for use in testing if needed
-  #   - name: commit-commands
-  #   target_agents: [claude] # commands only for Claude (testing)
-  #   exclude_commands:
-  #     - clean_gone
-
   - repo: FrancyJGLisboa/agent-skill-creator
     pull: true
     plugins:
@@ -99,6 +93,16 @@ agent_harness_sources_base:
           - registry
           - scripts/bootstrap.sh
           - scripts/install-skill.sh
+
+  - repo: nicobailon/visual-explainer
+    pull: true
+    plugins:
+      - name: visual-explainer
+        path: plugins/visual-explainer
+        target_agents: [claude, amp, codex, opencode, pi]
+        exclude_data:
+          - commands
+          - scripts
 
   - repo: pchalasani/claude-code-tools
     pull: true

@@ -1,6 +1,8 @@
 import { type FSWatcher, watch } from "node:fs";
 import type { Api, Model } from "@earendil-works/pi-ai";
 
+export type Eq<T> = (self: T, that: T) => boolean;
+
 export abstract class FileBackedStateWatcher<TConfig, TValue> {
   private watcher: FSWatcher | undefined;
   private disposed = false;
@@ -12,6 +14,7 @@ export abstract class FileBackedStateWatcher<TConfig, TValue> {
     private readonly filePath: string,
     model: Model<Api>,
     private readonly onChange: (value: TValue) => void,
+    private readonly eq: Eq<TValue>,
   ) {
     this.model = model;
     this.config = this.readConfig();
@@ -50,7 +53,7 @@ export abstract class FileBackedStateWatcher<TConfig, TValue> {
 
   private recompute(): void {
     const next = this.project(this.config, this.model);
-    if (Object.is(next, this.value)) return;
+    if (this.eq(next, this.value)) return;
 
     this.value = next;
     this.onChange(next);
