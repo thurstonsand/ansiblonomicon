@@ -12,10 +12,17 @@
     msg: "Skill source not found: {{ agent_harness_skill_info.source }} (from {{ agent_harness_skill_info.origin }})"
   when: not agent_harness_skill_source_stat.stat.exists
 
+- name: Check for SKILL.md.j2 template
+  ansible.builtin.stat:
+    path: "{{ agent_harness_skill_info.source }}/SKILL.md.j2"
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
+  register: agent_harness_skill_j2_stat
+
 - name: Build rsync exclude options
   ansible.builtin.set_fact:
     agent_harness_skill_rsync_opts: >-
       {{ ['--exclude=.git', '--exclude=.claude-plugin', '--exclude=*.j2', '--delete-excluded']
+         + ((agent_harness_skill_j2_stat.stat.exists | bool) | ternary(['--exclude=SKILL.md'], []))
          + (agent_harness_skill_info.exclude_data | default([]) | map('regex_replace', '^(.*)$', '--exclude=\1') | list) }}
 
 - name: Sync skill directory locally
@@ -42,12 +49,6 @@
     rsync_opts: "{{ agent_harness_skill_rsync_opts }}"
   delegate_to: localhost
   when: ansible_connection | default('ssh') != 'local'
-
-- name: Check for SKILL.md.j2 template
-  ansible.builtin.stat:
-    path: "{{ agent_harness_skill_info.source }}/SKILL.md.j2"
-  delegate_to: "{{ agent_harness_source_delegate_host }}"
-  register: agent_harness_skill_j2_stat
 
 - name: Render SKILL.md.j2 template
   ansible.builtin.template:

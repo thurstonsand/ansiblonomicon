@@ -22,7 +22,7 @@ Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 
 ### Terminal theme sync
 
-On macOS, `dark-notify` now acts as the source of truth for terminal theme state. An Ansible-managed `terminal_theme` role installs a user LaunchAgent (`house.thurstons.terminal-theme-watch`), the `~/.local/bin/terminal-theme-watch` watcher, `~/.local/bin/terminal-theme-switch.py`, and the shared zsh helper at `~/.config/zsh/tmux-theme.zsh`. Together they keep `~/.terminal-bg`, Codex, and Hunk theme state in sync while reloading the LaunchAgent only when the theme manager changes. Pi uses `pi-ansi-themes` and a file-watching extension, so it follows `~/.terminal-bg` and inherits the terminal's ANSI palette instead of hardcoded colors.
+On macOS, `dark-notify` now acts as the source of truth for terminal theme state. An Ansible-managed `terminal_theme` role installs a user LaunchAgent (`house.thurstons.terminal-theme-watch`), the `~/.local/bin/terminal-theme-watch` watcher, `~/.local/bin/terminal-theme-switch.py`, and the shared zsh helper at `~/.config/zsh/tmux-theme.zsh`. Together they keep `~/.terminal-bg`, Codex, and Hunk theme state in sync while reloading the LaunchAgent only when the theme manager changes. The role owns `~/.config/hunk/config.toml` and injects the current Gruvbox Hard custom theme block from `hunk_gruvbox_theme.py`; this takes effect once the installed Hunk release supports custom themes. Pi uses `pi-ansi-themes` and a file-watching extension, so it follows `~/.terminal-bg` and inherits the terminal's ANSI palette instead of hardcoded colors.
 
 ## Structure
 

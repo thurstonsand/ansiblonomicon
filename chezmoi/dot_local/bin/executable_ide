@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Opens an IDE-style Ghostty split: nvim on the left, shell on the right.
-# Usage: ghostty-ide [cwd]
+# Opens an IDE-style Ghostty split: nvim on the left, optional command on the right.
+# Usage: ide [--cwd cwd] [command...]
 
 [[ ${TERM_PROGRAM-} == "ghostty" ]] || {
-  echo "ghostty-ide: Ghostty only." >&2
+  echo "ide: Ghostty only." >&2
   exit 1
 }
 
 command -v ghostty-nav >/dev/null 2>&1 || {
-  echo "ghostty-ide: ghostty-nav is not installed." >&2
+  echo "ide: ghostty-nav is not installed." >&2
   exit 1
 }
 
@@ -31,21 +31,39 @@ wait_for_ready() {
     return 0
   fi
 
-  echo "ghostty-ide: timed out waiting for $label." >&2
+  echo "ide: timed out waiting for $label." >&2
   return 1
 }
 
-cwd=${1:-.}
+cwd=$(pwd -P)
+if [[ ${1:-} == "--cwd" || ${1:-} == "-C" ]]; then
+  (($# >= 2)) || {
+    echo "ide: ${1} requires a directory." >&2
+    exit 1
+  }
+  cwd=$2
+  shift 2
+fi
+[[ -d $cwd ]] || {
+  echo "ide: cwd does not exist: $cwd" >&2
+  exit 1
+}
+
 ready_fifo=$(mktemp -t ghostty-ide-ready.XXXXXX)
 rm -f "$ready_fifo"
 mkfifo "$ready_fifo"
 exec 3<>"$ready_fifo"
 trap 'exec 3>&- 3<&-; rm -f "$ready_fifo"' EXIT
 
-editor_inner="if ghostty-nav terminal-id >/dev/null; then printf 'ready\\n' > $(quote "$ready_fifo"); else echo 'ghostty-ide: failed to register Ghostty terminal' >&2; fi; nvim .; exec /bin/zsh -il"
+editor_inner="if ghostty-nav terminal-id >/dev/null; then printf 'ready\\n' > $(quote "$ready_fifo"); else echo 'ide: failed to register Ghostty terminal' >&2; fi; nvim .; exec /bin/zsh -il"
 editor_cmd=$(quote "$editor_inner")
 
 ghostty-nav split left --cwd "$cwd" --command "/bin/zsh -ilc $editor_cmd" --focus new
 wait_for_ready "editor terminal registration"
 ghostty-nav resize right --percent 15
 ghostty-nav toggle-zoom
+
+if (($# > 0)); then
+  cd "$cwd"
+  "$@"
+fi

@@ -50,6 +50,13 @@ return {
         vtsls = { mason = false },
         yamlls = { mason = false },
       },
+      setup = {
+        -- LazyVim's Go extra fabricates semanticTokensProvider when gopls omits it.
+        -- Remove this override when gopls advertises a compatible provider or LazyVim stops needing the shim.
+        gopls = function()
+          return false
+        end,
+      },
     },
   },
 }
@@ -123,6 +130,13 @@ return {
             },
           },
         },
+      },
+      setup = {
+        -- LazyVim's Go extra fabricates semanticTokensProvider when gopls omits it.
+        -- Remove this override when gopls advertises a compatible provider or LazyVim stops needing the shim.
+        gopls = function()
+          return false
+        end,
       },
     },
   },

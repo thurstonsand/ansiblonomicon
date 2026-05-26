@@ -11,22 +11,27 @@
       mode: "0755"
     - path: "{{ ansible_facts['env']['HOME'] }}/.config/zsh"
       mode: "0755"
+    - path: "{{ ansible_facts['env']['HOME'] }}/.config/hunk"
+      mode: "0755"
     - path: "{{ ansible_facts['env']['HOME'] }}/.local/state/terminal-theme/leases"
       mode: "0755"
 
-- name: Install terminal theme shared Python helper
+- name: Install terminal theme Python helpers
   ansible.builtin.copy:
-    src: terminal_theme_common.py
-    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal_theme_common.py"
-    mode: "0644"
-  register: terminal_theme_common_script
-
-- name: Install terminal theme switch helper
-  ansible.builtin.copy:
-    src: terminal-theme-switch.py
-    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal-theme-switch.py"
-    mode: "0755"
-  register: terminal_theme_switch_script
+    src: "{{ item.src }}"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/{{ item.dest }}"
+    mode: "{{ item.mode }}"
+  loop:
+    - src: terminal_theme_common.py
+      dest: terminal_theme_common.py
+      mode: "0644"
+    - src: terminal-theme-switch.py
+      dest: terminal-theme-switch.py
+      mode: "0755"
+    - src: hunk_gruvbox_theme.py
+      dest: hunk_gruvbox_theme.py
+      mode: "0755"
+  register: terminal_theme_python_helpers
 
 - name: Install tmux theme zsh helper
   ansible.builtin.copy:
@@ -92,32 +97,77 @@
   ansible.builtin.stat:
     path: "{{ ansible_facts['env']['HOME'] }}/.terminal-bg"
   register: terminal_theme_state_file
-  when: terminal_theme_profile == 'detector'
+
+- name: Read terminal background state file
+  ansible.builtin.command:
+    argv:
+      - cat
+      - "{{ ansible_facts['env']['HOME'] }}/.terminal-bg"
+  register: terminal_theme_state_file_content
+  changed_when: false
+  check_mode: false
+  when: terminal_theme_state_file.stat.exists
+
+- name: Detect current macOS appearance
+  ansible.builtin.command:
+    argv:
+      - defaults
+      - read
+      - -g
+      - AppleInterfaceStyle
+  register: terminal_theme_macos_appearance
+  changed_when: false
+  failed_when: false
+  check_mode: false
+  when:
+    - terminal_theme_profile == 'detector'
+    - not terminal_theme_state_file.stat.exists
+
+- name: Set terminal theme mode fact
+  ansible.builtin.set_fact:
+    terminal_theme_mode: >-
+      {{ terminal_theme_state_file.stat.exists | ternary(
+        terminal_theme_state_file_content.stdout | trim,
+        (terminal_theme_profile == 'detector') | ternary(
+          (terminal_theme_macos_appearance.rc | default(1) == 0) | ternary('dark', 'light'),
+          'dark'
+        )
+      ) }}
 
 - name: Seed terminal theme state from current macOS appearance
-  ansible.builtin.shell: |
-    set -eu
-    if defaults read -g AppleInterfaceStyle >/dev/null 2>&1; then
-      mode=dark
-    else
-      mode=light
-    fi
-    "$HOME/.local/bin/terminal-theme-switch.py" "$mode"
-  args:
-    executable: /bin/sh
+  ansible.builtin.command:
+    argv:
+      - "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal-theme-switch.py"
+      - "{{ terminal_theme_mode }}"
   changed_when: true
   when:
     - terminal_theme_profile == 'detector'
     - not ansible_check_mode
     - not terminal_theme_state_file.stat.exists
 
+- name: Render current Hunk custom theme
+  ansible.builtin.command:
+    argv:
+      - "{{ ansible_facts['env']['HOME'] }}/.local/bin/hunk_gruvbox_theme.py"
+      - "{{ terminal_theme_mode }}"
+  changed_when: false
+  check_mode: false
+  register: terminal_theme_hunk_custom_theme_result
+
+- name: Install Hunk config
+  ansible.builtin.template:
+    src: hunk/config.toml.j2
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/hunk/config.toml"
+    mode: "0644"
+  vars:
+    terminal_theme_hunk_custom_theme: "{{ terminal_theme_hunk_custom_theme_result.stdout }}"
+
 - name: Detect whether terminal theme LaunchAgent needs reload
   ansible.builtin.set_fact:
     terminal_theme_reload_required: >-
       {{
         terminal_theme_watch_script.changed | default(false)
-        or terminal_theme_common_script.changed | default(false)
-        or terminal_theme_switch_script.changed | default(false)
+        or terminal_theme_python_helpers.changed | default(false)
         or terminal_theme_zsh_helper.changed | default(false)
         or terminal_theme_launch_agent_plist.changed | default(false)
       }}

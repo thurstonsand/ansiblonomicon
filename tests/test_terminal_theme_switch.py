@@ -15,6 +15,7 @@ MODULE = module_from_spec(SPEC)
 SPEC.loader.exec_module(MODULE)
 
 set_codex_tui_theme = MODULE.set_codex_tui_theme
+set_hunk_theme = MODULE.set_hunk_theme
 
 
 def test_replaces_existing_tui_theme() -> None:
@@ -63,3 +64,40 @@ persistence = "save-all"
 
     assert parsed["tui"]["theme"] == "gruvbox-dark"
     assert parsed["history"]["persistence"] == "save-all"
+
+
+def test_sets_hunk_custom_dark_hard_theme() -> None:
+    original = """theme = "graphite"
+mode = "auto"
+"""
+
+    updated = set_hunk_theme(original, "dark")
+    parsed = tomllib.loads(updated)
+
+    assert parsed["theme"] == "graphite"
+    assert parsed["custom_theme"]["label"] == "Gruvbox Dark Hard"
+    assert "base" not in parsed["custom_theme"]
+    assert parsed["custom_theme"]["background"] == "#1d2021"
+    assert parsed["custom_theme"]["syntax"]["string"] == "#b8bb26"
+
+
+def test_sets_hunk_custom_light_hard_theme() -> None:
+    original = """theme = "custom"
+mode = "auto"
+
+[custom_theme]
+base = "graphite"
+label = "Gruvbox Dark Hard"
+
+[custom_theme.syntax]
+string = "#b8bb26"
+"""
+
+    updated = set_hunk_theme(original, "light")
+    parsed = tomllib.loads(updated)
+
+    assert parsed["theme"] == "custom"
+    assert parsed["custom_theme"]["label"] == "Gruvbox Light Hard"
+    assert "base" not in parsed["custom_theme"]
+    assert parsed["custom_theme"]["background"] == "#f9f5d7"
+    assert parsed["custom_theme"]["syntax"]["string"] == "#79740e"

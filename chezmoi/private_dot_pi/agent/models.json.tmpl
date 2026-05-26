@@ -15,7 +15,9 @@
           "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.anthropic.opus.max_input }},
-          "maxTokens": {{ .models.anthropic.opus.max_output }}
+          "maxTokens": {{ .models.anthropic.opus.max_output }},
+          "thinkingLevelMap": {"xhigh": "xhigh"},
+          "compat": {"forceAdaptiveThinking": true}
         },
         {
           "id": "{{ .models.anthropic.sonnet.version }}",
@@ -24,7 +26,8 @@
           "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.anthropic.sonnet.max_input }},
-          "maxTokens": {{ .models.anthropic.sonnet.max_output }}
+          "maxTokens": {{ .models.anthropic.sonnet.max_output }},
+          "compat": {"forceAdaptiveThinking": true}
         },
         {
           "id": "{{ .models.anthropic.haiku.version }}",

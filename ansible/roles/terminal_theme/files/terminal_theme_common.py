@@ -1,16 +1,22 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
 import time
-from typing import Literal, cast
+from typing import cast
 
-Mode = Literal["dark", "light"]
-VALID_MODES: set[Mode] = {"dark", "light"}
+
+class Mode(StrEnum):
+    LIGHT = "light"
+    DARK = "dark"
+
+
+VALID_MODES: tuple[Mode, ...] = tuple(Mode)
 HOST_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 
 
@@ -40,8 +46,8 @@ def read_mode() -> Mode:
     try:
         value = Path.home().joinpath(".terminal-bg").read_text(encoding="utf-8").strip()
     except OSError:
-        return "dark"
-    return "light" if value == "light" else "dark"
+        return Mode.DARK
+    return Mode(value)
 
 
 def write_atomic(path: Path, text: str) -> None:
@@ -136,7 +142,7 @@ class ThemeLease:
         for path in leases.glob("*.json"):
             try:
                 lease = cls.from_file(path)
-            except (OSError, ValueError, json.JSONDecodeError):
+            except OSError, ValueError, json.JSONDecodeError:
                 remove_file(path)
                 continue
             if lease.is_expired(now):

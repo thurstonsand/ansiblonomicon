@@ -11,13 +11,26 @@ mirror syncs.
 
 import argparse
 from collections.abc import MutableMapping
+from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from terminal_theme_common import VALID_MODES, Mode, ThemeLease, sync_mirror
+from hunk_gruvbox_theme import hunk_custom_theme_table
+from terminal_theme_common import (
+    Mode,
+    ThemeLease,
+    sync_mirror,
+    write_atomic,
+)
 from tomlkit import parse, table
 
 TomlMapping = MutableMapping[str, object]
+
+
+@dataclass(frozen=True)
+class CliArgs:
+    mode: Mode
+    no_mirror_sync: bool
 
 
 def update_terminal_bg(mode: Mode) -> None:
@@ -48,13 +61,9 @@ def update_codex_theme(mode: Mode) -> None:
     codex_toml.write_text(updated)
 
 
-def hunk_theme_name(mode: Mode) -> str:
-    return "paper" if mode == "light" else "graphite"
-
-
 def set_hunk_theme(text: str, mode: Mode) -> str:
     root = parse(text)
-    root["theme"] = hunk_theme_name(mode)
+    root["custom_theme"] = hunk_custom_theme_table(mode)
     return root.as_string()
 
 
@@ -64,7 +73,7 @@ def update_hunk_theme(mode: Mode) -> None:
         return
 
     updated = set_hunk_theme(hunk_toml.read_text(), mode)
-    hunk_toml.write_text(updated)
+    write_atomic(hunk_toml, updated)
 
 
 def sync_active_mirrors(mode: Mode) -> None:
@@ -72,21 +81,24 @@ def sync_active_mirrors(mode: Mode) -> None:
         sync_mirror(host, mode)
 
 
-def parse_args() -> argparse.Namespace:
+def parse_args() -> CliArgs:
     parser = argparse.ArgumentParser()
     parser.add_argument("--no-mirror-sync", action="store_true")
-    parser.add_argument("mode", choices=sorted(VALID_MODES))
-    return parser.parse_args()
+    parser.add_argument("mode", type=Mode)
+    args = parser.parse_args()
+    return CliArgs(
+        mode=args.mode,
+        no_mirror_sync=bool(args.no_mirror_sync),
+    )
 
 
 def main() -> None:
     args = parse_args()
-    mode = cast(Mode, args.mode)
-    update_terminal_bg(mode)
-    update_codex_theme(mode)
-    update_hunk_theme(mode)
+    update_terminal_bg(args.mode)
+    update_codex_theme(args.mode)
+    update_hunk_theme(args.mode)
     if not args.no_mirror_sync:
-        sync_active_mirrors(mode)
+        sync_active_mirrors(args.mode)
 
 
 if __name__ == "__main__":

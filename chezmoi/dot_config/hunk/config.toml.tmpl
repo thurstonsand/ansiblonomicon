@@ -1,6 +1,0 @@
-theme = "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo paper; else echo graphite; fi" | trim }}"
-mode = "auto"
-exclude_untracked = false
-line_numbers = true
-wrap_lines = true
-agent_notes = true
