@@ -1,9 +1,8 @@
 import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-
+import { CodexConfigWatcher } from "./codexctl-config.js";
 import { ContextGaugeStatus } from "./context-gauge.js";
 import { DebouncedTask } from "./debounced-task.js";
-import { CodexConversionConfigWatcher } from "./codex-conversion-config.js";
 import { updateModelDisplayStatus } from "./model-display.js";
 import { updateWorkspaceDisplayStatuses } from "./workspace-display.js";
 
@@ -11,7 +10,7 @@ const CONTEXT_STATUS_UPDATE_MS = 250;
 
 export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   let contextGaugeStatus: ContextGaugeStatus | undefined;
-  let codexConversionWatcher: CodexConversionConfigWatcher | undefined;
+  let codexWatcher: CodexConfigWatcher | undefined;
   let modelDisplayDirty = false;
 
   const contextGaugeSetTask = new DebouncedTask<ExtensionContext>(CONTEXT_STATUS_UPDATE_MS, (ctx) =>
@@ -19,7 +18,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   );
 
   const setModelDisplay = (ctx: ExtensionContext): void => {
-    updateModelDisplayStatus(ctx, pi.getThinkingLevel(), codexConversionWatcher?.get());
+    updateModelDisplayStatus(ctx, pi.getThinkingLevel(), codexWatcher?.get());
     modelDisplayDirty = false;
   };
 
@@ -39,13 +38,13 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
 
   const setModel = (ctx: ExtensionContext): void => {
     const model = requireModel(ctx);
-    codexConversionWatcher?.setModel(model);
+    codexWatcher?.setModel(model);
     setModelDisplay(ctx);
   };
 
   const disposeModelWatchers = (): void => {
-    codexConversionWatcher?.dispose();
-    codexConversionWatcher = undefined;
+    codexWatcher?.dispose();
+    codexWatcher = undefined;
   };
 
   pi.on("session_start", (_event, ctx) => {
@@ -54,7 +53,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
     disposeModelWatchers();
 
     const model = requireModel(ctx);
-    codexConversionWatcher = new CodexConversionConfigWatcher(model, () => {
+    codexWatcher = new CodexConfigWatcher(model, () => {
       modelDisplayDirty = true;
     });
     setCustomFooter(ctx);
@@ -88,7 +87,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   pi.registerCommand("custom-footer-refresh", {
     description: "Refresh pi-powerline-footer-custom status items.",
     handler: async (_args, ctx) => {
-      codexConversionWatcher?.refreshFromFile();
+      codexWatcher?.refreshFromFile();
       setCustomFooter(ctx);
       ctx.ui.notify("Custom footer statuses refreshed", "info");
     },

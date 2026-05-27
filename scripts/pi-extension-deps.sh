@@ -11,6 +11,14 @@ find_pi_package_json() {
     return 1
   fi
 
+  if command -v mise >/dev/null 2>&1; then
+    local mise_pi_bin=""
+    mise_pi_bin="$(mise which pi 2>/dev/null || true)"
+    if [[ -n "$mise_pi_bin" ]]; then
+      pi_bin="$mise_pi_bin"
+    fi
+  fi
+
   node - "$pi_bin" <<'NODE'
 const fs = require("fs");
 const path = require("path");
@@ -40,8 +48,23 @@ for dir in "${PACKAGE_DIRS[@]}"; do
   (
     cd "$dir"
     npm install
-    if node -e 'const pkg=require("./package.json"); process.exit((pkg.dependencies?.["@earendil-works/pi-coding-agent"] || pkg.devDependencies?.["@earendil-works/pi-coding-agent"]) ? 0 : 1)'; then
-      npm install --save-dev "@earendil-works/pi-coding-agent@${PI_VERSION}" @types/node@latest typescript@latest @biomejs/biome@latest
+    mapfile -t PI_DEPS < <(PI_VERSION="$PI_VERSION" node <<'NODE'
+const pkg = require("./package.json");
+const names = [
+  "@earendil-works/pi-agent-core",
+  "@earendil-works/pi-ai",
+  "@earendil-works/pi-coding-agent",
+  "@earendil-works/pi-tui",
+];
+for (const name of names) {
+  if (pkg.dependencies?.[name] || pkg.devDependencies?.[name] || pkg.peerDependencies?.[name]) {
+    console.log(`${name}@${process.env.PI_VERSION}`);
+  }
+}
+NODE
+)
+    if [[ ${#PI_DEPS[@]} -gt 0 ]]; then
+      PI_VERSION="$PI_VERSION" npm install --save-dev "${PI_DEPS[@]}" @types/node@latest typescript@latest @biomejs/biome@latest
     fi
     npm update
   )

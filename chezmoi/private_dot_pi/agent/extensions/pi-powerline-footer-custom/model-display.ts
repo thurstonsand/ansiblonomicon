@@ -2,16 +2,22 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ExtensionContext, ThemeColor } from "@earendil-works/pi-coding-agent";
 
-import type { CodexConversionStatus } from "./codex-conversion-config.js";
+import type { CodexStatus } from "./codexctl-config.js";
 
 const STATUS_KEY = "model_display";
 const FAST_ICON = "⚡︎";
 const FALLBACK_ICON = "◈";
 const ICON_PROVIDERS = ["anthropic", "google", "openai"] as const;
-const VERBOSITY_ICONS: Record<NonNullable<CodexConversionStatus["verbosity"]>, string> = {
+const VERBOSITY_ICONS: Record<NonNullable<CodexStatus["verbosity"]>, string> = {
   high: "●",
   medium: "◐",
   low: "◔",
+};
+const SUMMARY_ICONS: Record<NonNullable<CodexStatus["reasoningSummary"]>, string> = {
+  auto: "Σ",
+  concise: "Σ-",
+  detailed: "Σ+",
+  off: "Σ×",
 };
 const ICON_PROVIDER_SET: ReadonlySet<string> = new Set(ICON_PROVIDERS);
 
@@ -50,13 +56,13 @@ const THINKING_EXPONENTS: Partial<Record<ThinkingLevel, string>> = {
 export function updateModelDisplayStatus(
   ctx: ExtensionContext,
   thinkingLevel: ThinkingLevel,
-  codexConversionStatus: CodexConversionStatus | undefined,
+  codexStatus: CodexStatus | undefined,
 ): void {
   const model = ctx.model;
   const provider = getModelProvider(model);
   const name = formatModelName(model);
   const icon = provider ? PROVIDER_ICONS[provider] : FALLBACK_ICON;
-  const status = model ? formatModelStatus(codexConversionStatus) : "";
+  const status = model ? formatModelStatus(codexStatus) : "";
   const label = `${icon} ${applyThinkingExponent(name, thinkingLevel)}${status}`;
 
   ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg(providerColor(provider), label));
@@ -67,10 +73,11 @@ function formatModelName(model: Model<Api> | undefined): string {
   return rawName.replace(/^(anthropic|openai|google)\//i, "").replace(/-/g, " ");
 }
 
-function formatModelStatus(codexConversionStatus: CodexConversionStatus | undefined): string {
+function formatModelStatus(codexStatus: CodexStatus | undefined): string {
   const parts = [
-    codexConversionStatus?.verbosity ? VERBOSITY_ICONS[codexConversionStatus.verbosity] : undefined,
-    codexConversionStatus?.fast ? FAST_ICON : undefined,
+    codexStatus?.verbosity ? VERBOSITY_ICONS[codexStatus.verbosity] : undefined,
+    codexStatus?.reasoningSummary ? SUMMARY_ICONS[codexStatus.reasoningSummary] : undefined,
+    codexStatus?.fast ? FAST_ICON : undefined,
   ].filter(Boolean);
   return parts.length > 0 ? ` [${parts.join(" ")}]` : "";
 }

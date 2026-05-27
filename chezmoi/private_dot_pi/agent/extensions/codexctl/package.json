@@ -1,9 +1,7 @@
 {
-  "name": "pi-paste-file",
+  "name": "pi-codexctl",
   "private": true,
-  "version": "1.0.0",
   "type": "module",
-  "description": "Pi extension that pastes local or forwarded clipboard content into the editor as text or file paths",
   "pi": {
     "extensions": [
       "./index.ts"
@@ -11,13 +9,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.15",
+    "@earendil-works/pi-ai": "^0.75.5",
     "@earendil-works/pi-coding-agent": "^0.75.5",
     "@earendil-works/pi-tui": "^0.75.5",
     "@types/node": "^25.9.1",
-    "typebox": "^1.1.37",
     "typescript": "^6.0.3"
   },
-  "peerDependencies": {
-    "typebox": "*"
-  }
+  "description": "Codex integration controls for Pi"
 }
