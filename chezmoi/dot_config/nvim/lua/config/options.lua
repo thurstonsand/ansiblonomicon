@@ -11,7 +11,18 @@ vim.o.updatetime = 250
 vim.o.clipboard = "unnamedplus"
 
 vim.o.title = true
-vim.o.titlestring = "nvim:%{fnamemodify(getcwd(), ':t')}"
+
+local function update_title()
+  local ok, result = pcall(vim.fn.system, { vim.fn.expand("~/.local/libexec/tab-title.py"), "--nvim", vim.fn.getcwd() })
+  if ok and vim.v.shell_error == 0 then
+    vim.o.titlestring = vim.trim(result)
+  else
+    vim.o.titlestring = "nvim:" .. vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
+  end
+end
+
+update_title()
+vim.api.nvim_create_autocmd("DirChanged", { callback = update_title })
 
 -- readable soft wrapping for long lines
 vim.o.wrap = true

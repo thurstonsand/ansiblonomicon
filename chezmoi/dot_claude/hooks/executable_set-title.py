@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 """UserPromptSubmit hook: apply explicit {title} tags or pick up auto-generated titles."""
 
-from __future__ import annotations
-
 import json
 import re
 import sys

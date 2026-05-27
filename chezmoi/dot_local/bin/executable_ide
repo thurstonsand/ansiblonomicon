@@ -61,7 +61,8 @@ editor_cmd=$(quote "$editor_inner")
 ghostty-nav split left --cwd "$cwd" --command "/bin/zsh -ilc $editor_cmd" --focus new
 wait_for_ready "editor terminal registration"
 ghostty-nav resize right --percent 15
-ghostty-nav toggle-zoom
+cols=$(tput cols 2>/dev/null || echo 0)
+((cols < 200)) && ghostty-nav toggle-zoom
 
 if (($# > 0)); then
   cd "$cwd"
