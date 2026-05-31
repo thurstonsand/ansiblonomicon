@@ -155,15 +155,15 @@ models:
       zed: true
 
     gemini_flash:
-      version: "gemini-3-flash-preview"
-      display_name: "Gemini 3 Flash"
+      version: "gemini-3.5-flash"
+      display_name: "Gemini 3.5 Flash"
       max_input: 1000000
       max_output: 65536
       vision: true
       agent_harness:
         aliases:
-          opencode: google/gemini-3-flash-preview
-          pi: google/gemini-3-flash-preview
+          opencode: google/gemini-3.5-flash
+          pi: google/gemini-3.5-flash
       vscode:
         include: true
         thinking: true

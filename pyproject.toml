@@ -13,8 +13,8 @@ help = "Resolve 1Password secrets to .env and worker .dev.vars files (force rege
 shell = "rm -f .env && uv run scripts/init-secrets.py"
 
 [tool.poe.tasks.lint]
-help = "Lint all code (ansible + python + workers + pi + ghostty-nav)"
-sequence = ["lint:ansible", "lint:python", "lint:nvim", "lint:workers", "lint:pi", "lint:cli-tools"]
+help = "Lint all code (ansible + python + workers + pi + amp + ghostty-nav)"
+sequence = ["lint:ansible", "lint:python", "lint:nvim", "lint:workers", "lint:pi", "lint:amp", "lint:cli-tools"]
 
 [tool.poe.tasks."lint:ansible"]
 cmd = "ansible-lint"
@@ -53,6 +53,10 @@ cwd = "wrangler/hooks"
 help = "Lint and type-check pi extensions (pass --format to apply formatting)"
 cmd = "./scripts/pi-lint.sh ${format:+--format}"
 
+[tool.poe.tasks."lint:amp"]
+help = "Format, lint, and type-check Amp plugins"
+cmd = "./scripts/amp-lint.sh ${format:+--format}"
+
 [tool.poe.tasks."lint:cli-tools"]
 help = "Format, lint, test, and build in-repo CLI tools"
 sequence = ["lint:shp", "lint:ghostty-nav"]
@@ -74,6 +78,12 @@ cmd = "just check"
 cwd = "ansible/roles/ghostty_nav/files/ghostty-navd"
 
 [[tool.poe.tasks."lint:pi".args]]
+name = "format"
+type = "boolean"
+options = ["--format", "-f"]
+help = "Apply Biome formatting/fixes before type-checking"
+
+[[tool.poe.tasks."lint:amp".args]]
 name = "format"
 type = "boolean"
 options = ["--format", "-f"]

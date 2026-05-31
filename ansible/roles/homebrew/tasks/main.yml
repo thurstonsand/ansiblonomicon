@@ -70,7 +70,7 @@
   ansible.builtin.command:
     argv: >-
       {{ ['brew', 'bundle', '--file=' + homebrew_brewfile_path]
-         + (['--cleanup'] if homebrew_upgrade_due else []) }}
+         + (['--cleanup', '--force-cleanup'] if homebrew_upgrade_due else []) }}
   environment:
     SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
     HOMEBREW_SUDO_ASKPASS_PASS: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS'] | default(omit) }}"

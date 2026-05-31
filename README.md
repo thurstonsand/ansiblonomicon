@@ -79,6 +79,7 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 - `poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker
 - `poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker
 - `poe lint:pi` — Lint and type-check pi extension packages (`--format` applies Biome formatting/fixes first)
+- `poe lint:amp` — Format, lint, and type-check Amp plugin sources
 - `poe pi:update-deps` — Update tracked pi extension packages to the currently installed pi version
 
 ## Design

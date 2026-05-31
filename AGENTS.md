@@ -35,9 +35,10 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 ## Dev Commands
 
 - `uv run poe init-secrets` — Resolve 1Password secrets to `.env` and worker `.dev.vars` files (auto-runs via direnv)
-- `uv run poe lint` — Run all linters (Ansible, Python, Workers, and pi extensions)
+- `uv run poe lint` — Run all linters (Ansible, Python, Workers, Pi extensions, Amp plugins, and CLI tools)
 - `uv run poe lint:pi` — Lint and type-check pi extension packages
   - `--format` / `-f` — Apply Biome formatting/fixes before type-checking
+- `uv run poe lint:amp` — Format, lint, and type-check Amp plugins
 - `uv run poe pi:update-deps` — Update dependencies for all tracked pi extension packages (pins pi to the currently installed version found on `PATH`)
 - `uv run ruff format --check .` — Check Python formatting
 - `uv run ruff check .` — Lint Python code
@@ -56,6 +57,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `ansible/session-title-prompt.txt` — Session title prompt shared by chezmoi and agent_harness skills; symlinked to `chezmoi/.chezmoitemplates/session-title-prompt`
 - `ansible/inventory/group_vars/truenas.yml` — TrueNAS host vars (Docker config, network IPs/ports/domains)
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
+- `chezmoi/dot_config/amp/plugins/` — Amp plugin sources managed as a local TypeScript package; check with `uv run poe lint:amp`
 - `ansible/Brewfile` — Homebrew packages, casks, MAS apps
 - `terraform/cloudflare/` — Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 - `wrangler/` — Cloudflare Workers (deployed via wrangler, not Terraform)
