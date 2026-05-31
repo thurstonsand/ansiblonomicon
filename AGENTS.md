@@ -39,7 +39,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe lint:pi` — Lint and type-check pi extension packages
   - `--format` / `-f` — Apply Biome formatting/fixes before type-checking
 - `uv run poe lint:amp` — Format, lint, and type-check Amp plugins
-- `uv run poe pi:update-deps` — Update dependencies for all tracked pi extension packages (pins pi to the currently installed version found on `PATH`)
+- `uv run poe ts:update-deps` — Update dependencies for tracked TypeScript agent packages (pins Pi packages to the installed `pi` version and updates Amp plugin deps)
 - `uv run ruff format --check .` — Check Python formatting
 - `uv run ruff check .` — Lint Python code
 - `uv run basedpyright` — Type check Python code

@@ -1,0 +1,9 @@
+{
+  "trustedtaps": [
+    "cirruslabs/cli",
+    "cormacrelf/tap",
+    "entireio/tap",
+    "ghosttykit/local",
+    "oven-sh/bun"
+  ]
+}

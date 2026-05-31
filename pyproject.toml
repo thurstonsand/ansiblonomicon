@@ -89,9 +89,9 @@ type = "boolean"
 options = ["--format", "-f"]
 help = "Apply Biome formatting/fixes before type-checking"
 
-[tool.poe.tasks."pi:update-deps"]
-help = "Update dependencies for all tracked pi extension packages"
-cmd = "./scripts/pi-extension-deps.sh"
+[tool.poe.tasks."ts:update-deps"]
+help = "Update dependencies for tracked TypeScript agent packages"
+cmd = "./scripts/ts-package-deps.sh"
 
 [tool.poe.tasks.laptop]
 help = "Run the correct macOS playbook for this machine (auto-detects work vs personal)"

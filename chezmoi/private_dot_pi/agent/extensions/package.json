@@ -7,11 +7,11 @@
     "preview:gauge:shapes": "jiti pi-powerline-footer-custom/context-gauge-shapes-preview.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.15",
-    "@earendil-works/pi-agent-core": "^0.75.5",
-    "@earendil-works/pi-ai": "^0.75.5",
-    "@earendil-works/pi-coding-agent": "^0.75.5",
-    "@earendil-works/pi-tui": "^0.75.5",
+    "@biomejs/biome": "^2.4.16",
+    "@earendil-works/pi-agent-core": "^0.78.0",
+    "@earendil-works/pi-ai": "^0.78.0",
+    "@earendil-works/pi-coding-agent": "^0.78.0",
+    "@earendil-works/pi-tui": "^0.78.0",
     "@types/node": "^25.9.1",
     "jiti": "^2.7.0",
     "typescript": "^6.0.3"
