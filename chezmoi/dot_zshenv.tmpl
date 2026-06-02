@@ -71,7 +71,7 @@ export TWITTER_CT0="{{ template "twitter-ct0" . }}"
 {{- else if eq .chezmoi.hostname "openclaw" }}
 export EDITOR="nvim"
 {{- else }}
-export EDITOR="codeEditor --wait"
+export EDITOR="$HOME/.local/libexec/codeEditor --wait"
 {{- end }}
 {{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
 

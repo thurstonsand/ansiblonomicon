@@ -87,6 +87,14 @@ enrich_model_display() {
     local version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
     local name="${BASH_REMATCH[3]}"
     local context="${BASH_REMATCH[4]}"
+
+    # Prefer the configured display name for this tier when set.
+    local env_var="ANTHROPIC_DEFAULT_${name^^}_MODEL_NAME"
+    if [[ -n "${!env_var:-}" ]]; then
+      echo "${!env_var}"
+      return
+    fi
+
     local friendly
     friendly=$(awk -v n="$name" 'BEGIN { print toupper(substr(n,1,1)) substr(n,2) }')
     echo "${friendly} ${version}${context}"

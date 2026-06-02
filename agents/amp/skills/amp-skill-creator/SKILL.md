@@ -1,12 +1,12 @@
 ---
 name: amp-skill-creator
-description: PRIMARY skill creator. Use this by default when creating ANY skill. If user explicitly asks for a "Claude skill", "Claude-compatible skill", or "universal skill", use agent-skill-creator instead. Handles Amp-specific features (mcp.json, OAuth, Amp frontmatter).
+description: PRIMARY skill creator. Use this by default when creating ANY skill. If user explicitly asks for a "Claude skill", "Claude-compatible skill", or "universal skill", use write-a-skill instead. Handles Amp-specific features (mcp.json, OAuth, Amp frontmatter).
 argument-hint: "[skill-name] [objective]"
 ---
 
 # Amp Skill Creator
 
-This skill covers Amp-specific features for skill creation. After reading this, **load the `agent-skill-creator` skill** and follow its workflow, applying the overrides at the end of this document.
+This skill covers Amp-specific features for skill creation. After reading this, **load the `write-a-skill` skill** and follow its workflow, applying the overrides at the end of this document.
 
 ---
 
@@ -167,30 +167,24 @@ amp mcp add project-server --workspace -- npx -y @some/server
 
 ---
 
-## Now: Load agent-skill-creator
+## Now: Load write-a-skill
 
-**Load the `agent-skill-creator` skill now** and follow its 6-phase workflow for creating the skill content. Apply these overrides during implementation:
+**Load the `write-a-skill` skill now** and follow its workflow for creating the skill content. Apply these overrides during implementation:
 
 ---
 
-## Overrides for agent-skill-creator
+## Overrides for write-a-skill
 
-| agent-skill-creator Says                         | Amp Does Instead                                          |
-| ------------------------------------------------ | --------------------------------------------------------- |
-| Create `marketplace.json`                        | **Not used** — Amp uses SKILL.md frontmatter only         |
-| Create `.claude-plugin/` directory               | **Not used** in Amp                                       |
-| Skills in `plugins/cache/`                       | Use locations from "First: Ask Where to Install" above    |
-| `plugins[0].description` must sync with SKILL.md | **Not applicable** — only SKILL.md frontmatter matters    |
-| Cross-platform export to Desktop/API             | **Not applicable** to Amp skills                          |
-| Use `-cskill` suffix naming convention           | **Optional** — use descriptive names                      |
-| Run `/plugin marketplace add ./skill-name`       | Skill will be loaded automatically based on file location |
+| write-a-skill Says                      | Amp Does Instead                                                          |
+| --------------------------------------- | ------------------------------------------------------------------------- |
+| Skill installs via Claude `skills/` dir | Use locations from "First: Ask Where to Install" above                    |
+| `name` + `description` frontmatter only | Amp also supports `argument-hint`, `disable-model-invocation` (see above) |
+| No MCP bundling guidance                | Bundle MCP servers via `mcp.json` (see above)                             |
 
-**What to USE from agent-skill-creator:**
+**What to USE from write-a-skill:**
 
-- ✅ General SKILL.md content structure (workflows, examples, error handling)
-- ✅ Scripts organization (`scripts/`, `utils/`)
-- ✅ References organization (`references/`)
-- ✅ Quality standards (1000+ words, real examples, no TODOs)
-- ✅ Modular architecture patterns
-- ✅ Testing approaches
-- ✅ Validation patterns
+- ✅ General SKILL.md content structure (process, template, examples)
+- ✅ Description requirements (third person, "Use when..." triggers)
+- ✅ When to add scripts / when to split files
+- ✅ Review checklist
+- ✅ Quality standards (concrete examples, no time-sensitive info, consistent terminology)

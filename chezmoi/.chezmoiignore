@@ -7,7 +7,7 @@
 .config/linearmouse/
 .config/nextdns.conf
 .local/bin/code
-.local/bin/codeEditor
+.local/libexec/codeEditor
 .local/bin/btt-paste-image.sh
 .local/bin/delta
 .mactop/
@@ -21,7 +21,7 @@ Library/
 
 # Agent-host files
 {{ if not (or (eq .chezmoi.hostname "clawdbot") (eq .chezmoi.hostname "openclaw")) }}
-.local/bin/op-ssh-sign
+.local/libexec/op-ssh-sign
 .ssh/id_ed25519_nas
 .ssh/id_ed25519_nas.pub
 {{ end }}
@@ -35,15 +35,20 @@ Library/
 # ideo and local OpenClaw CLI remote config are personal to this Mac.
 {{ if ne .chezmoi.hostname "Thurstons-MacBook-Pro" }}
 .local/bin/ideo
-.local/bin/openclaw-op-secret
+.local/libexec/openclaw-op-secret
 .openclaw/
+{{ end }}
+
+# Work-only utilities
+{{ if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+.local/bin/cleanh
 {{ end }}
 
 # Work Mac
 {{ if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
 # SSH — personal home lab configs
 .ssh/
-.local/bin/ssh-smart-proxy
+.local/libexec/ssh-smart-proxy
 
 # Tools not installed on work Mac
 .config/opencode/

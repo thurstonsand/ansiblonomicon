@@ -75,24 +75,24 @@ agent_harness_sources_base:
     plugins:
       - name: code-simplification
         path: skills/code-simplification
-  - repo: FrancyJGLisboa/agent-skill-creator
+  - repo: mattpocock/skills
     pull: true
     plugins:
-      - name: agent-skill-creator
-        path: .
-        skills: []
-        exclude_data:
-          - .gitignore
-          - Dynamous
-          - exports
-          - README.md
-          - install.sh
-          - references/examples
-          - references/phase5-implementation.md
-          - references/templates
-          - registry
-          - scripts/bootstrap.sh
-          - scripts/install-skill.sh
+      - name: mattpocock-skills
+        exclude_skills:
+          - caveman
+          - grill-me
+          - handoff
+          - diagnose
+          - grill-with-docs
+          - triage
+          - improve-codebase-architecture
+          - setup-matt-pocock-skills
+          - tdd
+          - to-issues
+          - to-prd
+          - zoom-out
+          - prototype
 
   - repo: nicobailon/visual-explainer
     pull: true

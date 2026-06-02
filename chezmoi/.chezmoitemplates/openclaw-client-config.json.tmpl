@@ -14,12 +14,12 @@
     "providers": {
       "op": {
         "source": "exec",
-        "command": "{{ .chezmoi.homeDir }}/.local/bin/openclaw-op-secret",
+        "command": "{{ .chezmoi.homeDir }}/.local/libexec/openclaw-op-secret",
         "timeoutMs": 30000,
         "maxOutputBytes": 65536,
         "jsonOnly": true,
         "trustedDirs": [
-          "{{ .chezmoi.homeDir }}/.local/bin"
+          "{{ .chezmoi.homeDir }}/.local/libexec"
         ]
       }
     }

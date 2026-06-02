@@ -86,7 +86,6 @@
   "agentPushNotifEnabled": true,
   "voiceEnabled": true,
   "showClearContextOnPlanAccept": true,
-  "effortLevel": "high",
   "extraKnownMarketplaces": {
     "claude-plugins-official": {
       "source": {

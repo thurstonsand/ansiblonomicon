@@ -16,7 +16,7 @@ Host haos
 {{- if eq .chezmoi.hostname "openclaw" }}
   IdentityFile ~/.ssh/id_ed25519_nas
 {{- end }}
-  ProxyCommand ssh-smart-proxy haos 192.168.1.89 22222 haos-ssh.thurstons.house
+  ProxyCommand ~/.local/libexec/ssh-smart-proxy haos 192.168.1.89 22222 haos-ssh.thurstons.house
 
 Host truenas
   ForwardAgent yes
@@ -25,7 +25,7 @@ Host truenas
 {{- if eq .chezmoi.hostname "openclaw" }}
   IdentityFile ~/.ssh/id_ed25519_nas
 {{- end }}
-  ProxyCommand ssh-smart-proxy truenas 192.168.1.68 22 truenas-ssh.thurstons.house
+  ProxyCommand ~/.local/libexec/ssh-smart-proxy truenas 192.168.1.68 22 truenas-ssh.thurstons.house
 
 Host truenas-dev
   Port 2222
@@ -48,7 +48,7 @@ Host openclaw
   StreamLocalBindUnlink yes
   RemoteForward /home/thurstonsand/.local/run/ghostty-nav/ghostty-navd.sock {{ .chezmoi.homeDir }}/.local/run/ghostty-nav/ghostty-navd.sock
 {{- end }}
-  ProxyCommand ssh-smart-proxy openclaw 192.168.1.90 22 openclaw-ssh.thurstons.house
+  ProxyCommand ~/.local/libexec/ssh-smart-proxy openclaw 192.168.1.90 22 openclaw-ssh.thurstons.house
 
 {{- end }}
 
@@ -56,7 +56,7 @@ Host udmp
   ForwardAgent yes
   User root
   HostKeyAlias udmp
-  ProxyCommand ssh-smart-proxy udmp 192.168.1.1 22 udmp-ssh.thurstons.house
+  ProxyCommand ~/.local/libexec/ssh-smart-proxy udmp 192.168.1.1 22 udmp-ssh.thurstons.house
 
 Host *
   ServerAliveInterval 60

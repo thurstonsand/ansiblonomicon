@@ -28,6 +28,26 @@ agent_harness_sources_base:
           - commands
           - scripts
 
+  - repo: mattpocock/skills
+    pull: true
+    plugins:
+      - name: mattpocock-skills
+        target_agents: [claude]
+        exclude_skills:
+          - caveman
+          - grill-me
+          - handoff
+          - diagnose
+          - grill-with-docs
+          - triage
+          - improve-codebase-architecture
+          - setup-matt-pocock-skills
+          - tdd
+          - to-issues
+          - to-prd
+          - zoom-out
+          - prototype
+
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management

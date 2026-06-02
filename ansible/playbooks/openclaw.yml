@@ -252,7 +252,7 @@
 
         - name: Install OpenClaw 1Password SecretRef resolver
           ansible.builtin.copy:
-            dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/openclaw-op-secret"
+            dest: "{{ ansible_facts['env']['HOME'] }}/.local/libexec/openclaw-op-secret"
             mode: "0755"
             content: |
               #!/usr/bin/env python3

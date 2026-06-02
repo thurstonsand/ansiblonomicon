@@ -515,6 +515,23 @@ def test_resolve_plugin_from_repo_explicit_path(repo_path: Path) -> None:
 
 
 @pytest.mark.unit
+def test_resolve_plugin_from_repo_explicit_path_no_manifest_skips_agents(
+    repo_path: Path,
+) -> None:
+    """A manifest-less explicit-path source is a skill source: it must not
+    root-scan for agents (which would treat loose README/CHANGELOG .md as agents)."""
+    (repo_path / "custom" / "location").mkdir(parents=True)
+
+    resolved = _resolve_plugin_from_repo(
+        repo_path, {"name": "explicit", "path": "custom/location"}
+    )
+    assert resolved.is_valid
+    assert resolved.config is not None
+    assert resolved.config.skills_paths == [""]
+    assert resolved.config.agents_paths == []
+
+
+@pytest.mark.unit
 def test_resolve_plugin_from_repo_with_exclusions(repo_path: Path) -> None:
     plugin_dir = repo_path / ".claude-plugin"
     plugin_dir.mkdir()
@@ -670,7 +687,9 @@ def test_agent_harness_build_plugin_resources_git_discovers_skills(
 
     assert len(result["skills"]) == 2
     names = sorted(s["name"] for s in result["skills"])
-    assert names == ["skill-a", "skill-b"]
+    assert names == ["my-plugin-skill-a", "my-plugin-skill-b"]
+    display = sorted(s["display_name"] for s in result["skills"])
+    assert display == ["my-plugin:skill-a", "my-plugin:skill-b"]
     assert all(s["origin"] == "owner/repo" for s in result["skills"])
 
 
@@ -703,7 +722,7 @@ def test_agent_harness_build_plugin_resources_git_with_exclusions(
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
 
     assert len(result["skills"]) == 1
-    assert result["skills"][0]["name"] == "keep-skill"
+    assert result["skills"][0]["name"] == "my-plugin-keep-skill"
 
 
 @pytest.mark.unit
@@ -721,6 +740,50 @@ def test_agent_harness_build_plugin_resources_git_root_skill(
 
     assert len(result["skills"]) == 1
     assert result["skills"][0]["source"] == str(repo_path)
+    # Root skill is the plugin itself — not double-prefixed
+    assert result["skills"][0]["name"] == "single-skill"
+    assert result["skills"][0]["display_name"] == "single-skill"
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_plugin_json_nested_skill_paths(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    """plugin.json may list skill dirs at arbitrary depth (e.g. mattpocock/skills).
+    Each listed path is itself a skill dir, not a search root to scan below."""
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(
+        json.dumps(
+            {
+                "name": "nested-plugin",
+                "skills": [
+                    "./skills/productivity/alpha",
+                    "./skills/engineering/beta",
+                ],
+            }
+        )
+    )
+
+    for sub, name in [("productivity", "alpha"), ("engineering", "beta")]:
+        skill_dir = repo_path / "skills" / sub / name
+        skill_dir.mkdir(parents=True)
+        (skill_dir / "SKILL.md").write_text(f"# {name}")
+
+    sources: list[Any] = [{"repo": "owner/repo", "plugins": ["nested-plugin"]}]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["skills"]) == 2
+    names = sorted(s["name"] for s in result["skills"])
+    assert names == ["nested-plugin-alpha", "nested-plugin-beta"]
+    display = sorted(s["display_name"] for s in result["skills"])
+    assert display == ["nested-plugin:alpha", "nested-plugin:beta"]
+    # source paths point at the nested skill dirs, not a parent
+    sources_found = sorted(s["source"] for s in result["skills"])
+    assert sources_found == [
+        str(repo_path / "skills" / "engineering" / "beta"),
+        str(repo_path / "skills" / "productivity" / "alpha"),
+    ]
 
 
 @pytest.mark.unit
@@ -741,7 +804,8 @@ def test_agent_harness_build_plugin_resources_git_explicit_path(
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
 
     assert len(result["skills"]) == 1
-    assert result["skills"][0]["name"] == "custom-skill"
+    assert result["skills"][0]["name"] == "custom-custom-skill"
+    assert result["skills"][0]["display_name"] == "custom:custom-skill"
 
 
 # --- Local source tests ---
@@ -847,7 +911,7 @@ def test_agent_harness_build_plugin_resources_multiple_sources(
 
     assert len(result["skills"]) == 2
     names = sorted(s["name"] for s in result["skills"])
-    assert names == ["git-skill", "local-skill"]
+    assert names == ["git-plugin-git-skill", "local-skill"]
 
 
 @pytest.mark.unit
@@ -887,7 +951,7 @@ def test_agent_harness_build_plugin_resources_multiple_plugins_same_source(
 
     assert len(result["skills"]) == 2
     names = sorted(s["name"] for s in result["skills"])
-    assert names == ["plugin-a-skill", "plugin-b-skill"]
+    assert names == ["plugin-a-plugin-a-skill", "plugin-b-plugin-b-skill"]
 
 
 # =============================================================================
@@ -1084,7 +1148,7 @@ def test_agent_harness_build_plugin_resources_local_discovers_agents(
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
 
     assert len(result["agents"]) == 1
-    assert result["agents"][0]["name"] == "my-plugin-local-agent"
+    assert result["agents"][0]["name"] == "local-agent"
     assert result["agents"][0]["origin"] == "local"
 
 
@@ -1109,7 +1173,7 @@ def test_agent_harness_build_plugin_resources_local_with_exclude_agents(
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
 
     assert len(result["agents"]) == 1
-    assert result["agents"][0]["name"] == "my-plugin-keep"
+    assert result["agents"][0]["name"] == "keep"
 
 
 @pytest.mark.unit
@@ -1133,8 +1197,31 @@ def test_agent_harness_build_plugin_resources_mixed_skills_and_agents(
 
     assert len(result["skills"]) == 1
     assert result["skills"][0]["name"] == "my-skill"
+    assert result["skills"][0]["display_name"] == "my-skill"
     assert len(result["agents"]) == 1
-    assert result["agents"][0]["name"] == "mixed-plugin-my-agent"
+    assert result["agents"][0]["name"] == "my-agent"
+    assert result["agents"][0]["display_name"] == "my-agent"
+
+
+@pytest.mark.unit
+def test_agent_harness_build_plugin_resources_git_agents_prefixed(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    """External (git) agents are plugin-prefixed (hyphen name, colon display),
+    in contrast to local bundles which stay bare."""
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "ext-plugin"}))
+    agent_dir = repo_path / "agents"
+    agent_dir.mkdir(parents=True)
+    (agent_dir / "expert.md").write_text("# Expert")
+
+    sources: list[Any] = [{"repo": "owner/repo", "plugins": ["ext-plugin"]}]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["agents"]) == 1
+    assert result["agents"][0]["name"] == "ext-plugin-expert"
+    assert result["agents"][0]["display_name"] == "ext-plugin:expert"
 
 
 @pytest.mark.unit

@@ -29,6 +29,7 @@ class ResourceInfo:
     name: str
     source: str
     origin: str
+    display_name: str = ""
     plugin_root: str = ""
     target_agents: list[str] = field(default_factory=list)
     exclude_data: list[str] = field(default_factory=list)
@@ -39,6 +40,7 @@ class ResourceInfo:
             "name": self.name,
             "source": self.source,
             "origin": self.origin,
+            "display_name": self.display_name or self.name,
             "plugin_root": self.plugin_root,
             "target_agents": list(self.target_agents),
             "exclude_data": list(self.exclude_data),
@@ -180,6 +182,20 @@ def _normalize_path_field(value: str | list[str]) -> list[str]:
     if isinstance(value, str):
         return [value.lstrip("./")]
     return [p.lstrip("./") for p in value]
+
+
+def _prefixed_names(plugin_name: str, resource_name: str) -> tuple[str, str]:
+    """Build (deploy_name, display_name) for a plugin-namespaced resource.
+
+    Mirrors how Claude Code namespaces plugin resources as ``plugin:resource``,
+    while keeping a filesystem-safe ``plugin-resource`` for the on-disk name.
+
+    A root-level resource (resource_name == plugin_name) is the plugin itself;
+    it is not double-prefixed.
+    """
+    if not plugin_name or resource_name == plugin_name:
+        return resource_name, resource_name
+    return f"{plugin_name}-{resource_name}", f"{plugin_name}:{resource_name}"
 
 
 def _load_plugin_json(plugin_path: Path) -> dict[str, str | list[str] | None] | None:
@@ -350,7 +366,15 @@ def _discover_skills_in_plugin(
         if not skills_dir.exists() or not skills_dir.is_dir():
             continue
 
-        # Find all subdirectories with SKILL.md
+        # An explicit path that is itself a skill dir (contains SKILL.md) — the
+        # form used by plugin.json skill lists, e.g. "skills/productivity/foo".
+        # Take it directly rather than scanning one level deeper.
+        if _find_skill_md(skills_dir):
+            skills.append(skills_dir.name)
+            continue
+
+        # Otherwise treat it as a search root and scan one level down for skills
+        # (the bare "skills/" convention). We intentionally do not recurse deeper.
         for entry in skills_dir.iterdir():
             if entry.is_dir() and _find_skill_md(entry):
                 skills.append(entry.name)
@@ -378,7 +402,14 @@ def _get_skill_source_path(
 
     # Search skills paths
     for skills_base in skills_paths:
-        skill_dir = plugin_path / skills_base / skill_name
+        skills_dir = plugin_path / skills_base
+
+        # Explicit path that is itself the named skill dir
+        if skills_dir.name == skill_name and _find_skill_md(skills_dir):
+            return str(skills_dir)
+
+        # Search root: the named skill lives one level down
+        skill_dir = skills_dir / skill_name
         if skill_dir.exists() and _find_skill_md(skill_dir):
             return str(skill_dir)
 
@@ -485,10 +516,12 @@ def _resolve_plugin_from_repo(
             plugin_name = plugin_path.name
 
         # When path is explicit with no plugin.json, scan the directory
-        # itself rather than looking for a skills/ subdirectory
+        # itself for the skill. Agents are not root-scanned: a manifest-less
+        # path: source is a skill source, and root-scanning would treat loose
+        # *.md files (README, CHANGELOG) as agents.
         no_config_default = {
             "skills": ["."],
-            "agents": ["."],
+            "agents": [],
         }
         config = _apply_overrides(
             PluginConfig(
@@ -663,11 +696,15 @@ def agent_harness_build_plugin_resources(
                         plugin_path, skill_name, config.skills_paths, root_skill_name
                     )
                     if source_path:
+                        deploy_name, display_name = _prefixed_names(
+                            config.name, skill_name
+                        )
                         skills.append(
                             ResourceInfo(
-                                name=skill_name,
+                                name=deploy_name,
                                 source=source_path,
                                 origin=repo,
+                                display_name=display_name,
                                 plugin_root=str(plugin_path),
                                 target_agents=resolved.target_agents,
                                 exclude_data=resolved.exclude_data,
@@ -685,12 +722,15 @@ def agent_harness_build_plugin_resources(
                         plugin_path, agent_name, config.agents_paths
                     )
                     if source_path:
-                        prefixed_name = f"{config.name}-{agent_name}"
+                        deploy_name, display_name = _prefixed_names(
+                            config.name, agent_name
+                        )
                         agents.append(
                             ResourceInfo(
-                                name=prefixed_name,
+                                name=deploy_name,
                                 source=source_path,
                                 origin=repo,
+                                display_name=display_name,
                                 plugin_root=str(plugin_path),
                                 target_agents=resolved.target_agents,
                                 exclude_data=resolved.exclude_data,
@@ -723,11 +763,15 @@ def agent_harness_build_plugin_resources(
                         plugin_path, skill_name, config.skills_paths, config.name
                     )
                     if source_path:
+                        # Local (in-repo) bundles are not plugin-prefixed: their
+                        # names are hand-managed here, so bare names are kept for
+                        # cleaner invocation. Only external repos get prefixed.
                         skills.append(
                             ResourceInfo(
                                 name=skill_name,
                                 source=source_path,
                                 origin="local",
+                                display_name=skill_name,
                                 target_agents=resolved.target_agents,
                                 exclude_data=resolved.exclude_data,
                             )
@@ -744,12 +788,13 @@ def agent_harness_build_plugin_resources(
                         plugin_path, agent_name, config.agents_paths
                     )
                     if source_path:
-                        prefixed_name = f"{config.name}-{agent_name}"
+                        # Local bundles are not prefixed (see skills above).
                         agents.append(
                             ResourceInfo(
-                                name=prefixed_name,
+                                name=agent_name,
                                 source=source_path,
                                 origin="local",
+                                display_name=agent_name,
                                 target_agents=resolved.target_agents,
                                 exclude_data=resolved.exclude_data,
                             )
