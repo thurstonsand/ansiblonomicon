@@ -1,6 +1,7 @@
+{{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
 {
-  "defaultProvider": "openai-codex",
-  "defaultModel": "{{ .models.openai.gpt.version }}",
+  "defaultProvider": {{ if $isWork }}"anthropic"{{ else }}"openai-codex"{{ end }},
+  "defaultModel": {{ if $isWork }}"{{ trimSuffix "[1m]" .claude_code_models.opus }}"{{ else }}"{{ .models.openai.gpt.version }}"{{ end }},
   "defaultThinkingLevel": "medium",
   "compaction": {
     "enabled": true,
@@ -31,6 +32,11 @@
   },
   "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.loads(p.read_text()).get('lastChangelogVersion','0.74.0') if p.exists() else '0.74.0')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
   "enabledModels": [
+{{- if $isWork }}
+    "anthropic/{{ trimSuffix "[1m]" .claude_code_models.opus }}",
+    "anthropic/{{ trimSuffix "[1m]" .claude_code_models.sonnet }}",
+    "anthropic/{{ trimSuffix "[1m]" .claude_code_models.haiku }}"
+{{- else }}
     "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
     "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}",
     "openai-codex/{{ .models.openai.gpt.version }}",
@@ -38,12 +44,13 @@
     "{{ .models.openai.gpt_mini.agent_harness.aliases.pi }}",
     "{{ .models.google.gemini_pro.agent_harness.aliases.pi }}",
     "{{ .models.google.gemini_flash.agent_harness.aliases.pi }}"
+{{- end }}
   ],
   "steeringMode": "all",
   "followUpMode": "all",
   "sessions": {
     "autoTitle": {
-      "model": "{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}",
+      "model": {{ if $isWork }}"anthropic/{{ trimSuffix "[1m]" .claude_code_models.sonnet }}"{{ else }}"{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}"{{ end }},
       "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
     }
   },
@@ -94,6 +101,26 @@
     "editorEnd": "ctrl+alt+shift+5"
   },
   "packages": [
+{{- if $isWork }}
+{{- range .piWorkPackages }}
+    {{ . | toJson }},
+{{- end }}
+    "git:github.com/nicobailon/pi-subagents",
+    "git:github.com/thurstonsand/pi-powerline-footer@release",
+    "git:github.com/thurstonsand/pi-sessions",
+    "git:github.com/davebcn87/pi-autoresearch",
+    "git:github.com/nicobailon/pi-interview-tool",
+    "git:github.com/hazat/glimpse",
+    "npm:pi-mcp-adapter",
+    {
+      "source": "git:github.com/hasit/pi-community-themes",
+      "themes": [
+        "!themes/*.json",
+        "+themes/gruvbox-dark-hard.json",
+        "+themes/gruvbox-light-hard.json"
+      ]
+    }
+{{- else }}
     {
       "source": "npm:pi-interactive-shell",
       "skills": [
@@ -127,12 +154,19 @@
     },
     "git:github.com/earendil-works/pi-review",
     "npm:@howaboua/pi-smart-btw"
-  ],
-{{- if eq .chezmoi.os "darwin" }}
-  "extensions": [
-    "{{ output "npm" "root" "-g" | trim }}/glimpseui/examples/companion/index.ts"
-  ],
 {{- end }}
+  ],
+  "subagents": {
+    "agentOverrides": {
+      "scout": { "disabled": true },
+      "planner": { "disabled": true },
+      "worker": { "disabled": true },
+      "reviewer": { "disabled": true },
+      "context-builder": { "disabled": true },
+      "researcher": { "disabled": true },
+      "oracle": { "disabled": true }
+    }
+  },
   "hideThinkingBlock": true,
   "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",
   "transport": "auto",

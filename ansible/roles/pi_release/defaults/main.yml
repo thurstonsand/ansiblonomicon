@@ -1,0 +1,9 @@
+---
+# pi (pi-coding-agent) installed from GitHub release tarballs instead of npm,
+pi_release_version: latest
+
+# Root holding versioned extractions; the on-PATH symlink points into the active one.
+pi_release_root: "{{ ansible_facts['env']['HOME'] }}/.local/share/pi-release"
+
+# Directory on PATH where the `pi` symlink is created.
+pi_release_bin_dir: "{{ ansible_facts['env']['HOME'] }}/.local/bin"

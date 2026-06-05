@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.12"
+# requires-python = ">=3.14"
 # dependencies = ["tomlkit>=0.13.2"]
 # ///
 """Gruvbox Hard custom theme fragments for Hunk."""

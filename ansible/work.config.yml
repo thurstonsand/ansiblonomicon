@@ -12,10 +12,14 @@ configure_chezmoi: true
 configure_pam_reattach: false
 configure_agent_harness: true
 
-# Agent Harness - only deploy to Claude on work machine
+# Agent Harness - deploy to Claude and Pi on work machine
 agent_harness_target_agents_base:
   - claude
+  - pi
 agent_harness_target_agents: "{{ (agent_harness_target_agents_base | default([])) + (agent_harness_target_agents_extra | default([])) }}"
+
+# Symlink pi's git-installed Glimpse into the global npm root (registry-blocked here)
+agent_harness_link_glimpse: true
 
 agent_harness_sources_base:
   - repo: nicobailon/visual-explainer
@@ -51,7 +55,6 @@ agent_harness_sources_base:
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management
-        target_agents: [claude]
         exclude_skills:
           - showboat
           - pr
@@ -60,7 +63,6 @@ agent_harness_sources_base:
         exclude_skills:
           - retitle
       - name: work
-        target_agents: [claude]
 
 agent_harness_sources: "{{ (agent_harness_sources_base | default([])) + (agent_harness_sources_extra | default([])) }}"
 

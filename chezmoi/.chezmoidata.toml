@@ -20,6 +20,9 @@ scm = []
 pypiIndex = []
 mcp_servers = []
 uvIndexStrategy = ""
+anthropicAuthToken = ""
+anthropicBaseUrl = ""
+piWorkPackages = []
 
 # Font configuration - centralized for all apps
 # Store full variant names so templates don't need to append suffixes

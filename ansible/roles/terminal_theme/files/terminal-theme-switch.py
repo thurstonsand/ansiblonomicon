@@ -1,6 +1,6 @@
 #!/usr/bin/env -S uv run --script
 # /// script
-# requires-python = ">=3.12"
+# requires-python = ">=3.14"
 # dependencies = ["tomlkit>=0.13.2"]
 # ///
 """Applies side effects when the terminal switches between dark and light mode.

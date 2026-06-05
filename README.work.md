@@ -4,11 +4,15 @@ This documents all files that live **only** on the work Mac and are not tracked 
 
 ## Chezmoi Data Layer
 
-| File                                             | Purpose                                                                                        |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------- |
-| `~/.local/share/chezmoi/.chezmoidata/local.toml` | Git identity, SCM hosts (as `[[scm]]` array), Go import/build config, Claude Code model config |
+| File                                             | Purpose                                                                                                                                  |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| `~/.local/share/chezmoi/.chezmoidata/local.toml` | Git identity, SCM hosts (as `[[scm]]` array), Go import/build config, Claude Code model config, `anthropicAuthToken`, `anthropicBaseUrl` |
 
-Defaults for `goLocalImports` and `goplsBuildFlags` are declared in `.chezmoidata.toml` (empty strings). `scm` defaults to an empty array.
+Defaults for `goLocalImports`, `goplsBuildFlags`, `anthropicAuthToken`, and `anthropicBaseUrl` are declared in `.chezmoidata.toml` (empty strings). `scm` defaults to an empty array.
+
+On the work machine, pi is deployed alongside Claude (via the `pi_release` role and the `pi` agent-harness target). Its anthropic provider, auth, and default model are gated by hostname and route through the corporate endpoint using `anthropicAuthToken` / `anthropicBaseUrl` from `local.toml`. Personal machines keep the AI-Gateway config.
+
+Internal-only pi packages (e.g. SSH plugin sources on the corporate SCM) are supplied via `piWorkPackages` in `local.toml` (defaults to an empty array in `.chezmoidata.toml`). `settings.json.tmpl` prepends them to the work `packages` list, so their URLs never enter git.
 
 ## Shell Extras
 
@@ -117,6 +121,10 @@ Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `lo
 - `.envrc` sets `skip-worktree` on `uv.lock` — git ignores local changes, `git add` silently skips it
 - **Use `poe pull` instead of `git pull`** — lifts the mask, restores the canonical lock, pulls, re-syncs, and re-masks
 - Dependency updates must be committed from a personal machine (where the lock resolves against `pypi.org`)
+
+### pi extension package-lock.json handling
+
+The pi extensions `package-lock.json` (`chezmoi/private_dot_pi/agent/extensions/`) has the same mirror-URL problem: `npm install` on work rewrites it with Artifactory URLs. `.envrc` sets `skip-worktree` on it (gated by hostname) so the rewrite never reaches git. Dependency/lock bumps for pi extensions must be committed from a personal machine, where it resolves against the public npm registry.
 
 ## Ansible Local Tasks
 

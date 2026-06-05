@@ -47,3 +47,7 @@
   loop: "{{ agent_harness_target_agents }}"
   loop_control:
     loop_var: agent_harness_target_agent
+
+- name: Expose pi-installed Glimpse to the interview tool
+  ansible.builtin.include_tasks: link_glimpse.yml
+  when: agent_harness_link_glimpse | default(false)

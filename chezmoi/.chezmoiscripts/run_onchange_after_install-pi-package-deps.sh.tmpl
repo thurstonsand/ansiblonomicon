@@ -1,7 +1,7 @@
-{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
 {{- $packageFinder := print .chezmoi.workingTree "/scripts/pi-package-json-paths.sh" -}}
 {{- $sourceExtensions := print .chezmoi.sourceDir "/private_dot_pi/agent/extensions" -}}
 {{- $sourcePowerline := print .chezmoi.sourceDir "/private_dot_pi/agent/powerline" -}}
+{{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
 #!/bin/sh
 set -eu
 
@@ -11,10 +11,15 @@ PACKAGE_FINDER={{ $packageFinder | quote }}
 
 "$PACKAGE_FINDER" "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/powerline" | while IFS= read -r package_json; do
   package_dir=$(dirname "$package_json")
+{{- if $isWork }}
+  # Work: the @earendil-works SDK devDeps are not resolvable from artifactory,
+  # so a normal install fails. They are type-check-only; pi injects the runtime SDK.
+  npm --prefix "$package_dir" install --omit=dev
+{{- else }}
   if [ -f "$package_dir/package-lock.json" ]; then
     npm --prefix "$package_dir" ci
   else
     npm --prefix "$package_dir" install
   fi
+{{- end }}
 done
-{{- end -}}

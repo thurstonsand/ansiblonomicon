@@ -1,0 +1,79 @@
+---
+- name: Resolve latest pi release
+  when: pi_release_version == "latest"
+  ansible.builtin.uri:
+    url: https://api.github.com/repos/earendil-works/pi/releases/latest
+    return_content: true
+  register: pi_release_latest
+  changed_when: false
+
+- name: Compute pi release tag
+  ansible.builtin.set_fact:
+    pi_release_tag: >-
+      {{
+        (pi_release_latest.json.tag_name if pi_release_version == "latest" else pi_release_version)
+        | regex_replace('^(?!v)', 'v')
+      }}
+
+- name: Compute pi platform name
+  ansible.builtin.set_fact:
+    pi_release_platform: >-
+      {{
+        ({'Darwin': 'darwin', 'Linux': 'linux'}[ansible_facts['system']])
+        ~ '-'
+        ~ ({'x86_64': 'x64', 'amd64': 'x64', 'arm64': 'arm64', 'aarch64': 'arm64'}[ansible_facts['machine']])
+      }}
+
+- name: Set pi install paths
+  ansible.builtin.set_fact:
+    pi_release_dir: "{{ pi_release_root }}/{{ pi_release_tag }}"
+    pi_release_binary: "{{ pi_release_root }}/{{ pi_release_tag }}/pi/pi"
+    pi_release_symlink: "{{ pi_release_bin_dir }}/pi"
+
+- name: Check for existing pi binary at target version
+  ansible.builtin.stat:
+    path: "{{ pi_release_binary }}"
+  register: pi_release_existing
+
+- name: Install pi release
+  when: not pi_release_existing.stat.exists
+  block:
+    - name: Ensure pi version directory exists
+      ansible.builtin.file:
+        path: "{{ pi_release_dir }}"
+        state: directory
+        mode: "0755"
+
+    - name: Download pi release tarball
+      ansible.builtin.get_url:
+        url: "https://github.com/earendil-works/pi/releases/download/{{ pi_release_tag }}/pi-{{ pi_release_platform }}.tar.gz"
+        dest: "{{ pi_release_dir }}/pi.tar.gz"
+        mode: "0644"
+
+    - name: Extract pi release tarball # noqa: command-instead-of-module
+      # macOS ships BSD tar, which extracts .tar.gz fine; ansible.builtin.unarchive
+      # rejects it because it requires GNU tar, so extract via the command directly.
+      ansible.builtin.command:
+        cmd: tar -xzf pi.tar.gz
+        chdir: "{{ pi_release_dir }}"
+        creates: "{{ pi_release_binary }}"
+
+    - name: Remove downloaded tarball
+      ansible.builtin.file:
+        path: "{{ pi_release_dir }}/pi.tar.gz"
+        state: absent
+
+- name: Ensure bin directory exists
+  ansible.builtin.file:
+    path: "{{ pi_release_bin_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Link pi onto PATH
+  # The binary loads photon_rs_bg.wasm and native modules relative to its own
+  # location, so PATH must point at the in-tree binary via symlink, not a copy.
+  ansible.builtin.file:
+    src: "{{ pi_release_binary }}"
+    dest: "{{ pi_release_symlink }}"
+    state: link
+    force: true

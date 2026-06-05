@@ -87,6 +87,13 @@
           tags: ["language-tools"]
       tags: ["language-tools"]
 
+    - name: Install pi from GitHub releases
+      ansible.builtin.include_role:
+        name: pi_release
+        apply:
+          tags: ["pi"]
+      tags: ["pi"]
+
     - name: Deploy AI agent resources
       ansible.builtin.include_role:
         name: agent_harness

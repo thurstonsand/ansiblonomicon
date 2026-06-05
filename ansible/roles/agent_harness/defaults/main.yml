@@ -38,3 +38,9 @@ agent_harness_cleanup_orphaned_agents: true
 
 # Where to cache git repos
 agent_harness_cache_dir: "{{ ansible_facts.env.HOME }}/.cache/ansiblonomicon-harness"
+
+# Symlink pi's git-installed Glimpse clone into the global npm root so the
+# interview tool resolves the native UI instead of falling back to a browser.
+# Off by default; enable on hosts where glimpse is installed as a pi git package.
+agent_harness_link_glimpse: false
+agent_harness_glimpse_clone: "{{ ansible_facts.env.HOME }}/.pi/agent/git/github.com/hazat/glimpse"

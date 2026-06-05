@@ -69,7 +69,7 @@ agent_harness_agents:
     mcp_key: null
     mcp_env_format: "${VAR}"
     mcp_command_format: separate
-    name_transform: preserve
+    name_transform: lowercase_dash
     transform_content: false
     instructions_file: AGENTS.md
     supports_skill_mcp: false

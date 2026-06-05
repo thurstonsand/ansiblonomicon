@@ -61,7 +61,14 @@ Library/
 .config/nextdns.conf
 .config/nvim/lua/plugins/amp.lua
 .mactop/
-.pi/
+
+# Pi extension backed by the Parallel API
+.pi/agent/extensions/parallel-web-tools/
+
+# Pi source-clone extension: only useful on work (pi installed from release tarball)
+{{ if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+.pi/agent/extensions/pi-source.ts
+{{ end }}
 
 # Personal agent configs
 .codex/

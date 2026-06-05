@@ -1,0 +1,37 @@
+---
+# Expose pi's git-installed Glimpse to the interview tool.
+#
+# The interview tool (pi-interview-tool) resolves the native Glimpse UI only as a
+# Node module named "glimpseui" via `npm root -g`. pi installs glimpse as a git
+# package under ~/.pi/agent/git and builds the native binary there, but never
+# exposes it on the global resolution path. glimpse is not published to any
+# registry, and the work proxy blocks public npm anyway, so the only
+# viable path is to symlink pi's already-built clone into the global npm root.
+
+- name: Resolve global npm root
+  ansible.builtin.command: npm root -g
+  register: agent_harness_npm_root
+  changed_when: false
+  environment:
+    PATH: "{{ ansible_env.HOME }}/.local/share/mise/shims:{{ ansible_env.PATH }}"
+
+- name: Check for pi-installed Glimpse native binary
+  ansible.builtin.stat:
+    path: "{{ agent_harness_glimpse_clone }}/src/glimpse"
+  register: agent_harness_glimpse_bin
+
+- name: Warn when pi has not yet cloned and built Glimpse
+  ansible.builtin.debug:
+    msg: >-
+      Glimpse native binary not found at {{ agent_harness_glimpse_clone }}/src/glimpse.
+      The interview tool will fall back to the browser until pi installs the
+      'git:github.com/hazat/glimpse' package (launch pi once so it clones and
+      builds the binary), then re-run this play to create the global symlink.
+  when: not agent_harness_glimpse_bin.stat.exists
+
+- name: Link global glimpseui to pi-managed Glimpse clone
+  ansible.builtin.file:
+    src: "{{ agent_harness_glimpse_clone }}"
+    dest: "{{ agent_harness_npm_root.stdout }}/glimpseui"
+    state: link
+  when: agent_harness_glimpse_bin.stat.exists
