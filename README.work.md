@@ -10,6 +10,8 @@ This documents all files that live **only** on the work Mac and are not tracked 
 
 Defaults for `goLocalImports`, `goplsBuildFlags`, `anthropicAuthToken`, and `anthropicBaseUrl` are declared in `.chezmoidata.toml` (empty strings). `scm` defaults to an empty array.
 
+The `email` / `signingKey` identity from `local.toml` also renders `~/.config/git/allowed_signers` (via `dot_config/git/allowed_signers.tmpl`), which `git config gpg.ssh.allowedSignersFile` points at so SSH-signed commits verify locally (`%G?` → `G`). The template holds only `{{ .email }}` / `{{ .signingKey }}` placeholders, so the work identity never enters git — it only materializes in the deployed file.
+
 On the work machine, pi is deployed alongside Claude (via the `pi_release` role and the `pi` agent-harness target). Its anthropic provider, auth, and default model are gated by hostname and route through the corporate endpoint using `anthropicAuthToken` / `anthropicBaseUrl` from `local.toml`. Personal machines keep the AI-Gateway config.
 
 Internal-only pi packages (e.g. SSH plugin sources on the corporate SCM) are supplied via `piWorkPackages` in `local.toml` (defaults to an empty array in `.chezmoidata.toml`). `settings.json.tmpl` prepends them to the work `packages` list, so their URLs never enter git.
