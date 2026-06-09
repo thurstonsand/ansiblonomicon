@@ -40,11 +40,11 @@ lan:
     cloudflared:
       ip: 192.168.5.225
       ports: {}
-    overseerr:
+    seerr:
       ip: 192.168.5.227
       ports:
         web: 5055
-      domain: overseerr.thurstons.house
+      domain: seerr.thurstons.house
     anypod:
       ip: 192.168.5.231
       ports:

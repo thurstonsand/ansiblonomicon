@@ -46,9 +46,35 @@ resource "cloudflare_ruleset" "rate_limits" {
       requests_per_period = 10
       mitigation_timeout  = 10
     }
-    description = "block on Overseerr login bursts (free-plan fallback)"
+    description = "block on Seerr login bursts (free-plan fallback)"
     enabled     = true
     expression  = "(http.request.uri.path eq \"/login\")"
+  }
+}
+
+resource "cloudflare_ruleset" "redirects" {
+  kind    = "zone"
+  name    = "redirects"
+  phase   = "http_request_dynamic_redirect"
+  zone_id = local.zone_id
+
+  rules {
+    ref         = "redirect_overseerr_to_seerr"
+    action      = "redirect"
+    description = "redirect Overseerr hostname to Seerr"
+    enabled     = true
+    expression  = "(http.host eq \"overseerr.${local.zone_name}\")"
+
+    action_parameters {
+      from_value {
+        status_code           = 301
+        preserve_query_string = true
+
+        target_url {
+          expression = "concat(\"https://seerr.${local.zone_name}\", http.request.uri.path)"
+        }
+      }
+    }
   }
 }
 

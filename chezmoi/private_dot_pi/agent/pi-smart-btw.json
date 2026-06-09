@@ -1,4 +1,12 @@
 {
-  "model": "openai-codex/gpt-5.5",
-  "thinking": "low"
+  "provider": "openai-codex",
+  "modelId": "gpt-5.5",
+  "thinking": "low",
+  "composeShortcut": "ctrl+alt+shift+f13",
+  "injectShortcut": "alt+i",
+  "dismissShortcut": "alt+x",
+  "foldShortcut": "alt+h",
+  "unfoldShortcut": "alt+shift+h",
+  "previousShortcut": "ctrl+alt+shift+f14",
+  "nextShortcut": "ctrl+alt+shift+f15"
 }

@@ -83,7 +83,7 @@ services:
     container_name: swaparr-sonarr
     environment:
       - BASEURL=http://{{ lan.personal.sonarr.ip }}:{{ lan.personal.sonarr.ports.web }}
-      - APIKEY={{ lookup('env', 'HOMEPAGE_SONARR_API_KEY') }}
+      - APIKEY={{ lookup('env', 'SONARR_API_KEY') }}
       - PLATFORM=sonarr
       - MAX_STRIKES=6
       - SCAN_INTERVAL=30m
@@ -99,7 +99,7 @@ services:
     container_name: swaparr-radarr
     environment:
       - BASEURL=http://{{ lan.personal.radarr.ip }}:{{ lan.personal.radarr.ports.web }}
-      - APIKEY={{ lookup('env', 'HOMEPAGE_RADARR_API_KEY') }}
+      - APIKEY={{ lookup('env', 'RADARR_API_KEY') }}
       - PLATFORM=radarr
       - MAX_STRIKES=6
       - SCAN_INTERVAL=30m
@@ -119,21 +119,29 @@ services:
       - /etc/localtime:/etc/localtime:ro
     restart: unless-stopped
 
-  overseerr:
-    image: lscr.io/linuxserver/overseerr:latest
-    container_name: overseerr
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    container_name: seerr
     # mac_address: aa:06:ca:89:9e:df
+    user: "{{ docker.user.id }}"
     networks:
       external:
-        ipv4_address: {{ lan.external.overseerr.ip }}
+        ipv4_address: {{ lan.external.seerr.ip }}
     ports:
-      - "{{ lan.external.overseerr.ports.web }}:{{ lan.external.overseerr.ports.web }}" # web
+      - "{{ lan.external.seerr.ports.web }}:{{ lan.external.seerr.ports.web }}" # web
     volumes:
-      - {{ docker.config_dir }}/overseerr/config:/config
+      - {{ docker.config_dir }}/seerr/config:/app/config
       - /etc/localtime:/etc/localtime:ro
     environment:
-      - PUID={{ docker.user.puid }}
-      - PGID={{ docker.user.pgid }}
+      - TZ=America/New_York
+      - PORT={{ lan.external.seerr.ports.web }}
+    healthcheck:
+      test: wget --no-verbose --tries=1 --spider http://localhost:{{ lan.external.seerr.ports.web }}/api/v1/settings/public || exit 1
+      start_period: 20s
+      timeout: 3s
+      interval: 15s
+      retries: 3
     restart: unless-stopped
 
 networks:

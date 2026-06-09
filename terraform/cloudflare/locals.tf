@@ -11,7 +11,7 @@ locals {
 
   # Apps exposed via Cloudflare Tunnel - single source of truth for DNS + tunnel ingress
   tunnel_apps = [
-    { host = "overseerr", service = "http://192.168.5.227:5055" },
+    { host = "seerr", service = "http://192.168.5.227:5055" },
     { host = "podsync", service = "http://192.168.5.228:80" },
     { host = "anypod", service = "http://192.168.5.231:8024" },
     { host = "blog", service = "http://192.168.5.233:2368" },
@@ -37,6 +37,7 @@ locals {
     "www.${local.zone_name}",
     "blog.${local.zone_name}",
     "overseerr.${local.zone_name}",
+    "seerr.${local.zone_name}",
     "podsync.${local.zone_name}",
     "anypod.${local.zone_name}",
     "cli-proxy-api.${local.zone_name}",

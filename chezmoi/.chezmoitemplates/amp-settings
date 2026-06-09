@@ -3,4 +3,7 @@
   "amp.git.commit.ampThread.enabled": false,
   "amp.git.commit.coauthor.enabled": false,
   "amp.agent.deepReasoningEffort": "high",
-  "amp.tools.disable": []
+  "amp.tools.disable": [],
+  "amp.keymap": {
+    "permission-gate-toggle": "alt+a"
+  }

@@ -54,14 +54,14 @@
             - type: radarr
               service_group: Arr Apps
               service_name: Radarr
-    - Overseerr:
-        href: https://{{ lan.external.overseerr.domain }}
-        icon: overseerr.svg
+    - Seerr:
+        href: https://{{ lan.external.seerr.domain }}
+        icon: seerr.svg
         server: docker-proxy
-        container: overseerr
+        container: seerr
         widget:
           type: overseerr
-          url: https://{{ lan.external.overseerr.domain }}
+          url: https://{{ lan.external.seerr.domain }}
           key: "{{ lookup('env', 'HOMEPAGE_OVERSEERR_API_KEY') }}"
     - Plex:
         href: https://app.plex.tv/desktop/
@@ -90,8 +90,8 @@
         widget:
           type: qbittorrent
           url: http://{{ lan.personal.qbittorrent.domain }}
-          username: "{{ lookup('env', 'HOMEPAGE_QBITTORRENT_USERNAME') }}"
-          password: "{{ lookup('env', 'HOMEPAGE_QBITTORRENT_PASSWORD') }}"
+          username: "{{ lookup('env', 'QBITTORRENT_USERNAME') }}"
+          password: "{{ lookup('env', 'QBITTORRENT_PASSWORD') }}"
           enableLeechProgress: true
           enableLeechSize: true
     - Prowlarr:
@@ -102,7 +102,7 @@
         widget:
           type: prowlarr
           url: http://{{ lan.personal.prowlarr.domain }}:{{ lan.personal.prowlarr.ports.web }}
-          key: "{{ lookup('env', 'HOMEPAGE_PROWLARR_API_KEY') }}"
+          key: "{{ lookup('env', 'PROWLARR_API_KEY') }}"
     - Radarr:
         href: http://{{ lan.personal.radarr.domain }}:{{ lan.personal.radarr.ports.web }}
         icon: radarr.svg
@@ -111,7 +111,7 @@
         widget:
           type: radarr
           url: http://{{ lan.personal.radarr.domain }}:{{ lan.personal.radarr.ports.web }}
-          key: "{{ lookup('env', 'HOMEPAGE_RADARR_API_KEY') }}"
+          key: "{{ lookup('env', 'RADARR_API_KEY') }}"
           enableQueue: true
     - Sonarr:
         href: http://{{ lan.personal.sonarr.domain }}:{{ lan.personal.sonarr.ports.web }}
@@ -121,7 +121,7 @@
         widget:
           type: sonarr
           url: http://{{ lan.personal.sonarr.domain }}:{{ lan.personal.sonarr.ports.web }}
-          key: "{{ lookup('env', 'HOMEPAGE_SONARR_API_KEY') }}"
+          key: "{{ lookup('env', 'SONARR_API_KEY') }}"
           enableQueue: true
     - NewtArr:
         href: http://{{ lan.personal.newtarr.domain }}:{{ lan.personal.newtarr.ports.web }}

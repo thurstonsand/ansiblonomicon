@@ -69,6 +69,15 @@ resource "cloudflare_record" "www" {
   ttl     = 1
 }
 
+resource "cloudflare_record" "overseerr_redirect" {
+  zone_id = local.zone_id
+  name    = "overseerr"
+  type    = "CNAME"
+  content = local.tunnel_cname_target
+  proxied = true
+  ttl     = 1
+}
+
 # MX records
 resource "cloudflare_record" "mx1" {
   zone_id  = local.zone_id
@@ -156,5 +165,4 @@ resource "cloudflare_record" "snippethost_gitlab_verification" {
   comment = "GitLab Pages domain verification for snippethost"
   ttl     = 1
 }
-
 

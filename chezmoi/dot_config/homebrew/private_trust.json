@@ -3,7 +3,7 @@
     "cirruslabs/cli",
     "cormacrelf/tap",
     "entireio/tap",
-    "ghosttykit/local",
-    "oven-sh/bun"
+    "oven-sh/bun",
+    "thurstonsand/ghosttykit"
   ]
 }

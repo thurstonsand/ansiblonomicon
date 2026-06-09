@@ -12,6 +12,7 @@ brew "duti"
 brew "eza"
 brew "fd"
 brew "fzf"
+brew "thurstonsand/ghosttykit/ghosttykit-nightly"
 brew "htop"
 brew "jq"
 brew "mactop"
@@ -89,13 +90,13 @@ mas "Tailscale", id: 1475387142
 # Editors/Terminals
 brew "neovim"
 cask "cursor"
+cask "devin-desktop"
 cask "ghostty"
 cask "iterm2"
 cask "monodraw"
 cask "visual-studio-code"
 cask "visual-studio-code@insiders"
 cask "warp"
-cask "windsurf"
 cask "zed"
 
 # Apple
