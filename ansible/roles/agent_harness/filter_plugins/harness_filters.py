@@ -1077,7 +1077,7 @@ def _read_plugin_hooks(plugin_path: Path) -> str | None:
     if plugin_json.exists():
         try:
             data: dict[str, Any] = json.loads(plugin_json.read_text())
-        except (OSError, json.JSONDecodeError):
+        except OSError, json.JSONDecodeError:
             data = {}
         hooks = data.get("hooks")
         match hooks:

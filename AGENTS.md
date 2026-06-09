@@ -11,9 +11,9 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe laptop` — Apply macOS Ansible playbook (auto-detects work vs personal by hostname)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **macOS tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `ghostty-nav`, `homebrew`/`mas`, `language-tools`, `neovim`/`nvim-deps`, `opencode`, `plannotator`, `shp`, `sysconfig`/`hostname`, `terminal-theme`, `tmux`, `uvc-util`
+  - **macOS tags**: `agent-harness`, `chezmoi`/`dotfiles`, `claude-code`, `ghostty-nav`, `homebrew`/`mas`, `language-tools`, `neovim`/`nvim-deps`, `opencode`, `plannotator`, `sessions`, `shp`, `sysconfig`/`hostname`, `terminal-theme`, `tmux`, `uvc-util`
   - **macOS defaults tags**: `desktop-services`, `dock`, `finder`, `menubar`, `nsglobaldomain`, `permissions`
-  - **Work-only tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `language-tools`, `local`, `neovim`/`nvim-deps`, `pi`, `plannotator`, `terminal-theme`, `uvc-util`
+  - **Work-only tags**: `agent-harness`, `chezmoi`/`dotfiles`, `ghostty-nav`, `homebrew`, `language-tools`, `local`, `neovim`/`nvim-deps`, `pi`, `plannotator`, `sessions`, `terminal-theme`, `uvc-util`
 - `uv run poe truenas` — Apply TrueNAS Ansible playbook (same options as macos)
   - **TrueNAS tags**: `docker`/`docker-networks`, `docker-stack-role` (all Docker stacks), `truenas-apps`, `vm`/`truenas-vm`, `openclaw-vm`, `homeassistant-vm`, or individual stacks: `anypod`, `arr-apps`, `caddy`, `cli-proxy-api`, `cloudflared`, `ddclient`, `ghost`, `homepage`, `isponsorblocktv`, `scrypted`, `torrent`, `watchtower`
 - `uv run poe udmp` — Apply UDMP Ansible playbook (same options as macos)
@@ -21,7 +21,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `uv run poe openclaw` — Apply OpenClaw Ansible playbook (playbook selects local on hostname `openclaw`, otherwise remote over SSH; override with `--target openclaw_local|openclaw_remote`)
   - `--check` / `-c` — Dry-run mode (no changes made)
   - `--tags` / `-t` — Only run tasks with specific tags (comma-separated)
-  - **OpenClaw tags**: `apt`, `apt-repos`, `uv`, `mise`, `secrets`/`onepassword`/`op`, `chezmoi`/`dotfiles`, `claude-code`, `ghostty-nav`, `opencode`, `system-maintenance`/`timers`, `language-tools`, `sshd`/`ssh`, `shpool`, `pi-extensions`, `tmux`, `motd`, `agent-harness`
+  - **OpenClaw tags**: `apt`, `apt-repos`, `uv`, `mise`, `secrets`/`onepassword`/`op`, `chezmoi`/`dotfiles`, `claude-code`, `ghostty-nav`, `opencode`, `system-maintenance`/`timers`, `language-tools`, `sshd`/`ssh`, `shpool`, `pi-extensions`, `sessions`, `tmux`, `motd`, `agent-harness`
 - `uv run poe cz-diff` / `uv run poe cz-status` — Preview chezmoi changes (`cz-diff` excludes lockfiles)
 - `uv run poe tfi` / `uv run poe tfp` / `uv run poe tfa` — Terraform init/plan/apply (Cloudflare infrastructure)
   - `--yes` / `-y` — Auto-approve apply (no confirmation prompt)
@@ -35,8 +35,10 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 ## Dev Commands
 
 - `uv run poe init-secrets` — Resolve 1Password secrets to `.env` and worker `.dev.vars` files (auto-runs via direnv)
-- `uv run poe lint` — Run all linters (Ansible, Python, Workers, Pi extensions, Amp plugins, and CLI tools)
+- `uv run poe lint` — Run all linters (Ansible, Python, Workers, Pi extensions, session-recovery, Amp plugins, and CLI tools)
 - `uv run poe lint:pi` — Lint and type-check pi extension packages
+  - `--format` / `-f` — Apply Biome formatting/fixes before type-checking
+- `uv run poe lint:session-recovery` — Lint and type-check the shared `@thurstons/session-recovery` library and its agent consumers
   - `--format` / `-f` — Apply Biome formatting/fixes before type-checking
 - `uv run poe lint:amp` — Format, lint, and type-check Amp plugins
 - `uv run poe ts:update-deps` — Update dependencies for tracked TypeScript agent packages (pins Pi packages to the installed `pi` version and updates Amp plugin deps)

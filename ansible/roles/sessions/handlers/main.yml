@@ -1,0 +1,6 @@
+---
+- name: Store sessions build checksum
+  ansible.builtin.copy:
+    content: "{{ sessions_source_checksum.stdout }}"
+    dest: "{{ role_path }}/.build-checksum"
+    mode: "0644"

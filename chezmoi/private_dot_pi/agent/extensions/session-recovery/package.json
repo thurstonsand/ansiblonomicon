@@ -1,0 +1,15 @@
+{
+  "name": "pi-session-recovery",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Pi extension that records live sessions for hard-restart recovery via the shared @thurstons/session-recovery core",
+  "pi": {
+    "extensions": [
+      "./index.ts"
+    ]
+  },
+  "dependencies": {
+    "@thurstons/session-recovery": "file:../../../../.local/lib/session-recovery"
+  }
+}

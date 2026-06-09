@@ -1,0 +1,86 @@
+---
+- name: Ensure ~/.local/bin directory exists
+  ansible.builtin.file:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+    state: directory
+    mode: "0755"
+
+- name: Ensure sessions cache directory exists
+  ansible.builtin.file:
+    path: "{{ sessions_cache_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Check sessions dependency upgrade stamp
+  ansible.builtin.stat:
+    path: "{{ sessions_cache_dir }}/upgrade.stamp"
+  register: sessions_upgrade_stamp
+
+- name: Determine if sessions dependency upgrade is due
+  ansible.builtin.set_fact:
+    sessions_upgrade_due: >-
+      {{
+        (not sessions_upgrade_stamp.stat.exists)
+        or (
+          (ansible_date_time.epoch | int) - (sessions_upgrade_stamp.stat.mtime | int)
+          >= (sessions_upgrade_interval_seconds | int)
+        )
+      }}
+
+- name: Update sessions Go dependencies and tools
+  when: sessions_upgrade_due
+  ansible.builtin.command:
+    argv:
+      - just
+      - update-deps
+    chdir: "{{ role_path }}/files/sessions"
+  register: sessions_update_deps
+  changed_when: sessions_update_deps.stdout | length > 0 or sessions_update_deps.stderr | length > 0
+
+- name: Record sessions dependency upgrade timestamp
+  when: sessions_upgrade_due
+  ansible.builtin.file:
+    path: "{{ sessions_cache_dir }}/upgrade.stamp"
+    state: touch
+    mode: "0644"
+
+- name: Compute sessions source checksum
+  ansible.builtin.shell: |
+    set -euo pipefail
+    find . -type f \( -name '*.go' -o -name 'go.mod' -o -name 'go.sum' -o -name '.golangci.yml' -o -name 'justfile' \) -print0 \
+      | sort -z \
+      | xargs -0 shasum -a 256 \
+      | shasum -a 256 \
+      | awk '{print $1}'
+  args:
+    chdir: "{{ role_path }}/files/sessions"
+    executable: /bin/bash
+  register: sessions_source_checksum
+  changed_when: false
+
+- name: Check installed sessions binary
+  ansible.builtin.stat:
+    path: "{{ ansible_facts['env']['HOME'] }}/.local/bin/sessions"
+  register: sessions_binary
+
+- name: Read last sessions build checksum
+  ansible.builtin.slurp:
+    src: "{{ role_path }}/.build-checksum"
+  register: sessions_stored_checksum
+  failed_when: false
+
+- name: Build sessions
+  ansible.builtin.command:
+    argv:
+      - just
+      - install
+    chdir: "{{ role_path }}/files/sessions"
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['PATH'] }}"
+  when: >-
+    not sessions_binary.stat.exists
+    or sessions_stored_checksum is failed
+    or (sessions_stored_checksum.content | default('') | b64decode | trim) != sessions_source_checksum.stdout
+  changed_when: true
+  notify:
+    - Store sessions build checksum

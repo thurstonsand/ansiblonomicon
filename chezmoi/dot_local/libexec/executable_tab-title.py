@@ -19,7 +19,7 @@ def git(cwd: str, *args: str) -> str | None:
             stderr=subprocess.DEVNULL,
             text=True,
         )
-    except (OSError, subprocess.CalledProcessError):
+    except OSError, subprocess.CalledProcessError:
         return None
     return result.stdout.strip() or None
 
@@ -46,7 +46,9 @@ def compute_title(prefix: str, cwd: str) -> str:
     branch = git(cwd, "branch", "--show-current")
 
     if is_linked_worktree(cwd):
-        return f"{prefix}:wt:{basename}:{branch}" if branch else f"{prefix}:wt:{basename}"
+        return (
+            f"{prefix}:wt:{basename}:{branch}" if branch else f"{prefix}:wt:{basename}"
+        )
 
     if branch and branch not in MAINLINE_BRANCHES and not branch.endswith("/HEAD"):
         return f"{prefix}:{basename}:{branch}"
@@ -57,9 +59,15 @@ def compute_title(prefix: str, cwd: str) -> str:
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     mode = parser.add_mutually_exclusive_group(required=True)
-    mode.add_argument("--claude-hook", action="store_true", help="read SessionStart JSON on stdin, emit hook JSON")
+    mode.add_argument(
+        "--claude-hook",
+        action="store_true",
+        help="read SessionStart JSON on stdin, emit hook JSON",
+    )
     mode.add_argument("--nvim", action="store_true", help="print nvim title to stdout")
-    parser.add_argument("cwd", nargs="?", default=os.getcwd(), help="working directory (default: $PWD)")
+    parser.add_argument(
+        "cwd", nargs="?", default=os.getcwd(), help="working directory (default: $PWD)"
+    )
 
     args = parser.parse_args()
 

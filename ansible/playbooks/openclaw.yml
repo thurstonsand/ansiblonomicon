@@ -342,6 +342,13 @@
           tags: ["ghostty-nav"]
       tags: ["ghostty-nav"]
 
+    - name: Build sessions CLI for agent session recovery
+      ansible.builtin.include_role:
+        name: sessions
+        apply:
+          tags: ["sessions"]
+      tags: ["sessions"]
+
     - name: Configure shpool shell persistence
       ansible.builtin.include_role:
         name: shpool

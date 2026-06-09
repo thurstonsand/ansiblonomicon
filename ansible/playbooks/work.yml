@@ -80,6 +80,13 @@
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["ghostty-nav"]
 
+    - name: Build sessions CLI for agent session recovery
+      ansible.builtin.include_role:
+        name: sessions
+        apply:
+          tags: ["sessions"]
+      tags: ["sessions"]
+
     - name: Install global language tools
       ansible.builtin.include_role:
         name: language_tools

@@ -31,6 +31,7 @@ brew "zsh-syntax-highlighting"
 # Software Engineering
 # =============================================================================
 # Git
+brew "gh"
 brew "git"
 brew "git-delta"
 brew "glab"

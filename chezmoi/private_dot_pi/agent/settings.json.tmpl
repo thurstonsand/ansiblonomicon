@@ -108,9 +108,9 @@
     "git:github.com/nicobailon/pi-subagents",
     "git:github.com/thurstonsand/pi-powerline-footer@release",
     "git:github.com/thurstonsand/pi-sessions",
-    "git:github.com/davebcn87/pi-autoresearch",
     "git:github.com/nicobailon/pi-interview-tool",
     "git:github.com/hazat/glimpse",
+    "{{ .chezmoi.homeDir }}/code/pi-web-fetch",
     "npm:pi-mcp-adapter",
     {
       "source": "git:github.com/hasit/pi-community-themes",
@@ -137,7 +137,6 @@
     "npm:pi-librarian",
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:@thurstonsand/pi-powerline-footer"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
-    "git:github.com/davebcn87/pi-autoresearch",
     "npm:pi-interview",
 {{- if eq .chezmoi.os "darwin" }}
     "npm:glimpseui",
@@ -158,13 +157,27 @@
   ],
   "subagents": {
     "agentOverrides": {
-      "scout": { "disabled": true },
-      "planner": { "disabled": true },
-      "worker": { "disabled": true },
-      "reviewer": { "disabled": true },
-      "context-builder": { "disabled": true },
-      "researcher": { "disabled": true },
-      "oracle": { "disabled": true }
+      "scout": {
+        "disabled": true
+      },
+      "planner": {
+        "disabled": true
+      },
+      "worker": {
+        "disabled": true
+      },
+      "reviewer": {
+        "disabled": true
+      },
+      "context-builder": {
+        "disabled": true
+      },
+      "researcher": {
+        "disabled": true
+      },
+      "oracle": {
+        "disabled": true
+      }
     }
   },
   "hideThinkingBlock": true,

@@ -65,6 +65,11 @@ Library/
 # Pi extension backed by the Parallel API
 .pi/agent/extensions/parallel-web-tools/
 
+# Lint-only tsconfig for the session-recovery consumers: their `paths` mapping
+# resolves @thurstons/session-recovery to the repo-source core.ts for tsc only.
+.pi/agent/extensions/session-recovery/tsconfig.json
+.claude/scripts/session-recovery/tsconfig.json
+
 # Pi source-clone extension: only useful on work (pi installed from release tarball)
 {{ if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
 .pi/agent/extensions/pi-source.ts

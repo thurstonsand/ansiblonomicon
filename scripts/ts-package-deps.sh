@@ -3,6 +3,7 @@ set -euo pipefail
 
 PI_ROOT_DIR="chezmoi/private_dot_pi/agent/extensions"
 AMP_ROOT_DIR="chezmoi/dot_config/amp/plugins"
+SESSION_RECOVERY_DIR="chezmoi/dot_local/lib/session-recovery"
 
 find_pi_package_json() {
   local pi_bin=""
@@ -35,7 +36,7 @@ NODE
 }
 
 collect_package_dirs() {
-  find "$PI_ROOT_DIR" "$AMP_ROOT_DIR" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort
+  find "$PI_ROOT_DIR" "$AMP_ROOT_DIR" "$SESSION_RECOVERY_DIR" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort
 }
 
 package_has_dependency() {
@@ -54,6 +55,20 @@ PI_PACKAGE_JSON="$(find_pi_package_json)"
 PI_VERSION="$(node -p "require(process.argv[1]).version" "$PI_PACKAGE_JSON")"
 
 mapfile -t PACKAGE_DIRS < <(collect_package_dirs)
+
+# The Pi session-recovery extension depends on the shared library via a
+# live-layout `file:` path that only resolves on the deployed machine (chezmoi's
+# run_onchange installer links it there). `npm install` in the source checkout
+# would fail, and it carries no registry deps to pin, so skip it. The shared
+# library it points at (under dot_local/lib) is tracked normally.
+FILTERED_DIRS=()
+for dir in "${PACKAGE_DIRS[@]}"; do
+  case "$dir" in
+    */private_dot_pi/agent/extensions/session-recovery) continue ;;
+  esac
+  FILTERED_DIRS+=("$dir")
+done
+PACKAGE_DIRS=("${FILTERED_DIRS[@]}")
 
 if [[ ${#PACKAGE_DIRS[@]} -eq 0 ]]; then
   echo "No TypeScript package.json files found under $PI_ROOT_DIR or $AMP_ROOT_DIR"

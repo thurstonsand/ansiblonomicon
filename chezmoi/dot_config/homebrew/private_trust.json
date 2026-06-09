@@ -1,9 +1,0 @@
-{
-  "trustedtaps": [
-    "cirruslabs/cli",
-    "cormacrelf/tap",
-    "entireio/tap",
-    "oven-sh/bun",
-    "thurstonsand/ghosttykit"
-  ]
-}

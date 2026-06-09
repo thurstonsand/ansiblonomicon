@@ -1,0 +1,21 @@
+{
+	"compilerOptions": {
+		"target": "ES2024",
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
+		"strict": true,
+		"noEmit": true,
+		"skipLibCheck": true,
+		"allowImportingTsExtensions": true,
+		"types": ["node"],
+		"typeRoots": [
+			"../../../dot_local/lib/session-recovery/node_modules/@types"
+		],
+		"paths": {
+			"@thurstons/session-recovery": [
+				"../../../dot_local/lib/session-recovery/core.ts"
+			]
+		}
+	},
+	"include": ["./*.ts"]
+}

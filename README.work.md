@@ -4,9 +4,9 @@ This documents all files that live **only** on the work Mac and are not tracked 
 
 ## Chezmoi Data Layer
 
-| File                                             | Purpose                                                                                                                                  |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------- |
-| `~/.local/share/chezmoi/.chezmoidata/local.toml` | Git identity, SCM hosts (as `[[scm]]` array), Go import/build config, Claude Code model config, `anthropicAuthToken`, `anthropicBaseUrl` |
+| File                                             | Purpose                                                                                                                                                      |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `~/.local/share/chezmoi/.chezmoidata/local.toml` | Git identity, SCM hosts (as `[[scm]]` array), Go import/build config, Claude Code model config, `anthropicAuthToken`, `anthropicBaseUrl`, `localTrustedTaps` |
 
 Defaults for `goLocalImports`, `goplsBuildFlags`, `anthropicAuthToken`, and `anthropicBaseUrl` are declared in `.chezmoidata.toml` (empty strings). `scm` defaults to an empty array.
 
@@ -62,6 +62,12 @@ These should be used instead of hard-coding model values.
 | `ansible/Brewfile.work.local` | Machine-local additions not committed to git (if needed) |
 
 `Brewfile.work` **is** committed. The `.local` variant is for tools that are not publicly available.
+
+### Trusted Taps
+
+Homebrew's `HOMEBREW_REQUIRE_TAP_TRUST` gate refuses to load formulae from untrusted third-party taps. The trust list lives `chezmoi/dot_config/homebrew/private_trust.json.tmpl`.
+
+The template holds the personal taps inline and merges `localTrustedTaps` from `local.toml` (deduped + sorted), so corporate tap URLs never enter git. Non-GitHub-remote taps are trusted by their full git remote URL.
 
 ## Work-Local Config
 

@@ -1,0 +1,3 @@
+{{- $taps := list "cirruslabs/cli" "cormacrelf/tap" "entireio/tap" "oven-sh/bun" "thurstonsand/ghosttykit" -}}
+{{- $taps = concat $taps (.localTrustedTaps | default list) | uniq | sortAlpha -}}
+{{ dict "trustedtaps" $taps | toPrettyJson }}

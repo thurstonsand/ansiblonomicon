@@ -126,6 +126,13 @@
       when: hostname == "Thurstons-MacBook-Pro"
       tags: ["shp"]
 
+    - name: Build sessions CLI for agent session recovery
+      ansible.builtin.include_role:
+        name: sessions
+        apply:
+          tags: ["sessions"]
+      tags: ["sessions"]
+
     - name: Configure terminal theme manager
       ansible.builtin.include_role:
         name: terminal_theme

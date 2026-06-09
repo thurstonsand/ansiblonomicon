@@ -29,6 +29,14 @@
             "command": "~/.local/libexec/tab-title.py --claude-hook"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun ~/.claude/scripts/session-recovery/index.ts"
+          }
+        ]
       }
     ],
     "UserPromptSubmit": [
@@ -59,6 +67,21 @@
             "type": "command",
             "command": "~/.claude/hooks/derive-title.py",
             "async": true
+          },
+          {
+            "type": "command",
+            "command": "bun ~/.claude/scripts/session-recovery/index.ts",
+            "async": true
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun ~/.claude/scripts/session-recovery/index.ts"
           }
         ]
       }

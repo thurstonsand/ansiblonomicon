@@ -14,7 +14,7 @@ shell = "rm -f .env && uv run scripts/init-secrets.py"
 
 [tool.poe.tasks.lint]
 help = "Lint all code (ansible + python + workers + pi + amp + ghostty-nav)"
-sequence = ["lint:ansible", "lint:python", "lint:nvim", "lint:workers", "lint:pi", "lint:amp", "lint:cli-tools"]
+sequence = ["lint:ansible", "lint:python", "lint:nvim", "lint:workers", "lint:pi", "lint:session-recovery", "lint:amp", "lint:cli-tools"]
 
 [tool.poe.tasks."lint:ansible"]
 cmd = "ansible-lint"
@@ -57,9 +57,13 @@ cmd = "./scripts/pi-lint.sh ${format:+--format}"
 help = "Format, lint, and type-check Amp plugins"
 cmd = "./scripts/amp-lint.sh ${format:+--format}"
 
+[tool.poe.tasks."lint:session-recovery"]
+help = "Lint and type-check the shared session-recovery library + Pi entry"
+cmd = "./scripts/session-recovery-lint.sh ${format:+--format}"
+
 [tool.poe.tasks."lint:cli-tools"]
 help = "Format, lint, test, and build in-repo CLI tools"
-sequence = ["lint:shp", "lint:ghostty-nav"]
+sequence = ["lint:shp", "lint:ghostty-nav", "lint:sessions"]
 
 [tool.poe.tasks."lint:shp"]
 cmd = "just check"
@@ -73,6 +77,11 @@ sequence = ["lint:ghostty-nav:client", "lint:ghostty-nav:daemon"]
 cmd = "just check"
 cwd = "ansible/roles/ghostty_nav/files/ghostty-nav"
 
+[tool.poe.tasks."lint:sessions"]
+help = "Format, lint, test, and build the sessions recovery CLI"
+cmd = "just check"
+cwd = "ansible/roles/sessions/files/sessions"
+
 [tool.poe.tasks."lint:ghostty-nav:daemon"]
 cmd = "just check"
 cwd = "ansible/roles/ghostty_nav/files/ghostty-navd"
@@ -84,6 +93,12 @@ options = ["--format", "-f"]
 help = "Apply Biome formatting/fixes before type-checking"
 
 [[tool.poe.tasks."lint:amp".args]]
+name = "format"
+type = "boolean"
+options = ["--format", "-f"]
+help = "Apply Biome formatting/fixes before type-checking"
+
+[[tool.poe.tasks."lint:session-recovery".args]]
 name = "format"
 type = "boolean"
 options = ["--format", "-f"]
