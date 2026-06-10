@@ -75,6 +75,11 @@ Library/
 .pi/agent/extensions/pi-source.ts
 {{ end }}
 
+# Pi global MCP config: only rendered when pi_mcp_json is populated (gitignored local.toml)
+{{ if not .pi_mcp_json }}
+.pi/agent/mcp.json
+{{ end }}
+
 # Personal agent configs
 .codex/
 .oracle/

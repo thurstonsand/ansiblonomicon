@@ -19,9 +19,11 @@ goplsBuildFlags = ""
 scm = []
 pypiIndex = []
 mcp_servers = []
+pi_mcp_json = []
 uvIndexStrategy = ""
 anthropicAuthToken = ""
 anthropicBaseUrl = ""
+inferenceBudgetUrl = ""
 piWorkPackages = []
 localTrustedTaps = []
 

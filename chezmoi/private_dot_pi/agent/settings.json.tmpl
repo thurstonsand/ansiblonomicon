@@ -30,6 +30,11 @@
     "verbosity": "low",
     "reasoningSummary": "auto"
   },
+  {{- if .inferenceBudgetUrl }}
+  "inferenceBudget": {
+    "url": "{{ .inferenceBudgetUrl }}"
+  },
+  {{- end }}
   "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.loads(p.read_text()).get('lastChangelogVersion','0.74.0') if p.exists() else '0.74.0')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
   "enabledModels": [
 {{- if $isWork }}
@@ -66,6 +71,9 @@
       ],
       "rightSegments": [
         "custom:context_gauge"
+        {{- if .inferenceBudgetUrl }},
+        "custom:cost_budget"
+        {{- end }}
       ],
       "secondarySegments": []
     },
@@ -84,6 +92,12 @@
       {
         "id": "context_gauge"
       }
+      {{- if .inferenceBudgetUrl }},
+      {
+        "id": "cost_budget",
+        "hideWhenMissing": true
+      }
+      {{- end }}
     ]
   },
   "powerlineShortcuts": {

@@ -1,0 +1,6 @@
+{{- $overrides := list -}}
+{{- $servers := dict -}}
+{{- range concat $overrides (.pi_mcp_json | default list) -}}
+  {{- $servers = mergeOverwrite $servers (fromJson .) -}}
+{{- end -}}
+{{ dict "mcpServers" $servers | toPrettyJson }}

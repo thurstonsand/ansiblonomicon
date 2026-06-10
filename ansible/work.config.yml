@@ -27,7 +27,6 @@ agent_harness_sources_base:
     plugins:
       - name: visual-explainer
         path: plugins/visual-explainer
-        target_agents: [claude]
         exclude_data:
           - commands
           - scripts
@@ -36,7 +35,6 @@ agent_harness_sources_base:
     pull: true
     plugins:
       - name: mattpocock-skills
-        target_agents: [claude]
         exclude_skills:
           - caveman
           - grill-me

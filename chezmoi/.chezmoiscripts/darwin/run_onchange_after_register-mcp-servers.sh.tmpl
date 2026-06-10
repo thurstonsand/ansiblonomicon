@@ -1,16 +1,18 @@
 {{- if .mcp_servers -}}
 #!/bin/bash
-# Register user-scope MCP servers (idempotent — claude mcp add overwrites)
+# Register user-scope MCP servers.
+# `claude mcp add`` cannot overwrite, so each server is removed first to make re-runs idempotent
 # Data source: .chezmoidata/local.toml [[mcp_servers]]
 set -euo pipefail
 
 command -v claude >/dev/null 2>&1 || exit 0
 
 {{ range .mcp_servers -}}
+claude mcp remove --scope user {{ .name }} 2>/dev/null || true
 {{ if eq .transport "http" -}}
 claude mcp add --scope user --transport http {{ .name }} {{ .url }} 2>/dev/null || true
 {{ else -}}
-claude mcp add --scope user {{ .name }} -- {{ .command }} {{ range .args }}{{ . }} {{ end }}2>/dev/null || true
+claude mcp add --scope user {{ .name }} {{ range $key, $value := .env }}-e {{ $key }}={{ $value }} {{ end }}-- {{ .command }} {{ range .args }}{{ . }} {{ end }}2>/dev/null || true
 {{ end -}}
 {{ end -}}
 {{ end -}}

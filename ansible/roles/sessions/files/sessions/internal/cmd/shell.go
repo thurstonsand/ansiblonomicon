@@ -13,6 +13,7 @@ func newShellCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:       "shell <shell>",
 		Short:     "Output shell integration",
+		Hidden:    true,
 		ValidArgs: []string{"bash", "zsh"},
 		Long: `Output shell integration script for the specified shell.
 

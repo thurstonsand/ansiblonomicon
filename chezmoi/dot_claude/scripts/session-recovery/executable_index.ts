@@ -4,15 +4,29 @@
 // A Claude hook (SessionStart / Stop / SessionEnd) fires this with the hook
 // payload on stdin. It maps the lifecycle onto the shared recovery core:
 //   SessionStart / Stop -> writeRecord  (Stop also refreshes a late title)
-//   SessionEnd          -> deleteRecord (terminal; nothing left to recover)
+//   SessionEnd          -> delete only on a deliberate quit (see below)
 //
-// SessionEnd is the single delete authority and fires on every terminal
-// transition, /clear included. A hard restart fires no SessionEnd, so the file
-// survives -- that survivor is the recovery signal the `sessions` CLI consumes.
+// Not every SessionEnd means "done with this session." Claude fires it on
+// abrupt termination too -- closing the terminal tab or a SIGHUP/SIGTERM all
+// arrive as reason "other", indistinguishable from each other. Those are
+// exactly the cases we want to remain recoverable. So we delete the record
+// only on a deliberate in-app exit (Ctrl-D / `/exit` / `/quit` -> reason
+// "prompt_input_exit", `/logout`, `/clear`); everything else -- tab close,
+// kill signals, `resume`, and a hard reboot that fires no SessionEnd at all --
+// leaves the record as the orphan the `sessions` CLI surfaces for recovery.
 import { appendFileSync, readFileSync } from "node:fs";
 import { deleteRecord, writeRecord } from "@thurstons/session-recovery";
 
 const LOG_PATH = "/tmp/claude-session-recovery.log";
+
+// SessionEnd reasons that mean the user deliberately ended the session in-app.
+// Anything else (notably "other": tab close / SIGHUP / SIGTERM) is treated as
+// recoverable and the record is kept.
+const DELIBERATE_EXIT_REASONS = new Set([
+	"prompt_input_exit",
+	"logout",
+	"clear",
+]);
 
 /**
  * The subset of Claude's hook stdin payload this recorder consumes, parsed and
@@ -27,8 +41,14 @@ class HookEvent {
 		readonly reason: string | null,
 	) {}
 
-	get isTerminal(): boolean {
-		return this.event === "SessionEnd";
+	/** True when this SessionEnd was a deliberate in-app quit, so the record
+	 * should be removed rather than kept as a recoverable orphan. */
+	get isDeliberateExit(): boolean {
+		return (
+			this.event === "SessionEnd" &&
+			this.reason !== null &&
+			DELIBERATE_EXIT_REASONS.has(this.reason)
+		);
 	}
 
 	static parse(raw: string): HookEvent {
@@ -123,11 +143,17 @@ async function main(): Promise<void> {
 		return;
 	}
 
-	log(hook.sessionId, `event=${hook.event} cwd=${hook.cwd}`);
+	log(hook.sessionId, `event=${hook.event} reason=${hook.reason}`);
 
-	if (hook.isTerminal) {
-		deleteRecord("claude", hook.sessionId);
-		log(hook.sessionId, `removed own file (SessionEnd reason=${hook.reason})`);
+	if (hook.event === "SessionEnd") {
+		// Deliberate quit -> remove. Abrupt end (tab close, signal) -> leave the
+		// record in place so it surfaces as a recoverable orphan.
+		if (hook.isDeliberateExit) {
+			deleteRecord("claude", hook.sessionId);
+			log(hook.sessionId, `removed own file (deliberate exit: ${hook.reason})`);
+		} else {
+			log(hook.sessionId, `kept as orphan (SessionEnd reason=${hook.reason})`);
+		}
 		return;
 	}
 

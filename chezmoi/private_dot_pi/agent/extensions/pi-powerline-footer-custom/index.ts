@@ -2,6 +2,7 @@ import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { CodexConfigWatcher } from "./codexctl-config.js";
 import { ContextGaugeStatus } from "./context-gauge.js";
+import { CostBudgetStatus } from "./cost-display.js";
 import { DebouncedTask } from "./debounced-task.js";
 import { updateModelDisplayStatus } from "./model-display.js";
 import { updateWorkspaceDisplayStatuses } from "./workspace-display.js";
@@ -10,6 +11,7 @@ const CONTEXT_STATUS_UPDATE_MS = 250;
 
 export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   let contextGaugeStatus: ContextGaugeStatus | undefined;
+  let costBudgetStatus: CostBudgetStatus | undefined;
   let codexWatcher: CodexConfigWatcher | undefined;
   let modelDisplayDirty = false;
 
@@ -33,7 +35,12 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   const setCustomFooter = (ctx: ExtensionContext): void => {
     setContextGauge(ctx);
     setModelDisplay(ctx);
+    costBudgetStatus?.update(ctx);
     updateWorkspaceDisplayStatuses(ctx);
+  };
+
+  const refreshCostBudget = (ctx: ExtensionContext): void => {
+    void costBudgetStatus?.refresh(ctx);
   };
 
   const setModel = (ctx: ExtensionContext): void => {
@@ -50,6 +57,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   pi.on("session_start", (_event, ctx) => {
     contextGaugeSetTask.reset();
     contextGaugeStatus = new ContextGaugeStatus(ctx.cwd);
+    costBudgetStatus = new CostBudgetStatus();
     disposeModelWatchers();
 
     const model = requireModel(ctx);
@@ -57,6 +65,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
       modelDisplayDirty = true;
     });
     setCustomFooter(ctx);
+    refreshCostBudget(ctx);
   });
   pi.on("model_select", (_event, ctx) => setModel(ctx));
   pi.on("thinking_level_select", (_event, ctx) => setModelDisplay(ctx));
@@ -69,6 +78,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   pi.on("turn_start", (_event, ctx) => setContextGauge(ctx));
   pi.on("turn_end", (_event, ctx) => {
     setContextGauge(ctx);
+    refreshCostBudget(ctx);
     updateWorkspaceDisplayStatuses(ctx);
   });
   pi.on("message_start", (_event, ctx) => setCustomFooter(ctx));
@@ -88,6 +98,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
     description: "Refresh pi-powerline-footer-custom status items.",
     handler: async (_args, ctx) => {
       codexWatcher?.refreshFromFile();
+      await costBudgetStatus?.refresh(ctx, true);
       setCustomFooter(ctx);
       ctx.ui.notify("Custom footer statuses refreshed", "info");
     },

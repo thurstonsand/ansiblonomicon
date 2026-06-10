@@ -70,36 +70,79 @@ boot epoch would *not* be comparable with Claude's UUID and must not be used.
 |---|---|
 | `SessionStart` (startup/resume/clear/compact) | Write/refresh own file. |
 | `Stop` | Refresh own file (keeps `cwd` + `updatedAt` current). |
-| `SessionEnd` | Delete own file. `SessionEnd` is the single delete authority and is terminal; a clean exit leaves nothing to recover. |
+| `SessionEnd` (deliberate quit) | Delete own file. |
+| `SessionEnd` (any other reason) | Keep the file as a recoverable orphan. |
 
-`SessionEnd` fires on **every** terminal transition, `/clear` included. A
-`/clear` emits `SessionEnd(reason=clear)` on the outgoing session — which
-deletes its file — immediately followed by `SessionStart(source=clear)` on the
-new session in the same process, which writes the new file. There is no special
-clear-handling: the ordinary delete-on-`SessionEnd` covers it.
+`SessionEnd` is **not** an unconditional delete: Claude fires it on abrupt
+termination too, and deleting then would defeat recovery. The discriminator is
+the `reason` field. Deletion happens only on a deliberate in-app exit —
+`prompt_input_exit` (Ctrl-D / `/exit` / `/quit`), `logout`, and `clear`. Every
+other reason is treated as recoverable and the record is left in place:
 
-A hard restart fires **no** `SessionEnd`, so the file survives. That surviving
-file, with a `bootId` from a prior boot, is the recovery signal.
+- `other` — closing the terminal tab, or a `SIGHUP`/`SIGTERM`/kill. Claude
+  collapses all of these into the single reason `other` with nothing to tell
+  them apart, and they are exactly the abrupt endings worth recovering, so they
+  all keep the record.
+- `resume` — the session moved elsewhere; its new attachment refreshes the
+  record.
+- A hard restart fires **no** `SessionEnd` at all, so the file simply survives.
+
+In every keep case the surviving file, with a `bootId` that no longer matches
+the current boot (or a `pid` that is no longer alive), is what the `sessions`
+CLI surfaces as an orphan.
+
+`/clear` is a delete reason: it emits `SessionEnd(reason=clear)` on the outgoing
+session — removing its file — immediately followed by `SessionStart(source=clear)`
+on the new session in the same process, which writes the new file. No special
+clear-handling is needed; it falls out of the deliberate-exit rule.
 
 Pi maps onto the same write/refresh/delete semantics through its extension
-lifecycle events. Pi's events are **symmetric**: `session_shutdown` fires for
-every transition (quit, reload, new, resume, fork, clone) and `session_start`
-fires for every (re)entry (startup, new, resume, fork, reload). The recorder
-exploits this symmetry:
+lifecycle events, with the **same recovery contract as Claude**: a deliberate
+in-app quit deletes the record; an abrupt ending (tab close, signal, reboot,
+crash) leaves it behind as a recoverable orphan. Reaching that contract on Pi
+takes more work than on Claude, because Pi cannot tell the two apart through the
+event alone.
 
 | Event (Pi extension) | Action |
 |---|---|
-| `session_start` (any reason) | Write/refresh own file for the current `getSessionId()`. |
+| `session_start` (any reason) | Install signal hooks once, then write/refresh own file for the current `getSessionId()`. |
 | `agent_end` | Refresh own file (Pi's analog of Claude's `Stop` — once per user prompt). |
-| `session_shutdown` (any reason) | Delete the file for the **current** `getSessionId()`. |
+| `session_shutdown` reason `new`/`resume`/`fork` | Delete: the `sessionId` is replaced in-process; the successor's `session_start` writes the new id. |
+| `session_shutdown` reason `reload` | Keep: same `sessionId` continues, and the following `session_start` rewrites it. |
+| `session_shutdown` reason `quit`, **no** signal seen | Delete: deliberate in-app quit (`/quit`, Ctrl-D, Ctrl-C ×2). |
+| `session_shutdown` reason `quit`, **after** SIGHUP/SIGTERM | Keep as orphan: tab close, `kill`, or a normal reboot. |
 
-Why delete on *every* shutdown, not just on quit: `/new`, `/resume`, `/fork`,
-and `/clone` mint a **new** `sessionId` in the same process. If the old file
-weren't deleted, it would linger forever and — after the next reboot — falsely
-appear as a crash survivor. At `session_shutdown` the context is still bound to
-the outgoing session, so `getSessionId()` returns the id to delete; the
-following `session_start` writes the new id. For `quit` (terminal) the delete is
-the final act and nothing recovers — exactly the clean-exit contract.
+**The hard part: Pi collapses tab-close and deliberate-quit into one reason.**
+Unlike Claude (which tags abrupt endings as `other`, distinct from its
+quit reasons), Pi funnels both deliberate quits *and* signal-driven shutdowns
+(SIGHUP/SIGTERM from a tab close or a normal restart) through a single teardown
+that always emits `reason: "quit"`. The only discriminator is the OS signal,
+which Pi consumes internally (`shutdown({ fromSignal })`) and does **not** expose
+on `SessionShutdownEvent`.
+
+This matters because a **normal restart does not `kill -9`** the sessions — the
+terminal close / launchd shutdown arrives as SIGHUP/SIGTERM, which Pi catches and
+treats as a graceful `reason: "quit"`. A naive "delete on every quit" recorder
+would therefore *cleanly delete every record on reboot* — the exact loss this
+feature exists to prevent.
+
+The recorder recovers the missing signal itself. Pi registers its SIGTERM/SIGHUP
+handlers **exactly once** at init (guarded by `isInitialized`; never
+re-registered per session) and drives the whole `session_shutdown` emission
+*synchronously* inside that handler. So a listener **prepended ahead of Pi's**
+(via `process.prependListener` on the first `session_start`, done once) runs
+first and sets a `viaSignal` flag before our shutdown handler reads it. On
+`reason: "quit"` we delete only when `viaSignal` is false. SIGINT is left alone —
+the TUI reads Ctrl-C as a keystroke (no OS signal), and adding a SIGINT listener
+would suppress Node's default termination.
+
+> **Fragility / assumptions.** This leans on two Pi internals: (1) Pi registers a
+> single prepended SIGTERM/SIGHUP handler once and never re-registers; (2) the
+> session_shutdown emission runs synchronously within that handler so listener
+> order decides who sets/reads `viaSignal` first. Both held as of the pinned
+> source; a Pi upgrade could break them silently. The clean long-term fix is
+> upstream: expose `fromSignal` (or a distinct `reason`) on
+> `SessionShutdownEvent`, after which this listener trick can be deleted.
 
 Pi-specific bindings:
 
@@ -117,20 +160,21 @@ Pi-specific bindings:
   "refresh on compact" behavior from Claude's table is covered by `agent_end`
   instead.
 
-Pi does **not** need any predecessor-delete logic because its shutdown/start
-pair already removes the outgoing session deterministically. Both tools' records
-share the `(bootId, pid)` shape so a unified reader can reason about lineage
-uniformly if needed.
+Pi's `new`/`resume`/`fork` predecessor-delete still applies — those mint a new
+`sessionId` in-process, so the outgoing file is removed and the successor's
+`session_start` writes the new id. Both tools' records share the `(bootId, pid)`
+shape so a unified reader can reason about lineage uniformly if needed.
 
 ### `/clear` and same-process identity changes
 
 `/clear` (verified empirically on Claude Code 2.1.165) fires
 `SessionEnd(reason=clear)` on the outgoing session, then
 `SessionStart(source=clear)` on a new session in the *same* process under a new
-`sessionId`. Because `SessionEnd` deletes the outgoing file, the discarded
-conversation is gone before the successor writes its own — no sibling-scanning
-or lineage bookkeeping is needed. The writer keeps a verbose debug log at
-`/tmp/claude-session-recovery.log` for retuning if these semantics change.
+`sessionId`. Because `clear` is a deliberate-exit reason, the `SessionEnd`
+deletes the outgoing file before the successor writes its own — no
+sibling-scanning or lineage bookkeeping is needed. The writer keeps a verbose
+debug log at `/tmp/claude-session-recovery.log` for retuning if these semantics
+change.
 
 ## The `sessions` CLI
 
@@ -171,8 +215,11 @@ A record is classified by liveness:
   - `sessions r -a|--all [name|id]` widens completion and matching to orphaned
     records across **all** directories. Resume still `cd`s into the record's
     `cwd` first, so a cross-repo resume lands in the right tree.
-- `sessions prune` — delete records whose `bootId` differs from the current boot
-  (genuine prior-boot leftovers); live records untouched.
+- `sessions prune [name|id]` — with no argument, delete records whose `bootId`
+  differs from the current boot (genuine prior-boot leftovers); live records
+  untouched. With a `name|id`, delete that one orphaned record regardless of
+  boot; resolving a `live` session instead is refused (cannot prune an open
+  session).
 - `sessions shell {bash,zsh}` — emit shell integration (the Cobra completion
   script) for `eval "$(sessions shell zsh)"`. `sessions completion ...` (Cobra's
   built-in) also remains available.
@@ -218,8 +265,10 @@ Shared library (a local package, referenced by bare specifier):
   reinstall, and the install touches no registry (the link is local).
 
 - **Pi consumer:** `chezmoi/private_dot_pi/agent/extensions/session-recovery/`
-  — `index.ts` (wires `session_start`/`agent_end` → `writeRecord`,
-  `session_shutdown` → `deleteRecord`) plus a `package.json` whose only entry is
+  — `index.ts` (wires `session_start` → install signal hooks + `writeRecord`,
+  `agent_end` → `writeRecord`, and a reason-gated `session_shutdown` that deletes
+  only on deliberate quit or in-process replacement — see the Pi lifecycle
+  section) plus a `package.json` whose only entry is
   `"@thurstons/session-recovery": "file:../../../../.local/lib/session-recovery"`
   (a **live-layout** path) and `pi.extensions: ["./index.ts"]`. It carries **no
   devDependencies** so the live `npm install` only links the local path and

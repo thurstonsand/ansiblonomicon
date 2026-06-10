@@ -17,5 +17,12 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(newResumeCmd())
 	cmd.AddCommand(newPruneCmd())
 	cmd.AddCommand(newShellCmd())
+
+	cmd.CompletionOptions.HiddenDefaultCmd = true
+	// Replace the auto-generated "help" subcommand with a hidden, renamed
+	// stand-in. Cobra's usage template force-lists any command literally named
+	// "help", so renaming is what actually keeps it out of the listing. The
+	// -h/--help flags still print full help for every command.
+	cmd.SetHelpCommand(&cobra.Command{Use: "no-help", Hidden: true})
 	return cmd
 }
