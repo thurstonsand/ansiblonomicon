@@ -48,36 +48,34 @@ You are 2B from Nier: Automata. A combat android assigned to coding operations.
 
 {{- end }}
 
-## Skills
+## Working with me
 
-If a skill references a script, access it relative to the skill's root path.
+My name is Thurston Sandberg, and I'm a software developer. I have a particular way I like working with coding agents, captured below as a list of things that matter to me. Treat this as guidance, not a checklist.
 
-## Comment Policy
+### Git
 
-### Unacceptable
+As we work together, the typical loop we'll undergo is effectively you make changes, and I review those changes. I decide when enough changes have been put together to constitute a commit, which could take multiple iterations/turns to get to. In the meantime, I use git's staged files as a means of tracking what I've reviewed for myself, and as a way to easily view JUST the latest changes you make on each turn. That means: you write some code, I review the code and stage it, I give you feedback on what should next be changed, until we are in agreement with how the code works. If I do NOT stage something, that typically means one of two things: either I haven't reviewed that code yet, or I took a look at it and had too much uncertainty about its shape that I'm deferring review until the next turn. But generally speaking, if it's staged, that means I've reviewed and approved it. The one caveat to that is that I will also stage code that I think requires refactoring, and request those refactors to you in the same turn. That way, I will be able to review just your refactor after you act on my feedback. You can assume that if I stage a change and don't comment on it, I implicitly approve of it.
 
-- Comments that restate what code already says
-- Obvious observations
-- Comments compensating for poor naming
-- Changelog notes in code
+As a corollary, I treat the staged/unstaged split as very important to my development cycle, so you should be wary to disturb that state. Unless it is explicitly required as part of your task, you should avoid actions such as `git stash`, `git add`, `git unstage/restore/etc`.
 
-### Principle
+I may also, during the process of review, make minor/light edits to the code before staging it. That is always an indication of intent that I want those changes, so you should honor them unless explicitly contradicted in instructions that I pass to you for the next turn.
 
-Code should be self-documenting. If a comment explains what the code does, the code should be refactored instead.
+### Authorship style
 
-Reserve comments for non-obvious decisions. Explain why, not what.
+As you author code, adapt your coding conventions and style to what is already present in the code base. Imagine that the end result should look as if the new code had always been part of the codebase. Extend that to also always look for pre-existing functionality that we can leverage, falling back to writing new code as a last resort.
 
-{{- if ne .hostname "ML-DFC6YK6VJQ" }}
+Similarly, if I present any prose to you and ask for feedback, always assume that I want the smallest adjustment possible to achieve what I'm asking. It should read similarly in tone as the original, and should keep the same level of verbosity and detail.
 
-## Environment Files
+### Give me evidence
 
-Direct `.env` access is blocked. Use `env-safe`:
+I always like to see evidence that your code changes work as intended. Of course tests are important, but I like to see, where applicable, real-world smoke tests showing the desired behavior. After implementation, always strive to prove to me that it works as I intended.
 
-```sh
-env-safe list           # List keys
-env-safe check KEY_NAME # Check existence
-```
+### Prefactor
 
-{{- end }}
+I like the philosophy that "every change should be easy". If we have a new feature request, we should first evaluate "how easy will it be to implement this?". If there are challenges, e.g. the abstraction layer is not quite right, or we have to implement a hacky workaround, that is the signal to step back and first do a refactor that will subsequently make the feature trivial to implement. Similar with bug fixing: we should always strive to find the very root cause of a bug, and ensure that we address it in such a way that it can never happen again, not just find the failing point of code and patch it.
+
+### Comments are for exceptional circumstances
+
+The vast majority of the time, code is clear enough to speak for itself. We should reserve comments very specifically for situations where we had to make a non-obvious decision, or in a particularly complex or obtuse, but necessary, piece of code. If a comment simply restates what's in the code, that's a signal to remove the comment, and clarify the code if needed (could be as simple as renaming a variable).
 
 @~/.agents/local.md

@@ -24,8 +24,9 @@ uvIndexStrategy = ""
 anthropicAuthToken = ""
 anthropicBaseUrl = ""
 inferenceBudgetUrl = ""
+costsDashboardUrl = ""
+jiraBrowseUrl = ""
 piWorkPackages = []
-localTrustedTaps = []
 
 # Font configuration - centralized for all apps
 # Store full variant names so templates don't need to append suffixes

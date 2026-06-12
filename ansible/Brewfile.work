@@ -43,7 +43,7 @@ brew "go"
 brew "just"
 brew "libpq", link: true
 brew "mise"
-brew "oven-sh/bun/bun"
+brew "oven-sh/bun/bun", trusted: true
 brew "poetry"
 brew "uv"
 
@@ -84,7 +84,7 @@ brew "stern"
 
 # Infra
 brew "chezmoi"
-brew "cormacrelf/tap/dark-notify"
+brew "cormacrelf/tap/dark-notify", trusted: true
 brew "openssh"
 
 # Editors/Terminals

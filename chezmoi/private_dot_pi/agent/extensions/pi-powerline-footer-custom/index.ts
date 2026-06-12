@@ -35,12 +35,12 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
   const setCustomFooter = (ctx: ExtensionContext): void => {
     setContextGauge(ctx);
     setModelDisplay(ctx);
-    costBudgetStatus?.update(ctx);
+    void costBudgetStatus?.update(ctx);
     updateWorkspaceDisplayStatuses(ctx);
   };
 
   const refreshCostBudget = (ctx: ExtensionContext): void => {
-    void costBudgetStatus?.refresh(ctx);
+    void costBudgetStatus?.update(ctx);
   };
 
   const setModel = (ctx: ExtensionContext): void => {
@@ -98,7 +98,7 @@ export default function powerlineFooterCustom(pi: ExtensionAPI): void {
     description: "Refresh pi-powerline-footer-custom status items.",
     handler: async (_args, ctx) => {
       codexWatcher?.refreshFromFile();
-      await costBudgetStatus?.refresh(ctx, true);
+      await costBudgetStatus?.update(ctx, true);
       setCustomFooter(ctx);
       ctx.ui.notify("Custom footer statuses refreshed", "info");
     },

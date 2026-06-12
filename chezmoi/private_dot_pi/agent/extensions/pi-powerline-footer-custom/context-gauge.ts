@@ -1,10 +1,7 @@
-import {
-  type ExtensionContext,
-  getAgentDir,
-  SettingsManager,
-} from "@earendil-works/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 import { colorForPercent, renderGauge } from "./gauge.js";
+import { getCompactionReserveTokens } from "./settings.js";
 
 const STATUS_KEY = "context_gauge";
 const SOFT_MAX_TOKENS = 400_000;
@@ -15,10 +12,10 @@ interface ContextGauge {
 }
 
 export class ContextGaugeStatus {
-  private readonly settingsManager: SettingsManager;
+  private readonly cwd: string;
 
   constructor(cwd: string) {
-    this.settingsManager = SettingsManager.create(cwd, getAgentDir());
+    this.cwd = cwd;
   }
 
   update(ctx: ExtensionContext): void {
@@ -28,7 +25,7 @@ export class ContextGaugeStatus {
     const gauge = calculateContextGauge(
       usage.tokens,
       usage.contextWindow,
-      this.settingsManager.getCompactionReserveTokens(),
+      getCompactionReserveTokens(this.cwd),
     );
 
     ctx.ui.setStatus(

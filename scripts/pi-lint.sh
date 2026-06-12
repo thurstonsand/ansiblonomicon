@@ -36,7 +36,7 @@ for dir in "${PACKAGE_DIRS[@]}"; do
   echo "==> biome $MODE $dir"
   (
     cd "$dir"
-    mapfile -t files < <(find . -maxdepth 1 -type f \( -name '*.ts' -o -name 'package.json' -o -name 'tsconfig.json' -o -name 'biome.json' \) | sort)
+    mapfile -t files < <(find . -type f -not -path '*/node_modules/*' \( -name '*.ts' -o -name 'package.json' -o -name 'tsconfig.json' -o -name 'biome.json' \) | sort)
     if [[ ${#files[@]} -gt 0 ]]; then
       npx biome check $WRITE_FLAG "${files[@]}"
     fi

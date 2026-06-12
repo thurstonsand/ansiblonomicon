@@ -1,11 +1,11 @@
 import {
   type PermissionSubject,
   SHELL_TOOL_NAMES,
-  type ShellToolName,
+  WEB_SEARCH_SUBJECT_TOOL,
 } from "./permission-subject.js";
 
 export type PermissionRule = {
-  toolNames: readonly ShellToolName[];
+  toolNames: readonly string[];
   label: string;
   description: string;
   matches: (subject: PermissionSubject) => boolean;
@@ -25,7 +25,7 @@ function commandRule(
     toolNames: SHELL_TOOL_NAMES,
     label,
     description,
-    matches: (subject) => matches(subject.command),
+    matches: (subject) => subject.kind === "shell-command" && matches(subject.command),
   };
 }
 
@@ -82,6 +82,41 @@ export function isRecursiveForcedRemovalCommand(command: string): boolean {
   return false;
 }
 
+function isPsqlInvocation(command: string): boolean {
+  return tokenizeShellWords(command)
+    .map(stripOuterQuotes)
+    .some((token) => token === "psql" || token.endsWith("/psql"));
+}
+
+function psqlRule(
+  label: string,
+  description: string,
+  matchesSql: (command: string) => boolean,
+): PermissionRule {
+  return commandRule(
+    label,
+    description,
+    (command) => isPsqlInvocation(command) && matchesSql(command),
+  );
+}
+
+const SQL_DATA_MUTATION_PATTERN =
+  /\b(?:insert|update|delete|merge|truncate|vacuum|reindex|cluster)\b/i;
+// ANALYZE is a maintenance statement, but EXPLAIN ANALYZE is read-only — exclude that form.
+const SQL_ANALYZE_PATTERN = /(?<!\bexplain\s+)\banalyze\b/i;
+// COPY ... FROM (and the psql \copy meta-command) ingest data; COPY ... TO only exports.
+const SQL_COPY_FROM_PATTERN = /\\?\bcopy\b[\s\S]*?\bfrom\b/i;
+const SQL_DDL_PATTERN = /\b(?:create|alter|drop|rename)\b/i;
+const SQL_DCL_PATTERN = /\b(?:grant|revoke)\b/i;
+
+function isPostgresDataMutation(command: string): boolean {
+  return (
+    SQL_DATA_MUTATION_PATTERN.test(command) ||
+    SQL_ANALYZE_PATTERN.test(command) ||
+    SQL_COPY_FROM_PATTERN.test(command)
+  );
+}
+
 export const PERMISSION_RULES: PermissionRule[] = [
   commandPatternRule(
     "git mutation",
@@ -94,6 +129,23 @@ export const PERMISSION_RULES: PermissionRule[] = [
     isRecursiveForcedRemovalCommand,
   ),
   commandPatternRule("destructive find", "find with -delete", /find\s+.*-delete/i),
+  psqlRule(
+    "SQL data mutation",
+    "psql running INSERT/UPDATE/DELETE/MERGE/TRUNCATE, COPY…FROM, or VACUUM/REINDEX/ANALYZE/CLUSTER",
+    isPostgresDataMutation,
+  ),
+  psqlRule("SQL schema change", "psql running DDL: CREATE/ALTER/DROP/RENAME", (command) =>
+    SQL_DDL_PATTERN.test(command),
+  ),
+  psqlRule("SQL privilege change", "psql running DCL: GRANT/REVOKE", (command) =>
+    SQL_DCL_PATTERN.test(command),
+  ),
+  {
+    toolNames: [WEB_SEARCH_SUBJECT_TOOL],
+    label: "web search",
+    description: "web search tools (data leaves the machine on every query)",
+    matches: (subject) => subject.kind === "tool-invocation",
+  },
 ];
 
 export function findMatchingRule(subject: PermissionSubject): PermissionMatch | undefined {

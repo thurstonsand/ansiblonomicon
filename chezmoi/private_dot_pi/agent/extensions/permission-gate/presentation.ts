@@ -1,5 +1,3 @@
-import type { ShellToolName } from "./permission-subject.js";
-
 export type ApprovalNote = {
   ruleLabel: string;
   note: string;
@@ -7,7 +5,7 @@ export type ApprovalNote = {
 
 export type PermissionPromptInput = {
   ruleLabel: string;
-  toolName: ShellToolName;
+  toolName: string;
   detail: string;
 };
 

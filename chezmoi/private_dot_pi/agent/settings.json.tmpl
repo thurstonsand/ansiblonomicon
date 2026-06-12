@@ -30,10 +30,20 @@
     "verbosity": "low",
     "reasoningSummary": "auto"
   },
-  {{- if .inferenceBudgetUrl }}
-  "inferenceBudget": {
-    "url": "{{ .inferenceBudgetUrl }}"
+  "glimpse": {
+    "companion": {
+      "enabled": true
+    }
   },
+  {{- $pc := dict }}
+  {{- if .inferenceBudgetUrl }}
+  {{-   $budget := dict "url" .inferenceBudgetUrl }}
+  {{-   if .costsDashboardUrl }}{{ $_ := set $budget "costsUrl" .costsDashboardUrl }}{{ end }}
+  {{-   $_ := set $pc "budget" $budget }}
+  {{- end }}
+  {{- if .jiraBrowseUrl }}{{ $_ := set $pc "jira" (dict "browseUrl" .jiraBrowseUrl) }}{{ end }}
+  {{- if $pc }}
+  "powerlineCustom": {{ toPrettyJson $pc | indent 2 | trim }},
   {{- end }}
   "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.loads(p.read_text()).get('lastChangelogVersion','0.74.0') if p.exists() else '0.74.0')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
   "enabledModels": [
@@ -119,7 +129,6 @@
 {{- range .piWorkPackages }}
     {{ . | toJson }},
 {{- end }}
-    "git:github.com/nicobailon/pi-subagents",
     "git:github.com/thurstonsand/pi-powerline-footer@release",
     "git:github.com/thurstonsand/pi-sessions",
     "git:github.com/nicobailon/pi-interview-tool",
@@ -169,31 +178,6 @@
     "npm:@howaboua/pi-smart-btw"
 {{- end }}
   ],
-  "subagents": {
-    "agentOverrides": {
-      "scout": {
-        "disabled": true
-      },
-      "planner": {
-        "disabled": true
-      },
-      "worker": {
-        "disabled": true
-      },
-      "reviewer": {
-        "disabled": true
-      },
-      "context-builder": {
-        "disabled": true
-      },
-      "researcher": {
-        "disabled": true
-      },
-      "oracle": {
-        "disabled": true
-      }
-    }
-  },
   "hideThinkingBlock": true,
   "theme": "{{ output "sh" "-c" "if [ \"$(cat ~/.terminal-bg 2>/dev/null || echo dark)\" = light ]; then echo gruvbox-light-hard; else echo gruvbox-dark-hard; fi" | trim }}",
   "transport": "auto",

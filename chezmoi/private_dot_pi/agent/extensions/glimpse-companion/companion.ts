@@ -1,13 +1,24 @@
 import { execFileSync } from "node:child_process";
 import { existsSync, unlinkSync } from "node:fs";
 import { createRequire } from "node:module";
-import { createServer } from "node:net";
+import { createServer, type Socket } from "node:net";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
-import { getCompanionSocketPath, usesNamedPipe } from "./socket-path.mjs";
+// This file runs as a standalone process via `node companion.ts`, not through
+// pi's loader, so the import must name the real `.ts` file for Node to resolve.
+import { getCompanionSocketPath, usesNamedPipe } from "./shared/socket-path.ts";
 
-function resolveGlimpseEntry() {
-  const candidates = [];
+interface AgentMessage {
+  id: string;
+  project?: string;
+  status?: string;
+  detail?: string;
+  contextPercent?: number;
+  type?: string;
+}
+
+function resolveGlimpseEntry(): string | null {
+  const candidates: string[] = [];
   const override = process.env.GLIMPSE_DIR;
   if (override) candidates.push(join(override, "src", "glimpse.mjs"));
   try {
@@ -25,36 +36,40 @@ if (!glimpseEntry) {
   console.error("glimpse companion: glimpseui not found (set GLIMPSE_DIR to override)");
   process.exit(1);
 }
-const { open } = await import(glimpseEntry);
+// glimpseui has no published types and is resolved dynamically at runtime.
+// biome-ignore lint/suspicious/noExplicitAny: external module without type declarations.
+const { open } = (await import(glimpseEntry)) as { open: (...args: any[]) => any };
 
 const SOCK = getCompanionSocketPath();
 
 // ── status config ─────────────────────────────────────────────────────────────
 
-const STATUS_COLOR = {
+const STATUS_COLOR: Record<string, string> = {
   starting: "#22C55E",
   thinking: "#F59E0B",
   reading: "#3B82F6",
   editing: "#FACC15",
   running: "#F97316",
   searching: "#8B5CF6",
+  awaiting: "#A855F7",
   done: "#22C55E",
   error: "#EF4444",
 };
 
-const STATUS_LABEL = {
+const STATUS_LABEL: Record<string, string> = {
   thinking: "Working",
   reading: "Reading",
   editing: "Editing",
   running: "Running",
   searching: "Searching",
+  awaiting: "Needs you",
   done: "Done",
   error: "Error",
 };
 
 // ── HTML ──────────────────────────────────────────────────────────────────────
 
-function esc(s) {
+function esc(s: string): string {
   return String(s)
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
@@ -62,12 +77,12 @@ function esc(s) {
     .replace(/"/g, "&quot;");
 }
 
-function truncate(s, max = 100) {
+function truncate(s: string, max = 100): string {
   if (!s) return "";
   return s.length > max ? `${s.slice(0, max - 1)}…` : s;
 }
 
-function buildHTML() {
+function buildHTML(): string {
   return `<!DOCTYPE html>
 <html>
 <head>
@@ -88,6 +103,7 @@ body {
   flex-direction: column;
   justify-content: flex-end;
   height: 100vh;
+  padding: 16px;
 }
 #pill {
   width: fit-content;
@@ -123,6 +139,21 @@ body {
   font-size: 10px;
   white-space: nowrap;
 }
+.glyph {
+  color: #C084FC;
+  flex-shrink: 0;
+  font-size: 9px;
+}
+@keyframes pill-attn-pulse {
+  0%, 100% { background: rgba(0,0,0,0.45); box-shadow: 0 0 0 0 rgba(168,85,247,0); }
+  50% { background: rgba(74,38,114,0.6); box-shadow: 0 0 12px 1px rgba(168,85,247,0.55); }
+}
+#pill.attention { animation: pill-attn-pulse 1.5s ease-in-out infinite; }
+@keyframes dot-attn-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(192,132,252,0); }
+  50% { opacity: 0.5; box-shadow: 0 0 6px 1px rgba(192,132,252,0.7); }
+}
+.row.attention .dot { animation: dot-attn-pulse 1.5s ease-in-out infinite; }
 .meta {
   display: flex;
   align-items: center;
@@ -171,12 +202,12 @@ function startTick() {
   }, 1000);
 }
 
-function update(id, dotColor, project, status, detail, contextPercent) {
+function update(id, dotColor, project, status, detail, contextPercent, attention) {
   if (!_startTimes[id]) _startTimes[id] = Date.now();
   if (status === 'Done' && _startTimes[id] && !_frozenElapsed[id]) {
     _frozenElapsed[id] = fmtElapsed(Date.now() - _startTimes[id]);
   }
-  _rows[id] = { dotColor: dotColor, project: project, status: status, detail: detail, contextPercent: contextPercent };
+  _rows[id] = { dotColor: dotColor, project: project, status: status, detail: detail, contextPercent: contextPercent, attention: attention };
   render();
   startTick();
 }
@@ -193,19 +224,23 @@ function render() {
   var ids = Object.keys(_rows);
   if (ids.length === 0) {
     pill.style.opacity = '0';
+    pill.className = '';
     setTimeout(function() { pill.innerHTML = ''; }, 350);
     return;
   }
   pill.style.opacity = '1';
   var html = '';
+  var anyAttention = false;
   for (var i = 0; i < ids.length; i++) {
     var r = _rows[ids[i]];
+    if (r.attention) anyAttention = true;
     html += '<div id="r-' + ids[i] + '">';
-    html += '<div class="row">';
+    html += '<div class="' + (r.attention ? 'row attention' : 'row') + '">';
     html += '<div class="dot" style="background:' + r.dotColor + '"></div>';
     html += '<span class="project">' + esc(r.project) + '</span>';
     if (r.status) {
       html += '<span class="sep">·</span>';
+      if (r.attention) html += '<span class="glyph">▲</span> ';
       html += '<span class="status">' + esc(r.status) + '</span>';
     }
     if (r.detail) {
@@ -228,6 +263,7 @@ function render() {
     html += '</div>';
     html += '</div>';
   }
+  pill.className = anyAttention ? 'attention' : '';
   pill.innerHTML = html;
 }
 </script>
@@ -237,14 +273,15 @@ function render() {
 
 // ── state ─────────────────────────────────────────────────────────────────────
 
-const agents = new Map(); // id → { project, status, detail }
-const sockets = new Set(); // active client connections
-let win = null;
+const agents = new Map<string, AgentMessage>();
+const sockets = new Set<Socket>();
+// biome-ignore lint/suspicious/noExplicitAny: glimpse window handle is untyped.
+let win: any = null;
 let winReady = false;
-let pendingUpdates = []; // buffered calls until window is ready
-let idleTimer = null;
+let pendingUpdates: string[] = [];
+let idleTimer: ReturnType<typeof setTimeout> | null = null;
 
-function resetIdleTimer() {
+function resetIdleTimer(): void {
   if (idleTimer) clearTimeout(idleTimer);
   idleTimer = setTimeout(() => {
     if (agents.size === 0 && sockets.size === 0) {
@@ -256,18 +293,20 @@ function resetIdleTimer() {
 
 // ── render ─────────────────────────────────────────────────────────────────────
 
-function pushUpdate(id, data) {
-  const color = STATUS_COLOR[data.status] ?? "#6B7280";
-  const label = STATUS_LABEL[data.status] ?? "";
+function pushUpdate(id: string, data: AgentMessage): void {
+  const status = data.status ?? "";
+  const color = STATUS_COLOR[status] ?? "#6B7280";
+  const label = STATUS_LABEL[status] ?? "";
   const detail = truncate(data.detail ?? "", 60);
   const project = esc(data.project ?? "pi");
   const ctxPct = data.contextPercent ?? null;
-  const js = `update(${JSON.stringify(id)},${JSON.stringify(color)},${JSON.stringify(project)},${JSON.stringify(label)},${JSON.stringify(detail)},${JSON.stringify(ctxPct)})`;
+  const attention = status === "awaiting";
+  const js = `update(${JSON.stringify(id)},${JSON.stringify(color)},${JSON.stringify(project)},${JSON.stringify(label)},${JSON.stringify(detail)},${JSON.stringify(ctxPct)},${JSON.stringify(attention)})`;
   if (winReady) win.send(js);
   else pendingUpdates.push(js);
 }
 
-function pushRemove(id) {
+function pushRemove(id: string): void {
   const js = `remove(${JSON.stringify(id)})`;
   if (winReady) win.send(js);
   else pendingUpdates.push(js);
@@ -284,12 +323,12 @@ if (!usesNamedPipe(SOCK)) {
 
 const server = createServer((socket) => {
   sockets.add(socket);
-  const rl = createInterface({ input: socket, crlfDelay: Infinity });
-  let clientId = null;
+  const rl = createInterface({ input: socket, crlfDelay: Number.POSITIVE_INFINITY });
+  let clientId: string | null = null;
 
   rl.on("line", (line) => {
     try {
-      const msg = JSON.parse(line);
+      const msg = JSON.parse(line) as AgentMessage;
       if (!msg.id) return;
       clientId = msg.id;
 
@@ -337,7 +376,7 @@ win = open(buildHTML(), {
   cursorAnchor: "top-right",
 });
 
-win.on("ready", (_info) => {
+win.on("ready", () => {
   winReady = true;
   for (const js of pendingUpdates) win.send(js);
   pendingUpdates = [];
@@ -353,7 +392,7 @@ win.on("error", () => {});
 // ── cleanup ───────────────────────────────────────────────────────────────────
 
 let cleanedUp = false;
-function cleanup() {
+function cleanup(): void {
   if (cleanedUp) return;
   cleanedUp = true;
   server.close();

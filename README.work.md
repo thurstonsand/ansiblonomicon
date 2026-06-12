@@ -4,21 +4,21 @@ This documents all files that live **only** on the work Mac and are not tracked 
 
 ## Chezmoi Data Layer
 
-| File                                             | Purpose                                                                                                                                                                            |
-| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `~/.local/share/chezmoi/.chezmoidata/local.toml` | Git identity, SCM hosts (as `[[scm]]` array), Go import/build config, Claude Code model config, `anthropicAuthToken`, `anthropicBaseUrl`, `inferenceBudgetUrl`, `localTrustedTaps`, Claude MCP servers (`[[mcp_servers]]`), Pi MCP servers (`pi_mcp_json`) |
+All fields live in `~/.local/share/chezmoi/.chezmoidata/local.toml`:
 
-Defaults for `goLocalImports`, `goplsBuildFlags`, `anthropicAuthToken`, `anthropicBaseUrl`, and `inferenceBudgetUrl` are declared in `.chezmoidata.toml` (empty strings). `scm` defaults to an empty array.
-
-`inferenceBudgetUrl` is the full GenAI Hub budget endpoint. It feeds the pi powerline cost segment via `settings.json.tmpl` (`inferenceBudget.url`); the `pi-powerline-footer-custom` extension reads that value and the `anthropic` token from `auth.json` to fetch 30-day spend. Empty on personal machines disables the segment, so the work endpoint never enters git.
-
-The `email` / `signingKey` identity from `local.toml` also renders `~/.config/git/allowed_signers` (via `dot_config/git/allowed_signers.tmpl`), which `git config gpg.ssh.allowedSignersFile` points at so SSH-signed commits verify locally (`%G?` → `G`). The template holds only `{{ .email }}` / `{{ .signingKey }}` placeholders, so the work identity never enters git — it only materializes in the deployed file.
-
-On the work machine, pi is deployed alongside Claude (via the `pi_release` role and the `pi` agent-harness target). Its anthropic provider, auth, and default model are gated by hostname and route through the corporate endpoint using `anthropicAuthToken` / `anthropicBaseUrl` from `local.toml`. Personal machines keep the AI-Gateway config.
-
-Internal-only pi packages (e.g. SSH plugin sources on the corporate SCM) are supplied via `piWorkPackages` in `local.toml` (defaults to an empty array in `.chezmoidata.toml`). `settings.json.tmpl` prepends them to the work `packages` list, so their URLs never enter git.
-
-Pi MCP servers for the `pi-mcp-adapter` extension are supplied via `pi_mcp_json` in `local.toml` (defaults to an empty array in `.chezmoidata.toml`) — an array of JSON-string server maps with no `mcpServers` wrapper. `private_dot_pi/agent/mcp.json.tmpl` deep-merges those entries with `mergeOverwrite`, wraps them once under `mcpServers`, and renders `~/.pi/agent/mcp.json`; `.chezmoiignore` skips the file entirely when the array is empty, so corporate SCM-derived command paths never enter git. This is a separate key from the Claude `[[mcp_servers]]` list so the two agents' MCP sets can diverge.
+| Field                                | Consumed by                                              |
+| ------------------------------------ | -------------------------------------------------------- |
+| `email` / `signingKey`               | `dot_config/git/allowed_signers.tmpl`                    |
+| `[[scm]]`                            | git / SCM templates                                      |
+| `goLocalImports` / `goplsBuildFlags` | Go tooling templates                                     |
+| `[claude_code_models]`               | Claude Code model templates                              |
+| `anthropicAuthToken`                 | pi / Claude auth templates                               |
+| `anthropicBaseUrl`                   | pi / Claude provider templates                           |
+| `inferenceBudgetUrl`                 | `settings.json.tmpl` (`powerlineCustom.budget.url`)      |
+| `costsDashboardUrl`                  | `settings.json.tmpl` (`powerlineCustom.budget.costsUrl`) |
+| `jiraBrowseUrl`                      | `settings.json.tmpl` (`powerlineCustom.jira.browseUrl`)  |
+| `[[mcp_servers]]`                    | Claude MCP registration                                  |
+| `pi_mcp_json`                        | `private_dot_pi/agent/mcp.json.tmpl`                     |
 
 ## Shell Extras
 
@@ -67,12 +67,6 @@ These should be used instead of hard-coding model values.
 
 `Brewfile.work` **is** committed. The `.local` variant is for tools that are not publicly available.
 
-### Trusted Taps
-
-Homebrew's `HOMEBREW_REQUIRE_TAP_TRUST` gate refuses to load formulae from untrusted third-party taps. The trust list lives `chezmoi/dot_config/homebrew/private_trust.json.tmpl`.
-
-The template holds the personal taps inline and merges `localTrustedTaps` from `local.toml` (deduped + sorted), so corporate tap URLs never enter git. Non-GitHub-remote taps are trusted by their full git remote URL.
-
 ## Work-Local Config
 
 | File                            | Purpose                                                                          |
@@ -115,7 +109,7 @@ Added to `agent_harness_sources_base` in `work.config.yml`.
 | ------------------------------------------------ | --------------------------------------------------------- |
 | `~/.local/share/chezmoi/.chezmoidata/local.toml` | `[[mcp_servers]]` entries for user-scope MCP registration |
 
-The chezmoi `run_onchange_after_register-mcp-servers.sh` script reads `[[mcp_servers]]` from `local.toml` and runs `claude mcp add --scope user` for each entry. Supports `transport = "http"` (URL-based) and `transport = "stdio"` (command + args).
+The chezmoi `run_onchange_after_register-mcp-servers.sh` script reads `[[mcp_servers]]` from `local.toml` and runs `claude mcp add --scope user` for each entry.
 
 ## Python Package Indexes (uv + pip)
 

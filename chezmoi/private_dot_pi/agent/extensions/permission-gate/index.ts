@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { PendingApprovalNotes } from "./pending-approvals.js";
 import { permissionSubjectFromToolCall } from "./pi-tools.js";
@@ -98,7 +99,18 @@ export default function permissionGate(pi: ExtensionAPI) {
     }
 
     const prompt = formatPermissionPrompt(promptInput);
-    const decision = await showPermissionGate(ctx, prompt.title, prompt.body);
+    const attentionId = randomUUID();
+    pi.events.emit("glimpseui:attention:request", {
+      attentionId,
+      kind: "permission",
+      detail: subject.detail,
+    });
+    let decision: Awaited<ReturnType<typeof showPermissionGate>>;
+    try {
+      decision = await showPermissionGate(ctx, prompt.title, prompt.body);
+    } finally {
+      pi.events.emit("glimpseui:attention:resolve", { attentionId });
+    }
 
     switch (decision.kind) {
       case "allow":

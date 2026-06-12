@@ -10,7 +10,7 @@ command -v claude >/dev/null 2>&1 || exit 0
 {{ range .mcp_servers -}}
 claude mcp remove --scope user {{ .name }} 2>/dev/null || true
 {{ if eq .transport "http" -}}
-claude mcp add --scope user --transport http {{ .name }} {{ .url }} 2>/dev/null || true
+claude mcp add --scope user --transport http {{ range $key, $value := .headers }}--header '{{ $key }}: {{ $value }}' {{ end }}{{ .name }} {{ .url }} 2>/dev/null || true
 {{ else -}}
 claude mcp add --scope user {{ .name }} {{ range $key, $value := .env }}-e {{ $key }}={{ $value }} {{ end }}-- {{ .command }} {{ range .args }}{{ . }} {{ end }}2>/dev/null || true
 {{ end -}}

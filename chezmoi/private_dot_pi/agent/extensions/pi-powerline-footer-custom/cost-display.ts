@@ -1,135 +1,93 @@
-import { mkdirSync, renameSync, statSync, writeFileSync } from "node:fs";
-import { homedir } from "node:os";
-import path from "node:path";
-import { type ExtensionContext, getAgentDir, SettingsManager } from "@earendil-works/pi-coding-agent";
+import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 
+import { type BudgetCeiling, BudgetClient, type DailyCost } from "./budget-client.js";
 import { colorForPercent } from "./gauge.js";
-import { isJsonObject, type JsonObject, readJsonFile } from "./json-file.js";
+import { getBudgetSettings } from "./settings.js";
 
-const STATUS_KEY = "cost_budget";
-const CACHE_DIR = path.join(homedir(), ".cache", "claude-usage");
-const CACHE_FILE = path.join(CACHE_DIR, "budget.json");
-const REFRESH_TTL_MS = 300_000;
-const FETCH_TIMEOUT_MS = 5_000;
-
-interface Budget {
-  spentUsd: number;
-  budgetUsd: number;
-  percentUsed: number;
-}
-
-interface InferenceBudgetSettings {
-  readonly url: string | undefined;
-}
-
-interface PiSettings {
-  readonly inferenceBudget: InferenceBudgetSettings;
-}
+const BUDGET_STATUS_KEY = "cost_budget";
+const RATE_WINDOW_DAYS = 7; // "at last week's pace"
+// At 90% spend the budget forces a downgrade to haiku, so treat that as the
+// effective ceiling for the exceed projection.
+const USABLE_BUDGET_FRACTION = 0.9;
 
 export class CostBudgetStatus {
-  private readonly endpoint: string | undefined;
-  private refreshing = false;
+  private readonly client: BudgetClient;
 
   constructor() {
-    this.endpoint = loadSettings().inferenceBudget.url;
+    const budget = getBudgetSettings();
+    this.client = new BudgetClient(budget.url, budget.costsUrl);
   }
 
-  update(ctx: ExtensionContext): void {
-    const budget = this.endpoint ? readBudget() : undefined;
-    if (!budget) {
-      ctx.ui.setStatus(STATUS_KEY, undefined);
+  async update(ctx: ExtensionContext, force = false): Promise<void> {
+    const [ceiling, days] = await Promise.all([
+      this.client.getBudgetCeiling(force),
+      this.client.getDailyCosts(force),
+    ]);
+    if (!ceiling || !days) {
+      ctx.ui.setStatus(BUDGET_STATUS_KEY, undefined);
       return;
     }
 
-    const spent = ctx.ui.theme.fg(
-      colorForPercent(budget.percentUsed),
-      `$${Math.round(budget.spentUsd)}`,
-    );
-    const total = budget.budgetUsd > 0 ? ctx.ui.theme.fg("text", `/$${Math.round(budget.budgetUsd)}`) : "";
-    ctx.ui.setStatus(STATUS_KEY, `${spent}${total}`);
-  }
+    const spent = days.reduce((sum, d) => sum + d.cost, 0);
+    const percent = ceiling.budgetUsd > 0 ? (spent / ceiling.budgetUsd) * 100 : 0;
 
-  async refresh(ctx: ExtensionContext, force = false): Promise<void> {
-    if (!this.endpoint || this.refreshing || (!force && isCacheFresh())) return;
-    this.refreshing = true;
-    try {
-      const token = readAnthropicToken();
-      if (!token) return;
-
-      const data = await fetchBudget(this.endpoint, token);
-      if (!data) return;
-
-      writeCache(data);
-      this.update(ctx);
-    } finally {
-      this.refreshing = false;
-    }
+    const spentText = ctx.ui.theme.fg(colorForPercent(percent), `$${Math.round(spent)}`);
+    const totalText =
+      ceiling.budgetUsd > 0 ? ctx.ui.theme.fg("text", `/$${Math.round(ceiling.budgetUsd)}`) : "";
+    const alert = projectionAlert(ctx, ceiling, days);
+    ctx.ui.setStatus(BUDGET_STATUS_KEY, `${spentText}${alert}${totalText}`);
   }
 }
 
-function loadSettings(): PiSettings {
-  const raw = SettingsManager.create(process.cwd()).getGlobalSettings() as Record<string, unknown>;
-  const inferenceBudget = isJsonObject(raw.inferenceBudget) ? raw.inferenceBudget : undefined;
-  const url = typeof inferenceBudget?.url === "string" && inferenceBudget.url.length > 0
-    ? inferenceBudget.url
-    : undefined;
-  return { inferenceBudget: { url } };
+/**
+ * Inline overshoot warning: rendered only when last week's pace projects past
+ * the usable ceiling (90% of budget). Empty otherwise.
+ */
+function projectionAlert(ctx: ExtensionContext, ceiling: BudgetCeiling, days: DailyCost[]): string {
+  const eta = daysUntilExceed(days, ceiling.windowDays, ceiling.budgetUsd);
+  if (eta === undefined) return "";
+  const label = eta <= 0 ? "exceed now" : `exceed in ${eta}d`;
+  return ` ${ctx.ui.theme.fg("error", `(\u26a0 ${label})`)}`;
 }
 
-function readAnthropicToken(): string | undefined {
-  const auth = readJsonFile(path.join(getAgentDir(), "auth.json"));
-  const anthropic = isJsonObject(auth?.anthropic) ? auth.anthropic : undefined;
-  return typeof anthropic?.key === "string" ? anthropic.key : undefined;
+function completeDays(days: DailyCost[]): DailyCost[] {
+  const today = new Date().toISOString().slice(0, 10);
+  return days.filter((d) => d.date !== today);
 }
 
-function readBudget(): Budget | undefined {
-  const parsed = readJsonFile(CACHE_FILE);
-  if (!parsed) return undefined;
-
-  const spentUsd = numberOf(parsed.spent_usd);
-  const percentUsed = numberOf(parsed.percent_used);
-  if (spentUsd === undefined || percentUsed === undefined) return undefined;
-
-  return { spentUsd, budgetUsd: numberOf(parsed.budget_usd) ?? 0, percentUsed };
+/** Mean daily spend over the most recent complete days — "last week's pace". */
+function recentDailyRate(days: DailyCost[]): number | undefined {
+  const recent = completeDays(days).slice(-RATE_WINDOW_DAYS);
+  if (recent.length < 2) return undefined;
+  return recent.reduce((sum, d) => sum + d.cost, 0) / recent.length;
 }
 
-function isCacheFresh(): boolean {
-  try {
-    return Date.now() - statSync(CACHE_FILE).mtimeMs < REFRESH_TTL_MS;
-  } catch {
-    return false;
+/**
+ * Days until the rolling-window spend first crosses the usable ceiling (90% of
+ * budget), projecting forward at last week's rate: each simulated day adds the
+ * rate and drops the oldest day out of the window. Returns undefined when the
+ * steady-state pace stays within the ceiling, 0 when already over it.
+ */
+function daysUntilExceed(
+  days: DailyCost[],
+  windowDays: number,
+  budgetUsd: number,
+): number | undefined {
+  if (budgetUsd <= 0) return undefined;
+  const ceiling = budgetUsd * USABLE_BUDGET_FRACTION;
+  const rate = recentDailyRate(days);
+  if (rate === undefined || rate * windowDays <= ceiling) return undefined;
+
+  const window = completeDays(days)
+    .slice(-windowDays)
+    .map((d) => d.cost);
+  let rollingSum = window.reduce((sum, c) => sum + c, 0);
+  if (rollingSum > ceiling) return 0;
+
+  for (let k = 1; k <= windowDays; k++) {
+    const dropped = k <= window.length ? window[k - 1] : rate;
+    rollingSum += rate - dropped;
+    if (rollingSum > ceiling) return k;
   }
-}
-
-async function fetchBudget(endpoint: string, token: string): Promise<JsonObject | undefined> {
-  try {
-    const response = await fetch(endpoint, {
-      headers: { Authorization: `Bearer ${token}` },
-      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
-    });
-    if (!response.ok) return undefined;
-
-    const json: unknown = await response.json();
-    if (!isJsonObject(json) || "errors" in json) return undefined;
-    if (typeof json.spent_usd !== "number") return undefined;
-
-    return json;
-  } catch {
-    return undefined;
-  }
-}
-
-function writeCache(data: JsonObject): void {
-  try {
-    mkdirSync(CACHE_DIR, { recursive: true });
-    const tmpFile = `${CACHE_FILE}.tmp.${process.pid}`;
-    writeFileSync(tmpFile, JSON.stringify({ ...data, updatedAt: Date.now() }));
-    renameSync(tmpFile, CACHE_FILE);
-  } catch {
-    // Cache is best-effort; a failed write just defers the next refresh.
-  }
-}
-
-function numberOf(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value) ? value : undefined;
+  return windowDays;
 }
