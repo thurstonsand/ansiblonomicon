@@ -78,4 +78,7 @@ I like the philosophy that "every change should be easy". If we have a new featu
 
 The vast majority of the time, code is clear enough to speak for itself. We should reserve comments very specifically for situations where we had to make a non-obvious decision, or in a particularly complex or obtuse, but necessary, piece of code. If a comment simply restates what's in the code, that's a signal to remove the comment, and clarify the code if needed (could be as simple as renaming a variable).
 
+{{- if stat (joinPath .homeDir ".agents" "local.md") }}
+
 @~/.agents/local.md
+{{- end }}

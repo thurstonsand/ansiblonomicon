@@ -1,30 +1,70 @@
+local hunk_command = { "hunk", "diff" }
+
+local function hunk_editor_env()
+  local server = vim.v.servername
+  if server == "" then
+    server = vim.fn.serverstart()
+  end
+
+  return {
+    EDITOR = "nvim",
+    NVIM_OUTER_SERVER = server,
+    NVIM_REAL_BIN = vim.v.progpath,
+    PATH = vim.fn.expand("~/.local/libexec/nvim-inner") .. ":" .. vim.env.PATH,
+  }
+end
+
+local function hunk_terminal_opts(root)
+  return {
+    count = 1,
+    cwd = root,
+    env = hunk_editor_env(),
+    win = {
+      position = "float",
+      width = 0.98,
+      height = 0.98,
+      wo = { winblend = 5 },
+      keys = {
+        hunk_hide = {
+          "<c-q>",
+          function(win)
+            win:hide()
+          end,
+          mode = { "n", "t" },
+          desc = "Hide Hunk",
+        },
+      },
+    },
+  }
+end
+
+local function open_hunk_diff()
+  if vim.fn.executable("hunk") ~= 1 then
+    vim.notify("hunk executable not found", vim.log.levels.ERROR)
+    return
+  end
+
+  local root = LazyVim.root.git()
+  Snacks.terminal.focus(hunk_command, hunk_terminal_opts(root))
+end
+
 return {
   -- inline blame toggle (persistent GitLens-style virtual text)
   {
     "lewis6991/gitsigns.nvim",
-    opts = {
-      current_line_blame = false,
-      current_line_blame_opts = { delay = 300 },
-    },
-    keys = {
-      {
-        "<leader>ub",
-        function()
-          require("gitsigns").toggle_current_line_blame()
-        end,
-        desc = "Toggle Inline Blame",
-      },
-    },
-    -- disable <leader>ghd / ghD — diffview covers this use case
-    init = function()
-      vim.api.nvim_create_autocmd("User", {
-        pattern = "VeryLazy",
-        once = true,
-        callback = function()
-          pcall(vim.keymap.del, "n", "<leader>ghd")
-          pcall(vim.keymap.del, "n", "<leader>ghD")
-        end,
-      })
+    opts = function(_, opts)
+      local on_attach = opts.on_attach
+
+      opts.current_line_blame = false
+      opts.current_line_blame_opts = { delay = 0, virt_text_pos = "right_align" }
+      opts.on_attach = function(buffer)
+        if on_attach then
+          on_attach(buffer)
+        end
+
+        pcall(vim.keymap.del, "n", "<leader>ghd", { buffer = buffer })
+        pcall(vim.keymap.del, "n", "<leader>ghD", { buffer = buffer })
+      end
     end,
   },
 
@@ -69,7 +109,7 @@ return {
 
       return {
         { "<leader>gv", focus_or_open_diffview, desc = "Diff View (Open or Focus)" },
-        { "<leader>gV", "<cmd>DiffviewClose<cr>", desc = "Close Diff View" },
+        { "<leader>gV", open_hunk_diff, desc = "Hunk Diff" },
         { "<leader>gH", "<cmd>DiffviewFileHistory %<cr>", desc = "File History (Current)" },
       }
     end,

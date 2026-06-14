@@ -14,13 +14,15 @@ end, { desc = "Copy Diagnostics to Clipboard" })
 vim.keymap.set("n", "gb", "<Cmd>bnext<CR>", { desc = "Next Buffer" })
 vim.keymap.set("n", "gB", "<Cmd>bprevious<CR>", { desc = "Prev Buffer" })
 
--- remap background toggle from <leader>ub to <leader>uB so blame can use <leader>ub
--- runs after VeryLazy to ensure Snacks keymaps are already registered
-vim.api.nvim_create_autocmd("User", {
-  pattern = "VeryLazy",
-  once = true,
-  callback = function()
-    pcall(vim.keymap.del, "n", "<leader>ub")
-    Snacks.toggle.option("background", { off = "light", on = "dark", name = "Dark Background" }):map("<leader>uB")
-  end,
-})
+pcall(vim.keymap.del, "n", "<leader>ub")
+Snacks.toggle.option("background", { off = "light", on = "dark", name = "Dark Background" }):map("<leader>uB")
+vim.keymap.set("n", "<leader>ub", function()
+  require("lazy").load({ plugins = { "gitsigns.nvim" } })
+  local enabled = require("gitsigns").toggle_current_line_blame()
+  require("gitsigns.current_line_blame").refresh()
+  vim.notify("Inline blame " .. (enabled and "enabled" or "disabled"), vim.log.levels.INFO)
+end, { desc = "Toggle Inline Blame" })
+
+pcall(function()
+  require("which-key").add({ { "<leader>ub", desc = "Toggle Inline Blame", icon = "󰊢" } })
+end)
