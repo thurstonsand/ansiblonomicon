@@ -1,0 +1,31 @@
+#!/bin/bash
+set -euo pipefail
+
+if [[ -z "${NVIM_OUTER_SERVER:-}" ]]; then
+  echo "hunk nvim editor: NVIM_OUTER_SERVER is not set" >&2
+  exit 2
+fi
+
+if [[ -z "${NVIM_REAL_BIN:-}" ]]; then
+  echo "hunk nvim editor: NVIM_REAL_BIN is not set" >&2
+  exit 2
+fi
+
+line=1
+if [[ "${1:-}" =~ ^\+([0-9]+)$ ]]; then
+  line="${BASH_REMATCH[1]}"
+  shift
+fi
+
+if [[ $# -eq 0 ]]; then
+  exit 0
+fi
+
+vim_single_quote() {
+  local value=${1//\'/\'\'}
+  printf "'%s'" "$value"
+}
+
+file=$(vim_single_quote "$1")
+exec "$NVIM_REAL_BIN" --server "$NVIM_OUTER_SERVER" --remote-expr \
+  "v:lua.HunkOpenInNvim(${file}, ${line})" >/dev/null

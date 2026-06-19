@@ -16,6 +16,7 @@ func NewRootCmd() *cobra.Command {
 	cmd.AddCommand(newListCmd())
 	cmd.AddCommand(newResumeCmd())
 	cmd.AddCommand(newPruneCmd())
+	cmd.AddCommand(newIgnoreCmd())
 	cmd.AddCommand(newShellCmd())
 
 	cmd.CompletionOptions.HiddenDefaultCmd = true

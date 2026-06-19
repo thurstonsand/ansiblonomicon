@@ -10,8 +10,7 @@ export const ATTENTION_RESOLVE = "glimpseui:attention:resolve";
 
 const AttentionRequestSchema = Type.Object({
   attentionId: Type.String(),
-  kind: Type.Optional(Type.String()),
-  detail: Type.Optional(Type.String()),
+  label: Type.Optional(Type.String()),
 });
 
 const AttentionResolveSchema = Type.Object({
@@ -30,40 +29,44 @@ export function parseAttentionResolve(data: unknown): AttentionResolve | undefin
 }
 
 /**
- * Tracks outstanding "attention" spans for one session. UUID correlation ids
- * make resolution race-safe: a resolve for an unknown id is a no-op, and the
- * pill only clears when the last outstanding span resolves.
+ * Tracks outstanding "attention" spans for one session. Attention annotates the
+ * current companion state; it does not replace the active tool status.
  */
-export class AttentionTracker<S = string> {
-  private readonly outstanding = new Set<string>();
-  private priorStatus: S | null = null;
+export class AttentionTracker {
+  private readonly outstanding = new Map<string, string | undefined>();
 
-  /** Returns true when this is the first span (caller should show "awaiting"). */
-  request(id: string, currentStatus: S): boolean {
-    const wasEmpty = this.outstanding.size === 0;
-    this.outstanding.add(id);
-    if (!wasEmpty) return false;
-    this.priorStatus = currentStatus;
+  get active(): boolean {
+    return this.outstanding.size > 0;
+  }
+
+  get label(): string | undefined {
+    return Array.from(this.outstanding.values()).findLast((label) => label !== undefined);
+  }
+
+  request(id: string, label?: string): boolean {
+    const before = this.snapshot();
+    this.outstanding.set(id, this.normalizeLabel(label));
+    return before !== this.snapshot();
+  }
+
+  resolve(id: string): boolean {
+    const before = this.snapshot();
+    this.outstanding.delete(id);
+    return before !== this.snapshot();
+  }
+
+  clear(): boolean {
+    if (this.outstanding.size === 0) return false;
+    this.outstanding.clear();
     return true;
   }
 
-  /** Returns the status to restore when the last span resolves, else null. */
-  resolve(id: string): S | null {
-    if (!this.outstanding.delete(id)) return null;
-    if (this.outstanding.size > 0) return null;
-    return this.take();
+  private normalizeLabel(label: string | undefined): string | undefined {
+    const normalized = label?.trim();
+    return normalized ? normalized : undefined;
   }
 
-  /** Drops all outstanding spans, returning the status to restore, else null. */
-  clear(): S | null {
-    if (this.outstanding.size === 0) return null;
-    this.outstanding.clear();
-    return this.take();
-  }
-
-  private take(): S | null {
-    const prior = this.priorStatus;
-    this.priorStatus = null;
-    return prior;
+  private snapshot(): string {
+    return `${this.active}:${this.label ?? ""}`;
   }
 }

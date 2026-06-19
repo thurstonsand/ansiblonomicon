@@ -15,7 +15,12 @@
 // kill signals, `resume`, and a hard reboot that fires no SessionEnd at all --
 // leaves the record as the orphan the `sessions` CLI surfaces for recovery.
 import { appendFileSync, readFileSync } from "node:fs";
-import { deleteRecord, writeRecord } from "@thurstons/session-recovery";
+import {
+	deleteIgnoredRecords,
+	deleteRecord,
+	loadSettings,
+	writeRecord,
+} from "@thurstons/session-recovery";
 
 const LOG_PATH = "/tmp/claude-session-recovery.log";
 
@@ -143,6 +148,9 @@ async function main(): Promise<void> {
 		return;
 	}
 
+	const settings = loadSettings();
+	deleteIgnoredRecords(settings);
+
 	log(hook.sessionId, `event=${hook.event} reason=${hook.reason}`);
 
 	if (hook.event === "SessionEnd") {
@@ -157,14 +165,17 @@ async function main(): Promise<void> {
 		return;
 	}
 
-	writeRecord({
-		tool: "claude",
-		sessionId: hook.sessionId,
-		name: readTitle(hook.transcriptPath),
-		cwd: hook.cwd,
-		transcript: hook.transcriptPath,
-		pid: process.ppid,
-	});
+	writeRecord(
+		{
+			tool: "claude",
+			sessionId: hook.sessionId,
+			name: readTitle(hook.transcriptPath),
+			cwd: hook.cwd,
+			transcript: hook.transcriptPath,
+			pid: process.ppid,
+		},
+		settings,
+	);
 	log(hook.sessionId, "wrote record");
 }
 

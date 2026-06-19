@@ -201,6 +201,20 @@ A record is classified by liveness:
   whose process died without firing its shutdown hook. These are the crashed
   sessions worth resuming.
 
+### Config
+
+The shared record writer reads `~/.config/session-recovery/config.json` (or
+`$XDG_CONFIG_HOME/session-recovery/config.json`). The first setting is
+`ignoredDirectories`, a recursive list of folders whose sessions should not be
+tracked. Entries support `~` and match descendants, so ignoring
+`~/Library/Application Support/CodexBar` also ignores CodexBar's Claude probe
+subdirectories.
+
+The Go CLI deliberately does not use this config while listing or resolving
+sessions. It assumes anything in the recovery tree is a valid session record.
+The only read of config in the CLI is the explicit maintenance surface:
+`sessions ignore`.
+
 ### Commands
 
 - `sessions ls` — list every record, each labeled `live` or `orphaned`. Default
@@ -220,6 +234,11 @@ A record is classified by liveness:
   untouched. With a `name|id`, delete that one orphaned record regardless of
   boot; resolving a `live` session instead is refused (cannot prune an open
   session).
+- `sessions ignore [path]` — with a path, add a recursive ignored directory to
+  config and immediately prune matching records. With no path, re-read the
+  config, prune matching records, and print the configured ignored directories;
+  useful after manually editing the JSON. `sessions ignore --rm [path]` removes
+  a configured ignored directory.
 - `sessions shell {bash,zsh}` — emit shell integration (the Cobra completion
   script) for `eval "$(sessions shell zsh)"`. `sessions completion ...` (Cobra's
   built-in) also remains available.
@@ -250,8 +269,14 @@ Shared library (a local package, referenced by bare specifier):
   `scripts/session-recovery-lint.sh` (`lint:session-recovery`) and tracked by
   `scripts/ts-package-deps.sh`.
   - `core.ts` — the shared writer: `SessionRecord` schema, `bootId()`,
-    `stateDir()`, `writeRecord()`, `deleteRecord()`. Node builtins only, zero
-    runtime deps; `exports` `.` → `./core.ts`.
+    `stateDir()`, `writeRecord()`, `deleteRecord()`; `exports` `.` →
+    `./core.ts`.
+  - `settings.ts` — Zod-validated settings type/loader and recursive
+    ignored-directory matching for the write side. Consumers load settings once
+    and pass the instance into core operations.
+- `chezmoi/dot_config/session-recovery/config.json` →
+  `~/.config/session-recovery/config.json`, currently ignoring CodexBar's
+  application-support folder.
 
 - **How agents consume it — idiomatic bare specifier.** Each agent declares a
   dependency on the package and imports it by name

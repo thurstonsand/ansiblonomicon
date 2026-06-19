@@ -1,5 +1,11 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { deleteRecord, writeRecord } from "@thurstons/session-recovery";
+import {
+  deleteIgnoredRecords,
+  deleteRecord,
+  loadSettings,
+  type Settings,
+  writeRecord,
+} from "@thurstons/session-recovery";
 
 // Pi funnels both deliberate quits (/quit, Ctrl-D, Ctrl-C ×2) and
 // signal-driven shutdowns (tab close, SIGHUP/SIGTERM, reboot) through the same
@@ -28,29 +34,35 @@ function installSignalHooks(): void {
   process.prependListener("SIGTERM", mark);
 }
 
-function record(pi: ExtensionAPI, ctx: ExtensionContext): void {
+function record(pi: ExtensionAPI, ctx: ExtensionContext, settings: Settings): void {
   const transcript = ctx.sessionManager.getSessionFile();
   if (!transcript || !ctx.hasUI) {
     return;
   }
-  writeRecord({
-    tool: "pi",
-    sessionId: ctx.sessionManager.getSessionId(),
-    name: pi.getSessionName() ?? null,
-    cwd: ctx.cwd,
-    transcript,
-    pid: process.pid,
-  });
+  writeRecord(
+    {
+      tool: "pi",
+      sessionId: ctx.sessionManager.getSessionId(),
+      name: pi.getSessionName() ?? null,
+      cwd: ctx.cwd,
+      transcript,
+      pid: process.pid,
+    },
+    settings,
+  );
 }
 
 export default function sessionRecovery(pi: ExtensionAPI): void {
+  const settings = loadSettings();
+
   pi.on("session_start", async (_event, ctx) => {
     installSignalHooks();
-    record(pi, ctx);
+    deleteIgnoredRecords(settings);
+    record(pi, ctx, settings);
   });
 
   pi.on("agent_end", async (_event, ctx) => {
-    record(pi, ctx);
+    record(pi, ctx, settings);
   });
 
   pi.on("session_shutdown", async (event, ctx) => {

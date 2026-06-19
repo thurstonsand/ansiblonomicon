@@ -14,6 +14,8 @@ interface AgentMessage {
   status?: string;
   detail?: string;
   contextPercent?: number;
+  attention?: boolean;
+  attentionLabel?: string;
   type?: string;
 }
 
@@ -51,7 +53,6 @@ const STATUS_COLOR: Record<string, string> = {
   editing: "#FACC15",
   running: "#F97316",
   searching: "#8B5CF6",
-  awaiting: "#A855F7",
   done: "#22C55E",
   error: "#EF4444",
 };
@@ -62,10 +63,13 @@ const STATUS_LABEL: Record<string, string> = {
   editing: "Editing",
   running: "Running",
   searching: "Searching",
-  awaiting: "Needs you",
   done: "Done",
   error: "Error",
 };
+
+const WINDOW_WIDTH = 630;
+const MIN_WINDOW_HEIGHT = 100;
+const WINDOW_VERTICAL_PADDING = 32;
 
 // ── HTML ──────────────────────────────────────────────────────────────────────
 
@@ -107,17 +111,20 @@ body {
 }
 #pill {
   width: fit-content;
+  max-width: calc(100vw - 32px);
   background: rgba(0,0,0,0.45);
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-radius: 8px;
   padding: 2px 0;
+  overflow: hidden;
   transition: opacity 0.3s ease-out;
 }
 .row {
   display: flex;
   align-items: center;
   gap: 6px;
+  min-width: 0;
   padding: 4px 10px;
 }
 .dot {
@@ -133,27 +140,37 @@ body {
 }
 .sep { color: rgba(255,255,255,0.5); flex-shrink: 0; }
 .status { color: rgba(255,255,255,0.9); flex-shrink: 0; }
+.attention-label {
+  color: #E9D5FF;
+  flex-shrink: 0;
+}
 .detail {
   color: rgba(255,255,255,0.75);
   font-family: ui-monospace, 'SF Mono', monospace;
   font-size: 10px;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
 }
-.glyph {
-  color: #C084FC;
-  flex-shrink: 0;
-  font-size: 9px;
+@keyframes entry-attn-pulse {
+  0%, 100% { background: rgba(0,0,0,0); }
+  50% { background: rgba(0,0,0,0.24); }
 }
-@keyframes pill-attn-pulse {
-  0%, 100% { background: rgba(0,0,0,0.45); box-shadow: 0 0 0 0 rgba(168,85,247,0); }
-  50% { background: rgba(74,38,114,0.6); box-shadow: 0 0 12px 1px rgba(168,85,247,0.55); }
+.entry.attention {
+  animation: entry-attn-pulse 1.5s ease-in-out infinite;
+  border-radius: 2px;
 }
-#pill.attention { animation: pill-attn-pulse 1.5s ease-in-out infinite; }
+.entry.attention:first-child { border-top-left-radius: 7px; border-top-right-radius: 7px; }
+.entry.attention:last-child { border-bottom-left-radius: 7px; border-bottom-right-radius: 7px; }
 @keyframes dot-attn-pulse {
-  0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(192,132,252,0); }
-  50% { opacity: 0.5; box-shadow: 0 0 6px 1px rgba(192,132,252,0.7); }
+  0%, 100% { box-shadow: 0 0 4px 1px rgba(192,132,252,0.45); }
+  50% { box-shadow: 0 0 10px 3px rgba(192,132,252,0.9), 0 0 18px 5px rgba(168,85,247,0.35); }
 }
-.row.attention .dot { animation: dot-attn-pulse 1.5s ease-in-out infinite; }
+.row.attention .dot {
+  background: #C084FC !important;
+  animation: dot-attn-pulse 1.5s ease-in-out infinite;
+}
 .meta {
   display: flex;
   align-items: center;
@@ -202,12 +219,12 @@ function startTick() {
   }, 1000);
 }
 
-function update(id, dotColor, project, status, detail, contextPercent, attention) {
+function update(id, dotColor, project, status, detail, contextPercent, attention, attentionLabel) {
   if (!_startTimes[id]) _startTimes[id] = Date.now();
   if (status === 'Done' && _startTimes[id] && !_frozenElapsed[id]) {
     _frozenElapsed[id] = fmtElapsed(Date.now() - _startTimes[id]);
   }
-  _rows[id] = { dotColor: dotColor, project: project, status: status, detail: detail, contextPercent: contextPercent, attention: attention };
+  _rows[id] = { dotColor: dotColor, project: project, status: status, detail: detail, contextPercent: contextPercent, attention: attention, attentionLabel: attentionLabel };
   render();
   startTick();
 }
@@ -230,17 +247,18 @@ function render() {
   }
   pill.style.opacity = '1';
   var html = '';
-  var anyAttention = false;
   for (var i = 0; i < ids.length; i++) {
     var r = _rows[ids[i]];
-    if (r.attention) anyAttention = true;
-    html += '<div id="r-' + ids[i] + '">';
+    html += '<div id="r-' + ids[i] + '" class="' + (r.attention ? 'entry attention' : 'entry') + '">';
     html += '<div class="' + (r.attention ? 'row attention' : 'row') + '">';
     html += '<div class="dot" style="background:' + r.dotColor + '"></div>';
     html += '<span class="project">' + esc(r.project) + '</span>';
+    if (r.attentionLabel) {
+      html += '<span class="sep">·</span>';
+      html += '<span class="attention-label">' + esc(r.attentionLabel) + '</span>';
+    }
     if (r.status) {
       html += '<span class="sep">·</span>';
-      if (r.attention) html += '<span class="glyph">▲</span> ';
       html += '<span class="status">' + esc(r.status) + '</span>';
     }
     if (r.detail) {
@@ -263,8 +281,18 @@ function render() {
     html += '</div>';
     html += '</div>';
   }
-  pill.className = anyAttention ? 'attention' : '';
+  pill.className = '';
   pill.innerHTML = html;
+  requestResize();
+}
+
+function requestResize() {
+  if (!window.glimpse) return;
+  requestAnimationFrame(function() {
+    var pill = document.getElementById('pill');
+    var height = Math.ceil(pill.getBoundingClientRect().height + ${WINDOW_VERTICAL_PADDING});
+    window.glimpse.send({ type: 'resize', height: height });
+  });
 }
 </script>
 </body>
@@ -300,8 +328,9 @@ function pushUpdate(id: string, data: AgentMessage): void {
   const detail = truncate(data.detail ?? "", 60);
   const project = esc(data.project ?? "pi");
   const ctxPct = data.contextPercent ?? null;
-  const attention = status === "awaiting";
-  const js = `update(${JSON.stringify(id)},${JSON.stringify(color)},${JSON.stringify(project)},${JSON.stringify(label)},${JSON.stringify(detail)},${JSON.stringify(ctxPct)},${JSON.stringify(attention)})`;
+  const attention = data.attention === true;
+  const attentionLabel = data.attentionLabel ?? "";
+  const js = `update(${JSON.stringify(id)},${JSON.stringify(color)},${JSON.stringify(project)},${JSON.stringify(label)},${JSON.stringify(detail)},${JSON.stringify(ctxPct)},${JSON.stringify(attention)},${JSON.stringify(attentionLabel)})`;
   if (winReady) win.send(js);
   else pendingUpdates.push(js);
 }
@@ -364,8 +393,8 @@ server.listen(SOCK, () => {
 // ── window ────────────────────────────────────────────────────────────────────
 
 win = open(buildHTML(), {
-  width: 630,
-  height: 100,
+  width: WINDOW_WIDTH,
+  height: MIN_WINDOW_HEIGHT,
   frameless: true,
   floating: true,
   transparent: true,
@@ -381,6 +410,18 @@ win.on("ready", () => {
   for (const js of pendingUpdates) win.send(js);
   pendingUpdates = [];
   resetIdleTimer();
+});
+
+win.on("message", (data: unknown) => {
+  if (!data || typeof data !== "object") return;
+  const message = data as { type?: unknown; height?: unknown };
+  if (message.type !== "resize" || typeof message.height !== "number") return;
+  const height = Math.max(MIN_WINDOW_HEIGHT, Math.ceil(message.height));
+  if (typeof win.resize === "function") {
+    win.resize(WINDOW_WIDTH, height);
+  } else if (typeof win._write === "function") {
+    win._write({ type: "resize", width: WINDOW_WIDTH, height });
+  }
 });
 
 win.on("closed", () => {

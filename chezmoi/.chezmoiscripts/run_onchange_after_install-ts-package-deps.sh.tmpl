@@ -2,15 +2,16 @@
 {{- $sourceExtensions := print .chezmoi.sourceDir "/private_dot_pi/agent/extensions" -}}
 {{- $sourcePowerline := print .chezmoi.sourceDir "/private_dot_pi/agent/powerline" -}}
 {{- $sourceClaudeScripts := print .chezmoi.sourceDir "/dot_claude/scripts" -}}
+{{- $sourceLocalLib := print .chezmoi.sourceDir "/dot_local/lib" -}}
 {{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
 #!/bin/sh
 set -eu
 
 PACKAGE_FINDER={{ $packageFinder | quote }}
 
-# Dependency trigger: {{ output $packageFinder "--hash" $sourceExtensions $sourcePowerline $sourceClaudeScripts | trim }}
+# Dependency trigger: {{ output $packageFinder "--hash" $sourceExtensions $sourcePowerline $sourceClaudeScripts $sourceLocalLib | trim }}
 
-"$PACKAGE_FINDER" "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/powerline" "$HOME/.claude/scripts" | while IFS= read -r package_json; do
+"$PACKAGE_FINDER" "$HOME/.pi/agent/extensions" "$HOME/.pi/agent/powerline" "$HOME/.claude/scripts" "$HOME/.local/lib" | while IFS= read -r package_json; do
   package_dir=$(dirname "$package_json")
 {{- if $isWork }}
   # Work: the @earendil-works SDK devDeps are not resolvable from artifactory,

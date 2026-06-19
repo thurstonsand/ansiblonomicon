@@ -3,7 +3,9 @@
 // The single source of truth for the cross-agent recovery record. Consumed as a package
 import { execFileSync } from "node:child_process";
 import {
+	type Dirent,
 	mkdirSync,
+	readdirSync,
 	readFileSync,
 	renameSync,
 	rmSync,
@@ -11,6 +13,10 @@ import {
 } from "node:fs";
 import { homedir, platform } from "node:os";
 import { join } from "node:path";
+import { z } from "zod";
+import type { Settings } from "./settings.ts";
+
+export { loadSettings, Settings } from "./settings.ts";
 
 export const SUPPORTED_TOOLS = ["pi", "claude"] as const;
 export type Tool = (typeof SUPPORTED_TOOLS)[number];
@@ -73,8 +79,59 @@ function recordPath(tool: Tool, sessionId: string): string {
 	return join(stateDir(tool), `${sessionId}.json`);
 }
 
+const CleanupRecordSchema = z.object({
+	sessionId: z.string(),
+	cwd: z.string(),
+});
+
+type CleanupRecord = z.infer<typeof CleanupRecordSchema>;
+
+function recordsForTool(tool: Tool): CleanupRecord[] {
+	let entries: Dirent[];
+	try {
+		entries = readdirSync(stateDir(tool), { withFileTypes: true });
+	} catch {
+		return [];
+	}
+
+	const records: CleanupRecord[] = [];
+	for (const entry of entries) {
+		if (!entry.isFile() || !entry.name.endsWith(".json")) {
+			continue;
+		}
+		const record = readRecordFile(join(stateDir(tool), entry.name));
+		if (record) {
+			records.push(record);
+		}
+	}
+	return records;
+}
+
+function readRecordFile(path: string): CleanupRecord | null {
+	try {
+		return CleanupRecordSchema.parse(JSON.parse(readFileSync(path, "utf8")));
+	} catch {
+		return null;
+	}
+}
+
+export function deleteIgnoredRecords(settings: Settings): void {
+	for (const tool of SUPPORTED_TOOLS) {
+		for (const record of recordsForTool(tool)) {
+			if (!settings.shouldTrackCwd(record.cwd)) {
+				deleteRecord(tool, record.sessionId);
+			}
+		}
+	}
+}
+
 /** Atomically write (or refresh) a session's recovery record. */
-export function writeRecord(input: RecordInput): void {
+export function writeRecord(input: RecordInput, settings: Settings): void {
+	if (!settings.shouldTrackCwd(input.cwd)) {
+		deleteRecord(input.tool, input.sessionId);
+		return;
+	}
+
 	const dir = stateDir(input.tool);
 	mkdirSync(dir, { recursive: true, mode: 0o700 });
 

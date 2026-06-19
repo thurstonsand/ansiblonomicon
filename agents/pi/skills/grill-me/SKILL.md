@@ -19,7 +19,7 @@ Start at Gate 1 unless the user explicitly says a gate is already complete.
 
 Walk the decision tree in dependency order. Resolve upstream decisions before downstream ones. You may ask multiple questions in one turn when they depend on the same resolved premise.
 
-If a question can be answered by exploring the codebase or existing documentation, explore instead of asking.
+If a question can be answered by exploring the codebase, explore the codebase instead.
 
 ### Explore before asking
 

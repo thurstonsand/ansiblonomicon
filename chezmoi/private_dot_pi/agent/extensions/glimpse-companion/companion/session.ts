@@ -19,6 +19,8 @@ interface CompanionMessage {
   status: string;
   detail?: string;
   contextPercent?: number;
+  attention?: boolean;
+  attentionLabel?: string;
 }
 
 /**
@@ -29,13 +31,14 @@ interface CompanionMessage {
 export class CompanionSession {
   private enabled = loadEnabled();
   private lastStatus: CompanionStatus | "" = "";
+  private lastDetail: string | undefined;
   private lastCtx: ExtensionContext | null = null;
   private warnedUnsupported = false;
   private followCursorSupport: FollowCursorSupport = { supported: true };
   private glimpseLoaded = false;
   private readonly project = basename(process.cwd());
   private readonly connection = new CompanionConnection();
-  private readonly attention = new AttentionTracker<CompanionStatus | "">();
+  private readonly attention = new AttentionTracker();
 
   get isEnabled(): boolean {
     return this.enabled;
@@ -117,21 +120,19 @@ export class CompanionSession {
     if (!this.active) return;
     const payload = parseAttentionRequest(data);
     if (!payload) return;
-    if (!this.attention.request(payload.attentionId, this.lastStatus)) return;
+    if (!this.attention.request(payload.attentionId, payload.label)) return;
     await this.connection.ensureConnected();
-    this.send(COMPANION_STATUS.awaiting, payload.detail);
+    this.resend();
   }
 
   resolveAttention(data: unknown): void {
     const payload = parseAttentionResolve(data);
     if (!payload) return;
-    const prior = this.attention.resolve(payload.attentionId);
-    if (prior) this.send(prior);
+    if (this.attention.resolve(payload.attentionId)) this.resend();
   }
 
   clearAttention(): void {
-    const prior = this.attention.clear();
-    if (prior) this.send(prior);
+    if (this.attention.clear()) this.resend();
   }
 
   shutdown(): void {
@@ -158,8 +159,20 @@ export class CompanionSession {
 
   private send(status: CompanionStatus, detail?: string): void {
     this.lastStatus = status;
-    if (!this.connection.isConnected) return;
-    const msg: CompanionMessage = { id: SESSION_ID, project: this.project, status, detail };
+    this.lastDetail = detail;
+    this.resend();
+  }
+
+  private resend(): void {
+    if (!this.connection.isConnected || !this.lastStatus) return;
+    const msg: CompanionMessage = {
+      id: SESSION_ID,
+      project: this.project,
+      status: this.lastStatus,
+      detail: this.lastDetail,
+      attention: this.attention.active,
+      attentionLabel: this.attention.label,
+    };
     if (this.lastCtx) {
       try {
         const usage = this.lastCtx.getContextUsage();

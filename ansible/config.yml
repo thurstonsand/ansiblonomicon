@@ -80,10 +80,13 @@ agent_harness_sources_base:
     plugins:
       - name: mattpocock-skills
         exclude_skills:
-          - caveman
+          - ask-matt
+          - codebase-design
+          - diagnosing-bugs
+          - domain-modeling
           - grill-me
+          - grilling
           - handoff
-          - diagnose
           - grill-with-docs
           - triage
           - improve-codebase-architecture
@@ -91,7 +94,6 @@ agent_harness_sources_base:
           - tdd
           - to-issues
           - to-prd
-          - zoom-out
           - prototype
 
   - repo: nicobailon/visual-explainer

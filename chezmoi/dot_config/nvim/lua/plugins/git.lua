@@ -7,10 +7,9 @@ local function hunk_editor_env()
   end
 
   return {
-    EDITOR = "nvim",
+    EDITOR = vim.fn.expand("~/.local/libexec/hunk/nvim"),
     NVIM_OUTER_SERVER = server,
     NVIM_REAL_BIN = vim.v.progpath,
-    PATH = vim.fn.expand("~/.local/libexec/nvim-inner") .. ":" .. vim.env.PATH,
   }
 end
 
