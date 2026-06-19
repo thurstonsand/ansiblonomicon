@@ -8,6 +8,21 @@ import { createInterface } from "node:readline";
 // pi's loader, so the import must name the real `.ts` file for Node to resolve.
 import { getCompanionSocketPath, usesNamedPipe } from "./shared/socket-path.ts";
 
+interface CompanionTheme {
+  pillBg: string;
+  border: string;
+  shadow: string;
+  divider: string;
+  text: string;
+  muted: string;
+  subtle: string;
+  separator: string;
+  attentionDot: string;
+  attentionGlow: string;
+  attentionPulse: string;
+  dots: Record<string, string>;
+}
+
 interface AgentMessage {
   id: string;
   project?: string;
@@ -16,6 +31,7 @@ interface AgentMessage {
   contextPercent?: number;
   attention?: boolean;
   attentionLabel?: string;
+  theme?: CompanionTheme;
   type?: string;
 }
 
@@ -46,15 +62,28 @@ const SOCK = getCompanionSocketPath();
 
 // ── status config ─────────────────────────────────────────────────────────────
 
-const STATUS_COLOR: Record<string, string> = {
-  starting: "#22C55E",
-  thinking: "#F59E0B",
-  reading: "#3B82F6",
-  editing: "#FACC15",
-  running: "#F97316",
-  searching: "#8B5CF6",
-  done: "#22C55E",
-  error: "#EF4444",
+const DEFAULT_THEME: CompanionTheme = {
+  pillBg: "rgba(29,32,33,0.92)",
+  border: "rgba(235,219,178,0.38)",
+  shadow: "0 10px 26px rgba(0,0,0,0.46), inset 0 0 0 1px rgba(255,255,255,0.08)",
+  divider: "rgba(235,219,178,0.055)",
+  text: "rgba(255,255,255,0.95)",
+  muted: "rgba(255,255,255,0.9)",
+  subtle: "rgba(255,255,255,0.75)",
+  separator: "rgba(255,255,255,0.5)",
+  attentionDot: "#C084FC",
+  attentionGlow: "#FF2FA3",
+  attentionPulse: "rgba(255,255,255,0.13)",
+  dots: {
+    starting: "#22C55E",
+    thinking: "#F59E0B",
+    reading: "#3B82F6",
+    editing: "#FACC15",
+    running: "#F97316",
+    searching: "#8B5CF6",
+    done: "#22C55E",
+    error: "#EF4444",
+  },
 };
 
 const STATUS_LABEL: Record<string, string> = {
@@ -112,13 +141,15 @@ body {
 #pill {
   width: fit-content;
   max-width: calc(100vw - 32px);
-  background: rgba(0,0,0,0.45);
+  background: var(--pill-bg, rgba(0,0,0,0.45));
+  border: 1px solid var(--pill-border, rgba(255,255,255,0.12));
+  box-shadow: var(--pill-shadow, 0 10px 26px rgba(0,0,0,0.32));
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-radius: 8px;
   padding: 2px 0;
   overflow: hidden;
-  transition: opacity 0.3s ease-out;
+  transition: opacity 0.3s ease-out, background 0.2s ease;
 }
 .row {
   display: flex;
@@ -131,21 +162,22 @@ body {
   width: 5px; height: 5px;
   border-radius: 50%;
   flex-shrink: 0;
-  transition: background 0.2s ease;
+  transition: background 0.2s ease, box-shadow 0.2s ease;
 }
+.entry + .entry { border-top: 1px solid var(--pill-divider, rgba(255,255,255,0.055)); }
 .project {
-  color: rgba(255,255,255,0.95);
+  color: var(--pill-text, rgba(255,255,255,0.95));
   font-weight: 500;
   flex-shrink: 0;
 }
-.sep { color: rgba(255,255,255,0.5); flex-shrink: 0; }
-.status { color: rgba(255,255,255,0.9); flex-shrink: 0; }
+.sep { color: var(--pill-separator, rgba(255,255,255,0.5)); flex-shrink: 0; }
+.status { color: var(--pill-muted, rgba(255,255,255,0.9)); flex-shrink: 0; }
 .attention-label {
-  color: #E9D5FF;
+  color: var(--attention-dot, #C084FC);
   flex-shrink: 0;
 }
 .detail {
-  color: rgba(255,255,255,0.75);
+  color: var(--pill-subtle, rgba(255,255,255,0.75));
   font-family: ui-monospace, 'SF Mono', monospace;
   font-size: 10px;
   min-width: 0;
@@ -154,8 +186,8 @@ body {
   white-space: nowrap;
 }
 @keyframes entry-attn-pulse {
-  0%, 100% { background: rgba(0,0,0,0); }
-  50% { background: rgba(0,0,0,0.24); }
+  0%, 100% { background: transparent; }
+  50% { background: var(--attention-pulse, rgba(255,255,255,0.13)); }
 }
 .entry.attention {
   animation: entry-attn-pulse 1.5s ease-in-out infinite;
@@ -164,11 +196,11 @@ body {
 .entry.attention:first-child { border-top-left-radius: 7px; border-top-right-radius: 7px; }
 .entry.attention:last-child { border-bottom-left-radius: 7px; border-bottom-right-radius: 7px; }
 @keyframes dot-attn-pulse {
-  0%, 100% { box-shadow: 0 0 4px 1px rgba(192,132,252,0.45); }
-  50% { box-shadow: 0 0 10px 3px rgba(192,132,252,0.9), 0 0 18px 5px rgba(168,85,247,0.35); }
+  0%, 100% { box-shadow: 0 0 2px 1px color-mix(in srgb, var(--attention-glow, #FF2FA3) 42%, transparent); }
+  50% { box-shadow: 0 0 5px 1px color-mix(in srgb, var(--attention-glow, #FF2FA3) 84%, transparent), 0 0 8px 2px color-mix(in srgb, var(--attention-glow, #FF2FA3) 38%, transparent); }
 }
 .row.attention .dot {
-  background: #C084FC !important;
+  background: var(--attention-dot, #C084FC) !important;
   animation: dot-attn-pulse 1.5s ease-in-out infinite;
 }
 .meta {
@@ -178,7 +210,7 @@ body {
   padding: 0 10px 4px 21px;
   font-size: 10px;
   font-weight: 500;
-  color: rgba(255,255,255,0.85);
+  color: var(--pill-subtle, rgba(255,255,255,0.85));
   font-family: ui-monospace, 'SF Mono', monospace;
 }
 .meta-sep { margin: 0 2px; }
@@ -191,6 +223,7 @@ var _rows = {};
 var _startTimes = {};
 var _frozenElapsed = {};
 var _tickTimer = null;
+var _defaultTheme = ${JSON.stringify(DEFAULT_THEME)};
 
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -219,12 +252,12 @@ function startTick() {
   }, 1000);
 }
 
-function update(id, dotColor, project, status, detail, contextPercent, attention, attentionLabel) {
+function update(id, dotColor, project, status, detail, contextPercent, attention, attentionLabel, theme) {
   if (!_startTimes[id]) _startTimes[id] = Date.now();
   if (status === 'Done' && _startTimes[id] && !_frozenElapsed[id]) {
     _frozenElapsed[id] = fmtElapsed(Date.now() - _startTimes[id]);
   }
-  _rows[id] = { dotColor: dotColor, project: project, status: status, detail: detail, contextPercent: contextPercent, attention: attention, attentionLabel: attentionLabel };
+  _rows[id] = { dotColor: dotColor, project: project, status: status, detail: detail, contextPercent: contextPercent, attention: attention, attentionLabel: attentionLabel, theme: theme || _defaultTheme };
   render();
   startTick();
 }
@@ -234,6 +267,21 @@ function remove(id) {
   delete _startTimes[id];
   delete _frozenElapsed[id];
   render();
+}
+
+function setThemeVars(el, theme) {
+  var t = theme || _defaultTheme;
+  el.style.setProperty('--pill-bg', t.pillBg || _defaultTheme.pillBg);
+  el.style.setProperty('--pill-border', t.border || _defaultTheme.border);
+  el.style.setProperty('--pill-shadow', t.shadow || _defaultTheme.shadow);
+  el.style.setProperty('--pill-divider', t.divider || _defaultTheme.divider);
+  el.style.setProperty('--pill-text', t.text || _defaultTheme.text);
+  el.style.setProperty('--pill-muted', t.muted || _defaultTheme.muted);
+  el.style.setProperty('--pill-subtle', t.subtle || _defaultTheme.subtle);
+  el.style.setProperty('--pill-separator', t.separator || _defaultTheme.separator);
+  el.style.setProperty('--attention-dot', t.attentionDot || _defaultTheme.attentionDot);
+  el.style.setProperty('--attention-glow', t.attentionGlow || _defaultTheme.attentionGlow);
+  el.style.setProperty('--attention-pulse', t.attentionPulse || _defaultTheme.attentionPulse);
 }
 
 function render() {
@@ -246,6 +294,7 @@ function render() {
     return;
   }
   pill.style.opacity = '1';
+  setThemeVars(pill, _rows[ids[0]].theme);
   var html = '';
   for (var i = 0; i < ids.length; i++) {
     var r = _rows[ids[i]];
@@ -323,14 +372,15 @@ function resetIdleTimer(): void {
 
 function pushUpdate(id: string, data: AgentMessage): void {
   const status = data.status ?? "";
-  const color = STATUS_COLOR[status] ?? "#6B7280";
+  const theme = data.theme ?? DEFAULT_THEME;
+  const attention = data.attention === true;
+  const color = attention ? theme.attentionDot : (theme.dots[status] ?? "#6B7280");
   const label = STATUS_LABEL[status] ?? "";
   const detail = truncate(data.detail ?? "", 60);
   const project = esc(data.project ?? "pi");
   const ctxPct = data.contextPercent ?? null;
-  const attention = data.attention === true;
   const attentionLabel = data.attentionLabel ?? "";
-  const js = `update(${JSON.stringify(id)},${JSON.stringify(color)},${JSON.stringify(project)},${JSON.stringify(label)},${JSON.stringify(detail)},${JSON.stringify(ctxPct)},${JSON.stringify(attention)},${JSON.stringify(attentionLabel)})`;
+  const js = `update(${JSON.stringify(id)},${JSON.stringify(color)},${JSON.stringify(project)},${JSON.stringify(label)},${JSON.stringify(detail)},${JSON.stringify(ctxPct)},${JSON.stringify(attention)},${JSON.stringify(attentionLabel)},${JSON.stringify(theme)})`;
   if (winReady) win.send(js);
   else pendingUpdates.push(js);
 }

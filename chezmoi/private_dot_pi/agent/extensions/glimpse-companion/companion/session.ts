@@ -10,6 +10,7 @@ import {
 } from "./glimpse-support.js";
 import { loadEnabled } from "./settings.js";
 import { COMPANION_STATUS, type CompanionStatus, statusForTool } from "./status.js";
+import { buildCompanionThemeForContext, type CompanionTheme } from "./theme.js";
 
 const SESSION_ID = randomUUID().slice(0, 8);
 
@@ -21,6 +22,7 @@ interface CompanionMessage {
   contextPercent?: number;
   attention?: boolean;
   attentionLabel?: string;
+  theme?: CompanionTheme;
 }
 
 /**
@@ -174,6 +176,7 @@ export class CompanionSession {
       attentionLabel: this.attention.label,
     };
     if (this.lastCtx) {
+      msg.theme = buildCompanionThemeForContext(this.lastCtx);
       try {
         const usage = this.lastCtx.getContextUsage();
         if (usage && usage.percent != null) {
