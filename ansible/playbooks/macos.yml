@@ -59,13 +59,6 @@
           tags: ["claude-code"]
       tags: ["claude-code"]
 
-    - name: Install Plannotator
-      ansible.builtin.include_role:
-        name: plannotator
-        apply:
-          tags: ["plannotator"]
-      tags: ["plannotator"]
-
     - name: Install global language tools
       ansible.builtin.include_role:
         name: language_tools

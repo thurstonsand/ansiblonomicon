@@ -68,7 +68,7 @@
 - name: Run brew bundle
   when: not ansible_check_mode
   ansible.builtin.command:
-    argv: ["brew", "bundle", "install", "--file={{ homebrew_brewfile_path }}"]
+    argv: ["brew", "bundle", "install", "--no-upgrade", "--file={{ homebrew_brewfile_path }}"]
   environment:
     HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS: "1"
     SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"

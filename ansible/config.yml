@@ -166,10 +166,6 @@ agent_harness_sources_base:
 
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
-      - name: amp
-        target_agents: [amp]
-        exclude_skills:
-          - tmux-interactive-sessions
       - name: pi
         target_agents: [pi]
       - name: project-management

@@ -1,15 +1,24 @@
 ---
-- name: Update Lazy.nvim plugins
+- name: Sync Lazy.nvim plugins
   when: not ansible_check_mode
   ansible.builtin.command:
     argv:
       - nvim
       - --headless
-      - "+Lazy! update"
+      - "+Lazy! sync"
       - +qa
   changed_when: true
   async: 600
   poll: 5
+
+- name: Capture Lazy.nvim lockfile in chezmoi source
+  when: not ansible_check_mode
+  ansible.builtin.command:
+    argv:
+      - chezmoi
+      - re-add
+      - "{{ ansible_user_dir }}/.config/nvim/lazy-lock.json"
+  changed_when: true
 
 - name: Remove Mason packages with broken Python virtualenvs
   when: not ansible_check_mode

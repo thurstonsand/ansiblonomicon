@@ -1,13 +1,14 @@
 {
-	"name": "amp-plugins",
-	"private": true,
-	"version": "1.0.0",
-	"type": "module",
-	"description": "Amp plugin sources managed by chezmoi",
-	"devDependencies": {
-		"@ampcode/plugin": "^0.0.0-20260531003713-g5edca02",
-		"@biomejs/biome": "^2.4.6",
-		"@types/node": "^25.9.1",
-		"typescript": "^6.0.3"
-	}
+  "name": "amp-plugins",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Amp plugin sources managed by chezmoi",
+  "devDependencies": {
+    "@ampcode/plugin": "^0.0.0-20260619033929-g5bbf05d",
+    "@biomejs/biome": "^2.4.6",
+    "@types/node": "^25.9.1",
+    "typescript": "^6.0.3",
+    "zod": "^4.4.3"
+  }
 }

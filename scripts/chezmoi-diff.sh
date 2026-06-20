@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-LOCKFILE_RE='(^|/)(package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|uv\.lock)$'
+LOCKFILE_RE='(^|/)(lazy-lock\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|uv\.lock)$'
 
 declare -a diff_targets=()
 declare -a ignored_targets=()
