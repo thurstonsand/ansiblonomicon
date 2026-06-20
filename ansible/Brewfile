@@ -12,7 +12,7 @@ brew "duti"
 brew "eza"
 brew "fd"
 brew "fzf"
-brew "thurstonsand/ghosttykit/ghosttykit-nightly", trusted: true
+brew "thurstonsand/ghosttykit/ghosttykit-nightly", trusted: true, restart_service: true
 brew "htop"
 brew "jq"
 brew "mactop"

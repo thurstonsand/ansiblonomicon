@@ -1,5 +1,5 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, unlinkSync } from "node:fs";
+import { existsSync, readFileSync, unlinkSync } from "node:fs";
 import { createRequire } from "node:module";
 import { createServer, type Socket } from "node:net";
 import { join } from "node:path";
@@ -99,6 +99,22 @@ const STATUS_LABEL: Record<string, string> = {
 const WINDOW_WIDTH = 630;
 const MIN_WINDOW_HEIGHT = 100;
 const WINDOW_VERTICAL_PADDING = 32;
+const MAX_VISIBLE_SESSIONS = 6;
+const DEFAULT_FONT_FAMILY = "Menlo";
+
+function loadCompanionFontFamily(): string {
+  try {
+    const fontFamily = readFileSync(
+      new URL("./companion/font-family.txt", import.meta.url),
+      "utf-8",
+    ).trim();
+    return fontFamily || DEFAULT_FONT_FAMILY;
+  } catch {
+    return DEFAULT_FONT_FAMILY;
+  }
+}
+
+const MONO_FONT_STACK = `${JSON.stringify(loadCompanionFontFamily())}, Menlo, Monaco, ui-monospace, 'SF Mono', monospace`;
 
 // ── HTML ──────────────────────────────────────────────────────────────────────
 
@@ -125,7 +141,7 @@ function buildHTML(): string {
 * { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   background: transparent !important;
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: ${MONO_FONT_STACK};
   font-size: 11px;
   font-weight: 600;
   -webkit-font-smoothing: antialiased;
@@ -141,6 +157,7 @@ body {
 #pill {
   width: fit-content;
   max-width: calc(100vw - 32px);
+  flex-shrink: 0;
   background: var(--pill-bg, rgba(0,0,0,0.45));
   border: 1px solid var(--pill-border, rgba(255,255,255,0.12));
   box-shadow: var(--pill-shadow, 0 10px 26px rgba(0,0,0,0.32));
@@ -178,7 +195,7 @@ body {
 }
 .detail {
   color: var(--pill-subtle, rgba(255,255,255,0.75));
-  font-family: ui-monospace, 'SF Mono', monospace;
+  font-family: ${MONO_FONT_STACK};
   font-size: 10px;
   min-width: 0;
   overflow: hidden;
@@ -211,9 +228,27 @@ body {
   font-size: 10px;
   font-weight: 500;
   color: var(--pill-subtle, rgba(255,255,255,0.85));
-  font-family: ui-monospace, 'SF Mono', monospace;
+  font-family: ${MONO_FONT_STACK};
 }
 .meta-sep { margin: 0 2px; }
+.overflow-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  color: var(--pill-subtle, rgba(255,255,255,0.75));
+  font-size: 10px;
+  font-weight: 500;
+  font-family: ${MONO_FONT_STACK};
+  border-top: 1px solid var(--pill-divider, rgba(255,255,255,0.055));
+}
+.overflow-row.attention {
+  color: var(--attention-dot, #C084FC);
+  animation: entry-attn-pulse 1.5s ease-in-out infinite;
+}
+.overflow-row.attention .dot {
+  animation: dot-attn-pulse 1.5s ease-in-out infinite;
+}
 </style>
 </head>
 <body>
@@ -223,7 +258,9 @@ var _rows = {};
 var _startTimes = {};
 var _frozenElapsed = {};
 var _tickTimer = null;
+var _sequence = 0;
 var _defaultTheme = ${JSON.stringify(DEFAULT_THEME)};
+var _maxVisibleSessions = ${MAX_VISIBLE_SESSIONS};
 
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
@@ -257,7 +294,7 @@ function update(id, dotColor, project, status, detail, contextPercent, attention
   if (status === 'Done' && _startTimes[id] && !_frozenElapsed[id]) {
     _frozenElapsed[id] = fmtElapsed(Date.now() - _startTimes[id]);
   }
-  _rows[id] = { dotColor: dotColor, project: project, status: status, detail: detail, contextPercent: contextPercent, attention: attention, attentionLabel: attentionLabel, theme: theme || _defaultTheme };
+  _rows[id] = { dotColor: dotColor, project: project, status: status, detail: detail, contextPercent: contextPercent, attention: attention, attentionLabel: attentionLabel, theme: theme || _defaultTheme, sequence: ++_sequence };
   render();
   startTick();
 }
@@ -284,6 +321,47 @@ function setThemeVars(el, theme) {
   el.style.setProperty('--attention-pulse', t.attentionPulse || _defaultTheme.attentionPulse);
 }
 
+function renderEntry(id) {
+  var r = _rows[id];
+  var html = '<div id="r-' + id + '" class="' + (r.attention ? 'entry attention' : 'entry') + '">';
+  html += '<div class="' + (r.attention ? 'row attention' : 'row') + '">';
+  html += '<div class="dot" style="background:' + r.dotColor + '"></div>';
+  html += '<span class="project">' + esc(r.project) + '</span>';
+  if (r.attentionLabel) {
+    html += '<span class="sep">·</span>';
+    html += '<span class="attention-label">' + esc(r.attentionLabel) + '</span>';
+  }
+  if (r.status) {
+    html += '<span class="sep">·</span>';
+    html += '<span class="status">' + esc(r.status) + '</span>';
+  }
+  if (r.detail) {
+    html += '<span class="detail">' + esc(r.detail) + '</span>';
+  }
+  html += '</div>';
+  var frozen = _frozenElapsed[id];
+  var elapsed = frozen || (_startTimes[id] ? fmtElapsed(Date.now() - _startTimes[id]) : '');
+  html += '<div class="meta">';
+  if (r.contextPercent != null) {
+    html += '<span id="ctx-' + id + '">' + r.contextPercent + '%</span>';
+    html += '<span class="meta-sep">·</span>';
+  }
+  if (frozen) {
+    html += '<span id="elapsed-' + id + '" style="font-weight:700">' + elapsed + '</span>';
+  } else {
+    html += '<span id="elapsed-' + id + '">' + elapsed + '</span>';
+  }
+  html += '</div>';
+  html += '</div>';
+  return html;
+}
+
+function renderOverflow(hiddenCount, dotColor, attention) {
+  var className = attention ? 'overflow-row attention' : 'overflow-row';
+  var color = attention ? 'var(--attention-dot, #C084FC)' : dotColor;
+  return '<div class="' + className + '"><div class="dot" style="background:' + color + '"></div>… +' + hiddenCount + ' session' + (hiddenCount === 1 ? '' : 's') + '</div>';
+}
+
 function render() {
   var pill = document.getElementById('pill');
   var ids = Object.keys(_rows);
@@ -295,40 +373,18 @@ function render() {
   }
   pill.style.opacity = '1';
   setThemeVars(pill, _rows[ids[0]].theme);
+  var visibleIds = ids.slice(0, _maxVisibleSessions);
+  var hiddenIds = ids.slice(_maxVisibleSessions);
+  var hiddenAttention = hiddenIds.some(function(id) { return _rows[id].attention; });
+  var latestHidden = hiddenIds.reduce(function(latest, id) {
+    return !latest || _rows[id].sequence > latest.sequence ? _rows[id] : latest;
+  }, null);
   var html = '';
-  for (var i = 0; i < ids.length; i++) {
-    var r = _rows[ids[i]];
-    html += '<div id="r-' + ids[i] + '" class="' + (r.attention ? 'entry attention' : 'entry') + '">';
-    html += '<div class="' + (r.attention ? 'row attention' : 'row') + '">';
-    html += '<div class="dot" style="background:' + r.dotColor + '"></div>';
-    html += '<span class="project">' + esc(r.project) + '</span>';
-    if (r.attentionLabel) {
-      html += '<span class="sep">·</span>';
-      html += '<span class="attention-label">' + esc(r.attentionLabel) + '</span>';
-    }
-    if (r.status) {
-      html += '<span class="sep">·</span>';
-      html += '<span class="status">' + esc(r.status) + '</span>';
-    }
-    if (r.detail) {
-      html += '<span class="detail">' + esc(r.detail) + '</span>';
-    }
-    html += '</div>';
-    // Meta row
-    var frozen = _frozenElapsed[ids[i]];
-    var elapsed = frozen || (_startTimes[ids[i]] ? fmtElapsed(Date.now() - _startTimes[ids[i]]) : '');
-    html += '<div class="meta">';
-    if (r.contextPercent != null) {
-      html += '<span id="ctx-' + ids[i] + '">' + r.contextPercent + '%</span>';
-      html += '<span class="meta-sep">·</span>';
-    }
-    if (frozen) {
-      html += '<span id="elapsed-' + ids[i] + '" style="font-weight:700">' + elapsed + '</span>';
-    } else {
-      html += '<span id="elapsed-' + ids[i] + '">' + elapsed + '</span>';
-    }
-    html += '</div>';
-    html += '</div>';
+  for (var i = 0; i < visibleIds.length; i++) {
+    html += renderEntry(visibleIds[i]);
+  }
+  if (hiddenIds.length > 0) {
+    html += renderOverflow(hiddenIds.length, latestHidden.dotColor, hiddenAttention);
   }
   pill.className = '';
   pill.innerHTML = html;
@@ -339,7 +395,7 @@ function requestResize() {
   if (!window.glimpse) return;
   requestAnimationFrame(function() {
     var pill = document.getElementById('pill');
-    var height = Math.ceil(pill.getBoundingClientRect().height + ${WINDOW_VERTICAL_PADDING});
+    var height = Math.ceil(pill.scrollHeight + ${WINDOW_VERTICAL_PADDING});
     window.glimpse.send({ type: 'resize', height: height });
   });
 }

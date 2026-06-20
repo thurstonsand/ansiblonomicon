@@ -65,17 +65,24 @@
   changed_when: false
   failed_when: false
 
+- name: Set brew bundle install arguments
+  when: not ansible_check_mode
+  ansible.builtin.set_fact:
+    homebrew_bundle_install_args: >-
+      {{ ['brew', 'bundle', 'install', '--file=' ~ homebrew_brewfile_path]
+         + ([] if homebrew_upgrade_due else ['--no-upgrade']) }}
+
 - name: Run brew bundle
   when: not ansible_check_mode
   ansible.builtin.command:
-    argv: ["brew", "bundle", "install", "--no-upgrade", "--file={{ homebrew_brewfile_path }}"]
+    argv: "{{ homebrew_bundle_install_args }}"
   environment:
     HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS: "1"
     SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
     HOMEBREW_SUDO_ASKPASS_PASS: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS'] | default(omit) }}"
     HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
   register: homebrew_result
-  changed_when: "'Installing' in homebrew_result.stdout or 'Upgrading' in homebrew_result.stdout"
+  changed_when: "'Installing' in homebrew_result.stdout or 'Upgrading' in homebrew_result.stdout or 'Restarting' in homebrew_result.stdout"
 
 - name: Clean up dependencies not in Brewfile
   when: not ansible_check_mode and homebrew_upgrade_due
@@ -88,18 +95,6 @@
     HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
   register: homebrew_cleanup_result
   changed_when: "'Uninstalling' in homebrew_cleanup_result.stdout"
-
-- name: Upgrade all formulas
-  when: not ansible_check_mode and homebrew_upgrade_due
-  ansible.builtin.command:
-    argv: ["brew", "upgrade"]
-  environment:
-    HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS: "1"
-    SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
-    HOMEBREW_SUDO_ASKPASS_PASS: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS'] | default(omit) }}"
-    HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
-  register: homebrew_deps_result
-  changed_when: "'Pouring' in homebrew_deps_result.stdout"
 
 - name: Unpin keg-only conflicting formulas
   when: not ansible_check_mode and homebrew_link_conflicts | length > 0
@@ -142,7 +137,7 @@
       {{ (stdout | select('search', 'Installing|Upgrading|Skipping') | list)
          + (cleanup | select('search', 'Uninstalling') | list)
          + (stderr | reject('search', noise) | list) }}
-    homebrew_dep_changes: "{{ (homebrew_deps_result.stdout_lines | default([]) | select('search', 'Upgrading|Pouring') | reject('search', '^==>') | list) if homebrew_upgrade_due else [] }}"
+    homebrew_dep_changes: []
 
 # --- Unified output ---
 - name: Show brew changes
@@ -150,5 +145,5 @@
     msg:
       brewfile: "{{ homebrew_bundle_changes if homebrew_bundle_changes | length > 0 else 'Up to date' }}"
       transitive_deps: "{{ homebrew_dep_changes if homebrew_dep_changes | length > 0 else 'Up to date' }}"
-      upgrade_status: "{{ 'Ran cleanup + upgrade' if (homebrew_upgrade_due | default(false)) else 'Skipped (last run < 24h ago)' }}"
+      upgrade_status: "{{ 'Ran cleanup + Brewfile upgrade' if (homebrew_upgrade_due | default(false)) else 'Skipped (last run < 24h ago)' }}"
   when: (homebrew_bundle_changes | length > 0) or (homebrew_dep_changes | length > 0) or not (homebrew_upgrade_due | default(true))
