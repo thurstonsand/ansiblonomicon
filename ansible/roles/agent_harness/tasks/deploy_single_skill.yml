@@ -21,8 +21,7 @@
 - name: Build rsync exclude options
   ansible.builtin.set_fact:
     agent_harness_skill_rsync_opts: >-
-      {{ ['--exclude=.git', '--exclude=.claude-plugin', '--exclude=*.j2', '--delete-excluded']
-         + ((agent_harness_skill_j2_stat.stat.exists | bool) | ternary(['--exclude=SKILL.md'], []))
+      {{ ['--omit-dir-times', '--filter=P_SKILL.md', '--filter=H_SKILL.md', '--exclude=.git', '--exclude=.claude-plugin', '--exclude=*.j2', '--delete-excluded']
          + (agent_harness_skill_info.exclude_data | default([]) | map('regex_replace', '^(.*)$', '--exclude=\1') | list) }}
 
 - name: Sync skill directory locally
@@ -50,17 +49,17 @@
   delegate_to: localhost
   when: ansible_connection | default('ssh') != 'local'
 
-- name: Render SKILL.md.j2 template
-  ansible.builtin.template:
-    src: "{{ agent_harness_skill_info.source }}/SKILL.md.j2"
-    dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/SKILL.md"
-    mode: "0644"
+- name: Load SKILL.md.j2 template content
+  ansible.builtin.set_fact:
+    agent_harness_skill_source_content: >-
+      {{ lookup('ansible.builtin.template', agent_harness_skill_info.source + '/SKILL.md.j2', rstrip=false) }}
   when: agent_harness_skill_j2_stat.stat.exists
 
-- name: Set deployed SKILL.md path
+- name: Load SKILL.md content
   ansible.builtin.set_fact:
-    agent_harness_deployed_skill_md: >-
-      {{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/SKILL.md
+    agent_harness_skill_source_content: >-
+      {{ lookup('ansible.builtin.file', agent_harness_skill_info.source + '/SKILL.md', rstrip=false) }}
+  when: not agent_harness_skill_j2_stat.stat.exists
 
 - name: Resolve skill frontmatter name
   ansible.builtin.set_fact:
@@ -72,14 +71,13 @@
 - name: Transform SKILL.md for target agent
   ansible.builtin.set_fact:
     agent_harness_transformed_skill: >-
-      {{ agent_harness_deployed_skill_md
-         | agent_harness_transform_skill(agent_harness_target_agent, agent_harness_models.models,
-                                         agent_harness_skill_info.plugin_root | default(''),
-                                         agent_harness_skill_frontmatter_name) }}
+      {{ agent_harness_skill_source_content
+         | agent_harness_transform_skill_content(agent_harness_target_agent, agent_harness_models.models,
+                                                 agent_harness_skill_info.plugin_root | default(''),
+                                                 agent_harness_skill_frontmatter_name) }}
 
-- name: Update SKILL.md if transformed
+- name: Deploy SKILL.md
   ansible.builtin.copy:
     content: "{{ agent_harness_transformed_skill.content }}"
     dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/SKILL.md"
     mode: "0644"
-  when: agent_harness_transformed_skill.modified

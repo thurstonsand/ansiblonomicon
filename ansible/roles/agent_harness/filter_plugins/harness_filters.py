@@ -920,35 +920,20 @@ def _deep_convert_to_dict(obj: Any) -> Any:
     return obj
 
 
-def agent_harness_transform_skill(
-    source_path: str,
+def agent_harness_transform_skill_content(
+    content: str,
     target_agent: str,
     models_config: dict[str, Any],
     plugin_root: str = "",
     name_override: str = "",
 ) -> dict[str, Any]:
-    """Transform a skill/agent .md file for the target agent.
+    """Transform skill/agent Markdown content for the target agent.
 
     Applies up to three transformations:
     1. Model alias replacement in frontmatter (e.g., "sonnet" → provider-specific ID)
     2. ${CLAUDE_PLUGIN_ROOT} substitution with the absolute plugin path
     3. Frontmatter name rewrite (for agent namespace prefixing)
-
-    Args:
-        source_path: Path to the source .md file (SKILL.md or agent .md)
-        target_agent: Target agent name (e.g., "opencode", "claude", "amp")
-        models_config: The 'models' section from models.yml
-        plugin_root: Absolute path to substitute for ${CLAUDE_PLUGIN_ROOT}
-        name_override: If set, rewrite the frontmatter name field to this value
-
-    Returns:
-        Dict with 'content' (transformed file content) and 'modified' (bool)
     """
-    path = Path(source_path)
-    if not path.exists():
-        return SkillTransformResult(content="", modified=False).to_dict()
-
-    content = path.read_text()
     modified = False
 
     # Model alias replacement — regex on the model: line in frontmatter
@@ -978,16 +963,46 @@ def agent_harness_transform_skill(
     # frontmatter block. Some agent descriptions contain colons and other YAML
     # metacharacters that cause the frontmatter library to choke on parsing.
     if name_override:
-        content = re.sub(
+        transformed_content = re.sub(
             r"^(name:\s*).+$",
             rf"\g<1>{name_override}",
             content,
             count=1,
             flags=re.MULTILINE,
         )
-        modified = True
+        if transformed_content != content:
+            content = transformed_content
+            modified = True
 
     return SkillTransformResult(content=content, modified=modified).to_dict()
+
+
+def agent_harness_transform_skill(
+    source_path: str,
+    target_agent: str,
+    models_config: dict[str, Any],
+    plugin_root: str = "",
+    name_override: str = "",
+) -> dict[str, Any]:
+    """Transform a skill/agent .md file for the target agent.
+
+    Args:
+        source_path: Path to the source .md file (SKILL.md or agent .md)
+        target_agent: Target agent name (e.g., "opencode", "claude", "amp")
+        models_config: The 'models' section from models.yml
+        plugin_root: Absolute path to substitute for ${CLAUDE_PLUGIN_ROOT}
+        name_override: If set, rewrite the frontmatter name field to this value
+
+    Returns:
+        Dict with 'content' (transformed file content) and 'modified' (bool)
+    """
+    path = Path(source_path)
+    if not path.exists():
+        return SkillTransformResult(content="", modified=False).to_dict()
+
+    return agent_harness_transform_skill_content(
+        path.read_text(), target_agent, models_config, plugin_root, name_override
+    )
 
 
 @dataclass
@@ -1123,6 +1138,7 @@ class FilterModule:
             "agent_harness_get_git_sources": agent_harness_get_git_sources,
             "agent_harness_filter_resources": agent_harness_filter_resources,
             "agent_harness_transform_skill": agent_harness_transform_skill,
+            "agent_harness_transform_skill_content": agent_harness_transform_skill_content,
             "agent_harness_repo_to_cache_name": agent_harness_repo_to_cache_name,
             "agent_harness_find_plugin_hooks": agent_harness_find_plugin_hooks,
         }

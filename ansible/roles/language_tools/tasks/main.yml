@@ -1,6 +1,34 @@
 ---
+- name: Check language tools update stamp
+  when: not ansible_check_mode
+  ansible.builtin.stat:
+    path: "{{ language_tools_cache_dir }}/update.stamp"
+  register: language_tools_update_stamp
+
+- name: Determine if language tools update is due
+  ansible.builtin.set_fact:
+    language_tools_update_due: >-
+      {{
+        ansible_check_mode
+        or (not language_tools_update_stamp.stat.exists)
+        or (
+          (ansible_date_time.epoch | int) - (language_tools_update_stamp.stat.mtime | int)
+          >= (language_tools_update_interval_seconds | int)
+        )
+      }}
+    language_tools_managed_packages_present: >-
+      {{
+        (mise_global_tools | length > 0)
+        or (npm_global_packages | length > 0)
+        or (uv_global_tools | length > 0)
+        or (bun_global_packages | length > 0)
+        or (go_tools | length > 0)
+        or (cargo_packages | length > 0)
+        or (gem_packages | length > 0)
+      }}
+
 - name: Install mise-managed tools
-  when: mise_global_tools | length > 0
+  when: language_tools_update_due and mise_global_tools | length > 0
   ansible.builtin.command:
     argv:
       - mise
@@ -19,7 +47,7 @@
     'upgraded' in (language_tools_mise_result.stderr | lower)
 
 - name: Install global npm packages
-  when: npm_global_packages | length > 0
+  when: language_tools_update_due and npm_global_packages | length > 0
   community.general.npm:
     name: "{{ item }}"
     global: true
@@ -29,7 +57,7 @@
     PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['PATH'] }}"
 
 - name: Install global uv tools
-  when: uv_global_tools | length > 0
+  when: language_tools_update_due and uv_global_tools | length > 0
   ansible.builtin.command:
     cmd: uv tool install --upgrade {{ item }}
   loop: "{{ uv_global_tools }}"
@@ -37,7 +65,7 @@
   changed_when: "'Installed' in language_tools_uv_result.stderr or 'Updated' in language_tools_uv_result.stderr"
 
 - name: Install global bun packages
-  when: bun_global_packages | length > 0
+  when: language_tools_update_due and bun_global_packages | length > 0
   ansible.builtin.command:
     cmd: bun install --global {{ item }}
   loop: "{{ bun_global_packages }}"
@@ -45,7 +73,7 @@
   changed_when: "'installed' in language_tools_bun_result.stdout or 'Installed' in language_tools_bun_result.stderr"
 
 - name: Install global Go tools
-  when: go_tools | length > 0
+  when: language_tools_update_due and go_tools | length > 0
   ansible.builtin.command:
     cmd: "go install {{ item if '@' in item else item + '@latest' }}"
   loop: "{{ go_tools }}"
@@ -53,7 +81,7 @@
   changed_when: language_tools_go_result.stderr | length > 0
 
 - name: Select Rust stable toolchain
-  when: cargo_packages | length > 0
+  when: language_tools_update_due and cargo_packages | length > 0
   ansible.builtin.command:
     cmd: rustup default stable
   environment:
@@ -61,7 +89,7 @@
   changed_when: true
 
 - name: Install cargo-binstall
-  when: cargo_packages | length > 0
+  when: language_tools_update_due and cargo_packages | length > 0
   ansible.builtin.command:
     cmd: cargo install cargo-binstall
   environment:
@@ -73,7 +101,7 @@
     'Replacing' in language_tools_cargo_binstall_result.stderr
 
 - name: Install cargo packages
-  when: cargo_packages | length > 0
+  when: language_tools_update_due and cargo_packages | length > 0
   ansible.builtin.command:
     cmd: cargo binstall --no-confirm {{ item }}
   environment:
@@ -85,13 +113,13 @@
     'installed' in (language_tools_cargo_result.stdout | lower)
 
 - name: Install Neovim via bob
-  when: "'bob-nvim' in cargo_packages"
+  when: language_tools_update_due and 'bob-nvim' in cargo_packages
   ansible.builtin.command:
     cmd: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin/bob use stable"
   changed_when: true
 
 - name: Install global Ruby gems
-  when: gem_packages | length > 0
+  when: language_tools_update_due and gem_packages | length > 0
   vars:
     language_tools_gem_command: >-
       {{
@@ -103,3 +131,22 @@
   loop: "{{ gem_packages }}"
   register: language_tools_gem_result
   changed_when: "'Successfully installed' in language_tools_gem_result.stdout"
+
+- name: Ensure language tools cache directory exists
+  when: not ansible_check_mode and language_tools_update_due and language_tools_managed_packages_present
+  ansible.builtin.file:
+    path: "{{ language_tools_cache_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Record language tools update timestamp
+  when: not ansible_check_mode and language_tools_update_due and language_tools_managed_packages_present
+  ansible.builtin.file:
+    path: "{{ language_tools_cache_dir }}/update.stamp"
+    state: touch
+    mode: "0644"
+
+- name: Show language tools update status
+  when: not language_tools_update_due
+  ansible.builtin.debug:
+    msg: "Skipped language tool updates; last run < 24h ago"

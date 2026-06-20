@@ -12,7 +12,7 @@
   "flash.nvim": { "branch": "main", "commit": "fcea7ff883235d9024dc41e638f164a450c14ca2" },
   "friendly-snippets": { "branch": "main", "commit": "6cd7280adead7f586db6fccbd15d2cac7e2188b9" },
   "ghosttykit": { "branch": "main", "commit": "e525c5c1b1ef5607c07431bc0e5c0c774d9ae45d" },
-  "ghosttykit.nvim": { "branch": "main", "commit": "a25a18af4e2c85e8d786c1757073414d96961c71" },
+  "ghosttykit.nvim": { "branch": "main", "commit": "1456da3286104fd404865a9df2dbb7c72e189ed4" },
   "gitsigns.nvim": { "branch": "main", "commit": "2038c666bd9d8a0b7349a0b6ee00dc83104b9ecf" },
   "grug-far.nvim": { "branch": "main", "commit": "c995bbacf8229dc096ec1c3d60f8531059c86c1b" },
   "gruvbox.nvim": { "branch": "main", "commit": "154eb5ff5b96d0641307113fa385eaf0d36d9796" },

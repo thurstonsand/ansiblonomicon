@@ -26,6 +26,7 @@ from harness_filters import (
     agent_harness_get_git_sources,
     agent_harness_repo_to_cache_name,
     agent_harness_transform_skill,
+    agent_harness_transform_skill_content,
 )
 import pytest
 
@@ -1540,6 +1541,27 @@ This is the body content.
         return skill_file
 
     return _create
+
+
+@pytest.mark.unit
+def test_transform_skill_content_rewrites_name_only_when_it_changes(
+    sample_models_config: dict[str, Any],
+) -> None:
+    content = "---\nname: teach\ndescription: A test skill\n---\n\n# Teach\n"
+
+    result = agent_harness_transform_skill_content(
+        content, "claude", sample_models_config, name_override="plugin:teach"
+    )
+
+    assert result["modified"] is True
+    assert "name: plugin:teach" in result["content"]
+
+    second_result = agent_harness_transform_skill_content(
+        result["content"], "claude", sample_models_config, name_override="plugin:teach"
+    )
+
+    assert second_result["modified"] is False
+    assert second_result["content"] == result["content"]
 
 
 @pytest.mark.unit
