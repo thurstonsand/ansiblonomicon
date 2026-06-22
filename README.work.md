@@ -118,7 +118,7 @@ The chezmoi `run_onchange_after_register-mcp-servers.sh` script reads `[[mcp_ser
 | `~/.local/share/chezmoi/.chezmoidata/local.toml` | System-level indexes (`pypiIndex`, `uvIndexStrategy`) → `~/.config/uv/uv.toml` and `~/.config/pip/pip.conf` |
 | `./uv.toml`                                      | Project-level override for this repo (gitignored, non-CICD endpoint)                                        |
 
-Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `local.toml`. The default index becomes `global.index-url` in pip; non-default entries become `extra-index-url`. System-level config defaults to CICD Artifactory (correct for most work projects). This repo overrides to the enterprise endpoint since it's a personal repo not deployed through CICD.
+Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `local.toml`. The default index becomes `global.index-url` in pip; non-default entries become `extra-index-url`. System-level config defaults to Artifactory. This repo overrides to the enterprise endpoint since it's a personal repo not deployed through CICD, meaning it has a different, broader set of packages.
 
 ### uv.lock handling
 

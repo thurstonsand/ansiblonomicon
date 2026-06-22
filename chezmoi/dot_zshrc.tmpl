@@ -62,6 +62,18 @@ if [[ -o interactive ]]; then
   _evalcache fzf --zsh
 {{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
   [ -f /opt/homebrew/etc/profile.d/autojump.sh ] && . /opt/homebrew/etc/profile.d/autojump.sh
+  # Mirror zoxide's `--cmd cd`: prefer literal dirs, fall through to autojump's `j`.
+  cd() {
+    if [[ $# -eq 0 ]]; then
+      builtin cd ~
+    elif [[ $# -eq 1 ]] && { [[ -d "$1" ]] || [[ "$1" = '-' ]] || [[ "$1" =~ ^[-+][0-9]+$ ]]; }; then
+      builtin cd "$1"
+    elif [[ $# -eq 2 ]] && [[ "$1" = '--' ]]; then
+      builtin cd "$2"
+    else
+      j "$@"
+    fi
+  }
 {{- else }}
   _evalcache zoxide init zsh --cmd cd
 {{- end }}
