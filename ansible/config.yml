@@ -106,11 +106,6 @@ agent_harness_sources_base:
           - commands
           - scripts
 
-  - repo: pchalasani/claude-code-tools
-    pull: true
-    plugins:
-      - tmux-cli
-
   - repo: vercel-labs/agent-browser
     pull: true
     plugins:

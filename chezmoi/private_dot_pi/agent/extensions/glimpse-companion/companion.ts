@@ -64,8 +64,8 @@ const SOCK = getCompanionSocketPath();
 
 const DEFAULT_THEME: CompanionTheme = {
   pillBg: "rgba(29,32,33,0.92)",
-  border: "rgba(235,219,178,0.38)",
-  shadow: "0 10px 26px rgba(0,0,0,0.46), inset 0 0 0 1px rgba(255,255,255,0.08)",
+  border: "#504945",
+  shadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
   divider: "rgba(235,219,178,0.055)",
   text: "rgba(255,255,255,0.95)",
   muted: "rgba(255,255,255,0.9)",
@@ -75,19 +75,24 @@ const DEFAULT_THEME: CompanionTheme = {
   attentionGlow: "#FF2FA3",
   attentionPulse: "rgba(255,255,255,0.13)",
   dots: {
-    starting: "#22C55E",
-    thinking: "#F59E0B",
-    reading: "#3B82F6",
-    editing: "#FACC15",
-    running: "#F97316",
-    searching: "#8B5CF6",
-    done: "#22C55E",
-    error: "#EF4444",
+    starting: "#BDAE93",
+    thinking: "#928374",
+    responding: "#EBDBB2",
+    preparing_tool: "#928374",
+    reading: "#8EC07C",
+    editing: "#FABD2F",
+    running: "#FE8019",
+    searching: "#83A598",
+    done: "#B8BB26",
+    error: "#FB4934",
   },
 };
 
 const STATUS_LABEL: Record<string, string> = {
-  thinking: "Working",
+  starting: "Starting",
+  thinking: "Thinking",
+  responding: "Responding",
+  preparing_tool: "Preparing tool",
   reading: "Reading",
   editing: "Editing",
   running: "Running",
@@ -98,7 +103,7 @@ const STATUS_LABEL: Record<string, string> = {
 
 const WINDOW_WIDTH = 630;
 const MIN_WINDOW_HEIGHT = 100;
-const WINDOW_VERTICAL_PADDING = 32;
+const WINDOW_VERTICAL_PADDING = 72;
 const MAX_VISIBLE_SESSIONS = 6;
 const DEFAULT_FONT_FAMILY = "Menlo";
 
@@ -152,15 +157,15 @@ body {
   flex-direction: column;
   justify-content: flex-end;
   height: 100vh;
-  padding: 16px;
+  padding: 36px;
 }
 #pill {
   width: fit-content;
-  max-width: calc(100vw - 32px);
+  max-width: calc(100vw - 72px);
   flex-shrink: 0;
   background: var(--pill-bg, rgba(0,0,0,0.45));
   border: 1px solid var(--pill-border, rgba(255,255,255,0.12));
-  box-shadow: var(--pill-shadow, 0 10px 26px rgba(0,0,0,0.32));
+  box-shadow: var(--pill-shadow, 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1));
   -webkit-backdrop-filter: blur(12px);
   backdrop-filter: blur(12px);
   border-radius: 8px;

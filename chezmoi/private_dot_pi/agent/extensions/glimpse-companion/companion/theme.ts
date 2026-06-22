@@ -30,7 +30,9 @@ interface ResolvedThemePalette {
   error?: RgbColor;
   bashMode?: RgbColor;
   customMessageLabel?: RgbColor;
+  mdHeading?: RgbColor;
   mdLink?: RgbColor;
+  mdCode?: RgbColor;
   customMessageBg?: RgbColor;
   userMessageBg?: RgbColor;
 }
@@ -59,12 +61,14 @@ const CUBE_VALUES = [0, 95, 135, 175, 215, 255] as const;
 const GRAY_VALUES = Array.from({ length: 24 }, (_, i) => 8 + i * 10);
 
 const STATUS_THEME_COLORS = {
-  starting: "success",
-  thinking: "warning",
-  reading: "mdLink",
+  starting: "muted",
+  thinking: "dim",
+  responding: "text",
+  preparing_tool: "dim",
+  reading: "mdCode",
   editing: "warning",
-  running: "bashMode",
-  searching: "customMessageLabel",
+  running: "mdHeading",
+  searching: "accent",
   done: "success",
   error: "error",
 } as const satisfies Record<string, keyof ResolvedThemePalette>;
@@ -99,8 +103,8 @@ function buildDarkGlassTheme(palette: ResolvedThemePalette): CompanionTheme {
     surface,
     text,
     surfaceAlpha: 0.92,
-    border: rgba(text, 0.38),
-    shadow: "0 10px 26px rgba(0,0,0,0.46), inset 0 0 0 1px rgba(255,255,255,0.08)",
+    border: palette.border ? hex(palette.border) : rgba(text, 0.38),
+    shadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
     divider: rgba(text, 0.055),
     attentionPulse: rgba(text, 0.12),
   });
@@ -116,8 +120,8 @@ function buildPaperGlassTheme(palette: ResolvedThemePalette): CompanionTheme {
     surface,
     text,
     surfaceAlpha: 0.92,
-    border: rgba(text, 0.3),
-    shadow: `0 10px 26px ${rgba(text, 0.28)}, inset 0 0 0 1px rgba(255,255,255,0.46)`,
+    border: palette.border ? hex(palette.border) : rgba(text, 0.3),
+    shadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
     divider: rgba(text, 0.055),
     attentionPulse: rgba(text, 0.1),
   });
@@ -177,7 +181,9 @@ function buildThemePalette(theme: Theme, rawTheme: RawThemeJson | undefined): Re
     bashMode: readRawColor(rawTheme, "bashMode") ?? readFg(theme, "bashMode"),
     customMessageLabel:
       readRawColor(rawTheme, "customMessageLabel") ?? readFg(theme, "customMessageLabel"),
+    mdHeading: readRawColor(rawTheme, "mdHeading") ?? readFg(theme, "mdHeading"),
     mdLink: readRawColor(rawTheme, "mdLink") ?? readFg(theme, "mdLink"),
+    mdCode: readRawColor(rawTheme, "mdCode") ?? readFg(theme, "mdCode"),
     customMessageBg: readRawColor(rawTheme, "customMessageBg") ?? readBg(theme, "customMessageBg"),
     userMessageBg: readRawColor(rawTheme, "userMessageBg") ?? readBg(theme, "userMessageBg"),
   };

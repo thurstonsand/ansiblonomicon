@@ -9,7 +9,13 @@ import {
   resolveNode,
 } from "./glimpse-support.js";
 import { loadEnabled } from "./settings.js";
-import { COMPANION_STATUS, type CompanionStatus, statusForTool } from "./status.js";
+import {
+  COMPANION_STATUS,
+  type CompanionStatus,
+  statusForTool,
+  statusForToolCallUpdate,
+  type ToolCallUpdate,
+} from "./status.js";
 import { buildCompanionThemeForContext, type CompanionTheme } from "./theme.js";
 
 const SESSION_ID = randomUUID().slice(0, 8);
@@ -96,7 +102,18 @@ export class CompanionSession {
     this.send(COMPANION_STATUS.thinking);
   }
 
-  toolStart(toolName: string, args: Record<string, string | undefined>): void {
+  responding(): void {
+    if (!this.active || this.lastStatus === COMPANION_STATUS.responding) return;
+    this.send(COMPANION_STATUS.responding);
+  }
+
+  toolCallUpdate(update: ToolCallUpdate): void {
+    if (!this.active) return;
+    const { status, detail } = statusForToolCallUpdate(update);
+    this.send(status, detail);
+  }
+
+  toolStart(toolName: string, args: Record<string, unknown>): void {
     if (!this.active) return;
     const { status, detail } = statusForTool(toolName, args);
     this.send(status, detail);
@@ -160,6 +177,7 @@ export class CompanionSession {
   }
 
   private send(status: CompanionStatus, detail?: string): void {
+    if (this.lastStatus === status && this.lastDetail === detail) return;
     this.lastStatus = status;
     this.lastDetail = detail;
     this.resend();

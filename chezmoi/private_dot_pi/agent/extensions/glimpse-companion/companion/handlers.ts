@@ -1,6 +1,8 @@
+import type { AssistantMessageEvent } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { ATTENTION_REQUEST, ATTENTION_RESOLVE } from "./attention.js";
 import type { CompanionSession } from "./session.js";
+import type { TextUpdate, ThinkingUpdate, ToolCallUpdate } from "./status.js";
 
 export function registerCompanionHandlers(pi: ExtensionAPI, session: CompanionSession): void {
   pi.on("session_start", async (_event, ctx) => {
@@ -20,14 +22,26 @@ export function registerCompanionHandlers(pi: ExtensionAPI, session: CompanionSe
     session.done();
   });
 
-  pi.on("message_update", async (_event, ctx) => {
+  pi.on("message_update", async (event, ctx) => {
     session.noteContext(ctx);
-    session.thinking();
+    const update = event.assistantMessageEvent;
+    if (isThinkingUpdate(update)) {
+      session.thinking();
+      return;
+    }
+    if (isTextUpdate(update)) {
+      session.responding();
+      return;
+    }
+    if (isToolCallUpdate(update)) {
+      session.toolCallUpdate(update);
+      return;
+    }
   });
 
   pi.on("tool_execution_start", async (event, ctx) => {
     session.noteContext(ctx);
-    const args = (event.args ?? {}) as Record<string, string | undefined>;
+    const args = (event.args ?? {}) as Record<string, unknown>;
     session.toolStart(event.toolName, args);
   });
 
@@ -44,4 +58,24 @@ export function registerCompanionHandlers(pi: ExtensionAPI, session: CompanionSe
   pi.on("session_shutdown", async () => {
     session.shutdown();
   });
+}
+
+function isThinkingUpdate(update: AssistantMessageEvent): update is ThinkingUpdate {
+  return (
+    update.type === "thinking_start" ||
+    update.type === "thinking_delta" ||
+    update.type === "thinking_end"
+  );
+}
+
+function isTextUpdate(update: AssistantMessageEvent): update is TextUpdate {
+  return update.type === "text_start" || update.type === "text_delta" || update.type === "text_end";
+}
+
+function isToolCallUpdate(update: AssistantMessageEvent): update is ToolCallUpdate {
+  return (
+    update.type === "toolcall_start" ||
+    update.type === "toolcall_delta" ||
+    update.type === "toolcall_end"
+  );
 }

@@ -144,19 +144,6 @@
       ]
     }
 {{- else }}
-    {
-      "source": "npm:pi-interactive-shell",
-      "skills": [
-        "-examples/skills/codex-5-3-prompting/SKILL.md",
-        "-examples/skills/codex-cli/SKILL.md",
-        "-examples/skills/gpt-5-4-prompting/SKILL.md"
-      ],
-      "prompts": [
-        "-examples/prompts/codex-implement-plan.md",
-        "-examples/prompts/codex-review-impl.md",
-        "-examples/prompts/codex-review-plan.md"
-      ]
-    },
     "npm:pi-librarian",
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:@thurstonsand/pi-powerline-footer"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
