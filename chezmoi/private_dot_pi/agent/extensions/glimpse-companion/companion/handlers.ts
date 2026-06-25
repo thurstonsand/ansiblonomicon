@@ -1,8 +1,8 @@
 import type { AssistantMessageEvent } from "@earendil-works/pi-ai";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { TextUpdate, ThinkingUpdate, ToolCallUpdate } from "./activity.js";
 import { ATTENTION_REQUEST, ATTENTION_RESOLVE } from "./attention.js";
 import type { CompanionSession } from "./session.js";
-import type { TextUpdate, ThinkingUpdate, ToolCallUpdate } from "./status.js";
 
 export function registerCompanionHandlers(pi: ExtensionAPI, session: CompanionSession): void {
   pi.on("session_start", async (_event, ctx) => {

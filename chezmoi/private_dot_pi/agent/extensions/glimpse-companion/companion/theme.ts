@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs";
 import type { ExtensionContext, Theme, ThemeColor } from "@earendil-works/pi-coding-agent";
+import type { CompanionTheme } from "../shared/messages.js";
 
 type ThemeBgToken = Parameters<Theme["getBgAnsi"]>[0];
 
@@ -35,21 +36,6 @@ interface ResolvedThemePalette {
   mdCode?: RgbColor;
   customMessageBg?: RgbColor;
   userMessageBg?: RgbColor;
-}
-
-export interface CompanionTheme {
-  pillBg: string;
-  border: string;
-  shadow: string;
-  divider: string;
-  text: string;
-  muted: string;
-  subtle: string;
-  separator: string;
-  attentionDot: string;
-  attentionGlow: string;
-  attentionPulse: string;
-  dots: Record<string, string>;
 }
 
 const DEFAULT_DARK_TEXT: RgbColor = { r: 17, g: 24, b: 39 };

@@ -5,35 +5,9 @@ import { createServer, type Socket } from "node:net";
 import { join } from "node:path";
 import { createInterface } from "node:readline";
 // This file runs as a standalone process via `node companion.ts`, not through
-// pi's loader, so the import must name the real `.ts` file for Node to resolve.
+// pi's loader, so runtime imports must name the real `.ts` file for Node to resolve.
+import type { CompanionMessage, CompanionUpdateMessage } from "./shared/messages.ts";
 import { getCompanionSocketPath, usesNamedPipe } from "./shared/socket-path.ts";
-
-interface CompanionTheme {
-  pillBg: string;
-  border: string;
-  shadow: string;
-  divider: string;
-  text: string;
-  muted: string;
-  subtle: string;
-  separator: string;
-  attentionDot: string;
-  attentionGlow: string;
-  attentionPulse: string;
-  dots: Record<string, string>;
-}
-
-interface AgentMessage {
-  id: string;
-  project?: string;
-  status?: string;
-  detail?: string;
-  contextPercent?: number;
-  attention?: boolean;
-  attentionLabel?: string;
-  theme?: CompanionTheme;
-  type?: string;
-}
 
 function resolveGlimpseEntry(): string | null {
   const candidates: string[] = [];
@@ -60,50 +34,8 @@ const { open } = (await import(glimpseEntry)) as { open: (...args: any[]) => any
 
 const SOCK = getCompanionSocketPath();
 
-// ── status config ─────────────────────────────────────────────────────────────
-
-const DEFAULT_THEME: CompanionTheme = {
-  pillBg: "rgba(29,32,33,0.92)",
-  border: "#504945",
-  shadow: "0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)",
-  divider: "rgba(235,219,178,0.055)",
-  text: "rgba(255,255,255,0.95)",
-  muted: "rgba(255,255,255,0.9)",
-  subtle: "rgba(255,255,255,0.75)",
-  separator: "rgba(255,255,255,0.5)",
-  attentionDot: "#C084FC",
-  attentionGlow: "#FF2FA3",
-  attentionPulse: "rgba(255,255,255,0.13)",
-  dots: {
-    starting: "#BDAE93",
-    thinking: "#928374",
-    responding: "#EBDBB2",
-    preparing_tool: "#928374",
-    reading: "#8EC07C",
-    editing: "#FABD2F",
-    running: "#FE8019",
-    searching: "#83A598",
-    done: "#B8BB26",
-    error: "#FB4934",
-  },
-};
-
-const STATUS_LABEL: Record<string, string> = {
-  starting: "Starting",
-  thinking: "Thinking",
-  responding: "Responding",
-  preparing_tool: "Preparing tool",
-  reading: "Reading",
-  editing: "Editing",
-  running: "Running",
-  searching: "Searching",
-  done: "Done",
-  error: "Error",
-};
-
 const WINDOW_WIDTH = 630;
 const MIN_WINDOW_HEIGHT = 100;
-const WINDOW_VERTICAL_PADDING = 72;
 const MAX_VISIBLE_SESSIONS = 6;
 const DEFAULT_FONT_FAMILY = "Menlo";
 
@@ -119,299 +51,52 @@ function loadCompanionFontFamily(): string {
   }
 }
 
-const MONO_FONT_STACK = `${JSON.stringify(loadCompanionFontFamily())}, Menlo, Monaco, ui-monospace, 'SF Mono', monospace`;
-
 // ── HTML ──────────────────────────────────────────────────────────────────────
 
-function esc(s: string): string {
-  return String(s)
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
+interface CompanionClientConfig {
+  maxVisibleSessions: number;
+  fontFamily: string;
 }
 
-function truncate(s: string, max = 100): string {
-  if (!s) return "";
-  return s.length > max ? `${s.slice(0, max - 1)}…` : s;
+function safeInlineJSON(data: unknown): string {
+  return JSON.stringify(data)
+    .replace(/</g, "\\u003c")
+    .replace(/>/g, "\\u003e")
+    .replace(/&/g, "\\u0026");
 }
 
-function buildHTML(): string {
-  return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-* { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: transparent !important;
-  font-family: ${MONO_FONT_STACK};
-  font-size: 11px;
-  font-weight: 600;
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
-  font-optical-sizing: auto;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
-  height: 100vh;
-  padding: 36px;
-}
-#pill {
-  width: fit-content;
-  max-width: calc(100vw - 72px);
-  flex-shrink: 0;
-  background: var(--pill-bg, rgba(0,0,0,0.45));
-  border: 1px solid var(--pill-border, rgba(255,255,255,0.12));
-  box-shadow: var(--pill-shadow, 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1));
-  -webkit-backdrop-filter: blur(12px);
-  backdrop-filter: blur(12px);
-  border-radius: 8px;
-  padding: 2px 0;
-  overflow: hidden;
-  transition: opacity 0.3s ease-out, background 0.2s ease;
-}
-.row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  padding: 4px 10px;
-}
-.dot {
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  transition: background 0.2s ease, box-shadow 0.2s ease;
-}
-.entry + .entry { border-top: 1px solid var(--pill-divider, rgba(255,255,255,0.055)); }
-.project {
-  color: var(--pill-text, rgba(255,255,255,0.95));
-  font-weight: 500;
-  flex-shrink: 0;
-}
-.sep { color: var(--pill-separator, rgba(255,255,255,0.5)); flex-shrink: 0; }
-.status { color: var(--pill-muted, rgba(255,255,255,0.9)); flex-shrink: 0; }
-.attention-label {
-  color: var(--attention-dot, #C084FC);
-  flex-shrink: 0;
-}
-.detail {
-  color: var(--pill-subtle, rgba(255,255,255,0.75));
-  font-family: ${MONO_FONT_STACK};
-  font-size: 10px;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-@keyframes entry-attn-pulse {
-  0%, 100% { background: transparent; }
-  50% { background: var(--attention-pulse, rgba(255,255,255,0.13)); }
-}
-.entry.attention {
-  animation: entry-attn-pulse 1.5s ease-in-out infinite;
-  border-radius: 2px;
-}
-.entry.attention:first-child { border-top-left-radius: 7px; border-top-right-radius: 7px; }
-.entry.attention:last-child { border-bottom-left-radius: 7px; border-bottom-right-radius: 7px; }
-@keyframes dot-attn-pulse {
-  0%, 100% { box-shadow: 0 0 2px 1px color-mix(in srgb, var(--attention-glow, #FF2FA3) 42%, transparent); }
-  50% { box-shadow: 0 0 5px 1px color-mix(in srgb, var(--attention-glow, #FF2FA3) 84%, transparent), 0 0 8px 2px color-mix(in srgb, var(--attention-glow, #FF2FA3) 38%, transparent); }
-}
-.row.attention .dot {
-  background: var(--attention-dot, #C084FC) !important;
-  animation: dot-attn-pulse 1.5s ease-in-out infinite;
-}
-.meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 0 10px 4px 21px;
-  font-size: 10px;
-  font-weight: 500;
-  color: var(--pill-subtle, rgba(255,255,255,0.85));
-  font-family: ${MONO_FONT_STACK};
-}
-.meta-sep { margin: 0 2px; }
-.overflow-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 5px 10px;
-  color: var(--pill-subtle, rgba(255,255,255,0.75));
-  font-size: 10px;
-  font-weight: 500;
-  font-family: ${MONO_FONT_STACK};
-  border-top: 1px solid var(--pill-divider, rgba(255,255,255,0.055));
-}
-.overflow-row.attention {
-  color: var(--attention-dot, #C084FC);
-  animation: entry-attn-pulse 1.5s ease-in-out infinite;
-}
-.overflow-row.attention .dot {
-  animation: dot-attn-pulse 1.5s ease-in-out infinite;
-}
-</style>
-</head>
-<body>
-<div id="pill"></div>
-<script>
-var _rows = {};
-var _startTimes = {};
-var _frozenElapsed = {};
-var _tickTimer = null;
-var _sequence = 0;
-var _defaultTheme = ${JSON.stringify(DEFAULT_THEME)};
-var _maxVisibleSessions = ${MAX_VISIBLE_SESSIONS};
-
-function esc(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+function readClientAsset(fileName: string): string {
+  return readFileSync(new URL(`./companion/client/${fileName}`, import.meta.url), "utf-8");
 }
 
-function fmtElapsed(ms) {
-  var s = Math.floor(ms / 1000);
-  if (s < 60) return s + 's';
-  var m = Math.floor(s / 60);
-  s = s % 60;
-  return m + 'm ' + (s < 10 ? '0' : '') + s + 's';
-}
-
-function startTick() {
-  if (_tickTimer) return;
-  _tickTimer = setInterval(function() {
-    var ids = Object.keys(_rows);
-    if (ids.length === 0) { clearInterval(_tickTimer); _tickTimer = null; return; }
-    for (var i = 0; i < ids.length; i++) {
-      if (_frozenElapsed[ids[i]]) continue;
-      var el = document.getElementById('elapsed-' + ids[i]);
-      if (el && _startTimes[ids[i]]) {
-        el.textContent = fmtElapsed(Date.now() - _startTimes[ids[i]]);
-      }
-    }
-  }, 1000);
-}
-
-function update(id, dotColor, project, status, detail, contextPercent, attention, attentionLabel, theme) {
-  if (!_startTimes[id]) _startTimes[id] = Date.now();
-  if (status === 'Done' && _startTimes[id] && !_frozenElapsed[id]) {
-    _frozenElapsed[id] = fmtElapsed(Date.now() - _startTimes[id]);
+function renderClientTemplate(values: Record<string, string>): string {
+  let html = readClientAsset("index.html");
+  for (const [key, value] of Object.entries(values)) {
+    const token = `{{${key}}}`;
+    html = html.replaceAll(`/* ${token} */`, value).replaceAll(`{ "${token}": true }`, value);
   }
-  _rows[id] = { dotColor: dotColor, project: project, status: status, detail: detail, contextPercent: contextPercent, attention: attention, attentionLabel: attentionLabel, theme: theme || _defaultTheme, sequence: ++_sequence };
-  render();
-  startTick();
-}
-
-function remove(id) {
-  delete _rows[id];
-  delete _startTimes[id];
-  delete _frozenElapsed[id];
-  render();
-}
-
-function setThemeVars(el, theme) {
-  var t = theme || _defaultTheme;
-  el.style.setProperty('--pill-bg', t.pillBg || _defaultTheme.pillBg);
-  el.style.setProperty('--pill-border', t.border || _defaultTheme.border);
-  el.style.setProperty('--pill-shadow', t.shadow || _defaultTheme.shadow);
-  el.style.setProperty('--pill-divider', t.divider || _defaultTheme.divider);
-  el.style.setProperty('--pill-text', t.text || _defaultTheme.text);
-  el.style.setProperty('--pill-muted', t.muted || _defaultTheme.muted);
-  el.style.setProperty('--pill-subtle', t.subtle || _defaultTheme.subtle);
-  el.style.setProperty('--pill-separator', t.separator || _defaultTheme.separator);
-  el.style.setProperty('--attention-dot', t.attentionDot || _defaultTheme.attentionDot);
-  el.style.setProperty('--attention-glow', t.attentionGlow || _defaultTheme.attentionGlow);
-  el.style.setProperty('--attention-pulse', t.attentionPulse || _defaultTheme.attentionPulse);
-}
-
-function renderEntry(id) {
-  var r = _rows[id];
-  var html = '<div id="r-' + id + '" class="' + (r.attention ? 'entry attention' : 'entry') + '">';
-  html += '<div class="' + (r.attention ? 'row attention' : 'row') + '">';
-  html += '<div class="dot" style="background:' + r.dotColor + '"></div>';
-  html += '<span class="project">' + esc(r.project) + '</span>';
-  if (r.attentionLabel) {
-    html += '<span class="sep">·</span>';
-    html += '<span class="attention-label">' + esc(r.attentionLabel) + '</span>';
+  if (/{{[A-Z_]+}}/.test(html)) {
+    throw new Error("Unresolved companion client template token");
   }
-  if (r.status) {
-    html += '<span class="sep">·</span>';
-    html += '<span class="status">' + esc(r.status) + '</span>';
-  }
-  if (r.detail) {
-    html += '<span class="detail">' + esc(r.detail) + '</span>';
-  }
-  html += '</div>';
-  var frozen = _frozenElapsed[id];
-  var elapsed = frozen || (_startTimes[id] ? fmtElapsed(Date.now() - _startTimes[id]) : '');
-  html += '<div class="meta">';
-  if (r.contextPercent != null) {
-    html += '<span id="ctx-' + id + '">' + r.contextPercent + '%</span>';
-    html += '<span class="meta-sep">·</span>';
-  }
-  if (frozen) {
-    html += '<span id="elapsed-' + id + '" style="font-weight:700">' + elapsed + '</span>';
-  } else {
-    html += '<span id="elapsed-' + id + '">' + elapsed + '</span>';
-  }
-  html += '</div>';
-  html += '</div>';
   return html;
 }
 
-function renderOverflow(hiddenCount, dotColor, attention) {
-  var className = attention ? 'overflow-row attention' : 'overflow-row';
-  var color = attention ? 'var(--attention-dot, #C084FC)' : dotColor;
-  return '<div class="' + className + '"><div class="dot" style="background:' + color + '"></div>… +' + hiddenCount + ' session' + (hiddenCount === 1 ? '' : 's') + '</div>';
-}
+function buildHTML(): string {
+  const config: CompanionClientConfig = {
+    maxVisibleSessions: MAX_VISIBLE_SESSIONS,
+    fontFamily: loadCompanionFontFamily(),
+  };
 
-function render() {
-  var pill = document.getElementById('pill');
-  var ids = Object.keys(_rows);
-  if (ids.length === 0) {
-    pill.style.opacity = '0';
-    pill.className = '';
-    setTimeout(function() { pill.innerHTML = ''; }, 350);
-    return;
-  }
-  pill.style.opacity = '1';
-  setThemeVars(pill, _rows[ids[0]].theme);
-  var visibleIds = ids.slice(0, _maxVisibleSessions);
-  var hiddenIds = ids.slice(_maxVisibleSessions);
-  var hiddenAttention = hiddenIds.some(function(id) { return _rows[id].attention; });
-  var latestHidden = hiddenIds.reduce(function(latest, id) {
-    return !latest || _rows[id].sequence > latest.sequence ? _rows[id] : latest;
-  }, null);
-  var html = '';
-  for (var i = 0; i < visibleIds.length; i++) {
-    html += renderEntry(visibleIds[i]);
-  }
-  if (hiddenIds.length > 0) {
-    html += renderOverflow(hiddenIds.length, latestHidden.dotColor, hiddenAttention);
-  }
-  pill.className = '';
-  pill.innerHTML = html;
-  requestResize();
-}
-
-function requestResize() {
-  if (!window.glimpse) return;
-  requestAnimationFrame(function() {
-    var pill = document.getElementById('pill');
-    var height = Math.ceil(pill.scrollHeight + ${WINDOW_VERTICAL_PADDING});
-    window.glimpse.send({ type: 'resize', height: height });
+  return renderClientTemplate({
+    COMPANION_CSS: readClientAsset("styles.css"),
+    COMPANION_CONFIG: safeInlineJSON(config),
+    COMPANION_JS: readClientAsset("app.js"),
   });
-}
-</script>
-</body>
-</html>`;
 }
 
 // ── state ─────────────────────────────────────────────────────────────────────
 
-const agents = new Map<string, AgentMessage>();
+const agents = new Map<string, CompanionUpdateMessage>();
 const sockets = new Set<Socket>();
 // biome-ignore lint/suspicious/noExplicitAny: glimpse window handle is untyped.
 let win: any = null;
@@ -431,23 +116,15 @@ function resetIdleTimer(): void {
 
 // ── render ─────────────────────────────────────────────────────────────────────
 
-function pushUpdate(id: string, data: AgentMessage): void {
-  const status = data.status ?? "";
-  const theme = data.theme ?? DEFAULT_THEME;
-  const attention = data.attention === true;
-  const color = attention ? theme.attentionDot : (theme.dots[status] ?? "#6B7280");
-  const label = STATUS_LABEL[status] ?? "";
-  const detail = truncate(data.detail ?? "", 60);
-  const project = esc(data.project ?? "pi");
-  const ctxPct = data.contextPercent ?? null;
-  const attentionLabel = data.attentionLabel ?? "";
-  const js = `update(${JSON.stringify(id)},${JSON.stringify(color)},${JSON.stringify(project)},${JSON.stringify(label)},${JSON.stringify(detail)},${JSON.stringify(ctxPct)},${JSON.stringify(attention)},${JSON.stringify(attentionLabel)},${JSON.stringify(theme)})`;
+function pushUpdate(id: string, data: CompanionUpdateMessage): void {
+  const update = { ...data, id };
+  const js = `window.Companion.update(${safeInlineJSON(update)})`;
   if (winReady) win.send(js);
   else pendingUpdates.push(js);
 }
 
 function pushRemove(id: string): void {
-  const js = `remove(${JSON.stringify(id)})`;
+  const js = `window.Companion.remove(${safeInlineJSON(id)})`;
   if (winReady) win.send(js);
   else pendingUpdates.push(js);
 }
@@ -468,7 +145,7 @@ const server = createServer((socket) => {
 
   rl.on("line", (line) => {
     try {
-      const msg = JSON.parse(line) as AgentMessage;
+      const msg = JSON.parse(line) as CompanionMessage;
       if (!msg.id) return;
       clientId = msg.id;
 

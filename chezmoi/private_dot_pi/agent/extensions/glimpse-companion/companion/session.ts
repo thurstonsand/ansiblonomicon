@@ -1,6 +1,9 @@
 import { randomUUID } from "node:crypto";
 import { basename } from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { CompanionUpdateMessage } from "../shared/messages.js";
+import { COMPANION_STATUS, type CompanionStatus } from "../shared/status.js";
+import { statusForTool, statusForToolCallUpdate, type ToolCallUpdate } from "./activity.js";
 import { AttentionTracker, parseAttentionRequest, parseAttentionResolve } from "./attention.js";
 import { CompanionConnection } from "./connection.js";
 import {
@@ -9,27 +12,9 @@ import {
   resolveNode,
 } from "./glimpse-support.js";
 import { loadEnabled } from "./settings.js";
-import {
-  COMPANION_STATUS,
-  type CompanionStatus,
-  statusForTool,
-  statusForToolCallUpdate,
-  type ToolCallUpdate,
-} from "./status.js";
-import { buildCompanionThemeForContext, type CompanionTheme } from "./theme.js";
+import { buildCompanionThemeForContext } from "./theme.js";
 
 const SESSION_ID = randomUUID().slice(0, 8);
-
-interface CompanionMessage {
-  id: string;
-  project: string;
-  status: string;
-  detail?: string;
-  contextPercent?: number;
-  attention?: boolean;
-  attentionLabel?: string;
-  theme?: CompanionTheme;
-}
 
 /**
  * Owns the mutable per-session companion state and translates pi activity into
@@ -185,7 +170,7 @@ export class CompanionSession {
 
   private resend(): void {
     if (!this.connection.isConnected || !this.lastStatus) return;
-    const msg: CompanionMessage = {
+    const msg: CompanionUpdateMessage = {
       id: SESSION_ID,
       project: this.project,
       status: this.lastStatus,

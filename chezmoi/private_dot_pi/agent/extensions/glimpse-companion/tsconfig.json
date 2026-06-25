@@ -4,9 +4,17 @@
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
     "allowImportingTsExtensions": true,
+    "allowJs": true,
+    "checkJs": true,
     "strict": true,
     "noEmit": true,
     "skipLibCheck": true
   },
-  "include": ["./index.ts", "./companion.ts", "./companion/**/*.ts", "./shared/**/*.ts"]
+  "include": [
+    "./index.ts",
+    "./companion.ts",
+    "./companion/**/*.ts",
+    "./companion/**/*.js",
+    "./shared/**/*.ts"
+  ]
 }

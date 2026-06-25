@@ -9,25 +9,7 @@ import type {
   ReadToolInput,
   WriteToolInput,
 } from "@earendil-works/pi-coding-agent";
-
-/**
- * The companion status vocabulary. Values are the wire strings the renderer
- * (companion.ts) keys its colors and labels on, so the two must stay in sync.
- */
-export const COMPANION_STATUS = {
-  starting: "starting",
-  thinking: "thinking",
-  responding: "responding",
-  preparingTool: "preparing_tool",
-  reading: "reading",
-  editing: "editing",
-  running: "running",
-  searching: "searching",
-  done: "done",
-  error: "error",
-} as const;
-
-export type CompanionStatus = (typeof COMPANION_STATUS)[keyof typeof COMPANION_STATUS];
+import { COMPANION_STATUS, type CompanionStatus } from "../shared/status.js";
 
 export interface CompanionActivity {
   status: CompanionStatus;
