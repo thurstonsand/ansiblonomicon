@@ -104,7 +104,7 @@ ClientAliveCountMax 3
 
 ### 8. Ghostty-specific `ideo` local workflow
 
-The local `ideo` helper will be Ghostty-specific and use the existing `ghostty-nav` split machinery.
+The local `ideo` helper is Ghostty-specific and uses GhosttyKit's `gty` split machinery.
 
 Remote Neovim-to-local-Ghostty key-table synchronization is intentionally deferred. The planned design is captured in [12-ghostty-ssh-nvim-bridge.md](12-ghostty-ssh-nvim-bridge.md) and waits for a Ghostty stable release that exposes each terminal surface's controlling TTY through AppleScript.
 

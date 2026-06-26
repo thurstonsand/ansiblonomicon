@@ -1,5 +1,9 @@
 # Zellij → tmux Migration
 
+## Status
+
+Historical. The Ghostty navigation portions were superseded by GhosttyKit; see <https://github.com/thurstonsand/ghosttykit>. The tmux migration notes below remain as historical context.
+
 ## Problem Statement
 
 The current Zellij-based terminal multiplexer setup on clawdbot (Debian VM accessed via SSH from macOS/Ghostty) has three blocking issues:

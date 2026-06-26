@@ -1,0 +1,36 @@
+---
+- name: Stop legacy ghostty-nav LaunchAgent
+  when: ansible_facts['os_family'] == "Darwin"
+  community.general.launchd:
+    name: house.thurstons.ghostty-navd
+    enabled: false
+    state: stopped
+  failed_when: false
+
+- name: Unregister legacy ghostty-nav launchd jobs
+  when: ansible_facts['os_family'] == "Darwin"
+  ansible.builtin.command:
+    argv:
+      - launchctl
+      - remove
+      - "{{ item }}"
+  loop:
+    - house.thurstons.ghostty-navd
+    - com.thurstonsand.ghostty-nav
+  changed_when: false
+  failed_when: false
+
+- name: Remove legacy ghostty-nav artifacts
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "{{ ansible_facts['env']['HOME'] }}/.local/bin/ghostty-nav"
+    - "{{ ansible_facts['env']['HOME'] }}/.local/bin/ghostty-navd"
+    - "{{ ansible_facts['env']['HOME'] }}/.local/opt/ghostty-nav"
+    - "{{ ansible_facts['env']['HOME'] }}/.local/run/ghostty-nav"
+    - "{{ ansible_facts['env']['HOME'] }}/.local/state/ghostty-nav"
+    - "{{ ansible_facts['env']['HOME'] }}/.cache/ghostty-nav"
+    - "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents/house.thurstons.ghostty-navd.plist"
+    - "{{ ansible_facts['env']['HOME'] }}/Library/LaunchAgents/com.thurstonsand.ghostty-nav.plist"
+    - "{{ ansible_facts['env']['HOME'] }}/.pi/agent/extensions/pi-paste-file"

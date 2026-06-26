@@ -9,12 +9,12 @@ set -euo pipefail
   exit 1
 }
 
-command -v ghostty-nav >/dev/null 2>&1 || {
-  echo "ide: ghostty-nav is not installed." >&2
+command -v gty >/dev/null 2>&1 || {
+  echo "ide: gty is not installed." >&2
   exit 1
 }
 
-terminal_count=$(ghostty-nav tab-terminal-count 2>/dev/null) || exit 1
+terminal_count=$(gty tab-terminal-count 2>/dev/null) || exit 1
 [[ "$terminal_count" == "1" ]] || {
   echo "ide: expected a fresh tab with exactly one terminal." >&2
   exit 1
@@ -55,14 +55,14 @@ mkfifo "$ready_fifo"
 exec 3<>"$ready_fifo"
 trap 'exec 3>&- 3<&-; rm -f "$ready_fifo"' EXIT
 
-editor_inner="if ghostty-nav terminal-id >/dev/null; then printf 'ready\\n' > $(quote "$ready_fifo"); else echo 'ide: failed to register Ghostty terminal' >&2; fi; nvim .; exec /bin/zsh -il"
+editor_inner="if gty terminal-id >/dev/null; then printf 'ready\\n' > $(quote "$ready_fifo"); else echo 'ide: failed to register Ghostty terminal' >&2; fi; nvim .; exec /bin/zsh -il"
 editor_cmd=$(quote "$editor_inner")
 
-ghostty-nav split left --cwd "$cwd" --command "/bin/zsh -ilc $editor_cmd" --focus new
+gty split left --cwd "$cwd" --command "/bin/zsh -ilc $editor_cmd" --focus new --wait
 wait_for_ready "editor terminal registration"
-ghostty-nav resize right --percent 15
+gty resize right --percent 15 --wait
 cols=$(tput cols 2>/dev/null || echo 0)
-((cols < 200)) && ghostty-nav toggle-zoom
+((cols < 200)) && gty zoom --wait
 
 if (($# > 0)); then
   cd "$cwd"

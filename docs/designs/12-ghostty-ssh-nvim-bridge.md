@@ -2,9 +2,9 @@
 
 ## Status
 
-Superseded by the daemon-backed `ghostty-nav` bridge.
+Superseded by GhosttyKit's `gty ssh` bridge.
 
-The implemented path uses the portable Go `ghostty-nav` client on OpenClaw, SSH `RemoteForward` for the daemon Unix socket, and `GHOSTTY_NAV_TTY` propagation through zsh/SSH environment forwarding. It avoids Ghostty AppleScript terminal-id matching entirely, so the deferred `terminal.tty` dependency below is no longer the active implementation plan.
+The current path uses `gty ssh` to bootstrap the remote `gty` binary, create the reverse Unix-socket bridge, and set `GTY_SOCK` for remote commands. The older `ghostty-nav` client, SSH `RemoteForward`, and `GHOSTTY_NAV_TTY` path below is historical.
 
 The historical design assumed Ghostty AppleScript `terminal` objects would provide:
 

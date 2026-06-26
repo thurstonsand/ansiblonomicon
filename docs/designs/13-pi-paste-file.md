@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by GhosttyKit's `@thurstonsand/pi-paste` extension. See <https://github.com/thurstonsand/ghosttykit/tree/main/pi/pi-paste> for the current implementation.
 
 ## Decision Summary
 

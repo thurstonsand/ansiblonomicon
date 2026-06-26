@@ -171,12 +171,12 @@ if [[ ${TERM_PROGRAM:-} != "ghostty" ]]; then
   exit 1
 fi
 
-if ! command -v ghostty-nav >/dev/null 2>&1; then
-  echo "ideo: ghostty-nav is not installed." >&2
+if ! command -v gty >/dev/null 2>&1; then
+  echo "ideo: gty is not installed." >&2
   exit 1
 fi
 
-terminal_count=$(ghostty-nav tab-terminal-count 2>/dev/null)
+terminal_count=$(gty tab-terminal-count 2>/dev/null)
 if [[ "$terminal_count" != "1" ]]; then
   echo "ideo: expected a fresh Ghostty tab with exactly one terminal; open a new tab and try again." >&2
   exit 1
@@ -195,11 +195,11 @@ trap 'exec 3>&- 3<&-; rm -f "$ready_fifo"' EXIT
 
 script_path=$(self_path)
 editor_attach="exec $(quote "$script_path") --attach $(quote "$IDEO_HOST") $(quote "$IDEO_PROJECT") edit"
-editor_local="if ghostty-nav terminal-id >/dev/null; then printf 'ready\\n' > $(quote "$ready_fifo"); else echo 'ideo: failed to register editor Ghostty terminal' >&2; fi; $editor_attach"
+editor_local="if gty terminal-id >/dev/null; then printf 'ready\\n' > $(quote "$ready_fifo"); else echo 'ideo: failed to register editor Ghostty terminal' >&2; fi; $editor_attach"
 
-ghostty-nav split left --command "/bin/zsh -ilc $(quote "$editor_local")" --focus new
+gty split left --command "/bin/zsh -ilc $(quote "$editor_local")" --focus new --wait
 wait_for_ready "editor terminal registration"
-ghostty-nav resize right --percent 15
-ghostty-nav toggle-zoom
+gty resize right --percent 15 --wait
+gty zoom --wait
 
 attach_session "$IDEO_HOST" "$IDEO_PROJECT" agent "${IDEO_AGENT_ARGS[@]}"

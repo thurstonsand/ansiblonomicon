@@ -9,7 +9,11 @@ rawset(_G, "HunkOpenInNvim", function(file, line)
 
   local edit_win = vim.api.nvim_get_current_win()
   local explorer = _G.Snacks and Snacks.picker and Snacks.picker.get({ source = "explorer" })[1]
-  if explorer and vim.api.nvim_win_is_valid(explorer.main) and vim.api.nvim_win_get_config(explorer.main).relative == "" then
+  if
+    explorer
+    and vim.api.nvim_win_is_valid(explorer.main)
+    and vim.api.nvim_win_get_config(explorer.main).relative == ""
+  then
     edit_win = explorer.main
   end
 

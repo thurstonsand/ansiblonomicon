@@ -108,32 +108,6 @@ claude() {
 
 source ~/.config/zsh/tmux-theme.zsh 2>/dev/null || :
 
-{{- if ne .chezmoi.hostname "openclaw" }}
-# Repair a stale Ghostty nvim key-table activation if Neovim dies badly.
-_ghostty_nav_sentinel_path() {
-  local tty=${TTY-}
-  [[ -n "$tty" ]] || return 1
-
-  local state_home=${XDG_STATE_HOME:-$HOME/.local/state}
-  local tty_key=${tty//\//_}
-  printf '%s/ghostty-nav/%s.active\n' "$state_home" "$tty_key"
-}
-
-# _ghostty_nav_precmd() {
-#   [[ ${TERM_PROGRAM-} == "ghostty" ]] || return
-#   command -v ghostty-nav >/dev/null 2>&1 || return
-
-#   local sentinel
-#   sentinel=$(_ghostty_nav_sentinel_path) || return
-#   [[ -e "$sentinel" ]] || return
-
-#   ghostty-nav deactivate >/dev/null 2>&1 || true
-#   rm -f -- "$sentinel"
-# }
-
-autoload -Uz add-zsh-hook
-# add-zsh-hook precmd _ghostty_nav_precmd
-{{- end }}
 
 {{- if eq .chezmoi.hostname "clawdbot" }}
 ideoc() {

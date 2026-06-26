@@ -363,7 +363,7 @@ Claude Code recorder:
 Shared CLI:
 
 - `ansible/roles/sessions/files/sessions/` — the `sessions` Go/Cobra source,
-  structured like the in-repo `ghostty-nav`/`shp` tools: own `go.mod`,
+  structured like the in-repo `shp` tool: own `go.mod`,
   `justfile` (`fmt`/`lint`/`test`/`check`/`build`/`install`/`update-deps`),
   `.golangci.yml`, and an `internal/cmd` Cobra tree, with a `lint:sessions` poe
   task under `lint:cli-tools`.

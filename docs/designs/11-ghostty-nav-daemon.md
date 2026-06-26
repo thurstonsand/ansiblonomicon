@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by GhosttyKit. See <https://github.com/thurstonsand/ghosttykit> for the current `gty`, `ghosttykitd`, and SDK implementation.
 
 ## Decision Summary
 

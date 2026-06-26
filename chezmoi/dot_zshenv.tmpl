@@ -84,9 +84,6 @@ export EDITOR="$HOME/.local/libexec/codeEditor --wait"
 export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 {{- end }}
 
-if [[ ${TERM_PROGRAM:-} == "ghostty" && -t 0 ]]; then
-  export GHOSTTY_NAV_TTY="$(tty)"
-fi
 
 # PATH additions (available to all shells including scripts)
 {{- if eq .chezmoi.os "darwin" }}

@@ -44,11 +44,14 @@ Host openclaw
   ControlMaster auto
   ControlPath ~/.ssh/control-%C
   ControlPersist 10m
-  SendEnv GHOSTTY_NAV_TTY
-  StreamLocalBindUnlink yes
-  RemoteForward /home/thurstonsand/.local/run/ghostty-nav/ghostty-navd.sock {{ .chezmoi.homeDir }}/.local/run/ghostty-nav/ghostty-navd.sock
 {{- end }}
   ProxyCommand ~/.local/libexec/ssh-smart-proxy openclaw 192.168.1.90 22 openclaw-ssh.thurstons.house
+
+Host openclaw-gty
+  ForwardAgent yes
+  User thurstonsand
+  HostKeyAlias openclaw
+  ProxyCommand cloudflared access ssh --hostname openclaw-ssh.thurstons.house
 
 {{- end }}
 

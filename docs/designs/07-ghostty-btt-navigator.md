@@ -1,5 +1,9 @@
 # Ghostty Native Navigator Plan
 
+## Status
+
+Superseded by GhosttyKit. See <https://github.com/thurstonsand/ghosttykit> for the current `gty`, `ghosttykitd`, and `ghosttykit.nvim` implementation.
+
 ## Problem Statement
 
 We want `vim-tmux-navigator`-style movement (`Ctrl-h/j/k/l`) while migrating away from tmux and using Ghostty splits natively.

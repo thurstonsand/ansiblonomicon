@@ -335,12 +335,10 @@
           tags: ["language-tools"]
       tags: ["language-tools"]
 
-    - name: Build ghostty-nav client for split navigation
-      ansible.builtin.include_role:
-        name: ghostty_nav
-        apply:
-          tags: ["ghostty-nav"]
-      tags: ["ghostty-nav"]
+    # TODO: Delete this cleanup job after it has run across all managed machines.
+    - name: Remove legacy GhosttyKit predecessor artifacts
+      ansible.builtin.import_tasks: ../tasks/remove_legacy_ghostty_nav.yml
+      tags: ["ghosttykit"]
 
     - name: Build sessions CLI for agent session recovery
       ansible.builtin.include_role:
