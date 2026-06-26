@@ -37,6 +37,7 @@ brew "git-delta"
 brew "glab"
 brew "jujutsu"
 brew "lazygit"
+cask "bruno"
 
 # Languages & build tools
 brew "go"
@@ -90,6 +91,7 @@ brew "openssh"
 # Editors/Terminals
 brew "neovim"
 brew "pngpaste"
+brew "thurstonsand/ghosttykit/ghosttykit-nightly", trusted: true, restart_service: true
 cask "ghostty"
 cask "visual-studio-code"
 cask "zed"

@@ -5,5 +5,8 @@ pi_release_version: latest
 # Root holding versioned extractions; the on-PATH symlink points into the active one.
 pi_release_root: "{{ ansible_facts['env']['HOME'] }}/.local/share/pi-release"
 
-# Directory on PATH where the `pi` symlink is created.
-pi_release_bin_dir: "{{ ansible_facts['env']['HOME'] }}/.local/bin"
+# Directory holding the version-stable symlink to the active binary. This is
+# deliberately off PATH: the chezmoi `pi` wrapper owns ~/.local/bin/pi and execs
+# this binary after normalizing node, so extensions resolve global modules
+# against a stable node version instead of a project's mise selection.
+pi_release_libexec_dir: "{{ ansible_facts['env']['HOME'] }}/.local/libexec"

@@ -1,5 +1,5 @@
 ---
-name: git-commit-helper
+name: commit-msg
 description: Generate descriptive commit messages by analyzing git diffs. Use when the user asks for help commiting code, writing commit messages, or reviewing staged changes.
 ---
 

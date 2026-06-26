@@ -28,7 +28,7 @@
   ansible.builtin.set_fact:
     pi_release_dir: "{{ pi_release_root }}/{{ pi_release_tag }}"
     pi_release_binary: "{{ pi_release_root }}/{{ pi_release_tag }}/pi/pi"
-    pi_release_symlink: "{{ pi_release_bin_dir }}/pi"
+    pi_release_symlink: "{{ pi_release_libexec_dir }}/pi"
 
 - name: Check for existing pi binary at target version
   ansible.builtin.stat:
@@ -63,15 +63,16 @@
         path: "{{ pi_release_dir }}/pi.tar.gz"
         state: absent
 
-- name: Ensure bin directory exists
+- name: Ensure libexec directory exists
   ansible.builtin.file:
-    path: "{{ pi_release_bin_dir }}"
+    path: "{{ pi_release_libexec_dir }}"
     state: directory
     mode: "0755"
 
-- name: Link pi onto PATH
+- name: Link pi into libexec
   # The binary loads photon_rs_bg.wasm and native modules relative to its own
-  # location, so PATH must point at the in-tree binary via symlink, not a copy.
+  # location, so the symlink must point at the in-tree binary, not a copy. The
+  # chezmoi `pi` wrapper on PATH execs this after pinning node.
   ansible.builtin.file:
     src: "{{ pi_release_binary }}"
     dest: "{{ pi_release_symlink }}"

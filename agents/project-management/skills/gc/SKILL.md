@@ -1,6 +1,6 @@
 ---
 name: gc
-description: Review local docs and create a git commit. Use when the user wants to commit changes with proper documentation review.
+description: Review local docs and create a git commit or pull request. Use when committing changes with documentation review, or opening a PR.
 ---
 
 # Git Commit with Documentation Review
@@ -15,7 +15,7 @@ Execute these steps in order:
 
 ### 1. Review Documentation
 
-Invoke the `updating-documentation-for-changes` skill and follow its instructions.
+Invoke the `update-docs` skill and follow its instructions.
 
 ### 2. Stage Documentation Updates
 
@@ -29,4 +29,8 @@ Only stage documentation files that were actually modified. Do not `git add .` â
 
 ### 3. Create the Commit
 
-Invoke the `git-commit-helper` skill. Skip any steps (like reading the diff) already completed during step 1.
+Invoke the `commit-msg` skill. Skip any steps (like reading the diff) already completed during step 1.
+
+### Alternatively: Open a Pull Request
+
+If the user asks to open a PR instead of (or after) committing, follow the procedure in `references/pr.md`.

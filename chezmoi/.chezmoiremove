@@ -1,1 +1,3 @@
 .pi/agent/extensions/glimpse-companion/companion/status.ts
+# Pi gained built-in light/dark theme auto-switching; the auto-theme extension is obsolete.
+.pi/agent/extensions/auto-theme.ts

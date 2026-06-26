@@ -124,13 +124,21 @@ Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `lo
 
 `uv sync` rewrites `uv.lock` with mirror URLs. To prevent committing these:
 
-- `.envrc` sets `skip-worktree` on `uv.lock` — git ignores local changes, `git add` silently skips it
-- **Use `poe pull` instead of `git pull`** — lifts the mask, restores the canonical lock, pulls, re-syncs, and re-masks
+- `.envrc` sets `skip-worktree` on `uv.lock` and the pi extensions `package-lock.json` — git ignores local changes, `git add` silently skips them
+- **Use `poe pull` instead of `git pull`** — lifts both masks, restores the canonical lockfiles, rebases, re-resolves the work-local lock against Artifactory, re-syncs, and re-masks
 - Dependency updates must be committed from a personal machine (where the lock resolves against `pypi.org`)
+
+#### Mirror lag and wheel-only resolution
+
+The work `poe pull` re-resolves the masked lock with `uv lock --no-build`, not a plain `uv sync`. This allows for differences in sources across machines, including mixups with source dist and wheels for different os's. A version-only resolve would pin that release and then fail trying to build it from source. `--no-build` forbids the source fallback, so resolution backs off to the newest version the mirror serves as an installable wheel.
+
+This only bites when the lock targets a single platform — with the canonical multi-platform lock, another platform's wheel keeps the unbuildable version pinned. So `poe pull` transiently injects a single-platform `[tool.uv] environments` restriction, runs the wheel-only resolve, then restores `pyproject.toml` from a backup before syncing. The restriction is never committed, so no mirror version details leak to git, and the canonical `pyproject.toml` stays platform-agnostic.
+
+The mechanism is generic (no per-package pins, no version numbers anywhere) and self-heals: once the mirror carries the macOS-arm64 wheel, the work lock picks up the newer version automatically. A personal machine resolves the same `pyproject.toml` against `pypi.org`, where the wheel exists, so it floats to the latest. "Latest" thus differs per machine by what each index actually serves.
 
 ### pi extension package-lock.json handling
 
-The pi extensions `package-lock.json` (`chezmoi/private_dot_pi/agent/extensions/`) has the same mirror-URL problem: `npm install` on work rewrites it with Artifactory URLs. `.envrc` sets `skip-worktree` on it (gated by hostname) so the rewrite never reaches git. Dependency/lock bumps for pi extensions must be committed from a personal machine, where it resolves against the public npm registry.
+The pi extensions `package-lock.json` (`chezmoi/private_dot_pi/agent/extensions/`) has the same mirror-URL problem: `npm install` on work rewrites it with Artifactory URLs. `.envrc` sets `skip-worktree` on it (gated by hostname) so the rewrite never reaches git, and `poe pull` lifts/re-applies the mask around the rebase (see above). Dependency/lock bumps for pi extensions must be committed from a personal machine, where it resolves against the public npm registry.
 
 ## Ansible Local Tasks
 

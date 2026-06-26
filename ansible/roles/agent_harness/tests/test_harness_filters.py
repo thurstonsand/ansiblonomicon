@@ -1240,6 +1240,121 @@ def test_agent_harness_build_plugin_resources_empty_returns_agents_key(
 # =============================================================================
 
 
+# =============================================================================
+# Tests for prefix_override in _resolve_plugin_from_repo
+# =============================================================================
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_repo_prefix_override_empty_string(
+    repo_path: Path,
+) -> None:
+    """prefix: "" strips the plugin name so resources deploy with bare names."""
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    resolved = _resolve_plugin_from_repo(repo_path, {"name": "my-plugin", "prefix": ""})
+    assert resolved.prefix_override == ""
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_repo_prefix_override_custom_string(
+    repo_path: Path,
+) -> None:
+    """prefix: "foo" overrides the plugin name used as the resource prefix."""
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    resolved = _resolve_plugin_from_repo(repo_path, {"name": "my-plugin", "prefix": "foo"})
+    assert resolved.prefix_override == "foo"
+
+
+@pytest.mark.unit
+def test_resolve_plugin_from_repo_prefix_override_absent(
+    repo_path: Path,
+) -> None:
+    """Absent prefix key leaves prefix_override as None (default behaviour)."""
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+
+    resolved = _resolve_plugin_from_repo(repo_path, {"name": "my-plugin"})
+    assert resolved.prefix_override is None
+
+
+@pytest.mark.unit
+def test_build_plugin_resources_prefix_override_empty(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    """prefix: "" → skills deploy with bare names (no plugin-name prefix)."""
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+    skills_dir = repo_path / "skills" / "teach"
+    skills_dir.mkdir(parents=True)
+    (skills_dir / "SKILL.md").write_text("# Teach")
+
+    sources: list[Any] = [
+        {"repo": "owner/repo", "plugins": [{"name": "my-plugin", "prefix": ""}]}
+    ]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["skills"]) == 1
+    assert result["skills"][0]["name"] == "teach"
+    assert result["skills"][0]["display_name"] == "teach"
+
+
+@pytest.mark.unit
+def test_build_plugin_resources_prefix_override_custom(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    """prefix: "custom" → skills deploy as custom-<skill>."""
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+    skills_dir = repo_path / "skills" / "teach"
+    skills_dir.mkdir(parents=True)
+    (skills_dir / "SKILL.md").write_text("# Teach")
+
+    sources: list[Any] = [
+        {"repo": "owner/repo", "plugins": [{"name": "my-plugin", "prefix": "custom"}]}
+    ]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["skills"]) == 1
+    assert result["skills"][0]["name"] == "custom-teach"
+    assert result["skills"][0]["display_name"] == "custom:teach"
+
+
+@pytest.mark.unit
+def test_build_plugin_resources_prefix_override_absent_uses_plugin_name(
+    repo_path: Path, cache_dir: Path
+) -> None:
+    """Absent prefix → default behaviour: plugin_name used as prefix."""
+    plugin_dir = repo_path / ".claude-plugin"
+    plugin_dir.mkdir()
+    (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
+    skills_dir = repo_path / "skills" / "teach"
+    skills_dir.mkdir(parents=True)
+    (skills_dir / "SKILL.md").write_text("# Teach")
+
+    sources: list[Any] = [
+        {"repo": "owner/repo", "plugins": [{"name": "my-plugin"}]}
+    ]
+    result = agent_harness_build_plugin_resources(sources, str(cache_dir))
+
+    assert len(result["skills"]) == 1
+    assert result["skills"][0]["name"] == "my-plugin-teach"
+    assert result["skills"][0]["display_name"] == "my-plugin:teach"
+
+
+# =============================================================================
+# Tests for target_agents in _resolve_plugin_from_repo
+# =============================================================================
+
+
 @pytest.mark.unit
 def test_resolve_plugin_from_repo_with_target_agents(repo_path: Path) -> None:
     plugin_dir = repo_path / ".claude-plugin"

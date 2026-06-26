@@ -20,6 +20,7 @@ class PluginLongForm(TypedDict, total=False):
     exclude_data: list[str]  # rsync --exclude patterns for deployed files
     target_agents: list[str]
     hooks: bool  # deploy hooks from this plugin (default: true)
+    prefix: str | None  # override the name prefix applied to resources (None = use plugin name, "" = no prefix)
 
 
 @dataclass
@@ -83,6 +84,7 @@ class ResolvedPlugin:
     exclude_data: list[str] = field(default_factory=list)
     target_agents: list[str] = field(default_factory=list)
     include_hooks: bool = True
+    prefix_override: str | None = None  # None = use config.name, "" = no prefix, other = literal prefix
 
     @property
     def is_valid(self) -> bool:
@@ -184,7 +186,9 @@ def _normalize_path_field(value: str | list[str]) -> list[str]:
     return [p.lstrip("./") for p in value]
 
 
-def _prefixed_names(plugin_name: str, resource_name: str) -> tuple[str, str]:
+def _prefixed_names(
+    plugin_name: str, resource_name: str, prefix_override: str | None = None
+) -> tuple[str, str]:
     """Build (deploy_name, display_name) for a plugin-namespaced resource.
 
     Mirrors how Claude Code namespaces plugin resources as ``plugin:resource``,
@@ -192,10 +196,16 @@ def _prefixed_names(plugin_name: str, resource_name: str) -> tuple[str, str]:
 
     A root-level resource (resource_name == plugin_name) is the plugin itself;
     it is not double-prefixed.
+
+    prefix_override controls the prefix independently of the plugin name:
+    - None  → use plugin_name (default behaviour)
+    - ""    → no prefix; resource_name is used as-is
+    - other → use the supplied string as the prefix
     """
-    if not plugin_name or resource_name == plugin_name:
+    prefix = plugin_name if prefix_override is None else prefix_override
+    if not prefix or resource_name == prefix:
         return resource_name, resource_name
-    return f"{plugin_name}-{resource_name}", f"{plugin_name}:{resource_name}"
+    return f"{prefix}-{resource_name}", f"{prefix}:{resource_name}"
 
 
 def _load_plugin_json(plugin_path: Path) -> dict[str, str | list[str] | None] | None:
@@ -480,6 +490,7 @@ def _resolve_plugin_from_repo(
     exclude_data: list[str] = []
     target_agents: list[str] = []
     include_hooks = True
+    prefix_override: str | None = None
 
     skills_override: str | list[str] | None = None
     agents_override: str | list[str] | None = None
@@ -497,6 +508,7 @@ def _resolve_plugin_from_repo(
         exclude_data = list(plugin_spec.get("exclude_data", []))
         target_agents = list(plugin_spec.get("target_agents", []))
         include_hooks = plugin_spec.get("hooks", True)
+        prefix_override = plugin_spec.get("prefix")
 
     def _apply_overrides(config: PluginConfig) -> PluginConfig:
         """Apply skills/agents path overrides from the plugin spec."""
@@ -539,6 +551,7 @@ def _resolve_plugin_from_repo(
             exclude_data=exclude_data,
             target_agents=target_agents,
             include_hooks=include_hooks,
+            prefix_override=prefix_override,
         )
 
     # Try marketplace lookup
@@ -554,6 +567,7 @@ def _resolve_plugin_from_repo(
             exclude_data=exclude_data,
             target_agents=target_agents,
             include_hooks=include_hooks,
+            prefix_override=prefix_override,
         )
 
     # Try standalone plugin
@@ -568,6 +582,7 @@ def _resolve_plugin_from_repo(
             exclude_data=exclude_data,
             target_agents=target_agents,
             include_hooks=include_hooks,
+            prefix_override=prefix_override,
         )
 
     return ResolvedPlugin.empty()
@@ -590,6 +605,7 @@ def _resolve_plugin_from_local(
     exclude_data: list[str] = []
     target_agents: list[str] = []
     include_hooks = True
+    prefix_override: str | None = None
     skills_override: str | list[str] | None = None
     agents_override: str | list[str] | None = None
     base_path = Path(local_path)
@@ -607,6 +623,7 @@ def _resolve_plugin_from_local(
         exclude_data = list(plugin_spec.get("exclude_data", []))
         target_agents = list(plugin_spec.get("target_agents", []))
         include_hooks = plugin_spec.get("hooks", True)
+        prefix_override = plugin_spec.get("prefix")
 
     # Determine plugin path
     if explicit_path:
@@ -646,6 +663,7 @@ def _resolve_plugin_from_local(
         exclude_data=exclude_data,
         target_agents=target_agents,
         include_hooks=include_hooks,
+        prefix_override=prefix_override,
     )
 
 
@@ -697,7 +715,7 @@ def agent_harness_build_plugin_resources(
                     )
                     if source_path:
                         deploy_name, display_name = _prefixed_names(
-                            config.name, skill_name
+                            config.name, skill_name, resolved.prefix_override
                         )
                         skills.append(
                             ResourceInfo(
@@ -723,7 +741,7 @@ def agent_harness_build_plugin_resources(
                     )
                     if source_path:
                         deploy_name, display_name = _prefixed_names(
-                            config.name, agent_name
+                            config.name, agent_name, resolved.prefix_override
                         )
                         agents.append(
                             ResourceInfo(

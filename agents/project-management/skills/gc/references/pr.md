@@ -1,8 +1,3 @@
----
-name: pr
-description: Creates pull requests with an interactive review and approval step. Use when asked to create a pull request, open a PR, or submit changes for review.
----
-
 # PR Review Helper
 
 ## Overview

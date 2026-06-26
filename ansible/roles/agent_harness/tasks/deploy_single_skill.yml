@@ -21,7 +21,7 @@
 - name: Build rsync exclude options
   ansible.builtin.set_fact:
     agent_harness_skill_rsync_opts: >-
-      {{ ['--omit-dir-times', '--filter=P_SKILL.md', '--filter=H_SKILL.md', '--exclude=.git', '--exclude=.claude-plugin', '--exclude=*.j2', '--delete-excluded']
+      {{ ['--omit-dir-times', '--exclude=SKILL.md', '--exclude=.git', '--exclude=.claude-plugin', '--exclude=*.j2']
          + (agent_harness_skill_info.exclude_data | default([]) | map('regex_replace', '^(.*)$', '--exclude=\1') | list) }}
 
 - name: Sync skill directory locally

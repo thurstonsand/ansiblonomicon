@@ -221,16 +221,25 @@ args = [{ name = "file", positional = true, required = true }]
 
 # Git tasks
 [tool.poe.tasks.pull]
-help = "Git pull (handles uv.lock local-only conflicts on work machine)"
+help = "Git pull --rebase (handles lockfile local-only conflicts on work machine)"
 shell = """
 if [ "$(hostname -s)" = "ML-DFC6YK6VJQ" ]; then
-  git update-index --no-skip-worktree uv.lock
-  git checkout -- uv.lock
-  git pull
+  set -e
+  locks="uv.lock chezmoi/private_dot_pi/agent/extensions/package-lock.json"
+  pyproject_bak=$(mktemp)
+  cp pyproject.toml "$pyproject_bak"
+  trap 'cp -f "$pyproject_bak" pyproject.toml; rm -f "$pyproject_bak"; git update-index --skip-worktree $locks' EXIT
+  git update-index --no-skip-worktree $locks
+  git checkout -- $locks
+  git pull --rebase
+  # Re-resolve the masked lock against Artifactory wheel-only, backing off any
+  # release the mirror lacks a macOS-arm64 wheel for. See README.work.md.
+  uv run --no-project --with tomlkit python scripts/work_lock_environment.py pyproject.toml
+  uv lock --no-build
+  cp -f "$pyproject_bak" pyproject.toml
   uv sync --dev
-  git update-index --skip-worktree uv.lock
 else
-  git pull
+  git pull --rebase
 fi
 """
 interpreter = "bash"

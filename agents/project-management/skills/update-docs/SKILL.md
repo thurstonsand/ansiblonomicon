@@ -1,5 +1,5 @@
 ---
-name: updating-documentation-for-changes
+name: update-docs
 description: Use at the end of a unit of work, before commit or PR, to verify related documentation matches the new state
 ---
 

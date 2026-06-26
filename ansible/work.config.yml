@@ -52,12 +52,18 @@ agent_harness_sources_base:
           - to-prd
           - prototype
 
+  - repo: pbakaus/impeccable
+    pull: true
+    plugins:
+      - name: impeccable
+        path: .claude
+        skills: skills
+
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management
         exclude_skills:
           - showboat
-          - pr
       - name: claude
         target_agents: [claude]
         exclude_skills:
