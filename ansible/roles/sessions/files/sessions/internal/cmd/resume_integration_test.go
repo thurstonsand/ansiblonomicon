@@ -1,10 +1,10 @@
 package cmd
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strconv"
 	"strings"
 	"testing"
 )
@@ -16,10 +16,12 @@ func writeTestRecord(t *testing.T, root, tool string, rec Record) {
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	body := `{"sessionId":"` + rec.SessionID + `","name":"` + rec.Name + `","cwd":"` +
-		rec.Cwd + `","pid":` + strconv.Itoa(rec.PID) + `,"bootId":"` + rec.BootID +
-		`","updatedAt":` + strconv.FormatInt(rec.UpdatedAt, 10) + `,"tool":"` + tool + `"}`
-	if err := os.WriteFile(filepath.Join(dir, rec.SessionID+".json"), []byte(body), 0o600); err != nil {
+	rec.Tool = tool
+	body, err := json.Marshal(rec)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, rec.SessionID+".json"), append(body, '\n'), 0o600); err != nil {
 		t.Fatal(err)
 	}
 }

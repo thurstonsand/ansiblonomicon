@@ -69,7 +69,8 @@ export default function sessionRecovery(pi: ExtensionAPI): void {
     const sessionId = ctx.sessionManager.getSessionId();
 
     // "new"/"resume"/"fork" replace this session id in-process; the successor
-    // writes its own record on session_start, so the old one must go.
+    // writes its own record on session_start, so the old one is hidden from the
+    // active/orphaned view but remains resumable by explicit name or id.
     if (event.reason === "new" || event.reason === "resume" || event.reason === "fork") {
       deleteRecord("pi", sessionId);
       return;
@@ -81,9 +82,9 @@ export default function sessionRecovery(pi: ExtensionAPI): void {
       return;
     }
 
-    // reason === "quit": delete only on a deliberate in-app quit. A
-    // signal-driven shutdown (tab close, SIGHUP/SIGTERM, reboot) is left behind
-    // as a recoverable orphan.
+    // reason === "quit": hide only on a deliberate in-app quit. A signal-driven
+    // shutdown (tab close, SIGHUP/SIGTERM, reboot) is left behind as a
+    // recoverable orphan.
     if (!viaSignal) {
       deleteRecord("pi", sessionId);
     }

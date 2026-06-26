@@ -1,9 +1,11 @@
 package cmd
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/spf13/cobra"
 )
@@ -11,8 +13,8 @@ import (
 func newPruneCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:               "prune [name|id]",
-		Short:             "Delete records left over from a prior boot",
-		Long:              "Without an argument, delete recovery records whose boot id differs from the current boot; records from the current boot are left untouched. With a name or id, delete only that session's record, regardless of boot.",
+		Short:             "Hide records left over from a prior boot",
+		Long:              "Without an argument, hide recovery records whose boot id differs from the current boot; records from the current boot are left untouched. With a name or id, hide only that session's record, regardless of boot. Hidden records stay in history and can still be resumed by name or id.",
 		Args:              cobra.MaximumNArgs(1),
 		ValidArgsFunction: completeRecords,
 		RunE:              runPrune,
@@ -41,7 +43,7 @@ func pruneOne(cmd *cobra.Command, records []Record, arg string) error {
 		}
 		return fmt.Errorf("%w: %q", err, arg)
 	}
-	if err := removeRecord(target); err != nil {
+	if err := softDeleteRecord(target); err != nil {
 		return err
 	}
 	_, _ = fmt.Fprintf(cmd.OutOrStdout(), "Pruned %s.\n", recordLabel(target))
@@ -51,7 +53,7 @@ func pruneOne(cmd *cobra.Command, records []Record, arg string) error {
 func liveRecords(records []Record, boot string) []Record {
 	out := make([]Record, 0, len(records))
 	for _, rec := range records {
-		if rec.live(boot) {
+		if !rec.deleted() && rec.live(boot) {
 			out = append(out, rec)
 		}
 	}
@@ -62,10 +64,10 @@ func prunePriorBoot(cmd *cobra.Command, records []Record) error {
 	boot := currentBoot()
 	removed := 0
 	for _, rec := range records {
-		if boot != "" && rec.BootID == boot {
+		if rec.deleted() || (boot != "" && rec.BootID == boot) {
 			continue
 		}
-		if err := removeRecord(rec); err != nil {
+		if err := softDeleteRecord(rec); err != nil {
 			return err
 		}
 		removed++
@@ -74,12 +76,17 @@ func prunePriorBoot(cmd *cobra.Command, records []Record) error {
 	return nil
 }
 
-func removeRecord(rec Record) error {
+func softDeleteRecord(rec Record) error {
+	if rec.deleted() {
+		return nil
+	}
+	rec.DeletedAt = time.Now().UnixMilli()
 	path := filepath.Join(stateRoot(), rec.Tool, rec.SessionID+".json")
-	if err := os.Remove(path); err != nil && !os.IsNotExist(err) {
+	data, err := json.MarshalIndent(rec, "", "  ")
+	if err != nil {
 		return err
 	}
-	return nil
+	return os.WriteFile(path, append(data, '\n'), 0o600)
 }
 
 func recordLabel(rec Record) string {

@@ -16,7 +16,7 @@ func newResumeCmd() *cobra.Command {
 		Use:               "resume [name|id]",
 		Aliases:           []string{"r"},
 		Short:             "Resume an orphaned session",
-		Long:              "Resume a session that was not closed cleanly, by name or id. Completion and matching cover the current directory by default, or every directory with --all. Live sessions (open elsewhere) and clean historical sessions are never offered.",
+		Long:              "Resume a session by name or id. Without an argument, only visible orphaned sessions are considered. With an argument, clean historical sessions are also resumable by global history. Live sessions open elsewhere are never offered.",
 		Args:              cobra.MaximumNArgs(1),
 		ValidArgsFunction: completeOrphans,
 		RunE: func(_ *cobra.Command, args []string) error {
@@ -33,19 +33,24 @@ func runResume(all bool, args []string) error {
 		return err
 	}
 	cwd, _ := os.Getwd()
-	candidates := scopedOrphans(records, currentBoot(), cwd, all)
-	if len(candidates) == 0 {
-		return errors.New("no orphaned sessions to resume")
-	}
+	visibleOrphans := scopedOrphans(records, currentBoot(), cwd, all)
 
 	var target Record
 	if len(args) == 0 {
-		if len(candidates) > 1 {
-			return fmt.Errorf("%d orphaned sessions; specify a name or id", len(candidates))
+		if len(visibleOrphans) == 0 {
+			return errors.New("no orphaned sessions to resume")
 		}
-		target = candidates[0]
+		if len(visibleOrphans) > 1 {
+			return fmt.Errorf("%d orphaned sessions; specify a name or id", len(visibleOrphans))
+		}
+		target = visibleOrphans[0]
 	} else {
+		boot := currentBoot()
+		candidates := scopedResumeCandidates(records, boot, cwd, all, true)
 		target, err = resolve(candidates, args[0])
+		if errors.Is(err, errNoMatch) && !all {
+			target, err = resolve(deletedResumeCandidates(records, boot), args[0])
+		}
 		if err != nil {
 			return fmt.Errorf("%w: %q", err, args[0])
 		}

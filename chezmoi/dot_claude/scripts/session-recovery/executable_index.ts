@@ -4,13 +4,13 @@
 // A Claude hook (SessionStart / Stop / SessionEnd) fires this with the hook
 // payload on stdin. It maps the lifecycle onto the shared recovery core:
 //   SessionStart / Stop -> writeRecord  (Stop also refreshes a late title)
-//   SessionEnd          -> delete only on a deliberate quit (see below)
+//   SessionEnd          -> hide only on a deliberate quit (see below)
 //
 // Not every SessionEnd means "done with this session." Claude fires it on
 // abrupt termination too -- closing the terminal tab or a SIGHUP/SIGTERM all
 // arrive as reason "other", indistinguishable from each other. Those are
-// exactly the cases we want to remain recoverable. So we delete the record
-// only on a deliberate in-app exit (Ctrl-D / `/exit` / `/quit` -> reason
+// exactly the cases we want to remain recoverable. So we hide the record only
+// on a deliberate in-app exit (Ctrl-D / `/exit` / `/quit` -> reason
 // "prompt_input_exit", `/logout`, `/clear`); everything else -- tab close,
 // kill signals, `resume`, and a hard reboot that fires no SessionEnd at all --
 // leaves the record as the orphan the `sessions` CLI surfaces for recovery.
@@ -47,7 +47,7 @@ class HookEvent {
 	) {}
 
 	/** True when this SessionEnd was a deliberate in-app quit, so the record
-	 * should be removed rather than kept as a recoverable orphan. */
+	 * should be hidden rather than kept as a recoverable orphan. */
 	get isDeliberateExit(): boolean {
 		return (
 			this.event === "SessionEnd" &&
@@ -154,11 +154,11 @@ async function main(): Promise<void> {
 	log(hook.sessionId, `event=${hook.event} reason=${hook.reason}`);
 
 	if (hook.event === "SessionEnd") {
-		// Deliberate quit -> remove. Abrupt end (tab close, signal) -> leave the
-		// record in place so it surfaces as a recoverable orphan.
+		// Deliberate quit -> hide. Abrupt end (tab close, signal) -> leave the
+		// record visible so it surfaces as a recoverable orphan.
 		if (hook.isDeliberateExit) {
 			deleteRecord("claude", hook.sessionId);
-			log(hook.sessionId, `removed own file (deliberate exit: ${hook.reason})`);
+			log(hook.sessionId, `hid own file (deliberate exit: ${hook.reason})`);
 		} else {
 			log(hook.sessionId, `kept as orphan (SessionEnd reason=${hook.reason})`);
 		}

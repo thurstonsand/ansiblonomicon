@@ -38,6 +38,7 @@ halves:
   "pid": 12345,                 // the agent process that owns the session
   "bootId": "string",           // boot identity at write time (see below)
   "updatedAt": 1780679882949,   // epoch milliseconds, last refresh
+  "deletedAt": 1780679999999,   // optional soft-delete marker for history
   "tool": "claude" | "pi"
 }
 ```
@@ -70,14 +71,14 @@ boot epoch would *not* be comparable with Claude's UUID and must not be used.
 |---|---|
 | `SessionStart` (startup/resume/clear/compact) | Write/refresh own file. |
 | `Stop` | Refresh own file (keeps `cwd` + `updatedAt` current). |
-| `SessionEnd` (deliberate quit) | Delete own file. |
+| `SessionEnd` (deliberate quit) | Soft-delete own file. |
 | `SessionEnd` (any other reason) | Keep the file as a recoverable orphan. |
 
 `SessionEnd` is **not** an unconditional delete: Claude fires it on abrupt
 termination too, and deleting then would defeat recovery. The discriminator is
-the `reason` field. Deletion happens only on a deliberate in-app exit —
+the `reason` field. Soft deletion happens only on a deliberate in-app exit —
 `prompt_input_exit` (Ctrl-D / `/exit` / `/quit`), `logout`, and `clear`. Every
-other reason is treated as recoverable and the record is left in place:
+other reason is treated as recoverable and the record is left visible:
 
 - `other` — closing the terminal tab, or a `SIGHUP`/`SIGTERM`/kill. Claude
   collapses all of these into the single reason `other` with nothing to tell
@@ -91,15 +92,17 @@ In every keep case the surviving file, with a `bootId` that no longer matches
 the current boot (or a `pid` that is no longer alive), is what the `sessions`
 CLI surfaces as an orphan.
 
-`/clear` is a delete reason: it emits `SessionEnd(reason=clear)` on the outgoing
-session — removing its file — immediately followed by `SessionStart(source=clear)`
-on the new session in the same process, which writes the new file. No special
-clear-handling is needed; it falls out of the deliberate-exit rule.
+`/clear` is a soft-delete reason: it emits `SessionEnd(reason=clear)` on the
+outgoing session — hiding its file from active/orphaned listings — immediately
+followed by `SessionStart(source=clear)` on the new session in the same process,
+which writes the new file. No special clear-handling is needed; it falls out of
+the deliberate-exit rule.
 
-Pi maps onto the same write/refresh/delete semantics through its extension
+Pi maps onto the same write/refresh/soft-delete semantics through its extension
 lifecycle events, with the **same recovery contract as Claude**: a deliberate
-in-app quit deletes the record; an abrupt ending (tab close, signal, reboot,
-crash) leaves it behind as a recoverable orphan. Reaching that contract on Pi
+in-app quit hides the record from active/orphaned listings; an abrupt ending (tab
+close, signal, reboot, crash) leaves it visible as a recoverable orphan. Reaching
+that contract on Pi
 takes more work than on Claude, because Pi cannot tell the two apart through the
 event alone.
 
@@ -107,9 +110,9 @@ event alone.
 |---|---|
 | `session_start` (any reason) | Install signal hooks once, then write/refresh own file for the current `getSessionId()`. |
 | `agent_end` | Refresh own file (Pi's analog of Claude's `Stop` — once per user prompt). |
-| `session_shutdown` reason `new`/`resume`/`fork` | Delete: the `sessionId` is replaced in-process; the successor's `session_start` writes the new id. |
+| `session_shutdown` reason `new`/`resume`/`fork` | Soft-delete: the `sessionId` is replaced in-process; the successor's `session_start` writes the new id. |
 | `session_shutdown` reason `reload` | Keep: same `sessionId` continues, and the following `session_start` rewrites it. |
-| `session_shutdown` reason `quit`, **no** signal seen | Delete: deliberate in-app quit (`/quit`, Ctrl-D, Ctrl-C ×2). |
+| `session_shutdown` reason `quit`, **no** signal seen | Soft-delete: deliberate in-app quit (`/quit`, Ctrl-D, Ctrl-C ×2). |
 | `session_shutdown` reason `quit`, **after** SIGHUP/SIGTERM | Keep as orphan: tab close, `kill`, or a normal reboot. |
 
 **The hard part: Pi collapses tab-close and deliberate-quit into one reason.**
@@ -136,6 +139,10 @@ first and sets a `viaSignal` flag before our shutdown handler reads it. On
 the TUI reads Ctrl-C as a keystroke (no OS signal), and adding a SIGINT listener
 would suppress Node's default termination.
 
+Soft-deleted records stay on disk with `deletedAt` set. They are hidden from
+`list`, completions, and no-argument resume, but remain available to an explicit
+`sessions resume <name|id>` lookup.
+
 > **Fragility / assumptions.** This leans on two Pi internals: (1) Pi registers a
 > single prepended SIGTERM/SIGHUP handler once and never re-registers; (2) the
 > session_shutdown emission runs synchronously within that handler so listener
@@ -160,8 +167,8 @@ Pi-specific bindings:
   "refresh on compact" behavior from Claude's table is covered by `agent_end`
   instead.
 
-Pi's `new`/`resume`/`fork` predecessor-delete still applies — those mint a new
-`sessionId` in-process, so the outgoing file is removed and the successor's
+Pi's `new`/`resume`/`fork` predecessor soft-delete still applies — those mint a
+new `sessionId` in-process, so the outgoing record is hidden and the successor's
 `session_start` writes the new id. Both tools' records share the `(bootId, pid)`
 shape so a unified reader can reason about lineage uniformly if needed.
 
@@ -170,11 +177,10 @@ shape so a unified reader can reason about lineage uniformly if needed.
 `/clear` (verified empirically on Claude Code 2.1.165) fires
 `SessionEnd(reason=clear)` on the outgoing session, then
 `SessionStart(source=clear)` on a new session in the *same* process under a new
-`sessionId`. Because `clear` is a deliberate-exit reason, the `SessionEnd`
-deletes the outgoing file before the successor writes its own — no
-sibling-scanning or lineage bookkeeping is needed. The writer keeps a verbose
-debug log at `/tmp/claude-session-recovery.log` for retuning if these semantics
-change.
+`sessionId`. Because `clear` is a deliberate-exit reason, the `SessionEnd` hides
+the outgoing record before the successor writes its own. The writer keeps a
+verbose debug log at `/tmp/claude-session-recovery.log` for retuning if these
+semantics change.
 
 ## The `sessions` CLI
 
@@ -186,12 +192,13 @@ chosen for its zero-effort, dynamic shell completion (`ValidArgsFunction`).
 ### Single source: the recovery tree
 
 The CLI reads **only** `session-recovery/{claude,pi}/` — never the transcripts
-or the native session stores. Those records hold exactly the sessions that
-opened and have not cleanly shut down: the currently-live ones and the
-crash/orphan survivors. Cleanly-closed historical sessions deleted their own
-record and are intentionally out of scope. Every field the CLI needs (`name`,
-`cwd`, `sessionId`, `tool`, `pid`, `bootId`) lives in the record, so the reader
-stays fully tool-agnostic.
+or the native session stores. Visible records hold the sessions that opened and
+have not cleanly shut down: the currently-live ones and the crash/orphan
+survivors. Cleanly-closed historical sessions remain as soft-deleted records with
+`deletedAt` set; they are hidden from listings and completions but can still be
+resumed by explicit `name|id`. Every field the CLI needs (`name`, `cwd`,
+`sessionId`, `tool`, `pid`, `bootId`) lives in the record, so the reader stays
+fully tool-agnostic.
 
 A record is classified by liveness:
 
@@ -217,23 +224,27 @@ The only read of config in the CLI is the explicit maintenance surface:
 
 ### Commands
 
-- `sessions ls` — list every record, each labeled `live` or `orphaned`. Default
-  scope is the **current directory** (records whose `cwd` matches `$PWD`).
-  `-a`/`--all` lists across **all** directories, grouped by `cwd`. De-duped by
-  `(bootId, pid)`, newest per lineage.
-- `sessions r|resume [name|id]` — resume an **orphaned** session. Completion and
-  argument matching are scoped to the current directory and to orphaned records
-  only: historical sessions aren't tracked, and `live` sessions are excluded
-  (already open elsewhere). The CLI resolves `name|id` to a record, then execs
-  that tool's resume verb from the record's `cwd`.
-  - `sessions r -a|--all [name|id]` widens completion and matching to orphaned
-    records across **all** directories. Resume still `cd`s into the record's
-    `cwd` first, so a cross-repo resume lands in the right tree.
-- `sessions prune [name|id]` — with no argument, delete records whose `bootId`
-  differs from the current boot (genuine prior-boot leftovers); live records
-  untouched. With a `name|id`, delete that one orphaned record regardless of
-  boot; resolving a `live` session instead is refused (cannot prune an open
-  session).
+- `sessions ls` — list every visible record, each labeled `live` or `orphaned`.
+  Default scope is the **current directory** (records whose `cwd` matches `$PWD`).
+  `-a`/`--all` lists across **all** directories, grouped by `cwd`. Visible
+  records are de-duped by `(bootId, pid)`, newest per lineage; soft-deleted
+  history is never displayed.
+- `sessions r|resume [name|id]` — resume a session. With no argument, only a
+  single visible **orphaned** session in the current scope is eligible. With an
+  explicit `name|id`, matching includes soft-deleted historical records too, so
+  `sessions resume <old-session-name>` can recover a cleanly closed session that
+  no longer appears in `sessions ls`. `live` sessions are excluded (already open
+  elsewhere). The CLI resolves `name|id` to a record, then execs that tool's
+  resume verb from the record's `cwd`.
+  - `sessions r -a|--all [name|id]` widens visible orphan matching to records
+    across **all** directories. Resume still `cd`s into the record's `cwd` first,
+    so a cross-repo resume lands in the right tree. Soft-deleted history can also
+    be matched globally by explicit name or id.
+- `sessions prune [name|id]` — with no argument, soft-delete records whose
+  `bootId` differs from the current boot (genuine prior-boot leftovers); live
+  records are untouched. With a `name|id`, soft-delete that one orphaned record
+  regardless of boot; resolving a `live` session instead is refused (cannot prune
+  an open session).
 - `sessions ignore [path]` — with a path, add a recursive ignored directory to
   config and immediately prune matching records. With no path, re-read the
   config, prune matching records, and print the configured ignored directories;
@@ -250,13 +261,14 @@ The only read of config in the CLI is the explicit maintenance surface:
 
 ### Completion
 
-`r`'s `ValidArgsFunction` filters the recovery tree to orphaned records — current
-directory by default, all directories under `--all` — newest-first. It offers
-each record's `sessionId` and, when
-present, its `name` as alternate candidates; the completion *description* carries
-`<tool> · <name> · <relative-age>` (and `· <cwd>` under `--all`) so the picker is
-legible. An argument that uniquely matches a `name` resolves to that record;
-otherwise it is treated as a `sessionId`.
+`r`'s `ValidArgsFunction` filters the recovery tree to visible orphaned records
+— current directory by default, all directories under `--all` — newest-first. It
+offers each record's `sessionId` and, when present, its `name` as alternate
+candidates; the completion *description* carries `<tool> · <name> ·
+<relative-age>` (and `· <cwd>` under `--all`) so the picker is legible.
+Soft-deleted history is deliberately not completed, but an explicit argument
+that uniquely matches a historical `name` or `sessionId` still resolves to that
+record.
 
 ## Files
 
@@ -269,8 +281,8 @@ Shared library (a local package, referenced by bare specifier):
   `scripts/session-recovery-lint.sh` (`lint:session-recovery`) and tracked by
   `scripts/ts-package-deps.sh`.
   - `core.ts` — the shared writer: `SessionRecord` schema, `bootId()`,
-    `stateDir()`, `writeRecord()`, `deleteRecord()`; `exports` `.` →
-    `./core.ts`.
+    `stateDir()`, `writeRecord()`, `deleteRecord()` for soft-delete; `exports`
+    `.` → `./core.ts`.
   - `settings.ts` — Zod-validated settings type/loader and recursive
     ignored-directory matching for the write side. Consumers load settings once
     and pass the instance into core operations.
@@ -291,8 +303,8 @@ Shared library (a local package, referenced by bare specifier):
 
 - **Pi consumer:** `chezmoi/private_dot_pi/agent/extensions/session-recovery/`
   — `index.ts` (wires `session_start` → install signal hooks + `writeRecord`,
-  `agent_end` → `writeRecord`, and a reason-gated `session_shutdown` that deletes
-  only on deliberate quit or in-process replacement — see the Pi lifecycle
+  `agent_end` → `writeRecord`, and a reason-gated `session_shutdown` that
+  soft-deletes only on deliberate quit or in-process replacement — see the Pi lifecycle
   section) plus a `package.json` whose only entry is
   `"@thurstons/session-recovery": "file:../../../../.local/lib/session-recovery"`
   (a **live-layout** path) and `pi.extensions: ["./index.ts"]`. It carries **no
@@ -322,7 +334,7 @@ Claude Code recorder:
 - `chezmoi/dot_claude/scripts/session-recovery/` — the Claude consumer, a
   `bun`-run TS recorder that mirrors the Pi consumer. `index.ts` reads the hook
   payload from stdin and maps `SessionStart`/`Stop` → `writeRecord`, `SessionEnd`
-  → `deleteRecord` (pid via `process.ppid` — Claude injects none; `tool:
+  → `deleteRecord` soft-delete (pid via `process.ppid` — Claude injects none; `tool:
   "claude"`). `name` is read from the transcript (the latest `custom-title`
   line's `customTitle`), since Claude's `Stop` payload carries no title; it
   refreshes on every write so a late title lands. It imports

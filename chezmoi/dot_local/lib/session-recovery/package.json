@@ -3,7 +3,7 @@
 	"private": true,
 	"version": "1.0.0",
 	"type": "module",
-	"description": "Shared session-recovery core: record schema, boot id, and atomic write/delete, consumed by every agent's recorder",
+	"description": "Shared session-recovery core: record schema, boot id, and atomic write/soft-delete, consumed by every agent's recorder",
 	"exports": {
 		".": "./core.ts"
 	},

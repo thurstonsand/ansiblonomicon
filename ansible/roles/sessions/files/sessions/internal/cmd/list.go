@@ -35,7 +35,7 @@ func runList(cmd *cobra.Command, all bool) error {
 
 	var shown []Record
 	for _, rec := range records {
-		if !all && !sameDir(rec.Cwd, cwd) {
+		if rec.deleted() || (!all && !sameDir(rec.Cwd, cwd)) {
 			continue
 		}
 		shown = append(shown, rec)

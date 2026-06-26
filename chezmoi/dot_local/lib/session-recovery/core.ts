@@ -34,6 +34,7 @@ export interface SessionRecord {
 	pid: number;
 	bootId: string;
 	updatedAt: number;
+	deletedAt?: number;
 	tool: Tool;
 }
 
@@ -79,14 +80,21 @@ function recordPath(tool: Tool, sessionId: string): string {
 	return join(stateDir(tool), `${sessionId}.json`);
 }
 
-const CleanupRecordSchema = z.object({
+const StoredRecordSchema = z.object({
 	sessionId: z.string(),
+	name: z.string().nullable().optional(),
 	cwd: z.string(),
+	transcript: z.string().nullable().optional(),
+	pid: z.number().optional(),
+	bootId: z.string().optional(),
+	updatedAt: z.number().optional(),
+	deletedAt: z.number().optional(),
+	tool: z.enum(SUPPORTED_TOOLS).optional(),
 });
 
-type CleanupRecord = z.infer<typeof CleanupRecordSchema>;
+type StoredRecord = z.infer<typeof StoredRecordSchema>;
 
-function recordsForTool(tool: Tool): CleanupRecord[] {
+function recordsForTool(tool: Tool): StoredRecord[] {
 	let entries: Dirent[];
 	try {
 		entries = readdirSync(stateDir(tool), { withFileTypes: true });
@@ -94,7 +102,7 @@ function recordsForTool(tool: Tool): CleanupRecord[] {
 		return [];
 	}
 
-	const records: CleanupRecord[] = [];
+	const records: StoredRecord[] = [];
 	for (const entry of entries) {
 		if (!entry.isFile() || !entry.name.endsWith(".json")) {
 			continue;
@@ -107,9 +115,9 @@ function recordsForTool(tool: Tool): CleanupRecord[] {
 	return records;
 }
 
-function readRecordFile(path: string): CleanupRecord | null {
+function readRecordFile(path: string): StoredRecord | null {
 	try {
-		return CleanupRecordSchema.parse(JSON.parse(readFileSync(path, "utf8")));
+		return StoredRecordSchema.parse(JSON.parse(readFileSync(path, "utf8")));
 	} catch {
 		return null;
 	}
@@ -119,7 +127,7 @@ export function deleteIgnoredRecords(settings: Settings): void {
 	for (const tool of SUPPORTED_TOOLS) {
 		for (const record of recordsForTool(tool)) {
 			if (!settings.shouldTrackCwd(record.cwd)) {
-				deleteRecord(tool, record.sessionId);
+				removeRecord(tool, record.sessionId);
 			}
 		}
 	}
@@ -128,7 +136,7 @@ export function deleteIgnoredRecords(settings: Settings): void {
 /** Atomically write (or refresh) a session's recovery record. */
 export function writeRecord(input: RecordInput, settings: Settings): void {
 	if (!settings.shouldTrackCwd(input.cwd)) {
-		deleteRecord(input.tool, input.sessionId);
+		removeRecord(input.tool, input.sessionId);
 		return;
 	}
 
@@ -152,8 +160,23 @@ export function writeRecord(input: RecordInput, settings: Settings): void {
 	renameSync(tmp, target);
 }
 
-/** Remove a session's record. Safe to call when nothing was ever written. */
+/** Hide a session's record while keeping it available for explicit resume. */
 export function deleteRecord(tool: Tool, sessionId: string): void {
+	const path = recordPath(tool, sessionId);
+	const record = readRecordFile(path);
+	if (!record || record.deletedAt) {
+		return;
+	}
+	writeFileSync(
+		path,
+		`${JSON.stringify({ ...record, deletedAt: Date.now() }, null, 2)}\n`,
+		{
+			mode: 0o600,
+		},
+	);
+}
+
+function removeRecord(tool: Tool, sessionId: string): void {
 	try {
 		rmSync(recordPath(tool, sessionId));
 	} catch {

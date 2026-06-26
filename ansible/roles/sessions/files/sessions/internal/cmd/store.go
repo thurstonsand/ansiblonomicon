@@ -25,6 +25,7 @@ type Record struct {
 	PID        int    `json:"pid"`
 	BootID     string `json:"bootId"`
 	UpdatedAt  int64  `json:"updatedAt"`
+	DeletedAt  int64  `json:"deletedAt,omitempty"`
 	Tool       string `json:"tool"`
 }
 
@@ -33,6 +34,10 @@ type Record struct {
 // that died this boot without firing its shutdown hook.
 func (r Record) live(currentBoot string) bool {
 	return r.BootID != "" && r.BootID == currentBoot && pidAlive(r.PID)
+}
+
+func (r Record) deleted() bool {
+	return r.DeletedAt > 0
 }
 
 func (r Record) status(currentBoot string) string {
@@ -54,7 +59,7 @@ func stateRoot() string {
 }
 
 // loadRecords reads every record from every tool subdir, dropping malformed
-// files and keeping only the newest record per (bootId, pid) lineage.
+// files and keeping only the newest visible record per (bootId, pid) lineage.
 func loadRecords() ([]Record, error) {
 	root := stateRoot()
 	var records []Record
@@ -88,21 +93,26 @@ func loadRecords() ([]Record, error) {
 	return dedupeLineage(records), nil
 }
 
-// dedupeLineage keeps the newest record per (bootId, pid); a single process
-// owns at most one live session, so an older sibling is a stale leftover.
+// dedupeLineage keeps the newest visible record per (bootId, pid); a single
+// process owns at most one live/orphaned session, so an older visible sibling is
+// a stale leftover. Deleted records are historical and must not collapse.
 func dedupeLineage(records []Record) []Record {
 	type key struct {
 		boot string
 		pid  int
 	}
 	newest := make(map[key]Record, len(records))
+	out := make([]Record, 0, len(records))
 	for _, rec := range records {
+		if rec.deleted() {
+			out = append(out, rec)
+			continue
+		}
 		k := key{rec.BootID, rec.PID}
 		if cur, ok := newest[k]; !ok || rec.UpdatedAt > cur.UpdatedAt {
 			newest[k] = rec
 		}
 	}
-	out := make([]Record, 0, len(newest))
 	for _, rec := range newest {
 		out = append(out, rec)
 	}
@@ -130,18 +140,32 @@ func resolveDir(path string) string {
 	return filepath.Clean(path)
 }
 
-// scopedOrphans returns orphaned records eligible for resume. When all is
-// false, only records whose cwd matches the working directory are kept.
+// scopedOrphans returns visible orphaned records eligible for resume. When all
+// is false, only records whose cwd matches the working directory are kept.
 func scopedOrphans(records []Record, currentBoot, cwd string, all bool) []Record {
+	return scopedResumeCandidates(records, currentBoot, cwd, all, false)
+}
+
+func scopedResumeCandidates(records []Record, currentBoot, cwd string, all, includeDeleted bool) []Record {
 	out := make([]Record, 0, len(records))
 	for _, rec := range records {
-		if rec.live(currentBoot) {
+		if rec.live(currentBoot) || (!includeDeleted && rec.deleted()) {
 			continue
 		}
 		if !all && !sameDir(rec.Cwd, cwd) {
 			continue
 		}
 		out = append(out, rec)
+	}
+	return out
+}
+
+func deletedResumeCandidates(records []Record, currentBoot string) []Record {
+	out := make([]Record, 0, len(records))
+	for _, rec := range records {
+		if rec.deleted() && !rec.live(currentBoot) {
+			out = append(out, rec)
+		}
 	}
 	return out
 }
