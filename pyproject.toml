@@ -225,7 +225,7 @@ help = "Git pull --rebase (handles lockfile local-only conflicts on work machine
 shell = """
 if [ "$(hostname -s)" = "ML-DFC6YK6VJQ" ]; then
   set -e
-  locks="uv.lock chezmoi/private_dot_pi/agent/extensions/package-lock.json"
+  locks="uv.lock chezmoi/private_dot_pi/agent/extensions/package-lock.json chezmoi/private_dot_pi/agent/permissions/package-lock.json"
   pyproject_bak=$(mktemp)
   cp pyproject.toml "$pyproject_bak"
   trap 'cp -f "$pyproject_bak" pyproject.toml; rm -f "$pyproject_bak"; git update-index --skip-worktree $locks' EXIT

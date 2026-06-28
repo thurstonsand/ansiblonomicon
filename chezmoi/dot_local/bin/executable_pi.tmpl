@@ -9,30 +9,23 @@ if [[ ! -x "$pi_node" ]]; then
   exit 127
 fi
 
-{{ if eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
-# Work Mac: pi is a self-contained bun binary in libexec (via the pi_release
-# role). Its extensions spawn node/npm from PATH for global module resolution
-# (e.g. `npm root -g`), which a project's pinned node version would break, so
-# put $HOME's node first on PATH before exec'ing pi.
-pi_bin="$HOME/.local/libexec/pi"
-
-if [[ ! -e "$pi_bin" ]]; then
-  print -u2 "pi: pi binary not found: $pi_bin"
-  exit 127
-fi
-
+# Pi and its extensions may spawn node/npm from PATH. Put $HOME's selected
+# node first so repo-specific mise versions cannot break global module lookup.
 path=("${pi_node:h}" $path)
-exec "$pi_bin" "$@"
+
+{{ if eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
+# pi is a self-contained bun binary in libexec via the pi_release role.
+pi_bin="$HOME/.local/libexec/pi"
+pi_command=("$pi_bin")
 {{- else -}}
-# pi is an npm package installed next to the selected node; launching through
-# the pinned node also fixes its extensions' module resolution, since they share
-# the global node_modules.
+# pi is an npm package installed next to the selected node.
 pi_bin="${pi_node:h}/pi"
+pi_command=("$pi_node" "$pi_bin")
+{{- end }}
 
 if [[ ! -e "$pi_bin" ]]; then
   print -u2 "pi: pi binary not found: $pi_bin"
   exit 127
 fi
 
-exec "$pi_node" "$pi_bin" "$@"
-{{- end }}
+exec "${pi_command[@]}" "$@"

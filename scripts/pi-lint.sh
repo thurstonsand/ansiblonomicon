@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="chezmoi/private_dot_pi/agent/extensions"
+ROOT_DIRS=(
+  "chezmoi/private_dot_pi/agent/extensions"
+  "chezmoi/private_dot_pi/agent/permissions"
+)
 WRITE_FLAG=""
 MODE="check"
 
@@ -10,7 +13,7 @@ if [[ "${1:-}" == "--format" || "${1:-}" == "-f" ]]; then
   MODE="write"
 fi
 
-mapfile -t PACKAGE_DIRS < <(find "$ROOT_DIR" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort)
+mapfile -t PACKAGE_DIRS < <(find "${ROOT_DIRS[@]}" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort)
 
 # On the work machine the public npm registry is blocked, so packages with
 # registry-only deps (e.g. parallel-web-tools' `parallel-web`) can't install and
@@ -28,7 +31,7 @@ if [[ "$(hostname -s 2>/dev/null || hostname)" == "$WORK_HOSTNAME" ]]; then
 fi
 
 if [[ ${#PACKAGE_DIRS[@]} -eq 0 ]]; then
-  echo "No pi extension packages found under $ROOT_DIR"
+  echo "No pi extension packages found under ${ROOT_DIRS[*]}"
   exit 0
 fi
 

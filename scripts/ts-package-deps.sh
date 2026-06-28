@@ -1,7 +1,10 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-PI_ROOT_DIR="chezmoi/private_dot_pi/agent/extensions"
+PI_ROOT_DIRS=(
+  "chezmoi/private_dot_pi/agent/extensions"
+  "chezmoi/private_dot_pi/agent/permissions"
+)
 AMP_ROOT_DIR="chezmoi/dot_config/amp/plugins"
 SESSION_RECOVERY_DIR="chezmoi/dot_local/lib/session-recovery"
 
@@ -36,7 +39,7 @@ NODE
 }
 
 collect_package_dirs() {
-  find "$PI_ROOT_DIR" "$AMP_ROOT_DIR" "$SESSION_RECOVERY_DIR" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort
+  find "${PI_ROOT_DIRS[@]}" "$AMP_ROOT_DIR" "$SESSION_RECOVERY_DIR" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort
 }
 
 package_has_dependency() {
@@ -71,7 +74,7 @@ done
 PACKAGE_DIRS=("${FILTERED_DIRS[@]}")
 
 if [[ ${#PACKAGE_DIRS[@]} -eq 0 ]]; then
-  echo "No TypeScript package.json files found under $PI_ROOT_DIR or $AMP_ROOT_DIR"
+  echo "No TypeScript package.json files found under ${PI_ROOT_DIRS[*]} or $AMP_ROOT_DIR"
   exit 0
 fi
 
