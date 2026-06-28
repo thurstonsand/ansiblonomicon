@@ -38,6 +38,10 @@ Cross-check the user's claims against the code, tests, configuration, and existi
 - Track unresolved assumptions, constraints, and follow-up branches so nothing gets lost.
 - Prefer blunt accuracy over agreeable momentum. If something looks weak, say so plainly.
 
+### Calibrate by cost of being wrong
+
+For each major decision, ask what the cost would be if the design is wrong. Spend design attention on decisions that are hard to reverse, risky, surprising, or likely to constrain future work.
+
 ### Challenge against the glossary
 
 When the user uses a term that conflicts with existing language in `CONTEXT.md`, call it out immediately.
@@ -52,7 +56,7 @@ When the user uses vague, overloaded, or inconsistent language, stop and force a
 
 ### Discuss concrete scenarios
 
-Stress-test ideas with concrete scenarios and edge cases, not paraphrases of what the user just said. Invent scenarios that probe boundaries between concepts and force precision.
+Stress-test ideas with concrete scenarios and edge cases, not paraphrases of what the user just said. Invent scenarios that probe boundaries between concepts and force precision. Carry scenarios into the design doc's problem statement when they explain why the problem matters.
 
 ### Cross-reference with code
 
@@ -107,7 +111,7 @@ Gate 2 is complete when:
 - the design doc exists
 - the decision summary is clear
 - the major design decisions and tradeoffs are recorded
-- rejected alternatives worth remembering are captured
+- alternatives and open questions worth remembering are captured
 - the user agrees the design is ready for planning
 
 ## Gate 3: Execution Planning

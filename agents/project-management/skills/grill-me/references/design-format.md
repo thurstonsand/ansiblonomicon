@@ -19,18 +19,22 @@ Draft
 
 {1-3 sentences: what this design decides, why it exists, and the key tradeoff.}
 
-## Problem Statement
+## Problem Statement / Background
 
-{Clear articulation of what needs to be solved and why now.}
+{Clear articulation of what needs to be solved and why now. Answer: why are we taking this on, what problem does it solve, and were there previous attempts? Include concrete scenarios when they support these answers.}
 
 ## Goals
 
-- {Goal 1}
-- {Goal 2}
+- {Outcome-oriented goal; focus on desired behavior or impact, not implementation details}
+- {Outcome-oriented goal}
 
 ## Non-Goals
 
 - {Explicit scope boundary, if useful}
+
+## Exposed Shape
+
+{Setting aside implementation, describe what this design exposes to its users: UI, API, CLI, file format, workflow, or domain abstraction. Is this the shape we want people interacting with?}
 
 ## Design Decisions
 
@@ -42,15 +46,14 @@ Draft
 
 - **{Scenario}:** {Expected handling}
 
-## Rejected Alternatives
+## Alternatives
 
 ### {Alternative}
 
-{Why it was rejected. Only include alternatives worth remembering.}
-
-## Integration Points
-
-- {Existing component or system}: {How this design interacts with it}
+- **Status:** {Rejected or Open}
+- **Decision or open issue:** {If rejected, why it lost. If open, what problem remains unaddressed.}
+- **Retained discussion:** {Context worth preserving}
+- **Next step:** {For open alternatives only; what evidence or action would resolve the decision?}
 
 ## Implementation Plan
 
@@ -62,6 +65,18 @@ Break work into committable units. Each unit must leave the repository in a stab
   - Work:
   - Validation:
 ```
+
+## Optional sections
+
+Default to excluding these sections. Add them only when the context clearly warrants them; if unclear, ask the user.
+
+### Operational Considerations
+
+Use only for enterprise systems, projects with external stakeholders, or commitments to users other than the project owner where operational behavior needs explicit review. Possible contents include success metrics, SLOs, monitoring, alerting, logging, dependencies, infrastructure, rollout, and support boundaries.
+
+### Security / Privacy / Legal
+
+Use only when the project handles customer data, or when security, privacy, compliance, or legal risk is material. Omit for personal or self-only projects unless the user asks for it.
 
 ## Status values
 
@@ -89,7 +104,7 @@ Examples:
 - **Boundary and scope decisions.** The explicit no-s are as valuable as the yes-s.
 - **Deliberate deviations from the obvious path.** These stop future engineers from "fixing" something that was deliberate.
 - **Constraints not visible in the code.** Compliance, latency requirements, operational limits, hardware constraints.
-- **Rejected alternatives when the rejection is non-obvious.** If someone is likely to suggest the same alternative again, record why it lost.
+- **Alternatives when the outcome is non-obvious.** If someone is likely to suggest the same path again, record why it lost or what remains unresolved.
 
 ## Implementation plan rules
 
@@ -104,6 +119,7 @@ Each phase must:
 - avoid exposing half-finished concepts
 - include enough validation that the next person can trust the boundary
 - make clear what has and has not been completed
+- prefer phases that create reviewable artifacts early
 
 Prefer this structure for each phase:
 
