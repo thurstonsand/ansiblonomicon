@@ -9,7 +9,7 @@ All fields live in `~/.local/share/chezmoi/.chezmoidata/local.toml`:
 | Field                                | Consumed by                                              |
 | ------------------------------------ | -------------------------------------------------------- |
 | `email` / `signingKey`               | `dot_config/git/allowed_signers.tmpl`                    |
-| `[[scm]]`                            | git / SCM templates                                      |
+| `[[scm]]`                            | git / SCM templates, `nvim` gitbrowse host URLs          |
 | `goLocalImports` / `goplsBuildFlags` | Go tooling templates                                     |
 | `[claude_code_models]`               | Claude Code model templates                              |
 | `anthropicAuthToken`                 | pi / Claude auth templates                               |
