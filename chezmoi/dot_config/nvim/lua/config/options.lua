@@ -11,6 +11,7 @@ vim.o.updatetime = 250
 vim.o.clipboard = "unnamedplus"
 
 vim.o.title = true
+vim.o.showtabline = 0
 
 local function update_title()
   local ok, result = pcall(vim.fn.system, { vim.fn.expand("~/.local/libexec/tab-title.py"), "--nvim", vim.fn.getcwd() })
