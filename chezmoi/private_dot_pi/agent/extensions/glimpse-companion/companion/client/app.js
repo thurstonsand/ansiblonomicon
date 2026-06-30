@@ -72,8 +72,6 @@
  * @property {HTMLDivElement} row
  * @property {HTMLDivElement} dot
  * @property {HTMLSpanElement} project
- * @property {HTMLSpanElement} attentionSep
- * @property {HTMLSpanElement} attentionLabel
  * @property {HTMLSpanElement} statusSep
  * @property {HTMLSpanElement} status
  * @property {HTMLSpanElement} detail
@@ -175,12 +173,12 @@ function truncate(s, max) {
 
 /** @param {string} status */
 function statusLabel(status) {
-  return STATUS_LABEL[status] ?? "";
+  return STATUS_LABEL[status] ?? status;
 }
 
 /** @param {SessionRecord} record */
 function statusDotColor(record) {
-  return theme.dots[record.status] ?? "#6b7280";
+  return theme.dots[record.status] ?? theme.dots.running ?? "#6b7280";
 }
 
 function startTick() {
@@ -374,12 +372,10 @@ function createEntry(id) {
   const dot = document.createElement("div");
   dot.className = "dot";
   const project = createText("project");
-  const attentionSep = createText("sep attention-sep");
-  const attentionLabel = createText("attention-label");
   const statusSep = createText("sep status-sep");
   const status = createText("status");
   const detail = createText("detail");
-  row.append(dot, project, attentionSep, attentionLabel, statusSep, status, detail);
+  row.append(dot, project, statusSep, status, detail);
 
   const meta = document.createElement("div");
   meta.className = "meta";
@@ -394,8 +390,6 @@ function createEntry(id) {
     row,
     dot,
     project,
-    attentionSep,
-    attentionLabel,
     statusSep,
     status,
     detail,
@@ -409,15 +403,14 @@ function createEntry(id) {
 function updateEntry(entry, record) {
   entry.root.className = record.attention ? "entry attention" : "entry";
   entry.row.className = record.attention ? "row attention" : "row";
-  const label = statusLabel(record.status);
+  const label = record.attentionLabel || statusLabel(record.status);
   entry.dot.style.background = record.attention
     ? "var(--attention-dot, #c084fc)"
     : statusDotColor(record);
   setText(entry.project, record.project);
-  setText(entry.attentionSep, record.attentionLabel ? "·" : "");
-  setText(entry.attentionLabel, record.attentionLabel);
   setText(entry.statusSep, label ? "·" : "");
   setText(entry.status, label);
+  entry.status.style.color = record.attention ? "var(--attention-dot, #c084fc)" : "";
   setText(entry.detail, record.detail);
 
   entry.context.id = `ctx-${record.id}`;

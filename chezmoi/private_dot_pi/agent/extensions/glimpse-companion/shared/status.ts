@@ -12,3 +12,10 @@ export const COMPANION_STATUS = {
 } as const;
 
 export type CompanionStatus = (typeof COMPANION_STATUS)[keyof typeof COMPANION_STATUS];
+
+/**
+ * A status preset or an arbitrary label. Presets render with their themed dot
+ * color and canonical label; any other string renders verbatim with the
+ * `running` color as a fallback.
+ */
+export type CompanionStatusLabel = CompanionStatus | (string & {});

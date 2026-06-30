@@ -76,10 +76,6 @@ body {
   color: var(--pill-muted, rgba(255, 255, 255, 0.9));
   flex-shrink: 0;
 }
-.attention-label {
-  color: var(--attention-dot, #c084fc);
-  flex-shrink: 0;
-}
 .detail {
   color: var(--pill-subtle, rgba(255, 255, 255, 0.75));
   font-family: var(--companion-font-stack);

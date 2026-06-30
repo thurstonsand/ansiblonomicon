@@ -1,9 +1,21 @@
 import { SettingsManager } from "@earendil-works/pi-coding-agent";
 import { type Static, Type } from "typebox";
+import type { ToolConfigOverrides } from "./activity.js";
 import { parseTypeBoxValue } from "./typebox.js";
+
+const TOOL_DETAIL_SCHEMA = Type.Object({
+  from: Type.Optional(Type.Union([Type.String(), Type.Array(Type.String())])),
+  transform: Type.Optional(Type.Literal("basename")),
+});
+
+const TOOL_CONFIG_SCHEMA = Type.Object({
+  status: Type.Optional(Type.String()),
+  detail: Type.Optional(TOOL_DETAIL_SCHEMA),
+});
 
 const COMPANION_SETTINGS_SCHEMA = Type.Object({
   enabled: Type.Optional(Type.Boolean()),
+  tools: Type.Optional(Type.Record(Type.String(), TOOL_CONFIG_SCHEMA)),
 });
 
 const GLIMPSE_SETTINGS_SCHEMA = Type.Object({
@@ -23,10 +35,20 @@ function loadCompanionFileSettings(): CompanionFileSettings {
 }
 
 /**
- * The configured default from the pi settings file (`glimpse.companion.enabled`).
- * SettingsManager is read-only, so the `/companion` toggle only affects the live
- * session; permanent changes are made by editing the settings file.
+ * The centralized companion settings (`glimpse.companion.*`), parsed once.
+ * Callers read whichever field they need rather than re-parsing the settings
+ * tree. `enabled` is the persisted default; SettingsManager is read-only, so the
+ * `/companion` toggle only affects the live session.
  */
-export function loadEnabled(): boolean {
-  return loadCompanionFileSettings().enabled === true;
+export interface CompanionSettings {
+  enabled: boolean;
+  tools: ToolConfigOverrides;
+}
+
+export function loadCompanionSettings(): CompanionSettings {
+  const file = loadCompanionFileSettings();
+  return {
+    enabled: file.enabled === true,
+    tools: file.tools ?? {},
+  };
 }

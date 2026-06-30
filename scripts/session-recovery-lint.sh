@@ -11,6 +11,18 @@ if [[ "${1:-}" == "--format" || "${1:-}" == "-f" ]]; then
   MODE="write"
 fi
 
+if [[ ! -f "$ROOT_DIR/package.json" ]]; then
+  echo "No session-recovery package found under $ROOT_DIR"
+  exit 0
+fi
+
+# The lib carries the shared toolchain (biome/tsc) and the only runtime dep
+# (zod); consumers borrow its node_modules. Sync it before linting so a changed
+# package.json/lockfile can't leave tsc resolving against stale deps. Idempotent
+# and ~instant when already up to date.
+echo "==> npm install $ROOT_DIR"
+npm --prefix "$ROOT_DIR" install --no-audit --no-fund
+
 # The shared lib carries the biome/tsc toolchain; consumers borrow it so they
 # need no devDeps of their own (keeps the work-network install registry-free).
 TOOLCHAIN_BIN="$(cd "$ROOT_DIR/node_modules/.bin" && pwd)"
@@ -30,11 +42,6 @@ lint_package() {
     "$TOOLCHAIN_BIN/tsc" --noEmit
   )
 }
-
-if [[ ! -f "$ROOT_DIR/package.json" ]]; then
-  echo "No session-recovery package found under $ROOT_DIR"
-  exit 0
-fi
 
 lint_package "$ROOT_DIR"
 

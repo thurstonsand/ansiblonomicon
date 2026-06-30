@@ -146,7 +146,7 @@ The pill is the single floating HUD container.
 Rows are compact statusline segments inside the pill.
 
 - **Shape:** Mostly square internal row corners, with outer rows aligning visually to the pill edge.
-- **Content:** Dot, project, optional attention label, status, detail, then metadata below.
+- **Content:** Dot, project, status, detail, then metadata below. When attention is labeled, the label takes the status slot.
 - **State:** Status changes may update color and text, but should avoid unnecessary reordering or animation resets.
 - **Priority:** Important rows may become easier to see, but priority should not add headers or dashboard panels by default.
 
@@ -172,7 +172,8 @@ Attention is an overlay on session state, not a replacement for session state.
 
 - **Dot:** Strong attention color with tight glow.
 - **Row:** Subtle area pulse indicating the session needs action.
-- **Label:** Optional short text label when the source of attention is meaningful.
+- **Label:** When the attention source is meaningful, its label replaces the status word; otherwise the status stands.
+- **Status color:** While attention is active, the status word adopts the attention color, matching the dot.
 - **Motion:** Pulse should be phase-stable across unrelated updates.
 
 ## 6. Do's and Don'ts

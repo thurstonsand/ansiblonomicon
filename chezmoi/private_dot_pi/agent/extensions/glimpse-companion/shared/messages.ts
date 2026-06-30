@@ -1,4 +1,4 @@
-import type { CompanionStatus } from "./status.js";
+import type { CompanionStatusLabel } from "./status.js";
 
 export interface CompanionTheme {
   pillBg: string;
@@ -18,7 +18,7 @@ export interface CompanionTheme {
 export interface CompanionUpdateMessage {
   id: string;
   project?: string;
-  status?: CompanionStatus;
+  status?: CompanionStatusLabel;
   detail?: string;
   contextPercent?: number;
   attention?: boolean;

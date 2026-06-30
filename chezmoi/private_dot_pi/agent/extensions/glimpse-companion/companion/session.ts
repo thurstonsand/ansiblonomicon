@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { basename } from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { CompanionUpdateMessage } from "../shared/messages.js";
-import { COMPANION_STATUS, type CompanionStatus } from "../shared/status.js";
+import { COMPANION_STATUS, type CompanionStatusLabel } from "../shared/status.js";
 import { statusForTool, statusForToolCallUpdate, type ToolCallUpdate } from "./activity.js";
 import { AttentionTracker, parseAttentionRequest, parseAttentionResolve } from "./attention.js";
 import { CompanionConnection } from "./connection.js";
@@ -11,7 +11,7 @@ import {
   loadFollowCursorSupport,
   resolveNode,
 } from "./glimpse-support.js";
-import { loadEnabled } from "./settings.js";
+import { loadCompanionSettings } from "./settings.js";
 import { buildCompanionThemeForContext } from "./theme.js";
 
 const SESSION_ID = randomUUID().slice(0, 8);
@@ -22,8 +22,9 @@ const SESSION_ID = randomUUID().slice(0, 8);
  * class exposes the intent-level operations they call.
  */
 export class CompanionSession {
-  private enabled = loadEnabled();
-  private lastStatus: CompanionStatus | "" = "";
+  private readonly settings = loadCompanionSettings();
+  private enabled = this.settings.enabled;
+  private lastStatus: CompanionStatusLabel | "" = "";
   private lastDetail: string | undefined;
   private lastCtx: ExtensionContext | null = null;
   private warnedUnsupported = false;
@@ -94,13 +95,13 @@ export class CompanionSession {
 
   toolCallUpdate(update: ToolCallUpdate): void {
     if (!this.active) return;
-    const { status, detail } = statusForToolCallUpdate(update);
+    const { status, detail } = statusForToolCallUpdate(update, this.settings.tools);
     this.send(status, detail);
   }
 
   toolStart(toolName: string, args: Record<string, unknown>): void {
     if (!this.active) return;
-    const { status, detail } = statusForTool(toolName, args);
+    const { status, detail } = statusForTool(toolName, args, this.settings.tools);
     this.send(status, detail);
   }
 
@@ -161,7 +162,7 @@ export class CompanionSession {
     );
   }
 
-  private send(status: CompanionStatus, detail?: string): void {
+  private send(status: CompanionStatusLabel, detail?: string): void {
     if (this.lastStatus === status && this.lastDetail === detail) return;
     this.lastStatus = status;
     this.lastDetail = detail;
