@@ -31,18 +31,18 @@ models:
       zed: true
 
     sonnet:
-      version: "claude-sonnet-4-6"
-      display_name: "Claude Sonnet 4.6"
+      version: "claude-sonnet-5"
+      display_name: "Claude Sonnet 5"
       max_input: 1000000
       max_output: 64000
       vision: true
       cli_proxy_api:
-        pattern: "^claude-sonnet-4-6"
+        pattern: "^claude-sonnet-5"
       agent_harness:
         aliases:
           claude: "sonnet"
-          opencode: "anthropic/claude-sonnet-4-6"
-          pi: "anthropic/claude-sonnet-4-6"
+          opencode: "anthropic/claude-sonnet-5"
+          pi: "anthropic/claude-sonnet-5"
       vscode:
         include: true
         thinking: true
@@ -286,6 +286,7 @@ cli_proxy_api:
       - claude-opus-4-1-20250805
       - claude-opus-4-5-20251101
       - claude-sonnet-4-5-20250929
+      - claude-sonnet-4-6
       - claude-opus-4-6
     gemini-cli:
       - gemini-2.5-computer-use-preview-10-2025
