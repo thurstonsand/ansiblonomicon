@@ -6,13 +6,11 @@ import {
   clampMaxResults,
   DEFAULT_MAX_RESULTS,
   DEFAULT_SEARCH_MODE,
-  formatWarnings,
-  getErrorMessage,
   getParallelClient,
   normalizeSearchQueries,
-  summarizeExcerpt,
   validateAfterDate,
 } from "./parallel.js";
+import { formatWarnings, getErrorMessage, summarizeExcerpt } from "./shared.js";
 
 type SearchResultItem = {
   url: string;
@@ -111,16 +109,7 @@ export const searchWebTool: ToolDefinition<typeof searchWebParameters, SearchWeb
         },
       };
     } catch (error) {
-      return {
-        content: [
-          {
-            type: "text",
-            text: `Parallel search failed: ${getErrorMessage(error)}`,
-          },
-        ],
-        isError: true,
-        details: {},
-      };
+      throw new Error(`Parallel search failed: ${getErrorMessage(error)}`);
     }
   },
   renderCall(args, theme) {
@@ -139,12 +128,12 @@ export const searchWebTool: ToolDefinition<typeof searchWebParameters, SearchWeb
     }
     return new Text(text, 0, 0);
   },
-  renderResult(result, { expanded, isPartial }, theme) {
+  renderResult(result, { expanded, isPartial }, theme, context) {
     const renderedResult = result as RenderableToolResult<SearchWebDetails>;
     if (isPartial) {
       return new Text(theme.fg("warning", "Searching..."), 0, 0);
     }
-    if (renderedResult.isError) {
+    if (context.isError) {
       const text =
         renderedResult.content[0]?.type === "text"
           ? (renderedResult.content[0].text ?? "Search failed")

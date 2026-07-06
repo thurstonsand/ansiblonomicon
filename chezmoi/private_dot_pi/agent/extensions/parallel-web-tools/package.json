@@ -10,11 +10,13 @@
     ]
   },
   "dependencies": {
+    "@octokit/rest": "^22.0.1",
     "parallel-web": "^0.4.1"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
-    "@earendil-works/pi-coding-agent": ">=0.75.5",
+    "@earendil-works/pi-coding-agent": "^0.80.2",
+    "@earendil-works/pi-tui": "^0.80.2",
     "@types/node": "^25.9.1",
     "typebox": "^1.1.37",
     "typescript": "^6.0.3"

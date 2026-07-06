@@ -1,12 +1,11 @@
-import { mkdir, writeFile } from "node:fs/promises";
-import path from "node:path";
 import Parallel from "parallel-web";
+import type { FetchedDocument, FetchWarning, WebFetcher } from "./contract.js";
+import { formatWarnings, writeDocumentBody } from "./shared.js";
 
 export const API_KEY_ENV = "PARALLEL_API_KEY";
 export const DEFAULT_SEARCH_MODE: "basic" | "advanced" = "advanced";
 export const DEFAULT_MAX_RESULTS = 5;
 export const MAX_MAX_RESULTS = 8;
-export const TMP_DIR = "/tmp/pi-parallel-fetch";
 
 export function getParallelClient(): Parallel {
   const apiKey = process.env[API_KEY_ENV];
@@ -14,14 +13,6 @@ export function getParallelClient(): Parallel {
     throw new Error(`${API_KEY_ENV} is not set`);
   }
   return new Parallel({ apiKey });
-}
-
-export function asJson(value: unknown): string {
-  return JSON.stringify(value, null, 2);
-}
-
-export function getErrorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
 }
 
 export function normalizeSearchQueries(
@@ -52,26 +43,6 @@ export function validateAfterDate(afterDate: string | undefined): string | undef
   return afterDate;
 }
 
-export function summarizeExcerpt(text: string | undefined, maxLength = 220): string {
-  if (!text) return "";
-  const normalized = text.replace(/\s+/g, " ").trim();
-  if (normalized.length <= maxLength) return normalized;
-  return `${normalized.slice(0, maxLength - 1)}…`;
-}
-
-export function formatWarnings(
-  warnings: Array<{ message?: string | null; type?: string | null }> | undefined | null,
-): string[] {
-  if (!warnings?.length) return [];
-  return warnings
-    .map((warning) => {
-      const type = warning.type ? `[${warning.type}] ` : "";
-      const message = warning.message?.trim();
-      return message ? `${type}${message}` : undefined;
-    })
-    .filter((warning): warning is string => Boolean(warning));
-}
-
 export function formatExtractErrors(
   errors:
     | Array<{
@@ -84,13 +55,7 @@ export function formatExtractErrors(
     | null,
 ): string[] {
   if (!errors?.length) return [];
-  return errors.map((error) => {
-    const bits = [error.url];
-    if (error.error_type) bits.push(`type=${error.error_type}`);
-    if (error.http_status_code != null) bits.push(`status=${error.http_status_code}`);
-    if (error.content?.trim()) bits.push(`content=${error.content.trim()}`);
-    return bits.join(" | ");
-  });
+  return errors.map(formatParallelError);
 }
 
 export function buildSearchSummary(
@@ -127,41 +92,98 @@ export function buildSearchSummary(
   return [`Warnings:`, ...warningLines.map((warning) => `- ${warning}`), "", resultText].join("\n");
 }
 
-export function formatFetchSummaryLine(item: {
+export interface ParallelDocument extends FetchedDocument {
+  kind: "parallel.page";
+  source: "parallel";
+}
+
+export type ParallelFetchResultItem = {
   url: string;
   title?: string | null;
   publish_date?: string | null;
-  path: string;
   excerpts?: string[] | null;
-}): string {
-  const title = item.title?.trim();
-  const publishDate = item.publish_date ? ` (${item.publish_date})` : "";
-  const lines: string[] = [];
-  if (title && title !== item.url) {
-    lines.push(`${title}${publishDate}`);
-  }
-  lines.push(item.url);
-  lines.push(`Saved: ${item.path}`);
-  for (const [index, excerpt] of (item.excerpts ?? []).entries()) {
-    const prefix = (item.excerpts?.length ?? 0) > 1 ? `Excerpt ${index + 1}: ` : "Excerpt: ";
-    lines.push(`${prefix}${excerpt}`);
-  }
-  return lines.join("\n");
+  full_content?: string | null;
+};
+
+export type ParallelFetchWarning = {
+  message?: string | null;
+  type?: string | null;
+};
+
+export type ParallelFetchError = {
+  url: string;
+  error_type?: string | null;
+  http_status_code?: number | null;
+  content?: string | null;
+};
+
+export function createParallelFetcher(): WebFetcher {
+  return {
+    source: "parallel",
+    canFetch: () => true,
+    async fetch({ urls, objective, artifactDir }) {
+      const client = getParallelClient();
+      const result = await client.extract({
+        urls,
+        objective,
+        advanced_settings: { full_content: true },
+      });
+
+      const results = Array.isArray(result.results)
+        ? (result.results as ParallelFetchResultItem[])
+        : [];
+      const warnings = Array.isArray(result.warnings)
+        ? normalizeParallelWarnings(result.warnings as ParallelFetchWarning[])
+        : [];
+      const errors = Array.isArray(result.errors) ? (result.errors as ParallelFetchError[]) : [];
+
+      // Positional url mapping is only trustworthy when every url produced a
+      // result; with partial errors the results array shrinks and indexes
+      // would misattribute content, so fall back to the item's own url.
+      const aligned = results.length === urls.length;
+      const documents = await Promise.all(
+        results.map(async (item, index): Promise<ParallelDocument> => {
+          const requestedUrl = aligned ? (urls[index] ?? item.url) : item.url;
+          const body = await writeDocumentBody(
+            artifactDir,
+            requestedUrl,
+            "content.md",
+            item.full_content ?? "",
+          );
+          return {
+            kind: "parallel.page",
+            source: "parallel",
+            url: requestedUrl,
+            ...(item.url !== requestedUrl ? { link: item.url } : {}),
+            title: item.title?.trim() || item.url,
+            facts: item.publish_date ? [`published ${item.publish_date}`] : [],
+            // With an objective, Parallel's excerpts are the steered answer the
+            // agent asked for — deliver all of them uncapped as highlights.
+            ...(objective ? { highlights: item.excerpts ?? [] } : { excerpt: item.excerpts?.[0] }),
+            bodies: [body],
+          };
+        }),
+      );
+      return {
+        documents,
+        warnings,
+        failures: errors.map((error) => ({
+          url: error.url,
+          reason: formatParallelError(error),
+        })),
+      };
+    },
+  };
 }
 
-function slugify(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/https?:\/\//g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 80);
+function normalizeParallelWarnings(warnings: ParallelFetchWarning[]): FetchWarning[] {
+  return formatWarnings(warnings).map((message) => ({ type: "parallel", message }));
 }
 
-export async function writeFetchResultFile(url: string, payload: unknown): Promise<string> {
-  await mkdir(TMP_DIR, { recursive: true });
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-");
-  const filePath = path.join(TMP_DIR, `${stamp}-${slugify(url) || "result"}.json`);
-  await writeFile(filePath, asJson(payload), "utf8");
-  return filePath;
+function formatParallelError(error: ParallelFetchError): string {
+  const bits = [];
+  if (error.error_type) bits.push(`type=${error.error_type}`);
+  if (error.http_status_code != null) bits.push(`status=${error.http_status_code}`);
+  if (error.content?.trim()) bits.push(`content=${error.content.trim()}`);
+  return bits.join(" | ") || "extraction failed";
 }
