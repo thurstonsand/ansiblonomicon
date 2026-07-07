@@ -34,7 +34,7 @@ Draft
 
 ## Exposed Shape
 
-{Setting aside implementation, describe what this design exposes to its users: UI, API, CLI, file format, workflow, or domain abstraction. Is this the shape we want people interacting with?}
+{Setting aside implementation, describe every interface this design exposes: the end-user surface (UI, API, CLI, file format, workflow, or domain abstraction), boundaries between major layers or components, and contracts with external systems. For each, what crosses the boundary — operations, data shapes, failure behavior, and which side owns what. Is this the shape we want people and components interacting with?}
 
 ## Design Decisions
 

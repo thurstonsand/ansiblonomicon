@@ -42,6 +42,16 @@ Cross-check the user's claims against the code, tests, configuration, and existi
 
 For each major decision, ask what the cost would be if the design is wrong. Spend design attention on decisions that are hard to reverse, risky, surprising, or likely to constrain future work.
 
+### Describe every interface
+
+Before the design is settled, fully describe every interface the plan touches:
+
+- the end-user surface, whatever form it takes: UI, CLI, API, file format, workflow
+- boundaries between major layers or components: service ↔ database, client ↔ server, module ↔ module
+- contracts with external systems and libraries
+
+For each one, pin down what crosses the boundary: the operations, the data shapes, the failure behavior, and which side owns what.
+
 ### Challenge against the glossary
 
 When the user uses a term that conflicts with existing language in `CONTEXT.md`, call it out immediately.
@@ -77,6 +87,7 @@ Create context files lazily — only when you have something to write. If no `CO
 Gate 1 is complete when the major branches are resolved enough to summarize:
 
 - decisions made
+- interfaces described, at every level
 - open risks
 - unresolved questions
 - terminology/context updates made
