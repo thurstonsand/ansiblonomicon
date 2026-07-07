@@ -22,6 +22,7 @@ uv_global_tools_base:
 # which can outrun native npm packages used by global CLI tools.
 mise_global_tools_base:
   - node@lts
+  - npm@latest
   - golangci-lint@latest
 
 # Global npm packages (base set for all hosts)

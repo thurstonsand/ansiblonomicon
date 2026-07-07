@@ -6,7 +6,7 @@
 2. Aggregates any hook fragments from the agent-harness cache into the
    hooks section of the final output.
 
-Usage: resolve-overlay.py <base.json>
+Usage: resolve-overlay.py <base-json>
 Output: final merged JSON to stdout.
 """
 
@@ -112,15 +112,10 @@ def merge_harness_hooks(settings: dict[str, Any]) -> dict[str, Any]:
 
 def main() -> None:
     if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <base.json>", file=sys.stderr)
+        print(f"Usage: {sys.argv[0]} <base-json>", file=sys.stderr)
         sys.exit(1)
 
-    base_path = Path(sys.argv[1])
-    if not base_path.exists():
-        print(f"Base file not found: {base_path}", file=sys.stderr)
-        sys.exit(1)
-
-    base = json.loads(base_path.read_text())
+    base = json.loads(sys.argv[1])
 
     if OVERLAY.exists():
         subs = load_substitutions()

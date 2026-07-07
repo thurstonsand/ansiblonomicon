@@ -1,10 +1,10 @@
 import type { ToolDefinition } from "@earendil-works/pi-coding-agent";
 import { Text } from "@earendil-works/pi-tui";
 import { Type } from "typebox";
-import type { FetchWarning, UrlOutcome, WebFetcher } from "./contract.js";
-import { deliverFetchResults } from "./delivery.js";
-import { fetchDocuments } from "./router.js";
-import { formatWarnings, getErrorMessage } from "./shared.js";
+import type { FetchWarning, UrlOutcome, WebFetcher } from "./contract.ts";
+import { deliverFetchResults } from "./delivery.ts";
+import { fetchDocuments } from "./router.ts";
+import { formatWarnings, getErrorMessage } from "./shared.ts";
 
 type FetchWebDetails = {
   count?: number;
@@ -42,7 +42,7 @@ export function createFetchWebTool(
     description:
       "Fetch specific URLs. Every document's content is written as native files (markdown, patches, source files) under a per-call artifact directory; the tool result is a digest with per-document facts, file paths, and a short excerpt.",
     promptSnippet:
-      "Use when you already have a specific public URL and need the page contents or source-native artifacts.",
+      "Use when you already have a specific URL and need the page contents or source-native artifacts.",
     promptGuidelines: [
       "GitHub URLs use a source-native fetcher: issues, PRs, repos, and individual files and directories return structured responses.",
     ],

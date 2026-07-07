@@ -23,8 +23,9 @@
     agent_harness_skill_rsync_opts: >-
       {{ ['--omit-dir-times', '--exclude=SKILL.md', '--exclude=.git', '--exclude=.claude-plugin', '--exclude=*.j2']
          + (agent_harness_skill_info.exclude_data | default([]) | map('regex_replace', '^(.*)$', '--exclude=\1') | list) }}
+    agent_harness_skill_sync_label: "{{ agent_harness_target_agent }}:{{ agent_harness_skill_info.name }}"
 
-- name: Sync skill directory locally
+- name: Sync skill locally {{ agent_harness_skill_sync_label }}
   ansible.posix.synchronize:
     src: "{{ agent_harness_skill_info.source }}/"
     dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/"
@@ -34,9 +35,10 @@
     owner: false
     group: false
     rsync_opts: "{{ agent_harness_skill_rsync_opts }}"
+  register: agent_harness_skill_sync_local
   when: ansible_connection | default('ssh') == 'local'
 
-- name: Sync skill directory remotely
+- name: Sync skill remotely {{ agent_harness_skill_sync_label }}
   ansible.posix.synchronize:
     src: "{{ agent_harness_skill_info.source }}/"
     dest: "{{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/"
@@ -47,7 +49,26 @@
     group: false
     rsync_opts: "{{ agent_harness_skill_rsync_opts }}"
   delegate_to: localhost
+  register: agent_harness_skill_sync_remote
   when: ansible_connection | default('ssh') != 'local'
+
+- name: Select skill sync result
+  ansible.builtin.set_fact:
+    agent_harness_skill_sync_result: >-
+      {{ ((ansible_connection | default('ssh')) == 'local')
+         | ternary(agent_harness_skill_sync_local, agent_harness_skill_sync_remote) }}
+
+- name: Report skill sync changes
+  ansible.builtin.debug:
+    msg: >-
+      {{ [
+        'agent: ' ~ agent_harness_target_agent,
+        'skill: ' ~ agent_harness_skill_info.name,
+        'source: ' ~ agent_harness_skill_info.source ~ '/',
+        'destination: ' ~ agent_harness_agent_config.skills_dir ~ '/' ~ agent_harness_skill_info.name ~ '/',
+        'rsync:',
+      ] + (agent_harness_skill_sync_result.stdout_lines | default([])) }}
+  when: (agent_harness_skill_sync_result.stdout_lines | default([])) | length > 0
 
 - name: Load SKILL.md.j2 template content
   ansible.builtin.set_fact:

@@ -1,7 +1,13 @@
 import path from "node:path";
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import type { FetchWarning, RoutedFetchResult, UrlOutcome, WebFetcher } from "./contract.js";
-import { TMP_DIR } from "./shared.js";
+import type {
+  FetcherResult,
+  FetchWarning,
+  RoutedFetchResult,
+  UrlOutcome,
+  WebFetcher,
+} from "./contract.ts";
+import { getErrorMessage, TMP_DIR } from "./shared.ts";
 
 export async function fetchDocuments(
   fetchers: WebFetcher[],
@@ -26,13 +32,25 @@ export async function fetchDocuments(
     const matchingUrls = remainingUrls.filter((url) => fetcher.canFetch(url));
     if (matchingUrls.length === 0) continue;
 
-    const result = await fetcher.fetch({
-      urls: matchingUrls,
-      artifactDir: artifactRoot,
-      objective,
-      signal,
-      ctx,
-    });
+    let result: FetcherResult;
+    try {
+      result = await fetcher.fetch({
+        urls: matchingUrls,
+        artifactDir: artifactRoot,
+        objective,
+        signal,
+        ctx,
+      });
+    } catch (error) {
+      if (signal?.aborted) throw new Error("Fetch cancelled.");
+      // A throwing fetcher fails its claimed batch, not the whole call — later
+      // fetchers still get a shot at these URLs.
+      const reason = getErrorMessage(error);
+      for (const url of matchingUrls) {
+        outcomesByUrl.get(url)?.attempts.push({ source: fetcher.source, url, reason });
+      }
+      continue;
+    }
     warnings.push(...result.warnings);
     for (const document of result.documents) {
       const outcome = outcomesByUrl.get(document.url);

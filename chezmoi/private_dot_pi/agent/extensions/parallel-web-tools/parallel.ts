@@ -1,11 +1,15 @@
 import Parallel from "parallel-web";
-import type { FetchedDocument, FetchWarning, WebFetcher } from "./contract.js";
-import { formatWarnings, writeDocumentBody } from "./shared.js";
+import type { FetchedDocument, FetchWarning, WebFetcher } from "./contract.ts";
+import { formatWarnings, writeDocumentBody } from "./shared.ts";
 
 export const API_KEY_ENV = "PARALLEL_API_KEY";
 export const DEFAULT_SEARCH_MODE: "basic" | "advanced" = "advanced";
 export const DEFAULT_MAX_RESULTS = 5;
 export const MAX_MAX_RESULTS = 8;
+
+export function hasParallelApiKey(): boolean {
+  return Boolean(process.env[API_KEY_ENV]);
+}
 
 export function getParallelClient(): Parallel {
   const apiKey = process.env[API_KEY_ENV];
@@ -120,7 +124,7 @@ export type ParallelFetchError = {
 export function createParallelFetcher(): WebFetcher {
   return {
     source: "parallel",
-    canFetch: () => true,
+    canFetch: () => hasParallelApiKey(),
     async fetch({ urls, objective, artifactDir }) {
       const client = getParallelClient();
       const result = await client.extract({

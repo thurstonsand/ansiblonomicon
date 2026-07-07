@@ -19,6 +19,7 @@ colors:
   status-editing: "pi.theme.colors.warning"
   status-running: "pi.theme.colors.mdHeading"
   status-searching: "pi.theme.colors.accent"
+  status-compacting: "pi.theme.colors.dim"
   status-done: "pi.theme.colors.success"
   status-error: "pi.theme.colors.error"
 typography:

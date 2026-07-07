@@ -50,6 +50,14 @@
       }
     }
   },
+  "interview": {
+    "theme": {
+      "mode": "auto",
+      "lightPath": "~/.pi/agent/interview-themes/gruvbox-light-hard.css",
+      "darkPath": "~/.pi/agent/interview-themes/gruvbox-dark-hard.css",
+      "toggleHotkey": "alt+l"
+    }
+  },
   {{- $pc := dict }}
   {{- if .inferenceBudgetUrl }}
   {{-   $budget := dict "url" .inferenceBudgetUrl }}
@@ -61,6 +69,10 @@
   "powerlineCustom": {{ toPrettyJson $pc | indent 2 | trim }},
   {{- end }}
   "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.loads(p.read_text()).get('lastChangelogVersion','0.74.0') if p.exists() else '0.74.0')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
+  "librarian": {
+    "model": {{ if $isWork }}"anthropic/{{ trimSuffix "[1m]" .claude_code_models.haiku }}"{{ else }}"openai-codex/{{ .models.openai.gpt.version }}"{{ end }},
+    "thinkingLevel": "off"
+  },
   "enabledModels": [
 {{- if $isWork }}
     "anthropic/{{ trimSuffix "[1m]" .claude_code_models.opus }}",
@@ -80,7 +92,7 @@
   "followUpMode": "all",
   "sessions": {
     "autoTitle": {
-      "model": {{ if $isWork }}"anthropic/{{ trimSuffix "[1m]" .claude_code_models.sonnet }}"{{ else }}"{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}"{{ end }},
+      "model": {{ if $isWork }}"anthropic/{{ trimSuffix "[1m]" .claude_code_models.sonnet }}"{{ else }}"{{ .models.openai.gpt.agent_harness.aliases.pi }}"{{ end }},
       "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
     }
   },
@@ -149,7 +161,6 @@
     "git:github.com/thurstonsand/pi-sessions",
     "git:github.com/nicobailon/pi-interview-tool",
     "git:github.com/hazat/glimpse",
-    "{{ .chezmoi.homeDir }}/code/pi-web-fetch",
     "npm:pi-mcp-adapter",
     {
       "source": "git:github.com/hasit/pi-community-themes",
@@ -160,14 +171,12 @@
       ]
     }
 {{- else }}
-    "npm:pi-librarian",
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:@thurstonsand/pi-powerline-footer"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-permissions"{{ else }}"npm:pi-permissions"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-librarian"{{ else }}"npm:@thurstonsand/pi-librarian"{{ end }},
     "npm:pi-interview",
-{{- if eq .chezmoi.os "darwin" }}
     "npm:glimpseui",
-{{- end }}
     "npm:pi-mcp-adapter",
     {
       "source": "git:github.com/hasit/pi-community-themes",

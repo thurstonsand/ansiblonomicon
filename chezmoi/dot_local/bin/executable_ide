@@ -14,25 +14,14 @@ command -v gty >/dev/null 2>&1 || {
   exit 1
 }
 
+# This pane is organic (not daemon-spawned), so a recycled pty can carry a stale
+# cached mapping; rebind while this terminal is certainly the focused one.
+gty terminal-id --refresh >/dev/null || exit 1
+
 terminal_count=$(gty tab-terminal-count 2>/dev/null) || exit 1
 [[ "$terminal_count" == "1" ]] || {
   echo "ide: expected a fresh tab with exactly one terminal." >&2
   exit 1
-}
-
-quote() {
-  printf '%q' "$1"
-}
-
-wait_for_ready() {
-  local label=$1
-
-  if read -r -t 8 _ready <&3; then
-    return 0
-  fi
-
-  echo "ide: timed out waiting for $label." >&2
-  return 1
 }
 
 cwd=$(pwd -P)
@@ -49,20 +38,20 @@ fi
   exit 1
 }
 
-ready_fifo=$(mktemp -t ghostty-ide-ready.XXXXXX)
-rm -f "$ready_fifo"
-mkfifo "$ready_fifo"
-exec 3<>"$ready_fifo"
-trap 'exec 3>&- 3<&-; rm -f "$ready_fifo"' EXIT
-
-editor_inner="if gty terminal-id >/dev/null; then printf 'ready\\n' > $(quote "$ready_fifo"); else echo 'ide: failed to register Ghostty terminal' >&2; fi; nvim .; exec /bin/zsh -il"
-editor_cmd=$(quote "$editor_inner")
-
-gty split left --cwd "$cwd" --command "/bin/zsh -ilc $editor_cmd" --focus new --wait
-wait_for_ready "editor terminal registration"
-gty resize right --percent 15 --wait
+# Measure before the split shrinks this pane to 15%.
 cols=$(tput cols 2>/dev/null || echo 0)
+
+# The split spawns a claimed interactive login shell and reports its tty; nvim is
+# typed into that shell, so quitting it returns to the shell and session restore
+# recovers the project directory.
+editor_tty=$(gty split left --cwd "$cwd" --focus new --wait)
+gty resize right --percent 15 --wait
 ((cols < 200)) && gty zoom --wait
+if [[ -n $editor_tty ]]; then
+  gty input --tty "$editor_tty" --submit --wait 'nvim .'
+else
+  echo "ide: split reported no tty; leaving a plain shell." >&2
+fi
 
 if (($# > 0)); then
   cd "$cwd"

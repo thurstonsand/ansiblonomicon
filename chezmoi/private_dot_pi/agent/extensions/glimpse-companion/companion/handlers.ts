@@ -55,6 +55,16 @@ export function registerCompanionHandlers(pi: ExtensionAPI, session: CompanionSe
     session.clearAttention();
   });
 
+  pi.on("session_before_compact", async (event, ctx) => {
+    session.noteContext(ctx);
+    await session.compacting(event.reason);
+  });
+
+  pi.on("session_compact", async (_event, ctx) => {
+    session.noteContext(ctx);
+    session.compacted(ctx.isIdle());
+  });
+
   pi.on("session_shutdown", async () => {
     session.shutdown();
   });

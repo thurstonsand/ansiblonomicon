@@ -1,6 +1,6 @@
 import { mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
-import type { DocumentBody } from "./contract.js";
+import type { DocumentBody } from "./contract.ts";
 
 export const TMP_DIR = "/tmp/pi-fetch";
 

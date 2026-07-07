@@ -112,6 +112,7 @@ const DEFAULT_THEME = {
     editing: "#fabd2f",
     running: "#fe8019",
     searching: "#83a598",
+    compacting: "#928374",
     done: "#b8bb26",
     error: "#fb4934",
   },
@@ -127,6 +128,7 @@ const STATUS_LABEL = {
   editing: "Editing",
   running: "Running",
   searching: "Searching",
+  compacting: "Compacting",
   done: "Done",
   error: "Error",
 };

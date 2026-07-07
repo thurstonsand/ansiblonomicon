@@ -1,7 +1,7 @@
 import { execFileSync } from "node:child_process";
 import { realpathSync } from "node:fs";
 import path from "node:path";
-import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 
 const MAINLINE_BRANCHES = new Set(["main", "master"]);
 
@@ -67,17 +67,25 @@ function titleFor(cwd: string): string {
 }
 
 export default function sessionTitle(pi: ExtensionAPI): void {
-  pi.on("session_start", (_event, ctx) => {
+  const resetTitle = (ctx: ExtensionContext, defer = false): void => {
     const title = titleFor(ctx.cwd);
     ctx.ui.setTitle(title);
-    setTimeout(() => ctx.ui.setTitle(title), 0);
+    if (defer) setTimeout(() => ctx.ui.setTitle(title), 0);
+  };
+
+  pi.on("session_start", (_event, ctx) => {
+    resetTitle(ctx, true);
+  });
+
+  pi.on("session_info_changed", (_event, ctx) => {
+    resetTitle(ctx);
   });
 
   pi.on("session_tree", (_event, ctx) => {
-    ctx.ui.setTitle(titleFor(ctx.cwd));
+    resetTitle(ctx);
   });
 
   pi.on("session_compact", (_event, ctx) => {
-    ctx.ui.setTitle(titleFor(ctx.cwd));
+    resetTitle(ctx);
   });
 }

@@ -55,6 +55,7 @@ const STATUS_THEME_COLORS = {
   editing: "warning",
   running: "mdHeading",
   searching: "accent",
+  compacting: "dim",
   done: "success",
   error: "error",
 } as const satisfies Record<string, keyof ResolvedThemePalette>;

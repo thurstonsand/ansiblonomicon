@@ -9,8 +9,8 @@ import {
   getParallelClient,
   normalizeSearchQueries,
   validateAfterDate,
-} from "./parallel.js";
-import { formatWarnings, getErrorMessage, summarizeExcerpt } from "./shared.js";
+} from "./parallel.ts";
+import { formatWarnings, getErrorMessage, summarizeExcerpt } from "./shared.ts";
 
 type SearchResultItem = {
   url: string;

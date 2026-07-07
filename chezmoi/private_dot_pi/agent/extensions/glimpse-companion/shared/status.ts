@@ -7,6 +7,7 @@ export const COMPANION_STATUS = {
   editing: "editing",
   running: "running",
   searching: "searching",
+  compacting: "compacting",
   done: "done",
   error: "error",
 } as const;

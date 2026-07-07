@@ -14,6 +14,15 @@ end, { desc = "Copy Diagnostics to Clipboard" })
 vim.keymap.set("n", "gb", "<Cmd>bnext<CR>", { desc = "Next Buffer" })
 vim.keymap.set("n", "gB", "<Cmd>bprevious<CR>", { desc = "Prev Buffer" })
 
+local function reset_terminal_cursor_color()
+  vim.api.nvim_chan_send(vim.v.stderr, "\027]112\007")
+  vim.notify("Reset terminal cursor color", vim.log.levels.INFO)
+end
+
+vim.api.nvim_create_user_command("ResetTerminalCursor", reset_terminal_cursor_color, {})
+vim.keymap.set({ "n", "i" }, "<C-g><C-r>", reset_terminal_cursor_color, { desc = "Reset Terminal Cursor Color" })
+vim.keymap.set("n", "<leader>uC", reset_terminal_cursor_color, { desc = "Reset Terminal Cursor Color" })
+
 pcall(vim.keymap.del, "n", "<leader>ub")
 Snacks.toggle.option("background", { off = "light", on = "dark", name = "Dark Background" }):map("<leader>uB")
 vim.keymap.set("n", "<leader>ub", function()
@@ -24,5 +33,8 @@ vim.keymap.set("n", "<leader>ub", function()
 end, { desc = "Toggle Inline Blame" })
 
 pcall(function()
-  require("which-key").add({ { "<leader>ub", desc = "Toggle Inline Blame", icon = "󰊢" } })
+  require("which-key").add({
+    { "<leader>uC", desc = "Reset Terminal Cursor Color", icon = "󰍹" },
+    { "<leader>ub", desc = "Toggle Inline Blame", icon = "󰊢" },
+  })
 end)

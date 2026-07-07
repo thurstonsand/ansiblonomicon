@@ -1,7 +1,7 @@
 import path from "node:path";
 import { formatSize } from "@earendil-works/pi-coding-agent";
-import type { FetchedDocument, RoutedFetchResult, UrlOutcome } from "./contract.js";
-import { summarizeExcerpt } from "./shared.js";
+import type { FetchedDocument, RoutedFetchResult, UrlOutcome } from "./contract.ts";
+import { summarizeExcerpt } from "./shared.ts";
 
 const EXCERPT_LENGTH = 260;
 

@@ -110,6 +110,17 @@ export class CompanionSession {
     this.send(COMPANION_STATUS.error, toolName);
   }
 
+  async compacting(reason: string): Promise<void> {
+    if (!this.active) return;
+    await this.connection.ensureConnected();
+    this.send(COMPANION_STATUS.compacting, reason);
+  }
+
+  compacted(isIdle: boolean): void {
+    if (!this.active || !isIdle) return;
+    this.done();
+  }
+
   done(): void {
     if (!this.active) return;
     this.clearAttention();

@@ -1,8 +1,8 @@
 import path from "node:path";
 import { Octokit, type RestEndpointMethodTypes } from "@octokit/rest";
-import type { FetchedDocument, FetcherResult, FetchFailure, WebFetcher } from "./contract.js";
-import type { GitHubAuth } from "./github-auth.js";
-import { getErrorMessage, writeDocumentBody } from "./shared.js";
+import type { FetchedDocument, FetcherResult, FetchFailure, WebFetcher } from "./contract.ts";
+import type { GitHubAuth } from "./github-auth.ts";
+import { getErrorMessage, writeDocumentBody } from "./shared.ts";
 
 type ResolverResult =
   | { status: "resolved"; document: FetchedDocument }
