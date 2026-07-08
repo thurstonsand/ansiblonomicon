@@ -98,5 +98,3 @@ gem_packages_extra: []
 agent_harness_target_agents_extra: []
 #   TODO: we need to reconfigure where this gets installed first
 #   - openclaw
-pi_local_extension_package_dirs:
-  - parallel-web-tools

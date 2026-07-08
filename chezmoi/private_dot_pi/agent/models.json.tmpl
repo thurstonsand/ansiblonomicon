@@ -42,46 +42,6 @@
       ]
     }
 {{- else }}
-    // All provider entries route through the in-house Cloudflare AI Gateway proxy.
-    // Costs are set to zero here because billing/accounting happens at the gateway layer.
-    "anthropic": {
-      "baseUrl": "https://aig.thurstons.house",
-      "apiKey": "{{ template "llm-api-key" . }}",
-      "api": "anthropic-messages",
-      "authHeader": true,
-      "models": [
-        {
-          "id": "{{ .models.anthropic.opus.version }}",
-          "name": "{{ .models.anthropic.opus.display_name }}",
-          "reasoning": true,
-          "input": ["text", "image"],
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.anthropic.opus.max_input }},
-          "maxTokens": {{ .models.anthropic.opus.max_output }},
-          "thinkingLevelMap": {"xhigh": "xhigh"},
-          "compat": {"forceAdaptiveThinking": true}
-        },
-        {
-          "id": "{{ .models.anthropic.sonnet.version }}",
-          "name": "{{ .models.anthropic.sonnet.display_name }}",
-          "reasoning": true,
-          "input": ["text", "image"],
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.anthropic.sonnet.max_input }},
-          "maxTokens": {{ .models.anthropic.sonnet.max_output }},
-          "compat": {"forceAdaptiveThinking": true}
-        },
-        {
-          "id": "{{ .models.anthropic.haiku.version }}",
-          "name": "{{ .models.anthropic.haiku.display_name }}",
-          "reasoning": false,
-          "input": ["text", "image"],
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.anthropic.haiku.max_input }},
-          "maxTokens": {{ .models.anthropic.haiku.max_output }}
-        }
-      ]
-    },
     // Standard OpenAI Responses path through AIG. This path is SSE; use built-in openai-codex for Pi's WebSocket transport.
     "openai": {
       "baseUrl": "https://aig.thurstons.house/v1",

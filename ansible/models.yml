@@ -42,7 +42,7 @@ models:
         aliases:
           claude: "haiku"
           opencode: "anthropic/claude-haiku-4-5-20251001"
-          pi: "anthropic/claude-haiku-4-5-20251001"
+          pi: "anthropic/claude-haiku-4-5"
       vscode:
         include: true
         thinking: false
@@ -67,18 +67,18 @@ models:
       zed: true
 
     opus:
-      version: "claude-opus-4-7"
-      display_name: "Claude Opus 4.7"
+      version: "claude-opus-4-8"
+      display_name: "Claude Opus 4.8"
       max_input: 1000000
       max_output: 128000
       vision: true
       cli_proxy_api:
-        pattern: "^claude-opus-4-7"
+        pattern: "^claude-opus-4-8"
       agent_harness:
         aliases:
           claude: "opus"
-          opencode: "anthropic/claude-opus-4-7"
-          pi: "anthropic/claude-opus-4-7"
+          opencode: "anthropic/claude-opus-4-8"
+          pi: "anthropic/claude-opus-4-8"
       vscode:
         include: true
         thinking: true

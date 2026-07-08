@@ -1,0 +1,14 @@
+{
+  "name": "codex",
+  "version": "1.0.0",
+  "description": "Codex-specific automation skills",
+  "author": {
+    "name": "Thurston Sandberg"
+  },
+  "keywords": [
+    "codex",
+    "browser-automation",
+    "claims",
+    "gmail"
+  ]
+}

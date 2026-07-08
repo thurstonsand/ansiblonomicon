@@ -378,19 +378,6 @@
       when: configure_chezmoi | default(false)
       tags: ["chezmoi", "dotfiles"]
 
-    - name: Install local Pi extension dependencies
-      tags: ["chezmoi", "dotfiles", "npm", "pi-extensions"]
-      when: pi_local_extension_package_dirs | default([]) | length > 0
-      ansible.builtin.command:
-        cmd: npm install --omit=dev --no-fund --no-audit
-        chdir: "{{ ansible_facts['env']['HOME'] }}/.pi/agent/extensions/{{ item }}"
-      loop: "{{ pi_local_extension_package_dirs | default([]) }}"
-      register: pi_extension_deps_result
-      changed_when: >-
-        'added' in pi_extension_deps_result.stdout or
-        'changed' in pi_extension_deps_result.stdout or
-        'removed' in pi_extension_deps_result.stdout
-
     - name: Install tmux plugin manager and plugins
       tags: ["tmux"]
       ansible.builtin.include_tasks:

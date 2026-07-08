@@ -62,9 +62,6 @@ Library/
 .config/nvim/lua/plugins/amp.lua
 .mactop/
 
-# Pi extension backed by the Parallel API
-.pi/agent/extensions/parallel-web-tools/
-
 # Lint-only tsconfig for the session-recovery consumers: their `paths` mapping
 # resolves @thurstons/session-recovery to the repo-source core.ts for tsc only.
 .pi/agent/extensions/session-recovery/tsconfig.json
@@ -85,6 +82,7 @@ Library/
 .oracle/
 .gemini/
 .rustup/
+.pi/agent/claude-bridge.json
 
 # Personal home-lab scripts
 .local/bin/btt-paste-image.sh

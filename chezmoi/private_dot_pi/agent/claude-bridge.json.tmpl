@@ -1,0 +1,15 @@
+{{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
+{{- if not $isWork -}}
+{
+  "askClaude": {
+    "enabled": false
+  },
+  "provider": {
+    "systemPromptMode": "replace",
+    "settingSources": [],
+    "strictMcpConfig": true,
+    "plan": "max",
+    "longContextExtraUsage": false
+  }
+}
+{{- end -}}

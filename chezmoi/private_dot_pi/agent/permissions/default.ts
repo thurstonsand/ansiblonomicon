@@ -1,30 +1,42 @@
 import {
+  type HighlightSpan,
   isCustomToolInput,
   matchTool,
-  type PermissionInput,
   type PermissionsAPI,
   type PermissionToolInput,
   request,
 } from "@thurstonsand/pi-permissions";
 
+const GIT_MUTATION_PATTERN =
+  /\bgit\s+(\S+\s+)*?(stash|add|commit|push|checkout|reset|clean|rebase)\b/i;
 const SQL_DATA_MUTATION_PATTERN =
   /\b(?:insert|update|delete|merge|truncate|vacuum|reindex|cluster)\b/i;
 const SQL_ANALYZE_PATTERN = /(?<!\bexplain\s+)\banalyze\b/i;
 const SQL_COPY_FROM_PATTERN = /\\?\bcopy\b[\s\S]*?\bfrom\b/i;
 const SQL_DDL_PATTERN = /\b(?:create|alter|drop|rename)\b/i;
 const SQL_DCL_PATTERN = /\b(?:grant|revoke)\b/i;
+const SQL_MUTATION_HIGHLIGHTS = [
+  SQL_DATA_MUTATION_PATTERN,
+  SQL_ANALYZE_PATTERN,
+  SQL_COPY_FROM_PATTERN,
+  SQL_DDL_PATTERN,
+  SQL_DCL_PATTERN,
+] as const;
 const WEB_SEARCH_TOOL_PATTERN = /web[_-]?search$/i;
 
 export default function permissions(api: PermissionsAPI): void {
   api.onToolUse({
     name: "Git interference",
     description: "tampering with repository state or history",
-    matcher: "bash",
     handler: ({ tool }) =>
       matchTool(tool, {
         bash: ({ command }) =>
           isGitMutation(command)
-            ? request({ approveLabel: "Tamper", rejectLabel: "Deny" })
+            ? request({
+                highlight: GIT_MUTATION_PATTERN,
+                approveLabel: "Tamper",
+                rejectLabel: "Deny",
+              })
             : undefined,
       }),
   });
@@ -32,12 +44,15 @@ export default function permissions(api: PermissionsAPI): void {
   api.onToolUse({
     name: "File disposal",
     description: "files targeted for elimination",
-    matcher: "bash",
     handler: ({ tool }) =>
       matchTool(tool, {
         bash: ({ command }) =>
           isRecursiveForcedRemovalCommand(command) || isFindDeleteCommand(command)
-            ? request({ approveLabel: "Dispose", rejectLabel: "Prevent" })
+            ? request({
+                highlight: fileDisposalSpans,
+                approveLabel: "Dispose",
+                rejectLabel: "Prevent",
+              })
             : undefined,
       }),
   });
@@ -45,12 +60,15 @@ export default function permissions(api: PermissionsAPI): void {
   api.onToolUse({
     name: "Database integrity",
     description: "state mutation of data, schema, or privileges",
-    matcher: "bash",
     handler: ({ tool }) =>
       matchTool(tool, {
         bash: ({ command }) =>
           isPostgresMutation(command)
-            ? request({ approveLabel: "Mutate", rejectLabel: "Deny" })
+            ? request({
+                highlight: SQL_MUTATION_HIGHLIGHTS,
+                approveLabel: "Mutate",
+                rejectLabel: "Deny",
+              })
             : undefined,
       }),
   });
@@ -58,17 +76,74 @@ export default function permissions(api: PermissionsAPI): void {
   api.onToolUse({
     name: "Reconnaissance",
     description: "web search beyond local operational boundaries",
-    matcher: isWebSearchToolCall,
-    handler: () => request({ approveLabel: "Commence", rejectLabel: "Reconsider" }),
+    handler: ({ tool }) =>
+      matchTool(tool, {
+        custom: {
+          mcp: (tool) => requestWebSearch(webSearchTarget(tool)),
+        },
+        default: (tool) => requestWebSearch(tool.toolName),
+      }),
   });
 }
 
 function isGitMutation(command: string): boolean {
-  return /\bgit\s+(\S+\s+)*?(stash|add|commit|push|checkout|reset|clean|rebase)\b/i.test(command);
+  return GIT_MUTATION_PATTERN.test(command);
 }
 
 function isFindDeleteCommand(command: string): boolean {
   return /find\s+.*-delete/i.test(command);
+}
+
+function fileDisposalSpans(command: string): HighlightSpan[] {
+  return [...recursiveForcedRemovalSpans(command), ...findDeleteSpans(command)];
+}
+
+function recursiveForcedRemovalSpans(command: string): HighlightSpan[] {
+  const spans: HighlightSpan[] = [];
+
+  for (const segment of shellSegments(command)) {
+    const tokens = tokenizeShellWordsWithSpans(segment.text, segment.start);
+
+    for (let index = 0; index < tokens.length; index++) {
+      if (tokens[index]?.text !== "rm") continue;
+
+      let hasRecursive = false;
+      let hasForce = false;
+      let end = tokens[index]?.end ?? segment.start;
+
+      for (let optionIndex = index + 1; optionIndex < tokens.length; optionIndex++) {
+        const token = tokens[optionIndex];
+        if (!token) continue;
+
+        if (token.text === "--") break;
+        if (!token.text.startsWith("-") || token.text === "-") break;
+
+        if (token.text.startsWith("--")) {
+          hasRecursive ||= token.text === "--recursive";
+          hasForce ||= token.text === "--force";
+        } else {
+          const flags = token.text.slice(1);
+          hasRecursive ||= flags.includes("r");
+          hasForce ||= flags.includes("f");
+        }
+
+        end = token.end;
+      }
+
+      if (hasRecursive && hasForce && tokens[index]) {
+        spans.push({ start: tokens[index].start, end });
+      }
+    }
+  }
+
+  return spans;
+}
+
+function findDeleteSpans(command: string): HighlightSpan[] {
+  return [...command.matchAll(/find\s+.*?-delete\b/gi)].map((match) => ({
+    start: match.index ?? 0,
+    end: (match.index ?? 0) + match[0].length,
+  }));
 }
 
 function stripOuterQuotes(token: string): string {
@@ -80,8 +155,41 @@ function stripOuterQuotes(token: string): string {
   return first === last && (first === '"' || first === "'") ? token.slice(1, -1) : token;
 }
 
+interface ShellToken {
+  text: string;
+  start: number;
+  end: number;
+}
+
+interface ShellSegment {
+  text: string;
+  start: number;
+}
+
 function tokenizeShellWords(command: string): string[] {
-  return command.match(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\S+/g) ?? [];
+  return tokenizeShellWordsWithSpans(command).map((token) => token.text);
+}
+
+function tokenizeShellWordsWithSpans(command: string, offset = 0): ShellToken[] {
+  return [...command.matchAll(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\S+/g)].map((match) => ({
+    text: stripOuterQuotes(match[0]),
+    start: offset + (match.index ?? 0),
+    end: offset + (match.index ?? 0) + match[0].length,
+  }));
+}
+
+function shellSegments(command: string): ShellSegment[] {
+  const segments: ShellSegment[] = [];
+  let start = 0;
+
+  for (const match of command.matchAll(/&&|\|\||;|\n/g)) {
+    const end = match.index ?? 0;
+    segments.push({ text: command.slice(start, end), start });
+    start = end + match[0].length;
+  }
+
+  segments.push({ text: command.slice(start), start });
+  return segments;
 }
 
 function isRecursiveForcedRemovalCommand(command: string): boolean {
@@ -140,15 +248,14 @@ function isPostgresMutationStatement(command: string): boolean {
   );
 }
 
-function isWebSearchToolCall(input: PermissionInput): boolean {
-  const target = webSearchTarget(input.tool);
-  return target ? WEB_SEARCH_TOOL_PATTERN.test(target) : false;
+function requestWebSearch(target: string | undefined) {
+  return target && WEB_SEARCH_TOOL_PATTERN.test(target)
+    ? request({ approveLabel: "Commence", rejectLabel: "Reconsider" })
+    : undefined;
 }
 
 function webSearchTarget(tool: PermissionToolInput): string | undefined {
-  if (isCustomToolInput(tool, "mcp")) {
-    return typeof tool.input.tool === "string" ? tool.input.tool : undefined;
-  }
-
-  return tool.toolName;
+  return isCustomToolInput(tool, "mcp") && typeof tool.input.tool === "string"
+    ? tool.input.tool
+    : undefined;
 }
