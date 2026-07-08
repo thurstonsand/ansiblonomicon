@@ -1,14 +1,24 @@
 import {
   type HighlightSpan,
+  gitValueFlags,
   isCustomToolInput,
+  matchCommand,
   matchTool,
   type PermissionsAPI,
   type PermissionToolInput,
   request,
 } from "@thurstonsand/pi-permissions";
 
-const GIT_MUTATION_PATTERN =
-  /\bgit\s+(\S+\s+)*?(stash|add|commit|push|checkout|reset|clean|rebase)\b/i;
+const GIT_MUTATION_SUBCOMMANDS = [
+  "stash",
+  "add",
+  "commit",
+  "push",
+  "checkout",
+  "reset",
+  "clean",
+  "rebase",
+] as const;
 const SQL_DATA_MUTATION_PATTERN =
   /\b(?:insert|update|delete|merge|truncate|vacuum|reindex|cluster)\b/i;
 const SQL_ANALYZE_PATTERN = /(?<!\bexplain\s+)\banalyze\b/i;
@@ -30,14 +40,17 @@ export default function permissions(api: PermissionsAPI): void {
     description: "tampering with repository state or history",
     handler: ({ tool }) =>
       matchTool(tool, {
-        bash: ({ command }) =>
-          isGitMutation(command)
-            ? request({
-                highlight: GIT_MUTATION_PATTERN,
-                approveLabel: "Tamper",
-                rejectLabel: "Deny",
-              })
-            : undefined,
+        bash: matchCommand({
+          program: "git",
+          subcommands: GIT_MUTATION_SUBCOMMANDS,
+          valueFlags: gitValueFlags,
+          onMatch: ({ commands }) =>
+            request({
+              highlight: commands.map((command) => command.span),
+              approveLabel: "Tamper",
+              rejectLabel: "Deny",
+            }),
+        }),
       }),
   });
 
@@ -84,10 +97,6 @@ export default function permissions(api: PermissionsAPI): void {
         default: (tool) => requestWebSearch(tool.toolName),
       }),
   });
-}
-
-function isGitMutation(command: string): boolean {
-  return GIT_MUTATION_PATTERN.test(command);
 }
 
 function isFindDeleteCommand(command: string): boolean {
