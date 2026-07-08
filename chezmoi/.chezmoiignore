@@ -42,6 +42,9 @@ Library/
 # Work-only utilities
 {{ if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
 .local/bin/cleanh
+# Personal git identity include: only the work Mac splits identity by directory
+# (see the includeIf in .config/git/config). Personal machines are personal by default.
+.config/git/personal.inc
 {{ end }}
 
 # Work Mac

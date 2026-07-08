@@ -11,7 +11,7 @@ System configuration via Ansible + Chezmoi, replacing nix-darwin + home-manager.
 ./scripts/bootstrap.sh --ignore-certs
 
 # After changes
-anup
+uv run poe laptop
 ```
 
 ### Sudo Access
@@ -60,9 +60,8 @@ On macOS, `dark-notify` now acts as the source of truth for terminal theme state
 
 ## Commands
 
-- `anup` — Apply macOS Ansible playbook (alias set up by this playbook)
-- `anup --check` — Dry-run mode (shows what would change without applying)
 - `poe laptop` — Apply macOS Ansible playbook (auto-detects work vs personal)
+- `poe laptop --check` — Dry-run mode (shows what would change without applying)
 - `poe openclaw` — Apply OpenClaw (Debian VM) Ansible playbook
 - `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe udmp` — Apply UDMP Ansible playbook

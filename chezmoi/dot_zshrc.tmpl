@@ -175,9 +175,6 @@ fi
 {{- if eq .chezmoi.os "darwin" }}
 alias bd='brew desc'
 alias bh='brew home'
-anup() {
-  (cd ~/{{ .developDir }}/ansiblonomicon && poe play "$@")
-}
 {{- end }}
 
 # Machine-local overrides (work integrations, extra aliases)

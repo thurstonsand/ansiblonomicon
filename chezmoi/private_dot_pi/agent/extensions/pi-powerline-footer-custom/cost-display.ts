@@ -6,9 +6,6 @@ import { getBudgetSettings } from "./settings.js";
 
 const BUDGET_STATUS_KEY = "cost_budget";
 const RATE_WINDOW_DAYS = 7; // "at last week's pace"
-// At 90% spend the budget forces a downgrade to haiku, so treat that as the
-// effective ceiling for the exceed projection.
-const USABLE_BUDGET_FRACTION = 0.9;
 
 export class CostBudgetStatus {
   private readonly client: BudgetClient;
@@ -41,7 +38,7 @@ export class CostBudgetStatus {
 
 /**
  * Inline overshoot warning: rendered only when last week's pace projects past
- * the usable ceiling (90% of budget). Empty otherwise.
+ * the budget. Empty otherwise.
  */
 function projectionAlert(ctx: ExtensionContext, ceiling: BudgetCeiling, days: DailyCost[]): string {
   const eta = daysUntilExceed(days, ceiling.windowDays, ceiling.budgetUsd);
@@ -63,10 +60,10 @@ function recentDailyRate(days: DailyCost[]): number | undefined {
 }
 
 /**
- * Days until the rolling-window spend first crosses the usable ceiling (90% of
- * budget), projecting forward at last week's rate: each simulated day adds the
- * rate and drops the oldest day out of the window. Returns undefined when the
- * steady-state pace stays within the ceiling, 0 when already over it.
+ * Days until the rolling-window spend first crosses the budget, projecting
+ * forward at last week's rate: each simulated day adds the rate and drops the
+ * oldest day out of the window. Returns undefined when the steady-state pace
+ * stays within budget, 0 when already over it.
  */
 function daysUntilExceed(
   days: DailyCost[],
@@ -74,20 +71,19 @@ function daysUntilExceed(
   budgetUsd: number,
 ): number | undefined {
   if (budgetUsd <= 0) return undefined;
-  const ceiling = budgetUsd * USABLE_BUDGET_FRACTION;
   const rate = recentDailyRate(days);
-  if (rate === undefined || rate * windowDays <= ceiling) return undefined;
+  if (rate === undefined || rate * windowDays <= budgetUsd) return undefined;
 
   const window = completeDays(days)
     .slice(-windowDays)
     .map((d) => d.cost);
   let rollingSum = window.reduce((sum, c) => sum + c, 0);
-  if (rollingSum > ceiling) return 0;
+  if (rollingSum > budgetUsd) return 0;
 
   for (let k = 1; k <= windowDays; k++) {
     const dropped = k <= window.length ? window[k - 1] : rate;
     rollingSum += rate - dropped;
-    if (rollingSum > ceiling) return k;
+    if (rollingSum > budgetUsd) return k;
   }
   return windowDays;
 }

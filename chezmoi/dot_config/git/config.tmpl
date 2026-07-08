@@ -78,9 +78,18 @@
 	gpgSign = true
 
 [user]
-	email = "{{ .email }}"
+{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+	email = "{{ .workEmail }}"
 	name = "Thurston Sandberg"
-	signingKey = "{{ .signingKey }}"
+	signingKey = "{{ .workSigningKey }}"
+
+[includeIf "gitdir:~/code/personal/"]
+	path = personal.inc
+{{- else }}
+	email = "{{ .personalEmail }}"
+	name = "Thurston Sandberg"
+	signingKey = "{{ .personalSigningKey }}"
+{{- end }}
 {{- range .scm }}
 
 [url "ssh://git@{{ .host }}{{ with index . "sshPort" }}:{{ . }}{{ end }}"]

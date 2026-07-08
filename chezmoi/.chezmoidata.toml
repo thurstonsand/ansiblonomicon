@@ -28,9 +28,15 @@ costsDashboardUrl = ""
 jiraBrowseUrl = ""
 piWorkPackages = []
 
+# Git/jj identity
+personalEmail = "thurstonsand@gmail.com"
+personalSigningKey = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
+workEmail = ""
+workSigningKey = ""
+
 # Font configuration - centralized for all apps
 # Store full variant names so templates don't need to append suffixes
 [fonts]
-mono = "BerkeleyMono Nerd Font Mono"   # Terminal / monospace contexts (nerd font patched)
-propo = "BerkeleyMono Nerd Font Mono"  # Editor / UI contexts
+mono = "BerkeleyMono Nerd Font Mono"  # Terminal / monospace contexts (nerd font patched)
+propo = "BerkeleyMono Nerd Font Mono" # Editor / UI contexts
 size = 13
