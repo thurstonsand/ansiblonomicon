@@ -1,0 +1,34 @@
+---
+- name: Read retired managed paths
+  ansible.builtin.set_fact:
+    retired_paths: >-
+      {{
+        lookup('ansible.builtin.file', playbook_dir ~ '/../../.ansibleremove').splitlines()
+        | map('trim')
+        | reject('match', '^(#|$)')
+        | list
+      }}
+
+- name: Validate retired managed paths
+  ansible.builtin.assert:
+    that:
+      - item not in ['/', '.', '~']
+      - item is not match('^~[^/]')
+      - item is not match('(^|/)\.\.(/|$)')
+    fail_msg: "Invalid .ansibleremove path: {{ item }}"
+  loop: "{{ retired_paths }}"
+  loop_control:
+    label: "{{ item }}"
+
+- name: Remove retired managed paths
+  ansible.builtin.file:
+    path: >-
+      {{
+        ansible_facts['env']['HOME'] ~ item[1:]
+        if item is match('^~/')
+        else (item if item is match('^/') else ansible_facts['env']['HOME'] ~ '/' ~ item)
+      }}
+    state: absent
+  loop: "{{ retired_paths }}"
+  loop_control:
+    label: "{{ item }}"

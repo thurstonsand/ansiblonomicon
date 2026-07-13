@@ -13,6 +13,7 @@ import argparse
 from collections.abc import MutableMapping
 from dataclasses import dataclass
 from pathlib import Path
+import subprocess
 from typing import cast
 
 from hunk_gruvbox_theme import hunk_custom_theme_table
@@ -76,6 +77,16 @@ def update_hunk_theme(mode: Mode) -> None:
     write_atomic(hunk_toml, updated)
 
 
+def update_tmux_theme(mode: Mode) -> None:
+    theme_path = Path.home() / ".config" / "tmux" / f"gruvbox-{mode}.conf"
+    subprocess.run(
+        ["tmux", "source-file", str(theme_path)],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+
+
 def sync_active_mirrors(mode: Mode) -> None:
     for host in sorted(ThemeLease.active_hosts()):
         sync_mirror(host, mode)
@@ -97,6 +108,7 @@ def main() -> None:
     update_terminal_bg(args.mode)
     update_codex_theme(args.mode)
     update_hunk_theme(args.mode)
+    update_tmux_theme(args.mode)
     if not args.no_mirror_sync:
         sync_active_mirrors(args.mode)
 

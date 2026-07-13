@@ -33,10 +33,10 @@
       mode: "0755"
   register: terminal_theme_python_helpers
 
-- name: Install tmux theme zsh helper
+- name: Install terminal theme zsh helper
   ansible.builtin.copy:
-    src: tmux-theme.zsh
-    dest: "{{ ansible_facts['env']['HOME'] }}/.config/zsh/tmux-theme.zsh"
+    src: terminal-theme.zsh
+    dest: "{{ ansible_facts['env']['HOME'] }}/.config/zsh/terminal-theme.zsh"
     mode: "0644"
   register: terminal_theme_zsh_helper
 

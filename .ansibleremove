@@ -1,0 +1,3 @@
+# Relative and ~/ paths resolve beneath the managed user's home; absolute paths are used verbatim.
+# Files, symlinks, and directories are removed recursively when present.
+.config/zsh/tmux-theme.zsh

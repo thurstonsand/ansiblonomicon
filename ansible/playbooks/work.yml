@@ -15,6 +15,10 @@
       when: lookup('file', playbook_dir ~ '/../work.config.local.yml', errors='ignore') | length > 0
       tags: ["always"]
 
+    - name: Remove retired managed paths
+      ansible.builtin.import_tasks: ../tasks/remove_retired_paths.yml
+      tags: ["always"]
+
     - name: Verify this is the work machine
       ansible.builtin.assert:
         that: ansible_hostname is match(hostname_prefix)

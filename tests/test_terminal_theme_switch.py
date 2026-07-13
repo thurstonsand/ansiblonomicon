@@ -1,7 +1,9 @@
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+import subprocess
 import sys
 import tomllib
+from unittest.mock import patch
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
@@ -16,6 +18,7 @@ SPEC.loader.exec_module(MODULE)
 
 set_codex_tui_theme = MODULE.set_codex_tui_theme
 set_hunk_theme = MODULE.set_hunk_theme
+update_tmux_theme = MODULE.update_tmux_theme
 
 
 def test_replaces_existing_tui_theme() -> None:
@@ -64,6 +67,21 @@ persistence = "save-all"
 
     assert parsed["tui"]["theme"] == "gruvbox-dark"
     assert parsed["history"]["persistence"] == "save-all"
+
+
+def test_sources_tmux_theme_when_server_is_available() -> None:
+    with (
+        patch.object(MODULE.Path, "home", return_value=Path("/home/test")),
+        patch.object(MODULE.subprocess, "run") as run,
+    ):
+        update_tmux_theme("light")
+
+    run.assert_called_once_with(
+        ["tmux", "source-file", "/home/test/.config/tmux/gruvbox-light.conf"],
+        check=False,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 def test_sets_hunk_custom_dark_hard_theme() -> None:

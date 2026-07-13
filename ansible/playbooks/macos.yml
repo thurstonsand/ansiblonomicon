@@ -20,6 +20,10 @@
       when: ansible_facts['os_family'] == "Archlinux"
       tags: ["always"]
 
+    - name: Remove retired managed paths
+      ansible.builtin.import_tasks: ../tasks/remove_retired_paths.yml
+      tags: ["always"]
+
     - name: Verify this is the personal machine
       ansible.builtin.assert:
         that: ansible_hostname == hostname

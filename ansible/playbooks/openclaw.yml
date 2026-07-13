@@ -15,6 +15,10 @@
       ansible.builtin.include_vars: ../openclaw.config.yml
       tags: ["always"]
 
+    - name: Remove retired managed paths
+      ansible.builtin.import_tasks: ../tasks/remove_retired_paths.yml
+      tags: ["always"]
+
     - name: Display system info
       ansible.builtin.debug:
         msg: "Configuring {{ ansible_facts['os_family'] }} ({{ ansible_facts['distribution'] }} {{ ansible_facts['distribution_version'] }})"

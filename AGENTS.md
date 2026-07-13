@@ -57,6 +57,7 @@ When working with TrueNAS (SSH, Docker containers, stacks, debugging services), 
 - `ansible/config.yml` — Shared vars; `darwin.config.yml` / `work.config.yml` / `openclaw.config.yml` / `debian.config.yml` / `archlinux.config.yml` for OS/host-specific
 - `ansible/models.yml` — Centralized model definitions (versions, aliases, vscode/zed config); symlinked to `chezmoi/.chezmoidata/models.yaml`
 - `ansible/session-title-prompt.txt` — Session title prompt shared by chezmoi and agent_harness skills; symlinked to `chezmoi/.chezmoitemplates/session-title-prompt`
+- `.ansibleremove` — Retired files/directories removed on every personal macOS, work macOS, and OpenClaw run
 - `ansible/inventory/group_vars/truenas.yml` — TrueNAS host vars (Docker config, network IPs/ports/domains)
 - `chezmoi/` — Dotfiles using chezmoi templating (`.tmpl` files use Go templates)
 - `chezmoi/dot_config/amp/plugins/` — Amp plugin sources managed as a local TypeScript package; check with `uv run poe lint:amp`
