@@ -9,10 +9,14 @@
       "./index.ts"
     ]
   },
+  "scripts": {
+    "test": "node --import jiti/register --test companion/handlers.test.ts"
+  },
   "devDependencies": {
     "@biomejs/biome": "^2.4.6",
-    "@earendil-works/pi-coding-agent": ">=0.75.5",
+    "@earendil-works/pi-coding-agent": ">=0.80.4",
     "@types/node": "^25.9.1",
+    "jiti": "^2.7.0",
     "typebox": "^1.1.37",
     "typescript": "^6.0.3"
   },

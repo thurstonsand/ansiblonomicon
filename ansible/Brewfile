@@ -111,11 +111,10 @@ brew "cliproxyapi"
 brew "gemini-cli"
 brew "llm"
 
-cask "chatgpt"
+cask "chatgpt", greedy: true
 cask "chatgpt-atlas"
 cask "claude"
 cask "codex"
-cask "codex-app", greedy: true
 cask "codexbar"
 cask "opencode-desktop"
 cask "t3-code"
@@ -144,6 +143,7 @@ mas "Play: Save Videos Watch Later", id: 1596506190
 cask "antigravity"
 cask "comet"
 cask "google-chrome"
+cask "google-drive"
 cask "orion"
 cask "thebrowsercompany-dia"
 

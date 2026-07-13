@@ -53,7 +53,6 @@ fi
 
 {{- if .aigEnabled }}
 export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
-export PI_LIBRARIAN_MODELS="openai/{{ .models.openai.gpt_codex_spark.version }}:high"
 {{- end }}
 {{- if eq .chezmoi.hostname "clawdbot" }}
 export EDITOR="vim"

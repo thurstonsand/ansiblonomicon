@@ -15,7 +15,6 @@ chezmoi_source_dir: "{{ playbook_dir }}/../../chezmoi"
 # Global uv tools (base set for all hosts)
 uv_global_tools_base:
   - claude-code-tools
-  - showboat
 
 # Global mise tools (base set for all hosts)
 # Keep Node on active LTS. Homebrew's unversioned node formula tracks current release,
@@ -28,15 +27,16 @@ mise_global_tools_base:
 # Global npm packages (base set for all hosts)
 npm_global_packages_base:
   - "@earendil-works/pi-coding-agent"
-  - "@steipete/oracle"
   - agent-browser
   - hunkdiff
+  - sideshow
 
 # Global bun packages (base set for all hosts)
 bun_global_packages_base: []
 
 # Cargo packages
-cargo_packages_base: []
+cargo_packages_base:
+  - terminal-control
 
 # Global Ruby gems (base set for all hosts)
 gem_packages_base: []
@@ -65,23 +65,14 @@ agent_harness_target_agents_base:
 agent_harness_target_agents: "{{ (agent_harness_target_agents_base | default([])) + (agent_harness_target_agents_extra | default([])) }}"
 
 agent_harness_sources_base:
-  - repo: anthropics/claude-plugins-official
-    pull: true
-    plugins:
-      - name: code-simplifier
-        target_agents: [amp, codex, opencode, pi]
-
-  - repo: addyosmani/agent-skills
-    pull: true
-    plugins:
-      - name: code-simplification
-        path: skills/code-simplification
   - repo: mattpocock/skills
     pull: true
     plugins:
       - name: mattpocock-skills
+        prefix: ""
         exclude_skills:
           - ask-matt
+          - code-review
           - codebase-design
           - diagnosing-bugs
           - domain-modeling
@@ -91,21 +82,16 @@ agent_harness_sources_base:
           - grill-with-docs
           - triage
           - improve-codebase-architecture
+          - implement
           - setup-matt-pocock-skills
           - tdd
           - to-issues
           - to-prd
           - prototype
-
-  - repo: nicobailon/visual-explainer
-    pull: true
-    plugins:
-      - name: visual-explainer
-        path: plugins/visual-explainer
-        target_agents: [claude, amp, codex, opencode, pi]
-        exclude_data:
-          - commands
-          - scripts
+          - research
+          - to-spec
+          - to-tickets
+          - wayfinder
 
   - repo: vercel-labs/agent-browser
     pull: true
@@ -124,19 +110,21 @@ agent_harness_sources_base:
       - name: impeccable
         path: .claude
         skills: skills
-
-  - repo: steipete/oracle
-    pull: true
-    plugins:
-      - name: oracle
-        path: skills
-        target_agents: [claude, codex, opencode, pi, openclaw]
+        agents: agents
+        prefix: ""
 
   - repo: modem-dev/hunk
     pull: true
     plugins:
       - name: hunk
         path: skills
+        prefix: ""
+
+  - repo: anomalyco/terminal-control
+    pull: true
+    plugins:
+      - name: terminal-control
+        path: skills/terminal-control
 
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
@@ -146,7 +134,6 @@ agent_harness_sources_base:
         target_agents: [openclaw]
         exclude_skills:
           - designing-systems
-          - humanizer
       - name: project-management
         target_agents: [pi]
         exclude_skills:
@@ -155,6 +142,8 @@ agent_harness_sources_base:
         target_agents: [claude, amp, codex, opencode]
       - name: claude
         target_agents: [claude]
+      - name: codex
+        target_agents: [codex]
       - homelab
 
 agent_harness_sources: "{{ (agent_harness_sources_base | default([])) + (agent_harness_sources_extra | default([])) }}"

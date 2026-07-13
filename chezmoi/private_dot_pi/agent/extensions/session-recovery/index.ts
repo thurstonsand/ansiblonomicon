@@ -61,7 +61,7 @@ export default function sessionRecovery(pi: ExtensionAPI): void {
     record(pi, ctx, settings);
   });
 
-  pi.on("agent_end", async (_event, ctx) => {
+  pi.on("agent_settled", async (_event, ctx) => {
     record(pi, ctx, settings);
   });
 

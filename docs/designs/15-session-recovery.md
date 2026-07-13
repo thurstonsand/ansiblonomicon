@@ -109,7 +109,7 @@ event alone.
 | Event (Pi extension) | Action |
 |---|---|
 | `session_start` (any reason) | Install signal hooks once, then write/refresh own file for the current `getSessionId()`. |
-| `agent_end` | Refresh own file (Pi's analog of Claude's `Stop` — once per user prompt). |
+| `agent_settled` | Refresh own file after retries, auto-compaction retries, and queued continuations are exhausted. |
 | `session_shutdown` reason `new`/`resume`/`fork` | Soft-delete: the `sessionId` is replaced in-process; the successor's `session_start` writes the new id. |
 | `session_shutdown` reason `reload` | Keep: same `sessionId` continues, and the following `session_start` rewrites it. |
 | `session_shutdown` reason `quit`, **no** signal seen | Soft-delete: deliberate in-app quit (`/quit`, Ctrl-D, Ctrl-C ×2). |
@@ -158,14 +158,15 @@ Pi-specific bindings:
 - **`sessionId`** is `ctx.sessionManager.getSessionId()`; **`transcript`** is
   `ctx.sessionManager.getSessionFile()`; **`cwd`** is `ctx.cwd`.
 - **`name`** is `pi.getSessionName()` (often `null` until Pi's auto-title runs);
-  re-read on each `agent_end` refresh so a late title reaches the record.
+  re-read on each `agent_settled` refresh so a late title reaches the record.
 - **Guards**: only record real, resumable, interactive sessions. Skip when
   `getSessionFile()` is undefined (ephemeral / `--no-session`) and when
   `!ctx.hasUI` (print/RPC runs exit on completion and have nothing worth
   resuming after a crash).
 - Pi compaction fires `session_compact`, **not** `session_start`, so the
-  "refresh on compact" behavior from Claude's table is covered by `agent_end`
-  instead.
+  "refresh on compact" behavior from Claude's table is covered when the full
+  operation reaches `agent_settled` instead. The `session_start` write keeps the
+  active run recoverable until then.
 
 Pi's `new`/`resume`/`fork` predecessor soft-delete still applies — those mint a
 new `sessionId` in-process, so the outgoing record is hidden and the successor's
@@ -303,7 +304,7 @@ Shared library (a local package, referenced by bare specifier):
 
 - **Pi consumer:** `chezmoi/private_dot_pi/agent/extensions/session-recovery/`
   — `index.ts` (wires `session_start` → install signal hooks + `writeRecord`,
-  `agent_end` → `writeRecord`, and a reason-gated `session_shutdown` that
+  `agent_settled` → `writeRecord`, and a reason-gated `session_shutdown` that
   soft-deletes only on deliberate quit or in-process replacement — see the Pi lifecycle
   section) plus a `package.json` whose only entry is
   `"@thurstons/session-recovery": "file:../../../../.local/lib/session-recovery"`

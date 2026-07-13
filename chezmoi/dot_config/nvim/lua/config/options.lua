@@ -1,3 +1,6 @@
+-- prefer the repo root over LSP workspace roots (e.g. vtsls rooting at a nested package.json)
+vim.g.root_spec = { ".git", "lsp", "cwd" }
+
 -- use basedpyright instead of pyright
 vim.g.lazyvim_python_lsp = "basedpyright"
 

@@ -33,19 +33,19 @@
     "openai": {
       "available_models": [
         {
-          "name": "{{ $m.openai.gpt.version }}",
-          "display_name": "{{ $m.openai.gpt.display_name }}",
-          "max_tokens": {{ $m.openai.gpt.max_input }},
-          "max_output_tokens": {{ $m.openai.gpt.max_output }},
-          "max_completion_tokens": {{ $m.openai.gpt.max_output }}
+          "name": "{{ $m.openai.gpt_sol.version }}",
+          "display_name": "{{ $m.openai.gpt_sol.display_name }}",
+          "max_tokens": {{ $m.openai.gpt_sol.max_input }},
+          "max_output_tokens": {{ $m.openai.gpt_sol.max_output }},
+          "max_completion_tokens": {{ $m.openai.gpt_sol.max_output }}
         },
         {
-          "name": "{{ $m.openai.gpt.variants.high.id }}",
-          "display_name": "{{ $m.openai.gpt.variants.high.display_name }}",
+          "name": "{{ $m.openai.gpt_sol.variants.high.id }}",
+          "display_name": "{{ $m.openai.gpt_sol.variants.high.display_name }}",
           "reasoning_effort": "high",
-          "max_tokens": {{ $m.openai.gpt.max_input }},
-          "max_output_tokens": {{ $m.openai.gpt.max_output }},
-          "max_completion_tokens": {{ $m.openai.gpt.max_output }}
+          "max_tokens": {{ $m.openai.gpt_sol.max_input }},
+          "max_output_tokens": {{ $m.openai.gpt_sol.max_output }},
+          "max_completion_tokens": {{ $m.openai.gpt_sol.max_output }}
         }
       ],
       "api_url": "https://aig.thurstons.house/v1"
@@ -78,6 +78,7 @@
   },
 {{- end }}
   "collaboration_panel": {
+    "dock": "left",
     "button": true
   },
   "debugger": {
@@ -85,6 +86,7 @@
     "dock": "bottom"
   },
   "git_panel": {
+    "dock": "left",
     "collapse_untracked_diff": true,
     "sort_by_path": true,
     "button": true
@@ -101,6 +103,7 @@
     "dock": "bottom"
   },
   "project_panel": {
+    "dock": "left",
     "entry_spacing": "standard"
   },
   "use_system_window_tabs": true,
@@ -112,8 +115,8 @@
   "scroll_beyond_last_line": "off",
   "redact_private_values": true,
   "agent_servers": {
-    "codex": {
-      "default_mode": "full-access"
+    "opencode": {
+      "type": "registry"
     }
   },
 {{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
@@ -168,6 +171,7 @@
     "code_actions": true
   },
   "agent": {
+    "dock": "right",
     "always_allow_tool_actions": true,
 {{- if .aigEnabled }}
     "default_model": {

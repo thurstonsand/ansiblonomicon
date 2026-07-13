@@ -1,6 +1,6 @@
 import {
-  type HighlightSpan,
   gitValueFlags,
+  type HighlightSpan,
   isCustomToolInput,
   matchCommand,
   matchTool,
@@ -32,7 +32,7 @@ const SQL_MUTATION_HIGHLIGHTS = [
   SQL_DDL_PATTERN,
   SQL_DCL_PATTERN,
 ] as const;
-const WEB_SEARCH_TOOL_PATTERN = /web[_-]?search$/i;
+const WORK_WEB_SEARCH_TOOL = "web_search_web_search";
 
 export default function permissions(api: PermissionsAPI): void {
   api.onToolUse({
@@ -258,7 +258,7 @@ function isPostgresMutationStatement(command: string): boolean {
 }
 
 function requestWebSearch(target: string | undefined) {
-  return target && WEB_SEARCH_TOOL_PATTERN.test(target)
+  return target === WORK_WEB_SEARCH_TOOL
     ? request({ approveLabel: "Commence", rejectLabel: "Reconsider" })
     : undefined;
 }

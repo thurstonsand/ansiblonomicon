@@ -1,8 +1,9 @@
 {{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
 {
   "defaultProvider": {{ if $isWork }}"anthropic"{{ else }}"openai-codex"{{ end }},
-  "defaultModel": {{ if $isWork }}"{{ trimSuffix "[1m]" .claude_code_models.opus }}"{{ else }}"{{ .models.openai.gpt.version }}"{{ end }},
+  "defaultModel": {{ if $isWork }}"{{ trimSuffix "[1m]" .claude_code_models.opus }}"{{ else }}"{{ .models.openai.gpt_sol.version }}"{{ end }},
   "defaultThinkingLevel": "medium",
+  "showCacheMissNotices": true,
   "compaction": {
     "enabled": true,
     "reserveTokens": 16384,
@@ -84,7 +85,7 @@
   {{- end }}
   "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.loads(p.read_text()).get('lastChangelogVersion','0.74.0') if p.exists() else '0.74.0')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
   "librarian": {
-    "model": {{ if $isWork }}"anthropic/{{ trimSuffix "[1m]" .claude_code_models.haiku }}"{{ else }}"openai-codex/{{ .models.openai.gpt.version }}"{{ end }},
+    "model": {{ if $isWork }}"anthropic/{{ trimSuffix "[1m]" .claude_code_models.haiku }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
     "thinkingLevel": "off",
     "tools": [
       "search_web",
@@ -101,18 +102,16 @@
     "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
     "{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}",
     "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}",
-    "openai-codex/{{ .models.openai.gpt.version }}",
-    "openai-codex/{{ .models.openai.gpt_codex_spark.version }}",
-    "{{ .models.openai.gpt_mini.agent_harness.aliases.pi }}",
-    "{{ .models.google.gemini_pro.agent_harness.aliases.pi }}",
-    "{{ .models.google.gemini_flash.agent_harness.aliases.pi }}"
+    "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}",
+    "{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}",
+    "{{ .models.openai.gpt_luna.agent_harness.aliases.pi }}"
 {{- end }}
   ],
   "steeringMode": "all",
   "followUpMode": "all",
   "sessions": {
     "autoTitle": {
-      "model": {{ if $isWork }}"anthropic/{{ trimSuffix "[1m]" .claude_code_models.sonnet }}"{{ else }}"{{ .models.openai.gpt.agent_harness.aliases.pi }}"{{ end }},
+      "model": {{ if $isWork }}"anthropic/{{ trimSuffix "[1m]" .claude_code_models.sonnet }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
       "timeoutSecs": 60,
       "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
     }
@@ -204,6 +203,7 @@
     "npm:pi-interview",
     "npm:glimpseui",
     "npm:pi-mcp-adapter",
+    "npm:sideshow",
     {
       "source": "git:github.com/hasit/pi-community-themes",
       "themes": [

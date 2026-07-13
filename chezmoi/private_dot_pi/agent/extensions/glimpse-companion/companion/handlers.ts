@@ -17,7 +17,7 @@ export function registerCompanionHandlers(pi: ExtensionAPI, session: CompanionSe
     await session.starting();
   });
 
-  pi.on("agent_end", async (_event, ctx) => {
+  pi.on("agent_settled", async (_event, ctx) => {
     session.noteContext(ctx);
     session.done();
   });

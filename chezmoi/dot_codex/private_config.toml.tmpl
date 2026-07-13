@@ -17,17 +17,17 @@ last_updated = (
 if last_updated:
     print(last_updated)
 ` -}}
-model = "{{ .models.openai.gpt.version }}"
-model_context_window = {{ .models.openai.gpt.max_input }}
-model_auto_compact_token_limit = {{ .models.openai.gpt.codex.auto_compact_token_limit }}
+model = "{{ .models.openai.gpt_sol.version }}"
+model_context_window = {{ .models.openai.gpt_sol.max_input }}
+model_auto_compact_token_limit = {{ .models.openai.gpt_sol.codex.auto_compact_token_limit }}
 model_reasoning_effort = "medium"
 model_reasoning_summary = "auto"
-approval_policy = "on-request"
+approval_policy = "never"
 sandbox_mode = "danger-full-access"
 personality = "friendly"
 web_search = "live"
 default_mode_request_user_input = true
-service_tier = "fast"
+service_tier = "default"
 notify = [ "{{ .chezmoi.homeDir }}/.codex/computer-use/Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient", "turn-ended" ]
 
 [features]
@@ -40,13 +40,13 @@ prevent_idle_sleep = true
 memories = true
 chronicle = true
 remote_connections = true
-remote_control = true
 undo = true
 default_mode_request_user_input = true
 artifact = true
 child_agents_md = true
 terminal_resize_reflow = true
 goals = true
+js_repl = false
 
 [history]
 persistence = "save-all"
@@ -86,6 +86,9 @@ trust_level = "trusted"
 [projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/ghosttykit"]
 trust_level = "trusted"
 
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/flux-keyboard-sdk"]
+trust_level = "trusted"
+
 [notice]
 hide_gpt5_1_migration_prompt = true
 "hide_gpt-5.1-codex-max_migration_prompt" = true
@@ -114,7 +117,22 @@ enabled = true
 [plugins."computer-use@openai-bundled"]
 enabled = true
 
+[plugins."chrome@openai-bundled"]
+enabled = true
+
+[plugins."sites@openai-bundled"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
 [plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
 enabled = true
 
 [marketplaces.openai-bundled]
@@ -126,3 +144,74 @@ source = "{{ .chezmoi.homeDir }}/.codex/.tmp/bundled-marketplaces/openai-bundled
 last_updated = "{{ output "python3" "-c" $codexMarketplaceLastUpdated $codexConfigPath "openai-primary-runtime" | trim | default "2026-05-06T02:11:21Z" }}"
 source_type = "local"
 source = "{{ .chezmoi.homeDir }}/.cache/codex-runtimes/codex-primary-runtime/plugins/openai-primary-runtime"
+
+[desktop]
+followUpQueueMode = "steer"
+mac-menu-bar-enabled = false
+preventSleepWhileRunning = true
+hotkey-window-projectless-default-enabled = true
+appearanceLightCodeThemeId = "gruvbox"
+appearanceDarkCodeThemeId = "gruvbox"
+usePointerCursors = true
+selected-avatar-id = "custom:2b"
+open-local-url-in-target-preference = "in-app-browser"
+git-always-force-push = true
+dock-icon-preference = "app-default"
+
+[desktop.open-in-target-preferences]
+global = "zed"
+
+[desktop.appearanceLightChromeTheme]
+accent = "#458588"
+contrast = 45
+ink = "#3c3836"
+opaqueWindows = false
+surface = "#fbf1c7"
+
+[desktop.appearanceLightChromeTheme.fonts]
+
+[desktop.appearanceLightChromeTheme.semanticColors]
+diffAdded = "#3c3836"
+diffRemoved = "#cc241d"
+skill = "#b16286"
+
+[desktop.appearanceDarkChromeTheme]
+accent = "#458588"
+contrast = 60
+ink = "#ebdbb2"
+opaqueWindows = false
+surface = "#282828"
+
+[desktop.appearanceDarkChromeTheme.fonts]
+
+[desktop.appearanceDarkChromeTheme.semanticColors]
+diffAdded = "#ebdbb2"
+diffRemoved = "#cc241d"
+skill = "#b16286"
+
+[mcp_servers.node_repl]
+args = []
+command = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl"
+startup_timeout_sec = 120
+
+[mcp_servers.node_repl.env]
+NODE_REPL_NATIVE_PIPE_CONNECT_TIMEOUT_MS = "1000"
+NODE_REPL_NODE_MODULE_DIRS = "/Applications/ChatGPT.app/Contents/Resources/cua_node/lib/node_modules"
+NODE_REPL_NODE_PATH = "/Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node"
+NODE_REPL_TRUSTED_CODE_PATHS = "{{ .chezmoi.homeDir }}/.codex"
+CODEX_HOME = "{{ .chezmoi.homeDir }}/.codex"
+NODE_REPL_TRUSTED_BROWSER_CLIENT_SHA256S = "2b020a2faded171bf620563ce51864b7c3ff320f1834f0044b73fcbeabb29a76,6d25aa7656feac858f3a3bdaea5bcbab0dbfd426c9de8e6931ce90c399ee8e4f"
+BROWSER_USE_AVAILABLE_BACKENDS = "chrome,iab"
+NODE_REPL_INSTRUCTIONS_USE_CASE_BROWSER = "Control the in-app browser in conjunction with the Browser Plugin."
+NODE_REPL_INSTRUCTIONS_USE_CASE_CHROME = "Control the Chrome browser in conjunction with the Chrome Plugin. Prefer this method of controlling Chrome over alternatives (such as Computer Use) unless the user explicitly mentions an alternative."
+NODE_REPL_INSTRUCTIONS_USE_CASE_COMPUTER_USE = "Control desktop apps on macOS through Computer Use."
+BROWSER_USE_CODEX_APP_BUILD_FLAVOR = "prod"
+BROWSER_USE_CODEX_APP_VERSION = "26.707.30751"
+SKY_CUA_SERVICE_PATH = "{{ .chezmoi.homeDir }}/.codex/plugins/cache/openai-bundled/computer-use/1.0.1000362/Codex Computer Use.app"
+CODEX_CLI_PATH = "/Applications/ChatGPT.app/Contents/Resources/codex"
+
+[mcp_servers.computer-use]
+command = "./Codex Computer Use.app/Contents/SharedSupport/SkyComputerUseClient.app/Contents/MacOS/SkyComputerUseClient"
+args = ["mcp"]
+cwd = "."
+enabled = false

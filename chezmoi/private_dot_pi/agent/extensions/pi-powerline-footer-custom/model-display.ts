@@ -51,6 +51,7 @@ const THINKING_EXPONENTS: Partial<Record<ThinkingLevel, string>> = {
   low: "⁻¹",
   high: "²",
   xhigh: "³",
+  max: "⁴",
 };
 
 export function updateModelDisplayStatus(

@@ -32,7 +32,7 @@ feeds:
             category: "Society & Culture, News > News Commentary"
             image_url: "https://kagi.com/proxy/AtomicVariety-Final-Flat.png?c=8c5q1uKdhGQBVo5TJ1WDZHtMaZqBu4YhTNF5az9sQ-krNegRung_OTtMhj-Zv97STiVXz308W-DbN0l-nsCBWvd1bK-aGK-HJu_a3Kh8KIam2k4cOML3y-rSVmfhHjC4UC4sAluI9CpMlDH9sGNsUg%3D%3D"
     wan-show:
-        url: "https://youtube.com/playlist?list=PL8mG-RkN2uTw7PhlnAr4pZZz2QubIbujH&si=z6ztuVjTRBmdt4E7"
+        url: "https://www.youtube.com/channel/UCVlfe3MRSCZSeIWByrWHhkg/streams"
         yt_args: >
             --format
             bestvideo*[height<=1080][vcodec*=av01]+bestaudio/bestvideo*[height<=1080][vcodec*=av01]/bestvideo*[height<=1080][vcodec*=h265]+bestaudio/bestvideo*[height<=1080][vcodec*=h265]/bestvideo*[height<=1080][vcodec*=hevc]+bestaudio/bestvideo*[height<=1080][vcodec*=hevc]/bestvideo*[height<=1080][vcodec*=vp9]+bestaudio/bestvideo*[height<=1080][vcodec*=vp9]/bestvideo*[height<=1080]+bestaudio/bestvideo*[height<=1080]/best[height<=1080]

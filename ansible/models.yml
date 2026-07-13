@@ -88,67 +88,62 @@ models:
   # OPENAI
   # ===========================================================================
   openai:
-    gpt:
-      version: "gpt-5.5"
-      display_name: "GPT 5.5"
-      # Codex GPT-5.5 is advertised as a 400K total window: 272K input + 128K output.
+    gpt_sol:
+      version: "gpt-5.6-sol"
+      display_name: "GPT 5.6 Sol"
       # Check current subscription-backed Codex limits with:
-      # codex debug models | jq -r '.models[] | select(.slug=="gpt-5.5") | {slug, context_window, max_context_window, effective_context_window_percent}'
-      # Restore max_input to 1050000 when Codex exposes GPT-5.5's 1M API context window.
-      # GPT-5.4 currently reports max_context_window=1000000, but GPT-5.5 does not.
-      max_input: 272000
+      # codex debug models | jq -r '.models[] | select(.slug=="gpt-5.6-sol") | {slug, context_window, max_context_window, effective_context_window_percent}'
+      max_input: 372000
       max_output: 128000
       vision: true
       codex:
-        # 95% of the input window leaves room for compaction.
-        # Restore to 950000 with the 1M context window.
-        auto_compact_token_limit: 258000
+        # 95% of the 372K window leaves room for compaction.
+        auto_compact_token_limit: 353000
       agent_harness:
         aliases:
-          pi: "openai/gpt-5.5"
-          pi_openai_fast_codex: "openai-codex/gpt-5.5"
+          pi: "openai-codex/gpt-5.6-sol"
       vscode:
         include: true
         thinking: true
       zed: true
       variants:
         medium:
-          id: "gpt-5.5(medium)"
-          display_name: "GPT 5.5 Medium"
+          id: "gpt-5.6-sol(medium)"
+          display_name: "GPT 5.6 Sol Medium"
           vscode: true
         high:
-          id: "gpt-5.5(high)"
-          display_name: "GPT 5.5 High"
+          id: "gpt-5.6-sol(high)"
+          display_name: "GPT 5.6 Sol High"
           vscode: true
           zed: true
         xhigh:
-          id: "gpt-5.5(xhigh)"
-          display_name: "GPT 5.5 XHigh"
+          id: "gpt-5.6-sol(xhigh)"
+          display_name: "GPT 5.6 Sol XHigh"
           vscode: true
 
-    gpt_codex_spark:
-      version: "gpt-5.3-codex-spark"
-      display_name: "GPT Codex Spark"
-      max_input: 128000
+    gpt_terra:
+      version: "gpt-5.6-terra"
+      display_name: "GPT 5.6 Terra"
+      max_input: 372000
       max_output: 128000
       vision: true
       agent_harness:
         aliases:
-          pi: "openai/gpt-5.3-codex-spark"
+          pi: "openai-codex/gpt-5.6-terra"
       vscode:
         include: true
         thinking: true
       zed: true
 
-    gpt_mini:
-      version: "gpt-5.4-mini"
-      display_name: "GPT 5.4 Mini"
-      max_input: 400000
+    gpt_luna:
+      version: "gpt-5.6-luna"
+      display_name: "GPT 5.6 Luna"
+      max_input: 372000
       max_output: 128000
       vision: true
       agent_harness:
         aliases:
-          pi: "openai/gpt-5.4-mini"
+          pi: "openai-codex/gpt-5.6-luna"
       vscode:
         include: true
         thinking: true
@@ -328,3 +323,6 @@ cli_proxy_api:
       - gpt-5.1-codex
       - gpt-5.2-codex
       - gpt-5.3-codex
+      - gpt-5.3-codex-spark
+      - gpt-5.4-mini
+      - gpt-5.5

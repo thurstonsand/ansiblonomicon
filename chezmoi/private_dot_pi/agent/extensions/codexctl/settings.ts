@@ -57,13 +57,15 @@ export function startCodexSettingsWatcher(): void {
         };
       }
     });
-    settingsWatcher.on("error", () => {
-      settingsWatcher?.close();
-      settingsWatcher = undefined;
-    });
+    settingsWatcher.on("error", stopCodexSettingsWatcher);
   } catch {
     settingsWatcher = undefined;
   }
+}
+
+export function stopCodexSettingsWatcher(): void {
+  settingsWatcher?.close();
+  settingsWatcher = undefined;
 }
 
 export function saveCodexSettings(settings: CodexSettings): void {

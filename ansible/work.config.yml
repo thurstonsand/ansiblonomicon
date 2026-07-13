@@ -22,21 +22,14 @@ agent_harness_target_agents: "{{ (agent_harness_target_agents_base | default([])
 agent_harness_link_glimpse: true
 
 agent_harness_sources_base:
-  - repo: nicobailon/visual-explainer
-    pull: true
-    plugins:
-      - name: visual-explainer
-        path: plugins/visual-explainer
-        exclude_data:
-          - commands
-          - scripts
-
   - repo: mattpocock/skills
     pull: true
     plugins:
       - name: mattpocock-skills
+        prefix: ""
         exclude_skills:
           - ask-matt
+          - code-review
           - codebase-design
           - diagnosing-bugs
           - domain-modeling
@@ -46,11 +39,16 @@ agent_harness_sources_base:
           - grill-with-docs
           - triage
           - improve-codebase-architecture
+          - implement
           - setup-matt-pocock-skills
           - tdd
           - to-issues
           - to-prd
           - prototype
+          - research
+          - to-spec
+          - to-tickets
+          - wayfinder
 
   - repo: pbakaus/impeccable
     pull: true
@@ -58,12 +56,12 @@ agent_harness_sources_base:
       - name: impeccable
         path: .claude
         skills: skills
+        agents: agents
+        prefix: ""
 
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management
-        exclude_skills:
-          - showboat
       - name: claude
         target_agents: [claude]
         exclude_skills:

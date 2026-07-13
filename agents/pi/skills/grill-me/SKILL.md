@@ -42,7 +42,7 @@ Cross-check the user's claims against the code, tests, configuration, and existi
 
 For each major decision, ask what the cost would be if the design is wrong. Spend design attention on decisions that are hard to reverse, risky, surprising, or likely to constrain future work.
 
-### Describe every interface
+### Describe every interface and test seam
 
 Before the design is settled, fully describe every interface the plan touches:
 
@@ -51,6 +51,8 @@ Before the design is settled, fully describe every interface the plan touches:
 - contracts with external systems and libraries
 
 For each one, pin down what crosses the boundary: the operations, the data shapes, the failure behavior, and which side owns what.
+
+Identify where the resulting behavior will be tested. Prefer existing seams, and choose the highest seam that proves external behavior without coupling tests to implementation details. If the design needs a new seam, make that an explicit decision.
 
 ### Challenge against the glossary
 
@@ -137,5 +139,7 @@ Gate 2 is complete when:
 ## Gate 3: Execution Planning
 
 Add the implementation plan to the end of the design doc. Use the implementation-plan structure and rules in [design-format.md](./references/design-format.md).
+
+Prefer tracer-bullet phases: each phase should deliver a narrow, complete path through every affected layer and be independently demonstrable or verifiable. If the current structure makes that difficult, plan the prefactor first. For wide mechanical migrations that cannot land as vertical slices, use expand–migrate–contract phases so intermediate commits remain stable.
 
 Gate 3 is complete when the design doc contains a handoff-safe implementation plan.

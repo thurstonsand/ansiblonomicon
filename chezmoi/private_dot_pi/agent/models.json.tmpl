@@ -42,42 +42,6 @@
       ]
     }
 {{- else }}
-    // Standard OpenAI Responses path through AIG. This path is SSE; use built-in openai-codex for Pi's WebSocket transport.
-    "openai": {
-      "baseUrl": "https://aig.thurstons.house/v1",
-      "apiKey": "{{ template "llm-api-key" . }}",
-      "api": "openai-responses",
-      "authHeader": true,
-      "models": [
-        {
-          "id": "{{ .models.openai.gpt.version }}",
-          "name": "{{ .models.openai.gpt.display_name }}",
-          "reasoning": true,
-          "input": ["text", "image"],
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.openai.gpt.max_input }},
-          "maxTokens": {{ .models.openai.gpt.max_output }}
-        },
-        {
-          "id": "{{ .models.openai.gpt_codex_spark.version }}",
-          "name": "{{ .models.openai.gpt_codex_spark.display_name }}",
-          "reasoning": true,
-          "input": ["text", "image"],
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.openai.gpt_codex_spark.max_input }},
-          "maxTokens": {{ .models.openai.gpt_codex_spark.max_output }}
-        },
-        {
-          "id": "{{ .models.openai.gpt_mini.version }}",
-          "name": "{{ .models.openai.gpt_mini.display_name }}",
-          "reasoning": true,
-          "input": ["text", "image"],
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.openai.gpt_mini.max_input }},
-          "maxTokens": {{ .models.openai.gpt_mini.max_output }}
-        }
-      ]
-    },
     "google": {
       "baseUrl": "https://aig.thurstons.house/v1beta",
       "apiKey": "{{ template "llm-api-key" . }}",
