@@ -48,6 +48,7 @@ export default function permissions(api: PermissionsAPI): void {
             request({
               highlight: commands.map((command) => command.span),
               approveLabel: "Tamper",
+              editLabel: "Amend",
               rejectLabel: "Deny",
             }),
         }),
@@ -64,6 +65,7 @@ export default function permissions(api: PermissionsAPI): void {
             ? request({
                 highlight: fileDisposalSpans,
                 approveLabel: "Dispose",
+                editLabel: "Retarget",
                 rejectLabel: "Prevent",
               })
             : undefined,
@@ -80,6 +82,7 @@ export default function permissions(api: PermissionsAPI): void {
             ? request({
                 highlight: SQL_MUTATION_HIGHLIGHTS,
                 approveLabel: "Mutate",
+                editLabel: "Reword",
                 rejectLabel: "Deny",
               })
             : undefined,

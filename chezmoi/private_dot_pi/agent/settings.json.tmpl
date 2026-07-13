@@ -3,6 +3,11 @@
   "defaultProvider": {{ if $isWork }}"anthropic"{{ else }}"openai-codex"{{ end }},
   "defaultModel": {{ if $isWork }}"{{ trimSuffix "[1m]" .claude_code_models.opus }}"{{ else }}"{{ .models.openai.gpt_sol.version }}"{{ end }},
   "defaultThinkingLevel": "medium",
+  "pinnedModel": {
+    "provider": {{ if $isWork }}"anthropic"{{ else }}"openai-codex"{{ end }},
+    "modelId": {{ if $isWork }}"{{ trimSuffix "[1m]" .claude_code_models.opus }}"{{ else }}"{{ .models.openai.gpt_sol.version }}"{{ end }},
+    "thinkingLevel": "medium"
+  },
   "showCacheMissNotices": true,
   "compaction": {
     "enabled": true,
@@ -159,17 +164,17 @@
   },
   "powerlineShortcuts": {
     "stashHistory": "alt+shift+s",
-    "copyEditor": "ctrl+alt+shift+9",
-    "cutEditor": "ctrl+alt+shift+0",
+    "copyEditor": null,
+    "cutEditor": null,
     "jumpPreviousUserMessage": "ctrl+shift+k",
     "jumpNextUserMessage": "ctrl+shift+j",
-    "jumpPreviousLlmMessage": "ctrl+alt+shift+8",
-    "jumpNextLlmMessage": "ctrl+alt+shift+7",
+    "jumpPreviousLlmMessage": null,
+    "jumpNextLlmMessage": null,
     "jumpChatBottom": "ctrl+shift+g",
     "scrollChatUp": "alt+k",
     "scrollChatDown": "alt+j",
-    "editorStart": "ctrl+alt+shift+6",
-    "editorEnd": "ctrl+alt+shift+5"
+    "editorStart": null,
+    "editorEnd": null
   },
   "packages": [
 {{- if $isWork }}
