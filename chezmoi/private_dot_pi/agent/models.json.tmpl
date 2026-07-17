@@ -5,68 +5,49 @@
     "anthropic": {
       "baseUrl": "{{ .anthropicBaseUrl }}",
       "apiKey": "{{ .anthropicAuthToken }}",
-      "api": "anthropic-messages",
       "authHeader": true,
       "headers": {"anthropic-beta": "context-1m-2025-08-07"},
-      "models": [
-        {
-          "id": "{{ trimSuffix "[1m]" .claude_code_models.opus }}",
+      "modelOverrides": {
+        "{{ trimSuffix "[1m]" .claude_code_models.opus }}": {
           "name": "{{ .claude_code_models.opus_name }}",
-          "reasoning": true,
-          "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.anthropic.opus.max_input }},
-          "maxTokens": {{ .models.anthropic.opus.max_output }},
-          "thinkingLevelMap": {"xhigh": "xhigh"},
-          "compat": {"forceAdaptiveThinking": true}
+          "maxTokens": {{ .models.anthropic.opus.max_output }}
         },
-        {
-          "id": "{{ trimSuffix "[1m]" .claude_code_models.sonnet }}",
+        "{{ trimSuffix "[1m]" .claude_code_models.sonnet }}": {
           "name": "{{ .claude_code_models.sonnet_name }}",
-          "reasoning": true,
-          "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.anthropic.sonnet.max_input }},
-          "maxTokens": {{ .models.anthropic.sonnet.max_output }},
-          "compat": {"forceAdaptiveThinking": true}
+          "maxTokens": {{ .models.anthropic.sonnet.max_output }}
         },
-        {
-          "id": "{{ trimSuffix "[1m]" .claude_code_models.haiku }}",
+        "{{ trimSuffix "[1m]" .claude_code_models.haiku }}": {
           "name": "{{ .claude_code_models.haiku_name }}",
           "reasoning": false,
-          "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.anthropic.haiku.max_input }},
           "maxTokens": {{ .models.anthropic.haiku.max_output }}
         }
-      ]
+      }
     }
 {{- else }}
     "google": {
       "baseUrl": "https://aig.thurstons.house/v1beta",
       "apiKey": "{{ template "llm-api-key" . }}",
-      "api": "google-generative-ai",
       "authHeader": true,
-      "models": [
-        {
-          "id": "{{ .models.google.gemini_flash.version }}",
+      "modelOverrides": {
+        "{{ .models.google.gemini_flash.version }}": {
           "name": "{{ .models.google.gemini_flash.display_name }}",
-          "reasoning": true,
-          "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.google.gemini_flash.max_input }},
           "maxTokens": {{ .models.google.gemini_flash.max_output }}
         },
-        {
-          "id": "{{ .models.google.gemini_pro.version }}",
+        "{{ .models.google.gemini_pro.version }}": {
           "name": "{{ .models.google.gemini_pro.display_name }}",
-          "reasoning": true,
-          "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.google.gemini_pro.max_input }},
           "maxTokens": {{ .models.google.gemini_pro.max_output }}
         }
-      ]
+      }
     }
 {{- end }}
   }

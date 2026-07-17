@@ -4,7 +4,8 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
 import type { Api, Model } from "@earendil-works/pi-ai";
-import {
+import type { AutocompleteItem } from "@earendil-works/pi-tui";
+import pinModelExtension, {
   findExactModelReferenceMatch,
   restorePinnedDefaults,
   writePinnedDefaults,
@@ -23,6 +24,20 @@ function withSettings(
   );
   try {
     run(settingsPath);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
+async function withSettingsAsync(
+  settings: Record<string, unknown>,
+  run: (settingsPath: string, directory: string) => Promise<void>,
+): Promise<void> {
+  const directory = mkdtempSync(join(tmpdir(), "pin-model-"));
+  const settingsPath = join(directory, "settings.json");
+  writeFileSync(settingsPath, JSON.stringify(settings), "utf8");
+  try {
+    await run(settingsPath, directory);
   } finally {
     rmSync(directory, { recursive: true, force: true });
   }
@@ -133,4 +148,83 @@ test("exact matching accepts canonical references and unique bare ids", () => {
   equal(findExactModelReferenceMatch("unique", models), models[2]);
   equal(findExactModelReferenceMatch("shared", models), undefined);
   equal(findExactModelReferenceMatch("openai/missing", models), undefined);
+});
+
+test("refreshes models before command resolution and session-start completions", async () => {
+  await withSettingsAsync(
+    {
+      defaultProvider: "openai",
+      defaultModel: "test-model",
+      defaultThinkingLevel: "off",
+    },
+    async (_settingsPath, agentDir) => {
+      const previousAgentDir = process.env.PI_CODING_AGENT_DIR;
+      process.env.PI_CODING_AGENT_DIR = agentDir;
+      try {
+        const availableModel = model("openai", "test-model");
+        const handlers = new Map<string, (...args: never[]) => unknown>();
+        let command:
+          | {
+              getArgumentCompletions(prefix: string): AutocompleteItem[] | null;
+              handler(args: string, ctx: unknown): Promise<void>;
+            }
+          | undefined;
+        let refreshed = false;
+        const refreshResolvers: Array<() => void> = [];
+        const modelRegistry = {
+          refresh: () =>
+            new Promise<void>((resolve) => {
+              refreshResolvers.push(() => {
+                refreshed = true;
+                resolve();
+              });
+            }),
+          getAvailable: () => {
+            equal(refreshed, true);
+            return [availableModel];
+          },
+        };
+        const pi = {
+          getThinkingLevel: () => "off",
+          on: (event: string, handler: (...args: never[]) => unknown) => {
+            handlers.set(event, handler);
+          },
+          registerCommand: (_name: string, definition: typeof command) => {
+            command = definition;
+          },
+          setModel: async () => true,
+        };
+        pinModelExtension(pi as never);
+        if (!command) throw new Error("pin-model command was not registered");
+        const ctx = {
+          model: availableModel,
+          modelRegistry,
+          ui: { notify() {}, select: async () => undefined },
+        };
+
+        const sessionStart = handlers.get("session_start");
+        if (!sessionStart) throw new Error("session_start handler was not registered");
+        const starting = sessionStart({} as never, ctx as never) as Promise<void>;
+        await Promise.resolve();
+        deepStrictEqual(command.getArgumentCompletions("test"), null);
+        refreshResolvers.shift()?.();
+        await starting;
+        equal(command.getArgumentCompletions("test")?.[0]?.value, "openai/test-model");
+
+        refreshed = false;
+        const pinning = command.handler("openai/test-model", ctx);
+        await Promise.resolve();
+        equal(refreshed, false);
+        refreshResolvers.shift()?.();
+        await pinning;
+        equal(refreshed, true);
+      } finally {
+        if (previousAgentDir === undefined) {
+          delete process.env.PI_CODING_AGENT_DIR;
+        } else {
+          process.env.PI_CODING_AGENT_DIR = previousAgentDir;
+        }
+      }
+    },
+  );
 });

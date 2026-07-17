@@ -293,7 +293,7 @@ export default function pinModelExtension(pi: ExtensionAPI): void {
         return;
       }
 
-      ctx.modelRegistry.refresh();
+      await ctx.modelRegistry.refresh();
       modelSource = () => ctx.modelRegistry.getAvailable();
       const availableModels = getAvailableModels();
       const exactMatch = findExactModelReferenceMatch(pattern, availableModels);
@@ -316,9 +316,9 @@ export default function pinModelExtension(pi: ExtensionAPI): void {
     },
   });
 
-  pi.on("session_start", (_event, ctx) => {
+  pi.on("session_start", async (_event, ctx) => {
     restorePinnedDefaults(settingsPath);
-    ctx.modelRegistry.refresh();
+    await ctx.modelRegistry.refresh();
     modelSource = () => ctx.modelRegistry.getAvailable();
   });
 

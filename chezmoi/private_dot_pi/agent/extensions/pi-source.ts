@@ -61,8 +61,12 @@ export default function (pi: ExtensionAPI): void {
   if (VERSION === "0.0.0") return;
   ensureClone();
 
-  pi.on("before_agent_start", async (event) => {
+  pi.on("before_agent_start", async (event, ctx) => {
     ensureClone();
-    return { systemPrompt: event.systemPrompt + sourceSection() };
+    const model = ctx.model;
+    const modelSection = model
+      ? `\n\nYou are running as model ${model.id} (provider: ${model.provider}).`
+      : "";
+    return { systemPrompt: event.systemPrompt + modelSection + sourceSection() };
   });
 }

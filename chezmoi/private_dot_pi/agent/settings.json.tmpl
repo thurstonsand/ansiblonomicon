@@ -185,6 +185,7 @@
     "git:github.com/thurstonsand/pi-permissions",
     "git:github.com/thurstonsand/pi-sessions",
     "git:@github.com/thurstonsand/pi-web-tools",
+    "git:github.com/thurstonsand/wt",
     "git:github.com/nicobailon/pi-interview-tool",
     "git:github.com/hazat/glimpse",
     "npm:pi-mcp-adapter",
@@ -209,6 +210,7 @@
     "npm:glimpseui",
     "npm:pi-mcp-adapter",
     "npm:sideshow",
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/wt/plugins/pi"{{ else }}"npm:@thurstonsand/pi-wt"{{ end }},
     {
       "source": "git:github.com/hasit/pi-community-themes",
       "themes": [

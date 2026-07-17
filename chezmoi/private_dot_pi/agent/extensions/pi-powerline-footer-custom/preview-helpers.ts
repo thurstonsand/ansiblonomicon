@@ -3,7 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { isAbsolute, join, resolve } from "node:path";
 
-import { Theme, type ThemeColor } from "@earendil-works/pi-coding-agent";
+import { getPackageDir, Theme, type ThemeColor } from "@earendil-works/pi-coding-agent";
 
 type ThemeBg =
   | "selectedBg"
@@ -129,6 +129,7 @@ function resolveThemePath(themeNameOrPath: string, cwd: string): string {
   if (existsSync(direct)) return direct;
 
   const repoRoot = resolve(__dirname, "../../../../..");
+  const piPackageDir = getPackageDir();
   const candidates = [
     join(homedir(), ".pi", "agent", "themes", `${themeNameOrPath}.json`),
     join(cwd, ".pi", "themes", `${themeNameOrPath}.json`),
@@ -145,10 +146,9 @@ function resolveThemePath(themeNameOrPath: string, cwd: string): string {
       `${themeNameOrPath}.json`,
     ),
     join(repoRoot, "chezmoi", "private_dot_pi", "agent", "themes", `${themeNameOrPath}.json`),
-    join(
-      "/opt/homebrew/lib/node_modules/@earendil-works/pi-coding-agent/dist/modes/interactive/theme",
-      `${themeNameOrPath}.json`,
-    ),
+    join(piPackageDir, "theme", `${themeNameOrPath}.json`),
+    join(piPackageDir, "dist", "modes", "interactive", "theme", `${themeNameOrPath}.json`),
+    join(piPackageDir, "src", "modes", "interactive", "theme", `${themeNameOrPath}.json`),
   ];
 
   const found = candidates.find((path) => existsSync(path));
