@@ -123,21 +123,20 @@
   },
   "showLastPrompt": false,
   "powerline": {
-    "preset": "custom",
-    "custom": {
-      "separator": "slash",
-      "leftSegments": [
+    "preset": "minimal",
+    "layout": {
+      "left": [
         "custom:model_display",
         "custom:workspace_folder",
         "custom:workspace_branch"
       ],
-      "rightSegments": [
+      "right": [
         "custom:context_gauge"
         {{- if .inferenceBudgetUrl }},
         "custom:cost_budget"
         {{- end }}
       ],
-      "secondarySegments": []
+      "secondary": []
     },
     "customItems": [
       {
@@ -181,7 +180,7 @@
 {{- range .piWorkPackages }}
     {{ . | toJson }},
 {{- end }}
-    "git:github.com/thurstonsand/pi-powerline-footer@release",
+    "git:github.com/nicobailon/pi-powerline-footer",
     "git:github.com/thurstonsand/pi-permissions",
     "git:github.com/thurstonsand/pi-sessions",
     "git:@github.com/thurstonsand/pi-web-tools",
@@ -198,19 +197,17 @@
       ]
     }
 {{- else }}
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:@thurstonsand/pi-powerline-footer"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-permissions"{{ else }}"npm:pi-permissions"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-librarian"{{ else }}"npm:@thurstonsand/pi-librarian"{{ end }},
-    {{- if eq .chezmoi.os "darwin" }}
-    "/Users/thurstonsand/Develop/pi-claude-bridge",
-    {{- end }}
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-web-tools"{{ else }}"npm:@thurstonsand/pi-web-tools"{{ end }},
-    "npm:pi-interview",
-    "npm:glimpseui",
-    "npm:pi-mcp-adapter",
-    "npm:sideshow",
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/wt/plugins/pi"{{ else }}"npm:@thurstonsand/pi-wt"{{ end }},
+    {{- if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-claude-bridge",{{- end }}
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-web-tools"{{ else }}"npm:@thurstonsand/pi-web-tools"{{ end }},
+    "npm:glimpseui",
+    "npm:pi-interview",
+    "npm:pi-mcp-adapter",
+    "npm:pi-powerline-footer",
+    "npm:sideshow",
     {
       "source": "git:github.com/hasit/pi-community-themes",
       "themes": [

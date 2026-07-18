@@ -13,12 +13,12 @@
     "test": "node --import jiti/register --test companion/handlers.test.ts"
   },
   "devDependencies": {
-    "@biomejs/biome": "^2.4.6",
-    "@earendil-works/pi-coding-agent": ">=0.80.4",
-    "@types/node": "^25.9.1",
+    "@biomejs/biome": "^2.5.4",
+    "@earendil-works/pi-coding-agent": "^0.80.10",
+    "@types/node": "^26.1.1",
     "jiti": "^2.7.0",
     "typebox": "^1.1.37",
-    "typescript": "^6.0.3"
+    "typescript": "^7.0.2"
   },
   "peerDependencies": {
     "typebox": "*"

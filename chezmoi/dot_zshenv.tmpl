@@ -15,14 +15,29 @@ _evalcache() {
   shift
   local cache_file="$ZSH_CACHE_DIR/${cmd##*/}_init.zsh"
   local binary=$(command -v "$cmd" 2>/dev/null)
+  local cache_key="$cmd $*"
 
   if [[ ! -f "$cache_file" ]] || \
      [[ -n "$binary" && "$binary" -nt "$cache_file" ]] || \
-     [[ "$cmd $*" != "$(head -1 "$cache_file" 2>/dev/null | sed 's/^# //')" ]]; then
+     [[ "$cache_key" != "$(head -1 "$cache_file" 2>/dev/null | sed 's/^# //')" ]]; then
     mkdir -p "$ZSH_CACHE_DIR"
-    echo "# $cmd $*" > "$cache_file"
-    "$cmd" "$@" >> "$cache_file" 2>/dev/null
-    zcompile "$cache_file" 2>/dev/null || true
+    local cache_tmp
+    local generation_status
+    cache_tmp=$(mktemp "$cache_file.tmp.XXXXXX") || return
+
+    if {
+      echo "# $cache_key"
+      "$cmd" "$@"
+    } > "$cache_tmp" 2>/dev/null; then
+      mv "$cache_tmp" "$cache_file"
+      rm -f "$cache_file.zwc"
+      zcompile "$cache_file" 2>/dev/null || true
+    else
+      generation_status=$?
+      rm -f "$cache_tmp"
+      print -u2 "_evalcache: failed to refresh $cache_key (status $generation_status)"
+      [[ -f "$cache_file" ]] || return "$generation_status"
+    fi
   fi
   source "$cache_file"
 }

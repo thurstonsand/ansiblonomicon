@@ -3,9 +3,9 @@
   "private": true,
   "type": "module",
   "devDependencies": {
-    "@biomejs/biome": "^2.5.2",
-    "@thurstonsand/pi-permissions": "^0.8.0",
-    "@types/node": "^26.1.0",
-    "typescript": "^6.0.3"
+    "@biomejs/biome": "^2.5.4",
+    "@thurstonsand/pi-permissions": "^0.9.0",
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2"
   }
 }

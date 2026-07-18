@@ -5,10 +5,10 @@
   "type": "module",
   "description": "Amp plugin sources managed by chezmoi",
   "devDependencies": {
-    "@ampcode/plugin": "^0.0.0-20260619033929-g5bbf05d",
-    "@biomejs/biome": "^2.4.6",
-    "@types/node": "^25.9.1",
-    "typescript": "^6.0.3",
+    "@ampcode/plugin": "^0.0.0-20260717002806-g76909f1",
+    "@biomejs/biome": "^2.5.4",
+    "@types/node": "^26.1.1",
+    "typescript": "^7.0.2",
     "zod": "^4.4.3"
   }
 }
