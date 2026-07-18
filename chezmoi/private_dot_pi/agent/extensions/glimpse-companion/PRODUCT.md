@@ -25,6 +25,7 @@ Not heavy in screen real estate. Not a dashboard. Not macOS-native chrome. Not n
 - **Terminal-native first.** The companion should inherit the active Pi theme and feel like a terminal-adjacent status surface, not a separate app skin.
 - **Priority without ceremony.** Important state should become easier to see, but the UI should avoid headers, panels, badges, or extra structure unless the state genuinely needs them.
 - **Stable peripheral state.** Ordinary activity changes should not cause distracting reshuffles, animation resets, or visual jumps.
+- **Completion is acknowledged by return.** A completed session may expire normally while its terminal is focused, but remains visible with a slow neutral pulse while unfocused and clears when focus returns or terminal input proves the operator has returned.
 - **Folder identity is primary.** The project/folder label is the most important text. Other labels are useful, but they may yield first when space is tight.
 - **Density with restraint.** Compactness is a core constraint, but it must preserve scanability and clear state changes.
 

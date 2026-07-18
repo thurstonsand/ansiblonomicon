@@ -10,7 +10,7 @@
     ]
   },
   "scripts": {
-    "test": "node --import jiti/register --test companion/handlers.test.ts"
+    "test": "node --import jiti/register --test companion/focus.test.ts companion/handlers.test.ts"
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.4",

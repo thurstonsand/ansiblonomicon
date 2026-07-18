@@ -6,6 +6,7 @@ import { COMPANION_STATUS, type CompanionStatusLabel } from "../shared/status.js
 import { statusForTool, statusForToolCallUpdate, type ToolCallUpdate } from "./activity.js";
 import { AttentionTracker, parseAttentionRequest, parseAttentionResolve } from "./attention.js";
 import { CompanionConnection } from "./connection.js";
+import { TerminalFocusTracker } from "./focus.js";
 import {
   type FollowCursorSupport,
   loadFollowCursorSupport,
@@ -33,6 +34,11 @@ export class CompanionSession {
   private readonly project = basename(process.cwd());
   private readonly connection = new CompanionConnection();
   private readonly attention = new AttentionTracker();
+  private readonly focus = new TerminalFocusTracker();
+  private doneDismissalTimer: NodeJS.Timeout | undefined;
+  private doneNeedsAcknowledgement = false;
+  private compactionSignal: AbortSignal | undefined;
+  private compactionAbortListener: (() => void) | undefined;
 
   get isEnabled(): boolean {
     return this.enabled;
@@ -58,6 +64,7 @@ export class CompanionSession {
       ctx.ui.setStatus("companion", undefined);
       return;
     }
+    this.focus.start(ctx, (focused) => this.focusChanged(focused));
     await this.connection.ensureConnected();
     if (!this.connection.isConnected && !resolveNode()) {
       ctx.ui.notify(
@@ -110,24 +117,32 @@ export class CompanionSession {
     this.send(COMPANION_STATUS.error, toolName);
   }
 
-  async compacting(reason: string): Promise<void> {
+  async compacting(reason: string, signal: AbortSignal): Promise<void> {
     if (!this.active) return;
+    this.trackCompaction(signal);
     await this.connection.ensureConnected();
+    if (signal.aborted) return;
     this.send(COMPANION_STATUS.compacting, reason);
   }
 
   compacted(isIdle: boolean): void {
+    this.clearCompactionState();
     if (!this.active || !isIdle) return;
     this.done();
   }
 
   done(): void {
     if (!this.active) return;
+    this.clearDoneState();
     this.clearAttention();
+    this.doneNeedsAcknowledgement = !this.focus.isFocused;
     this.send(COMPANION_STATUS.done);
-    setTimeout(() => {
-      if (this.lastStatus === COMPANION_STATUS.done) this.sendRemove();
-    }, 3000);
+    if (!this.doneNeedsAcknowledgement) {
+      this.doneDismissalTimer = setTimeout(() => {
+        this.doneDismissalTimer = undefined;
+        if (this.lastStatus === COMPANION_STATUS.done) this.sendRemove();
+      }, 3000);
+    }
   }
 
   // ── attention bridge ─────────────────────────────────────────────────────────
@@ -174,6 +189,8 @@ export class CompanionSession {
   }
 
   private send(status: CompanionStatusLabel, detail?: string): void {
+    if (status !== COMPANION_STATUS.compacting) this.clearCompactionState();
+    if (status !== COMPANION_STATUS.done) this.clearDoneState();
     if (this.lastStatus === status && this.lastDetail === detail) return;
     this.lastStatus = status;
     this.lastDetail = detail;
@@ -189,6 +206,7 @@ export class CompanionSession {
       detail: this.lastDetail,
       attention: this.attention.active,
       attentionLabel: this.attention.label,
+      acknowledgementPending: this.doneNeedsAcknowledgement,
     };
     if (this.lastCtx) {
       msg.theme = buildCompanionThemeForContext(this.lastCtx);
@@ -202,13 +220,58 @@ export class CompanionSession {
     this.connection.write(msg);
   }
 
+  private focusChanged(focused: boolean): void {
+    if (this.lastStatus !== COMPANION_STATUS.done) return;
+    if (focused) {
+      if (this.doneNeedsAcknowledgement) this.sendRemove();
+      return;
+    }
+    if (!this.doneDismissalTimer) return;
+    clearTimeout(this.doneDismissalTimer);
+    this.doneDismissalTimer = undefined;
+    this.doneNeedsAcknowledgement = true;
+    this.resend();
+  }
+
+  private trackCompaction(signal: AbortSignal): void {
+    this.clearCompactionState();
+    this.compactionSignal = signal;
+    this.compactionAbortListener = () => this.compactionAborted();
+    signal.addEventListener("abort", this.compactionAbortListener, { once: true });
+    if (signal.aborted) this.compactionAborted();
+  }
+
+  private compactionAborted(): void {
+    this.clearCompactionState();
+    if (this.lastStatus === COMPANION_STATUS.compacting) this.sendRemove();
+  }
+
+  private clearCompactionState(): void {
+    if (this.compactionAbortListener) {
+      this.compactionSignal?.removeEventListener("abort", this.compactionAbortListener);
+    }
+    this.compactionSignal = undefined;
+    this.compactionAbortListener = undefined;
+  }
+
+  private clearDoneState(): void {
+    if (this.doneDismissalTimer) clearTimeout(this.doneDismissalTimer);
+    this.doneDismissalTimer = undefined;
+    this.doneNeedsAcknowledgement = false;
+  }
+
   private sendRemove(): void {
-    if (!this.connection.isConnected) return;
-    this.connection.write({ id: SESSION_ID, type: "remove" });
+    this.clearDoneState();
+    if (this.connection.isConnected) {
+      this.connection.write({ id: SESSION_ID, type: "remove" });
+    }
     this.lastStatus = "";
   }
 
   private teardown(): void {
+    this.focus.stop();
+    this.clearCompactionState();
+    this.clearDoneState();
     if (this.connection.isConnected) this.sendRemove();
     this.connection.end();
     this.lastStatus = "";

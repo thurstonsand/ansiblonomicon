@@ -149,6 +149,7 @@ Rows are compact statusline segments inside the pill.
 - **Shape:** Mostly square internal row corners, with outer rows aligning visually to the pill edge.
 - **Content:** Dot, project, status, detail, then metadata below. When attention is labeled, the label takes the status slot.
 - **State:** Status changes may update color and text, but should avoid unnecessary reordering or animation resets.
+- **Completion:** A Done row pinned for terminal return reuses the area pulse at half the attention speed while preserving its normal success color and omitting dot glow.
 - **Priority:** Important rows may become easier to see, but priority should not add headers or dashboard panels by default.
 
 ### Status Dots

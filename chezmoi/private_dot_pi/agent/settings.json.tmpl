@@ -201,7 +201,9 @@
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-librarian"{{ else }}"npm:@thurstonsand/pi-librarian"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/wt/plugins/pi"{{ else }}"npm:@thurstonsand/pi-wt"{{ end }},
-    {{- if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-claude-bridge",{{- end }}
+    {{- if eq .chezmoi.os "darwin" }}
+    "/Users/thurstonsand/Develop/pi-claude-bridge",
+    {{- end }}
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-web-tools"{{ else }}"npm:@thurstonsand/pi-web-tools"{{ end }},
     "npm:glimpseui",
     "npm:pi-interview",

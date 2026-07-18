@@ -23,6 +23,7 @@ export interface CompanionUpdateMessage {
   contextPercent?: number;
   attention?: boolean;
   attentionLabel?: string;
+  acknowledgementPending?: boolean;
   theme?: CompanionTheme;
   type?: string;
 }

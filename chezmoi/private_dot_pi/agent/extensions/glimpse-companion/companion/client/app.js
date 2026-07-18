@@ -31,6 +31,7 @@
  * @property {number | undefined} contextPercent
  * @property {boolean | undefined} attention
  * @property {string | undefined} attentionLabel
+ * @property {boolean | undefined} acknowledgementPending
  * @property {CompanionTheme | undefined} theme
  */
 
@@ -43,6 +44,7 @@
  * @property {number | null} contextPercent
  * @property {boolean} attention
  * @property {string} attentionLabel
+ * @property {boolean} acknowledgementPending
  * @property {number} sequence
  * @property {number} firstSeen
  * @property {number} startedAt
@@ -205,7 +207,7 @@ function updateSession(update) {
   const previous = sessions.get(update.id);
   const startedAt = previous?.startedAt ?? now;
   const frozenElapsed =
-    previous?.frozenElapsed ?? (update.status === "Done" ? fmtElapsed(now - startedAt) : null);
+    previous?.frozenElapsed ?? (update.status === "done" ? fmtElapsed(now - startedAt) : null);
   const attentionStarted = update.attention ? (previous?.attentionStarted ?? now) : null;
 
   theme = update.theme ?? theme;
@@ -217,6 +219,7 @@ function updateSession(update) {
     contextPercent: update.contextPercent ?? null,
     attention: update.attention === true,
     attentionLabel: update.attentionLabel ?? "",
+    acknowledgementPending: update.acknowledgementPending === true,
     sequence: ++sequence,
     firstSeen: previous?.firstSeen ?? now,
     startedAt,
@@ -403,7 +406,11 @@ function createEntry(id) {
 
 /** @param {EntryElements} entry @param {SessionRecord} record */
 function updateEntry(entry, record) {
-  entry.root.className = record.attention ? "entry attention" : "entry";
+  entry.root.className = record.attention
+    ? "entry attention"
+    : record.acknowledgementPending
+      ? "entry acknowledgement-pending"
+      : "entry";
   entry.row.className = record.attention ? "row attention" : "row";
   const label = record.attentionLabel || statusLabel(record.status);
   entry.dot.style.background = record.attention

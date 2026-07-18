@@ -96,13 +96,21 @@ body {
 }
 .entry.attention {
   animation: entry-attn-pulse 1.5s ease-in-out infinite;
+}
+.entry.acknowledgement-pending {
+  animation: entry-attn-pulse 3s ease-in-out infinite;
+}
+.entry.attention,
+.entry.acknowledgement-pending {
   border-radius: 2px;
 }
-.entry.attention:first-child {
+.entry.attention:first-child,
+.entry.acknowledgement-pending:first-child {
   border-top-left-radius: 7px;
   border-top-right-radius: 7px;
 }
-.entry.attention:last-child {
+.entry.attention:last-child,
+.entry.acknowledgement-pending:last-child {
   border-bottom-left-radius: 7px;
   border-bottom-right-radius: 7px;
 }
@@ -153,4 +161,20 @@ body {
 }
 .overflow-row.attention .dot {
   animation: dot-attn-pulse 1.5s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .entry.attention,
+  .entry.acknowledgement-pending,
+  .row.attention .dot,
+  .overflow-row.attention,
+  .overflow-row.attention .dot {
+    animation: none;
+  }
+  .entry.acknowledgement-pending {
+    background: color-mix(
+      in srgb,
+      var(--attention-pulse, rgba(255, 255, 255, 0.13)) 50%,
+      transparent
+    );
+  }
 }

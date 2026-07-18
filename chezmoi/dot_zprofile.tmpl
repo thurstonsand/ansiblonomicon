@@ -4,8 +4,8 @@
 
 {{- if eq .chezmoi.os "darwin" }}
 
-# Homebrew shell environment
-_evalcache /opt/homebrew/bin/brew shellenv
+# Homebrew shell environment; not cacheable due to dynamic nature of the command
+eval "$(/opt/homebrew/bin/brew shellenv)"
 
 # Ensure local bins and mise shims take precedence over Homebrew formulas.
 typeset -U path
