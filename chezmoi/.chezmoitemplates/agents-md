@@ -83,7 +83,7 @@ If you're reaching for a subagent, consider the following:
 | claude-4-8-opus | default workhorse, general purpose | high           | first choice for planning and work |
 | claude-5-sonnet | exploration subagent               | high           | digging for answers/explanations   |
 
-If it's not in the list, don't consider it.
+If it's not in the list, don't consider it. Also on the table: use opus, the stronger model, for adversarial review of plans and implementations.
 {{- else }}
 | model           | role                          | thinking level                 | cost                  | intelligence | taste | notes                                                                                 |
 | --------------- | ----------------------------- | ------------------------------ | --------------------- | ------------ | ----- | ------------------------------------------------------------------------------------- |

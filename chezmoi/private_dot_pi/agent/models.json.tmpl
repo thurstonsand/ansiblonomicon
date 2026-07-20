@@ -10,33 +10,33 @@
       "headers": {"anthropic-beta": "context-1m-2025-08-07", "User-Agent": "pi-coding-agent"},
       "models": [
         {
-          "id": "{{ trimSuffix "[1m]" .claude_code_models.opus }}",
-          "name": "{{ .claude_code_models.opus_name }}",
+          "id": "{{ trimSuffix "[1m]" .work_models.opus.version }}",
+          "name": "{{ .work_models.opus.display_name }}",
           "reasoning": true,
           "input": ["text", "image"],
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "cost": {"input": {{ .work_models.opus.cost.input }}, "output": {{ .work_models.opus.cost.output }}, "cacheRead": {{ .work_models.opus.cost.cacheRead }}, "cacheWrite": {{ .work_models.opus.cost.cacheWrite }}},
           "contextWindow": {{ .models.anthropic.opus.max_input }},
           "maxTokens": {{ .models.anthropic.opus.max_output }},
           "thinkingLevelMap": {"xhigh": "xhigh", "max": "max"},
           "compat": {"forceAdaptiveThinking": true, "supportsTemperature": {{ .models.anthropic.opus.supports_temperature }}}
         },
         {
-          "id": "{{ trimSuffix "[1m]" .claude_code_models.sonnet }}",
-          "name": "{{ .claude_code_models.sonnet_name }}",
+          "id": "{{ trimSuffix "[1m]" .work_models.sonnet.version }}",
+          "name": "{{ .work_models.sonnet.display_name }}",
           "reasoning": true,
           "input": ["text", "image"],
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "cost": {"input": {{ .work_models.sonnet.cost.input }}, "output": {{ .work_models.sonnet.cost.output }}, "cacheRead": {{ .work_models.sonnet.cost.cacheRead }}, "cacheWrite": {{ .work_models.sonnet.cost.cacheWrite }}},
           "contextWindow": {{ .models.anthropic.sonnet.max_input }},
           "maxTokens": {{ .models.anthropic.sonnet.max_output }},
           "thinkingLevelMap": {"xhigh": "xhigh", "max": "max"},
           "compat": {"forceAdaptiveThinking": true}
         },
         {
-          "id": "{{ trimSuffix "[1m]" .claude_code_models.haiku }}",
-          "name": "{{ .claude_code_models.haiku_name }}",
+          "id": "{{ trimSuffix "[1m]" .work_models.haiku.version }}",
+          "name": "{{ .work_models.haiku.display_name }}",
           "reasoning": false,
           "input": ["text", "image"],
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
+          "cost": {"input": {{ .work_models.haiku.cost.input }}, "output": {{ .work_models.haiku.cost.output }}, "cacheRead": {{ .work_models.haiku.cost.cacheRead }}, "cacheWrite": {{ .work_models.haiku.cost.cacheWrite }}},
           "contextWindow": {{ .models.anthropic.haiku.max_input }},
           "maxTokens": {{ .models.anthropic.haiku.max_output }}
         }

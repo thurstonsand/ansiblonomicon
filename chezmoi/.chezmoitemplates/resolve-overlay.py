@@ -47,10 +47,15 @@ def load_substitutions() -> dict[str, str]:
     if not CHEZMOI_DATA.exists():
         return {}
     data = tomllib.loads(CHEZMOI_DATA.read_text())
-    models = data.get("claude_code_models", {})
-    return {
-        f"claude_code_models.{k}": v for k, v in models.items() if isinstance(v, str)
-    }
+    models = data.get("work_models", {})
+    subs: dict[str, str] = {}
+    for tier, fields in models.items():
+        if not isinstance(fields, dict):
+            continue
+        for key, val in cast(dict[str, Any], fields).items():
+            if isinstance(val, str):
+                subs[f"work_models.{tier}.{key}"] = val
+    return subs
 
 
 def resolve_overlay(subs: dict[str, str]) -> str:

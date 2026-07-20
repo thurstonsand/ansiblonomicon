@@ -11,7 +11,7 @@ All fields live in `~/.local/share/chezmoi/.chezmoidata/local.toml`:
 | `email` / `signingKey`               | `dot_config/git/allowed_signers.tmpl`                    |
 | `[[scm]]`                            | git / SCM templates, `nvim` gitbrowse host URLs          |
 | `goLocalImports` / `goplsBuildFlags` | Go tooling templates                                     |
-| `[claude_code_models]`               | Claude Code model templates                              |
+| `[work_models]`                      | pi models/settings, Claude Code overlay                  |
 | `anthropicAuthToken`                 | pi / Claude auth templates                               |
 | `anthropicBaseUrl`                   | pi / Claude provider templates                           |
 | `inferenceBudgetUrl`                 | `settings.json.tmpl` (`powerlineCustom.budget.url`)      |
@@ -54,7 +54,7 @@ Note: The `permissions.allow` array in the overlay **replaces** the base entirel
 
 ### Model Configuration
 
-`local.toml` defines Claude Code model IDs under `[claude_code_models]`:
+`local.toml` defines models under `[work_models]`.
 
 These should be used instead of hard-coding model values.
 
