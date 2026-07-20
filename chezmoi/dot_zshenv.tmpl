@@ -17,6 +17,11 @@ _evalcache() {
   local binary=$(command -v "$cmd" 2>/dev/null)
   local cache_key="$cmd $*"
 
+  if [[ -z "$binary" ]]; then
+    print -u2 "_evalcache: command not found: $cmd"
+    return 127
+  fi
+
   if [[ ! -f "$cache_file" ]] || \
      [[ -n "$binary" && "$binary" -nt "$cache_file" ]] || \
      [[ "$cache_key" != "$(head -1 "$cache_file" 2>/dev/null | sed 's/^# //')" ]]; then
@@ -27,7 +32,7 @@ _evalcache() {
 
     if {
       echo "# $cache_key"
-      "$cmd" "$@"
+      "$binary" "$@"
     } > "$cache_tmp" 2>/dev/null; then
       mv "$cache_tmp" "$cache_file"
       rm -f "$cache_file.zwc"
@@ -101,10 +106,15 @@ export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/
 
 # PATH additions (available to all shells including scripts)
 {{- if eq .chezmoi.os "darwin" }}
-# Note: .local/bin is added in .zprofile after brew shellenv
+# Keep Homebrew executables available to non-login shells. .zprofile runs
+# brew shellenv for the remaining Homebrew environment configuration.
 {{- end }}
 typeset -U path
 path=(
+{{- if eq .chezmoi.os "darwin" }}
+  "/opt/homebrew/bin"
+  "/opt/homebrew/sbin"
+{{- end }}
   "$HOME/.local/share/mise/shims"
   "$HOME/.bun/bin"
   "$HOME/.npm-global/bin"
