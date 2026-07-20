@@ -52,7 +52,7 @@ models:
       version: "claude-sonnet-5"
       display_name: "Claude Sonnet 5"
       max_input: 1000000
-      max_output: 64000
+      max_output: 128000
       vision: true
       cli_proxy_api:
         pattern: "^claude-sonnet-5"
@@ -72,6 +72,7 @@ models:
       max_input: 1000000
       max_output: 128000
       vision: true
+      supports_temperature: false
       cli_proxy_api:
         pattern: "^claude-opus-4-8"
       agent_harness:

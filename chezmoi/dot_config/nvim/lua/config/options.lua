@@ -4,6 +4,9 @@ vim.g.root_spec = { ".git", "lsp", "cwd" }
 -- use basedpyright instead of pyright
 vim.g.lazyvim_python_lsp = "basedpyright"
 
+-- ignore LSPs that root to a single file's directory, hijacking Root Dir pickers
+vim.g.root_lsp_ignore = { "copilot", "marksman" }
+
 -- allow project-local .nvim.lua
 vim.o.exrc = true
 

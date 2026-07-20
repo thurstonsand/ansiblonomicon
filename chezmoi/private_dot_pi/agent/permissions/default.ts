@@ -7,6 +7,7 @@ import {
   type PermissionsAPI,
   type PermissionToolInput,
   request,
+  type SimpleCommand,
 } from "@thurstonsand/pi-permissions";
 
 const GIT_MUTATION_SUBCOMMANDS = [
@@ -14,10 +15,22 @@ const GIT_MUTATION_SUBCOMMANDS = [
   "add",
   "commit",
   "push",
+  "pull",
   "checkout",
+  "switch",
+  "restore",
   "reset",
   "clean",
   "rebase",
+  "merge",
+  "cherry-pick",
+  "revert",
+  "rm",
+  "mv",
+  "branch",
+  "tag",
+  "worktree",
+  "submodule",
 ] as const;
 const SQL_DATA_MUTATION_PATTERN =
   /\b(?:insert|update|delete|merge|truncate|vacuum|reindex|cluster)\b/i;
@@ -44,6 +57,7 @@ export default function permissions(api: PermissionsAPI): void {
           program: "git",
           subcommands: GIT_MUTATION_SUBCOMMANDS,
           valueFlags: gitValueFlags,
+          where: allowReadOnly(isReadOnlyAction, isReadOnlyListing, isReadOnlyClean),
           onMatch: ({ commands }) =>
             request({
               highlight: commands.map((command) => command.span),
@@ -100,6 +114,73 @@ export default function permissions(api: PermissionsAPI): void {
         default: (tool) => requestWebSearch(tool.toolName),
       }),
   });
+}
+
+interface ReadOnlyActionRule {
+  actions: ReadonlySet<string>;
+  allowBare?: boolean;
+}
+
+const READ_ONLY_ACTION_SUBCOMMANDS: Record<string, ReadOnlyActionRule> = {
+  stash: { actions: new Set(["list", "show"]) },
+  worktree: { actions: new Set(["list"]) },
+  submodule: { actions: new Set(["status", "summary"]), allowBare: true },
+};
+
+const LISTING_MUTATING_FLAGS: Record<string, readonly string[]> = {
+  branch: [
+    "-d",
+    "-D",
+    "--delete",
+    "-m",
+    "-M",
+    "--move",
+    "-c",
+    "-C",
+    "--copy",
+    "-f",
+    "--force",
+    "-u",
+    "--set-upstream-to",
+    "--unset-upstream",
+    "--edit-description",
+  ],
+  tag: ["-d", "--delete", "-f", "--force", "-a", "--annotate", "-s", "--sign", "-m", "--message", "-F", "--file"],
+};
+
+function allowReadOnly(
+  ...predicates: readonly ((command: SimpleCommand) => boolean)[]
+): (command: SimpleCommand) => boolean {
+  return (command) => !predicates.some((predicate) => predicate(command));
+}
+
+function gitPositionals(command: SimpleCommand): readonly string[] {
+  return command.positionals({ valueFlags: gitValueFlags }).map((token) => token.text);
+}
+
+function isReadOnlyAction(command: SimpleCommand): boolean {
+  const [subcommand, action] = gitPositionals(command);
+  if (subcommand === undefined) return false;
+
+  const rule = READ_ONLY_ACTION_SUBCOMMANDS[subcommand];
+  if (!rule) return false;
+
+  return action === undefined ? rule.allowBare === true : rule.actions.has(action);
+}
+
+function isReadOnlyListing(command: SimpleCommand): boolean {
+  const positionals = gitPositionals(command);
+  const subcommand = positionals[0];
+  if (subcommand === undefined) return false;
+
+  const mutatingFlags = LISTING_MUTATING_FLAGS[subcommand];
+  if (!mutatingFlags) return false;
+
+  return positionals.length === 1 && !command.hasFlag(...mutatingFlags);
+}
+
+function isReadOnlyClean(command: SimpleCommand): boolean {
+  return gitPositionals(command)[0] === "clean" && command.hasFlag("-n", "--dry-run");
 }
 
 function isFindDeleteCommand(command: string): boolean {

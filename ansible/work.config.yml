@@ -62,6 +62,8 @@ agent_harness_sources_base:
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management
+        exclude_skills:
+          - tui-screenshot
       - name: claude
         target_agents: [claude]
         exclude_skills:

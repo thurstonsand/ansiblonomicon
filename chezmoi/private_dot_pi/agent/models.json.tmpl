@@ -2,32 +2,45 @@
 {
   "providers": {
 {{- if $isWork }}
-    "anthropic": {
+    "genaihub": {
       "baseUrl": "{{ .anthropicBaseUrl }}",
       "apiKey": "{{ .anthropicAuthToken }}",
+      "api": "anthropic-messages",
       "authHeader": true,
-      "headers": {"anthropic-beta": "context-1m-2025-08-07"},
-      "modelOverrides": {
-        "{{ trimSuffix "[1m]" .claude_code_models.opus }}": {
+      "headers": {"anthropic-beta": "context-1m-2025-08-07", "User-Agent": "pi-coding-agent"},
+      "models": [
+        {
+          "id": "{{ trimSuffix "[1m]" .claude_code_models.opus }}",
           "name": "{{ .claude_code_models.opus_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.anthropic.opus.max_input }},
-          "maxTokens": {{ .models.anthropic.opus.max_output }}
+          "maxTokens": {{ .models.anthropic.opus.max_output }},
+          "thinkingLevelMap": {"xhigh": "xhigh", "max": "max"},
+          "compat": {"forceAdaptiveThinking": true, "supportsTemperature": {{ .models.anthropic.opus.supports_temperature }}}
         },
-        "{{ trimSuffix "[1m]" .claude_code_models.sonnet }}": {
+        {
+          "id": "{{ trimSuffix "[1m]" .claude_code_models.sonnet }}",
           "name": "{{ .claude_code_models.sonnet_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.anthropic.sonnet.max_input }},
-          "maxTokens": {{ .models.anthropic.sonnet.max_output }}
+          "maxTokens": {{ .models.anthropic.sonnet.max_output }},
+          "thinkingLevelMap": {"xhigh": "xhigh", "max": "max"},
+          "compat": {"forceAdaptiveThinking": true}
         },
-        "{{ trimSuffix "[1m]" .claude_code_models.haiku }}": {
+        {
+          "id": "{{ trimSuffix "[1m]" .claude_code_models.haiku }}",
           "name": "{{ .claude_code_models.haiku_name }}",
           "reasoning": false,
+          "input": ["text", "image"],
           "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
           "contextWindow": {{ .models.anthropic.haiku.max_input }},
           "maxTokens": {{ .models.anthropic.haiku.max_output }}
         }
-      }
+      ]
     }
 {{- else }}
     "google": {

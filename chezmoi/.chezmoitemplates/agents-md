@@ -1,3 +1,4 @@
+{{- $isWork := eq .hostname "ML-DFC6YK6VJQ" -}}
 {{- if eq .agent "claude" -}}
 # CLAUDE.md
 {{- else -}}
@@ -76,7 +77,14 @@ Just use soft wrap, my editor knows how to handle long lines.
 ### Delegation and model selection
 
 If you're reaching for a subagent, consider the following:
+{{ if $isWork }}
+| model           | role                               | thinking level | notes                              |
+| --------------- | ---------------------------------- | -------------- | ---------------------------------- |
+| claude-4-8-opus | default workhorse, general purpose | high           | first choice for planning and work |
+| claude-5-sonnet | exploration subagent               | high           | digging for answers/explanations   |
 
+If it's not in the list, don't consider it.
+{{- else }}
 | model           | role                          | thinking level                 | cost                  | intelligence | taste | notes                                                                                 |
 | --------------- | ----------------------------- | ------------------------------ | --------------------- | ------------ | ----- | ------------------------------------------------------------------------------------- |
 | gpt-5.6-sol     | default workhorse             | see notes                      | 5                     | 7            | 5     | thinking high when planning is involved; medium for pure execution                    |
@@ -92,6 +100,7 @@ If you're reaching for a subagent, consider the following:
 - cost is at most a tie-breaker; weight these in order of importance: intelligence > taste > cost
 
 Try to pick the right agent for the job. If it's not in the list, don't consider it. Also on the table: adversarial cross-lab reviews of your plans and implementations: OpenAI models reviewing Anthropic plans/implementations and vice versa. Note that you should request permission before firing off a Fable model for review.
+{{- end }}
 
 {{- if stat (joinPath .homeDir ".agents" "local.md") }}
 
