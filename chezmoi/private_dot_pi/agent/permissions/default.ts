@@ -1,4 +1,6 @@
+import { execFileSync } from "node:child_process";
 import {
+  block,
   gitValueFlags,
   type HighlightSpan,
   isCustomToolInput,
@@ -58,13 +60,17 @@ export default function permissions(api: PermissionsAPI): void {
           subcommands: GIT_MUTATION_SUBCOMMANDS,
           valueFlags: gitValueFlags,
           where: allowReadOnly(isReadOnlyAction, isReadOnlyListing, isReadOnlyClean),
-          onMatch: ({ commands }) =>
-            request({
+          onMatch: ({ commands }) => {
+            if (isSubagent()) {
+              return block("Subagents may not alter Git state or history.");
+            }
+            return request({
               highlight: commands.map((command) => command.span),
               approveLabel: "Tamper",
               editLabel: "Amend",
               rejectLabel: "Deny",
-            }),
+            });
+          },
         }),
       }),
   });
@@ -74,15 +80,20 @@ export default function permissions(api: PermissionsAPI): void {
     description: "files targeted for elimination",
     handler: ({ tool }) =>
       matchTool(tool, {
-        bash: ({ command }) =>
-          isRecursiveForcedRemovalCommand(command) || isFindDeleteCommand(command)
-            ? request({
-                highlight: fileDisposalSpans,
-                approveLabel: "Dispose",
-                editLabel: "Retarget",
-                rejectLabel: "Prevent",
-              })
-            : undefined,
+        bash: ({ command }) => {
+          if (!isRecursiveForcedRemovalCommand(command) && !isFindDeleteCommand(command)) {
+            return undefined;
+          }
+          if (isSubagent()) {
+            return undefined;
+          }
+          return request({
+            highlight: fileDisposalSpans,
+            approveLabel: "Dispose",
+            editLabel: "Retarget",
+            rejectLabel: "Prevent",
+          });
+        },
       }),
   });
 
@@ -91,15 +102,20 @@ export default function permissions(api: PermissionsAPI): void {
     description: "state mutation of data, schema, or privileges",
     handler: ({ tool }) =>
       matchTool(tool, {
-        bash: ({ command }) =>
-          isPostgresMutation(command)
-            ? request({
-                highlight: SQL_MUTATION_HIGHLIGHTS,
-                approveLabel: "Mutate",
-                editLabel: "Reword",
-                rejectLabel: "Deny",
-              })
-            : undefined,
+        bash: ({ command }) => {
+          if (!isPostgresMutation(command)) {
+            return undefined;
+          }
+          if (isSubagent()) {
+            return block("Subagents may not mutate databases.");
+          }
+          return request({
+            highlight: SQL_MUTATION_HIGHLIGHTS,
+            approveLabel: "Mutate",
+            editLabel: "Reword",
+            rejectLabel: "Deny",
+          });
+        },
       }),
   });
 
@@ -145,7 +161,20 @@ const LISTING_MUTATING_FLAGS: Record<string, readonly string[]> = {
     "--unset-upstream",
     "--edit-description",
   ],
-  tag: ["-d", "--delete", "-f", "--force", "-a", "--annotate", "-s", "--sign", "-m", "--message", "-F", "--file"],
+  tag: [
+    "-d",
+    "--delete",
+    "-f",
+    "--force",
+    "-a",
+    "--annotate",
+    "-s",
+    "--sign",
+    "-m",
+    "--message",
+    "-F",
+    "--file",
+  ],
 };
 
 function allowReadOnly(
@@ -181,6 +210,31 @@ function isReadOnlyListing(command: SimpleCommand): boolean {
 
 function isReadOnlyClean(command: SimpleCommand): boolean {
   return gitPositionals(command)[0] === "clean" && command.hasFlag("-n", "--dry-run");
+}
+
+let subagentDetected: boolean | undefined;
+
+function isSubagent(): boolean {
+  if (subagentDetected !== undefined) return subagentDetected;
+
+  const tmuxPane = process.env.TMUX_PANE;
+  if (!tmuxPane) {
+    subagentDetected = false;
+    return subagentDetected;
+  }
+
+  try {
+    // Temporary integration hack: pi-sessions identifies managed subagents with a window stamp.
+    subagentDetected = Boolean(
+      execFileSync("tmux", ["show-options", "-wqv", "-t", tmuxPane, "@pi_session_id"], {
+        encoding: "utf8",
+      }).trim(),
+    );
+  } catch {
+    subagentDetected = false;
+  }
+
+  return subagentDetected;
 }
 
 function isFindDeleteCommand(command: string): boolean {
@@ -342,9 +396,10 @@ function isPostgresMutationStatement(command: string): boolean {
 }
 
 function requestWebSearch(target: string | undefined) {
-  return target === WORK_WEB_SEARCH_TOOL
-    ? request({ approveLabel: "Commence", rejectLabel: "Reconsider" })
-    : undefined;
+  if (target !== WORK_WEB_SEARCH_TOOL || isSubagent()) {
+    return undefined;
+  }
+  return request({ approveLabel: "Commence", rejectLabel: "Reconsider" });
 }
 
 function webSearchTarget(tool: PermissionToolInput): string | undefined {
