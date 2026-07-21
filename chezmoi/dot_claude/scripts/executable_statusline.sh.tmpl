@@ -233,7 +233,7 @@ render_section_branch() {
   esac
 
   if [[ "$worktree" -eq 1 ]]; then
-    printf '%b' "${color}\uf126 \ue725 $branch${RESET}"
+    printf '%b' "${color}\ue725 \uf126 $branch${RESET}"
   else
     printf '%b' "${color}\uf126 $branch${RESET}"
   fi
