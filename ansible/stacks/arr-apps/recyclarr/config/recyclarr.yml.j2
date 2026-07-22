@@ -3,6 +3,9 @@ sonarr:
   mainsonarr:
     base_url: http://sonarr.thurstons.house:8989
     api_key: {{ lookup('env', 'SONARR_API_KEY') }}
+    delete_old_custom_formats: true
+    media_management:
+      propers_and_repacks: do_not_prefer
     media_naming:
       season: default
       series: plex-imdb
@@ -69,9 +72,9 @@ sonarr:
       - trash_ids:
           - 15a05bc7c1a36e2b57fd628f8977e2fc
         assign_scores_to:
-          - name: WEB-2160p
+          - trash_id: d1498e7d189fbe6c7110ceaabb7473e6
             score: 0
-          - name: '[Anime] Remux-1080p'
+          - trash_id: 20e0fc959f1f1704bed501f23bdae76f
             score: 0
       - trash_ids:
           - 2016d1676f5ee13a5b7257ff86ac9a93
@@ -83,6 +86,9 @@ radarr:
   mainradarr:
     base_url: http://radarr.thurstons.house:7878
     api_key: {{ lookup('env', 'RADARR_API_KEY') }}
+    delete_old_custom_formats: true
+    media_management:
+      propers_and_repacks: do_not_prefer
     media_naming:
       folder: plex-imdb
       movie:
@@ -140,9 +146,9 @@ radarr:
       - trash_ids:
           - cae4ca30163749b891686f95532519bd
         assign_scores_to:
-          - name: Remux + WEB 2160p
+          - trash_id: fd161a61e3ab826d3a22d53f935696dd
             score: 0
-          - name: '[Anime] Remux-1080p'
+          - trash_id: 722b624f9af1e492284c4bc842153a38
             score: 0
       - trash_ids:
           - 9c38ebb7384dada637be8899efa68e6f

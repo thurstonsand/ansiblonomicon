@@ -119,6 +119,12 @@
       "model": {{ if $isWork }}"genaihub/{{ trimSuffix "[1m]" .work_models.sonnet.version }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
       "timeoutSecs": 60,
       "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
+    },
+    "ask": {
+      "persistRuns": true
+    },
+    "handoff": {
+      "persistRuns": true
     }
   },
   "showLastPrompt": false,
