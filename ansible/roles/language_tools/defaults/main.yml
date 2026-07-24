@@ -1,3 +1,9 @@
 ---
 language_tools_update_interval_seconds: 86400
 language_tools_cache_dir: "{{ ansible_facts['env']['HOME'] }}/.cache/ansible-language-tools"
+language_tools_cargo_path: >-
+  {{
+    (((ansible_facts['env']['HOMEBREW_PREFIX'] | default('/opt/homebrew')) ~ '/opt/zig@0.15/bin:')
+      if ansible_facts['os_family'] == 'Darwin' else '')
+    ~ ansible_facts['env']['HOME'] ~ '/.cargo/bin:' ~ ansible_facts['env']['PATH']
+  }}

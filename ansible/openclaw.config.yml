@@ -94,6 +94,7 @@ go_tools_extra:
 uv_global_tools_extra: []
 mise_global_tools_extra:
   - chezmoi@latest
+  - zig@0.15.2
 gem_packages_extra: []
 agent_harness_target_agents_extra: []
 #   TODO: we need to reconfigure where this gets installed first

@@ -11,3 +11,6 @@ configure_pacman: true
 # Packages
 pacman_packages: []
 aur_packages: []
+
+mise_global_tools_extra:
+  - zig@0.15.2

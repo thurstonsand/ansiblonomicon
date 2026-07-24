@@ -62,7 +62,7 @@ brew "rustup"
 brew "swiftformat"
 brew "swiftlint"
 brew "uv"
-brew "zig"
+brew "zig@0.15"
 
 # Infra/Cloud
 brew "cf-terraforming"

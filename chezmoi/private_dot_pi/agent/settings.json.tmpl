@@ -124,6 +124,8 @@
       "persistRuns": true
     },
     "handoff": {
+      "model": {{ if $isWork }}"genaihub/{{ trimSuffix "[1m]" .work_models.sonnet.version }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
+      "thinkingLevel": "low",
       "persistRuns": true
     }
   },

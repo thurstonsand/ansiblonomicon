@@ -87,7 +87,7 @@ If it's not in the list, don't consider it. Also on the table: use opus, the str
 {{- else }}
 | model           | role                          | thinking level                 | cost                  | intelligence | taste | notes                                                                                 |
 | --------------- | ----------------------------- | ------------------------------ | --------------------- | ------------ | ----- | ------------------------------------------------------------------------------------- |
-| gpt-5.6-sol     | default workhorse             | see notes                      | 5                     | 7            | 5     | thinking high when planning is involved; medium for pure execution                    |
+| gpt-5.6-sol     | default workhorse             | see notes                      | 5                     | 7            | 5     | thinking high when active planning is involved; medium for most other cases           |
 | claude-fable-5  | planning, highest-impact work | high                           | 1 (burns limits fast) | 9            | 8     | human stays in the loop (request before firing); reserve for highest-impact scenarios |
 | claude-opus-4.8 | prose/docs authoring          | high                           | 3                     | 6            | 6     | one step below sol generally; READMEs, docs                                           |
 | gpt-5.6-terra   | exploration subagent          | high                           | 7                     | 4            | 5     | digging for answers/explanations                                                      |

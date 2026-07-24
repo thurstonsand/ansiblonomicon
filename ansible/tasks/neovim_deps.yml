@@ -65,7 +65,7 @@
     argv:
       - nvim
       - --headless
-      - "+TSUpdateSync"
+      - '+lua local ok, err = xpcall(function() require("nvim-treesitter").update(nil, { summary = true }):wait(600000) end, debug.traceback); if not ok then vim.api.nvim_err_writeln(err); vim.cmd.cquit() end'
       - +qa
   changed_when: true
   async: 600

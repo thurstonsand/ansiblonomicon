@@ -1,8 +1,29 @@
 # Static command gates. Keep `default.rules` available for Codex to append
 # one-off allow-prefix approvals that you accept during a session.
 
+# Codex rules match prefixes rather than parsing Git arguments. Commands with
+# both read-only and mutating forms are conservatively prompted.
 prefix_rule(
-    pattern = ["git", ["stash", "add", "commit", "push", "checkout", "reset", "clean", "rebase"]],
+    pattern = ["git", [
+        "stash",
+        "add",
+        "commit",
+        "push",
+        "pull",
+        "checkout",
+        "switch",
+        "restore",
+        "reset",
+        "clean",
+        "rebase",
+        "merge",
+        "cherry-pick",
+        "revert",
+        "rm",
+        "mv",
+        "branch",
+        "tag",
+    ]],
     decision = "prompt",
     justification = "Ask before mutating git state.",
     match = [
@@ -10,14 +31,51 @@ prefix_rule(
         "git add .",
         "git commit -m test",
         "git push origin main",
+        "git pull --rebase",
         "git checkout main",
+        "git switch feature",
+        "git restore file.txt",
         "git reset --hard HEAD~1",
         "git clean -fd",
         "git rebase main",
+        "git merge feature",
+        "git cherry-pick HEAD~1",
+        "git revert HEAD",
+        "git rm file.txt",
+        "git mv old.txt new.txt",
+        "git branch feature",
+        "git tag v1.0.0",
     ],
     not_match = [
         "git status",
         "git diff --stat",
+    ],
+)
+
+prefix_rule(
+    pattern = ["git", "worktree", ["add", "remove", "move", "lock", "unlock", "prune", "repair"]],
+    decision = "prompt",
+    justification = "Ask before mutating Git worktrees.",
+    match = [
+        "git worktree add ../feature feature",
+        "git worktree remove ../feature",
+        "git worktree prune",
+    ],
+    not_match = ["git worktree list"],
+)
+
+prefix_rule(
+    pattern = ["git", "submodule", ["add", "absorbgitdirs", "deinit", "foreach", "init", "set-branch", "set-url", "sync", "update"]],
+    decision = "prompt",
+    justification = "Ask before mutating Git submodules.",
+    match = [
+        "git submodule add https://example.com/repo.git vendor/repo",
+        "git submodule update --init",
+        "git submodule deinit vendor/repo",
+    ],
+    not_match = [
+        "git submodule status",
+        "git submodule summary",
     ],
 )
 
