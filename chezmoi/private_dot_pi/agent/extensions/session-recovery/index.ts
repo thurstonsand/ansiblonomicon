@@ -55,13 +55,22 @@ function record(pi: ExtensionAPI, ctx: ExtensionContext, settings: Settings): vo
 export default function sessionRecovery(pi: ExtensionAPI): void {
   const settings = loadSettings();
 
-  pi.on("session_start", async (_event, ctx) => {
+  pi.on("session_start", async (event, ctx) => {
     installSignalHooks();
     deleteIgnoredRecords(settings);
-    record(pi, ctx, settings);
+    // A fresh session (startup/new) has no transcript on disk yet: pi only
+    // creates the file once the first assistant message is persisted. Recording
+    // here would leave a phantom record if the session crashes before any
+    // exchange. Defer those to agent_start, the point past which we expect a
+    // transcript. "resume"/"fork" carry prior history, so their transcript
+    // already exists and is worth recording immediately; "reload" keeps its
+    // existing record in place.
+    if (event.reason === "resume" || event.reason === "fork") {
+      record(pi, ctx, settings);
+    }
   });
 
-  pi.on("agent_settled", async (_event, ctx) => {
+  pi.on("agent_start", async (_event, ctx) => {
     record(pi, ctx, settings);
   });
 
