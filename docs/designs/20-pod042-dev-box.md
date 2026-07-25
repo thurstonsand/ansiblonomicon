@@ -112,7 +112,7 @@ The pre-Ansible bootstrap is deliberately ad hoc and manual-once, not an Ansible
 
 ## Implementation Plan
 
-- [ ] Phase 1: Establish the boot-to-on-VM-agent tracer bullet
+- [x] Phase 1: Establish the boot-to-on-VM-agent tracer bullet
   - Goal: In this session, reach a fresh Debian 13 pod042 shell, clone this repo, complete the first local `poe pod042` converge, and transfer execution to a managed Pi session running from the VM checkout.
   - Files: `ansible/inventory/targets/group_vars/truenas.yml`, `ansible/playbooks/truenas.yml`, `ansible/inventory/targets/pod042.yml`, `ansible/playbooks/pod042.yml`, `ansible/pod042.config.yml`, `pyproject.toml`, a new `ansible/roles/op_service_account/`, the minimum pod042 generalization in `scripts/init-secrets.py`, `ansible/roles/chezmoi/`, and `ansible/roles/agent_harness/`, plus a new pod042 operations runbook under `docs/operations/`.
   - Work: Declare the durable 80 GiB `performance` zvol, 4-core/16 GiB/min-8 GiB VM, fresh MAC, autostart, pod042 dataset, and NFS export; add a local-only inventory, deliberately thin first-converge playbook, and Poe entrypoint; implement the reusable runtime `op` launcher needed by that converge; with Thurston, use documented ad-hoc commands—not a bootstrap role or retained script—to place the Debian generic cloud image and NoCloud seed ISO, boot at static `192.168.1.94`, reach the first shell, clone through forwarded SSH-agent credentials, seed the existing service-account token without exposing it in process arguments, install `uv`, and run `poe pod042` locally; use SPICE only if cloud-init or SSH fails; start a new Pi session in the checkout with a self-contained handoff for all later phases.

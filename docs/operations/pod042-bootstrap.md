@@ -216,9 +216,40 @@ SSH_AUTH_SOCK="$onepassword_agent" ssh thurstonsand@192.168.1.94 '
   cd ~/code/ansiblonomicon
   ~/.local/bin/uv run poe pod042
 '
+
+ssh thurstonsand@192.168.1.94 'cat > /tmp/merge-pi-oauth.py' <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+
+path = Path.home() / ".pi/agent/auth.json"
+incoming = json.load(sys.stdin)
+credential = incoming.get("openai-codex")
+if not isinstance(credential, dict) or credential.get("type") != "oauth":
+    raise SystemExit("incoming openai-codex OAuth credential is invalid")
+existing = json.loads(path.read_text())
+existing["openai-codex"] = credential
+temporary = path.with_suffix(".json.tmp")
+temporary.write_text(json.dumps(existing, indent=2) + "\n")
+os.chmod(temporary, 0o600)
+temporary.replace(path)
+PY
+
+python3 - <<'PY' |
+import json
+from pathlib import Path
+
+credentials = json.loads((Path.home() / ".pi/agent/auth.json").read_text())
+credential = credentials.get("openai-codex")
+if not isinstance(credential, dict) or credential.get("type") != "oauth":
+    raise SystemExit("workstation openai-codex OAuth credential is missing")
+print(json.dumps({"openai-codex": credential}))
+PY
+  ssh thurstonsand@192.168.1.94 'trap '\''rm -f /tmp/merge-pi-oauth.py'\'' EXIT; python3 /tmp/merge-pi-oauth.py'
 ```
 
-Only the service-account token crosses the second command's stdin. `printenv` receives only the variable name as an argument, the remote side rejects an empty temporary file before installation, and the repository-wide `.env` is never copied to pod042. The GitHub Ed25519 host key is pinned to GitHub's published key rather than accepted through TOFU.
+Only the service-account token and the single unmanaged `openai-codex` OAuth credential cross their commands' stdin. `printenv` receives only the variable name as an argument, the remote side rejects an empty token before installation, the OAuth merge is atomic, and the repository-wide `.env` and other Pi credentials are never copied to pod042. Chezmoi preserves the unmanaged OAuth entry on later converges. The GitHub Ed25519 host key is pinned to GitHub's published key rather than accepted through TOFU.
 
 Verify the managed agent boundary and a guest reboot:
 
@@ -243,5 +274,6 @@ Fill this during the build rather than reconstructing it later.
 - `cloud-init status --wait`: done with no errors on `.94`; hostname, static route, `1000:1000` identity, and 78.5 GiB root filesystem verified
 - Seed detached and SSH restored: passed; VM devices contain only the boot zvol and expected NIC
 - First local `poe pod042` converge: passed after correcting pod042's Chezmoi config to use service-account mode; second converge changed zero tasks
+- Pi OAuth bootstrap: copied only the workstation's unmanaged `openai-codex` credential through SSH stdin; Pi 0.82.0 replied `pod042-ready`
 - Guest reboot returned unattended: passed; post-reboot `poe pod042 --check` changed zero tasks
-- On-VM Pi handoff session: pending
+- On-VM Pi handoff session: `019f9762-b802-7e44-9291-665af00d0421` acknowledged hostname, checkout, clean `178d0fd` HEAD, and the Phase 2 mission

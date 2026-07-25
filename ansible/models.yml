@@ -24,7 +24,7 @@ models:
         aliases:
           claude: "claude-fable-5[1m]"
           opencode: "anthropic/claude-fable-5"
-          pi: "anthropic/claude-fable-5"
+          pi: "anthropic-agent-sdk/claude-fable-5"
       vscode:
         include: true
         thinking: true
@@ -42,7 +42,7 @@ models:
         aliases:
           claude: "haiku"
           opencode: "anthropic/claude-haiku-4-5-20251001"
-          pi: "anthropic/claude-haiku-4-5"
+          pi: "anthropic-agent-sdk/claude-haiku-4-5"
       vscode:
         include: true
         thinking: false
@@ -60,26 +60,26 @@ models:
         aliases:
           claude: "sonnet"
           opencode: "anthropic/claude-sonnet-5"
-          pi: "anthropic/claude-sonnet-5"
+          pi: "anthropic-agent-sdk/claude-sonnet-5"
       vscode:
         include: true
         thinking: true
       zed: true
 
     opus:
-      version: "claude-opus-4-8"
-      display_name: "Claude Opus 4.8"
+      version: "claude-opus-5"
+      display_name: "Claude Opus 5"
       max_input: 1000000
       max_output: 128000
       vision: true
       supports_temperature: false
       cli_proxy_api:
-        pattern: "^claude-opus-4-8"
+        pattern: "^claude-opus-5"
       agent_harness:
         aliases:
           claude: "opus"
-          opencode: "anthropic/claude-opus-4-8"
-          pi: "anthropic/claude-opus-4-8"
+          opencode: "anthropic/claude-opus-5"
+          pi: "anthropic-agent-sdk/claude-opus-5"
       vscode:
         include: true
         thinking: true
