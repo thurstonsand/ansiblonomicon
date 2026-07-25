@@ -6,7 +6,7 @@ Pod042 manages itself after its first successful `poe pod042` converge. This run
 
 - VM: `pod042`
 - Address: `192.168.1.94/24`; gateway and DNS: `192.168.1.1`
-- NIC MAC: `02:d3:b5:97:4f:0f`, reserved to `192.168.1.94` in UniFi before first boot
+- NIC MAC: `02:d3:b5:97:4f:0f`; `.94` was verified silent before bootstrap, with its UniFi reservation deferred
 - Boot zvol: `performance/pod042-boot`
 - Shared dataset/export: `performance/pod042` at `/mnt/performance/pod042`; the guest mount is added in Phase 3
 - Image: Debian generic amd64 build `20260722-2547`
@@ -236,12 +236,12 @@ Fill this during the build rather than reconstructing it later.
 
 - Image downloaded and workstation checksum verified: 2026-07-25, SHA-512 matched
 - NAS checksum and source `qemu-img info` verified: 2026-07-25, QCOW2 clean, 3 GiB virtual size
-- UniFi `.94` reservation for `02:D3:B5:97:4F:0F`: pending
+- UniFi `.94` reservation for `02:D3:B5:97:4F:0F`: deferred; Thurston directed the bootstrap to proceed after `.94` was verified silent and absent from existing static leases
 - TrueNAS scoped check/apply: 2026-07-25, second apply changed zero tasks
 - Image-import job completed: 2026-07-25; repeated cleanly after `.91` was found reserved to an Apple device and pod042 moved to `.94`
 - Temporary CDROM device ID: `56`
-- `cloud-init status --wait`: pending; first `.91` boot was stopped before login after the address collision was identified
-- Seed detached and SSH restored: pending
-- First local `poe pod042` converge: pending
-- Guest reboot returned unattended: pending
+- `cloud-init status --wait`: done with no errors on `.94`; hostname, static route, `1000:1000` identity, and 78.5 GiB root filesystem verified
+- Seed detached and SSH restored: passed; VM devices contain only the boot zvol and expected NIC
+- First local `poe pod042` converge: passed after correcting pod042's Chezmoi config to use service-account mode; second converge changed zero tasks
+- Guest reboot returned unattended: passed; post-reboot `poe pod042 --check` changed zero tasks
 - On-VM Pi handoff session: pending

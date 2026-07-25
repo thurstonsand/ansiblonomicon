@@ -17,4 +17,4 @@ Grilled 2026-07-24. Decisions: 4 cores / 16G (min 8G); 80G zvol on `performance`
 
 Gate 2 design doc: [Pod042 Dev Box](../../../designs/20-pod042-dev-box.md) — consolidates the whole effort's decisions. Accepted.
 
-Build-time amendment (2026-07-25): UniFi revealed that `.91` was already a live static reservation for an Apple device. Pod042 moved to reserved `192.168.1.94`; the fresh MAC and all other VM decisions are unchanged.
+Build-time amendment (2026-07-25): UniFi revealed that `.91` was already a live static reservation for an Apple device. Pod042 moved to static `192.168.1.94`; the fresh MAC and all other VM decisions are unchanged. `.94` was verified silent and absent from existing static leases, and Thurston directed bootstrap to proceed with its reservation deferred.
