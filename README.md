@@ -100,7 +100,7 @@ SSH aliases are configured via chezmoi (`~/.ssh/config`). Existing infrastructur
 | Target                                            | Alias         | Description                                 |
 | ------------------------------------------------- | ------------- | ------------------------------------------- |
 | `192.168.1.68:22` / `truenas-ssh.thurstons.house` | `ssh truenas` | TrueNAS SCALE server (Docker stacks, media) |
-| `192.168.1.91:22`                                 | `ssh pod042`  | Debian development VM                       |
+| `192.168.1.94:22`                                 | `ssh pod042`  | Debian development VM                       |
 | `192.168.1.89:22222` / `haos-ssh.thurstons.house` | `ssh haos`    | Home Assistant OS                           |
 | `192.168.1.1:22` / `udmp-ssh.thurstons.house`     | `ssh udmp`    | UniFi Dream Machine Pro                     |
 

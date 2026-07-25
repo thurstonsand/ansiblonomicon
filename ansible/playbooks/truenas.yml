@@ -208,7 +208,7 @@
       local.truenas.sharing_nfs:
         path: /mnt/performance/pod042
         hosts:
-          - 192.168.1.91
+          - 192.168.1.94
         maproot_user: root
         maproot_group: root
         enabled: true

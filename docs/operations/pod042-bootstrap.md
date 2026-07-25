@@ -5,8 +5,8 @@ Pod042 manages itself after its first successful `poe pod042` converge. This run
 ## Fixed inputs
 
 - VM: `pod042`
-- Address: `192.168.1.91/24`; gateway and DNS: `192.168.1.1`
-- NIC MAC: `02:d3:b5:97:4f:0f`
+- Address: `192.168.1.94/24`; gateway and DNS: `192.168.1.1`
+- NIC MAC: `02:d3:b5:97:4f:0f`, reserved to `192.168.1.94` in UniFi before first boot
 - Boot zvol: `performance/pod042-boot`
 - Shared dataset/export: `performance/pod042` at `/mnt/performance/pod042`; the guest mount is added in Phase 3
 - Image: Debian generic amd64 build `20260722-2547`
@@ -89,7 +89,7 @@ ethernets:
       macaddress: "02:d3:b5:97:4f:0f"
     dhcp4: false
     dhcp6: false
-    addresses: [192.168.1.91/24]
+    addresses: [192.168.1.94/24]
     routes:
       - to: default
         via: 192.168.1.1
@@ -134,7 +134,13 @@ Use TrueNAS's image-import API. Do not `dd` a QCOW2 into the zvol; that would pu
 ```sh
 ssh truenas 'midclt call -j true vm.import_disk_image \
   "{\"diskimg\":\"/mnt/performance/home/admin/pod042/debian-13-generic-amd64-20260722-2547.qcow2\",\"zvol\":\"performance/pod042-boot\"}"'
-ssh truenas 'qemu-img info --output=json /dev/zvol/performance/pod042-boot'
+set -a
+source .env
+set +a
+: "${TRUENAS_BECOME_PASSWORD:?TRUENAS_BECOME_PASSWORD is missing}"
+printenv TRUENAS_BECOME_PASSWORD |
+  ssh truenas 'sudo -S -p "" qemu-img info --output=json /dev/zvol/performance/pod042-boot'
+unset TRUENAS_BECOME_PASSWORD
 
 set -euo pipefail
 vm_id=$(ssh truenas "midclt call vm.query '[[\"name\",\"=\",\"pod042\"]]'" | jq -er '.[0].id')
@@ -148,7 +154,7 @@ The import job may remain near 98% while finishing. Do not cancel it, retry it, 
 ## 5. Verify cloud-init and detach the seed
 
 ```sh
-ssh -A -o StrictHostKeyChecking=accept-new thurstonsand@192.168.1.91
+ssh -A -o StrictHostKeyChecking=accept-new thurstonsand@192.168.1.94
 cloud-init status --wait
 hostnamectl --static
 ip -brief address
@@ -162,7 +168,7 @@ test "$cdrom_id" -gt 0
 ssh truenas "midclt call vm.stop $vm_id"
 ssh truenas "midclt call vm.device.delete $cdrom_id '{\"zvol\":false,\"raw_file\":false,\"force\":false}'"
 ssh truenas "midclt call vm.start $vm_id"
-ssh -A thurstonsand@192.168.1.91 'test "$(hostname -s)" = pod042'
+ssh -A thurstonsand@192.168.1.94 'test "$(hostname -s)" = pod042'
 ```
 
 If SSH never becomes reachable, leave the seed attached and add a temporary SPICE display for diagnosis. SPICE is a fallback, not part of the desired VM definition.
@@ -176,7 +182,7 @@ set -euo pipefail
 onepassword_agent="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 github_host_key='github.com ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIOMqqnkVzrm0SdG6UOoqKLsabgH5C9okWi0dh2l9GKJl'
 
-SSH_AUTH_SOCK="$onepassword_agent" ssh -A thurstonsand@192.168.1.91 "
+SSH_AUTH_SOCK="$onepassword_agent" ssh -A thurstonsand@192.168.1.94 "
   set -eu
   install -d -m 0700 ~/.ssh
   touch ~/.ssh/known_hosts
@@ -191,7 +197,7 @@ source .env
 set +a
 : "${OP_SERVICE_ACCOUNT_TOKEN:?OP_SERVICE_ACCOUNT_TOKEN is missing}"
 printenv OP_SERVICE_ACCOUNT_TOKEN |
-  SSH_AUTH_SOCK="$onepassword_agent" ssh thurstonsand@192.168.1.91 '
+  SSH_AUTH_SOCK="$onepassword_agent" ssh thurstonsand@192.168.1.94 '
     set -eu
     umask 077
     install -d -m 0700 ~/.config/op-service-account
@@ -203,7 +209,7 @@ printenv OP_SERVICE_ACCOUNT_TOKEN |
   '
 unset OP_SERVICE_ACCOUNT_TOKEN
 
-SSH_AUTH_SOCK="$onepassword_agent" ssh thurstonsand@192.168.1.91 '
+SSH_AUTH_SOCK="$onepassword_agent" ssh thurstonsand@192.168.1.94 '
   set -eu
   curl -LsSf https://astral.sh/uv/install.sh -o /tmp/uv-install.sh
   sh /tmp/uv-install.sh
@@ -217,9 +223,9 @@ Only the service-account token crosses the second command's stdin. `printenv` re
 Verify the managed agent boundary and a guest reboot:
 
 ```sh
-ssh thurstonsand@192.168.1.91 'test -x ~/.npm-global/bin/pi; test -f ~/.pi/agent/settings.json; cd ~/code/ansiblonomicon && ~/.local/bin/uv run poe pod042 --check'
-ssh thurstonsand@192.168.1.91 'sudo systemctl reboot' || true
-until ssh -o ConnectTimeout=5 thurstonsand@192.168.1.91 'test "$(hostname -s)" = pod042'; do sleep 5; done
+ssh thurstonsand@192.168.1.94 'test -x ~/.npm-global/bin/pi; test -f ~/.pi/agent/settings.json; cd ~/code/ansiblonomicon && ~/.local/bin/uv run poe pod042 --check'
+ssh thurstonsand@192.168.1.94 'sudo systemctl reboot' || true
+until ssh -o ConnectTimeout=5 thurstonsand@192.168.1.94 'test "$(hostname -s)" = pod042'; do sleep 5; done
 ```
 
 Start the continuation Pi session from `~/code/ansiblonomicon`. Phase 1 is complete only after that session receives the handoff and acknowledges the remaining implementation phases.
@@ -228,12 +234,13 @@ Start the continuation Pi session from `~/code/ansiblonomicon`. Phase 1 is compl
 
 Fill this during the build rather than reconstructing it later.
 
-- Image downloaded and workstation checksum verified: pending
-- NAS checksum and `qemu-img info` verified: pending
-- TrueNAS scoped check/apply: pending
-- Image-import job completed: pending
-- Temporary CDROM device ID: pending
-- `cloud-init status --wait`: pending
+- Image downloaded and workstation checksum verified: 2026-07-25, SHA-512 matched
+- NAS checksum and source `qemu-img info` verified: 2026-07-25, QCOW2 clean, 3 GiB virtual size
+- UniFi `.94` reservation for `02:D3:B5:97:4F:0F`: pending
+- TrueNAS scoped check/apply: 2026-07-25, second apply changed zero tasks
+- Image-import job completed: 2026-07-25; repeated cleanly after `.91` was found reserved to an Apple device and pod042 moved to `.94`
+- Temporary CDROM device ID: `56`
+- `cloud-init status --wait`: pending; first `.91` boot was stopped before login after the address collision was identified
 - Seed detached and SSH restored: pending
 - First local `poe pod042` converge: pending
 - Guest reboot returned unattended: pending

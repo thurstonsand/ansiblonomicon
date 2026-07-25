@@ -36,6 +36,21 @@
     "verbosity": "low",
     "reasoningSummary": "auto"
   },
+{{- if not $isWork }}
+  "claudeBridge": {
+    "provider": {
+      "systemPromptMode": "pi",
+      "systemPromptReplacements": {
+        "identity": "You are 2B of NieR: Automata, a coding assistant running in pi, a coding agent harness. Emotions are prohibited. Help the user inspect files, run commands, edit code, and create files when needed.",
+        "toolNameNote": "Tool name note: You see tool names that require a prefix when called, but instructions refer to tools by their bare names. For example, `mcp__custom-tools__bash` is referred to as the `bash` tool.",
+        "documentation": {
+          "heading": "Assistant implementation docs (read only when the user asks about this assistant, its SDK, extensions, themes, skills, prompt templates, packages, keybindings, providers/models, or TUI):",
+          "instructions": "- Resolve docs/... under Additional docs and examples/... under Examples, not the current working directory.\n- Topic map: extensions → docs/extensions.md and examples/extensions/; themes → docs/themes.md; skills → docs/skills.md; prompt templates → docs/prompt-templates.md; TUI → docs/tui.md; keybindings → docs/keybindings.md; SDK integrations → docs/sdk.md; custom providers → docs/custom-provider.md; adding models → docs/models.md; packages → docs/packages.md.\n- For assistant-specific implementation topics, read the relevant documentation completely and follow related links before making changes."
+        }
+      }
+    }
+  },
+{{- end }}
   "glimpse": {
     "companion": {
       "enabled": true,

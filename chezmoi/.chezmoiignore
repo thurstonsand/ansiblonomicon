@@ -85,7 +85,6 @@ Library/
 .oracle/
 .gemini/
 .rustup/
-.pi/agent/claude-bridge.json
 
 # Personal home-lab scripts
 .local/bin/btt-paste-image.sh

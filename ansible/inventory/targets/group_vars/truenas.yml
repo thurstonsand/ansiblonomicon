@@ -29,7 +29,7 @@ lan:
         ssh: 22
       domain: openclaw.thurstons.house
     pod042:
-      ip: 192.168.1.91
+      ip: 192.168.1.94
       ports:
         ssh: 22
       domain: pod042.thurstons.house
