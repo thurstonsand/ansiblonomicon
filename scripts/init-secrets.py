@@ -46,23 +46,27 @@ WORKER_DEV_VARS: dict[str, dict[str, str]] = {
 }
 
 
+def service_account_op_wrapper() -> Path | None:
+    wrapper = Path.home() / ".local/bin/op"
+    if wrapper.exists():
+        return wrapper
+    return None
+
+
 def op_command() -> str:
-    if socket.gethostname().split(".")[0] == "openclaw":
-        wrapper = Path.home() / ".local/bin/op"
-        if wrapper.exists():
-            return str(wrapper)
-    return "op"
+    wrapper = service_account_op_wrapper()
+    return str(wrapper) if wrapper is not None else "op"
 
 
 def op_environment() -> dict[str, str]:
     env = os.environ.copy()
-    if socket.gethostname().split(".")[0] != "openclaw":
+    if service_account_op_wrapper() is None:
         env.pop("OP_SERVICE_ACCOUNT_TOKEN", None)
     return env
 
 
 def resolve_op_account() -> str | None:
-    if socket.gethostname().split(".")[0] == "openclaw":
+    if service_account_op_wrapper() is not None:
         return None
 
     result = subprocess.run(

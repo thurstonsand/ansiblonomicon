@@ -53,10 +53,10 @@
     path: "{{ ansible_facts.env.HOME }}/.config/chezmoi/chezmoi.toml"
   register: chezmoi_config
 
-- name: Read OpenClaw 1Password service account token for chezmoi
-  when: ansible_facts['hostname'] == 'openclaw'
+- name: Read 1Password service account token for chezmoi
+  when: chezmoi_op_service_account_token_path | length > 0
   ansible.builtin.slurp:
-    src: "{{ ansible_facts.env.HOME }}/.config/openclaw/secrets/op-service-account-token"
+    src: "{{ chezmoi_op_service_account_token_path }}"
   register: chezmoi_op_service_account_token
   failed_when: false
   no_log: true

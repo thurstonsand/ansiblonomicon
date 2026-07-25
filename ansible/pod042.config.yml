@@ -1,0 +1,53 @@
+---
+hostname: pod042
+
+configure_chezmoi: true
+configure_agent_harness: true
+
+apt_packages:
+  - ca-certificates
+  - curl
+  - direnv
+  - git
+  - gpg
+  - openssh-client
+  - python3-venv
+  - rsync
+  - sudo
+  - zsh
+
+apt_external_repos:
+  - name: nodesource
+    url: https://deb.nodesource.com/node_22.x
+    suites: nodistro
+    components: main
+    key_url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
+    key_path: /usr/share/keyrings/nodesource.asc
+    packages:
+      - nodejs
+
+  - name: mise
+    url: https://mise.jdx.dev/deb
+    suites: stable
+    components: main
+    key_url: https://mise.jdx.dev/gpg-key.pub
+    key_path: /etc/apt/keyrings/mise-archive-keyring.asc
+    packages:
+      - mise
+
+mise_global_tools_base:
+  - chezmoi@latest
+npm_global_packages_base:
+  - "@earendil-works/pi-coding-agent"
+uv_global_tools_base: []
+bun_global_packages_base: []
+cargo_packages_base: []
+go_tools_base: []
+gem_packages_base: []
+
+agent_harness_target_agents_base:
+  - pi
+agent_harness_target_agents_extra: []
+
+op_service_account_token_path: "{{ ansible_facts.env.HOME }}/.config/op-service-account/token"
+chezmoi_op_service_account_token_path: "{{ op_service_account_token_path }}"

@@ -13,18 +13,12 @@ Host haos
   ForwardAgent yes
   User root
   HostKeyAlias haos
-{{- if eq .chezmoi.hostname "openclaw" }}
-  IdentityFile ~/.ssh/id_ed25519_nas
-{{- end }}
   ProxyCommand ~/.local/libexec/ssh-smart-proxy haos 192.168.1.89 22222 haos-ssh.thurstons.house
 
 Host truenas
   ForwardAgent yes
   User admin
   HostKeyAlias truenas
-{{- if eq .chezmoi.hostname "openclaw" }}
-  IdentityFile ~/.ssh/id_ed25519_nas
-{{- end }}
   ProxyCommand ~/.local/libexec/ssh-smart-proxy truenas 192.168.1.68 22 truenas-ssh.thurstons.house
 
 Host truenas-dev
@@ -34,24 +28,13 @@ Host truenas-dev
   HostName 192.168.6.227
   SetEnv TERM="xterm-256color"
 
-{{- if ne .chezmoi.hostname "openclaw" }}
+{{- if ne .chezmoi.hostname "pod042" }}
 
-Host openclaw
-  ForwardAgent yes
+Host pod042
+  HostName 192.168.1.91
   User thurstonsand
-  HostKeyAlias openclaw
-{{- if eq .chezmoi.os "darwin" }}
-  ControlMaster auto
-  ControlPath ~/.ssh/control-%C
-  ControlPersist 10m
-{{- end }}
-  ProxyCommand ~/.local/libexec/ssh-smart-proxy openclaw 192.168.1.90 22 openclaw-ssh.thurstons.house
-
-Host openclaw-gty
   ForwardAgent yes
-  User thurstonsand
-  HostKeyAlias openclaw
-  ProxyCommand cloudflared access ssh --hostname openclaw-ssh.thurstons.house
+  HostKeyAlias pod042
 
 {{- end }}
 

@@ -191,6 +191,29 @@ name = "target"
 options = ["--target"]
 help = "Override play target, e.g. openclaw_local or openclaw_remote"
 
+[tool.poe.tasks.pod042]
+help = "Converge pod042"
+shell = """
+if [[ "$(hostname -s)" != "pod042" ]]; then
+  printf 'pod042 must run on pod042; SSH there first.\n' >&2
+  exit 1
+fi
+ansible-playbook -i inventory/targets/pod042.yml playbooks/pod042.yml --diff ${check:+--check} ${tags:+--tags ${tags}}
+"""
+cwd = "ansible"
+interpreter = "bash"
+
+[[tool.poe.tasks.pod042.args]]
+name = "check"
+type = "boolean"
+options = ["--check", "-c"]
+help = "Dry-run mode (no changes made)"
+
+[[tool.poe.tasks.pod042.args]]
+name = "tags"
+options = ["--tags", "-t"]
+help = "Only run tasks with these tags (comma-separated)"
+
 # Chezmoi tasks
 [tool.poe.tasks.cz-diff]
 help = "Show what chezmoi would change (source → home), excluding lockfiles"

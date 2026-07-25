@@ -38,7 +38,8 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 │   ├── config.yml           # Shared configuration variables
 │   ├── darwin.config.yml    # macOS-specific config
 │   ├── work.config.yml     # Work macOS-specific config
-│   ├── openclaw.config.yml  # Fresh OpenClaw Debian VM config
+│   ├── openclaw.config.yml  # Retained OpenClaw reference config
+│   ├── pod042.config.yml    # pod042 Debian dev VM config
 │   ├── archlinux.config.yml # Arch Linux-specific config
 │   ├── Brewfile             # Homebrew packages, casks, and MAS apps
 │   ├── requirements.yml     # Ansible Galaxy dependencies
@@ -49,7 +50,8 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 │   └── playbooks/
 │       ├── macos.yml        # macOS playbook
 │       ├── work.yml         # Work macOS playbook
-│       ├── openclaw.yml     # OpenClaw (Debian VM) playbook
+│       ├── openclaw.yml     # Retained OpenClaw reference playbook
+│       ├── pod042.yml       # pod042 local-only playbook
 │       ├── truenas.yml      # TrueNAS playbook
 │       └── udmp.yml         # UDMP playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
@@ -67,7 +69,8 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 
 - `poe laptop` — Apply macOS Ansible playbook (auto-detects work vs personal)
 - `poe laptop --check` — Dry-run mode (shows what would change without applying)
-- `poe openclaw` — Apply OpenClaw (Debian VM) Ansible playbook
+- `poe openclaw` — Apply the retained OpenClaw reference playbook
+- `poe pod042` — Converge pod042 from inside its persistent checkout
 - `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe udmp` — Apply UDMP Ansible playbook
 - `poe cz-diff` — Preview dotfile changes (source → home), excluding lockfiles
@@ -92,19 +95,18 @@ See [nixonomicon/docs/designs/nix-to-chezmoi-ansible-migration.md](https://githu
 
 ## Hosts
 
-SSH aliases are configured via chezmoi (`~/.ssh/config`) and use `ssh-smart-proxy` to prefer LAN access with Cloudflare Access fallback:
+SSH aliases are configured via chezmoi (`~/.ssh/config`). Existing infrastructure aliases use `ssh-smart-proxy` for LAN access with Cloudflare Access fallback; pod042 is LAN-only until its Amp remote terminal is configured.
 
-| Target                                             | Alias          | Description                                 |
-| -------------------------------------------------- | -------------- | ------------------------------------------- |
-| `192.168.1.68:22` / `truenas-ssh.thurstons.house`  | `ssh truenas`  | TrueNAS SCALE server (Docker stacks, media) |
-| `openclaw.thurstons.house` (Cloudflare Tunnel)     | Web UI         | OpenClaw AI agent VM                        |
-| `192.168.1.90:22` / `openclaw-ssh.thurstons.house` | `ssh openclaw` | OpenClaw Debian VM                          |
-| `192.168.1.89:22222` / `haos-ssh.thurstons.house`  | `ssh haos`     | Home Assistant OS                           |
-| `192.168.1.1:22` / `udmp-ssh.thurstons.house`      | `ssh udmp`     | UniFi Dream Machine Pro                     |
+| Target                                            | Alias         | Description                                 |
+| ------------------------------------------------- | ------------- | ------------------------------------------- |
+| `192.168.1.68:22` / `truenas-ssh.thurstons.house` | `ssh truenas` | TrueNAS SCALE server (Docker stacks, media) |
+| `192.168.1.91:22`                                 | `ssh pod042`  | Debian development VM                       |
+| `192.168.1.89:22222` / `haos-ssh.thurstons.house` | `ssh haos`    | Home Assistant OS                           |
+| `192.168.1.1:22` / `udmp-ssh.thurstons.house`     | `ssh udmp`    | UniFi Dream Machine Pro                     |
 
 ## Platform Support
 
 - **macOS** (Darwin) — Primary, fully supported
-- **Debian** (openclaw) — Fresh OpenClaw VM playbook; auto-selects local on the VM or remote over SSH
+- **Debian** (pod042) — Local-only, self-converging development VM
 - **TrueNAS** — Docker stacks plus first-class VM modeling via the in-repo `local.truenas` collection
 - **Arch Linux** (omarchy) — Future, structure ready

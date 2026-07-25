@@ -28,6 +28,11 @@ lan:
         gateway: 18789
         ssh: 22
       domain: openclaw.thurstons.house
+    pod042:
+      ip: 192.168.1.91
+      ports:
+        ssh: 22
+      domain: pod042.thurstons.house
 
   iot:
     homeassistant:
@@ -242,10 +247,45 @@ truenas_apps:
 
 # TrueNAS VM definitions. Opinionated: model stable core fields and selected devices only.
 truenas_vms:
+  pod042:
+    name: pod042
+    description: Debian 13 development VM
+    autostart: true
+    memory: 16384
+    min_memory: 8192
+    vcpus: 1
+    cores: 4
+    threads: 1
+    cpu_mode: HOST-PASSTHROUGH
+    cpuset: ""
+    nodeset: ""
+    bootloader: UEFI
+    ensure_display_device: false
+    time: UTC
+    zvols:
+      - name: performance/pod042-boot
+        volsize: 85899345920
+        volblocksize: 16K
+        comments: pod042 VM boot disk
+    devices:
+      - dtype: DISK
+        order: 1001
+        attributes:
+          path: /dev/zvol/performance/pod042-boot
+          type: VIRTIO
+          iotype: THREADS
+      - dtype: NIC
+        order: 1002
+        attributes:
+          type: VIRTIO
+          mac: 02:d3:b5:97:4f:0f
+          nic_attach: br0
+          trust_guest_rx_filters: false
+
   openclaw:
     name: OpenClaw
     description: Fresh OpenClaw Debian VM
-    autostart: true
+    autostart: false
     memory: 12288
     min_memory: 12288
     vcpus: 1
@@ -257,7 +297,7 @@ truenas_vms:
     bootloader: UEFI
     ensure_display_device: true
     zvols:
-      - name: performance/openclaw
+      - name: capacity/openclaw
         volsize: 107374182400
         volblocksize: 16K
         comments: OpenClaw VM boot disk
@@ -265,7 +305,7 @@ truenas_vms:
       - dtype: DISK
         order: 1001
         attributes:
-          path: /dev/zvol/performance/openclaw
+          path: /dev/zvol/capacity/openclaw
           type: VIRTIO
           iotype: THREADS
       - dtype: NIC

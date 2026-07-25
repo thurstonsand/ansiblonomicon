@@ -20,6 +20,7 @@
         state: started
 
     - name: Enable NFS service
+      tags: [pod042, pod042-storage]
       local.truenas.service:
         name: nfs
         enabled: true
@@ -183,6 +184,36 @@
     # ===================
     # NFS Shares
     # ===================
+    - name: Create pod042 dataset
+      tags: [pod042, pod042-storage]
+      ansible.builtin.command:
+        argv:
+          - midclt
+          - call
+          - pool.dataset.create
+          - '{"name":"performance/pod042","type":"FILESYSTEM"}'
+        creates: /mnt/performance/pod042
+
+    - name: Configure pod042 dataset ownership
+      tags: [pod042, pod042-storage]
+      ansible.builtin.file:
+        path: /mnt/performance/pod042
+        state: directory
+        owner: "1000"
+        group: "1000"
+        mode: "0770"
+
+    - name: Pod042 NFS share
+      tags: [pod042, pod042-storage]
+      local.truenas.sharing_nfs:
+        path: /mnt/performance/pod042
+        hosts:
+          - 192.168.1.91
+        maproot_user: root
+        maproot_group: root
+        enabled: true
+        state: present
+
     - name: Docker NFS share
       local.truenas.sharing_nfs:
         path: /mnt/performance/docker
@@ -356,6 +387,10 @@
           tags: [docker-stack-role, isponsorblocktv]
       vars:
         docker_stack_name: isponsorblocktv
+
+    - name: Pod042 VM
+      tags: [vm, truenas-vm, pod042-vm, pod042]
+      local.truenas.vm: "{{ truenas_vms.pod042 }}"
 
     - name: OpenClaw VM
       tags: [vm, truenas-vm, openclaw-vm, openclaw]

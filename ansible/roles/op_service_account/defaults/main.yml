@@ -1,0 +1,5 @@
+---
+op_service_account_token_dir: "{{ ansible_facts.env.HOME }}/.config/op-service-account"
+op_service_account_token_path: "{{ op_service_account_token_dir }}/token"
+op_service_account_bootstrap_token: "{{ lookup('env', 'OP_SERVICE_ACCOUNT_TOKEN') }}"
+op_service_account_launcher_path: "{{ ansible_facts.env.HOME }}/.local/bin/op"

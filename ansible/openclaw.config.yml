@@ -9,6 +9,7 @@ configure_apt: true
 configure_agent_harness: true
 configure_terminal_theme: true
 terminal_theme_profile: mirror
+chezmoi_op_service_account_token_path: "{{ ansible_facts.env.HOME }}/.config/openclaw/secrets/op-service-account-token"
 
 # Start small. Add runtime tools when the new OpenClaw actually needs them.
 apt_packages:
