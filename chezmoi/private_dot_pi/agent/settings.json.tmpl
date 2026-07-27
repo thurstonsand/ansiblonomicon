@@ -1,11 +1,11 @@
 {{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
 {
-  "defaultProvider": {{ if $isWork }}"genaihub"{{ else }}"openai-codex"{{ end }},
-  "defaultModel": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.opus.version }}"{{ else }}"{{ .models.openai.gpt_sol.version }}"{{ end }},
+  "defaultProvider": {{ if $isWork }}"genaihub"{{ else }}"doppelclaude"{{ end }},
+  "defaultModel": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.opus.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
   "defaultThinkingLevel": "medium",
   "pinnedModel": {
-    "provider": {{ if $isWork }}"genaihub"{{ else }}"openai-codex"{{ end }},
-    "modelId": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.opus.version }}"{{ else }}"{{ .models.openai.gpt_sol.version }}"{{ end }},
+    "provider": {{ if $isWork }}"genaihub"{{ else }}"doppelclaude"{{ end }},
+    "modelId": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.opus.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
     "thinkingLevel": "medium"
   },
   "showCacheMissNotices": true,
@@ -37,7 +37,7 @@
     "reasoningSummary": "auto"
   },
 {{- if not $isWork }}
-  "claudeBridge": {
+  "doppelclaude": {
     "provider": {
       "systemPromptMode": "pi",
       "systemPromptReplacements": {
@@ -45,7 +45,11 @@
         "toolNameNote": "Tool name note: You see tool names that require a prefix when called, but instructions refer to tools by their bare names. For example, `mcp__custom-tools__bash` is referred to as the `bash` tool.",
         "documentation": {
           "heading": "Assistant implementation docs (read only when the user asks about this assistant, its SDK, extensions, themes, skills, prompt templates, packages, keybindings, providers/models, or TUI):",
-          "instructions": "- Resolve docs/... under Additional docs and examples/... under Examples, not the current working directory.\n- Topic map: extensions → docs/extensions.md and examples/extensions/; themes → docs/themes.md; skills → docs/skills.md; prompt templates → docs/prompt-templates.md; TUI → docs/tui.md; keybindings → docs/keybindings.md; SDK integrations → docs/sdk.md; custom providers → docs/custom-provider.md; adding models → docs/models.md; packages → docs/packages.md.\n- For assistant-specific implementation topics, read the relevant documentation completely and follow related links before making changes."
+          "instructions": [
+            "- Resolve docs/... under Additional docs and examples/... under Examples, not the current working directory.",
+            "- Topic map: extensions → docs/extensions.md and examples/extensions/; themes → docs/themes.md; skills → docs/skills.md; prompt templates → docs/prompt-templates.md; TUI → docs/tui.md; keybindings → docs/keybindings.md; SDK integrations → docs/sdk.md; custom providers → docs/custom-provider.md; adding models → docs/models.md; packages → docs/packages.md.",
+            "- For assistant-specific implementation topics, read the relevant documentation completely and follow related links before making changes."
+          ]
         }
       }
     }
@@ -131,7 +135,7 @@
   "followUpMode": "all",
   "sessions": {
     "autoTitle": {
-      "model": {{ if $isWork }}"genaihub/{{ trimSuffix "[1m]" .work_models.sonnet.version }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
+      "model": {{ if $isWork }}"genaihub/{{ trimSuffix "[1m]" .work_models.sonnet.version }}"{{ else }}"{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}"{{ end }},
       "timeoutSecs": 60,
       "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
     },
@@ -195,11 +199,11 @@
     "stashHistory": "alt+shift+s",
     "copyEditor": null,
     "cutEditor": null,
-    "jumpPreviousUserMessage": "ctrl+shift+k",
-    "jumpNextUserMessage": "ctrl+shift+j",
+    "jumpPreviousUserMessage": "alt+shift+k",
+    "jumpNextUserMessage": "alt+shift+j",
     "jumpPreviousLlmMessage": null,
     "jumpNextLlmMessage": null,
-    "jumpChatBottom": "ctrl+shift+g",
+    "jumpChatBottom": "alt+shift+g",
     "scrollChatUp": "alt+k",
     "scrollChatDown": "alt+j",
     "editorStart": null,
@@ -231,9 +235,7 @@
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-librarian"{{ else }}"npm:@thurstonsand/pi-librarian"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/wt/plugins/pi"{{ else }}"npm:@thurstonsand/pi-wt"{{ end }},
-    {{- if eq .chezmoi.os "darwin" }}
-    "/Users/thurstonsand/Develop/pi-claude-bridge",
-    {{- end }}
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-doppelclaude"{{ else }}"npm:pi-doppelclaude"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-web-tools"{{ else }}"npm:@thurstonsand/pi-web-tools"{{ end }},
     "npm:glimpseui",
     "npm:pi-interview",

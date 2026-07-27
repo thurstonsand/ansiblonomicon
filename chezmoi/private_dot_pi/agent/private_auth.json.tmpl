@@ -1,11 +1,12 @@
 {{- $authPath := joinPath .chezmoi.homeDir ".pi" "agent" "auth.json" -}}
 {{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
-{{- $preserveUnmanagedAuth := `import json
+{{- $mergeAuth := `import json
 import pathlib
 import sys
 
 path = pathlib.Path(sys.argv[1])
-managed_keys = set(sys.argv[2:])
+managed = json.loads(sys.argv[2])
+managed_keys = set(sys.argv[3:]) | set(managed)
 try:
     existing = json.loads(path.read_text())
 except FileNotFoundError:
@@ -16,31 +17,13 @@ except json.JSONDecodeError as exc:
 if not isinstance(existing, dict):
     raise SystemExit(f"{path}: expected top-level JSON object")
 
-unmanaged = [
-    (key, value)
-    for key, value in existing.items()
-    if key not in managed_keys
-]
-
-for key, value in unmanaged:
-    rendered = json.dumps({key: value}, indent=2).splitlines()
-    print(",")
-    print("\n".join(rendered[1:-1]), end="")
+merged = dict(managed)
+merged.update({key: value for key, value in existing.items() if key not in managed_keys})
+print(json.dumps(merged, indent=2))
 ` -}}
-{
-{{- if $isWork }}
-  "anthropic": {
-    "type": "api_key",
-    "key": "{{ .anthropicAuthToken }}"
-  }{{ output "python3" "-c" $preserveUnmanagedAuth $authPath "anthropic" }}
-{{- else }}
-  "anthropic": {
-    "type": "api_key",
-    "key": "{{ template "llm-api-key" . }}"
-  },
-  "google": {
-    "type": "api_key",
-    "key": "{{ template "llm-api-key" . }}"
-  }{{ output "python3" "-c" $preserveUnmanagedAuth $authPath "anthropic" "openai" "google" }}
-{{- end }}
-}
+{{- if $isWork -}}
+{{- $managed := printf `{"anthropic": {"type": "api_key", "key": "%s"}}` .anthropicAuthToken -}}
+{{ output "python3" "-c" $mergeAuth $authPath $managed "anthropic" }}
+{{- else -}}
+{{ output "python3" "-c" $mergeAuth $authPath "{}" "anthropic" "openai" "google" }}
+{{- end -}}

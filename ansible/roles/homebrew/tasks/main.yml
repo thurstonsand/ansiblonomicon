@@ -57,6 +57,67 @@
         )
       }}
 
+- name: Read Brewfile
+  when: not ansible_check_mode
+  ansible.builtin.slurp:
+    src: "{{ homebrew_brewfile_path }}"
+  register: homebrew_brewfile_content
+
+- name: Collect Mac App Store app IDs from Brewfile
+  when: not ansible_check_mode
+  ansible.builtin.set_fact:
+    homebrew_mas_ids: "{{ homebrew_brewfile_content.content | b64decode | regex_findall('^mas .*, id: (\\d+)', multiline=True) }}"
+
+# mas 7 requires root and shells out to bare `sudo` itself, which never sees SUDO_ASKPASS.
+# Driving it here with `sudo -A` leaves brew bundle's own mas path with nothing to do.
+- name: Reconcile Mac App Store apps
+  when: not ansible_check_mode and homebrew_mas_ids | length > 0
+  environment:
+    MAS_NO_AUTO_INDEX: "1"
+    SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
+    HOMEBREW_SUDO_ASKPASS_PASS: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS'] | default(omit) }}"
+    HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
+  block:
+    - name: Ensure mas is installed
+      ansible.builtin.command:
+        argv: ["brew", "install", "mas"]
+      register: homebrew_mas_tool
+      changed_when: "'Pouring' in homebrew_mas_tool.stdout"
+
+    - name: List installed Mac App Store apps
+      ansible.builtin.command:
+        argv: ["mas", "list"]
+      register: homebrew_mas_list
+      changed_when: false
+
+    - name: List outdated Mac App Store apps
+      when: homebrew_upgrade_due
+      ansible.builtin.command:
+        argv: ["mas", "outdated"]
+      register: homebrew_mas_outdated
+      changed_when: false
+
+    - name: Determine Mac App Store work
+      vars:
+        installed_ids: "{{ homebrew_mas_list.stdout | regex_findall('^\\s*(\\d+)\\s', multiline=True) }}"
+      ansible.builtin.set_fact:
+        homebrew_mas_missing: "{{ homebrew_mas_ids | difference(installed_ids) }}"
+        homebrew_mas_upgrades: >-
+          {{ homebrew_mas_outdated.stdout_lines | default([])
+             | select('search', '^\\s*(' ~ homebrew_mas_ids | join('|') ~ ')\\s') | list }}
+
+    - name: Install missing Mac App Store apps
+      ansible.builtin.command:
+        argv: ["sudo", "-A", "mas", "install", "{{ item }}"]
+      loop: "{{ homebrew_mas_missing }}"
+      changed_when: true
+
+    - name: Upgrade outdated Mac App Store apps
+      ansible.builtin.command:
+        argv: ["sudo", "-A", "mas", "upgrade", "{{ item.split() | first }}"]
+      loop: "{{ homebrew_mas_upgrades }}"
+      changed_when: true
+
 - name: Pin keg-only conflicting formulas
   when: not ansible_check_mode and homebrew_link_conflicts | length > 0
   ansible.builtin.command:
@@ -134,7 +195,9 @@
     noise: '^==>|^Adjust how often|^Hide these hints|^Updated |^You have \d+ outdated|JSON API'
   ansible.builtin.set_fact:
     homebrew_bundle_changes: >-
-      {{ (stdout | select('search', 'Installing|Upgrading|Skipping') | list)
+      {{ (homebrew_mas_missing | default([]) | map('regex_replace', '^', 'Installing App Store app ') | list)
+         + (homebrew_mas_upgrades | default([]) | map('regex_replace', '^\\s*', 'Upgrading ') | list)
+         + (stdout | select('search', 'Installing|Upgrading|Skipping') | list)
          + (cleanup | select('search', 'Uninstalling') | list)
          + (stderr | reject('search', noise) | list) }}
     homebrew_dep_changes: []

@@ -81,7 +81,6 @@ agent_harness_sources_base:
           - handoff
           - grill-with-docs
           - triage
-          - improve-codebase-architecture
           - implement
           - setup-matt-pocock-skills
           - tdd
@@ -97,7 +96,7 @@ agent_harness_sources_base:
     pull: true
     plugins:
       - name: agent-browser
-        target_agents: [claude, amp, codex, opencode, pi]
+        target_agents: [claude, amp, opencode, pi]
         skills: skills
         exclude_skills:
           - dogfood

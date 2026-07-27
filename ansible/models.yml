@@ -24,7 +24,7 @@ models:
         aliases:
           claude: "claude-fable-5[1m]"
           opencode: "anthropic/claude-fable-5"
-          pi: "anthropic-agent-sdk/claude-fable-5"
+          pi: "doppelclaude/claude-fable-5"
       vscode:
         include: true
         thinking: true
@@ -42,7 +42,7 @@ models:
         aliases:
           claude: "haiku"
           opencode: "anthropic/claude-haiku-4-5-20251001"
-          pi: "anthropic-agent-sdk/claude-haiku-4-5"
+          pi: "doppelclaude/claude-haiku-4-5"
       vscode:
         include: true
         thinking: false
@@ -60,7 +60,7 @@ models:
         aliases:
           claude: "sonnet"
           opencode: "anthropic/claude-sonnet-5"
-          pi: "anthropic-agent-sdk/claude-sonnet-5"
+          pi: "doppelclaude/claude-sonnet-5"
       vscode:
         include: true
         thinking: true
@@ -79,7 +79,7 @@ models:
         aliases:
           claude: "opus"
           opencode: "anthropic/claude-opus-5"
-          pi: "anthropic-agent-sdk/claude-opus-5"
+          pi: "doppelclaude/claude-opus-5"
       vscode:
         include: true
         thinking: true

@@ -42,26 +42,6 @@
         }
       ]
     }
-{{- else }}
-    "google": {
-      "baseUrl": "https://aig.thurstons.house/v1beta",
-      "apiKey": "{{ template "llm-api-key" . }}",
-      "authHeader": true,
-      "modelOverrides": {
-        "{{ .models.google.gemini_flash.version }}": {
-          "name": "{{ .models.google.gemini_flash.display_name }}",
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.google.gemini_flash.max_input }},
-          "maxTokens": {{ .models.google.gemini_flash.max_output }}
-        },
-        "{{ .models.google.gemini_pro.version }}": {
-          "name": "{{ .models.google.gemini_pro.display_name }}",
-          "cost": {"input": 0, "output": 0, "cacheRead": 0, "cacheWrite": 0},
-          "contextWindow": {{ .models.google.gemini_pro.max_input }},
-          "maxTokens": {{ .models.google.gemini_pro.max_output }}
-        }
-      }
-    }
 {{- end }}
   }
 }
