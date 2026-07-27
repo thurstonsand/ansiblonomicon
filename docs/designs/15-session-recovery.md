@@ -108,8 +108,10 @@ event alone.
 
 | Event (Pi extension) | Action |
 |---|---|
-| `session_start` (any reason) | Install signal hooks once, then write/refresh own file for the current `getSessionId()`. |
-| `agent_settled` | Refresh own file after retries, auto-compaction retries, and queued continuations are exhausted. |
+| `session_start` reason `startup`/`new` | Install signal hooks once. Do **not** write a record yet — the session has no transcript on disk until its first assistant message persists; defer to `agent_start`. |
+| `session_start` reason `resume`/`fork` | Install signal hooks once, then write/refresh the record: these carry prior history, so a transcript already exists. |
+| `session_start` reason `reload` | Install signal hooks once. The existing record stays in place (same `getSessionId()`), so no rewrite is needed. |
+| `agent_start` | Write/refresh the record. The agent loop has begun, so a transcript is expected from here on — this is the meaningful "a transcript will exist" signal for a fresh session. Pi's auto-title is not set on the first loop, so the record is nameless until the second turn's `agent_start` picks it up; a session that crashes within its only turn stays recoverable but nameless. |
 | `session_shutdown` reason `new`/`resume`/`fork` | Soft-delete: the `sessionId` is replaced in-process; the successor's `session_start` writes the new id. |
 | `session_shutdown` reason `reload` | Keep: same `sessionId` continues, and the following `session_start` rewrites it. |
 | `session_shutdown` reason `quit`, **no** signal seen | Soft-delete: deliberate in-app quit (`/quit`, Ctrl-D, Ctrl-C ×2). |
@@ -157,16 +159,21 @@ Pi-specific bindings:
   unlike Claude's hook subprocess — there is no `os.getppid()` indirection.
 - **`sessionId`** is `ctx.sessionManager.getSessionId()`; **`transcript`** is
   `ctx.sessionManager.getSessionFile()`; **`cwd`** is `ctx.cwd`.
-- **`name`** is `pi.getSessionName()` (often `null` until Pi's auto-title runs);
-  re-read on each `agent_settled` refresh so a late title reaches the record.
+- **`name`** is `pi.getSessionName()` (often `null` until Pi's auto-title runs,
+  which lands after the first exchange); a later `agent_start` re-reads it, so
+  the title reaches the record from the second turn onward.
 - **Guards**: only record real, resumable, interactive sessions. Skip when
   `getSessionFile()` is undefined (ephemeral / `--no-session`) and when
   `!ctx.hasUI` (print/RPC runs exit on completion and have nothing worth
-  resuming after a crash).
-- Pi compaction fires `session_compact`, **not** `session_start`, so the
-  "refresh on compact" behavior from Claude's table is covered when the full
-  operation reaches `agent_settled` instead. The `session_start` write keeps the
-  active run recoverable until then.
+  resuming after a crash). A fresh session is also skipped at `session_start`:
+  pi buffers entries in memory and only writes the transcript file once the
+  first assistant message persists, so recording earlier would strand a phantom
+  record if the session crashes before any exchange. `agent_start` is the
+  earliest meaningful signal that a transcript will exist; we accept the small
+  race where the record briefly points at a not-yet-written file.
+- Pi compaction fires `session_compact`, **not** `session_start`. The record's
+  transcript path is unchanged by compaction, and the next `agent_start`
+  refreshes it, so no compaction-specific hook is needed.
 
 Pi's `new`/`resume`/`fork` predecessor soft-delete still applies — those mint a
 new `sessionId` in-process, so the outgoing record is hidden and the successor's
@@ -303,8 +310,9 @@ Shared library (a local package, referenced by bare specifier):
   reinstall, and the install touches no registry (the link is local).
 
 - **Pi consumer:** `chezmoi/private_dot_pi/agent/extensions/session-recovery/`
-  — `index.ts` (wires `session_start` → install signal hooks + `writeRecord`,
-  `agent_settled` → `writeRecord`, and a reason-gated `session_shutdown` that
+  — `index.ts` (wires `session_start` → install signal hooks, `deleteIgnoredRecords`,
+  and `writeRecord` only for `resume`/`fork`; `agent_start` → `writeRecord`; and a
+  reason-gated `session_shutdown` that
   soft-deletes only on deliberate quit or in-process replacement — see the Pi lifecycle
   section) plus a `package.json` whose only entry is
   `"@thurstons/session-recovery": "file:../../../../.local/lib/session-recovery"`

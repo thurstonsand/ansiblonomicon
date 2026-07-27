@@ -1,5 +1,8 @@
 {
   "mcpServers": {
+    "btt": {
+      "url": "http://127.0.0.1:64832/mcp"
+    },
     "cloudflare-api": {
       "url": "https://mcp.cloudflare.com/mcp",
       "auth": "bearer",
