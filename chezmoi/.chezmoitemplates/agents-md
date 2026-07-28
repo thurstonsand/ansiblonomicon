@@ -78,19 +78,19 @@ Just use soft wrap, my editor knows how to handle long lines.
 
 If you're reaching for a subagent, consider the following:
 {{ if $isWork }}
-| model           | role                               | thinking level | notes                              |
-| --------------- | ---------------------------------- | -------------- | ---------------------------------- |
-| claude-5-opus   | default workhorse, general purpose | medium         | first choice for planning and work |
-| claude-5-sonnet | exploration subagent               | high           | digging for answers/explanations   |
-
-If it's not in the list, don't consider it. Also on the table: use opus, the stronger model, for adversarial review of plans and implementations.
+| model                 | role                               | thinking level | cost | intelligence | taste | notes                                                                                 |
+| --------------------- | ---------------------------------- | -------------- | ---- | ------------ | ----- | ------------------------------------------------------------------------------------- |
+| claude-5-opus         | default workhorse, general purpose | medium         | 5    | 7            | 7     | also great for prose and thinking through problems                                    |
+| bedrock.gpt-5.6-sol   | focused implementer                | medium         | 4    | 7            | 5     | pure execution where scope is crystal clear; use high thinking for adversarial review |
+| bedrock.gpt-5.6-terra | exploration subagent               | high           | 7    | 4            | 5     | digging for answers/explanations                                                      |
 {{- else }}
 | model           | role                          | thinking level                 | cost                  | intelligence | taste | notes                                                                                 |
 | --------------- | ----------------------------- | ------------------------------ | --------------------- | ------------ | ----- | ------------------------------------------------------------------------------------- |
 | claude-opus-5   | default workhose              | medium                         | 5                     | 7            | 7     | also great for prose or thinking through medium-sized problems                        |
 | claude-fable-5  | planning, highest-impact work | high                           | 1 (burns limits fast) | 9            | 8     | human stays in the loop (request before firing); reserve for highest-impact scenarios |
-| gpt-5.6-sol     | default workhorse             | medium                         | 5                     | 7            | 5     | pure exeuction where scope is crystal clear; use high thinking for adversarial review |
+| gpt-5.6-sol     | focused implementer           | medium                         | 5                     | 7            | 5     | pure exeuction where scope is crystal clear; use high thinking for adversarial review |
 | gpt-5.6-terra   | exploration subagent          | high                           | 7                     | 4            | 5     | digging for answers/explanations                                                      |
+{{- end }}
 
 (1-10, higher is better across all axes)
 
@@ -99,7 +99,9 @@ If it's not in the list, don't consider it. Also on the table: use opus, the str
 - taste: ability to create a well-considered UI; a nicely balanced abstraction; prose that's pleasant to read
 - cost is at most a tie-breaker; weight these in order of importance: intelligence > taste > cost
 
-Try to pick the right agent for the job. If it's not in the list, don't consider it. Also on the table: adversarial cross-lab reviews of your plans and implementations: OpenAI models reviewing Anthropic plans/implementations and vice versa. Note that you should request permission before firing off a Fable model for review.
+Try to pick the right agent for the job. If it's not in the list, don't consider it. Also on the table: adversarial cross-lab reviews of your plans and implementations: OpenAI models reviewing Anthropic plans/implementations and vice versa.
+{{- if not $isWork }}
+Note that you should request permission before firing off a Fable model for review.
 {{- end }}
 
 {{- if stat (joinPath .homeDir ".agents" "local.md") }}

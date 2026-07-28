@@ -19,6 +19,7 @@
     language_tools_managed_packages_present: >-
       {{
         (mise_global_tools | length > 0)
+        or (mise_tool_config | length > 0)
         or (npm_global_packages | length > 0)
         or (uv_global_tools | length > 0)
         or (bun_global_packages | length > 0)
@@ -26,6 +27,39 @@
         or (cargo_packages | length > 0)
         or (gem_packages | length > 0)
       }}
+
+- name: Read current mise tool config
+  when: mise_tool_config | length > 0
+  ansible.builtin.command:
+    argv:
+      - mise
+      - config
+      - get
+      - "--file"
+      - "{{ language_tools_mise_global_config }}"
+      - "{{ item.key }}"
+  loop: "{{ mise_tool_config | dict2items }}"
+  loop_control:
+    label: "{{ item.key }}"
+  register: language_tools_mise_config_current
+  changed_when: false
+  failed_when: false
+
+- name: Write mise tool config
+  when: item.item.value != (item.stdout | trim)
+  ansible.builtin.command:
+    argv:
+      - mise
+      - config
+      - set
+      - "--file"
+      - "{{ language_tools_mise_global_config }}"
+      - "{{ item.item.key }}"
+      - "{{ item.item.value }}"
+  loop: "{{ language_tools_mise_config_current.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.key }}"
+  changed_when: true
 
 - name: Install mise-managed tools
   when: language_tools_update_due and mise_global_tools | length > 0
@@ -45,6 +79,13 @@
     'installed' in (language_tools_mise_result.stderr | lower) or
     'updated' in (language_tools_mise_result.stderr | lower) or
     'upgraded' in (language_tools_mise_result.stderr | lower)
+
+- name: Install tools declared in mise config
+  when: language_tools_update_due and mise_tool_config | length > 0
+  ansible.builtin.command:
+    argv: ["mise", "install"]
+  register: language_tools_mise_config_install
+  changed_when: "'✓ installed' in language_tools_mise_config_install.stdout + language_tools_mise_config_install.stderr"
 
 - name: Install global npm packages
   when: language_tools_update_due and npm_global_packages | length > 0

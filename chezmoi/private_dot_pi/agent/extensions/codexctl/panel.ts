@@ -2,6 +2,7 @@ import type { ExtensionCommandContext, Theme } from "@earendil-works/pi-coding-a
 import type { Focusable, TUI } from "@earendil-works/pi-tui";
 import { matchesKey, visibleWidth } from "@earendil-works/pi-tui";
 import { cycleSummary, cycleVerbosity, formatCodexSettings } from "./command.js";
+import { shouldApplyCodexSettings } from "./request.js";
 import { type CodexSettings, loadCodexSettingsState, saveCodexSettings } from "./settings.js";
 
 export async function showCodexPanel(ctx: ExtensionCommandContext): Promise<void> {
@@ -105,7 +106,7 @@ class CodexPanel implements Focusable {
     if (!model) return "no model";
 
     const label = `${model.provider}/${model.id}`;
-    return model.provider === "openai-codex"
+    return shouldApplyCodexSettings(model)
       ? this.theme.fg("accent", label)
       : this.theme.fg("dim", label);
   }

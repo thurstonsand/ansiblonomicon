@@ -6,19 +6,18 @@ This documents all files that live **only** on the work Mac and are not tracked 
 
 All fields live in `~/.local/share/chezmoi/.chezmoidata/local.toml`:
 
-| Field                                | Consumed by                                              |
-| ------------------------------------ | -------------------------------------------------------- |
-| `email` / `signingKey`               | `dot_config/git/allowed_signers.tmpl`                    |
-| `[[scm]]`                            | git / SCM templates, `nvim` gitbrowse host URLs          |
-| `goLocalImports` / `goplsBuildFlags` | Go tooling templates                                     |
-| `[work_models]`                      | pi models/settings, Claude Code overlay                  |
-| `anthropicAuthToken`                 | pi / Claude auth templates                               |
-| `anthropicBaseUrl`                   | pi / Claude provider templates                           |
-| `inferenceBudgetUrl`                 | `settings.json.tmpl` (`powerlineCustom.budget.url`)      |
-| `costsDashboardUrl`                  | `settings.json.tmpl` (`powerlineCustom.budget.costsUrl`) |
-| `jiraBrowseUrl`                      | `settings.json.tmpl` (`powerlineCustom.jira.browseUrl`)  |
-| `[[mcp_servers]]`                    | Claude MCP registration                                  |
-| `pi_mcp_json`                        | `private_dot_pi/agent/mcp.json.tmpl`                     |
+| Field                                | Consumed by                                                |
+| ------------------------------------ | ---------------------------------------------------------- |
+| `email` / `signingKey`               | `dot_config/git/allowed_signers.tmpl`                      |
+| `[[scm]]`                            | git / SCM templates, `nvim` gitbrowse host URLs            |
+| `goLocalImports` / `goplsBuildFlags` | Go tooling templates                                       |
+| `[work_models]`                      | pi models/settings, Claude Code overlay                    |
+| `[work_gateway]`                     | pi models/auth templates (endpoint, token, provider names) |
+| `inferenceBudgetUrl`                 | `settings.json.tmpl` (`powerlineCustom.budget.url`)        |
+| `costsDashboardUrl`                  | `settings.json.tmpl` (`powerlineCustom.budget.costsUrl`)   |
+| `jiraBrowseUrl`                      | `settings.json.tmpl` (`powerlineCustom.jira.browseUrl`)    |
+| `[[mcp_servers]]`                    | Claude MCP registration                                    |
+| `pi_mcp_json`                        | `private_dot_pi/agent/mcp.json.tmpl`                       |
 
 ## Shell Extras
 
@@ -54,7 +53,9 @@ Note: The `permissions.allow` array in the overlay **replaces** the base entirel
 
 ### Model Configuration
 
-`local.toml` defines models under `[work_models]`.
+`local.toml` defines models under `[work_models]`, one entry per model the gateway serves: `version` (the bare id), `pi_alias` (the `provider/id` pair pi resolves by, mirroring `agent_harness.aliases.pi` in `models.yml`), `display_name`, `context_window`, `max_output`, and the negotiated `cost` rates.
+
+`[work_gateway]` holds the endpoint, the bearer token, and the two pi provider names. One gateway fronts two wire protocols — Anthropic Messages and OpenAI Responses (at `{base_url}/v1`) — so pi needs a provider per protocol, both authenticating with the same token.
 
 These should be used instead of hard-coding model values.
 

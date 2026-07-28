@@ -118,14 +118,6 @@
       loop: "{{ homebrew_mas_upgrades }}"
       changed_when: true
 
-- name: Pin keg-only conflicting formulas
-  when: not ansible_check_mode and homebrew_link_conflicts | length > 0
-  ansible.builtin.command:
-    argv: ["brew", "pin", "{{ item }}"]
-  loop: "{{ homebrew_link_conflicts.values() | flatten }}"
-  changed_when: false
-  failed_when: false
-
 - name: Set brew bundle install arguments
   when: not ansible_check_mode
   ansible.builtin.set_fact:
@@ -156,21 +148,6 @@
     HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
   register: homebrew_cleanup_result
   changed_when: "'Uninstalling' in homebrew_cleanup_result.stdout"
-
-- name: Unpin keg-only conflicting formulas
-  when: not ansible_check_mode and homebrew_link_conflicts | length > 0
-  ansible.builtin.command:
-    argv: ["brew", "unpin", "{{ item }}"]
-  loop: "{{ homebrew_link_conflicts.values() | flatten }}"
-  changed_when: false
-  failed_when: false
-
-- name: Upgrade conflicting formulas
-  when: not ansible_check_mode and homebrew_upgrade_due and homebrew_link_conflicts | length > 0
-  ansible.builtin.include_tasks: upgrade_conflicting.yml
-  loop: "{{ homebrew_link_conflicts | dict2items }}"
-  loop_control:
-    loop_var: conflict
 
 - name: Ensure cache directory exists
   when: not ansible_check_mode and homebrew_upgrade_due

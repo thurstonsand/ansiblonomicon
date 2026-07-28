@@ -8,8 +8,17 @@ type ResponsesPayload = Record<string, unknown> & {
   text?: unknown;
 };
 
+/**
+ * Verbosity, reasoning summaries and priority service are Responses-API knobs,
+ * not Codex-provider knobs: any model reached over that wire takes them.
+ */
+const CODEX_SETTINGS_APIS: ReadonlySet<string> = new Set<Api>([
+  "openai-responses",
+  "openai-codex-responses",
+]);
+
 export function shouldApplyCodexSettings(model: Model<Api> | undefined): boolean {
-  return model?.provider === "openai-codex";
+  return model !== undefined && CODEX_SETTINGS_APIS.has(model.api);
 }
 
 export function applyCodexRequestSettings(payload: unknown, settings: CodexSettings): unknown {

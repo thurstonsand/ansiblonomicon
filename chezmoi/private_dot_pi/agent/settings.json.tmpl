@@ -1,11 +1,11 @@
 {{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
 {
-  "defaultProvider": {{ if $isWork }}"genaihub"{{ else }}"doppelclaude"{{ end }},
-  "defaultModel": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.opus.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
+  "defaultProvider": {{ if $isWork }}"{{ .work_gateway.openai_provider }}"{{ else }}"doppelclaude"{{ end }},
+  "defaultModel": {{ if $isWork }}"{{ .work_models.gpt_sol.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
   "defaultThinkingLevel": "medium",
   "pinnedModel": {
-    "provider": {{ if $isWork }}"genaihub"{{ else }}"doppelclaude"{{ end }},
-    "modelId": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.opus.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
+    "provider": {{ if $isWork }}"{{ .work_gateway.openai_provider }}"{{ else }}"doppelclaude"{{ end }},
+    "modelId": {{ if $isWork }}"{{ .work_models.gpt_sol.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
     "thinkingLevel": "medium"
   },
   "showCacheMissNotices": true,
@@ -109,7 +109,7 @@
   {{- end }}
   "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.loads(p.read_text()).get('lastChangelogVersion','0.74.0') if p.exists() else '0.74.0')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
   "librarian": {
-    "model": {{ if $isWork }}"genaihub/{{ trimSuffix "[1m]" .work_models.sonnet.version }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
+    "model": {{ if $isWork }}"{{ .work_models.gpt_terra.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
     "thinkingLevel": "off",
     "tools": [
       "search_web",
@@ -118,24 +118,27 @@
   },
   "enabledModels": [
 {{- if $isWork }}
-    "genaihub/{{ trimSuffix "[1m]" .work_models.opus.version }}",
-    "genaihub/{{ trimSuffix "[1m]" .work_models.sonnet.version }}",
-    "genaihub/{{ trimSuffix "[1m]" .work_models.haiku.version }}"
+    "{{ .work_models.gpt_sol.pi_alias }}:medium",
+    "{{ .work_models.opus.pi_alias }}:medium",
+    "{{ .work_models.gpt_terra.pi_alias }}:high",
+    "{{ .work_models.sonnet.pi_alias }}:high",
+    "{{ .work_models.gpt_luna.pi_alias }}:low",
+    "{{ .work_models.haiku.pi_alias }}"
 {{- else }}
-    "{{ .models.anthropic.fable.agent_harness.aliases.pi }}",
-    "{{ .models.anthropic.opus.agent_harness.aliases.pi }}",
-    "{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}",
-    "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}",
-    "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}",
-    "{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}",
-    "{{ .models.openai.gpt_luna.agent_harness.aliases.pi }}"
+    "{{ .models.anthropic.opus.agent_harness.aliases.pi }}:medium",
+    "{{ .models.anthropic.fable.agent_harness.aliases.pi }}:medium",
+    "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}:medium",
+    "{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}:high",
+    "{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}:high",
+    "{{ .models.openai.gpt_luna.agent_harness.aliases.pi }}:low",
+    "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}"
 {{- end }}
   ],
   "steeringMode": "all",
   "followUpMode": "all",
   "sessions": {
     "autoTitle": {
-      "model": {{ if $isWork }}"genaihub/{{ trimSuffix "[1m]" .work_models.sonnet.version }}"{{ else }}"{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}"{{ end }},
+      "model": {{ if $isWork }}"{{ .work_models.sonnet.pi_alias }}"{{ else }}"{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}"{{ end }},
       "timeoutSecs": 60,
       "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
     },
@@ -143,14 +146,14 @@
       "persistRuns": true
     },
     "handoff": {
-      "model": {{ if $isWork }}"genaihub/{{ trimSuffix "[1m]" .work_models.sonnet.version }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
+      "model": {{ if $isWork }}"{{ .work_models.gpt_terra.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
       "thinkingLevel": "low",
       "persistRuns": true
     }
   },
   "workingVibe": "YoRHa",
   "workingVibeMode": "generate",
-  "workingVibeModel": {{ if $isWork }}"genaihub/{{ .work_models.haiku.version }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
+  "workingVibeModel": {{ if $isWork }}"{{ .work_models.sonnet.pi_alias }}"{{ else }}"{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}"{{ end }},
   "workingVibeMaxLength": 48,
   "workingVibeFallback": "Recalibrating",
   "workingVibePrompt": "Generate a terse 2-4 word loading message describing an operation currently underway, in the cold mechanical register of NieR: Automata. Begin with a present-participle verb and use clipped operational vocabulary tied to the task. Sentence case only, never all-caps. No real NieR names (2B, 9S, YoRHa). Task: {task}. {exclude} Output only the message, nothing else.",

@@ -40,8 +40,6 @@
           tags: ["homebrew"]
       vars:
         homebrew_brewfile_path: "{{ playbook_dir }}/../Brewfile.work"
-        homebrew_link_conflicts:
-          pn: [pnpm]
       when: configure_homebrew | default(true)
       tags: ["homebrew"]
 

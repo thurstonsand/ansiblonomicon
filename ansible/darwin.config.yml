@@ -24,3 +24,8 @@ npm_global_packages_extra:
 
 # Additional Ruby gems for macOS (extends gem_packages_base)
 gem_packages_extra: []
+
+# `pn` is a redundant pnpm alias we never use and conflicts with existing bin
+mise_tool_config:
+  tools.pnpm.version: latest
+  tools.pnpm.postinstall: rm -f "$MISE_TOOL_INSTALL_PATH/pn"

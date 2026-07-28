@@ -2,6 +2,7 @@ import path from "node:path";
 import type { Api, Model } from "@earendil-works/pi-ai";
 import { getAgentDir } from "@earendil-works/pi-coding-agent";
 
+import { shouldApplyCodexSettings } from "../codexctl/request.js";
 import {
   type CodexReasoningSummary,
   type CodexVerbosity,
@@ -56,7 +57,7 @@ export class CodexConfigWatcher extends FileBackedStateWatcher<PiSettingsFile, C
   }
 
   protected project(config: PiSettingsFile, model: Model<Api>): CodexStatus {
-    if (model.provider !== "openai-codex") return { fast: false };
+    if (!shouldApplyCodexSettings(model)) return { fast: false };
     return {
       fast: config.codex?.fast === true,
       verbosity: config.codex?.verbosity,

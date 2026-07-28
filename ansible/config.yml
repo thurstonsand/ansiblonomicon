@@ -24,6 +24,11 @@ mise_global_tools_base:
   - npm@latest
   - golangci-lint@latest
 
+# Tools whose mise config goes beyond a version string, written straight to
+# mise's global config file (see the language_tools role).
+# override this wholesale.
+mise_tool_config: {}
+
 # Global npm packages (base set for all hosts)
 npm_global_packages_base:
   - "@earendil-works/pi-coding-agent"

@@ -84,7 +84,7 @@ export class BudgetClient {
     if (pending) return pending;
 
     const task = (async () => {
-      const token = readAnthropicToken();
+      const token = readGatewayToken();
       if (!token) return;
       const data = await fetcher(token);
       if (data) writeCache(file, data);
@@ -96,10 +96,20 @@ export class BudgetClient {
   }
 }
 
-function readAnthropicToken(): string | undefined {
-  const auth = readJsonFile(path.join(getAgentDir(), "auth.json"));
-  const anthropic = isJsonObject(auth?.anthropic) ? auth.anthropic : undefined;
-  return typeof anthropic?.key === "string" ? anthropic.key : undefined;
+/**
+ * Every provider in models.json is the same gateway behind a different wire
+ * protocol, sharing one token, so the first key found is the right one. Looking
+ * one up by provider name would put the gateway's name in git.
+ */
+function readGatewayToken(): string | undefined {
+  const models = readJsonFile(path.join(getAgentDir(), "models.json"));
+  const providers = isJsonObject(models?.providers) ? models.providers : undefined;
+  if (!providers) return undefined;
+
+  for (const provider of Object.values(providers)) {
+    if (isJsonObject(provider) && typeof provider.apiKey === "string") return provider.apiKey;
+  }
+  return undefined;
 }
 
 function readBudgetCeiling(): BudgetCeiling | undefined {

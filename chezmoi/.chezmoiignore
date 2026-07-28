@@ -85,6 +85,8 @@ Library/
 .oracle/
 .gemini/
 .rustup/
+# smart-btw is not installed here, so its config would be an orphan
+.pi/agent/pi-smart-btw.json
 
 # Personal home-lab scripts
 .local/bin/btt-paste-image.sh

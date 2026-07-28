@@ -22,8 +22,7 @@ merged.update({key: value for key, value in existing.items() if key not in manag
 print(json.dumps(merged, indent=2))
 ` -}}
 {{- if $isWork -}}
-{{- $managed := printf `{"anthropic": {"type": "api_key", "key": "%s"}}` .anthropicAuthToken -}}
-{{ output "python3" "-c" $mergeAuth $authPath $managed "anthropic" }}
+{{ output "python3" "-c" $mergeAuth $authPath "{}" "anthropic" }}
 {{- else -}}
 {{ output "python3" "-c" $mergeAuth $authPath "{}" "anthropic" "openai" "google" }}
 {{- end -}}

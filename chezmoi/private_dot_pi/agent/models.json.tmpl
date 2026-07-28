@@ -2,9 +2,9 @@
 {
   "providers": {
 {{- if $isWork }}
-    "genaihub": {
-      "baseUrl": "{{ .anthropicBaseUrl }}",
-      "apiKey": "{{ .anthropicAuthToken }}",
+    "{{ .work_gateway.anthropic_provider }}": {
+      "baseUrl": "{{ .work_gateway.base_url }}",
+      "apiKey": "{{ .work_gateway.auth_token }}",
       "api": "anthropic-messages",
       "authHeader": true,
       "headers": {"anthropic-beta": "context-1m-2025-08-07", "User-Agent": "pi-coding-agent"},
@@ -15,10 +15,10 @@
           "reasoning": true,
           "input": ["text", "image"],
           "cost": {"input": {{ .work_models.opus.cost.input }}, "output": {{ .work_models.opus.cost.output }}, "cacheRead": {{ .work_models.opus.cost.cacheRead }}, "cacheWrite": {{ .work_models.opus.cost.cacheWrite }}},
-          "contextWindow": {{ .models.anthropic.opus.max_input }},
-          "maxTokens": {{ .models.anthropic.opus.max_output }},
+          "contextWindow": {{ .work_models.opus.context_window }},
+          "maxTokens": {{ .work_models.opus.max_output }},
           "thinkingLevelMap": {"xhigh": "xhigh", "max": "max"},
-          "compat": {"forceAdaptiveThinking": true, "supportsTemperature": {{ .models.anthropic.opus.supports_temperature }}}
+          "compat": {"forceAdaptiveThinking": true, "supportsTemperature": {{ .work_models.opus.supports_temperature }}}
         },
         {
           "id": "{{ trimSuffix "[1m]" .work_models.sonnet.version }}",
@@ -26,8 +26,8 @@
           "reasoning": true,
           "input": ["text", "image"],
           "cost": {"input": {{ .work_models.sonnet.cost.input }}, "output": {{ .work_models.sonnet.cost.output }}, "cacheRead": {{ .work_models.sonnet.cost.cacheRead }}, "cacheWrite": {{ .work_models.sonnet.cost.cacheWrite }}},
-          "contextWindow": {{ .models.anthropic.sonnet.max_input }},
-          "maxTokens": {{ .models.anthropic.sonnet.max_output }},
+          "contextWindow": {{ .work_models.sonnet.context_window }},
+          "maxTokens": {{ .work_models.sonnet.max_output }},
           "thinkingLevelMap": {"xhigh": "xhigh", "max": "max"},
           "compat": {"forceAdaptiveThinking": true}
         },
@@ -37,8 +37,47 @@
           "reasoning": false,
           "input": ["text", "image"],
           "cost": {"input": {{ .work_models.haiku.cost.input }}, "output": {{ .work_models.haiku.cost.output }}, "cacheRead": {{ .work_models.haiku.cost.cacheRead }}, "cacheWrite": {{ .work_models.haiku.cost.cacheWrite }}},
-          "contextWindow": {{ .models.anthropic.haiku.max_input }},
-          "maxTokens": {{ .models.anthropic.haiku.max_output }}
+          "contextWindow": {{ .work_models.haiku.context_window }},
+          "maxTokens": {{ .work_models.haiku.max_output }}
+        }
+      ]
+    },
+    "{{ .work_gateway.openai_provider }}": {
+      "baseUrl": "{{ .work_gateway.base_url }}/v1",
+      "apiKey": "{{ .work_gateway.auth_token }}",
+      "api": "openai-responses",
+      "headers": {"User-Agent": "pi-coding-agent"},
+      "compat": {"supportsStrictMode": true, "supportsOpenAIGrammarTools": true},
+      "models": [
+        {
+          "id": "{{ .work_models.gpt_sol.version }}",
+          "name": "{{ .work_models.gpt_sol.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": {{ .work_models.gpt_sol.cost.input }}, "output": {{ .work_models.gpt_sol.cost.output }}, "cacheRead": {{ .work_models.gpt_sol.cost.cacheRead }}, "cacheWrite": {{ .work_models.gpt_sol.cost.cacheWrite }}},
+          "contextWindow": {{ .work_models.gpt_sol.context_window }},
+          "maxTokens": {{ .work_models.gpt_sol.max_output }},
+          "thinkingLevelMap": {"off": "none", "minimal": null, "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh", "max": "max"}
+        },
+        {
+          "id": "{{ .work_models.gpt_terra.version }}",
+          "name": "{{ .work_models.gpt_terra.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": {{ .work_models.gpt_terra.cost.input }}, "output": {{ .work_models.gpt_terra.cost.output }}, "cacheRead": {{ .work_models.gpt_terra.cost.cacheRead }}, "cacheWrite": {{ .work_models.gpt_terra.cost.cacheWrite }}},
+          "contextWindow": {{ .work_models.gpt_terra.context_window }},
+          "maxTokens": {{ .work_models.gpt_terra.max_output }},
+          "thinkingLevelMap": {"off": "none", "minimal": null, "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh", "max": "max"}
+        },
+        {
+          "id": "{{ .work_models.gpt_luna.version }}",
+          "name": "{{ .work_models.gpt_luna.display_name }}",
+          "reasoning": true,
+          "input": ["text", "image"],
+          "cost": {"input": {{ .work_models.gpt_luna.cost.input }}, "output": {{ .work_models.gpt_luna.cost.output }}, "cacheRead": {{ .work_models.gpt_luna.cost.cacheRead }}, "cacheWrite": {{ .work_models.gpt_luna.cost.cacheWrite }}},
+          "contextWindow": {{ .work_models.gpt_luna.context_window }},
+          "maxTokens": {{ .work_models.gpt_luna.max_output }},
+          "thinkingLevelMap": {"off": "none", "minimal": null, "low": "low", "medium": "medium", "high": "high", "xhigh": "xhigh", "max": "max"}
         }
       ]
     }

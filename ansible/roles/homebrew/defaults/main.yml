@@ -1,4 +1,3 @@
 ---
 homebrew_upgrade_interval_seconds: 86400
 homebrew_cache_dir: "{{ ansible_facts['env']['HOME'] }}/.cache/ansible-homebrew"
-homebrew_link_conflicts: {}

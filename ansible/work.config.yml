@@ -86,6 +86,12 @@ gem_packages: "{{ (gem_packages_base | default([])) + (gem_packages_extra | defa
 mise_global_tools_base:
   - node@lts
   - golangci-lint@latest
+
+# Tools whose mise config goes beyond a version string, written straight to
+# mise's global config file.
+mise_tool_config:
+  tools.pnpm.version: latest
+  tools.pnpm.postinstall: rm -f "$MISE_TOOL_INSTALL_PATH/pn"
 go_tools_base: []
 npm_global_packages_base: []
 bun_global_packages_base: []
