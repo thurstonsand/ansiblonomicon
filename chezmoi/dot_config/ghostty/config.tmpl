@@ -35,6 +35,9 @@ keybind = cmd+enter=ignore
 keybind = shift+enter=unbind
 keybind = cmd+shift+p=toggle_command_palette
 
+# ctrl-k is claimed by goto_split:up, so route kill-to-end-of-line through cmd+fn+delete
+keybind = cmd+delete=text:\x0b
+
 # ctrl-hjkl navigates Ghostty splits unless this surface is in the nvim key table
 keybind = ctrl+h=goto_split:left
 keybind = ctrl+j=goto_split:down
