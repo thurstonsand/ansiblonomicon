@@ -139,6 +139,7 @@
   "sessions": {
     "autoTitle": {
       "model": {{ if $isWork }}"{{ .work_models.sonnet.pi_alias }}"{{ else }}"{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}"{{ end }},
+      "thinkingLevel": "off",
       "timeoutSecs": 60,
       "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
     },
