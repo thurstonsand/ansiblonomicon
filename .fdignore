@@ -1,4 +1,5 @@
 # Unhide work-only files from fd (overrides .gitignore)
+!AGENTS.local.md
 !agents/work/
 !ansible/Brewfile.work.*
 !ansible/tasks/work.local.yml

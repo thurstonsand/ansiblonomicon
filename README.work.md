@@ -104,6 +104,12 @@ The `repo` field accepts full git URLs (ending in `.git`) or the short `owner/na
 
 Added to `agent_harness_sources_base` in `work.config.yml`.
 
+## Local Agent Instructions
+
+| File                | Purpose                                                        |
+| ------------------- | -------------------------------------------------------------- |
+| `./AGENTS.local.md` | Work-machine instructions loaded alongside the project context |
+
 ## MCP Servers
 
 | File                                             | Purpose                                                   |
@@ -172,6 +178,7 @@ When setting up a new work Mac, copy these files from the old machine:
 - `ansible/work.config.local.yml`
 - `ansible/tasks/work.local.yml`
 - `agents/work/`
+- `./AGENTS.local.md`
 - `./uv.toml`
 
 Then run `chezmoi apply` and `uv run poe laptop`.

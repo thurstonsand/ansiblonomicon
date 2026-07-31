@@ -18,6 +18,8 @@ node_modules
 
 # ai
 /.claude/settings.local.json
+AGENTS.local.md
+CLAUDE.local.md
 
 # Terraform
 **/.terraform/

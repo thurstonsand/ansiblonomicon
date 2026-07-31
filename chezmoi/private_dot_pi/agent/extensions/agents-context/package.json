@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "description": "Pi extension that extends AGENTS.md context, loading @-referenced files into the system prompt",
+  "description": "Pi extension that loads local context and @-referenced files into the system prompt",
   "pi": {
     "extensions": [
       "./index.ts"

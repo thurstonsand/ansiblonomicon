@@ -4,8 +4,20 @@ import path from "node:path";
 // newlines so line-leading refs in multi-line context files are detected.
 const TOKEN_BOUNDARIES = new Set([" ", "\t", "\n", "\r", '"', "'", "="]);
 
-export function isAgentsFile(filePath: string): boolean {
-  return path.basename(filePath).toUpperCase() === "AGENTS.MD";
+export type ContextFileKind = "agents" | "claude";
+
+export function contextFileKind(filePath: string): ContextFileKind | undefined {
+  const basename = path.basename(filePath).toUpperCase();
+  if (basename === "AGENTS.MD") return "agents";
+  if (basename === "CLAUDE.MD") return "claude";
+  return undefined;
+}
+
+export function localCompanionBasename(filePath: string): string | undefined {
+  const kind = contextFileKind(filePath);
+  if (kind === "agents") return "AGENTS.local.md";
+  if (kind === "claude") return "CLAUDE.local.md";
+  return undefined;
 }
 
 /** Extract `@`-reference tokens that begin at a token boundary. */
