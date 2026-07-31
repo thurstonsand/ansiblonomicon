@@ -26,7 +26,7 @@ On macOS, `dark-notify` acts as the source of truth for terminal theme state. An
 
 ### Retiring managed paths
 
-Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, work macOS, and OpenClaw run removes listed files, symlinks, or directories idempotently, including tagged runs. Relative and `~/` entries resolve beneath the managed user's home; absolute paths are used verbatim. TrueNAS and UDMP do not consume this manifest.
+Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, work macOS, pod042, and OpenClaw run removes listed files, symlinks, or directories idempotently, including tagged runs. Relative and `~/` entries resolve beneath the managed user's home; absolute paths are used verbatim. TrueNAS and UDMP do not consume this manifest.
 
 ## Structure
 
@@ -73,6 +73,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 - `poe pod042` — Converge pod042 from inside its persistent checkout
 - `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe udmp` — Apply UDMP Ansible playbook
+- `poe list-tags [playbook]` — List the `--tags` a playbook offers (defaults to this machine's own)
 - `poe cz-diff` — Preview dotfile changes (source → home), excluding lockfiles
 - `poe cz-status` — Show files that differ between source and home
 - `poe cz-re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)

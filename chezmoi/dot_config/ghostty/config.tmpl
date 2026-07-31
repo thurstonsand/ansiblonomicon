@@ -38,6 +38,13 @@ keybind = cmd+shift+p=toggle_command_palette
 # ctrl-k is claimed by goto_split:up, so route kill-to-end-of-line through cmd+fn+delete
 keybind = cmd+delete=text:\x0b
 
+keybind = cmd+j=scroll_page_lines:3
+keybind = cmd+k=scroll_page_lines:-3
+keybind = cmd+shift+j=jump_to_prompt:1
+keybind = cmd+shift+k=jump_to_prompt:-1
+# displaced by cmd+k; ctrl+l is spent on goto_split, so clear lands one modifier over
+keybind = cmd+l=clear_screen
+
 # ctrl-hjkl navigates Ghostty splits unless this surface is in the nvim key table
 keybind = ctrl+h=goto_split:left
 keybind = ctrl+j=goto_split:down
@@ -58,6 +65,25 @@ keybind = cmd+shift+a>j=new_split:down
 keybind = cmd+shift+a>k=new_split:up
 keybind = cmd+shift+a>l=new_split:right
 keybind = cmd+shift+a>m=toggle_mouse_reporting
+
+# vim-style scroll mode; no nvim/ counterpart because the alt screen has no scrollback
+keybind = cmd+shift+a>v=activate_key_table:scroll
+keybind = scroll/
+keybind = scroll/j=scroll_page_lines:3
+keybind = scroll/k=scroll_page_lines:-3
+keybind = scroll/f=scroll_page_down
+keybind = scroll/b=scroll_page_up
+keybind = scroll/ctrl+f=scroll_page_down
+keybind = scroll/ctrl+b=scroll_page_up
+keybind = scroll/d=scroll_page_fractional:0.5
+keybind = scroll/u=scroll_page_fractional:-0.5
+keybind = scroll/g=scroll_to_top
+keybind = scroll/shift+g=scroll_to_bottom
+keybind = scroll/shift+j=jump_to_prompt:1
+keybind = scroll/shift+k=jump_to_prompt:-1
+keybind = scroll/escape=deactivate_key_table
+keybind = scroll/q=deactivate_key_table
+
 keybind = nvim/cmd+shift+a>z=toggle_split_zoom
 keybind = nvim/cmd+shift+a>h=new_split:left
 keybind = nvim/cmd+shift+a>j=new_split:down

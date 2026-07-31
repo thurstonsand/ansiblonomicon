@@ -55,9 +55,36 @@
     chdir: "{{ docker_stack_dest }}"
   changed_when: true
 
+# Sidecars that drive `docker compose` themselves race this deploy: both clients
+# recreate the same containers, one renames a container out from under the other,
+# and the loser fails with "No such container". Stop them for the duration; the
+# deploy's own `compose up` starts them again as part of the project.
 - name: Deploy stack
-  community.docker.docker_compose_v2:
-    project_src: "{{ docker_stack_dest }}"
-    state: present
-    pull: "{{ docker_stack_pull_policy | default('missing') }}"
-    build: policy
+  block:
+    - name: Stop containers that drive compose themselves
+      ansible.builtin.command:
+        cmd: "docker stop {{ item }}"
+      loop: "{{ docker_stack_pause_containers | default([]) }}"
+      changed_when: true
+
+    - name: Deploy stack
+      community.docker.docker_compose_v2:
+        project_src: "{{ docker_stack_dest }}"
+        state: present
+        pull: "{{ docker_stack_pull_policy | default('missing') }}"
+        build: policy
+  always:
+    - name: Check paused containers came back
+      community.docker.docker_container_info:
+        name: "{{ item }}"
+      loop: "{{ docker_stack_pause_containers | default([]) }}"
+      register: _docker_stack_paused_info
+
+    - name: Restart paused containers the deploy left stopped
+      ansible.builtin.command:
+        cmd: "docker start {{ item.item }}"
+      loop: "{{ _docker_stack_paused_info.results | default([]) }}"
+      loop_control:
+        label: "{{ item.item }}"
+      when: item.exists and not item.container.State.Running
+      changed_when: true

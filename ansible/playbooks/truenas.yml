@@ -433,6 +433,7 @@
           tags: [docker-stack-role, torrent]
       vars:
         docker_stack_name: torrent
+        docker_stack_pause_containers: [torrent-netns-repair]
 
     - name: Deploy watchtower stack
       tags: [docker-stack-role, watchtower]

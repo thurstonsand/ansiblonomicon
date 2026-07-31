@@ -1,11 +1,13 @@
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
-import type { Api, Model } from "@earendil-works/pi-ai";
+import { getSupportedThinkingLevels } from "@earendil-works/pi-ai";
 import {
   type ExtensionAPI,
   type ExtensionCommandContext,
+  type ExtensionContext,
   getAgentDir,
+  type ScopedModel,
 } from "@earendil-works/pi-coding-agent";
 import type { AutocompleteItem } from "@earendil-works/pi-tui";
 import { fuzzyFilter } from "@earendil-works/pi-tui";
@@ -169,14 +171,14 @@ export function writePinnedDefaults(
 
 export function findExactModelReferenceMatch(
   modelReference: string,
-  availableModels: Model<Api>[],
-): Model<Api> | undefined {
+  availableModels: readonly ScopedModel[],
+): ScopedModel | undefined {
   const trimmedReference = modelReference.trim();
   if (!trimmedReference) return undefined;
 
   const normalizedReference = trimmedReference.toLowerCase();
   const canonicalMatches = availableModels.filter(
-    (model) => `${model.provider}/${model.id}`.toLowerCase() === normalizedReference,
+    ({ model }) => `${model.provider}/${model.id}`.toLowerCase() === normalizedReference,
   );
   if (canonicalMatches.length === 1) return canonicalMatches[0];
   if (canonicalMatches.length > 1) return undefined;
@@ -187,7 +189,7 @@ export function findExactModelReferenceMatch(
     const modelId = trimmedReference.substring(slashIndex + 1).trim();
     if (provider && modelId) {
       const providerMatches = availableModels.filter(
-        (model) =>
+        ({ model }) =>
           model.provider.toLowerCase() === provider.toLowerCase() &&
           model.id.toLowerCase() === modelId.toLowerCase(),
       );
@@ -197,65 +199,146 @@ export function findExactModelReferenceMatch(
   }
 
   const idMatches = availableModels.filter(
-    (model) => model.id.toLowerCase() === normalizedReference,
+    ({ model }) => model.id.toLowerCase() === normalizedReference,
   );
   return idMatches.length === 1 ? idMatches[0] : undefined;
 }
 
-function getModelSearchText(model: Model<Api>): string {
+export interface ModelArgument {
+  reference: string;
+  thinkingLevel?: ThinkingLevel;
+}
+
+/**
+ * Split a `model[:level]` argument. Model ids carry their own colons (Bedrock's
+ * `...-v1:0`), so a suffix is only a thinking level when it actually names one.
+ */
+export function parseModelArgument(argument: string): ModelArgument {
+  const separator = argument.lastIndexOf(":");
+  if (separator === -1) return { reference: argument.trim() };
+
+  const suffix = argument.slice(separator + 1).trim();
+  if (!isThinkingLevel(suffix)) return { reference: argument.trim() };
+
+  return { reference: argument.slice(0, separator).trim(), thinkingLevel: suffix };
+}
+
+// Pi's own selector and cycler operate on the scoped models, so pinning outside
+// that scope would write a default the built-in selector never offers. An empty
+// scope means no scoping is configured, leaving the whole catalogue usable.
+function selectableModels(ctx: ExtensionContext): ScopedModel[] {
+  return ctx.scopedModels.length > 0
+    ? [...ctx.scopedModels]
+    : ctx.modelRegistry.getAvailable().map((model) => ({ model }));
+}
+
+function modelReference({ model, thinkingLevel }: ScopedModel): string {
+  const reference = `${model.provider}/${model.id}`;
+  return thinkingLevel ? `${reference}:${thinkingLevel}` : reference;
+}
+
+function getModelSearchText({ model }: ScopedModel): string {
   const name = model.name ? ` ${model.name}` : "";
   return `${model.id} ${model.provider} ${model.provider}/${model.id} ${model.provider} ${model.id}${name}`;
 }
 
-function getModelSelectorSearchText(model: Model<Api>): string {
+function getModelSelectorSearchText({ model }: ScopedModel): string {
   const name = model.name ? ` ${model.name}` : "";
   return `${model.provider} ${model.provider}/${model.id} ${model.provider} ${model.id}${name}`;
 }
 
-function getArgumentCompletions(
-  models: Model<Api>[],
-  argumentPrefix: string,
+function getThinkingLevelCompletions(
+  scoped: ScopedModel,
+  levelPrefix: string,
 ): AutocompleteItem[] | null {
-  const matches = fuzzyFilter(models, argumentPrefix, getModelSearchText);
-  if (matches.length === 0) return null;
-  return matches.map((model) => ({
-    value: `${model.provider}/${model.id}`,
-    label: model.id,
-    description: model.provider,
+  const reference = `${scoped.model.provider}/${scoped.model.id}`;
+  const levels = getSupportedThinkingLevels(scoped.model).filter((level) =>
+    level.startsWith(levelPrefix.toLowerCase()),
+  );
+  if (levels.length === 0) return null;
+
+  return levels.map((level) => ({
+    value: `${reference}:${level}`,
+    label: level,
+    description: scoped.model.id,
   }));
 }
 
+function getArgumentCompletions(
+  models: readonly ScopedModel[],
+  argumentPrefix: string,
+): AutocompleteItem[] | null {
+  // An exact model on the left of a colon means the user is choosing a level for
+  // it. Anything else — including a model id whose own suffix is `:0` — is still
+  // a model reference being typed.
+  const separator = argumentPrefix.lastIndexOf(":");
+  if (separator !== -1) {
+    const match = findExactModelReferenceMatch(argumentPrefix.slice(0, separator), models);
+    if (match)
+      return getThinkingLevelCompletions(match, argumentPrefix.slice(separator + 1).trim());
+  }
+
+  const matches = fuzzyFilter([...models], argumentPrefix, getModelSearchText);
+  if (matches.length === 0) return null;
+  return matches.map((scoped) => ({
+    value: modelReference(scoped),
+    label: scoped.thinkingLevel ? `${scoped.model.id}:${scoped.thinkingLevel}` : scoped.model.id,
+    description: scoped.model.provider,
+  }));
+}
+
+/**
+ * Switching models mirrors pi's own cycler: an explicitly requested level wins,
+ * else the level the scope pinned, else whatever the session already sits at.
+ * Pinning in place (no switch) always keeps the current level, since the point
+ * of a bare `/pin-model` is to capture where you already are.
+ */
 async function pinModel(
   pi: ExtensionAPI,
   ctx: ExtensionCommandContext,
   settingsPath: string,
-  model: Model<Api>,
+  scoped: ScopedModel,
+  requestedLevel: ThinkingLevel | undefined,
   switchModel: boolean,
 ): Promise<void> {
+  const { model } = scoped;
+
+  if (requestedLevel && !getSupportedThinkingLevels(model).includes(requestedLevel)) {
+    const supported = getSupportedThinkingLevels(model).join(", ");
+    ctx.ui.notify(`${model.id} supports only: ${supported}`, "error");
+    return;
+  }
+
   if (switchModel && !(await pi.setModel(model))) {
     ctx.ui.notify(`No API key for ${model.provider}/${model.id}`, "error");
     return;
   }
 
+  const thinkingLevel = switchModel ? (requestedLevel ?? scoped.thinkingLevel) : requestedLevel;
+  if (thinkingLevel) pi.setThinkingLevel(thinkingLevel);
+
+  // Read back rather than reusing the requested level: pi clamps to what the
+  // model actually supports, and that clamped value is what the session runs on.
+  const effectiveLevel = pi.getThinkingLevel();
   const result = writePinnedDefaults(settingsPath, {
     provider: model.provider,
     modelId: model.id,
-    thinkingLevel: pi.getThinkingLevel(),
+    thinkingLevel: effectiveLevel,
   });
   if (result === "failed") {
     ctx.ui.notify("Could not update pinned model settings", "error");
     return;
   }
 
-  ctx.ui.notify(`Model: ${model.id}`, "info");
+  ctx.ui.notify(`Model: ${model.id} (${effectiveLevel})`, "info");
 }
 
 export default function pinModelExtension(pi: ExtensionAPI): void {
   const settingsPath = join(getAgentDir(), "settings.json");
-  let modelSource: (() => Model<Api>[]) | undefined;
+  let modelSource: (() => ScopedModel[]) | undefined;
   let restoreTimers: NodeJS.Timeout[] = [];
 
-  const getAvailableModels = (): Model<Api>[] => {
+  const getAvailableModels = (): ScopedModel[] => {
     try {
       return modelSource?.() ?? [];
     } catch {
@@ -283,35 +366,36 @@ export default function pinModelExtension(pi: ExtensionAPI): void {
     description: "Pin the default model and thinking level",
     getArgumentCompletions: (prefix) => getArgumentCompletions(getAvailableModels(), prefix),
     handler: async (args, ctx) => {
-      const pattern = args.trim();
-      if (!pattern) {
+      const { reference, thinkingLevel } = parseModelArgument(args);
+      modelSource = () => selectableModels(ctx);
+      const availableModels = getAvailableModels();
+
+      if (!reference) {
         if (!ctx.model) {
           ctx.ui.notify("No model is selected", "error");
           return;
         }
-        await pinModel(pi, ctx, settingsPath, ctx.model, false);
+        await pinModel(pi, ctx, settingsPath, { model: ctx.model }, thinkingLevel, false);
         return;
       }
 
-      modelSource = () => ctx.modelRegistry.getAvailable();
-      const availableModels = getAvailableModels();
-      const exactMatch = findExactModelReferenceMatch(pattern, availableModels);
+      const exactMatch = findExactModelReferenceMatch(reference, availableModels);
       if (exactMatch) {
-        await pinModel(pi, ctx, settingsPath, exactMatch, true);
+        await pinModel(pi, ctx, settingsPath, exactMatch, thinkingLevel, true);
         return;
       }
 
-      const partialMatches = fuzzyFilter(availableModels, pattern, getModelSelectorSearchText);
+      const partialMatches = fuzzyFilter(availableModels, reference, getModelSelectorSearchText);
       if (partialMatches.length === 0) {
-        ctx.ui.notify(`No models match "${pattern}"`, "error");
+        ctx.ui.notify(`No models match "${reference}"`, "error");
         return;
       }
 
-      const references = partialMatches.map((model) => `${model.provider}/${model.id}`);
+      const references = partialMatches.map(modelReference);
       const selected = await ctx.ui.select("Pin model:", references);
       if (!selected) return;
       const selectedModel = partialMatches[references.indexOf(selected)];
-      if (selectedModel) await pinModel(pi, ctx, settingsPath, selectedModel, true);
+      if (selectedModel) await pinModel(pi, ctx, settingsPath, selectedModel, thinkingLevel, true);
     },
   });
 
@@ -323,7 +407,7 @@ export default function pinModelExtension(pi: ExtensionAPI): void {
   // extension loaded after this one.
   pi.on("session_start", (_event, ctx) => {
     restorePinnedDefaults(settingsPath);
-    modelSource = () => ctx.modelRegistry.getAvailable();
+    modelSource = () => selectableModels(ctx);
   });
 
   pi.on("model_select", scheduleRestore);

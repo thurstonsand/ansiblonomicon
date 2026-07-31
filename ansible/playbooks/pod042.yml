@@ -22,6 +22,10 @@
           `uv run poe pod042` from the ansiblonomicon checkout.
       tags: [always]
 
+    - name: Remove retired managed paths
+      ansible.builtin.import_tasks: ../tasks/remove_retired_paths.yml
+      tags: [always]
+
     - name: Display system info
       ansible.builtin.debug:
         msg: >-

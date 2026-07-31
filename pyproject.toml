@@ -214,6 +214,15 @@ name = "tags"
 options = ["--tags", "-t"]
 help = "Only run tasks with these tags (comma-separated)"
 
+[tool.poe.tasks.list-tags]
+help = "List the --tags a playbook offers (defaults to this machine's own)"
+cmd = "./scripts/list-tags.sh ${playbook}"
+
+[[tool.poe.tasks.list-tags.args]]
+name = "playbook"
+positional = true
+help = "Playbook to inspect: macos, work, truenas, udmp, pod042"
+
 # Chezmoi tasks
 [tool.poe.tasks.cz-diff]
 help = "Show what chezmoi would change (source → home), excluding lockfiles"
