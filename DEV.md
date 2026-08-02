@@ -96,6 +96,7 @@ Spans every host and every harness. Driven by `roles/agent_harness/vars/agents.y
 - **Models** at `ansible/models.yml` — the single source for versions, aliases, and per-editor config, symlinked to `chezmoi/.chezmoidata/models.yaml`. `ansible/session-title-prompt.txt` is symlinked the same way.
 - **Pi** at `chezmoi/private_dot_pi/agent/`: extensions under `extensions/`, permission rules under `permissions/`, external packages referenced from `settings.json.tmpl`.
 - **Amp** at `chezmoi/dot_config/amp/plugins/`.
+- **Codex** at `chezmoi/.chezmoitemplates/codex-config.toml.tmpl` — the declared keys only. Codex and the ChatGPT app write into the file as well, so it's additive.
 - **Session recovery**: the shared core at `chezmoi/dot_local/lib/session-recovery/`, consumed by a Pi extension at `private_dot_pi/agent/extensions/session-recovery/` and a Claude script at `dot_claude/scripts/session-recovery/`. User config sits at `dot_config/session-recovery/`. Consumers carry no devDeps and borrow the core's toolchain, so lint it through `poe lint:session-recovery` rather than from inside a consumer.
 
 ## Cloudflare

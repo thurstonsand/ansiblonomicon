@@ -1,0 +1,150 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+model = "{{ .models.openai.gpt_sol.version }}"
+model_context_window = {{ .models.openai.gpt_sol.max_input }}
+model_auto_compact_token_limit = {{ .models.openai.gpt_sol.codex.auto_compact_token_limit }}
+model_reasoning_effort = "medium"
+model_reasoning_summary = "auto"
+approval_policy = "on-request"
+sandbox_mode = "danger-full-access"
+personality = "friendly"
+web_search = "live"
+default_mode_request_user_input = true
+service_tier = "default"
+
+[features]
+unified_exec = true
+apply_patch_freeform = true
+shell_snapshot = true
+multi_agent = true
+apps = true
+prevent_idle_sleep = true
+memories = true
+chronicle = true
+remote_connections = true
+undo = true
+default_mode_request_user_input = true
+artifact = true
+child_agents_md = true
+terminal_resize_reflow = true
+goals = true
+js_repl = false
+
+[history]
+persistence = "save-all"
+
+[tui]
+notifications = true
+theme = "gruvbox-{{ output "sh" "-c" "cat ~/.terminal-bg 2>/dev/null || echo dark" | trim }}"
+status_line = [ "context-remaining", "model-with-reasoning", "project-root", "git-branch" ]
+
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/nixonomicon"]
+trust_level = "trusted"
+
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/anypod"]
+trust_level = "trusted"
+
+{{ if eq .chezmoi.hostname "clawdbot" -}}
+[projects."{{ .chezmoi.homeDir }}"]
+trust_level = "trusted"
+
+{{ end -}}
+
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/ansiblonomicon"]
+trust_level = "trusted"
+
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/pi-sessions"]
+trust_level = "trusted"
+
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/mtool"]
+trust_level = "trusted"
+
+[projects."/"]
+trust_level = "trusted"
+
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/ghosttykit"]
+trust_level = "trusted"
+
+[projects."{{ .chezmoi.homeDir }}/{{ .developDir }}/flux-keyboard-sdk"]
+trust_level = "trusted"
+
+[plugins."google-calendar@openai-curated"]
+enabled = true
+
+[plugins."gmail@openai-curated"]
+enabled = true
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."google-drive@openai-curated"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."chrome@openai-bundled"]
+enabled = true
+
+[plugins."sites@openai-bundled"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[desktop]
+followUpQueueMode = "steer"
+mac-menu-bar-enabled = false
+preventSleepWhileRunning = true
+hotkey-window-projectless-default-enabled = true
+appearanceLightCodeThemeId = "gruvbox"
+appearanceDarkCodeThemeId = "gruvbox"
+usePointerCursors = true
+selected-avatar-id = "custom:2b"
+open-local-url-in-target-preference = "in-app-browser"
+git-always-force-push = true
+dock-icon-preference = "app-default"
+
+[desktop.open-in-target-preferences]
+global = "zed"
+
+[desktop.appearanceLightChromeTheme]
+accent = "#458588"
+contrast = 45
+ink = "#3c3836"
+opaqueWindows = false
+surface = "#fbf1c7"
+
+[desktop.appearanceLightChromeTheme.semanticColors]
+diffAdded = "#3c3836"
+diffRemoved = "#cc241d"
+skill = "#b16286"
+
+[desktop.appearanceDarkChromeTheme]
+accent = "#458588"
+contrast = 60
+ink = "#ebdbb2"
+opaqueWindows = false
+surface = "#282828"
+
+[desktop.appearanceDarkChromeTheme.semanticColors]
+diffAdded = "#ebdbb2"
+diffRemoved = "#cc241d"
+skill = "#b16286"

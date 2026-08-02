@@ -38,6 +38,9 @@
   },
 {{- if not $isWork }}
   "doppelclaude": {
+    "debug": {
+      "enabled": true
+    },
     "provider": {
       "systemPromptMode": "pi",
       "systemPromptReplacements": {
@@ -203,13 +206,6 @@
     "stashHistory": "alt+shift+s",
     "copyEditor": null,
     "cutEditor": null,
-    "jumpPreviousUserMessage": "alt+shift+k",
-    "jumpNextUserMessage": "alt+shift+j",
-    "jumpPreviousLlmMessage": null,
-    "jumpNextLlmMessage": null,
-    "jumpChatBottom": "alt+shift+g",
-    "scrollChatUp": "alt+k",
-    "scrollChatDown": "alt+j",
     "editorStart": null,
     "editorEnd": null
   },
@@ -241,10 +237,10 @@
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/wt/plugins/pi"{{ else }}"npm:@thurstonsand/pi-wt"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-doppelclaude"{{ else }}"npm:pi-doppelclaude"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-web-tools"{{ else }}"npm:@thurstonsand/pi-web-tools"{{ end }},
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:pi-powerline-footer"{{ end }},
     "npm:glimpseui",
     "npm:pi-interview",
     "npm:pi-mcp-adapter",
-    "npm:pi-powerline-footer",
     "npm:sideshow",
     {
       "source": "git:github.com/hasit/pi-community-themes",

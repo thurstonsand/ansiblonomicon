@@ -1,0 +1,8 @@
+{
+  "tui.altScreen.pageUp": ["alt+k"],
+  "tui.altScreen.pageDown": ["alt+j"],
+  "tui.altScreen.previousPrompt": ["alt+shift+k"],
+  "tui.altScreen.nextPrompt": ["alt+shift+j"],
+  "tui.altScreen.top": ["alt+g"],
+  "tui.altScreen.bottom": ["alt+shift+g"]
+}
