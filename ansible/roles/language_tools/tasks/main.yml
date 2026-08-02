@@ -1,20 +1,18 @@
 ---
-- name: Check language tools update stamp
-  when: not ansible_check_mode
-  ansible.builtin.stat:
-    path: "{{ language_tools_cache_dir }}/update.stamp"
-  register: language_tools_update_stamp
-
-- name: Determine if language tools update is due
+- name: Compute managed language tools fingerprint
   ansible.builtin.set_fact:
-    language_tools_update_due: >-
+    language_tools_managed_packages_fingerprint: >-
       {{
-        ansible_check_mode
-        or (not language_tools_update_stamp.stat.exists)
-        or (
-          (ansible_date_time.epoch | int) - (language_tools_update_stamp.stat.mtime | int)
-          >= (language_tools_update_interval_seconds | int)
-        )
+        {
+          'mise': mise_global_tools,
+          'mise_config': mise_tool_config,
+          'npm': npm_global_packages,
+          'uv': uv_global_tools,
+          'bun': bun_global_packages,
+          'go': go_tools,
+          'cargo': cargo_packages,
+          'gem': gem_packages,
+        } | to_json | hash('sha256')
       }}
     language_tools_managed_packages_present: >-
       {{
@@ -61,6 +59,36 @@
     label: "{{ item.item.key }}"
   changed_when: true
 
+- name: Check language tools update stamp
+  when: not ansible_check_mode
+  ansible.builtin.stat:
+    path: "{{ language_tools_cache_dir }}/update.stamp"
+  register: language_tools_update_stamp
+
+- name: Read language tools update stamp
+  when:
+    - not ansible_check_mode
+    - language_tools_update_stamp.stat.exists
+  ansible.builtin.slurp:
+    src: "{{ language_tools_cache_dir }}/update.stamp"
+  register: language_tools_update_stamp_content
+
+- name: Determine if language tools update is due
+  ansible.builtin.set_fact:
+    language_tools_update_due: >-
+      {{
+        ansible_check_mode
+        or (not language_tools_update_stamp.stat.exists)
+        or (
+          (language_tools_update_stamp_content.content | default('') | b64decode | trim)
+          != language_tools_managed_packages_fingerprint
+        )
+        or (
+          (ansible_date_time.epoch | int) - (language_tools_update_stamp.stat.mtime | int)
+          >= (language_tools_update_interval_seconds | int)
+        )
+      }}
+
 - name: Install mise-managed tools
   when: language_tools_update_due and mise_global_tools | length > 0
   ansible.builtin.command:
@@ -100,7 +128,12 @@
 - name: Install global uv tools
   when: language_tools_update_due and uv_global_tools | length > 0
   ansible.builtin.command:
-    cmd: uv tool install --upgrade {{ item }}
+    argv:
+      - "{{ language_tools_uv_command }}"
+      - tool
+      - install
+      - --upgrade
+      - "{{ item }}"
   loop: "{{ uv_global_tools }}"
   register: language_tools_uv_result
   changed_when: "'Installed' in language_tools_uv_result.stderr or 'Updated' in language_tools_uv_result.stderr"
@@ -117,6 +150,8 @@
   when: language_tools_update_due and go_tools | length > 0
   ansible.builtin.command:
     cmd: "go install {{ item if '@' in item else item + '@latest' }}"
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['PATH'] }}"
   loop: "{{ go_tools }}"
   register: language_tools_go_result
   changed_when: language_tools_go_result.stderr | length > 0
@@ -159,6 +194,14 @@
     cmd: "{{ ansible_facts['env']['HOME'] }}/.cargo/bin/bob use stable"
   changed_when: true
 
+- name: Link bob-managed Neovim into user local bin
+  when: "'bob-nvim' in cargo_packages"
+  ansible.builtin.file:
+    src: "{{ ansible_facts['env']['HOME'] }}/.local/share/bob/nvim-bin/nvim"
+    dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/nvim"
+    state: link
+    force: true
+
 - name: Install global Ruby gems
   when: language_tools_update_due and gem_packages | length > 0
   vars:
@@ -180,11 +223,11 @@
     state: directory
     mode: "0755"
 
-- name: Record language tools update timestamp
+- name: Record language tools update fingerprint
   when: not ansible_check_mode and language_tools_update_due and language_tools_managed_packages_present
-  ansible.builtin.file:
-    path: "{{ language_tools_cache_dir }}/update.stamp"
-    state: touch
+  ansible.builtin.copy:
+    dest: "{{ language_tools_cache_dir }}/update.stamp"
+    content: "{{ language_tools_managed_packages_fingerprint }}\n"
     mode: "0644"
 
 - name: Show language tools update status

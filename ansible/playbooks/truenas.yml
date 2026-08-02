@@ -214,6 +214,19 @@
         enabled: true
         state: present
 
+    - name: Require pod042 SSH public key
+      tags: [pod042, pod042-ssh]
+      ansible.builtin.assert:
+        that: lookup('env', 'POD042_TRUENAS_SSH_PUBLIC_KEY') | length > 0
+        fail_msg: POD042_TRUENAS_SSH_PUBLIC_KEY must be resolved before managing pod042 SSH access.
+
+    - name: Authorize pod042 SSH key for TrueNAS admin
+      tags: [pod042, pod042-ssh]
+      ansible.posix.authorized_key:
+        user: admin
+        key: "{{ lookup('env', 'POD042_TRUENAS_SSH_PUBLIC_KEY') }}"
+        state: present
+
     - name: Docker NFS share
       local.truenas.sharing_nfs:
         path: /mnt/performance/docker

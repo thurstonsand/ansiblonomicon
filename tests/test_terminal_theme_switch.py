@@ -19,6 +19,7 @@ SPEC.loader.exec_module(MODULE)
 set_codex_tui_theme = MODULE.set_codex_tui_theme
 set_hunk_theme = MODULE.set_hunk_theme
 update_tmux_theme = MODULE.update_tmux_theme
+write_atomic = MODULE.write_atomic
 
 
 def test_replaces_existing_tui_theme() -> None:
@@ -97,6 +98,17 @@ mode = "auto"
     assert "base" not in parsed["custom_theme"]
     assert parsed["custom_theme"]["background"] == "#1d2021"
     assert parsed["custom_theme"]["syntax"]["string"] == "#b8bb26"
+
+
+def test_atomic_write_preserves_existing_mode(tmp_path: Path) -> None:
+    path = tmp_path / "config.toml"
+    path.write_text("old\n")
+    path.chmod(0o600)
+
+    write_atomic(path, "new\n")
+
+    assert path.read_text() == "new\n"
+    assert path.stat().st_mode & 0o777 == 0o600
 
 
 def test_sets_hunk_custom_light_hard_theme() -> None:

@@ -21,9 +21,14 @@ Library/
 
 # Agent-host files
 {{ if not (or (eq .chezmoi.hostname "clawdbot") (eq .chezmoi.hostname "openclaw")) }}
-.local/libexec/op-ssh-sign
 .ssh/id_ed25519_nas
 .ssh/id_ed25519_nas.pub
+{{ end }}
+{{ if ne .chezmoi.hostname "pod042" }}
+.ssh/id_ed25519_git
+.ssh/id_ed25519_git.pub
+.ssh/id_ed25519_pod042_truenas
+.ssh/id_ed25519_pod042_truenas.pub
 {{ end }}
 
 # OpenClaw is headless; Ghostty helpers are workstation-only.

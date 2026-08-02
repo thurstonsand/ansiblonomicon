@@ -3,22 +3,73 @@ hostname: pod042
 
 configure_chezmoi: true
 configure_agent_harness: true
+configure_terminal_theme: true
+terminal_theme_profile: mirror
 
 apt_packages:
+  - btop
+  - build-essential
   - ca-certificates
   - curl
   - direnv
+  - eza
+  - fd-find
+  - fzf
   - git
+  - git-delta
+  - gh
   - gpg
+  - jq
+  - just
+  - lazygit
+  - nfs-common
   - openssh-client
+  - openssh-server
   - python3-venv
+  - ripgrep
   - rsync
+  - rustup
+  - sqlite3
+  - starship
+  - strace
   - sudo
+  - tmux
+  - tree
+  - unzip
+  - vim
+  - zoxide
   - zsh
+  - zsh-autosuggestions
+  - zsh-syntax-highlighting
+
+apt_retired_repos:
+  - >-
+    deb [arch=amd64 signed-by=/usr/share/keyrings/nodesource.asc]
+    https://deb.nodesource.com/node_22.x nodistro main
 
 apt_external_repos:
+  - name: 1password
+    url: https://downloads.1password.com/linux/debian/amd64
+    suites: stable
+    components: main
+    key_url: https://downloads.1password.com/linux/keys/1password.asc
+    key_path: /usr/share/keyrings/1password-archive-keyring.asc
+    packages:
+      - 1password-cli
+
+  - name: docker
+    url: https://download.docker.com/linux/debian
+    suites: trixie
+    components: stable
+    key_url: https://download.docker.com/linux/debian/gpg
+    key_path: /etc/apt/keyrings/docker.asc
+    packages:
+      - docker-buildx-plugin
+      - docker-ce-cli
+      - docker-compose-plugin
+
   - name: nodesource
-    url: https://deb.nodesource.com/node_22.x
+    url: https://deb.nodesource.com/node_24.x
     suites: nodistro
     components: main
     key_url: https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key
@@ -36,13 +87,26 @@ apt_external_repos:
       - mise
 
 mise_global_tools_base:
+  - node@lts
+  - npm@latest
+  - go@latest
+  - golangci-lint@latest
+  - zig@0.15.2
   - chezmoi@latest
 npm_global_packages_base:
   - "@earendil-works/pi-coding-agent"
-uv_global_tools_base: []
+  - agent-browser
+  - hunkdiff
+  - sideshow
+uv_global_tools_base:
+  - claude-code-tools
 bun_global_packages_base: []
-cargo_packages_base: []
-go_tools_base: []
+cargo_packages_base:
+  - bob-nvim
+  - shpool
+  - terminal-control
+go_tools_base:
+  - mvdan.cc/gofumpt@latest
 gem_packages_base: []
 
 agent_harness_target_agents_base:
@@ -51,3 +115,8 @@ agent_harness_target_agents_extra: []
 
 op_service_account_token_path: "{{ ansible_facts.env.HOME }}/.config/op-service-account/token"
 chezmoi_op_service_account_token_path: "{{ op_service_account_token_path }}"
+
+pod042_nfs_path: /mnt/performance/pod042
+pod042_nfs_source: 192.168.1.68:/mnt/performance/pod042
+pod042_truenas_host: 192.168.1.68
+pod042_truenas_host_key_fingerprint: SHA256:Y/v95l/67PcMqsZm/LmXLWIL5o9YaixqkYmKXKNynZ8

@@ -81,18 +81,18 @@ if [[ -o interactive ]]; then
     _evalcache starship init zsh
   fi
 fi
+{{- if or (eq .chezmoi.os "darwin") (eq .chezmoi.hostname "openclaw") }}
 _evalcache bun completions
+{{- end }}
 _evalcache sessions shell zsh
+{{- if eq .chezmoi.os "darwin" }}
 _evalcache wt shell zsh
+{{- end }}
 _evalcache direnv hook zsh
 _evalcache mise activate zsh
 {{- if eq .chezmoi.hostname "Thurstons-MacBook-Pro" }}
 _evalcache shp completion zsh
 {{- end }}
-{{- if eq .chezmoi.hostname "clawdbot" }}
-_evalcache openclaw completion --shell zsh
-{{- end }}
-
 # Aliases
 if command -v prettyping &>/dev/null; then
   alias ping='prettyping'
@@ -120,58 +120,6 @@ claude() {
 {{- end }}
 
 source ~/.config/zsh/terminal-theme.zsh 2>/dev/null || :
-
-
-{{- if eq .chezmoi.hostname "clawdbot" }}
-ideoc() {
-  local session="openclaw"
-
-  if [[ -n "$TMUX" ]]; then
-    if [[ "$(tmux display-message -p '#{session_name}')" == "$session" ]]; then
-      echo "Already in session '$session'"
-    else
-      echo "Already inside tmux session '$(tmux display-message -p '#{session_name}')'. Detach first."
-    fi
-    return 1
-  fi
-
-  if [[ "$1" == "--recreate" ]]; then
-    tmux kill-session -t "$session" 2>/dev/null
-  fi
-
-  if tmux has-session -t "$session" 2>/dev/null; then
-    tmux attach -t "$session"
-  else
-    local ansi_hash
-    ansi_hash=$(printf '%s' "$HOME/code/ansiblonomicon" | shasum | cut -c1-8)
-    local home_hash
-    home_hash=$(printf '%s' "$HOME" | shasum | cut -c1-8)
-
-    tmux new-session -d -s "$session" -n ansiblonomicon -c ~/code/ansiblonomicon
-    tmux new-window -t "$session" -n ansi_agent -c ~/code/ansiblonomicon
-    tmux set-option -w -t "$session":ansi_agent @cwd_hash "$ansi_hash"
-    tmux new-window -t "$session" -n home -c ~
-    tmux new-window -t "$session" -n home_agent -c ~
-    tmux set-option -w -t "$session":home_agent @cwd_hash "$home_hash"
-    tmux select-window -t "$session":ansiblonomicon
-    (sleep 1.0 && \
-      pane_cmd=$(tmux list-panes -t "$session":ansiblonomicon -F '#{pane_current_command}' 2>/dev/null) && \
-      [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
-      tmux send-keys -t "$session":ansiblonomicon "nvim ." Enter
-    ) &!
-    (sleep 5.0 && \
-      pane_cmd=$(tmux list-panes -t "$session":home -F '#{pane_current_command}' 2>/dev/null) && \
-      [[ "$pane_cmd" == "zsh" || "$pane_cmd" == "bash" ]] && \
-      tmux send-keys -t "$session":home "nvim ." Enter
-    ) &!
-    tmux attach -t "$session"
-  fi
-}
-
-if [[ -n "$SSH_CONNECTION" && -z "$TMUX" && $- == *i* ]]; then
-  ideoc
-fi
-{{- end }}
 
 {{- if eq .chezmoi.os "darwin" }}
 alias bd='brew desc'

@@ -139,6 +139,8 @@
     argv:
       - "{{ ansible_facts['env']['HOME'] }}/.local/bin/terminal-theme-switch.py"
       - "{{ terminal_theme_mode }}"
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
   changed_when: true
   when:
     - terminal_theme_profile == 'detector'
@@ -150,6 +152,8 @@
     argv:
       - "{{ ansible_facts['env']['HOME'] }}/.local/bin/hunk_gruvbox_theme.py"
       - "{{ terminal_theme_mode }}"
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/bin:{{ ansible_facts['env']['PATH'] }}"
   changed_when: false
   check_mode: false
   register: terminal_theme_hunk_custom_theme_result

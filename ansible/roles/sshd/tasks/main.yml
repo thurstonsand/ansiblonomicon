@@ -6,10 +6,10 @@
     state: directory
     mode: "0755"
 
-- name: Configure OpenClaw sshd settings
+- name: Configure managed sshd settings
   become: true
   ansible.builtin.template:
-    src: 99-openclaw.conf.j2
-    dest: /etc/ssh/sshd_config.d/99-openclaw.conf
+    src: 99-ansiblonomicon.conf.j2
+    dest: /etc/ssh/sshd_config.d/99-ansiblonomicon.conf
     mode: "0644"
   notify: Validate and reload sshd

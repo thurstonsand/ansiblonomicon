@@ -6,6 +6,7 @@ import json
 import os
 from pathlib import Path
 import re
+import stat
 import subprocess
 import time
 from typing import cast
@@ -52,8 +53,11 @@ def read_mode() -> Mode:
 
 def write_atomic(path: Path, text: str) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
+    existing_mode = stat.S_IMODE(path.stat().st_mode) if path.exists() else None
     tmp = path.with_name(f"{path.name}.tmp.{os.getpid()}")
     tmp.write_text(text, encoding="utf-8")
+    if existing_mode is not None:
+        tmp.chmod(existing_mode)
     tmp.replace(path)
 
 

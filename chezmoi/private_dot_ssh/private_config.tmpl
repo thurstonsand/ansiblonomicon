@@ -16,11 +16,25 @@ Host haos
   ProxyCommand ~/.local/libexec/ssh-smart-proxy haos 192.168.1.89 22222 haos-ssh.thurstons.house
 
 Host truenas
-  ForwardAgent yes
   User admin
   HostKeyAlias truenas
+{{- if eq .chezmoi.hostname "pod042" }}
+  HostName 192.168.1.68
+  IdentityFile ~/.ssh/id_ed25519_pod042_truenas
+  IdentitiesOnly yes
+  UserKnownHostsFile ~/.ssh/known_hosts_pod042
+{{- else }}
+  ForwardAgent yes
   ProxyCommand ~/.local/libexec/ssh-smart-proxy truenas 192.168.1.68 22 truenas-ssh.thurstons.house
+{{- end }}
 
+{{- if eq .chezmoi.hostname "pod042" }}
+Host github.com
+  User git
+  IdentityFile ~/.ssh/id_ed25519_git
+  IdentitiesOnly yes
+
+{{- end }}
 Host truenas-dev
   Port 2222
   ForwardAgent yes

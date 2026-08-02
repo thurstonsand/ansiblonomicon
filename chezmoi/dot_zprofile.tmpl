@@ -16,9 +16,3 @@ path=("$HOME/.local/bin" "$HOME/.local/share/mise/shims" $path)
 source ~/.orbstack/shell/init.zsh 2>/dev/null || :
 {{- end }}
 {{- end }}
-
-{{- if eq .chezmoi.hostname "clawdbot" }}
-
-# Regenerate clawdbot MOTD tagline on login (detached from TTY)
-( setsid update-motd-tagline &>/dev/null & )
-{{- end }}

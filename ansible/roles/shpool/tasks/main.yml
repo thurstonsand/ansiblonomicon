@@ -33,7 +33,7 @@
     dest: "{{ ansible_facts['env']['HOME'] }}/.local/bin/shpool-prune-tmp"
     mode: "0755"
 
-- name: Enable lingering for OpenClaw user
+- name: Enable lingering for managed user
   become: true
   ansible.builtin.command:
     argv:

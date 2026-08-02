@@ -277,3 +277,10 @@ Fill this during the build rather than reconstructing it later.
 - Pi OAuth bootstrap: copied only the workstation's unmanaged `openai-codex` credential through SSH stdin; Pi 0.82.0 replied `pod042-ready`
 - Guest reboot returned unattended: passed; post-reboot `poe pod042 --check` changed zero tasks
 - On-VM Pi handoff session: `019f9762-b802-7e44-9291-665af00d0421` acknowledged hostname, checkout, clean `178d0fd` HEAD, and the Phase 2 mission
+- Phase 2 development baseline: Node 24, audited shell/tool roles, Docker client-only packages, shpool, sessions, terminal theme, tmux plugins, and pod042 guidance in the existing project-local software-provisioning skill converged; repeat converge changed zero tasks
+- Workstation integration: the macOS terminal-theme detector mirrors to pod042; `gty ssh pod042` exposes the GhosttyKit clipboard bridge, and Pi loads the managed `@thurstonsand/pi-paste` package for `alt+v` and `/paste`
+- Phase 3 service-account boundary: `op user get --me`, agent-vault read, temporary item create/delete, and denial of the unavailable `Private` vault passed; `.env` regenerated non-interactively at mode `0600`
+- Phase 3 Git identity: agent-vault item `Git SSH Key` deployed; unattended GitHub authentication, repository read, and SSH commit signing passed
+- Phase 3 TrueNAS identity: dedicated agent-vault item `pod042 TrueNAS SSH Key` (`yqt5h3i7ppiv56ejqaxlvxunuq`), fingerprint `SHA256:QAGBCAoELQIWnTwZluGrYXgRZsOQGH9EW3mVBla45QQ`, authorized only as an additional `admin` key; pinned TrueNAS host-key fingerprint `SHA256:Y/v95l/67PcMqsZm/LmXLWIL5o9YaixqkYmKXKNynZ8`
+- Phase 3 storage and Docker boundary: NFSv4 mounted from `192.168.1.68:/mnt/performance/pod042` at the symmetric path with `1000:1000` user and `0:0` root identity preserved; remote Docker 27.1.1 container and bind-mount smoke tests passed; no local Docker daemon packages or units were introduced
+- Phase 3 idempotence: two scoped TrueNAS applies and two full local pod042 converges each changed zero tasks

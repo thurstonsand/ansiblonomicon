@@ -85,11 +85,7 @@
   changed_when: false
   failed_when: false
   check_mode: false
-
-- name: Display pending chezmoi changes
-  ansible.builtin.debug:
-    msg: "{{ chezmoi_diff.stdout }}"
-  when: chezmoi_diff.stdout | length > 0
+  no_log: true
 
 - name: Apply chezmoi dotfiles
   ansible.builtin.command:
@@ -102,6 +98,7 @@
   environment:
     OP_SERVICE_ACCOUNT_TOKEN: "{{ chezmoi_op_service_account_token.content | default('') | b64decode | trim }}"
   changed_when: chezmoi_diff.stdout | length > 0
+  no_log: true
   when:
     - not ansible_check_mode
     - chezmoi_diff.stdout | length > 0

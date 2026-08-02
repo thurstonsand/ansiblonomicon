@@ -58,6 +58,14 @@ def op_command() -> str:
     return str(wrapper) if wrapper is not None else "op"
 
 
+def secrets_for_hostname(config: dict[str, str], hostname: str) -> dict[str, str]:
+    return {
+        key: value
+        for key, value in config.items()
+        if key not in MACHINE_SECRET_KEYS or hostname in MACHINE_SECRET_KEYS[key]
+    }
+
+
 def op_environment() -> dict[str, str]:
     env = os.environ.copy()
     if service_account_op_wrapper() is None:
@@ -107,11 +115,7 @@ def main() -> None:
 
     hostname = socket.gethostname().split(".")[0]
     config: dict[str, str] = jsonc.loads(SECRETS_CONFIG.read_text())
-    config = {
-        key: value
-        for key, value in config.items()
-        if key not in MACHINE_SECRET_KEYS or hostname in MACHINE_SECRET_KEYS[key]
-    }
+    config = secrets_for_hostname(config, hostname)
 
     # Build a template for op inject to resolve all secrets in one call
     # Format: KEY="{{ op://... }}" for op:// refs, KEY="literal" for literals

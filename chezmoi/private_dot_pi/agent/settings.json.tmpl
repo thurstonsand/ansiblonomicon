@@ -31,6 +31,10 @@
   "pasteFile": {
     "shortcut": "alt+p"
   },
+  "paste": {
+    "shortcut": "alt+v",
+    "outputDir": "/tmp/pi-paste-file"
+  },
   "codex": {
     "fast": false,
     "verbosity": "low",
@@ -115,8 +119,8 @@
     "model": {{ if $isWork }}"{{ .work_models.gpt_terra.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
     "thinkingLevel": "off",
     "tools": [
-      "search_web",
-      "fetch_web"
+      "web_search",
+      "web_fetch"
     ]
   },
   "enabledModels": [
@@ -242,6 +246,7 @@
     "npm:pi-interview",
     "npm:pi-mcp-adapter",
     "npm:sideshow",
+    "npm:@thurstonsand/pi-paste",
     {
       "source": "git:github.com/hasit/pi-community-themes",
       "themes": [

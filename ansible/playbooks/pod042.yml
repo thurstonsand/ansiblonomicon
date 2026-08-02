@@ -73,6 +73,12 @@
           loop_control:
             label: "{{ item.name }}"
 
+        - name: Remove retired pod042 repositories
+          ansible.builtin.apt_repository:
+            repo: "{{ item }}"
+            state: absent
+          loop: "{{ apt_retired_repos }}"
+
         - name: Add external repositories
           ansible.builtin.apt_repository:
             repo: >-
@@ -97,12 +103,103 @@
         state: present
       tags: [apt]
 
+    - name: Pin the TrueNAS SSH host key
+      tags: [ssh]
+      block:
+        - name: Ensure SSH configuration directory exists
+          ansible.builtin.file:
+            path: "{{ ansible_facts.env.HOME }}/.ssh"
+            state: directory
+            mode: "0700"
+
+        - name: Scan the TrueNAS SSH host key
+          ansible.builtin.command:
+            argv:
+              - ssh-keyscan
+              - -T
+              - "5"
+              - -t
+              - ed25519
+              - "{{ pod042_truenas_host }}"
+          register: pod042_truenas_host_key_scan
+          changed_when: false
+          check_mode: false
+
+        - name: Select the TrueNAS ED25519 host key
+          ansible.builtin.set_fact:
+            pod042_truenas_host_keys: >-
+              {{ pod042_truenas_host_key_scan.stdout_lines
+                 | select('match', '^\S+ ssh-ed25519 ')
+                 | list }}
+
+        - name: Require exactly one TrueNAS ED25519 host key
+          ansible.builtin.assert:
+            that: pod042_truenas_host_keys | length == 1
+            fail_msg: TrueNAS did not return exactly one ED25519 SSH host key.
+
+        - name: Compute the TrueNAS SSH host key fingerprint
+          ansible.builtin.command:
+            argv:
+              - ssh-keygen
+              - -lf
+              - "-"
+            stdin: "{{ pod042_truenas_host_keys | first }}\n"
+          register: pod042_truenas_host_key_details
+          changed_when: false
+          check_mode: false
+
+        - name: Verify the TrueNAS SSH host key fingerprint
+          ansible.builtin.assert:
+            that: pod042_truenas_host_key_fingerprint in pod042_truenas_host_key_details.stdout
+            fail_msg: >-
+              TrueNAS returned an unexpected SSH host key. Refusing to update
+              the pod042 trust store.
+
+        - name: Trust the verified TrueNAS SSH host key
+          ansible.builtin.copy:
+            dest: "{{ ansible_facts.env.HOME }}/.ssh/known_hosts_pod042"
+            content: |
+              {{ pod042_truenas_host_keys | first
+                 | regex_replace('^\S+', 'truenas') }}
+            mode: "0600"
+
+    - name: Mount pod042 shared storage
+      become: true
+      ansible.posix.mount:
+        path: "{{ pod042_nfs_path }}"
+        src: "{{ pod042_nfs_source }}"
+        fstype: nfs4
+        opts: rw,hard,_netdev
+        state: mounted
+      tags: [nfs, storage]
+
+    - name: Use zsh as the login shell
+      become: true
+      ansible.builtin.user:
+        name: "{{ ansible_user_id }}"
+        shell: /usr/bin/zsh
+      tags: [apt, zsh]
+
+    - name: Configure sshd
+      ansible.builtin.include_role:
+        name: sshd
+        apply:
+          tags: [sshd, ssh]
+      tags: [sshd, ssh]
+
     - name: Ensure user local bin directory exists
       ansible.builtin.file:
         path: "{{ ansible_facts.env.HOME }}/.local/bin"
         state: directory
         mode: "0755"
       tags: [apt, uv, secrets, onepassword, op]
+
+    - name: Link fd to Debian's fdfind binary
+      ansible.builtin.file:
+        src: /usr/bin/fdfind
+        dest: "{{ ansible_facts.env.HOME }}/.local/bin/fd"
+        state: link
+      tags: [apt]
 
     - name: Install uv for local self-management
       tags: [uv]
@@ -146,12 +243,34 @@
           tags: [secrets, onepassword, op]
       tags: [secrets, onepassword, op]
 
-    - name: Install bootstrap language tools
+    - name: Install global language tools
       ansible.builtin.include_role:
         name: language_tools
         apply:
           tags: [language-tools]
       tags: [language-tools]
+
+    - name: Build sessions CLI for agent session recovery
+      ansible.builtin.include_role:
+        name: sessions
+        apply:
+          tags: [sessions]
+      tags: [sessions]
+
+    - name: Configure shpool shell persistence
+      ansible.builtin.include_role:
+        name: shpool
+        apply:
+          tags: [shpool]
+      tags: [shpool]
+
+    - name: Configure terminal theme mirror
+      ansible.builtin.include_role:
+        name: terminal_theme
+        apply:
+          tags: [terminal-theme]
+      when: configure_terminal_theme
+      tags: [terminal-theme]
 
     - name: Apply chezmoi dotfiles
       ansible.builtin.include_role:
@@ -168,3 +287,8 @@
           tags: [agent-harness]
       when: configure_agent_harness
       tags: [agent-harness]
+
+    - name: Install tmux plugin manager and plugins
+      ansible.builtin.include_tasks:
+        file: ../tasks/tmux_plugins.yml
+      tags: [tmux]

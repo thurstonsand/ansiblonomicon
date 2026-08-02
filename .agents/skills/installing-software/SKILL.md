@@ -11,7 +11,7 @@ Use this skill when changing how software is installed in this repo.
 
 - Shared package lists and agent-harness sources: `ansible/config.yml`
 - macOS host-specific additions: `ansible/darwin.config.yml`
-- OpenClaw/Debian host-specific additions: `ansible/debian.config.yml`
+- Pod042 host-specific packages and tools: `ansible/pod042.config.yml`
 
 ## macOS
 
@@ -27,14 +27,22 @@ Use this skill when changing how software is installed in this repo.
 - External apt repos + repo packages: `ansible/debian.config.yml`
 - How apt / apt repos are applied: `ansible/playbooks/openclaw.yml`
 
+## Pod042
+
+- Apt packages, external repositories, and host-specific language tools: `ansible/pod042.config.yml`
+- Installation and role ordering: `ansible/playbooks/pod042.yml`
+- Pod042 SSH identities and host configuration: `chezmoi/private_dot_ssh/`
+- NFS mount and Docker environment: `ansible/playbooks/pod042.yml`, `chezmoi/dot_zshenv.tmpl`
+- Run `uv run poe pod042` only on hostname `pod042`.
+
 ## Language-specific package managers
 
-- npm globals: `ansible/config.yml`, `ansible/darwin.config.yml`, `ansible/debian.config.yml`, `ansible/playbooks/macos.yml`, `ansible/playbooks/openclaw.yml`
-- bun globals: `ansible/config.yml`, `ansible/debian.config.yml`, `ansible/playbooks/macos.yml`, `ansible/playbooks/openclaw.yml`
-- uv tools: `ansible/config.yml`, `ansible/playbooks/macos.yml`, `ansible/playbooks/openclaw.yml`
-- Go tools: `ansible/config.yml`, `ansible/debian.config.yml`, `ansible/playbooks/macos.yml`, `ansible/playbooks/openclaw.yml`
-- Rust / cargo packages: `ansible/config.yml`, `ansible/debian.config.yml`, `ansible/playbooks/openclaw.yml`
-- Ruby gems: `ansible/config.yml`, `ansible/darwin.config.yml`, `ansible/playbooks/macos.yml`, `ansible/playbooks/openclaw.yml`
+- npm globals: `ansible/config.yml`, `ansible/darwin.config.yml`, `ansible/debian.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
+- bun globals: `ansible/config.yml`, `ansible/debian.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
+- uv tools: `ansible/config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
+- Go tools: `ansible/config.yml`, `ansible/debian.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
+- Rust / cargo packages: `ansible/config.yml`, `ansible/debian.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
+- Ruby gems: `ansible/config.yml`, `ansible/darwin.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
 
 ## Script/install-sh based tools
 

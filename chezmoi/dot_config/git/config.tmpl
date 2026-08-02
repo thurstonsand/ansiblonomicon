@@ -52,8 +52,6 @@
 [gpg "ssh"]
 {{- if eq .chezmoi.os "darwin" }}
 	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
-{{- else }}
-	program = "~/.local/libexec/op-ssh-sign"
 {{- end }}
 	allowedSignersFile = "{{ .chezmoi.homeDir }}/.config/git/allowed_signers"
 
@@ -88,7 +86,11 @@
 {{- else }}
 	email = "{{ .personalEmail }}"
 	name = "Thurston Sandberg"
+{{- if eq .chezmoi.hostname "pod042" }}
+	signingKey = "{{ .chezmoi.homeDir }}/.ssh/id_ed25519_git"
+{{- else }}
 	signingKey = "{{ .personalSigningKey }}"
+{{- end }}
 {{- end }}
 {{- range .scm }}
 

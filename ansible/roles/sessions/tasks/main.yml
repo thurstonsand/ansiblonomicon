@@ -65,7 +65,7 @@
 
 - name: Read last sessions build checksum
   ansible.builtin.slurp:
-    src: "{{ role_path }}/.build-checksum"
+    src: "{{ sessions_cache_dir }}/build-checksum"
   register: sessions_stored_checksum
   failed_when: false
 
