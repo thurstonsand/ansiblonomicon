@@ -84,12 +84,12 @@ If you're reaching for a subagent, consider the following:
 | bedrock.gpt-5.6-sol   | focused implementer                | medium         | 4    | 7            | 5     | pure execution where scope is crystal clear; use high thinking for adversarial review |
 | bedrock.gpt-5.6-terra | exploration subagent               | high           | 7    | 4            | 5     | digging for answers/explanations                                                      |
 {{- else }}
-| model           | role                          | thinking level                 | cost                  | intelligence | taste | notes                                                                                 |
-| --------------- | ----------------------------- | ------------------------------ | --------------------- | ------------ | ----- | ------------------------------------------------------------------------------------- |
-| claude-opus-5   | default workhose              | medium                         | 5                     | 7            | 7     | also great for prose or thinking through medium-sized problems                        |
-| claude-fable-5  | planning, highest-impact work | high                           | 1 (burns limits fast) | 9            | 8     | human stays in the loop (request before firing); reserve for highest-impact scenarios |
-| gpt-5.6-sol     | focused implementer           | medium                         | 5                     | 7            | 5     | pure exeuction where scope is crystal clear; use high thinking for adversarial review |
-| gpt-5.6-terra   | exploration subagent          | high                           | 7                     | 4            | 5     | digging for answers/explanations                                                      |
+| model          | role                          | thinking level | cost | intelligence | taste | notes                                                                                 |
+| -------------- | ----------------------------- | ---------------| -----| ------------ | ----- | ------------------------------------------------------------------------------------- |
+| claude-opus-5  | default workhose              | medium         | 5    | 7            | 7     | also great for prose or thinking through medium-sized problems                        |
+| claude-fable-5 | planning, highest-impact work | high           | 2    | 9            | 8     | human stays in the loop (request before firing); reserve for highest-impact scenarios |
+| gpt-5.6-sol    | focused implementer           | medium         | 5    | 7            | 5     | use only at request of user or for adversarial review (at high thinking)              |
+| gpt-5.6-terra  | exploration subagent          | high           | 7    | 4            | 5     | digging for answers/explanations                                                      |
 {{- end }}
 
 (1-10, higher is better across all axes)
