@@ -52,7 +52,7 @@
       {{
         (not homebrew_upgrade_stamp.stat.exists)
         or (
-          (ansible_date_time.epoch | int) - (homebrew_upgrade_stamp.stat.mtime | int)
+          (now().timestamp() | int) - (homebrew_upgrade_stamp.stat.mtime | int)
           >= (homebrew_upgrade_interval_seconds | int)
         )
       }}

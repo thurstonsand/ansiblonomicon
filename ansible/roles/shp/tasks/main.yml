@@ -22,7 +22,7 @@
       {{
         (not shp_upgrade_stamp.stat.exists)
         or (
-          (ansible_date_time.epoch | int) - (shp_upgrade_stamp.stat.mtime | int)
+          (now().timestamp() | int) - (shp_upgrade_stamp.stat.mtime | int)
           >= (shp_upgrade_interval_seconds | int)
         )
       }}

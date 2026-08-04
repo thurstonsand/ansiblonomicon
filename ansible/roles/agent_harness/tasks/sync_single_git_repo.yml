@@ -29,7 +29,7 @@
         and (
           (not agent_harness_repo_update_stamp.stat.exists)
           or (
-            (ansible_date_time.epoch | int) - (agent_harness_repo_update_stamp.stat.mtime | int)
+            (now().timestamp() | int) - (agent_harness_repo_update_stamp.stat.mtime | int)
             >= (agent_harness_update_interval_seconds | int)
           )
         )

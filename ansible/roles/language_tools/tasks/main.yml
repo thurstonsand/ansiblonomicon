@@ -84,7 +84,7 @@
           != language_tools_managed_packages_fingerprint
         )
         or (
-          (ansible_date_time.epoch | int) - (language_tools_update_stamp.stat.mtime | int)
+          (now().timestamp() | int) - (language_tools_update_stamp.stat.mtime | int)
           >= (language_tools_update_interval_seconds | int)
         )
       }}
@@ -115,15 +115,43 @@
   register: language_tools_mise_config_install
   changed_when: "'✓ installed' in language_tools_mise_config_install.stdout + language_tools_mise_config_install.stderr"
 
+- name: Read current npm allow-scripts config
+  when: npm_global_packages | length > 0
+  ansible.builtin.command:
+    argv: ["npm", "config", "get", "allow-scripts", "--location=user"]
+  environment:
+    PATH: "{{ language_tools_mise_path }}"
+  register: language_tools_npm_allow_scripts_current
+  changed_when: false
+
+- name: Write npm allow-scripts config
+  when:
+    - npm_global_packages | length > 0
+    - (npm_allow_scripts | join(',')) != (language_tools_npm_allow_scripts_current.stdout | default('') | trim)
+  ansible.builtin.command:
+    argv:
+      - npm
+      - config
+      - set
+      - "allow-scripts={{ npm_allow_scripts | join(',') }}"
+      - "--location=user"
+  environment:
+    PATH: "{{ language_tools_mise_path }}"
+  changed_when: true
+
+# Global npm packages live inside the node install directory, so a node upgrade
+# orphans every one of them. Reconcile presence on every run and reserve the
+# version bump for when an update is due; npm runs under whichever node mise
+# just settled on, so native builds always match the interpreter.
 - name: Install global npm packages
-  when: language_tools_update_due and npm_global_packages | length > 0
+  when: npm_global_packages | length > 0
   community.general.npm:
     name: "{{ item }}"
     global: true
-    state: latest
+    state: "{{ language_tools_update_due | ternary('latest', 'present') }}"
   loop: "{{ npm_global_packages }}"
   environment:
-    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['PATH'] }}"
+    PATH: "{{ language_tools_mise_path }}"
 
 - name: Install global uv tools
   when: language_tools_update_due and uv_global_tools | length > 0
@@ -151,7 +179,7 @@
   ansible.builtin.command:
     cmd: "go install {{ item if '@' in item else item + '@latest' }}"
   environment:
-    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['PATH'] }}"
+    PATH: "{{ language_tools_mise_path }}"
   loop: "{{ go_tools }}"
   register: language_tools_go_result
   changed_when: language_tools_go_result.stderr | length > 0
@@ -228,6 +256,15 @@
   ansible.builtin.copy:
     dest: "{{ language_tools_cache_dir }}/update.stamp"
     content: "{{ language_tools_managed_packages_fingerprint }}\n"
+    mode: "0644"
+
+# copy leaves mtime alone when the fingerprint is unchanged, which would freeze
+# the interval check open forever.
+- name: Record language tools update timestamp
+  when: not ansible_check_mode and language_tools_update_due and language_tools_managed_packages_present
+  ansible.builtin.file:
+    path: "{{ language_tools_cache_dir }}/update.stamp"
+    state: touch
     mode: "0644"
 
 - name: Show language tools update status

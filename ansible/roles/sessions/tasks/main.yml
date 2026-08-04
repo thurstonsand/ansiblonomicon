@@ -22,7 +22,7 @@
       {{
         (not sessions_upgrade_stamp.stat.exists)
         or (
-          (ansible_date_time.epoch | int) - (sessions_upgrade_stamp.stat.mtime | int)
+          (now().timestamp() | int) - (sessions_upgrade_stamp.stat.mtime | int)
           >= (sessions_upgrade_interval_seconds | int)
         )
       }}

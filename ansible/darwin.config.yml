@@ -22,6 +22,10 @@ npm_global_packages_extra:
   - openclaw
   - glimpseui
 
+# glimpseui compiles a Swift helper in its postinstall
+npm_allow_scripts_extra:
+  - glimpseui
+
 # Additional Ruby gems for macOS (extends gem_packages_base)
 gem_packages_extra: []
 

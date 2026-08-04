@@ -36,6 +36,11 @@ npm_global_packages_base:
   - hunkdiff
   - sideshow
 
+# npm blocks lifecycle scripts by default. Packages listed here are trusted to
+# run theirs; without it they install but ship no working binary.
+npm_allow_scripts_base:
+  - agent-browser
+
 # Global bun packages (base set for all hosts)
 bun_global_packages_base: []
 
@@ -56,6 +61,7 @@ go_tools: "{{ (go_tools_base | default([])) + (go_tools_extra | default([])) }}"
 uv_global_tools: "{{ (uv_global_tools_base | default([])) + (uv_global_tools_extra | default([])) }}"
 mise_global_tools: "{{ (mise_global_tools_base | default([])) + (mise_global_tools_extra | default([])) }}"
 npm_global_packages: "{{ (npm_global_packages_base | default([])) + (npm_global_packages_extra | default([])) }}"
+npm_allow_scripts: "{{ ((npm_allow_scripts_base | default([])) + (npm_allow_scripts_extra | default([]))) | sort }}"
 bun_global_packages: "{{ (bun_global_packages_base | default([])) + (bun_global_packages_extra | default([])) }}"
 cargo_packages: "{{ (cargo_packages_base | default([])) + (cargo_packages_extra | default([])) }}"
 gem_packages: "{{ (gem_packages_base | default([])) + (gem_packages_extra | default([])) }}"
