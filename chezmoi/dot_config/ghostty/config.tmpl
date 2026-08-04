@@ -45,18 +45,19 @@ keybind = cmd+shift+k=jump_to_prompt:-1
 # displaced by cmd+k; ctrl+l is spent on goto_split, so clear lands one modifier over
 keybind = cmd+l=clear_screen
 
-# ctrl-hjkl navigates Ghostty splits unless this surface is in the nvim key table
+# ctrl-hjkl navigates Ghostty splits unless an inner layer owns this surface: nvim, or a remote
+# herdr session under gty herdr attach
 keybind = ctrl+h=goto_split:left
 keybind = ctrl+j=goto_split:down
 keybind = ctrl+k=goto_split:up
 keybind = ctrl+l=goto_split:right
-keybind = nvim/
-keybind = nvim/ctrl+h=text:\x08
-keybind = nvim/ctrl+j=text:\x0a
-keybind = nvim/ctrl+k=text:\x0b
-keybind = nvim/ctrl+l=text:\x0c
-keybind = nvim/cmd+shift+a>n=deactivate_key_table
-keybind = cmd+shift+a>n=activate_key_table:nvim
+keybind = bypass/
+keybind = bypass/ctrl+h=text:\x08
+keybind = bypass/ctrl+j=text:\x0a
+keybind = bypass/ctrl+k=text:\x0b
+keybind = bypass/ctrl+l=text:\x0c
+keybind = bypass/cmd+shift+a>n=deactivate_key_table
+keybind = cmd+shift+a>n=activate_key_table:bypass
 
 # prefix-style pane actions (keeps top-level cmd bindings uncluttered)
 keybind = cmd+shift+a>z=toggle_split_zoom
@@ -66,7 +67,7 @@ keybind = cmd+shift+a>k=new_split:up
 keybind = cmd+shift+a>l=new_split:right
 keybind = cmd+shift+a>m=toggle_mouse_reporting
 
-# vim-style scroll mode; no nvim/ counterpart because the alt screen has no scrollback
+# vim-style scroll mode; no bypass/ counterpart because the alt screen has no scrollback
 keybind = cmd+shift+a>v=activate_key_table:scroll
 keybind = scroll/
 keybind = scroll/j=scroll_page_lines:3
@@ -84,9 +85,9 @@ keybind = scroll/shift+k=jump_to_prompt:-1
 keybind = scroll/escape=deactivate_key_table
 keybind = scroll/q=deactivate_key_table
 
-keybind = nvim/cmd+shift+a>z=toggle_split_zoom
-keybind = nvim/cmd+shift+a>h=new_split:left
-keybind = nvim/cmd+shift+a>j=new_split:down
-keybind = nvim/cmd+shift+a>k=new_split:up
-keybind = nvim/cmd+shift+a>l=new_split:right
-keybind = nvim/cmd+shift+a>m=toggle_mouse_reporting
+keybind = bypass/cmd+shift+a>z=toggle_split_zoom
+keybind = bypass/cmd+shift+a>h=new_split:left
+keybind = bypass/cmd+shift+a>j=new_split:down
+keybind = bypass/cmd+shift+a>k=new_split:up
+keybind = bypass/cmd+shift+a>l=new_split:right
+keybind = bypass/cmd+shift+a>m=toggle_mouse_reporting

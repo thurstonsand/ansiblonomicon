@@ -20,7 +20,9 @@ class PluginLongForm(TypedDict, total=False):
     exclude_data: list[str]  # rsync --exclude patterns for deployed files
     target_agents: list[str]
     hooks: bool  # deploy hooks from this plugin (default: true)
-    prefix: str | None  # override the name prefix applied to resources (None = use plugin name, "" = no prefix)
+    prefix: (
+        str | None
+    )  # override the name prefix applied to resources (None = use plugin name, "" = no prefix)
 
 
 @dataclass
@@ -84,7 +86,9 @@ class ResolvedPlugin:
     exclude_data: list[str] = field(default_factory=list)
     target_agents: list[str] = field(default_factory=list)
     include_hooks: bool = True
-    prefix_override: str | None = None  # None = use config.name, "" = no prefix, other = literal prefix
+    prefix_override: str | None = (
+        None  # None = use config.name, "" = no prefix, other = literal prefix
+    )
 
     @property
     def is_valid(self) -> bool:

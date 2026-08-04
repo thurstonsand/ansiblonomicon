@@ -43,8 +43,7 @@ agent_harness_agents:
     transform_content: false
     instructions_file: AGENTS.md
     supports_skill_mcp: false
-    cleanup_preserved_skills:
-      - chronicle # First-party Codex Chronicle runtime; not managed by agent_harness.
+    cleanup_orphaned_skills: false # Preserve skills managed by Codex and ChatGPT outside agent_harness.
 
   opencode:
     config_root: "{{ ansible_facts.env.HOME }}/.config/opencode"

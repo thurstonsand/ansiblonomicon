@@ -169,7 +169,7 @@
     stdout: "{{ homebrew_result.stdout_lines | default([]) }}"
     stderr: "{{ homebrew_result.stderr_lines | default([]) }}"
     cleanup: "{{ homebrew_cleanup_result.stdout_lines | default([]) }}"
-    noise: '^==>|^Adjust how often|^Hide these hints|^Updated |^You have \d+ outdated|JSON API'
+    noise: '^==>|^Adjust how often|^Hide these hints|^Updated |^You have \d+ outdated|JSON API|^Warning: Calling|^Please report this issue|^\s+/opt/homebrew/Library/Taps/|^$'
   ansible.builtin.set_fact:
     homebrew_bundle_changes: >-
       {{ (homebrew_mas_missing | default([]) | map('regex_replace', '^', 'Installing App Store app ') | list)

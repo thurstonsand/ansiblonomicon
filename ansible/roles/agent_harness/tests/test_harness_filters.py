@@ -1267,7 +1267,9 @@ def test_resolve_plugin_from_repo_prefix_override_custom_string(
     plugin_dir.mkdir()
     (plugin_dir / "plugin.json").write_text(json.dumps({"name": "my-plugin"}))
 
-    resolved = _resolve_plugin_from_repo(repo_path, {"name": "my-plugin", "prefix": "foo"})
+    resolved = _resolve_plugin_from_repo(
+        repo_path, {"name": "my-plugin", "prefix": "foo"}
+    )
     assert resolved.prefix_override == "foo"
 
 
@@ -1340,9 +1342,7 @@ def test_build_plugin_resources_prefix_override_absent_uses_plugin_name(
     skills_dir.mkdir(parents=True)
     (skills_dir / "SKILL.md").write_text("# Teach")
 
-    sources: list[Any] = [
-        {"repo": "owner/repo", "plugins": [{"name": "my-plugin"}]}
-    ]
+    sources: list[Any] = [{"repo": "owner/repo", "plugins": [{"name": "my-plugin"}]}]
     result = agent_harness_build_plugin_resources(sources, str(cache_dir))
 
     assert len(result["skills"]) == 1
