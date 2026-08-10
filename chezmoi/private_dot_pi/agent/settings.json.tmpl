@@ -1,11 +1,11 @@
 {{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
 {
   "defaultProvider": {{ if $isWork }}"{{ .work_gateway.openai_provider }}"{{ else }}"doppelclaude"{{ end }},
-  "defaultModel": {{ if $isWork }}"{{ .work_models.gpt_sol.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
+  "defaultModel": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.gpt_sol.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
   "defaultThinkingLevel": "medium",
   "pinnedModel": {
     "provider": {{ if $isWork }}"{{ .work_gateway.openai_provider }}"{{ else }}"doppelclaude"{{ end }},
-    "modelId": {{ if $isWork }}"{{ .work_models.gpt_sol.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
+    "modelId": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.gpt_sol.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
     "thinkingLevel": "medium"
   },
   "showCacheMissNotices": true,
@@ -223,9 +223,9 @@
     {{ . | toJson }},
 {{- end }}
     "git:github.com/nicobailon/pi-powerline-footer",
-    "git:github.com/thurstonsand/pi-permissions",
+    "git:github.com/thurstonsand/pi-permissions@downgrade",
     "git:github.com/thurstonsand/pi-sessions",
-    "git:@github.com/thurstonsand/pi-web-tools",
+    "git:@github.com/thurstonsand/pi-web-tools@downgrade",
     "git:github.com/thurstonsand/wt",
     "git:github.com/nicobailon/pi-interview-tool",
     "git:github.com/hazat/glimpse",

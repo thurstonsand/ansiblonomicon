@@ -132,6 +132,6 @@ cask "google-drive"
 # =============================================================================
 # Voice
 # =============================================================================
-cask "thurstonsand/tap/mini-whisper"
+cask "thurstonsand/tap/mini-whisper-nightly"
 brew "whisper-cpp"
 cask "whispering"

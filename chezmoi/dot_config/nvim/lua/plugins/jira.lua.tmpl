@@ -1,0 +1,79 @@
+local jira_browse_url = "{{ .jiraBrowseUrl | default `https://jira.atlassian.com/browse/` }}"
+local jira_ticket_pattern = [[\<[A-Z][A-Z0-9]\+-[0-9]\+\>]]
+
+local function highlight_jira_tickets()
+  vim.api.nvim_set_hl(0, "JiraTicket", { link = "DiagnosticInfo" })
+
+  if not vim.w.jira_ticket_match then
+    vim.w.jira_ticket_match = vim.fn.matchadd("JiraTicket", jira_ticket_pattern)
+  end
+end
+
+local function jira_url_under_cursor()
+  local line = vim.api.nvim_get_current_line()
+  local cursor_column = vim.api.nvim_win_get_cursor(0)[2]
+  local search_start = 0
+
+  while true do
+    local match = vim.fn.matchstrpos(line, jira_ticket_pattern, search_start)
+    local ticket, ticket_start, ticket_end = match[1], match[2], match[3]
+    if ticket_start == -1 then
+      return nil
+    end
+
+    if cursor_column >= ticket_start and cursor_column < ticket_end then
+      return jira_browse_url .. ticket
+    end
+
+    search_start = ticket_end
+  end
+end
+
+local function jira_url_or_notify()
+  local url = jira_url_under_cursor()
+  if not url then
+    vim.notify("No Jira ticket under cursor", vim.log.levels.WARN)
+  end
+  return url
+end
+
+return {
+  "folke/snacks.nvim",
+  init = function()
+    local group = vim.api.nvim_create_augroup("jira_ticket_highlights", { clear = true })
+    vim.api.nvim_create_autocmd("ColorScheme", {
+      group = group,
+      callback = function()
+        vim.api.nvim_set_hl(0, "JiraTicket", { link = "DiagnosticInfo" })
+      end,
+    })
+    vim.api.nvim_create_autocmd("WinEnter", {
+      group = group,
+      callback = highlight_jira_tickets,
+    })
+    highlight_jira_tickets()
+  end,
+  keys = {
+    {
+      "<leader>jB",
+      function()
+        local url = jira_url_or_notify()
+        if url then
+          vim.ui.open(url)
+        end
+      end,
+      desc = "Jira Browse",
+    },
+    {
+      "<leader>jY",
+      function()
+        local url = jira_url_or_notify()
+        if url then
+          vim.fn.setreg("+", url)
+          vim.notify("Copied Jira URL", vim.log.levels.INFO)
+        end
+      end,
+      desc = "Jira URL (Copy)",
+    },
+  },
+}

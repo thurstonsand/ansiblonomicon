@@ -15,7 +15,7 @@ All fields live in `~/.local/share/chezmoi/.chezmoidata/local.toml`:
 | `[work_gateway]`                     | pi models/auth templates (endpoint, token, provider names) |
 | `inferenceBudgetUrl`                 | `settings.json.tmpl` (`powerlineCustom.budget.url`)        |
 | `costsDashboardUrl`                  | `settings.json.tmpl` (`powerlineCustom.budget.costsUrl`)   |
-| `jiraBrowseUrl`                      | `settings.json.tmpl` (`powerlineCustom.jira.browseUrl`)    |
+| `jiraBrowseUrl`                      | Pi footer settings and Neovim Jira ticket links            |
 | `[[mcp_servers]]`                    | Claude MCP registration                                    |
 | `pi_mcp_json`                        | `private_dot_pi/agent/mcp.json.tmpl`                       |
 

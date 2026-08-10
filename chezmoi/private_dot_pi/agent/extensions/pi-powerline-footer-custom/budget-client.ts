@@ -9,16 +9,16 @@ const CACHE_DIR = path.join(homedir(), ".cache", "claude-usage");
 const BUDGET_CACHE_FILE = path.join(CACHE_DIR, "budget.json");
 const DAILY_CACHE_FILE = path.join(CACHE_DIR, "daily-costs.json");
 
-const BUDGET_TTL_MS = 86_400_000; // ceiling is config-like; refresh once a day
-const DAILY_TTL_MS = 300_000; // spend changes continuously
+const CACHE_TTL_MS = 300_000; // both endpoints report spend, which changes continuously
 const FETCH_TIMEOUT_MS = 5_000;
 
 const DEFAULT_WINDOW_DAYS = 30;
 
-/** Rolling budget ceiling and the length of its window, in whole days. */
-export interface BudgetCeiling {
+export interface BudgetStatus {
   budgetUsd: number;
   windowDays: number;
+  spentUsd: number;
+  percentUsed: number;
 }
 
 /** One day's total spend across all services. */
@@ -42,26 +42,25 @@ export class BudgetClient {
     this.costsEndpoint = costsEndpoint;
   }
 
-  async getBudgetCeiling(force = false): Promise<BudgetCeiling | undefined> {
+  async getBudgetStatus(force = false): Promise<BudgetStatus | undefined> {
     const endpoint = this.budgetEndpoint;
     if (!endpoint) return undefined;
 
     // Written in the full budgets-api shape so budget.json stays interchangeable
-    // with the Claude statusline plugin's hook, which also owns this file and
-    // depends on spent_usd.
-    await this.ensureFresh(BUDGET_CACHE_FILE, BUDGET_TTL_MS, force, async (token) => {
+    // with the Claude statusline plugin's hook, which also owns this file.
+    await this.ensureFresh(BUDGET_CACHE_FILE, force, async (token) => {
       const json = await fetchJson(endpoint, token);
-      return isJsonObject(json) && numberOf(json.budget_usd) !== undefined ? json : undefined;
+      return isJsonObject(json) && parseBudgetStatus(json) ? json : undefined;
     });
-    return readBudgetCeiling();
+    return readBudgetStatus();
   }
 
   async getDailyCosts(force = false): Promise<DailyCost[] | undefined> {
     const endpoint = this.costsEndpoint;
     if (!endpoint) return undefined;
 
-    const windowDays = readBudgetCeiling()?.windowDays ?? DEFAULT_WINDOW_DAYS;
-    await this.ensureFresh(DAILY_CACHE_FILE, DAILY_TTL_MS, force, async (token) => {
+    const windowDays = readBudgetStatus()?.windowDays ?? DEFAULT_WINDOW_DAYS;
+    await this.ensureFresh(DAILY_CACHE_FILE, force, async (token) => {
       const days = await fetchDailyCosts(endpoint, token, windowDays);
       return days ? { days } : undefined;
     });
@@ -74,11 +73,10 @@ export class BudgetClient {
    */
   private async ensureFresh(
     file: string,
-    ttlMs: number,
     force: boolean,
     fetcher: (token: string) => Promise<JsonObject | undefined>,
   ): Promise<void> {
-    if (!force && isFresh(file, ttlMs)) return;
+    if (!force && isFresh(file)) return;
 
     const pending = this.inFlight.get(file);
     if (pending) return pending;
@@ -112,16 +110,24 @@ function readGatewayToken(): string | undefined {
   return undefined;
 }
 
-function readBudgetCeiling(): BudgetCeiling | undefined {
+function readBudgetStatus(): BudgetStatus | undefined {
   const parsed = readJsonFile(BUDGET_CACHE_FILE);
-  if (!parsed) return undefined;
+  return parsed ? parseBudgetStatus(parsed) : undefined;
+}
 
+function parseBudgetStatus(parsed: JsonObject): BudgetStatus | undefined {
   const budgetUsd = numberOf(parsed.budget_usd);
-  if (budgetUsd === undefined) return undefined;
+  const spentUsd = numberOf(parsed.spent_usd);
+  const percentUsed = numberOf(parsed.percent_used);
+  if (budgetUsd === undefined || spentUsd === undefined || percentUsed === undefined) {
+    return undefined;
+  }
 
   return {
     budgetUsd,
     windowDays: numberOf(parsed.window_days) ?? DEFAULT_WINDOW_DAYS,
+    spentUsd,
+    percentUsed,
   };
 }
 
@@ -139,9 +145,9 @@ function readDailyCosts(): DailyCost[] | undefined {
   return days.length > 0 ? days : undefined;
 }
 
-function isFresh(file: string, ttlMs: number): boolean {
+function isFresh(file: string): boolean {
   try {
-    return Date.now() - statSync(file).mtimeMs < ttlMs;
+    return Date.now() - statSync(file).mtimeMs < CACHE_TTL_MS;
   } catch {
     return false;
   }
