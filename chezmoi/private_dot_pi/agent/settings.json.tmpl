@@ -166,7 +166,7 @@
   },
   "workingVibe": "YoRHa",
   "workingVibeMode": "generate",
-  "workingVibeModel": {{ if $isWork }}"{{ .work_models.sonnet.pi_alias }}"{{ else }}"{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}"{{ end }},
+  "workingVibeModel": {{ if $isWork }}"{{ .work_models.sonnet.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
   "workingVibeMaxLength": 48,
   "workingVibeFallback": "Recalibrating",
   "workingVibePrompt": "Generate a terse 2-4 word loading message describing an operation currently underway, in the cold mechanical register of NieR: Automata. Begin with a present-participle verb and use clipped operational vocabulary tied to the task. Sentence case only, never all-caps. No real NieR names (2B, 9S, YoRHa). Task: {task}. {exclude} Output only the message, nothing else.",

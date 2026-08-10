@@ -9,23 +9,6 @@
   },
   "plugins": [
     {
-      "name": "amp",
-      "source": "./agents/amp",
-      "description": "Amp-specific skill creation, tool building, permissions management, and tmux interactive sessions",
-      "version": "1.0.0",
-      "author": {
-        "name": "Thurston Sandberg"
-      },
-      "keywords": [
-        "amp",
-        "skills",
-        "toolbox",
-        "permissions",
-        "tmux",
-        "interactive-cli"
-      ]
-    },
-    {
       "name": "homelab",
       "source": "./agents/homelab",
       "description": "Skills for managing homelab infrastructure including remote server management",

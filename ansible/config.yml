@@ -129,6 +129,8 @@ agent_harness_sources_base:
       - name: hunk
         path: skills
         prefix: ""
+        exclude_skills:
+          - launch-video # Hunk maintainer-only: needs a hunk source checkout we do not have.
 
   - repo: anomalyco/terminal-control
     pull: true
@@ -142,8 +144,6 @@ agent_harness_sources_base:
         target_agents: [pi]
       - name: project-management
         target_agents: [openclaw]
-        exclude_skills:
-          - designing-systems
       - name: project-management
         target_agents: [pi]
         exclude_skills:
