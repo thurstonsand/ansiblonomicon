@@ -63,7 +63,7 @@ The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json
 Reconciles itself: the playbook asserts a local connection and matching hostname, so there is no workstation-driven remote path.
 
 ```sh
-ssh pod042 && cd ansiblonomicon && uv run poe pod042 -t chezmoi   # also: language-tools
+ssh pod042 && cd ansiblonomicon && uv run poe pod042 -t chezmoi   # also: language-tools, nvim-deps
 ```
 
 Config in `pod042.config.yml`, inventory in `inventory/targets/pod042.yml`. Packages come from apt with explicit external repos, plus mise and npm. Secrets arrive through a scoped 1Password service account installed by the `op_service_account` role. Docker work targets the NAS daemon over SSH rather than a local one, automatically configured.

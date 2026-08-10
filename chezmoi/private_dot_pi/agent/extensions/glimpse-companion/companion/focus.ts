@@ -54,6 +54,7 @@ export interface FocusTerminal {
   write(data: string): void;
   on(event: "pause" | "resume", listener: () => void): void;
   off(event: "pause" | "resume", listener: () => void): void;
+  onData(listener: (data: string) => void): () => void;
 }
 
 const processTerminal: FocusTerminal = {
@@ -72,6 +73,13 @@ const processTerminal: FocusTerminal = {
   off(event, listener) {
     process.stdin.off(event, listener);
   },
+  onData(listener) {
+    const handler = (data: string | Buffer) => listener(data.toString());
+    process.stdin.on("data", handler);
+    return () => {
+      process.stdin.off("data", handler);
+    };
+  },
 };
 
 export class TerminalFocusTracker {
@@ -80,7 +88,8 @@ export class TerminalFocusTracker {
   private focused = true;
   private started = false;
   private reporting = false;
-  private unsubscribe: (() => void) | undefined;
+  private unsubscribeInput: (() => void) | undefined;
+  private unsubscribeData: (() => void) | undefined;
   private onFocusChange: ((focused: boolean) => void) | undefined;
 
   constructor(private readonly terminal: FocusTerminal = processTerminal) {}
@@ -101,12 +110,14 @@ export class TerminalFocusTracker {
     this.started = true;
     this.focused = true;
     this.onFocusChange = onFocusChange;
-    this.unsubscribe = ctx.ui.onTerminalInput((data) => {
+    // Focus is read off raw stdin rather than the pi input chain: the
+    // alternate-screen renderer registers its own listener first and consumes
+    // focus reports, so an extension listener never sees them. The pi listener
+    // is kept only to strip reports the main-screen renderer would otherwise
+    // treat as typed input.
+    this.unsubscribeData = this.terminal.onData(this.observe);
+    this.unsubscribeInput = ctx.ui.onTerminalInput((data) => {
       const input = parseTerminalInput(data);
-      if (input.focused !== this.focused) {
-        this.focused = input.focused;
-        this.onFocusChange?.(input.focused);
-      }
       if (!input.includesFocusReport) return;
       if (!input.data) return { consume: true };
       return { data: input.data };
@@ -120,8 +131,10 @@ export class TerminalFocusTracker {
     if (!this.started) return;
 
     this.disableReporting();
-    this.unsubscribe?.();
-    this.unsubscribe = undefined;
+    this.unsubscribeInput?.();
+    this.unsubscribeInput = undefined;
+    this.unsubscribeData?.();
+    this.unsubscribeData = undefined;
     this.terminal.off("pause", this.disableReporting);
     this.terminal.off("resume", this.enableReporting);
     this.onFocusChange = undefined;
@@ -129,6 +142,19 @@ export class TerminalFocusTracker {
     this.focused = true;
   }
 
+  private readonly observe = (data: string): void => {
+    const { focused } = parseTerminalInput(data);
+    if (focused === this.focused) return;
+    this.focused = focused;
+    this.onFocusChange?.(focused);
+  };
+
+  // Only the main screen needs us to manage focus reporting; the alternate
+  // screen already enables 1004 with its mouse tracking and clears it on
+  // terminal stop. Toggling it there is redundant, and disabling on stop()
+  // clears a mode pi still wants.
+  // TODO: skip these writes under the alternate screen once pi exposes the tui
+  // mode to extensions.
   private readonly enableReporting = (): void => {
     if (!this.started || this.reporting) return;
     this.terminal.write(ENABLE_FOCUS_REPORTING);

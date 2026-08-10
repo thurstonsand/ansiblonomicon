@@ -16,15 +16,14 @@ fi
 mapfile -t PACKAGE_DIRS < <(find "${ROOT_DIRS[@]}" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort)
 
 # On the work machine the public npm registry is blocked, so packages with
-# registry-only deps can't install and tsc can't resolve them: parallel-web-tools
-# (`parallel-web`) and permissions (`@thurstonsand/pi-permissions`, published only
-# to npm). Skip those here; they still lint on personal machines.
+# registry-only deps can't install and tsc can't resolve them: permissions
+# (`@thurstonsand/pi-permissions`, published only to npm). Skip those here; they
+# still lint on personal machines.
 WORK_HOSTNAME="ML-DFC6YK6VJQ"
 if [[ "$(hostname -s 2>/dev/null || hostname)" == "$WORK_HOSTNAME" ]]; then
   FILTERED_DIRS=()
   for dir in "${PACKAGE_DIRS[@]}"; do
     case "$dir" in
-      */parallel-web-tools) continue ;;
       */permissions) continue ;;
     esac
     FILTERED_DIRS+=("$dir")

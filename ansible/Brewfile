@@ -141,6 +141,7 @@ mas "Play: Save Videos Watch Later", id: 1596506190
 # Browsers
 cask "antigravity"
 cask "comet"
+cask "firefox" # headless render backend for trmnlp (TRMNL plugin previews)
 cask "google-chrome"
 cask "google-drive"
 cask "orion"
@@ -161,7 +162,7 @@ cask "bloom"
 cask "dot"
 cask "fantastical"
 cask "obsidian"
-cask "thurstonsand/tap/mini-whisper"
+cask "thurstonsand/tap/mini-whisper-nightly"
 cask "qlmarkdown"
 cask "setapp"
 cask "wispr-flow"

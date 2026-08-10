@@ -9,6 +9,8 @@
     "thinkingLevel": "medium"
   },
   "showCacheMissNotices": true,
+  "tuiMode": "fullscreen",
+  "fullscreenScrollbar": "auto",
   "compaction": {
     "enabled": true,
     "reserveTokens": 16384,
@@ -110,7 +112,8 @@
   {{- if $pc }}
   "powerlineCustom": {{ toPrettyJson $pc | indent 2 | trim }},
   {{- end }}
-  "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys; p=pathlib.Path(sys.argv[1]); print(json.loads(p.read_text()).get('lastChangelogVersion','0.74.0') if p.exists() else '0.74.0')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
+  {{- /* falls back rather than raising: a malformed deployed file would otherwise block the very apply that repairs it */}}
+  "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys\ntry: print(json.loads(pathlib.Path(sys.argv[1]).read_text())['lastChangelogVersion'])\nexcept Exception: print('0.84.1')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
   "librarian": {
     "model": {{ if $isWork }}"{{ .work_models.gpt_terra.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
     "thinkingLevel": "off",
@@ -122,26 +125,18 @@
   "enabledModels": [
 {{- if $isWork }}
     "{{ .work_models.gpt_sol.pi_alias }}:medium",
-    "{{ .work_models.opus.pi_alias }}:medium",
-    "{{ .work_models.gpt_terra.pi_alias }}:high",
-    "{{ .work_models.sonnet.pi_alias }}:high",
-    "{{ .work_models.gpt_luna.pi_alias }}:low",
-    "{{ .work_models.haiku.pi_alias }}"
+    "{{ .work_models.opus.pi_alias }}:medium"
 {{- else }}
     "{{ .models.anthropic.opus.agent_harness.aliases.pi }}:medium",
     "{{ .models.anthropic.fable.agent_harness.aliases.pi }}:medium",
-    "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}:medium",
-    "{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}:high",
-    "{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}:high",
-    "{{ .models.openai.gpt_luna.agent_harness.aliases.pi }}:low",
-    "{{ .models.anthropic.haiku.agent_harness.aliases.pi }}"
+    "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}:medium"
 {{- end }}
   ],
   "steeringMode": "all",
   "followUpMode": "all",
   "sessions": {
     "autoTitle": {
-      "model": {{ if $isWork }}"{{ .work_models.sonnet.pi_alias }}"{{ else }}"{{ .models.anthropic.sonnet.agent_harness.aliases.pi }}"{{ end }},
+      "model": {{ if $isWork }}"{{ .work_models.sonnet.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
       "thinkingLevel": "off",
       "timeoutSecs": 60,
       "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
@@ -152,7 +147,21 @@
     "handoff": {
       "model": {{ if $isWork }}"{{ .work_models.gpt_terra.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
       "thinkingLevel": "low",
-      "persistRuns": true
+      "persistRuns": true,
+      "roster": [
+{{- if $isWork }}
+        "{{ .work_models.opus.pi_alias }}:medium",
+        "{{ .work_models.gpt_sol.pi_alias }}:medium",
+        "{{ .work_models.gpt_sol.pi_alias }}:high",
+        "{{ .work_models.gpt_terra.pi_alias }}:high"
+{{- else }}
+        "{{ .models.anthropic.opus.agent_harness.aliases.pi }}:medium",
+        "{{ .models.anthropic.fable.agent_harness.aliases.pi }}:medium",
+        "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}:medium",
+        "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}:high",
+        "{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}:high"
+{{- end }}
+      ]
     }
   },
   "workingVibe": "YoRHa",
@@ -163,7 +172,6 @@
   "workingVibePrompt": "Generate a terse 2-4 word loading message describing an operation currently underway, in the cold mechanical register of NieR: Automata. Begin with a present-participle verb and use clipped operational vocabulary tied to the task. Sentence case only, never all-caps. No real NieR names (2B, 9S, YoRHa). Task: {task}. {exclude} Output only the message, nothing else.",
   "showLastPrompt": false,
   "powerline": {
-    "mouseScroll": false,
     "preset": "minimal",
     "layout": {
       "left": [
@@ -237,10 +245,10 @@
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/wt/plugins/pi"{{ else }}"npm:@thurstonsand/pi-wt"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-doppelclaude"{{ else }}"npm:pi-doppelclaude"{{ end }},
     {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-web-tools"{{ else }}"npm:@thurstonsand/pi-web-tools"{{ end }},
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-powerline-footer"{{ else }}"npm:pi-powerline-footer"{{ end }},
+    "npm:pi-powerline-footer",
     "npm:glimpseui",
     "npm:pi-interview",
-    "npm:pi-mcp-adapter",
+    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-mcp-adapter"{{ else }}"npm:pi-mcp-adapter"{{ end }},
     "npm:sideshow",
     "npm:@thurstonsand/pi-paste",
     {

@@ -1,6 +1,11 @@
-import { execSync } from "node:child_process";
+import { spawn } from "node:child_process";
 import { basename, dirname } from "node:path";
-import type { ExtensionContext, ThemeColor } from "@earendil-works/pi-coding-agent";
+import type {
+  ExtensionContext,
+  ThemeColor,
+  ToolResultEvent,
+  UserBashEvent,
+} from "@earendil-works/pi-coding-agent";
 import { getCapabilities, hyperlink } from "@earendil-works/pi-tui";
 
 import { getJiraSettings } from "./settings.js";
@@ -12,48 +17,178 @@ const BRANCH_ICON = "\u{F126}";
 const WORKTREE_ICON = "\u{E725}";
 const MAINLINE_BRANCHES = new Set(["main", "master"]);
 const JIRA_TICKET_PATTERN = /[A-Z][A-Z0-9]+-\d+/;
+const CACHE_TTL_MS = 500;
 
-export function updateWorkspaceDisplayStatuses(ctx: ExtensionContext): void {
-  updateFolderStatus(ctx);
-  updateBranchStatus(ctx, currentGitBranch(ctx.cwd), isLinkedWorktree(ctx.cwd));
+interface WorkspaceState {
+  mainWorktreeName: string | null;
+  branch: string | null;
+  linkedWorktree: boolean;
 }
 
-function updateFolderStatus(ctx: ExtensionContext): void {
-  const folder = mainWorktreeName(ctx.cwd) ?? (basename(ctx.cwd) || ctx.cwd);
+interface CachedWorkspaceState {
+  cwd: string;
+  state: WorkspaceState;
+  timestamp: number;
+}
+
+export class WorkspaceDisplayStatus {
+  private cached: CachedWorkspaceState | undefined;
+  private pending: { cwd: string; promise: Promise<WorkspaceState> } | undefined;
+  private readonly timers = new Set<NodeJS.Timeout>();
+  private generation = 0;
+  private disposed = false;
+
+  sessionStart(ctx: ExtensionContext): void {
+    this.reset();
+    void this.refresh(ctx);
+  }
+
+  turnEnd(ctx: ExtensionContext): void {
+    void this.refresh(ctx);
+  }
+
+  toolResult(event: ToolResultEvent, ctx: ExtensionContext): void {
+    if (event.toolName === "bash" && mightChangeWorkspace(String(event.input.command ?? ""))) {
+      this.invalidate(ctx);
+    }
+  }
+
+  userBash(event: UserBashEvent, ctx: ExtensionContext): void {
+    if (mightChangeWorkspace(event.command)) this.scheduleInvalidation(ctx);
+  }
+
+  sessionShutdown(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.generation++;
+    this.clearTimers();
+  }
+
+  async refresh(ctx: ExtensionContext, force = false): Promise<void> {
+    if (this.disposed) return;
+
+    const generation = ++this.generation;
+    const cached = this.cached?.cwd === ctx.cwd ? this.cached : undefined;
+    if (cached) {
+      this.render(ctx, cached.state);
+    } else {
+      updateFolderStatus(ctx, basename(ctx.cwd) || ctx.cwd);
+      updateBranchStatus(ctx, null, false);
+    }
+
+    if (!force && cached && Date.now() - cached.timestamp < CACHE_TTL_MS) return;
+
+    const state = await this.fetch(ctx.cwd);
+    if (this.disposed || generation !== this.generation) return;
+
+    this.cached = { cwd: ctx.cwd, state, timestamp: Date.now() };
+    this.render(ctx, state);
+  }
+
+  private invalidate(ctx: ExtensionContext): void {
+    if (this.cached?.cwd === ctx.cwd) this.cached.timestamp = 0;
+    void this.refresh(ctx, true);
+  }
+
+  private scheduleInvalidation(ctx: ExtensionContext): void {
+    for (const delay of [100, 300, 500]) {
+      const timer = setTimeout(() => {
+        this.timers.delete(timer);
+        if (!this.disposed) this.invalidate(ctx);
+      }, delay);
+      this.timers.add(timer);
+    }
+  }
+
+  private reset(): void {
+    this.generation++;
+    this.disposed = false;
+    this.cached = undefined;
+    this.pending = undefined;
+    this.clearTimers();
+  }
+
+  private clearTimers(): void {
+    for (const timer of this.timers) clearTimeout(timer);
+    this.timers.clear();
+  }
+
+  private fetch(cwd: string): Promise<WorkspaceState> {
+    if (this.pending?.cwd === cwd) return this.pending.promise;
+
+    const promise = fetchWorkspaceState(cwd).finally(() => {
+      if (this.pending?.promise === promise) this.pending = undefined;
+    });
+    this.pending = { cwd, promise };
+    return promise;
+  }
+
+  private render(ctx: ExtensionContext, state: WorkspaceState): void {
+    updateFolderStatus(ctx, state.mainWorktreeName ?? (basename(ctx.cwd) || ctx.cwd));
+    updateBranchStatus(ctx, state.branch, state.linkedWorktree);
+  }
+}
+
+function mightChangeWorkspace(command: string): boolean {
+  return [
+    /\bgit\s+(checkout|switch|branch\s+-[dDmM]|merge|rebase|pull|reset|worktree)/,
+    /\bgit\s+stash\s+(pop|apply)/,
+    /\bwt\s+rebranch\b/,
+  ].some((pattern) => pattern.test(command));
+}
+
+async function fetchWorkspaceState(cwd: string): Promise<WorkspaceState> {
+  const [gitDirectories, currentBranch] = await Promise.all([
+    runGit(cwd, ["rev-parse", "--path-format=absolute", "--git-dir", "--git-common-dir"]),
+    runGit(cwd, ["branch", "--show-current"]),
+  ]);
+
+  if (gitDirectories === null || currentBranch === null) {
+    return { mainWorktreeName: null, branch: null, linkedWorktree: false };
+  }
+
+  const [gitDir, commonDir] = gitDirectories.split("\n");
+  const branch = currentBranch || (await detachedHead(cwd));
+  return {
+    mainWorktreeName: commonDir ? basename(dirname(commonDir)) || null : null,
+    branch,
+    linkedWorktree: Boolean(gitDir && commonDir && gitDir !== commonDir),
+  };
+}
+
+async function detachedHead(cwd: string): Promise<string | null> {
+  const sha = await runGit(cwd, ["rev-parse", "--short", "HEAD"]);
+  return sha ? `${sha} (detached)` : "detached";
+}
+
+function runGit(cwd: string, args: string[]): Promise<string | null> {
+  return new Promise((resolve) => {
+    const child = spawn("git", args, { cwd, stdio: ["ignore", "pipe", "ignore"] });
+    let stdout = "";
+    let settled = false;
+
+    const finish = (value: string | null): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timeout);
+      resolve(value);
+    };
+
+    child.stdout.on("data", (chunk) => {
+      stdout += chunk.toString();
+    });
+    child.on("close", (code) => finish(code === 0 ? stdout.trim() : null));
+    child.on("error", () => finish(null));
+
+    const timeout = setTimeout(() => {
+      child.kill();
+      finish(null);
+    }, 500);
+  });
+}
+
+function updateFolderStatus(ctx: ExtensionContext, folder: string): void {
   ctx.ui.setStatus(FOLDER_STATUS_KEY, ctx.ui.theme.fg("bashMode", `${FOLDER_ICON} ${folder}`));
-}
-
-// In a linked worktree, the common git dir points at the main worktree's .git,
-// so its parent is the main worktree folder. Outside a worktree this returns
-// the current repo's folder, matching the previous basename(cwd) behavior.
-function mainWorktreeName(cwd: string): string | null {
-  try {
-    const commonDir = execSync("git rev-parse --path-format=absolute --git-common-dir", {
-      cwd,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-    if (!commonDir) return null;
-    return basename(dirname(commonDir)) || null;
-  } catch {
-    return null;
-  }
-}
-
-// A linked worktree has a per-worktree git dir distinct from the shared common
-// dir; in the main worktree the two paths are identical.
-function isLinkedWorktree(cwd: string): boolean {
-  try {
-    const output = execSync("git rev-parse --path-format=absolute --git-dir --git-common-dir", {
-      cwd,
-      encoding: "utf8",
-      stdio: ["ignore", "pipe", "ignore"],
-    }).trim();
-    const [gitDir, commonDir] = output.split("\n");
-    return Boolean(gitDir && commonDir && gitDir !== commonDir);
-  } catch {
-    return false;
-  }
 }
 
 function updateBranchStatus(ctx: ExtensionContext, branch: string | null, worktree: boolean): void {
@@ -70,9 +205,6 @@ function updateBranchStatus(ctx: ExtensionContext, branch: string | null, worktr
     return;
   }
 
-  // The ticket is colored as a link (blue) and wrapped in an OSC 8 hyperlink;
-  // the surrounding branch keeps its own color. Each fg() call self-resets, so
-  // the segments concatenate without color bleed.
   const text =
     ctx.ui.theme.fg(color, `${prefix} ${link.before}`) +
     hyperlink(ctx.ui.theme.fg("accent", link.ticket), link.url) +
@@ -105,18 +237,4 @@ function ticketLink(branch: string): TicketLink | undefined {
 
 function branchColor(branch: string): ThemeColor {
   return MAINLINE_BRANCHES.has(branch) ? "warning" : "muted";
-}
-
-function currentGitBranch(cwd: string): string | null {
-  try {
-    return (
-      execSync("git branch --show-current", {
-        cwd,
-        encoding: "utf8",
-        stdio: ["ignore", "pipe", "ignore"],
-      }).trim() || null
-    );
-  } catch {
-    return null;
-  }
 }

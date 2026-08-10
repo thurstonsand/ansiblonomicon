@@ -1,12 +1,12 @@
 ---
 name: wayfinder
-description: Plan a huge chunk of work — more than one agent session can hold — as a shared map of investigation tickets, and resolve them one at a time until the way to the destination is clear.
+description: Plan a huge chunk of work — more than one agent session can hold — as a shared map of decision tickets, and resolve them one at a time until the way to the destination is clear.
 disable-model-invocation: true
 ---
 
 # Wayfinder
 
-A loose idea has arrived — too big for one agent session, and wrapped in fog: the way from here to the **destination** isn't visible yet. Wayfinding is about finding that way, not charging at the destination. This skill charts the way as a **shared map** under `docs/wayfinding/`, then works its tickets one at a time until the route is clear.
+A loose idea has arrived — too big for one agent session, and wrapped in fog: the way from here to the **destination** isn't visible yet. Wayfinding is about finding that way, not charging at the destination. This skill charts the way as a **shared map** under `docs/wayfinding/`, then works its **decision tickets** — questions whose resolution is a decision, not slices of a build to execute — one at a time until the route is clear.
 
 The destination varies per effort, and naming it is the first act of charting — it shapes every ticket. It might be a spec to hand off and iterate on (which typically lands as a `/grill-me` Gate 2 design doc in `docs/designs/`), a decision to lock before planning starts, or a change made in place like a data-structure migration. The map is domain-agnostic — engineering work, course content, whatever fits the shape.
 
@@ -96,9 +96,9 @@ The answer isn't drafted in the body — it's appended as a `## Resolution` sect
 
 Every ticket is either **HITL** — human in the loop, worked _with_ a human who speaks for themselves — or **AFK**, driven by the agent alone. A HITL ticket only resolves through that live exchange; the agent never stands in for the human's side of it (a grilling agent that answers its own questions has broken this).
 
-- **Research** (AFK): Reading documentation, third-party APIs, or local resources like knowledge bases. Creates a markdown summary as a linked asset. Use when knowledge outside the current working directory is required.
+- **Research** (AFK): Reading documentation, third-party APIs, or local resources like knowledge bases to surface a fact a decision waits on. Resolved by a **subagent** (see [Burn down research](#burn-down-research)). Use when knowledge outside the current working directory is required.
 - **Prototype** (HITL): Raise the fidelity of the discussion by making a cheap, rough, concrete artifact to react to — an outline, a rough take, a stub, or UI/logic code created inline for this ticket. Links the prototype as an asset. Use when "how should it look" or "how should it behave" is the key question.
-- **Grilling** (HITL): Conversation via the /grill-me skill — a Gate 1 session scoped to one decision branch at a time. The default case.
+- **Grilling** (HITL): Conversation via the /grill-me skill — a Gate 1 session scoped to this ticket's question. The default case.
 - **Task** (HITL or AFK): Manual work that must happen before a _decision_ can be made — nothing to decide, prototype, or research, but the discussion is blocked until it's done. Signing up for a service so its API can be judged, provisioning access, moving data so its shape can be seen. This is the one type that _does_ rather than decides — and it earns its place by unblocking a decision, not by delivering the destination. The agent drives it alone where it can (AFK); otherwise it hands the human a precise checklist (HITL). Resolved when the work is done; the answer records what was done and any resulting facts (credentials location, new URLs, row counts) later tickets depend on.
 
 ## Fog of war
@@ -122,19 +122,28 @@ Out-of-scope work never graduates — the frontier stops at the destination — 
 
 Ruling something out of scope is a scoping act, not a step on the route. When a ticket that already exists turns out to sit past the destination — mis-scoped in while charting, or exposed by a resolution — **close it** (a closed ticket is unambiguously off the frontier) and leave one line in the **Out of scope** section: the gist plus why it's out of scope, linking the closed ticket. It stays out of **Decisions so far**, which records the route actually walked — a scope boundary isn't a step on it.
 
+## Burn down research
+
+Research is AFK, so a session never stops to read: it dispatches a **subagent** per research ticket and carries on. Claim each ticket for the subagent before dispatching, so no other session picks it up.
+
+The subagent investigates against **primary sources** — official docs, source code, specs, first-party APIs — never a secondary write-up of them, following every claim back to the source that owns it. It writes its findings to `docs/wayfinding/<effort-slug>/research/<slug>.md`, citing each claim's source, then appends the ticket's `## Resolution` linking that file, closes the ticket, and reports back. The dispatching session appends the Decisions-so-far line when the report arrives — the map has one writer.
+
+Research tickets are the one exception to one ticket per session: fire as many as the frontier holds, in parallel.
+
 ## Invocation
 
-Two modes. Either way, **never resolve more than one ticket per session.**
+Two modes. Either way, **never resolve more than one ticket per session** — with the exception of research tickets.
 
 ### Chart the map
 
 User invokes with a loose idea.
 
 1. **Name the destination.** Run a `/grill-me` session — Gate 1 only — to pin down what this map is finding its way to: the spec, decision, or change. The destination fixes the scope, so it's settled first.
-2. **Map the frontier.** Continue `/grill-me`, **breadth-first** this time: fan out across the whole space rather than deep on any one thread, surfacing the open decisions and the first steps takeable now. Stay in Gate 1 — charting surfaces decisions, it doesn't design them. **If this surfaces no fog** — the way to the destination is already clear, the whole journey small enough for one session — you don't need a map. Stop and ask the user how they'd like to proceed.
+2. **Map the frontier.** Continue `/grill-me`, **breadth-first** this time: the design tree you are walking spans the whole effort, so fan out across it rather than going deep on any one thread, surfacing the open decisions and the first steps takeable now. Stay in Gate 1 — charting surfaces decisions, it doesn't design them. **If this surfaces no fog** — the way to the destination is already clear, the whole journey small enough for one session — you don't need a map. Stop and ask the user how they'd like to proceed.
 3. **Create the map** at `docs/wayfinding/<effort-slug>/map.md`: Destination and Notes filled in, Decisions-so-far empty, the fog sketched into **Not yet specified**.
 4. **Create the tickets you can specify now** under `tickets/`, numbering them in creation order and wiring `blocked-by` as you go. Wiring sorts them into the frontier and the blocked; everything you can't yet specify stays in the fog — the **Not yet specified** section.
-5. Stop — charting the map is one session's work; do not also resolve tickets.
+5. **Fire the research subagents.** For each `research` ticket you just created, spin up a subagent to resolve it in parallel, and record their resolutions on the map as they report.
+6. Stop — charting the map is one session's work; do not also resolve the tickets a human has to answer.
 
 ### Work through the map
 
@@ -144,6 +153,6 @@ User invokes with a map (path or effort name). A ticket is **optional** — with
 2. Choose the ticket. If the user named one, use it. Otherwise run [scripts/frontier.py](./scripts/frontier.py) and take the first frontier ticket. **Claim it**: set `claimed:` before any work.
 3. Resolve it — **zoom as needed**: read the full body of any related or closed ticket on demand; invoke the skills the `## Notes` block names. If in doubt, use `/grill-me` (Gate 1).
 4. Record the resolution: append the answer as a `## Resolution` section, set `status: closed`, and **append a context pointer** to the map's Decisions-so-far.
-5. Add newly-surfaced tickets; graduate any fog the answer has made specifiable, clearing each graduated patch from **Not yet specified** so it lives only as its new ticket. If the answer reveals a ticket — this one or another — sits beyond the destination, **rule it out of scope** rather than resolving it on the route. If the decision invalidates other parts of the map, update or delete those tickets.
+5. Add newly-surfaced tickets, dispatching a subagent for any `research` ticket among them; graduate any fog the answer has made specifiable, clearing each graduated patch from **Not yet specified** so it lives only as its new ticket. If the answer reveals a ticket — this one or another — sits beyond the destination, **rule it out of scope** rather than resolving it on the route. If the decision invalidates other parts of the map, update or delete those tickets.
 
 The user may run unblocked tickets in parallel, so expect other sessions to be editing the map concurrently — the `claimed:` field is how they stay out of each other's way.

@@ -3,6 +3,15 @@
     "cloudflare-api": {
       "type": "http",
       "url": "https://mcp.cloudflare.com/mcp"
+    },
+    "ha-mcp": {
+      "type": "http",
+      "url": "${HA_MCP_URL}",
+      "auth": "oauth",
+      "oauth": {
+        "clientId": "${HA_MCP_OAUTH_CLIENT_ID}",
+        "clientSecret": "${HA_MCP_OAUTH_CLIENT_SECRET}"
+      }
     }
   }
 }

@@ -401,10 +401,8 @@ export default function pinModelExtension(pi: ExtensionAPI): void {
 
   // Read the registry, never refresh it. Pi populates it before extensions bind and
   // re-refreshes on every credential change, so this handler exists only to capture ctx
-  // for the argument completions. Refreshing here would take the networked variant —
-  // ExtensionContext.modelRegistry.refresh() accepts no options — and pi awaits
-  // session_start handlers in series, so a hung catalog fetch silently stalls every
-  // extension loaded after this one.
+  // for the argument completions. Even a bounded refresh is redundant here, and pi awaits
+  // session_start handlers in series, so it would delay every extension loaded after this one.
   pi.on("session_start", (_event, ctx) => {
     restorePinnedDefaults(settingsPath);
     modelSource = () => selectableModels(ctx);

@@ -8,18 +8,30 @@ const BUDGET_STATUS_KEY = "cost_budget";
 const RATE_WINDOW_DAYS = 7; // "at last week's pace"
 
 export class CostBudgetStatus {
-  private readonly client: BudgetClient;
+  private client: BudgetClient | undefined;
 
-  constructor() {
+  sessionStart(ctx: ExtensionContext): void {
     const budget = getBudgetSettings();
     this.client = new BudgetClient(budget.url, budget.costsUrl);
+    void this.refresh(ctx);
   }
 
-  async update(ctx: ExtensionContext, force = false): Promise<void> {
+  turnEnd(ctx: ExtensionContext): void {
+    void this.refresh(ctx);
+  }
+
+  sessionShutdown(): void {
+    this.client = undefined;
+  }
+
+  async refresh(ctx: ExtensionContext, force = false): Promise<void> {
+    const client = this.requireClient();
     const [ceiling, days] = await Promise.all([
-      this.client.getBudgetCeiling(force),
-      this.client.getDailyCosts(force),
+      client.getBudgetCeiling(force),
+      client.getDailyCosts(force),
     ]);
+    if (client !== this.client) return;
+
     if (!ceiling || !days) {
       ctx.ui.setStatus(BUDGET_STATUS_KEY, undefined);
       return;
@@ -33,6 +45,11 @@ export class CostBudgetStatus {
       ceiling.budgetUsd > 0 ? ctx.ui.theme.fg("text", `/$${Math.round(ceiling.budgetUsd)}`) : "";
     const alert = projectionAlert(ctx, ceiling, days);
     ctx.ui.setStatus(BUDGET_STATUS_KEY, `${spentText}${alert}${totalText}`);
+  }
+
+  private requireClient(): BudgetClient {
+    if (!this.client) throw new Error("Cost budget status has not started");
+    return this.client;
   }
 }
 

@@ -5,7 +5,7 @@ description: Grilling and design session that challenges your plan against the e
 
 # Grill Me
 
-Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down each branch of the design tree, resolving dependencies between decisions one-by-one. For each question, provide your recommended answer.
+Interview me relentlessly about every aspect of this plan until we reach a shared understanding. Walk down every branch of the design tree, and for each question, provide your recommended answer.
 
 This skill uses three gates:
 
@@ -17,13 +17,21 @@ Start at Gate 1 unless the user explicitly says a gate is already complete.
 
 ## Gate 1: Grill
 
-Walk the decision tree in dependency order. Resolve upstream decisions before downstream ones. You may ask multiple questions in one turn when they depend on the same resolved premise.
+Map the plan as a **design tree**: every decision branches into the decisions that hang off it.
 
-If a question can be answered by exploring the codebase or existing documentation, explore instead of asking.
+### Work the frontier
 
-### Explore before asking
+Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled — the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
 
-During codebase exploration, inspect:
+Each round the user answers reshapes the tree — settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
+
+Prefer blunt accuracy over agreeable momentum. If something looks weak, say so plainly.
+
+### Facts are yours; decisions are the user's
+
+Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment, dispatch a sub-agent to find it — don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report — ask the rest of the frontier now.
+
+Inspect:
 
 - code, tests, configuration, and existing docs relevant to the plan
 - existing relevant design docs in `docs/designs/`
@@ -32,11 +40,7 @@ During codebase exploration, inspect:
 
 Cross-check the user's claims against the code, tests, configuration, and existing docs. Surface contradictions immediately.
 
-### Walk the decision tree
-
-- At branching decision points, stop and get my answer before exploring divergent branches.
-- Track unresolved assumptions, constraints, and follow-up branches so nothing gets lost.
-- Prefer blunt accuracy over agreeable momentum. If something looks weak, say so plainly.
+The _decisions_ are the user's — put each to them and wait.
 
 ### Calibrate by cost of being wrong
 
@@ -84,9 +88,23 @@ Don't couple `CONTEXT.md` to implementation details. Only include terms that are
 
 Create context files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If `CONTEXT-MAP.md` exists, use it to find the relevant context. When multiple contexts exist, infer which one the current topic relates to; if unclear, ask.
 
+### Question format
+
+Each question should be formatted like so:
+
+```
+❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
+
+➡️ <your recommended answer>
+```
+
+Shape choices around real paths forward. Do not turn the round into a generic questionnaire.
+
+If code, docs, diffs, or diagrams will sharpen a decision, include them rather than paraphrasing them. Keep them small: the minimum structure needed to make the decision clear, or pseudocode when that communicates the idea better.
+
 ### Gate 1 exit
 
-Gate 1 is complete when the major branches are resolved enough to summarize:
+Gate 1 is complete when the frontier is empty: every branch of the design tree visited, nothing left silently assumed. Summarize:
 
 - decisions made
 - interfaces described, at every level

@@ -2,7 +2,7 @@ import type { ThinkingLevel } from "@earendil-works/pi-agent-core";
 import type { Api, Model } from "@earendil-works/pi-ai";
 import type { ExtensionContext, ThemeColor } from "@earendil-works/pi-coding-agent";
 
-import type { CodexStatus } from "./codexctl-config.js";
+import { CodexConfigWatcher, type CodexStatus } from "./codexctl-config.js";
 
 const STATUS_KEY = "model_display";
 const FAST_ICON = "⚡︎";
@@ -54,6 +54,52 @@ const THINKING_EXPONENTS: Partial<Record<ThinkingLevel, string>> = {
   max: "⁴",
 };
 
+export class ModelDisplayStatus {
+  private watcher: CodexConfigWatcher | undefined;
+  private currentCtx: ExtensionContext | undefined;
+
+  sessionStart(ctx: ExtensionContext): void {
+    this.currentCtx = ctx;
+    this.disposeWatcher();
+    this.watcher = new CodexConfigWatcher(requireModel(ctx), () => {
+      if (this.currentCtx) this.update(this.currentCtx);
+    });
+    this.update(ctx);
+  }
+
+  modelSelect(ctx: ExtensionContext): void {
+    this.watcher?.setModel(requireModel(ctx));
+    this.update(ctx);
+  }
+
+  thinkingLevelSelect(ctx: ExtensionContext): void {
+    this.update(ctx);
+  }
+
+  sessionTree(ctx: ExtensionContext): void {
+    this.update(ctx);
+  }
+
+  sessionShutdown(): void {
+    this.currentCtx = undefined;
+    this.disposeWatcher();
+  }
+
+  refresh(ctx: ExtensionContext): void {
+    this.watcher?.refreshFromFile();
+    this.update(ctx);
+  }
+
+  private update(ctx: ExtensionContext): void {
+    updateModelDisplayStatus(ctx, ctx.thinkingLevel ?? "off", this.watcher?.get());
+  }
+
+  private disposeWatcher(): void {
+    this.watcher?.dispose();
+    this.watcher = undefined;
+  }
+}
+
 export function updateModelDisplayStatus(
   ctx: ExtensionContext,
   thinkingLevel: ThinkingLevel,
@@ -67,6 +113,12 @@ export function updateModelDisplayStatus(
   const label = `${icon} ${applyThinkingExponent(name, thinkingLevel)}${status}`;
 
   ctx.ui.setStatus(STATUS_KEY, ctx.ui.theme.fg(providerColor(provider), label));
+}
+
+function requireModel(ctx: ExtensionContext): Model<Api> {
+  const model = ctx.model;
+  if (!model) throw new Error("pi-powerline-footer-custom requires an active model");
+  return model;
 }
 
 function formatModelName(model: Model<Api> | undefined): string {

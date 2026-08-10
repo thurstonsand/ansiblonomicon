@@ -11,6 +11,7 @@ class FakeTerminal implements FocusTerminal {
   outputIsTTY = true;
   readonly writes: string[] = [];
   private readonly listeners = new Map<FocusEvent, Set<() => void>>();
+  private readonly dataListeners = new Set<(data: string) => void>();
 
   write(data: string): void {
     this.writes.push(data);
@@ -26,8 +27,23 @@ class FakeTerminal implements FocusTerminal {
     this.listeners.get(event)?.delete(listener);
   }
 
+  onData(listener: (data: string) => void): () => void {
+    this.dataListeners.add(listener);
+    return () => {
+      this.dataListeners.delete(listener);
+    };
+  }
+
   emit(event: FocusEvent): void {
     for (const listener of this.listeners.get(event) ?? []) listener();
+  }
+
+  emitData(data: string): void {
+    for (const listener of this.dataListeners) listener(data);
+  }
+
+  get dataListenerCount(): number {
+    return this.dataListeners.size;
   }
 
   listenerCount(event: FocusEvent): number {
@@ -87,24 +103,30 @@ test("tracks focus while terminal reporting is active", () => {
   assert.deepEqual(terminal.writes, ["\x1b[?1004h"]);
   assert.equal(terminal.listenerCount("pause"), 1);
   assert.equal(terminal.listenerCount("resume"), 1);
+  assert.equal(terminal.dataListenerCount, 1);
 
-  assert.deepEqual(inputHandler?.("\x1b[O"), { consume: true });
+  terminal.emitData("\x1b[O");
   assert.equal(tracker.isFocused, false);
   assert.deepEqual(changes, [false]);
 
-  assert.deepEqual(inputHandler?.("\x1b[O"), { consume: true });
+  terminal.emitData("\x1b[O");
   assert.deepEqual(changes, [false]);
 
-  assert.equal(inputHandler?.("x"), undefined);
+  terminal.emitData("x");
   assert.equal(tracker.isFocused, true);
   assert.deepEqual(changes, [false, true]);
 
-  assert.deepEqual(inputHandler?.("x\x1b[O"), { data: "x" });
+  terminal.emitData("x\x1b[O");
   assert.equal(tracker.isFocused, false);
   assert.deepEqual(changes, [false, true, false]);
 
-  assert.deepEqual(inputHandler?.("\x1b[Ix"), { data: "x" });
+  terminal.emitData("\x1b[Ix");
   assert.equal(tracker.isFocused, true);
+  assert.deepEqual(changes, [false, true, false, true]);
+
+  assert.deepEqual(inputHandler?.("\x1b[O"), { consume: true });
+  assert.deepEqual(inputHandler?.("x\x1b[O"), { data: "x" });
+  assert.equal(inputHandler?.("x"), undefined);
   assert.deepEqual(changes, [false, true, false, true]);
 
   terminal.emit("pause");
@@ -114,5 +136,6 @@ test("tracks focus while terminal reporting is active", () => {
   assert.deepEqual(terminal.writes, ["\x1b[?1004h", "\x1b[?1004l", "\x1b[?1004h", "\x1b[?1004l"]);
   assert.equal(terminal.listenerCount("pause"), 0);
   assert.equal(terminal.listenerCount("resume"), 0);
+  assert.equal(terminal.dataListenerCount, 0);
   assert.equal(unsubscribed, true);
 });

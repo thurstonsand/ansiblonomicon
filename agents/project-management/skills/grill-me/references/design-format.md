@@ -51,9 +51,10 @@ Draft
 ### {Alternative}
 
 - **Status:** {Rejected or Open}
-- **Decision or open issue:** {If rejected, why it lost. If open, what problem remains unaddressed.}
-- **Retained discussion:** {Context worth preserving}
-- **Next step:** {For open alternatives only; what evidence or action would resolve the decision?}
+- {{if Rejected}}**Decision**: {why it lost}{{endif}}
+- {{if Open}}**Open Issue**: {what problem remains unaddressed}{{endif}}
+- **Discussion:** {Context worth preserving}
+- {{if Open}}**Next step:** {what evidence or action would resolve the decision?}{{endif}}
 
 ## Implementation Plan
 

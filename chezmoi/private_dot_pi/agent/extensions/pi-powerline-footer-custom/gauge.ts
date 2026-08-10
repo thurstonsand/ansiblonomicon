@@ -4,9 +4,9 @@ const GAUGE_WIDTH = 21;
 const WARN_AT = 50;
 const ERROR_AT = 80;
 
-export function renderGauge(percent: number, overSoftMax = false): string {
+export function renderGauge(percent: number, overSoftMax = false, approximate = false): string {
   const label = Math.max(0, Math.round(percent)).toString().padStart(2, "0");
-  const text = `${label}${overSoftMax ? "!" : "%"}`;
+  const text = `${approximate ? "~" : ""}${label}${overSoftMax ? "!" : "%"}`;
   const clamped = Math.max(0, Math.min(percent, 100));
   const visibleBarWidth = Math.max(0, GAUGE_WIDTH - text.length);
   const filled = Math.round((clamped / 100) * visibleBarWidth);

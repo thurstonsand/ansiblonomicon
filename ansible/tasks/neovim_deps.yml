@@ -1,6 +1,13 @@
 ---
-- name: Sync Lazy.nvim plugins
-  when: not ansible_check_mode
+# neovim_plugins_mode decides which end of the lockfile a host owns. A "sync" host resolves
+# plugins to their latest commits and captures the result back into the chezmoi source, so the
+# lockfile it produces is what every other host installs. A "restore" host installs exactly the
+# lockfile chezmoi just deployed and captures nothing; two hosts capturing would overwrite each
+# other's versions on every deploy.
+- name: Sync Lazy.nvim plugins to their latest commits
+  when:
+    - not ansible_check_mode
+    - neovim_plugins_mode | default("sync") == "sync"
   ansible.builtin.command:
     argv:
       - nvim
@@ -12,13 +19,29 @@
   poll: 5
 
 - name: Capture Lazy.nvim lockfile in chezmoi source
-  when: not ansible_check_mode
+  when:
+    - not ansible_check_mode
+    - neovim_plugins_mode | default("sync") == "sync"
   ansible.builtin.command:
     argv:
       - chezmoi
       - re-add
       - "{{ ansible_user_dir }}/.config/nvim/lazy-lock.json"
   changed_when: true
+
+- name: Restore Lazy.nvim plugins to the deployed lockfile
+  when:
+    - not ansible_check_mode
+    - neovim_plugins_mode | default("sync") == "restore"
+  ansible.builtin.command:
+    argv:
+      - nvim
+      - --headless
+      - "+Lazy! restore"
+      - +qa
+  changed_when: true
+  async: 600
+  poll: 5
 
 - name: Remove Mason packages with broken Python virtualenvs
   when: not ansible_check_mode

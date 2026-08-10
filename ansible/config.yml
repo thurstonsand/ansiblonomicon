@@ -91,16 +91,16 @@ agent_harness_sources_base:
           - grilling
           - handoff
           - grill-with-docs
+          - improve-codebase-architecture
           - triage
           - implement
           - setup-matt-pocock-skills
           - tdd
-          - to-issues
-          - to-prd
           - prototype
           - research
           - to-spec
           - to-tickets
+          - wait-what
           - wayfinder
 
   - repo: vercel-labs/agent-browser
