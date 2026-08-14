@@ -12,7 +12,7 @@
   ansible.builtin.set_fact:
     agent_harness_agent_specific_skills: >-
       {{ agent_harness_plugin_resources.skills
-         | agent_harness_filter_resources(agent_harness_target_agent) }}
+         | agent_harness_filter_resources(agent_harness_target_agent, agent_harness_agent_config.name_transform) }}
   when: agent_harness_agent_config.cleanup_orphaned_skills | default(agent_harness_cleanup_orphaned_skills)
 
 - name: Find existing skills in destination
@@ -60,7 +60,7 @@
       ansible.builtin.set_fact:
         agent_harness_agent_specific_agents: >-
           {{ agent_harness_plugin_resources.agents
-             | agent_harness_filter_resources(agent_harness_target_agent) }}
+             | agent_harness_filter_resources(agent_harness_target_agent, agent_harness_agent_config.name_transform) }}
 
     - name: Find existing agents in destination
       ansible.builtin.find:

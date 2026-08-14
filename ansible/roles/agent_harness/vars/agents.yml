@@ -6,84 +6,29 @@ agent_harness_agents:
     config_root: "{{ ansible_facts.env.HOME }}/.claude"
     skills_dir: "{{ ansible_facts.env.HOME }}/.claude/skills"
     agents_dir: "{{ ansible_facts.env.HOME }}/.claude/agents"
-    mcp_file: "{{ ansible_facts.env.HOME }}/.claude/.mcp.json"
-    mcp_format: json
-    mcp_key: mcpServers
-    mcp_env_format: "${VAR}"
-    mcp_command_format: separate
     name_transform: preserve
-    transform_content: false
-    instructions_file: CLAUDE.md
-    supports_skill_mcp: false
 
   amp:
     config_root: "{{ ansible_facts.env.HOME }}/.config/amp"
     skills_dir: "{{ ansible_facts.env.HOME }}/.config/amp/skills"
     agents_dir: null # Amp does not support user-defined subagents
-    mcp_file: "{{ ansible_facts.env.HOME }}/.config/amp/settings.json"
-    mcp_format: json
-    mcp_key: amp.mcpServers
-    mcp_env_format: "${VAR}"
-    mcp_command_format: separate
     name_transform: preserve
-    transform_content: false
-    instructions_file: AGENTS.md
-    supports_skill_mcp: true
 
   codex:
     config_root: "{{ ansible_facts.env.HOME }}/.codex"
     skills_dir: "{{ ansible_facts.env.HOME }}/.codex/skills"
     agents_dir: null # Codex does not support subagents
-    mcp_file: "{{ ansible_facts.env.HOME }}/.codex/config.toml"
-    mcp_format: toml
-    mcp_key: mcp_servers
-    mcp_env_format: literal # env values are literal strings in TOML
-    mcp_command_format: separate
     name_transform: preserve
-    transform_content: false
-    instructions_file: AGENTS.md
-    supports_skill_mcp: false
     cleanup_orphaned_skills: false # Preserve skills managed by Codex and ChatGPT outside agent_harness.
 
   opencode:
     config_root: "{{ ansible_facts.env.HOME }}/.config/opencode"
     skills_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/skill" # SINGULAR - not "skills"
     agents_dir: "{{ ansible_facts.env.HOME }}/.config/opencode/agent" # SINGULAR - not "agents"
-    mcp_file: "{{ ansible_facts.env.HOME }}/.config/opencode/opencode.json"
-    mcp_format: json
-    mcp_key: mcp
-    mcp_env_format: "{env:VAR}" # OpenCode uses {env:VAR} syntax
-    mcp_command_format: array # command is an array: ["cmd", "arg1", "arg2"]
     name_transform: lowercase_dash # Names must be lowercase alphanumeric with single hyphen separators
-    transform_content: false # Content transformation not needed - SKILL.md format is compatible
-    instructions_file: AGENTS.md
-    supports_skill_mcp: false # MCP is configured in opencode.json, not per-skill
 
   pi:
     config_root: "{{ ansible_facts.env.HOME }}/.pi/agent"
     skills_dir: "{{ ansible_facts.env.HOME }}/.pi/agent/skills"
     agents_dir: null # Pi does not support built-in user-defined subagents
-    mcp_file: null
-    mcp_format: json
-    mcp_key: null
-    mcp_env_format: "${VAR}"
-    mcp_command_format: separate
     name_transform: lowercase_dash
-    transform_content: false
-    instructions_file: AGENTS.md
-    supports_skill_mcp: false
-
-  openclaw:
-    config_root: "{{ ansible_facts.env.HOME }}/.openclaw"
-    skills_dir: "{{ ansible_facts.env.HOME }}/.openclaw/skills"
-    agents_dir: null # OpenClaw agents work very differently
-    mcp_file: null
-    mcp_format: json
-    mcp_key: null
-    mcp_env_format: "${VAR}"
-    mcp_command_format: separate
-    name_transform: preserve
-    transform_content: false
-    instructions_file: AGENTS.md
-    supports_skill_mcp: false
-    cleanup_orphaned_skills: false # Preserve existing local OpenClaw skills outside Ansible's source list

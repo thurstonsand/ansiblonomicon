@@ -99,7 +99,7 @@ The driver is playwright (confirmed present in work artifactory), imported as **
 - Work macOS: same cask, already present in `ansible/Brewfile.work`.
 - OpenClaw (Debian, headless): deferred — not provisioned in this pass. When it is: Debian's `chromium` apt package, `webTools.fetch.browser.executablePath` templated to `/usr/bin/chromium`.
 
-Rationale: every target is Ansible-provisioned and this repo's standing rule is that Ansible owns software installation — a driver-managed browser cache is a second package manager. Branded Chrome is also strictly better for the authenticated-login flow than a bare Chromium build. The accepted risk: Chrome self-updates while `playwright-core` stays pinned, so a protocol-drift breakage window exists across major Chrome bumps; playwright commits to stable-channel support and `poe ts:update-deps` keeps the pin current.
+Rationale: every target is Ansible-provisioned and this repo's standing rule is that Ansible owns software installation — a driver-managed browser cache is a second package manager. Branded Chrome is also strictly better for the authenticated-login flow than a bare Chromium build. The accepted risk: Chrome self-updates while `playwright-core` stays pinned, so a protocol-drift breakage window exists across major Chrome bumps; playwright commits to stable-channel support and `poe update-deps:ts` keeps the pin current.
 
 One binary serves both headless and interactive modes. This is not a convenience: a Chrome profile written by one version cannot be safely opened by an older one, so headless and headed must be the same executable.
 
@@ -150,7 +150,7 @@ The profile lives at `~/.pi/agent/browser-profile/` (settings-overridable), isol
 - **Non-HTML response exceeds the 100MB cap:** per-URL failure with the size in the reason, matching the GitHub fetcher's ceiling.
 - **Trafilatura extracts nothing:** per-URL failure ("no content extracted"), not an empty document.
 - **`/open-browser` on headless OpenClaw:** the headed launch fails (no display); the error surfaces to the user. Acceptable — logins happen on machines with screens.
-- **Chrome major-version bump breaks pinned playwright-core:** local fetches fail with driver errors until `poe ts:update-deps` refreshes the pin; GitHub and Parallel paths unaffected.
+- **Chrome major-version bump breaks pinned playwright-core:** local fetches fail with driver errors until `poe update-deps:ts` refreshes the pin; GitHub and Parallel paths unaffected.
 - **Non-http(s) scheme:** unclaimed by every fetcher; appears in the Failed section.
 
 ## Alternatives

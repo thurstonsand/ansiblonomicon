@@ -88,7 +88,9 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 - `poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker
 - `poe lint:pi` — Lint and type-check pi extension packages (`--format` applies Biome formatting/fixes first)
 - `poe lint:amp` — Format, lint, and type-check Amp plugin sources
-- `poe ts:update-deps` — Update tracked TypeScript agent packages (Pi extension packages and Amp plugin sources)
+- `poe update-deps` — Update every tracked lockfile (python + typescript)
+- `poe update-deps:ts` — Update tracked TypeScript agent packages (Pi extension packages and Amp plugin sources)
+- `poe update-deps:uv` — Upgrade `uv.lock` to the newest allowed releases and sync (personal machines only)
 
 ## Design
 

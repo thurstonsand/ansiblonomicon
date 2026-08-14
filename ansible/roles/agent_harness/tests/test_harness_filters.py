@@ -1511,6 +1511,23 @@ def test_agent_harness_filter_resources_non_matching_agent() -> None:
 
 
 @pytest.mark.unit
+def test_agent_harness_filter_resources_normalizes_lowercase_dash_names() -> None:
+    resources: list[Any] = [
+        {
+            "name": "Mixed_Case Skill",
+            "source": "/path/a",
+            "origin": "repo",
+            "target_agents": [],
+        },
+    ]
+
+    result = agent_harness_filter_resources(resources, "pi", "lowercase_dash")
+
+    assert result[0]["name"] == "mixed-case-skill"
+    assert resources[0]["name"] == "Mixed_Case Skill"
+
+
+@pytest.mark.unit
 def test_agent_harness_filter_resources_mixed() -> None:
     """Filter correctly handles mixed resources."""
     resources: list[Any] = [

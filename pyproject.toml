@@ -92,9 +92,25 @@ type = "boolean"
 options = ["--format", "-f"]
 help = "Apply Biome formatting/fixes before type-checking"
 
-[tool.poe.tasks."ts:update-deps"]
+[tool.poe.tasks.update-deps]
+help = "Update every tracked lockfile (python + typescript)"
+sequence = ["update-deps:uv", "update-deps:ts"]
+
+[tool.poe.tasks."update-deps:ts"]
 help = "Update dependencies for tracked TypeScript agent packages"
 cmd = "./scripts/ts-package-deps.sh"
+
+[tool.poe.tasks."update-deps:uv"]
+help = "Upgrade the Python lockfile to the newest allowed releases"
+shell = """
+if [ "$(hostname -s)" = "ML-DFC6YK6VJQ" ]; then
+  echo "The work lock is re-resolved against the mirror by 'poe pull'; it already tracks the newest wheel Artifactory serves." >&2
+  exit 1
+fi
+uv lock --upgrade
+uv sync --dev
+"""
+interpreter = "bash"
 
 [tool.poe.tasks.laptop]
 help = "Run the correct macOS playbook for this machine (auto-detects work vs personal)"

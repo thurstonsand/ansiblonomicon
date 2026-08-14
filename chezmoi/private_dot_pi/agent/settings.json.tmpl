@@ -1,11 +1,79 @@
 {{- $isWork := eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
+{{- $themes := dict
+      "source" "git:github.com/hasit/pi-community-themes"
+      "themes" (list
+        "!themes/*.json"
+        "+themes/gruvbox-dark-hard.json"
+        "+themes/gruvbox-light-hard.json") -}}
+{{- $profile := dict -}}
+{{- if $isWork -}}
+{{-   $profile = dict
+        "default" (dict "provider" .work_gateway.openai_provider "model" (trimSuffix "[1m]" .work_models.gpt_sol.version))
+        "librarian" .work_models.gpt_sol.pi_alias
+        "autoTitle" .work_models.sonnet.pi_alias
+        "handoff" .work_models.gpt_terra.pi_alias
+        "vibe" .work_models.sonnet.pi_alias
+        "enabledModels" (list
+          (printf "%s:medium" .work_models.gpt_sol.pi_alias)
+          (printf "%s:medium" .work_models.opus.pi_alias))
+        "handoffRoster" (list
+          (printf "%s:medium" .work_models.opus.pi_alias)
+          (printf "%s:medium" .work_models.gpt_sol.pi_alias)
+          (printf "%s:high" .work_models.gpt_sol.pi_alias)
+          (printf "%s:high" .work_models.gpt_terra.pi_alias)) -}}
+{{-   $_ := set $profile "packages" (append (concat .piWorkPackages (list
+        "git:github.com/nicobailon/pi-powerline-footer"
+        "git:github.com/thurstonsand/pi-permissions@downgrade"
+        "git:github.com/thurstonsand/pi-sessions"
+        "git:@github.com/thurstonsand/pi-web-tools@downgrade"
+        "git:github.com/thurstonsand/wt"
+        "git:github.com/nicobailon/pi-interview-tool"
+        "git:github.com/hazat/glimpse"
+        "npm:pi-mcp-adapter")) $themes) -}}
+{{- else -}}
+{{-   $profile = dict
+        "default" (dict "provider" "doppelclaude" "model" .models.anthropic.opus.version)
+        "librarian" .models.openai.gpt_sol.agent_harness.aliases.pi
+        "autoTitle" .models.openai.gpt_terra.agent_harness.aliases.pi
+        "handoff" .models.openai.gpt_terra.agent_harness.aliases.pi
+        "vibe" .models.openai.gpt_terra.agent_harness.aliases.pi
+        "enabledModels" (list
+          (printf "%s:medium" .models.anthropic.opus.agent_harness.aliases.pi)
+          (printf "%s:medium" .models.anthropic.fable.agent_harness.aliases.pi)
+          (printf "%s:medium" .models.openai.gpt_sol.agent_harness.aliases.pi))
+        "handoffRoster" (list
+          (printf "%s:medium" .models.anthropic.opus.agent_harness.aliases.pi)
+          (printf "%s:medium" .models.anthropic.fable.agent_harness.aliases.pi)
+          (printf "%s:medium" .models.openai.gpt_sol.agent_harness.aliases.pi)
+          (printf "%s:high" .models.openai.gpt_sol.agent_harness.aliases.pi)
+          (printf "%s:high" .models.openai.gpt_terra.agent_harness.aliases.pi)) -}}
+{{-   $useLocalPackages := eq .chezmoi.os "darwin" -}}
+{{-   $personalPackages := list
+        (dict "npm" "pi-permissions" "local" "/Users/thurstonsand/Develop/pi-permissions")
+        (dict "npm" "pi-sessions" "local" "/Users/thurstonsand/Develop/pi-sessions")
+        (dict "npm" "@thurstonsand/pi-librarian" "local" "/Users/thurstonsand/Develop/pi-librarian")
+        (dict "npm" "@thurstonsand/pi-wt" "local" "/Users/thurstonsand/Develop/wt/plugins/pi")
+        (dict "npm" "pi-doppelclaude" "local" "/Users/thurstonsand/Develop/pi-doppelclaude")
+        (dict "npm" "@thurstonsand/pi-web-tools" "local" "/Users/thurstonsand/Develop/pi-web-tools")
+        (dict "npm" "pi-powerline-footer" "local" "")
+        (dict "npm" "glimpseui" "local" "")
+        (dict "npm" "pi-interview" "local" "")
+        (dict "npm" "pi-mcp-adapter" "local" "/Users/thurstonsand/Develop/pi-mcp-adapter")
+        (dict "npm" "sideshow" "local" "")
+        (dict "npm" "@thurstonsand/pi-paste" "local" "") -}}
+{{-   $pkgs := list -}}
+{{-   range $personalPackages -}}
+{{-     if and $useLocalPackages .local -}}{{- $pkgs = append $pkgs .local -}}{{- else -}}{{- $pkgs = append $pkgs (printf "npm:%s" .npm) -}}{{- end -}}
+{{-   end -}}
+{{-   $_ := set $profile "packages" (concat $pkgs (list $themes "npm:@howaboua/pi-smart-btw")) -}}
+{{- end -}}
 {
-  "defaultProvider": {{ if $isWork }}"{{ .work_gateway.openai_provider }}"{{ else }}"doppelclaude"{{ end }},
-  "defaultModel": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.gpt_sol.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
+  "defaultProvider": "{{ $profile.default.provider }}",
+  "defaultModel": "{{ $profile.default.model }}",
   "defaultThinkingLevel": "medium",
   "pinnedModel": {
-    "provider": {{ if $isWork }}"{{ .work_gateway.openai_provider }}"{{ else }}"doppelclaude"{{ end }},
-    "modelId": {{ if $isWork }}"{{ trimSuffix "[1m]" .work_models.gpt_sol.version }}"{{ else }}"{{ .models.anthropic.opus.version }}"{{ end }},
+    "provider": "{{ $profile.default.provider }}",
+    "modelId": "{{ $profile.default.model }}",
     "thinkingLevel": "medium"
   },
   "showCacheMissNotices": true,
@@ -115,28 +183,19 @@
   {{- /* falls back rather than raising: a malformed deployed file would otherwise block the very apply that repairs it */}}
   "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys\ntry: print(json.loads(pathlib.Path(sys.argv[1]).read_text())['lastChangelogVersion'])\nexcept Exception: print('0.84.2')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
   "librarian": {
-    "model": {{ if $isWork }}"{{ .work_models.gpt_sol.pi_alias }}"{{ else }}"{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}"{{ end }},
+    "model": "{{ $profile.librarian }}",
     "thinkingLevel": "off",
     "tools": [
       "web_search",
       "web_fetch"
     ]
   },
-  "enabledModels": [
-{{- if $isWork }}
-    "{{ .work_models.gpt_sol.pi_alias }}:medium",
-    "{{ .work_models.opus.pi_alias }}:medium"
-{{- else }}
-    "{{ .models.anthropic.opus.agent_harness.aliases.pi }}:medium",
-    "{{ .models.anthropic.fable.agent_harness.aliases.pi }}:medium",
-    "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}:medium"
-{{- end }}
-  ],
+  "enabledModels": {{ toPrettyJson $profile.enabledModels | indent 2 | trim }},
   "steeringMode": "all",
   "followUpMode": "all",
   "sessions": {
     "autoTitle": {
-      "model": {{ if $isWork }}"{{ .work_models.sonnet.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
+      "model": "{{ $profile.autoTitle }}",
       "thinkingLevel": "off",
       "timeoutSecs": 60,
       "prompt": {{ includeTemplate "session-title-prompt" . | toJson }}
@@ -145,28 +204,15 @@
       "persistRuns": true
     },
     "handoff": {
-      "model": {{ if $isWork }}"{{ .work_models.gpt_terra.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
+      "model": "{{ $profile.handoff }}",
       "thinkingLevel": "low",
       "persistRuns": true,
-      "roster": [
-{{- if $isWork }}
-        "{{ .work_models.opus.pi_alias }}:medium",
-        "{{ .work_models.gpt_sol.pi_alias }}:medium",
-        "{{ .work_models.gpt_sol.pi_alias }}:high",
-        "{{ .work_models.gpt_terra.pi_alias }}:high"
-{{- else }}
-        "{{ .models.anthropic.opus.agent_harness.aliases.pi }}:medium",
-        "{{ .models.anthropic.fable.agent_harness.aliases.pi }}:medium",
-        "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}:medium",
-        "{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}:high",
-        "{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}:high"
-{{- end }}
-      ]
+      "roster": {{ toPrettyJson $profile.handoffRoster | indent 6 | trim }}
     }
   },
   "workingVibe": "YoRHa",
   "workingVibeMode": "generate",
-  "workingVibeModel": {{ if $isWork }}"{{ .work_models.sonnet.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
+  "workingVibeModel": "{{ $profile.vibe }}",
   "workingVibeMaxLength": 48,
   "workingVibeFallback": "Recalibrating",
   "workingVibePrompt": "Generate a terse 2-4 word loading message describing an operation currently underway, in the cold mechanical register of NieR: Automata. Begin with a present-participle verb and use clipped operational vocabulary tied to the task. Sentence case only, never all-caps. No real NieR names (2B, 9S, YoRHa). Task: {task}. {exclude} Output only the message, nothing else.",
@@ -217,51 +263,7 @@
     "editorStart": null,
     "editorEnd": null
   },
-  "packages": [
-{{- if $isWork }}
-{{- range .piWorkPackages }}
-    {{ . | toJson }},
-{{- end }}
-    "git:github.com/nicobailon/pi-powerline-footer",
-    "git:github.com/thurstonsand/pi-permissions@downgrade",
-    "git:github.com/thurstonsand/pi-sessions",
-    "git:@github.com/thurstonsand/pi-web-tools@downgrade",
-    "git:github.com/thurstonsand/wt",
-    "git:github.com/nicobailon/pi-interview-tool",
-    "git:github.com/hazat/glimpse",
-    "npm:pi-mcp-adapter",
-    {
-      "source": "git:github.com/hasit/pi-community-themes",
-      "themes": [
-        "!themes/*.json",
-        "+themes/gruvbox-dark-hard.json",
-        "+themes/gruvbox-light-hard.json"
-      ]
-    }
-{{- else }}
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-permissions"{{ else }}"npm:pi-permissions"{{ end }},
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-sessions"{{ else }}"npm:pi-sessions"{{ end }},
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-librarian"{{ else }}"npm:@thurstonsand/pi-librarian"{{ end }},
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/wt/plugins/pi"{{ else }}"npm:@thurstonsand/pi-wt"{{ end }},
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-doppelclaude"{{ else }}"npm:pi-doppelclaude"{{ end }},
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-web-tools"{{ else }}"npm:@thurstonsand/pi-web-tools"{{ end }},
-    "npm:pi-powerline-footer",
-    "npm:glimpseui",
-    "npm:pi-interview",
-    {{ if eq .chezmoi.os "darwin" }}"/Users/thurstonsand/Develop/pi-mcp-adapter"{{ else }}"npm:pi-mcp-adapter"{{ end }},
-    "npm:sideshow",
-    "npm:@thurstonsand/pi-paste",
-    {
-      "source": "git:github.com/hasit/pi-community-themes",
-      "themes": [
-        "!themes/*.json",
-        "+themes/gruvbox-dark-hard.json",
-        "+themes/gruvbox-light-hard.json"
-      ]
-    },
-    "npm:@howaboua/pi-smart-btw"
-{{- end }}
-  ],
+  "packages": {{ toPrettyJson $profile.packages | indent 2 | trim }},
   "hideThinkingBlock": true,
   "theme": "gruvbox-light-hard/gruvbox-dark-hard",
   "transport": "auto",

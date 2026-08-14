@@ -842,27 +842,33 @@ def agent_harness_get_git_sources(sources: list[SourceConfig]) -> list[dict[str,
     return [GitSourceConfig.from_dict(s).to_dict() for s in sources if "repo" in s]
 
 
+def _transform_resource_name(name: str, name_transform: str) -> str:
+    """Transform a resource name for a harness filesystem."""
+    if name_transform == "preserve":
+        return name
+    if name_transform == "lowercase_dash":
+        return re.sub(r"[^a-z0-9]+", "-", name.lower()).strip("-")
+    msg = f"Unknown agent harness name transform: {name_transform}"
+    raise ValueError(msg)
+
+
 def agent_harness_filter_resources(
-    resources: list[dict[str, Any]], target_agent: str
+    resources: list[dict[str, Any]],
+    target_agent: str,
+    name_transform: str = "preserve",
 ) -> list[dict[str, Any]]:
-    """Filter resources to those that should deploy to a specific agent.
-
-    A resource is included if:
-    - target_agents is empty (deploy to all agents), OR
-    - target_agents contains the target_agent
-
-    Args:
-        resources: List of resource dicts (from PluginResources.to_dict())
-        target_agent: Name of the agent to filter for
-
-    Returns:
-        Filtered list of resources for the target agent
-    """
-    return [
-        r
-        for r in resources
-        if not r["target_agents"] or target_agent in r["target_agents"]
-    ]
+    """Select resources for an agent and transform their deployment names."""
+    filtered_resources: list[dict[str, Any]] = []
+    for resource in resources:
+        if resource["target_agents"] and target_agent not in resource["target_agents"]:
+            continue
+        filtered_resources.append(
+            {
+                **resource,
+                "name": _transform_resource_name(resource["name"], name_transform),
+            }
+        )
+    return filtered_resources
 
 
 # =============================================================================

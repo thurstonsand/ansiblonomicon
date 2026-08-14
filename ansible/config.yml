@@ -143,8 +143,6 @@ agent_harness_sources_base:
       - name: pi
         target_agents: [pi]
       - name: project-management
-        target_agents: [openclaw]
-      - name: project-management
         target_agents: [pi]
         exclude_skills:
           - grill-me
