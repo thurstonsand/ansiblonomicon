@@ -113,9 +113,9 @@
   "powerlineCustom": {{ toPrettyJson $pc | indent 2 | trim }},
   {{- end }}
   {{- /* falls back rather than raising: a malformed deployed file would otherwise block the very apply that repairs it */}}
-  "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys\ntry: print(json.loads(pathlib.Path(sys.argv[1]).read_text())['lastChangelogVersion'])\nexcept Exception: print('0.84.1')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
+  "lastChangelogVersion": "{{ output "python3" "-c" "import json,pathlib,sys\ntry: print(json.loads(pathlib.Path(sys.argv[1]).read_text())['lastChangelogVersion'])\nexcept Exception: print('0.84.2')" (joinPath .chezmoi.homeDir ".pi" "agent" "settings.json") | trim }}",
   "librarian": {
-    "model": {{ if $isWork }}"{{ .work_models.gpt_terra.pi_alias }}"{{ else }}"{{ .models.openai.gpt_terra.agent_harness.aliases.pi }}"{{ end }},
+    "model": {{ if $isWork }}"{{ .work_models.gpt_sol.pi_alias }}"{{ else }}"{{ .models.openai.gpt_sol.agent_harness.aliases.pi }}"{{ end }},
     "thinkingLevel": "off",
     "tools": [
       "web_search",

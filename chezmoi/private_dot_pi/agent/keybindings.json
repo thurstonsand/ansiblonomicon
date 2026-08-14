@@ -1,8 +1,11 @@
 {
   "tui.altScreen.pageUp": [],
   "tui.altScreen.pageDown": [],
-  "tui.altScreen.halfPageUp": ["alt+k"],
-  "tui.altScreen.halfPageDown": ["alt+j"],
+  "tui.altScreen.halfPageUp": ["alt+b"],
+  "tui.altScreen.halfPageDown": ["alt+f"],
+  "tui.altScreen.lineUp": ["alt+k"],
+  "tui.altScreen.lineDown": ["alt+j"],
+  "tui.altScreen.search": ["alt+/"],
   "tui.altScreen.previousPrompt": ["alt+shift+k"],
   "tui.altScreen.nextPrompt": ["alt+shift+j"],
   "tui.altScreen.top": ["alt+g"],
