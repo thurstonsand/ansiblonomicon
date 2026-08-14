@@ -190,6 +190,12 @@
       "web_fetch"
     ]
   },
+  "sourcegraph": {
+    "librarian": {
+      "model": "{{ $profile.librarian }}",
+      "thinkingLevel": "off"
+    }
+  },
   "enabledModels": {{ toPrettyJson $profile.enabledModels | indent 2 | trim }},
   "steeringMode": "all",
   "followUpMode": "all",

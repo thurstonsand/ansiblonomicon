@@ -48,7 +48,7 @@ def test_orb_op_uses_service_account_token(
     assert MODULE.op_command() == "op"
     assert MODULE.uses_service_account()
     assert MODULE.op_environment()["OP_SERVICE_ACCOUNT_TOKEN"] == "token"
-    assert MODULE.resolve_op_account() is None
+    assert MODULE.resolve_op_accounts({"PQ7X5"}) == {"PQ7X5": None}
 
 
 def test_machine_secrets_are_filtered_for_pod042() -> None:

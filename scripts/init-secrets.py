@@ -19,12 +19,27 @@ import jsonc  # pyright: ignore[reportMissingTypeStubs]
 ROOT_DIR = Path(__file__).parent.parent
 SECRETS_CONFIG = ROOT_DIR / ".secrets.jsonc"
 SECRETS_CACHE = ROOT_DIR / ".env"
-OP_ACCOUNT_PREFIX = "PQ7X5"
+PERSONAL_OP_ACCOUNT_PREFIX = "PQ7X5"
+WORK_OP_ACCOUNT_PREFIX = "EU7WV"
 PERSONAL_HOSTNAME = "Thurstons-MacBook-Pro"
 WORK_HOSTNAME = "ML-DFC6YK6VJQ"
 MACHINE_SECRET_KEYS = {
+    "ANTHROPIC_AUTH_TOKEN": {WORK_HOSTNAME},
+    "BITBUCKET_TOKEN": {WORK_HOSTNAME},
+    "GITLAB_ACCESS_TOKEN": {WORK_HOSTNAME},
     "HOMEBREW_SUDO_ASKPASS_PASS": {PERSONAL_HOSTNAME},
     "HOMEBREW_SUDO_ASKPASS_PASS_WORK": {WORK_HOSTNAME},
+    "LOGSCALE_VIPER_SPOG_TOKEN": {WORK_HOSTNAME},
+    "N8N_API_KEY": {WORK_HOSTNAME},
+    "SOURCEGRAPH_TOKEN": {WORK_HOSTNAME},
+}
+SECRET_ACCOUNT_PREFIXES = {
+    "ANTHROPIC_AUTH_TOKEN": WORK_OP_ACCOUNT_PREFIX,
+    "BITBUCKET_TOKEN": WORK_OP_ACCOUNT_PREFIX,
+    "GITLAB_ACCESS_TOKEN": WORK_OP_ACCOUNT_PREFIX,
+    "LOGSCALE_VIPER_SPOG_TOKEN": WORK_OP_ACCOUNT_PREFIX,
+    "N8N_API_KEY": WORK_OP_ACCOUNT_PREFIX,
+    "SOURCEGRAPH_TOKEN": WORK_OP_ACCOUNT_PREFIX,
 }
 
 # Map worker directories to their .dev.vars secrets
@@ -80,9 +95,9 @@ def op_environment() -> dict[str, str]:
     return env
 
 
-def resolve_op_account() -> str | None:
+def resolve_op_accounts(prefixes: set[str]) -> dict[str, str | None]:
     if uses_service_account():
-        return None
+        return dict.fromkeys(prefixes)
 
     result = subprocess.run(
         [op_command(), "account", "list", "--format=json"],
@@ -97,12 +112,59 @@ def resolve_op_account() -> str | None:
             file=sys.stderr,
         )
         sys.exit(1)
+
     accounts: list[dict[str, str]] = json.loads(result.stdout)
-    for acct in accounts:
-        if acct["account_uuid"].startswith(OP_ACCOUNT_PREFIX):
-            return acct["account_uuid"]
-    print(f"No 1Password account matching prefix {OP_ACCOUNT_PREFIX}", file=sys.stderr)
-    sys.exit(1)
+    resolved: dict[str, str | None] = {}
+    for prefix in prefixes:
+        account = next(
+            (
+                account["account_uuid"]
+                for account in accounts
+                if account["account_uuid"].startswith(prefix)
+            ),
+            None,
+        )
+        if account is None:
+            print(f"No 1Password account matching prefix {prefix}", file=sys.stderr)
+            sys.exit(1)
+        resolved[prefix] = account
+    return resolved
+
+
+def resolve_secrets(config: dict[str, str]) -> dict[str, str | None]:
+    grouped: dict[str, dict[str, str]] = {}
+    for key, value in config.items():
+        prefix = SECRET_ACCOUNT_PREFIXES.get(key, PERSONAL_OP_ACCOUNT_PREFIX)
+        grouped.setdefault(prefix, {})[key] = value
+
+    accounts = resolve_op_accounts(set(grouped))
+    resolved: dict[str, str | None] = {}
+    for prefix, secrets in grouped.items():
+        template_lines: list[str] = []
+        for key, value in secrets.items():
+            if value.startswith("op://"):
+                template_lines.append(f"{key}={{{{ {value} }}}}")
+            else:
+                escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+                template_lines.append(f'{key}="{escaped}"')
+
+        command = [op_command(), "inject"]
+        if account := accounts[prefix]:
+            command.extend(["--account", account])
+        result = subprocess.run(
+            command,
+            input="\n".join(template_lines),
+            capture_output=True,
+            text=True,
+            check=False,
+            env=op_environment(),
+        )
+        if result.returncode != 0:
+            print(f"Error resolving secrets: {result.stderr.strip()}", file=sys.stderr)
+            sys.exit(1)
+        resolved.update(dotenv_values(stream=StringIO(result.stdout)))
+
+    return resolved
 
 
 def main() -> None:
@@ -124,41 +186,7 @@ def main() -> None:
     config: dict[str, str] = jsonc.loads(SECRETS_CONFIG.read_text())
     config = secrets_for_hostname(config, hostname)
 
-    # Build a template for op inject to resolve all secrets in one call
-    # Format: KEY="{{ op://... }}" for op:// refs, KEY="literal" for literals
-    template_lines: list[str] = []
-    for key, value in config.items():
-        if value.startswith("op://"):
-            # Use op inject template syntax: {{ op://vault/item/field }}
-            template_lines.append(f"{key}={{{{ {value} }}}}")
-        else:
-            # Literal value - escape any braces and quotes
-            escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-            template_lines.append(f'{key}="{escaped}"')
-
-    template = "\n".join(template_lines)
-
-    # Run op inject to resolve all secrets at once
-    op_inject_cmd = [op_command(), "inject"]
-    op_account = resolve_op_account()
-    if op_account is not None:
-        op_inject_cmd.extend(["--account", op_account])
-
-    result = subprocess.run(
-        op_inject_cmd,
-        input=template,
-        capture_output=True,
-        text=True,
-        check=False,
-        env=op_environment(),
-    )
-
-    if result.returncode != 0:
-        print(f"Error resolving secrets: {result.stderr.strip()}", file=sys.stderr)
-        sys.exit(1)
-
-    # Parse resolved output
-    resolved_secrets = dotenv_values(stream=StringIO(result.stdout))
+    resolved_secrets = resolve_secrets(config)
 
     # Build final .env file
     lines = [
