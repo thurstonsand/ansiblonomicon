@@ -10,7 +10,7 @@ agent_harness_agents:
 
   amp:
     config_root: "{{ ansible_facts.env.HOME }}/.config/amp"
-    skills_dir: "{{ ansible_facts.env.HOME }}/.config/amp/skills"
+    skills_dir: "{{ agent_harness_amp_skills_dir | default(ansible_facts.env.HOME ~ '/.config/amp/skills') }}"
     agents_dir: null # Amp does not support user-defined subagents
     name_transform: preserve
 

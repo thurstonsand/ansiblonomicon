@@ -1,0 +1,45 @@
+name: Publish Amp Skills
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/publish-amp-skills.yml
+      - agents/**
+      - ansible/config.yml
+      - ansible/models.yml
+      - ansible/playbooks/publish-amp-skills.yml
+      - ansible/roles/agent_harness/**
+      - scripts/publish-amp-skills.sh
+      - uv.lock
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      AMP_API_KEY: ${{ secrets.AMP_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@20cfd1bf945f4377ade1205e4dbc17946fc9a30d # v10.0.1
+        with:
+          enable-cache: true
+          cache-python: true
+          python-version: "3.14"
+
+      - name: Install Amp
+        run: |
+          curl -fsSL https://ampcode.com/install.sh | bash
+          echo "$HOME/.amp/bin" >> "$GITHUB_PATH"
+
+      - name: Install dependencies
+        run: uv sync --locked --no-dev
+
+      - name: Publish Amp skills
+        run: scripts/publish-amp-skills.sh

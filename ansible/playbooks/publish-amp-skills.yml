@@ -1,0 +1,13 @@
+---
+- name: Render global Amp skills
+  hosts: localhost
+  connection: local
+  gather_facts: true
+
+  vars_files:
+    - ../config.yml
+
+  roles:
+    - role: agent_harness
+      agent_harness_target_agents:
+        - amp
