@@ -20,9 +20,6 @@ ANSIBLE_CONFIG="$repo_root/ansible/ansible.cfg" \
   "$repo_root/ansible/playbooks/publish-amp-skills.yml" \
   -e "agent_harness_amp_skills_dir=$render_dir"
 
-uv run --directory "$repo_root" --no-sync \
-  "$repo_root/scripts/prepare_amp_skills.py" "$render_dir"
-
 repository="$(amp skills repositories --json | jq -ce '.[] | select(.scope == "user")')"
 clone_url="$(jq -r '.cloneURL' <<<"$repository")"
 

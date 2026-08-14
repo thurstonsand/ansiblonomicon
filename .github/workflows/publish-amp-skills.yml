@@ -10,8 +10,6 @@ on:
       - ansible/models.yml
       - ansible/playbooks/publish-amp-skills.yml
       - ansible/roles/agent_harness/**
-      - scripts/amp-skill-runner.mjs
-      - scripts/prepare_amp_skills.py
       - scripts/publish-amp-skills.sh
       - uv.lock
   workflow_dispatch:

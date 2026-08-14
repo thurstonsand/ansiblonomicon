@@ -49,15 +49,6 @@ agent_harness_sources_base:
           - to-tickets
           - wayfinder
 
-  - repo: pbakaus/impeccable
-    pull: true
-    plugins:
-      - name: impeccable
-        path: .claude
-        skills: skills
-        agents: agents
-        prefix: ""
-
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management

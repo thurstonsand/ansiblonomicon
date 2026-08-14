@@ -114,15 +114,6 @@ agent_harness_sources_base:
           - slack
           - vercel-sandbox
 
-  - repo: pbakaus/impeccable
-    pull: true
-    plugins:
-      - name: impeccable
-        path: .claude
-        skills: skills
-        agents: agents
-        prefix: ""
-
   - repo: modem-dev/hunk
     pull: true
     plugins:
