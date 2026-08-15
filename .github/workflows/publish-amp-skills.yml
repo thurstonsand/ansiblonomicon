@@ -12,6 +12,8 @@ on:
       - ansible/roles/agent_harness/**
       - scripts/publish-amp-skills.sh
       - uv.lock
+  schedule:
+    - cron: "23 7 * * *"
   workflow_dispatch:
 
 permissions:

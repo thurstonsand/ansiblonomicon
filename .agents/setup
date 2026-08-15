@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$repo_root"
+
+step() {
+  printf '\n==> %s\n' "$1"
+}
+
+step "Install mise"
+if ! command -v mise >/dev/null 2>&1; then
+  curl -fsSL https://mise.run | sh
+fi
+
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+
+profile_marker="# ansiblonomicon orb toolchain"
+if ! grep -Fqx "$profile_marker" "$HOME/.bash_profile" 2>/dev/null; then
+  cat >> "$HOME/.bash_profile" <<'EOF'
+
+# ansiblonomicon orb toolchain
+export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
+EOF
+fi
+
+step "Install lint toolchains"
+mise use --global --yes \
+  node@lts \
+  npm@latest \
+  go@1.26 \
+  golangci-lint@latest \
+  just@latest \
+  stylua@latest
+
+for tool in node npm go golangci-lint just stylua; do
+  ln -sfn "$HOME/.local/share/mise/shims/$tool" "$HOME/.local/bin/$tool"
+done
+
+if ! command -v wrangler >/dev/null 2>&1 || [[ "$(wrangler --version)" != 4.* ]]; then
+  npm install --global --prefix "$HOME/.local" --no-audit --no-fund wrangler@4
+fi
+
+step "Sync Python dependencies"
+UV_PYTHON_PREFERENCE=only-managed uv sync --locked --dev
+
+step "Sync TypeScript dependencies"
+mapfile -t package_locks < <(
+  find \
+    chezmoi/private_dot_pi/agent/extensions \
+    chezmoi/private_dot_pi/agent/permissions \
+    chezmoi/dot_config/amp/plugins \
+    chezmoi/dot_local/lib/session-recovery \
+    -name package-lock.json \
+    -not -path '*/node_modules/*' \
+    -print | sort
+)
+
+for package_lock in "${package_locks[@]}"; do
+  package_dir="${package_lock%/package-lock.json}"
+  printf '    npm ci: %s\n' "$package_dir"
+  npm --prefix "$package_dir" ci --no-audit --no-fund --silent
+done
+
+step "Install Ansible collections"
+uv run ansible-galaxy collection install -r ansible/requirements.yml

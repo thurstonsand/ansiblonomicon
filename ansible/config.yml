@@ -45,8 +45,7 @@ npm_allow_scripts_base:
 bun_global_packages_base: []
 
 # Cargo packages
-cargo_packages_base:
-  - terminal-control
+cargo_packages_base: []
 
 # Global Ruby gems (base set for all hosts)
 gem_packages_base: []
@@ -74,6 +73,9 @@ agent_harness_target_agents_base:
   - opencode
   - pi
 agent_harness_target_agents: "{{ (agent_harness_target_agents_base | default([])) + (agent_harness_target_agents_extra | default([])) }}"
+
+agent_harness_amp_user_skill_excludes:
+  - truenas-docker-ops
 
 agent_harness_sources_base:
   - repo: mattpocock/skills
@@ -123,11 +125,11 @@ agent_harness_sources_base:
         exclude_skills:
           - launch-video # Hunk maintainer-only: needs a hunk source checkout we do not have.
 
-  - repo: anomalyco/terminal-control
+  - repo: remorses/tuistory
     pull: true
     plugins:
-      - name: terminal-control
-        path: skills/terminal-control
+      - name: tuistory
+        path: skills/tuistory
 
   - local: "{{ playbook_dir }}/../../agents"
     plugins:

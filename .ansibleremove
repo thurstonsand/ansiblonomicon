@@ -2,9 +2,11 @@
 # Files, symlinks, and directories are removed recursively when present.
 .config/zsh/tmux-theme.zsh
 .pi/agent/claude-bridge.json
+.cargo/bin/termctrl
 
 # Codex disables orphan cleanup, so retired skills must be declared here.
 .codex/skills/launch-video
 .codex/skills/bro
 .codex/skills/writing-great-skills
 .codex/skills/impeccable
+.codex/skills/terminal-control
