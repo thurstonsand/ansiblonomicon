@@ -36,6 +36,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 │   ├── ansible.cfg          # Ansible configuration
 │   ├── inventory/           # Host definitions (localhost, truenas, openclaw)
 │   ├── config.yml           # Shared configuration variables
+│   ├── agent-harness.config.yml # Agent skill catalogue + host capability profiles
 │   ├── darwin.config.yml    # macOS-specific config
 │   ├── work.config.yml     # Work macOS-specific config
 │   ├── openclaw.config.yml  # Retained OpenClaw reference config

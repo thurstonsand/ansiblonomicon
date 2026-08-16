@@ -108,9 +108,7 @@ go_tools_base:
   - mvdan.cc/gofumpt@latest
 gem_packages_base: []
 
-agent_harness_target_agents_base:
-  - pi
-agent_harness_target_agents_extra: []
+agent_harness_profile: pod042
 
 op_service_account_token_path: "{{ ansible_facts.env.HOME }}/.config/op-service-account/token"
 chezmoi_op_service_account_token_path: "{{ op_service_account_token_path }}"

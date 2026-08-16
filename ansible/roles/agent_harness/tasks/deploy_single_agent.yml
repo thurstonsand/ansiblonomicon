@@ -23,7 +23,7 @@
   ansible.builtin.set_fact:
     agent_harness_transformed_agent: >-
       {{ agent_harness_agent_info.source
-         | agent_harness_transform_skill(agent_harness_target_agent, agent_harness_models.models,
+         | agent_harness_transform_skill(agent_harness_target_agent, models,
                                          agent_harness_agent_info.plugin_root | default(''),
                                          agent_harness_agent_frontmatter_name) }}
 

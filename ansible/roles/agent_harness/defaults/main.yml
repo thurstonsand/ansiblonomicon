@@ -3,7 +3,7 @@
 agent_harness_target_agents:
   - claude
 
-# Extra sources appended to agent_harness_sources_base
+# Host-specific sources appended while resolving the shared catalogue
 # Supports both git repos and local paths
 agent_harness_sources_extra: []
 #   # Git sources - clone from GitHub

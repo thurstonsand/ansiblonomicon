@@ -142,7 +142,7 @@ bun_global_packages_extra:
 cargo_packages_extra:
   - bob-nvim
 
-# Additional agent harness targets for clawdbot (extends agent_harness_target_agents_base)
+# Additional agent harness targets for clawdbot (extends the selected capability profile)
 agent_harness_target_agents_extra:
   - openclaw
 

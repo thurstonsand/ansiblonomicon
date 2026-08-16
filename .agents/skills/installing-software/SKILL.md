@@ -9,7 +9,8 @@ Use this skill when changing how software is installed in this repo.
 
 ## Start Here
 
-- Shared package lists and agent-harness sources: `ansible/config.yml`
+- Shared package lists: `ansible/config.yml`
+- Agent-harness source catalogue and host profiles: `ansible/agent-harness.config.yml`
 - macOS host-specific additions: `ansible/darwin.config.yml`
 - Pod042 host-specific packages and tools: `ansible/pod042.config.yml`
 
@@ -62,7 +63,8 @@ These are managed as dotfiles via chezmoi, then applied by Ansible through the c
 
 ## Skills / agents
 
-- Source and target configuration: `ansible/config.yml`
+- Source catalogue, host capability profiles, and profile exclusions: `ansible/agent-harness.config.yml`
+- Host profile selection and host-only extras: `agent_harness_profile` / `agent_harness_sources_extra` in each host config
 - Role defaults and supported source/plugin keys: `ansible/roles/agent_harness/defaults/main.yml`
 - Target agent filesystem/layout rules: `ansible/roles/agent_harness/vars/agents.yml`
 - Discovery/filter behavior: `ansible/roles/agent_harness/filter_plugins/harness_filters.py`

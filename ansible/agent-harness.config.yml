@@ -1,0 +1,119 @@
+---
+# Shared agent skill/plugin catalogue and host capability profiles.
+agent_harness_profile: personal
+agent_harness_profiles:
+  personal:
+    target_agents: [claude, amp, codex, opencode, pi]
+  work:
+    target_agents: [claude, pi]
+  pod042:
+    target_agents: [pi]
+  # CI rendering of Amp user skills for orbs, not a host.
+  amp_publish:
+    target_agents: [amp]
+
+agent_harness_source_catalogue:
+  - repo: mattpocock/skills
+    pull: true
+    plugins:
+      - name: mattpocock-skills
+        prefix: ""
+        exclude_skills:
+          - ask-matt
+          - code-review
+          - codebase-design
+          - diagnosing-bugs
+          - domain-modeling
+          - grill-me
+          - grilling
+          - handoff
+          - grill-with-docs
+          - improve-codebase-architecture
+          - triage
+          - implement
+          - setup-matt-pocock-skills
+          - tdd
+          - prototype
+          - research
+          - to-spec
+          - to-tickets
+          - wait-what
+          - wayfinder
+        exclude_skills_by_profile:
+          work:
+            - ask-matt
+            - code-review
+            - codebase-design
+            - diagnosing-bugs
+            - domain-modeling
+            - grill-me
+            - grilling
+            - handoff
+            - grill-with-docs
+            - triage
+            - implement
+            - setup-matt-pocock-skills
+            - tdd
+            - to-issues
+            - to-prd
+            - prototype
+            - research
+            - to-spec
+            - to-tickets
+            - wayfinder
+
+  - repo: vercel-labs/agent-browser
+    pull: true
+    excluded_on: [work]
+    plugins:
+      - name: agent-browser
+        target_agents: [claude, amp, opencode, pi]
+        skills: skills
+        exclude_skills:
+          - dogfood
+          - slack
+          - vercel-sandbox
+
+  - repo: modem-dev/hunk
+    pull: true
+    excluded_on: [work]
+    plugins:
+      - name: hunk
+        path: skills
+        prefix: ""
+        exclude_skills:
+          - launch-video # Hunk maintainer-only: needs a hunk source checkout we do not have.
+
+  - repo: remorses/tuistory
+    pull: true
+    excluded_on: [work]
+    plugins:
+      - name: tuistory
+        path: skills/tuistory
+
+  - local: "{{ playbook_dir }}/../../agents"
+    excluded_on: [work]
+    plugins:
+      - name: pi
+        target_agents: [pi]
+      - name: project-management
+        target_agents: [pi]
+        exclude_skills:
+          - grill-me
+      - name: project-management
+        target_agents: [claude, amp, codex, opencode]
+      - name: claude
+        target_agents: [claude]
+      - name: codex
+        target_agents: [codex]
+      - name: homelab
+        exclude_skills_by_profile:
+          amp_publish: # machine-bound skills make no sense in an orb
+            - truenas-docker-ops
+
+agent_harness_target_agents: >-
+  {{ agent_harness_profiles[agent_harness_profile].target_agents
+     + (agent_harness_target_agents_extra | default([])) }}
+agent_harness_sources: >-
+  {{ agent_harness_source_catalogue
+     | agent_harness_resolve_sources(agent_harness_profile, agent_harness_sources_extra | default([])) }}

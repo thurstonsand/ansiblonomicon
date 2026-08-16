@@ -13,42 +13,13 @@ configure_pam_reattach: false
 configure_agent_harness: true
 
 # Agent Harness - deploy to Claude and Pi on work machine
-agent_harness_target_agents_base:
-  - claude
-  - pi
-agent_harness_target_agents: "{{ (agent_harness_target_agents_base | default([])) + (agent_harness_target_agents_extra | default([])) }}"
+agent_harness_profile: work
 
 # Symlink pi's git-installed Glimpse into the global npm root (registry-blocked here)
 agent_harness_link_glimpse: true
 
-agent_harness_sources_base:
-  - repo: mattpocock/skills
-    pull: true
-    plugins:
-      - name: mattpocock-skills
-        prefix: ""
-        exclude_skills:
-          - ask-matt
-          - code-review
-          - codebase-design
-          - diagnosing-bugs
-          - domain-modeling
-          - grill-me
-          - grilling
-          - handoff
-          - grill-with-docs
-          - triage
-          - implement
-          - setup-matt-pocock-skills
-          - tdd
-          - to-issues
-          - to-prd
-          - prototype
-          - research
-          - to-spec
-          - to-tickets
-          - wayfinder
-
+# Work-only in-repo plugins. Shared and restricted sources live in the catalogue.
+agent_harness_sources_extra:
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management
@@ -59,8 +30,6 @@ agent_harness_sources_base:
         exclude_skills:
           - retitle
       - name: work
-
-agent_harness_sources: "{{ (agent_harness_sources_base | default([])) + (agent_harness_sources_extra | default([])) }}"
 
 uv_global_tools_base:
   - basedpyright

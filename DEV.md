@@ -89,7 +89,7 @@ uv run poe udmp -t nextdns            # or multicast-querier
 
 ## Agent tooling
 
-Spans every host and every harness. Driven by `roles/agent_harness/vars/agents.yml`.
+Spans every host and every harness. Driven by `roles/agent_harness/vars/agents.yml` with sources in `agent-harness.config.yml` and host-specific configs in `agent_harness_profile`.
 
 - **Plugins** at `agents/<plugin>/skills/`, listed in `.claude-plugin/marketplace.json`. A skill may be a plain `SKILL.md` or a `SKILL.md.j2` templated at deploy time. Repo-local skills live at `.agents/skills/`, symlinked into `.claude/skills/`. The `.j2` skills mean a plugin is not installable through Claude's own plugin mechanism, which does no templating — deployment goes through `agent_harness` instead.
 - **User-level Instructions** at `chezmoi/.chezmoitemplates/agents-md`, rendered per harness into `~/.claude/CLAUDE.md`, `~/.codex/AGENTS.md`, `~/.pi/agent/AGENTS.md`, and the rest. The persona fragment it pulls in is `.chezmoitemplates/2b-persona`. This is not the same file as the repo's own `AGENTS.md`.

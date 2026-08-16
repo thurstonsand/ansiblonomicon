@@ -4,11 +4,6 @@
 - name: Include agent configuration
   ansible.builtin.include_vars: agents.yml
 
-- name: Load models configuration
-  ansible.builtin.include_vars:
-    file: "{{ playbook_dir }}/../models.yml"
-    name: agent_harness_models
-
 - name: Select agent harness source execution context
   ansible.builtin.set_fact:
     agent_harness_source_delegate_host: >-

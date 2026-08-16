@@ -1,6 +1,7 @@
 """Filter plugins for agent_harness role."""
 
 from collections.abc import Mapping
+from copy import deepcopy
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
@@ -830,6 +831,42 @@ def agent_harness_repo_to_cache_name(repo: str) -> str:
     return _repo_to_cache_name(repo)
 
 
+def agent_harness_resolve_sources(
+    catalogue: list[SourceConfig],
+    profile: str,
+    extra_sources: list[SourceConfig] | None = None,
+) -> list[SourceConfig]:
+    """Resolve the canonical source catalogue for one host profile."""
+    resolved_sources: list[SourceConfig] = []
+
+    for source in [*catalogue, *(extra_sources or [])]:
+        if profile in source.get("excluded_on", []):
+            continue
+
+        resolved_source = deepcopy(source)
+        resolved_source.pop("excluded_on", None)
+        resolved_plugins: list[str | dict[str, Any]] = []
+
+        for plugin in resolved_source.get("plugins", []):
+            if isinstance(plugin, str):
+                resolved_plugins.append(plugin)
+                continue
+            if profile in plugin.get("excluded_on", []):
+                continue
+
+            resolved_plugin = deepcopy(plugin)
+            resolved_plugin.pop("excluded_on", None)
+            exclusions_by_profile = resolved_plugin.pop("exclude_skills_by_profile", {})
+            if profile in exclusions_by_profile:
+                resolved_plugin["exclude_skills"] = list(exclusions_by_profile[profile])
+            resolved_plugins.append(resolved_plugin)
+
+        resolved_source["plugins"] = resolved_plugins
+        resolved_sources.append(resolved_source)
+
+    return resolved_sources
+
+
 def agent_harness_get_git_sources(sources: list[SourceConfig]) -> list[dict[str, Any]]:
     """Extract only git sources from the sources list.
 
@@ -1163,6 +1200,7 @@ class FilterModule:
     def filters(self) -> dict[str, object]:
         return {
             "agent_harness_build_plugin_resources": agent_harness_build_plugin_resources,
+            "agent_harness_resolve_sources": agent_harness_resolve_sources,
             "agent_harness_get_git_sources": agent_harness_get_git_sources,
             "agent_harness_filter_resources": agent_harness_filter_resources,
             "agent_harness_transform_skill": agent_harness_transform_skill,

@@ -5,6 +5,7 @@
   hosts: pod042
   vars_files:
     - ../config.yml
+    - ../agent-harness.config.yml
     - ../models.yml
 
   pre_tasks:

@@ -6,15 +6,9 @@
 
   vars_files:
     - ../config.yml
+    - ../agent-harness.config.yml
+    - ../models.yml
 
   roles:
     - role: agent_harness
-      agent_harness_target_agents:
-        - amp
-
-  post_tasks:
-    - name: Exclude skills that require local machine access
-      ansible.builtin.file:
-        path: "{{ agent_harness_amp_skills_dir }}/{{ item }}"
-        state: absent
-      loop: "{{ agent_harness_amp_user_skill_excludes }}"
+      agent_harness_profile: amp_publish

@@ -5,6 +5,10 @@
 - name: Configure work host
   hosts: 127.0.0.1
 
+  vars_files:
+    - ../agent-harness.config.yml
+    - ../models.yml
+
   pre_tasks:
     - name: Load work-specific config
       ansible.builtin.include_vars: ../work.config.yml
