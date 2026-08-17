@@ -29,6 +29,7 @@ unsetopt LIST_BEEP          # no beep on ambiguous completion
 # Emacs-style key bindings
 bindkey -e
 bindkey "^[[3~" delete-char
+bindkey "^[[3;3~" kill-word # alt+fn+delete
 bindkey "^U" backward-kill-line
 bindkey -r -M emacs '^[a'
 

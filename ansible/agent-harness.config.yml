@@ -82,7 +82,9 @@ agent_harness_source_catalogue:
         path: skills
         prefix: ""
         exclude_skills:
-          - launch-video # Hunk maintainer-only: needs a hunk source checkout we do not have.
+          # Hunk maintainer-only: both need a hunk source checkout we do not have.
+          - hunk-launch-video
+          - hunk-release
 
   - repo: remorses/tuistory
     pull: true
