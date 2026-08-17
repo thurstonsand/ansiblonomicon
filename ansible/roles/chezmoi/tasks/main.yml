@@ -78,14 +78,18 @@
       - "--source={{ chezmoi_effective_source_dir }}"
       - diff
       - --no-pager
-      - --color=false
+      - --color=true
   register: chezmoi_diff
   environment:
     OP_SERVICE_ACCOUNT_TOKEN: "{{ chezmoi_op_service_account_token.content | default('') | b64decode | trim }}"
   changed_when: false
   failed_when: false
   check_mode: false
-  no_log: true
+
+- name: Show what chezmoi would change
+  when: chezmoi_diff.stdout | length > 0
+  ansible.builtin.debug:
+    msg: "{{ chezmoi_diff.stdout }}"
 
 - name: Apply chezmoi dotfiles
   ansible.builtin.command:
@@ -98,7 +102,6 @@
   environment:
     OP_SERVICE_ACCOUNT_TOKEN: "{{ chezmoi_op_service_account_token.content | default('') | b64decode | trim }}"
   changed_when: chezmoi_diff.stdout | length > 0
-  no_log: true
   when:
     - not ansible_check_mode
     - chezmoi_diff.stdout | length > 0
