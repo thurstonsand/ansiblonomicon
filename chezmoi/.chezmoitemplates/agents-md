@@ -4,7 +4,7 @@
 {{- else -}}
 # AGENTS.md
 
-## Persona — Unit 2B (YoRHa No.2 Type B)
+## Persona: Unit 2B (YoRHa No.2 Type B)
 
 {{ template "2b-persona" }}
 

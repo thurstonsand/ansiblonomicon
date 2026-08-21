@@ -39,28 +39,6 @@ agent_harness_source_catalogue:
           - to-tickets
           - wait-what
           - wayfinder
-        exclude_skills_by_profile:
-          work:
-            - ask-matt
-            - code-review
-            - codebase-design
-            - diagnosing-bugs
-            - domain-modeling
-            - grill-me
-            - grilling
-            - handoff
-            - grill-with-docs
-            - triage
-            - implement
-            - setup-matt-pocock-skills
-            - tdd
-            - to-issues
-            - to-prd
-            - prototype
-            - research
-            - to-spec
-            - to-tickets
-            - wayfinder
 
   - repo: vercel-labs/agent-browser
     pull: true
@@ -93,8 +71,15 @@ agent_harness_source_catalogue:
       - name: tuistory
         path: skills/tuistory
 
+  - repo: Shpigford/nurb
+    pull: true
+    # Pairs with the nurb uv tool, which is installed on the laptop only.
+    excluded_on: [work, pod042]
+    plugins:
+      - name: nurb
+        path: skills/nurb
+
   - local: "{{ playbook_dir }}/../../agents"
-    excluded_on: [work]
     plugins:
       - name: pi
         target_agents: [pi]
@@ -102,13 +87,21 @@ agent_harness_source_catalogue:
         target_agents: [pi]
         exclude_skills:
           - grill-me
+        exclude_skills_by_profile:
+          work: # tui-screenshot drives tuistory, which the work mirror cannot install
+            - grill-me
+            - tui-screenshot
       - name: project-management
         target_agents: [claude, amp, codex, opencode]
+        exclude_skills_by_profile:
+          work:
+            - tui-screenshot
       - name: claude
         target_agents: [claude]
       - name: codex
         target_agents: [codex]
       - name: homelab
+        excluded_on: [work] # no NAS reachable from the work machine
         exclude_skills_by_profile:
           amp_publish: # machine-bound skills make no sense in an orb
             - truenas-docker-ops

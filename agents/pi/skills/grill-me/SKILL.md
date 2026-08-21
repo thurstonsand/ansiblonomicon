@@ -9,9 +9,9 @@ Interview me relentlessly about every aspect of this plan until we reach a share
 
 This skill uses three gates:
 
-1. **Grill** — challenge the plan until assumptions, terminology, constraints, and branches are resolved.
-2. **Design** — turn the resolved decisions into a design document.
-3. **Execution planning** — break the design into committable implementation units.
+1. **Grill**: challenge the plan until assumptions, terminology, constraints, and branches are resolved.
+2. **Design**: turn the resolved decisions into a design document.
+3. **Execution planning**: break the design into committable implementation units.
 
 Start at Gate 1 unless the user explicitly says a gate is already complete.
 
@@ -21,15 +21,15 @@ Map the plan as a **design tree**: every decision branches into the decisions th
 
 ### Work the frontier
 
-Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled — the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
+Work the tree in **rounds**. The **frontier** is every decision whose prerequisites are already settled: the questions you can ask _now_ without guessing at answers you haven't heard yet. Ask the whole frontier in one round: number each question and give your recommended answer. Then wait for the user's answers before the next round.
 
-Each round the user answers reshapes the tree — settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
+Each round the user answers reshapes the tree: settled decisions push the frontier outward and unblock questions that depended on them. Recompute the frontier and ask the next round. A question whose answer depends on another question still open in this round belongs to a _later_ round, not this one.
 
 Prefer blunt accuracy over agreeable momentum. If something looks weak, say so plainly.
 
 ### Facts are yours; decisions are the user's
 
-Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment, dispatch a sub-agent to find it — don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report — ask the rest of the frontier now.
+Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment, dispatch a sub-agent to find it; don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now.
 
 Inspect:
 
@@ -40,7 +40,7 @@ Inspect:
 
 Cross-check the user's claims against the code, tests, configuration, and existing docs. Surface contradictions immediately.
 
-The _decisions_ are the user's — put each to them and wait.
+The _decisions_ are the user's: put each to them and wait.
 
 ### Calibrate by cost of being wrong
 
@@ -62,13 +62,13 @@ Identify where the resulting behavior will be tested. Prefer existing seams, and
 
 When the user uses a term that conflicts with existing language in `CONTEXT.md`, call it out immediately.
 
-> Your glossary defines "cancellation" as X, but you seem to mean Y — which is it?
+> Your glossary defines "cancellation" as X, but you seem to mean Y. Which is it?
 
 ### Sharpen fuzzy language
 
 When the user uses vague, overloaded, or inconsistent language, stop and force a sharper definition. Propose a precise canonical term.
 
-> You're saying "account" — do you mean the Customer or the User? Those are different things.
+> You're saying "account". Do you mean the Customer or the User? Those are different things.
 
 ### Discuss concrete scenarios
 
@@ -78,15 +78,15 @@ Stress-test ideas with concrete scenarios and edge cases, not paraphrases of wha
 
 When the user states how something works, check whether the code agrees. If you find a contradiction, surface it.
 
-> Your code cancels entire Orders, but you just said partial cancellation is possible — which is right?
+> Your code cancels entire Orders, but you just said partial cancellation is possible. Which is right?
 
 ### Update CONTEXT.md inline
 
-When a term is resolved, update `CONTEXT.md` right there. Don't batch these up — capture terms as they happen. Use the format in [context-format.md](./references/context-format.md).
+When a term is resolved, update `CONTEXT.md` right there. Don't batch these up: capture terms as they happen. Use the format in [context-format.md](./references/context-format.md).
 
 Don't couple `CONTEXT.md` to implementation details. Only include terms that are meaningful to domain experts.
 
-Create context files lazily — only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If `CONTEXT-MAP.md` exists, use it to find the relevant context. When multiple contexts exist, infer which one the current topic relates to; if unclear, ask.
+Create context files lazily, only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If `CONTEXT-MAP.md` exists, use it to find the relevant context. When multiple contexts exist, infer which one the current topic relates to; if unclear, ask.
 
 ### Question format
 
@@ -122,11 +122,11 @@ Design docs record what was decided, why, and the tradeoff that made the decisio
 
 Use these statuses only:
 
-- `Draft` — still being shaped
-- `Accepted` — agreed path; normal terminal state
-- `Deferred` — valid, but not being pursued now
-- `Rejected` — explored and intentionally declined
-- `Superseded by docs/designs/NN-name.md` — old decision replaced by a newer design
+- `Draft`: still being shaped
+- `Accepted`: agreed path; normal terminal state
+- `Deferred`: valid, but not being pursued now
+- `Rejected`: explored and intentionally declined
+- `Superseded by docs/designs/NN-name.md`: old decision replaced by a newer design
 
 Once a design doc reaches `Accepted`, treat it as a historical artifact. Do not keep editing it into current-state documentation. If the design changes materially, create a new design doc or mark the old one superseded.
 

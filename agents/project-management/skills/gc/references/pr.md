@@ -50,7 +50,7 @@ Present the draft PR description to the user in a code block for easy copying/ed
 ```
 
 - Ask the user to review and suggest any edits before creating the PR.
-- Write each bullet or paragraph as a single soft-wrapped line — do not insert hard newlines to wrap text within a point.
+- Write each bullet or paragraph as a single soft-wrapped line, and do not insert hard newlines to wrap text within a point.
 
 ### 4. Wait for User Approval
 

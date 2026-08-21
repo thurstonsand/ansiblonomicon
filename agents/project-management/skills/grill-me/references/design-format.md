@@ -34,7 +34,11 @@ Draft
 
 ## Exposed Shape
 
-{Setting aside implementation, describe every interface this design exposes: the end-user surface (UI, API, CLI, file format, workflow, or domain abstraction), boundaries between major layers or components, and contracts with external systems. For each, what crosses the boundary — operations, data shapes, failure behavior, and which side owns what. Is this the shape we want people and components interacting with?}
+{Setting aside implementation, describe every interface this design exposes: the end-user surface (UI, API, CLI, file format, workflow, or domain abstraction), boundaries between major layers or components, and contracts with external systems. For each, what crosses the boundary: operations, data shapes, failure behavior, and which side owns what. Is this the shape we want people and components interacting with?}
+
+## Call Stacks and Data Flow
+
+{For every new, changed, or deleted behavior, the call stack from entrypoint to side effects and response, in diff syntax when the interesting part is what changes. Current and proposed flow when changing existing behavior.}
 
 ## Design Decisions
 
@@ -83,11 +87,11 @@ Use only when the project handles customer data, or when security, privacy, comp
 
 Use these statuses only:
 
-- `Draft` — still being shaped
-- `Accepted` — agreed path; normal terminal state
-- `Deferred` — valid, but not being pursued now
-- `Rejected` — explored and intentionally declined
-- `Superseded by docs/designs/NN-name.md` — old decision replaced by a newer design
+- `Draft`: still being shaped
+- `Accepted`: agreed path; normal terminal state
+- `Deferred`: valid, but not being pursued now
+- `Rejected`: explored and intentionally declined
+- `Superseded by docs/designs/NN-name.md`: old decision replaced by a newer design
 
 ## Decision quality
 
@@ -106,6 +110,39 @@ Examples:
 - **Deliberate deviations from the obvious path.** These stop future engineers from "fixing" something that was deliberate.
 - **Constraints not visible in the code.** Compliance, latency requirements, operational limits, hardware constraints.
 - **Alternatives when the outcome is non-obvious.** If someone is likely to suggest the same path again, record why it lost or what remains unresolved.
+
+## Call stack rules
+
+Include the section for any orchestration or control-flow change. Skip it when the design decides a shape rather than a flow: a schema, a config layout, a naming convention.
+
+A call stack goes a level below the exposed shape, into the shape of code: which function calls which, in what order, and where the side effects land. Every one of those is a decision that otherwise gets made implicitly during code review, at the most expensive possible time to change your mind. Unlike a type sketch, it survives implementation drift, because it pins ownership and order rather than signatures.
+
+Use diff syntax when the interesting part is what changes:
+
+```diff
+ entrypoint
+   runCommand
++    handleCreateResource
++      ResourceClient.create(input)
++        POST /resources
++      renderResult
+-    legacyCreateFlow
+```
+
+Add a data-flow trace when a value is reshaped as it crosses boundaries:
+
+```txt
+raw input
+  -> boundary DTO / unknown
+  -> parser
+  -> canonical domain input
+  -> module interface
+  -> adapter call
+  -> typed result/error
+  -> serialized output
+```
+
+Include failure, retry, cancellation, idempotency, and observability flows when they are reachable. Keep the notation in whatever the project actually is: Ansible task names and handlers, a chezmoi template chain, a CLI command path, a function trace. Signatures earn a place only for the handful of functions too internal for the exposed shape but easy for an implementer to get wrong.
 
 ## Implementation plan rules
 

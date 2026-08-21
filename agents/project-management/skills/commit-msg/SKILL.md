@@ -7,7 +7,7 @@ description: Generate descriptive commit messages by analyzing git diffs. Use wh
 
 ## Purpose
 
-Commit messages are trust artifacts. A well-written commit should give the reader enough context to decide whether they need to review the code at all. Capture intent, decisions, and verification — not just what files changed.
+Commit messages are trust artifacts. A well-written commit should give the reader enough context to decide whether they need to review the code at all. Capture intent, decisions, and verification, not just what files changed.
 
 ## Gather Context
 
@@ -22,7 +22,7 @@ git diff --staged
 git log --oneline -5
 ```
 
-Read the diff carefully. Understand *why* the change was made, not just what changed. If you made the changes yourself, you already have this context — use it.
+Read the diff carefully. Understand *why* the change was made, not just what changed. If you made the changes yourself, you already have this context, so use it.
 
 ## Commit Message Format
 
@@ -53,7 +53,7 @@ What you did and, critically, *why you did it that way*. Include:
 
 - Design decisions that weren't obvious
 - Patterns chosen and why (especially if the codebase has multiple precedents)
-- Scope boundaries — what you intentionally didn't change
+- Scope boundaries: what you intentionally didn't change
 
 This is where agent context gets preserved. If you chose approach A over approach B, say so. That reasoning exists in your working memory right now and will be lost after the session ends.
 
@@ -66,7 +66,7 @@ How you know the change is correct. Be specific:
 - "Manually tested the endpoint with curl, confirmed 200 response with expected payload"
 - "Type-checked with tsc --noEmit, no errors"
 
-If verification was limited, say that too: "No existing test suite — verified by running the script against sample input." Honest verification is more useful than vague confidence.
+If verification was limited, say that too: "No existing test suite, so verified by running the script against sample input." Honest verification is more useful than vague confidence.
 
 ### Tradeoffs (optional)
 
@@ -104,4 +104,4 @@ Before committing:
 - [ ] Approach captures decisions that would otherwise be lost
 - [ ] Verified section is specific about what was tested and what passed
 - [ ] Message is proportional to the change size
-- [ ] Read the message as if you're seeing it in 6 months — does it make sense?
+- [ ] Read the message as if you're seeing it in 6 months. Does it make sense?

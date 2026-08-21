@@ -7,7 +7,7 @@ description: Review local docs and create a git commit or pull request. Use when
 
 A composite workflow that ensures documentation is up-to-date before committing changes.
 
-**CRITICAL:** This skill delegates to sub-skills. You MUST use the Skill tool to invoke each one — do NOT attempt to perform their work inline from memory or summary knowledge. The sub-skills contain detailed procedures that must be followed.
+**CRITICAL:** This skill delegates to sub-skills. You MUST use the Skill tool to invoke each one. Do NOT attempt to perform their work inline from memory or summary knowledge. The sub-skills contain detailed procedures that must be followed.
 
 ## Workflow
 
@@ -25,7 +25,7 @@ After the documentation review skill completes, stage any documentation files th
 git add <updated-docs-only>
 ```
 
-Only stage documentation files that were actually modified. Do not `git add .` — there may be unstaged files not ready for commit.
+Only stage documentation files that were actually modified. Do not `git add .`, since there may be unstaged files not ready for commit.
 
 ### 3. Create the Commit
 

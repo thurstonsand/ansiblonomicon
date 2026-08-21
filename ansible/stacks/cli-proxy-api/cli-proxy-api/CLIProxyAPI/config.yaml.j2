@@ -41,7 +41,7 @@ quota-exceeded:
   switch-preview-model: true # Whether to automatically switch to a preview model when a quota is exceeded
 # When true, enable authentication for the WebSocket API (/v1/ws).
 ws-auth: false
-request-log: true
+request-log: false # nothing rotates these; they once grew to 282G, 28% of the pool
 disable-cooling: false
 ampcode:
   upstream-url: https://ampcode.com

@@ -33,11 +33,11 @@ _Avoid_: Client, buyer, account
 ## Example dialogue
 
 > **Dev:** "When a **Customer** places an **Order**, do we create the **Invoice** immediately?"
-> **Domain expert:** "No — an **Invoice** is only generated once a **Fulfillment** is confirmed."
+> **Domain expert:** "No. An **Invoice** is only generated once a **Fulfillment** is confirmed."
 
 ## Flagged ambiguities
 
-- "account" was used to mean both **Customer** and **User** — resolved: these are distinct concepts.
+- "account" was used to mean both **Customer** and **User**. Resolved: these are distinct concepts.
 ```
 
 ## Rules
@@ -61,9 +61,9 @@ _Avoid_: Client, buyer, account
 
 ## Contexts
 
-- [Ordering](./src/ordering/CONTEXT.md) — receives and tracks customer orders
-- [Billing](./src/billing/CONTEXT.md) — generates invoices and processes payments
-- [Fulfillment](./src/fulfillment/CONTEXT.md) — manages warehouse picking and shipping
+- [Ordering](./src/ordering/CONTEXT.md): receives and tracks customer orders
+- [Billing](./src/billing/CONTEXT.md): generates invoices and processes payments
+- [Fulfillment](./src/fulfillment/CONTEXT.md): manages warehouse picking and shipping
 
 ## Relationships
 

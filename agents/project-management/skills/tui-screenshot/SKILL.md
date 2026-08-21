@@ -16,7 +16,7 @@ In Amp orbs, run Tuistory through Bun so screenshots do not use the incompatible
 1. Identify the exact state to prove and the final image path. Ask when either is ambiguous. Default to a tight frame; use a full viewport only when the user requests one or the surrounding application is part of the proof.
 2. Launch a disposable session large enough to render the subject without clipping. Preserve the application's real configuration where useful, but disable unrelated extensions, features, or chrome that would contaminate the frame.
 3. Force the application into the requested light or dark theme rather than relying on terminal background detection. For Pi, load/select the matching configured theme explicitly.
-4. Drive the application into the requested state. Wait for text from the **last stable row** of the finished component—not its title or another early-rendered marker—before saving. A title can appear while the rest of a modal is still being painted.
+4. Drive the application into the requested state. Wait for text from the **last stable row** of the finished component, not its title or another early-rendered marker, before saving. A title can appear while the rest of a modal is still being painted.
 5. Inspect `snapshot --trim`, then save the raw PNG under `/tmp`. Keep it until the finished image has been inspected. Stop the disposable live session after capture.
 
 The capture step is complete when the raw image visibly contains the entire requested component and its bottom-most stable content.

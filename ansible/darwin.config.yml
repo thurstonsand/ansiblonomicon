@@ -26,6 +26,11 @@ npm_global_packages_extra:
 npm_allow_scripts_extra:
   - glimpseui
 
+# Additional uv tools for macOS (extends uv_global_tools_base)
+# nurb models parts in a browser and prints them; it belongs where the printer is.
+uv_global_tools_extra:
+  - nurb
+
 # Additional Ruby gems for macOS (extends gem_packages_base)
 gem_packages_extra: []
 

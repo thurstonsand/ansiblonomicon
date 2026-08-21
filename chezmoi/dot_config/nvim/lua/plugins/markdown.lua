@@ -32,6 +32,19 @@ return {
     end,
   },
   {
+    "MeanderingProgrammer/render-markdown.nvim",
+    opts = { pipe_table = { enabled = false } },
+  },
+  {
+    "ice345/markdown-table-wrap.nvim",
+    ft = { "markdown" },
+    opts = {
+      max_width_ratio = 0.9,
+      min_col_width = 8,
+      max_col_width = 50,
+    },
+  },
+  {
     "HakonHarnes/img-clip.nvim",
     ft = { "markdown" },
     cmd = { "PasteImage", "ImgClipConfig", "ImgClipDebug" },

@@ -1,6 +1,6 @@
 ---
 name: truenas-docker-ops
-description: Playbook for anything on the TrueNAS host — consult before touching services, data, or containers. Covers SSH entry, container interaction, and data/layout notes so you can operate safely on TrueNAS.
+description: Playbook for anything on the TrueNAS host. Consult before touching services, data, or containers. Covers SSH entry, container interaction, and data/layout notes so you can operate safely on TrueNAS.
 ---
 
 # TrueNAS Docker Operations
