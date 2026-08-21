@@ -65,9 +65,9 @@ These should be used instead of hard-coding model values.
 
 ## Work-Local Config
 
-| File                            | Purpose                                                                          |
-| ------------------------------- | -------------------------------------------------------------------------------- |
-| `ansible/work.config.local.yml` | Work-specific extras: agent harness sources, private language tools (gitignored) |
+| File                            | Purpose                                                                        |
+| ------------------------------- | ------------------------------------------------------------------------------ |
+| `ansible/work.config.local.yml` | Uncommitted extras: agent harness sources, private language tools (gitignored) |
 
 The work playbook conditionally includes this file if it exists. It defines `_extra` vars that get appended to their respective `_base` lists (defined in `work.config.yml`).
 
@@ -97,7 +97,7 @@ The `repo` field accepts full git URLs (ending in `.git`) or the short `owner/na
 | -------------- | ------------------------------------------------- |
 | `agents/work/` | Gitignored local plugin with work-specific skills |
 
-Added to `agent_harness_host_sources` in `work.config.yml`.
+Declared for the `work` profile in `ansible/agent-harness.config.yml`.
 
 ## Local Agent Instructions
 

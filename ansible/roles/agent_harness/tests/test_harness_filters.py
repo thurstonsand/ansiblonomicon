@@ -1528,6 +1528,46 @@ def test_agent_harness_filter_resources_normalizes_lowercase_dash_names() -> Non
 
 
 @pytest.mark.unit
+def test_agent_harness_filter_resources_rejects_duplicate_destinations() -> None:
+    resources: list[Any] = [
+        {"name": "same", "source": "/path/a", "origin": "repo-a", "target_agents": []},
+        {
+            "name": "same",
+            "source": "/path/b",
+            "origin": "repo-b",
+            "target_agents": ["pi"],
+        },
+    ]
+
+    with pytest.raises(
+        ValueError,
+        match=r"Multiple resources target pi:same: /path/a and /path/b",
+    ):
+        agent_harness_filter_resources(resources, "pi")
+
+
+@pytest.mark.unit
+def test_agent_harness_filter_resources_rejects_transformed_name_collisions() -> None:
+    resources: list[Any] = [
+        {
+            "name": "Same_Name",
+            "source": "/path/a",
+            "origin": "repo-a",
+            "target_agents": [],
+        },
+        {
+            "name": "same-name",
+            "source": "/path/b",
+            "origin": "repo-b",
+            "target_agents": [],
+        },
+    ]
+
+    with pytest.raises(ValueError, match=r"Multiple resources target pi:same-name"):
+        agent_harness_filter_resources(resources, "pi", "lowercase_dash")
+
+
+@pytest.mark.unit
 def test_agent_harness_filter_resources_mixed() -> None:
     """Filter correctly handles mixed resources."""
     resources: list[Any] = [

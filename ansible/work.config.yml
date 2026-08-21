@@ -18,19 +18,6 @@ agent_harness_profile: work
 # Symlink pi's git-installed Glimpse into the global npm root (registry-blocked here)
 agent_harness_link_glimpse: true
 
-# Work-only in-repo plugins. Shared and restricted sources live in the catalogue.
-agent_harness_host_sources:
-  - local: "{{ playbook_dir }}/../../agents"
-    plugins:
-      - name: project-management
-        exclude_skills:
-          - tui-screenshot
-      - name: claude
-        target_agents: [claude]
-        exclude_skills:
-          - retitle
-      - name: work
-
 uv_global_tools_base:
   - basedpyright
 

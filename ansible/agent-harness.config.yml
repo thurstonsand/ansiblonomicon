@@ -98,8 +98,13 @@ agent_harness_source_catalogue:
             - tui-screenshot
       - name: claude
         target_agents: [claude]
+        exclude_skills_by_profile:
+          work:
+            - retitle
       - name: codex
         target_agents: [codex]
+      - name: work
+        included_on: [work]
       - name: homelab
         excluded_on: [work] # no NAS reachable from the work machine
         exclude_skills_by_profile:
@@ -111,7 +116,4 @@ agent_harness_target_agents: >-
      + (agent_harness_target_agents_extra | default([])) }}
 agent_harness_sources: >-
   {{ agent_harness_source_catalogue
-     | agent_harness_resolve_sources(
-         agent_harness_profile,
-         (agent_harness_host_sources | default([])) + (agent_harness_sources_extra | default([]))
-       ) }}
+     | agent_harness_resolve_sources(agent_harness_profile, agent_harness_sources_extra | default([])) }}

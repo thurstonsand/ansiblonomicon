@@ -3,10 +3,7 @@
 agent_harness_target_agents:
   - claude
 
-# Committed host-specific sources appended while resolving the shared catalogue
-agent_harness_host_sources: []
-
-# Uncommitted host-local sources appended after committed host sources
+# Uncommitted host-local sources appended after the committed catalogue
 # Supports both git repos and local paths
 agent_harness_sources_extra: []
 #   # Git sources - clone from GitHub

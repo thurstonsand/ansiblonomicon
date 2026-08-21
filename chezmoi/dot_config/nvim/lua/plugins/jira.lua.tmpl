@@ -1,12 +1,58 @@
 local jira_browse_url = "{{ .jiraBrowseUrl | default `https://jira.atlassian.com/browse/` }}"
-local jira_ticket_pattern = [[\<[A-Z][A-Z0-9]\+-[0-9]\+\>]]
+local jira_ticket_pattern = [[\<[A-Z][A-Z0-9]\{2,}-[0-9]\+\>]]
+local jira_ticket_namespace = vim.api.nvim_create_namespace("jira_tickets")
+local attached_buffers = {}
 
-local function highlight_jira_tickets()
-  vim.api.nvim_set_hl(0, "JiraTicket", { link = "DiagnosticInfo" })
-
-  if not vim.w.jira_ticket_match then
-    vim.w.jira_ticket_match = vim.fn.matchadd("JiraTicket", jira_ticket_pattern)
+local function link_jira_tickets(buffer, first_line, last_line)
+  if not vim.api.nvim_buf_is_valid(buffer) or not vim.api.nvim_buf_is_loaded(buffer) then
+    return
   end
+
+  local line_count = vim.api.nvim_buf_line_count(buffer)
+  first_line = math.min(first_line, line_count - 1)
+  last_line = math.min(last_line, line_count)
+  vim.api.nvim_buf_clear_namespace(buffer, jira_ticket_namespace, first_line, last_line)
+
+  for row, line in ipairs(vim.api.nvim_buf_get_lines(buffer, first_line, last_line, false)) do
+    local search_start = 0
+    while true do
+      local match = vim.fn.matchstrpos(line, jira_ticket_pattern, search_start)
+      local ticket, ticket_start, ticket_end = match[1], match[2], match[3]
+      if ticket_start == -1 then
+        break
+      end
+
+      vim.api.nvim_buf_set_extmark(buffer, jira_ticket_namespace, first_line + row - 1, ticket_start, {
+        end_col = ticket_end,
+        hl_group = "JiraTicket",
+        url = jira_browse_url .. ticket,
+      })
+      search_start = ticket_end
+    end
+  end
+end
+
+local function attach_jira_ticket_links(buffer)
+  if
+    attached_buffers[buffer]
+    or not vim.api.nvim_buf_is_valid(buffer)
+    or not vim.api.nvim_buf_is_loaded(buffer)
+  then
+    return
+  end
+
+  attached_buffers[buffer] = true
+  link_jira_tickets(buffer, 0, vim.api.nvim_buf_line_count(buffer))
+  vim.api.nvim_buf_attach(buffer, false, {
+    on_lines = function(_, changed_buffer, _, first_line, _, new_last_line)
+      vim.schedule(function()
+        link_jira_tickets(changed_buffer, first_line, math.max(new_last_line, first_line + 1))
+      end)
+    end,
+    on_detach = function(_, detached_buffer)
+      attached_buffers[detached_buffer] = nil
+    end,
+  })
 end
 
 local function jira_url_under_cursor()
@@ -40,6 +86,7 @@ end
 return {
   "folke/snacks.nvim",
   init = function()
+    vim.api.nvim_set_hl(0, "JiraTicket", { link = "DiagnosticInfo" })
     local group = vim.api.nvim_create_augroup("jira_ticket_highlights", { clear = true })
     vim.api.nvim_create_autocmd("ColorScheme", {
       group = group,
@@ -47,11 +94,15 @@ return {
         vim.api.nvim_set_hl(0, "JiraTicket", { link = "DiagnosticInfo" })
       end,
     })
-    vim.api.nvim_create_autocmd("WinEnter", {
+    vim.api.nvim_create_autocmd("BufEnter", {
       group = group,
-      callback = highlight_jira_tickets,
+      callback = function(args)
+        attach_jira_ticket_links(args.buf)
+      end,
     })
-    highlight_jira_tickets()
+    vim.schedule(function()
+      attach_jira_ticket_links(vim.api.nvim_get_current_buf())
+    end)
   end,
   keys = {
     {

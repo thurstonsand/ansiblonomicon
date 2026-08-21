@@ -840,10 +840,14 @@ def agent_harness_resolve_sources(
     resolved_sources: list[SourceConfig] = []
 
     for source in [*catalogue, *(extra_sources or [])]:
-        if profile in source.get("excluded_on", []):
+        included_on = source.get("included_on", [])
+        if (included_on and profile not in included_on) or profile in source.get(
+            "excluded_on", []
+        ):
             continue
 
         resolved_source = deepcopy(source)
+        resolved_source.pop("included_on", None)
         resolved_source.pop("excluded_on", None)
         resolved_plugins: list[str | dict[str, Any]] = []
 
@@ -851,10 +855,14 @@ def agent_harness_resolve_sources(
             if isinstance(plugin, str):
                 resolved_plugins.append(plugin)
                 continue
-            if profile in plugin.get("excluded_on", []):
+            included_on = plugin.get("included_on", [])
+            if (included_on and profile not in included_on) or profile in plugin.get(
+                "excluded_on", []
+            ):
                 continue
 
             resolved_plugin = deepcopy(plugin)
+            resolved_plugin.pop("included_on", None)
             resolved_plugin.pop("excluded_on", None)
             exclusions_by_profile = resolved_plugin.pop("exclude_skills_by_profile", {})
             if profile in exclusions_by_profile:
@@ -900,15 +908,23 @@ def agent_harness_filter_resources(
 ) -> list[dict[str, Any]]:
     """Select resources for an agent and transform their deployment names."""
     filtered_resources: list[dict[str, Any]] = []
+    resources_by_name: dict[str, dict[str, Any]] = {}
     for resource in resources:
         if resource["target_agents"] and target_agent not in resource["target_agents"]:
             continue
-        filtered_resources.append(
-            {
-                **resource,
-                "name": _transform_resource_name(resource["name"], name_transform),
-            }
-        )
+        transformed_resource = {
+            **resource,
+            "name": _transform_resource_name(resource["name"], name_transform),
+        }
+        name = transformed_resource["name"]
+        if existing_resource := resources_by_name.get(name):
+            msg = (
+                f"Multiple resources target {target_agent}:{name}: "
+                f"{existing_resource['source']} and {resource['source']}"
+            )
+            raise ValueError(msg)
+        resources_by_name[name] = transformed_resource
+        filtered_resources.append(transformed_resource)
     return filtered_resources
 
 

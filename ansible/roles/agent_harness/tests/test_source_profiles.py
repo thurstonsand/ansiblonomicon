@@ -33,6 +33,7 @@ CATALOGUE = [
         "plugins": [
             {"name": "everywhere"},
             {"name": "not-at-work", "excluded_on": ["work"]},
+            {"name": "only-at-work", "included_on": ["work"]},
             "shorthand-plugin",
         ],
     },
@@ -59,7 +60,20 @@ def test_unrestricted_profile_receives_full_catalogue() -> None:
 def test_plugin_level_exclusion_removes_plugin_for_profile() -> None:
     local = next(s for s in resolve("work") if "local" in s)
     names = [p if isinstance(p, str) else p["name"] for p in local["plugins"]]
-    assert names == ["everywhere", "shorthand-plugin"]
+    assert names == ["everywhere", "only-at-work", "shorthand-plugin"]
+
+
+def test_source_level_inclusion_limits_source_to_named_profiles() -> None:
+    source = {
+        "local": "/work-agents",
+        "included_on": ["work"],
+        "plugins": [{"name": "work-only"}],
+    }
+
+    assert agent_harness_resolve_sources([source], "personal") == []
+    assert agent_harness_resolve_sources([source], "work") == [
+        {"local": "/work-agents", "plugins": [{"name": "work-only"}]}
+    ]
 
 
 def test_profile_exclusion_list_extends_base_exclusions() -> None:
@@ -84,6 +98,7 @@ def test_resolver_strips_profile_metadata_from_output() -> None:
             assert "excluded_on" not in source
             for plugin in source["plugins"]:
                 if isinstance(plugin, dict):
+                    assert "included_on" not in plugin
                     assert "excluded_on" not in plugin
                     assert "exclude_skills_by_profile" not in plugin
 
@@ -117,6 +132,7 @@ def test_real_catalogue_resolves_cleanly_for_every_profile() -> None:
         )
         assert resolved, profile
         for source in resolved:
+            assert "included_on" not in source
             assert "excluded_on" not in source
             for plugin in source["plugins"]:
                 if isinstance(plugin, dict):
@@ -136,6 +152,38 @@ def test_real_work_profile_preserves_mattpocock_base_exclusions() -> None:
     resolved_plugin = resolved_source["plugins"][0]
 
     assert set(base_plugin["exclude_skills"]) <= set(resolved_plugin["exclude_skills"])
+
+
+def test_real_work_profile_excludes_claude_retitle() -> None:
+    config = real_config()
+    local_source = next(
+        item
+        for item in agent_harness_resolve_sources(
+            config["agent_harness_source_catalogue"], "work"
+        )
+        if "local" in item
+    )
+    claude_plugin = next(
+        plugin for plugin in local_source["plugins"] if plugin["name"] == "claude"
+    )
+
+    assert "retitle" in claude_plugin["exclude_skills"]
+
+
+def test_real_catalogue_scopes_work_plugin_to_work_profile() -> None:
+    config = real_config()
+    catalogue = config["agent_harness_source_catalogue"]
+
+    def local_plugin_names(profile: str) -> set[str]:
+        local_source = next(
+            source
+            for source in agent_harness_resolve_sources(catalogue, profile)
+            if "local" in source
+        )
+        return {plugin["name"] for plugin in local_source["plugins"]}
+
+    assert "work" in local_plugin_names("work")
+    assert "work" not in local_plugin_names("personal")
 
 
 def test_real_work_profile_is_a_strict_subset_of_personal() -> None:

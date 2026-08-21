@@ -16,7 +16,7 @@ const FOLDER_ICON = "\u{F115}";
 const BRANCH_ICON = "\u{F126}";
 const WORKTREE_ICON = "\u{E725}";
 const MAINLINE_BRANCHES = new Set(["main", "master"]);
-const JIRA_TICKET_PATTERN = /[A-Z][A-Z0-9]+-\d+/;
+const JIRA_TICKET_PATTERN = /[A-Z][A-Z0-9]{2,}-\d+/;
 const CACHE_TTL_MS = 500;
 
 interface WorkspaceState {
