@@ -13,7 +13,7 @@ umask = 0o22
 
 {{- if eq .chezmoi.hostname "pod042" }}
 [onepassword]
-  command = "/home/thurstonsand/.local/bin/op"
+  command = {{ joinPath .chezmoi.homeDir ".local/bin/op" | quote }}
   prompt = false
   mode = "service"
 {{- end }}

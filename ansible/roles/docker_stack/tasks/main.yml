@@ -9,7 +9,7 @@
   ansible.builtin.file:
     path: "{{ docker_stack_dest }}"
     state: directory
-    mode: "0750"
+    mode: "{{ docker_stack_dir_mode }}"
 
 - name: Clone/update source repository
   when: docker_stack_source is defined and docker_stack_source.repo is defined
@@ -61,11 +61,16 @@
 # deploy's own `compose up` starts them again as part of the project.
 - name: Deploy stack
   block:
+    # A first deploy on a fresh host has no sidecar to stop yet.
     - name: Stop containers that drive compose themselves
       ansible.builtin.command:
         cmd: "docker stop {{ item }}"
       loop: "{{ docker_stack_pause_containers | default([]) }}"
-      changed_when: true
+      register: _docker_stack_pause_result
+      changed_when: _docker_stack_pause_result.rc == 0
+      failed_when:
+        - _docker_stack_pause_result.rc != 0
+        - "'No such container' not in _docker_stack_pause_result.stderr"
 
     - name: Deploy stack
       community.docker.docker_compose_v2:

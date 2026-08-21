@@ -1,0 +1,28 @@
+---
+- name: Configure sanoid snapshots
+  ansible.builtin.include_tasks:
+    file: sanoid.yml
+    apply:
+      tags: [zfs, sanoid, snapshots]
+  tags: [zfs, sanoid, snapshots]
+
+- name: Configure pool scrubs
+  ansible.builtin.include_tasks:
+    file: scrub.yml
+    apply:
+      tags: [zfs, scrub]
+  tags: [zfs, scrub]
+
+- name: Configure SMART monitoring
+  ansible.builtin.include_tasks:
+    file: smartd.yml
+    apply:
+      tags: [smart, smartd]
+  tags: [smart, smartd]
+
+- name: Configure the ZFS event daemon
+  ansible.builtin.include_tasks:
+    file: zed.yml
+    apply:
+      tags: [zfs, zed]
+  tags: [zfs, zed]

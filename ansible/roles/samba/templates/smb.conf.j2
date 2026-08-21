@@ -1,0 +1,40 @@
+[global]
+	workgroup = {{ samba_workgroup }}
+	server string = {{ samba_server_string }}
+	server role = standalone server
+	security = user
+	map to guest = never
+	disable netbios = yes
+	smb ports = 445
+	server min protocol = SMB3
+	logging = systemd
+	load printers = no
+	printing = bsd
+	printcap name = /dev/null
+	disable spoolss = yes
+
+	# macOS clients
+	vfs objects = catia fruit streams_xattr
+	fruit:metadata = stream
+	fruit:model = MacSamba
+	fruit:posix_rename = yes
+	fruit:veto_appledouble = no
+	fruit:wipe_intentionally_left_blank_rfork = yes
+	fruit:delete_empty_adfiles = yes
+	fruit:nfs_aces = no
+
+{% for share in samba_shares %}
+[{{ share.name }}]
+	path = {{ share.path }}
+{% if share.comment is defined %}
+	comment = {{ share.comment }}
+{% endif %}
+	browseable = yes
+	read only = no
+	valid users = @{{ samba_media_group }}
+	force group = {{ samba_media_group }}
+	create mask = 0664
+	force create mode = 0664
+	directory mask = 2775
+	force directory mode = 2775
+{% endfor %}

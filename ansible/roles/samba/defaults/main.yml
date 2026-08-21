@@ -1,0 +1,9 @@
+---
+# One SMB share, admin-tier, shared-group semantics from ticket 10.
+samba_workgroup: WORKGROUP
+samba_server_string: "{{ ansible_facts.hostname }}"
+samba_media_group: media
+samba_media_gid: 3000
+samba_shares: []
+# Each entry: {name, password_env}. Empty until an SMB password SecretRef exists.
+samba_users: []

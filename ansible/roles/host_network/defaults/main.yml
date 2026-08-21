@@ -1,0 +1,10 @@
+# Recreates the TrueNAS-era interface topology on plain Debian so the docker
+# macvlan networks keep their parents verbatim: physical NIC enslaved to br0
+# (host IP lives on the bridge, untagged), with 802.1Q VLAN subinterfaces
+# br0.1-br0.4 on top of the bridge. Retires with the post-move debridging.
+host_network_nic: enp3s0
+host_network_bridge: br0
+host_network_address: "{{ lan.hosts.trusted.truenas.ip }}/24"
+host_network_gateway: 192.168.1.1
+host_network_dns: 192.168.1.1
+host_network_vlan_ids: [1, 2, 3, 4]

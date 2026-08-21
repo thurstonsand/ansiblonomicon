@@ -1,0 +1,17 @@
+[Unit]
+Description=Offsite restic backup of the black-box subset to Backblaze B2
+After=network-online.target docker.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart={{ alerting_bin_dir }}/hc-run restic-backup -- {{ restic_backup_bin_dir }}/restic-backup backup
+LoadCredential=op-token:{{ restic_backup_op_token_path }}
+LoadCredential=hc-ping:{{ alerting_state_dir }}/checks/restic-backup.url
+RuntimeDirectory=restic-backup
+CacheDirectory=restic-backup
+Environment=RESTIC_CACHE_DIR=/var/cache/restic-backup
+Environment=HOME=/root
+PrivateMounts=yes
+StandardOutput=journal
+StandardError=journal

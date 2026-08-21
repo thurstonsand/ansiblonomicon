@@ -45,3 +45,8 @@ uv.toml
 
 # Wrangler build output
 wrangler/*/dist/
+
+# bunker-rebuild cutover runtime artifacts (state, ISO, router backup)
+docs/wayfinding/bunker-rebuild/scripts/.cutover-state
+docs/wayfinding/bunker-rebuild/scripts/debian-13-netinst.iso
+docs/wayfinding/bunker-rebuild/artifacts/

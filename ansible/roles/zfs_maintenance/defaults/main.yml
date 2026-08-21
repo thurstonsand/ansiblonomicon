@@ -1,0 +1,33 @@
+---
+# Snapshots, scrubs, SMART tests and ZFS event handling (ticket 08). Everything
+# that has something to say says it through the alerting role.
+zfs_maintenance_bin_dir: /usr/local/bin
+
+# Sanoid. Pools absent from this list are deliberately snapshot-free.
+zfs_maintenance_sanoid_datasets: []
+zfs_maintenance_sanoid_template:
+  frequently: 0
+  hourly: 24
+  daily: 7
+  monthly: 1
+  yearly: 0
+zfs_maintenance_sanoid_check: "{{ ansible_facts.hostname }}-sanoid"
+zfs_maintenance_sanoid_schedule: "0 * * * *"
+zfs_maintenance_sanoid_grace: 1800
+
+# Scrubs: one timer per pool, staggered. Each entry needs pool, calendar,
+# healthchecks_schedule and healthchecks_grace.
+zfs_maintenance_scrubs: []
+
+# SMART: short daily at 02:00, long monthly on the 1st at 03:00, all disks.
+zfs_maintenance_smart_schedule: "(S/../.././02|L/../01/./03)"
+zfs_maintenance_smart_temp_limits: "4,45,55"
+
+# ZED. `autoreplace` is what makes the hot spare more than decoration.
+zfs_maintenance_zed_events:
+  - statechange
+  - data
+  - scrub_finish
+  - resilver_finish
+zfs_maintenance_zed_throttle_seconds: 900
+zfs_maintenance_pools_autoreplace: []

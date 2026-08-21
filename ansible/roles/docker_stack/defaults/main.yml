@@ -1,0 +1,5 @@
+---
+# Config directories are group-accessible: the containers' gid owns them, and
+# where the tree carries a named ACL this is also what keeps the ACL mask at
+# rwx. rsync is told the same mode so it stops undoing it on every run.
+docker_stack_dir_mode: "0770"

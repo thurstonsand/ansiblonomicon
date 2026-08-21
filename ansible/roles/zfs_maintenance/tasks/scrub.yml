@@ -1,0 +1,57 @@
+---
+- name: Install the scrub runner
+  become: true
+  ansible.builtin.template:
+    src: zfs-scrub-pool.j2
+    dest: "{{ zfs_maintenance_bin_dir }}/zfs-scrub-pool"
+    owner: root
+    group: root
+    mode: "0755"
+
+- name: Register a check per scrubbed pool
+  ansible.builtin.include_role:
+    name: alerting
+    tasks_from: check.yml
+  vars:
+    alerting_check_name: "{{ ansible_facts.hostname }}-zfs-scrub-{{ item.pool }}"
+    alerting_check_schedule: "{{ item.healthchecks_schedule }}"
+    alerting_check_grace: "{{ item.healthchecks_grace }}"
+  loop: "{{ zfs_maintenance_scrubs }}"
+  loop_control:
+    label: "{{ item.pool }}"
+
+- name: Install the scrub service template unit
+  become: true
+  ansible.builtin.template:
+    src: zfs-scrub-pool@.service.j2
+    dest: /etc/systemd/system/zfs-scrub-pool@.service
+    owner: root
+    group: root
+    mode: "0644"
+  notify: Reload systemd for zfs maintenance
+
+- name: Install a scrub timer per pool
+  become: true
+  ansible.builtin.template:
+    src: zfs-scrub-pool@.timer.j2
+    dest: "/etc/systemd/system/zfs-scrub-pool@{{ item.pool }}.timer"
+    owner: root
+    group: root
+    mode: "0644"
+  loop: "{{ zfs_maintenance_scrubs }}"
+  loop_control:
+    label: "{{ item.pool }}"
+  notify: Reload systemd for zfs maintenance
+
+- name: Flush handlers so the scrub timers see their units
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable the scrub timers
+  become: true
+  ansible.builtin.systemd_service:
+    name: "zfs-scrub-pool@{{ item.pool }}.timer"
+    enabled: true
+    state: started
+  loop: "{{ zfs_maintenance_scrubs }}"
+  loop_control:
+    label: "{{ item.pool }}"

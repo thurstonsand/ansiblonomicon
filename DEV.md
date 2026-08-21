@@ -58,16 +58,6 @@ Homebrew formulae, casks, and Mac App Store apps come from `ansible/Brewfile`, w
 
 The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json` files are masked with `skip-worktree` there. Use `uv run poe pull`, and be careful with `merge`, `rebase`, or `stash pop` on work. Confirm a version exists on the mirror before bumping a dependency.
 
-## pod042
-
-Reconciles itself: the playbook asserts a local connection and matching hostname, so there is no workstation-driven remote path.
-
-```sh
-ssh pod042 && cd ansiblonomicon && uv run poe pod042 -t chezmoi   # also: language-tools, nvim-deps
-```
-
-Config in `pod042.config.yml`, inventory in `inventory/targets/pod042.yml`. Packages come from apt with explicit external repos, plus mise and npm. Secrets arrive through a scoped 1Password service account installed by the `op_service_account` role. Docker work targets the NAS daemon over SSH rather than a local one, automatically configured.
-
 ## TrueNAS
 
 One playbook, two declaration sites: stacks are templated under `ansible/stacks/` and rendered by the `docker_stack` role; everything else — apps, and all of `local.truenas` — is declared in `inventory/targets/group_vars/truenas.yml`.

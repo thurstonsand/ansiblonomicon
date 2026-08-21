@@ -76,7 +76,6 @@ export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
 {{- end }}
 {{- if eq .chezmoi.hostname "pod042" }}
 export EDITOR="nvim"
-export DOCKER_HOST="ssh://truenas"
 {{- else if eq .chezmoi.hostname "openclaw" }}
 export EDITOR="nvim"
 {{- else }}

@@ -1,0 +1,16 @@
+[Unit]
+Description=Monthly restic forget, prune, and repository check
+After=network-online.target
+Wants=network-online.target
+Conflicts=restic-backup.service
+
+[Service]
+Type=oneshot
+ExecStart={{ alerting_bin_dir }}/hc-run restic-maintenance -- {{ restic_backup_bin_dir }}/restic-backup maintenance
+LoadCredential=op-token:{{ restic_backup_op_token_path }}
+LoadCredential=hc-ping:{{ alerting_state_dir }}/checks/restic-maintenance.url
+CacheDirectory=restic-backup
+Environment=RESTIC_CACHE_DIR=/var/cache/restic-backup
+Environment=HOME=/root
+StandardOutput=journal
+StandardError=journal

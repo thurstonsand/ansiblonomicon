@@ -1,0 +1,82 @@
+---
+- name: Require alerting credentials
+  ansible.builtin.assert:
+    that:
+      - alerting_hark_webhook_url | length > 0
+      - alerting_healthchecks_api_key | length > 0
+    fail_msg: >-
+      HARK_WEBHOOK_URL and HEALTHCHECKS_API_KEY must be resolved before
+      configuring alerting. Run `uv run poe init-secrets`.
+  no_log: true
+
+- name: Install alerting dependencies
+  become: true
+  ansible.builtin.apt:
+    name:
+      - curl
+      - jq
+    state: present
+
+- name: Ensure alerting state directories exist
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+  loop:
+    - "{{ alerting_state_dir }}"
+    - "{{ alerting_state_dir }}/checks"
+
+- name: Install the Hark webhook credential
+  become: true
+  ansible.builtin.copy:
+    dest: "{{ alerting_state_dir }}/hark-webhook-url"
+    content: "{{ alerting_hark_webhook_url }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
+- name: Install alerting scripts
+  become: true
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "{{ alerting_bin_dir }}/{{ item }}"
+    owner: root
+    group: root
+    mode: "0755"
+  loop:
+    - storage-alert
+    - hc-run
+
+- name: Register the host-alive check
+  ansible.builtin.include_tasks: check.yml
+  vars:
+    alerting_check_name: "{{ alerting_heartbeat_check }}"
+    alerting_check_schedule: "{{ alerting_heartbeat_schedule }}"
+    alerting_check_grace: "{{ alerting_heartbeat_grace }}"
+
+- name: Install the host-alive units
+  become: true
+  ansible.builtin.template:
+    src: "alerting-heartbeat.{{ item }}.j2"
+    dest: "/etc/systemd/system/alerting-heartbeat.{{ item }}"
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - service
+    - timer
+  notify: Reload systemd for alerting
+
+- name: Flush handlers so the heartbeat timer sees its units
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable the host-alive timer
+  become: true
+  ansible.builtin.systemd_service:
+    name: alerting-heartbeat.timer
+    enabled: true
+    state: started

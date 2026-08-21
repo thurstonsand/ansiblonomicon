@@ -1,0 +1,7 @@
+---
+# Every unit and script this role installs is written against alerting's
+# interface — hc-run, storage-alert, and the credential paths under
+# alerting_state_dir. Declaring the dependency is what puts those paths in
+# scope, including on a tag-limited run that never includes alerting itself.
+dependencies:
+  - role: alerting

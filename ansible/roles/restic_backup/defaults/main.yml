@@ -1,0 +1,36 @@
+---
+# Offsite backup of the black-box subset to Backblaze B2 (bunker-rebuild ticket 04).
+# Sources are ZFS datasets; each is snapshotted before it is read, so sqlite
+# databases land consistent. `subpath` narrows a backup to part of a dataset.
+restic_backup_sources:
+  - dataset: black-box/docker
+  - dataset: black-box/agents
+  - dataset: black-box/anypod
+  - dataset: ark/anypod
+    subpath: transcripts
+
+restic_backup_excludes:
+  - /mnt/black-box/docker/plex/config/Library/Application Support/Plex Media Server/Cache
+  # 25G of regenerable BIF/chapter thumbnails — re-derivable, excluded by ticket 04 doctrine
+  - /mnt/black-box/docker/plex/config/Library/Application Support/Plex Media Server/Media
+  - /mnt/black-box/docker/plex/config/Library/Application Support/Plex Media Server/Crash Reports
+  - /mnt/black-box/docker/plex/logs
+
+restic_backup_repository_path: black-box
+restic_backup_host_tag: bunker
+
+restic_backup_keep_daily: 7
+restic_backup_keep_weekly: 4
+restic_backup_keep_monthly: 12
+
+restic_backup_schedule: "*-*-* 03:30:00"
+restic_backup_maintenance_schedule: "Sun *-*-01..07 05:00:00"
+
+restic_backup_bin_dir: /usr/local/bin
+restic_backup_zfs_bin: /usr/sbin/zfs
+restic_backup_staging_root: /run/restic-backup/src
+
+# 1Password references, resolved at run time by the service account token that
+# systemd hands the unit as a credential.
+restic_backup_op_token_path: "{{ ansible_facts['env']['HOME'] }}/.config/op-service-account/token"
+restic_backup_op_b2_item: op://agent/Backblaze

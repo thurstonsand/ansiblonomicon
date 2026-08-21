@@ -1,0 +1,199 @@
+---
+# pod042 — the Bunker. Plain Debian 13 on the old NAS hardware.
+# Host facts live here; role behaviour lives in each role's defaults.
+
+# Docker configuration
+docker:
+  # Base path for container configs: {config_base}/{stack}/{container}/...
+  config_base: /mnt/black-box/docker
+  # User/group for containers
+  user:
+    puid: 950
+    pgid: 544
+    id: "950:544"
+
+# Network ranges (macvlan iprange):
+#   trusted:  192.168.1.0/24 (host network)
+#   iot:      192.168.3.224/27 (192.168.3.224-255)
+#   external: 192.168.5.224/27 (192.168.5.224-255)
+#   personal: 192.168.6.224/27 (192.168.6.224-255)
+lan:
+  trusted:
+    truenas:
+      ip: 192.168.1.68
+      ports:
+        plex: 32400
+        storj_node: 20909
+      domain: truenas.thurstons.house
+    openclaw:
+      ip: 192.168.1.90
+      ports:
+        gateway: 18789
+        ssh: 22
+      domain: openclaw.thurstons.house
+    pod042:
+      ip: 192.168.1.94
+      ports:
+        ssh: 22
+      domain: pod042.thurstons.house
+
+  iot:
+    homeassistant:
+      ip: 192.168.1.89
+      ports:
+        mqtt: 1883
+
+
+  external:
+    cloudflared:
+      ip: 192.168.5.225
+      ports: {}
+    seerr:
+      ip: 192.168.5.227
+      ports:
+        web: 5055
+      domain: seerr.thurstons.house
+    anypod:
+      ip: 192.168.5.231
+      ports:
+        web: 8024
+      domain: anypod.thurstons.house
+    bgutil_pot_provider:
+      ip: 192.168.5.232
+      ports:
+        api: 4416
+    ghost:
+      ip: 192.168.5.233
+      ports:
+        web: 2368
+      domain: blog.thurstons.house
+    ghost_mysql:
+      ip: 192.168.5.234
+      ports:
+        mysql: 3306
+    cli_proxy_api:
+      ip: 192.168.5.235
+      ports:
+        api: 8317
+        gemini_oauth: 8085
+        codex_oauth: 1455
+        claude_oauth: 54545
+        antigravity_oauth: 51121
+        iflow_oauth: 11451
+      domain: cli-proxy-api.thurstons.house
+
+  personal:
+    homepage:
+      ip: 192.168.6.225
+      ports:
+        web: 80
+      domain: dash.thurstons.house
+    homepage_docker_socket_proxy:
+      ip: 192.168.6.234
+      ports:
+        docker_api: 2375
+    gluetun:
+      ip: 192.168.6.226
+      ports:
+        control: 8000
+        http_proxy: 8888
+        shadowsocks: 8388
+        qbittorrent_web: 80
+        qbittorrent_bt: 57412
+    qbittorrent:
+      domain: torrent.thurstons.house
+    flaresolverr:
+      ip: 192.168.6.228
+      ports:
+        web: 8191
+    prowlarr:
+      ip: 192.168.6.229
+      ports:
+        web: 9696
+      domain: prowlarr.thurstons.house
+    sonarr:
+      ip: 192.168.6.230
+      ports:
+        web: 8989
+      domain: sonarr.thurstons.house
+    radarr:
+      ip: 192.168.6.231
+      ports:
+        web: 7878
+      domain: radarr.thurstons.house
+    newtarr:
+      ip: 192.168.6.237
+      ports:
+        web: 9705
+      domain: newtarr.thurstons.house
+    scrypted:
+      ip: 192.168.6.232
+      ports:
+        web_insecure: 11080
+        web_secure: 10443
+        rtsp: 554
+      domain: scrypted.thurstons.house
+    isponsorblocktv:
+      ip: 192.168.6.235
+      ports: {}
+    caddy:
+      ip: 192.168.6.239
+      ports:
+        http: 80
+        https: 443
+      domain: thurstons.house
+
+# Docker engine. The apt repo itself is declared in pod042.config.yml
+# (apt_external_repos.docker); the daemon packages are host facts.
+docker_engine_packages:
+  - docker-ce
+  - containerd.io
+
+# Plex hands /dev/dri to the container for QuickSync. Real hardware has it and
+# should fail loudly if it ever stops appearing; rigs without an iGPU turn it off.
+plex_hw_transcode: true
+
+# Pools, as renamed at import (ticket 10): capacity -> ark, performance -> black-box.
+pod042_pools:
+  - ark
+  - black-box
+
+# Move-day scaffold. The stack templates still name the TrueNAS-era pool
+# mountpoints; these symlinks let them resolve unchanged until the templates are
+# repathed post-move. Retire both with that repath.
+pod042_legacy_pool_links:
+  - src: /mnt/ark
+    path: /mnt/capacity
+  - src: /mnt/black-box
+    path: /mnt/performance
+
+# ZFS maintenance
+zfs_maintenance_scrubs:
+  - pool: ark
+    calendar: "*-*-01 04:00:00"
+    healthchecks_schedule: "0 4 1 * *"
+    healthchecks_grace: 86400
+  - pool: black-box
+    calendar: "*-*-05 04:00:00"
+    healthchecks_schedule: "0 4 5 * *"
+    healthchecks_grace: 7200
+
+# Only ark carries the hot spare, but autoreplace is right on both.
+zfs_maintenance_pools_autoreplace:
+  - ark
+
+# black-box only: ark is deliberately snapshot-free (ticket 08).
+zfs_maintenance_sanoid_datasets:
+  - dataset: black-box
+    template: production
+    recursive: true
+
+# Samba: one share (ticket 08); password from the SAMBA_MEDIA_PASSWORD
+# SecretRef (op item "Samba media (pod042)").
+samba_shares:
+  - name: media
+    path: /mnt/ark/media
+    comment: Media library
+samba_users:
+  - name: thurston
+    password_env: SAMBA_MEDIA_PASSWORD

@@ -1,0 +1,58 @@
+---
+- name: Install the ZFS event daemon
+  become: true
+  ansible.builtin.apt:
+    name: zfs-zed
+    state: present
+
+- name: Install the storage-alert zedlets
+  become: true
+  ansible.builtin.template:
+    src: zedlet-storage-alert.sh.j2
+    dest: "/etc/zfs/zed.d/{{ item }}-storage-alert.sh"
+    owner: root
+    group: root
+    mode: "0755"
+  loop: "{{ zfs_maintenance_zed_events }}"
+  notify: Restart zed
+
+- name: Enable the ZFS event daemon
+  become: true
+  ansible.builtin.systemd_service:
+    name: zfs-zed
+    enabled: true
+    state: started
+
+- name: Read pool autoreplace settings
+  become: true
+  ansible.builtin.command:
+    argv:
+      - zpool
+      - get
+      - -H
+      - -o
+      - value
+      - autoreplace
+      - "{{ item }}"
+  loop: "{{ zfs_maintenance_pools_autoreplace }}"
+  register: zfs_maintenance_autoreplace_state
+  changed_when: false
+  failed_when: false
+  check_mode: false
+
+# Without autoreplace the hot spare never activates on its own.
+- name: Enable autoreplace so the hot spare can take over
+  become: true
+  ansible.builtin.command:
+    argv:
+      - zpool
+      - set
+      - autoreplace=on
+      - "{{ item.item }}"
+  loop: "{{ zfs_maintenance_autoreplace_state.results }}"
+  loop_control:
+    label: "{{ item.item }}"
+  when:
+    - item.rc == 0
+    - item.stdout | trim != "on"
+  changed_when: true

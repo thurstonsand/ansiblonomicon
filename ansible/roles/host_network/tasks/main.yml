@@ -1,0 +1,49 @@
+- name: Install networkd config for bridge and NIC
+  ansible.builtin.template:
+    src: "{{ item.src }}"
+    dest: /etc/systemd/network/{{ item.dest }}
+    owner: root
+    group: root
+    mode: "0644"
+  loop:
+    - { src: bridge.netdev.j2, dest: 10-br0.netdev }
+    - { src: bridge.network.j2, dest: 10-br0.network }
+    - { src: nic.network.j2, dest: 11-nic.network }
+  notify: Reload networkd
+
+- name: Install networkd config for VLAN subinterfaces
+  ansible.builtin.template:
+    src: vlan.netdev.j2
+    dest: /etc/systemd/network/2{{ item }}-br0.{{ item }}.netdev
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    vlan_id: "{{ item }}"
+  loop: "{{ host_network_vlan_ids }}"
+  notify: Reload networkd
+
+- name: Install networkd network config for VLAN subinterfaces
+  ansible.builtin.template:
+    src: vlan.network.j2
+    dest: /etc/systemd/network/2{{ item }}-br0.{{ item }}.network
+    owner: root
+    group: root
+    mode: "0644"
+  vars:
+    vlan_id: "{{ item }}"
+  loop: "{{ host_network_vlan_ids }}"
+  notify: Reload networkd
+
+- name: Remove ifupdown claim on the physical NIC
+  ansible.builtin.lineinfile:
+    path: /etc/network/interfaces
+    regexp: '^(auto|allow-hotplug|iface)\s+{{ host_network_nic }}'
+    state: absent
+  notify: Reload networkd
+
+- name: Enable systemd-networkd
+  ansible.builtin.systemd_service:
+    name: systemd-networkd
+    enabled: true
+    state: started

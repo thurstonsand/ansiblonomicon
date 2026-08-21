@@ -1,0 +1,73 @@
+---
+- name: Install restic and its runtime dependencies
+  become: true
+  ansible.builtin.apt:
+    name:
+      - restic
+      - curl
+    state: present
+
+- name: Require the 1Password service account token
+  ansible.builtin.stat:
+    path: "{{ restic_backup_op_token_path }}"
+  register: restic_backup_token_file
+
+- name: Assert the service account token exists
+  ansible.builtin.assert:
+    that:
+      - restic_backup_token_file.stat.exists
+      - restic_backup_token_file.stat.size | int > 0
+    fail_msg: >-
+      {{ restic_backup_op_token_path }} is missing; run the op_service_account
+      role first — systemd hands that token to the backup units as a credential.
+
+- name: Register Healthchecks check for the backup job
+  ansible.builtin.include_role:
+    name: alerting
+    tasks_from: check.yml
+  vars:
+    alerting_check_name: restic-backup
+    alerting_check_schedule: "30 3 * * *"
+    alerting_check_grace: 7200
+
+- name: Register Healthchecks check for the maintenance job
+  ansible.builtin.include_role:
+    name: alerting
+    tasks_from: check.yml
+  vars:
+    alerting_check_name: restic-maintenance
+    alerting_check_schedule: "0 5 1-7 * 0"
+    alerting_check_grace: 14400
+
+- name: Deploy restic backup script
+  become: true
+  ansible.builtin.template:
+    src: restic-backup.sh.j2
+    dest: "{{ restic_backup_bin_dir }}/restic-backup"
+    mode: "0755"
+
+- name: Deploy systemd units
+  become: true
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/etc/systemd/system/{{ item }}"
+    mode: "0644"
+  loop:
+    - restic-backup.service
+    - restic-backup.timer
+    - restic-backup-maintenance.service
+    - restic-backup-maintenance.timer
+  notify: Reload systemd for restic backup
+
+- name: Flush handlers to reload systemd
+  ansible.builtin.meta: flush_handlers
+
+- name: Enable and start backup timers
+  become: true
+  ansible.builtin.systemd_service:
+    name: "{{ item }}"
+    enabled: true
+    state: started
+  loop:
+    - restic-backup.timer
+    - restic-backup-maintenance.timer

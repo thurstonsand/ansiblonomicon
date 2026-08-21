@@ -3,7 +3,9 @@ name = "ansiblonomicon"
 version = "0.1.0"
 description = "Ansible configuration for macOS systems"
 requires-python = ">=3.14"
-dependencies = ["ansible>=12.3.0", "httpx>=0.28.1"]
+# requests is community.docker's HTTP client: pod042 runs its playbook against
+# this venv, so the docker modules import it from here.
+dependencies = ["ansible>=12.3.0", "httpx>=0.28.1", "requests>=2.32.3"]
 
 [tool.poe]
 verbosity = -1
@@ -208,7 +210,7 @@ options = ["--target"]
 help = "Override play target, e.g. openclaw_local or openclaw_remote"
 
 [tool.poe.tasks.pod042]
-help = "Converge pod042"
+help = "Converge pod042, the Bunker (storage, stacks, and its own dev environment)"
 shell = """
 if [[ "$(hostname -s)" != "pod042" ]]; then
   printf 'pod042 must run on pod042; SSH there first.\n' >&2

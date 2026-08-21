@@ -34,6 +34,8 @@
       - just
       - update-deps
     chdir: "{{ role_path }}/files/shp"
+  environment:
+    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['PATH'] }}"
   register: shp_update_deps
   changed_when: shp_update_deps.stdout | length > 0 or shp_update_deps.stderr | length > 0
 

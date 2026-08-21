@@ -16,5 +16,5 @@
 - **Agent plugin**: A directory under `agents/` holding a themed set of skills, installable by any harness configured in this repo.
 - **Session recovery**: The shared library that lets an interrupted agent session be picked back up, with a common core and per-harness entry points.
 - **Work machine**: The corporate laptop. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions, and cannot easily be extended.
-- **pod042**: The dev VM on TrueNAS, treated as a separate target for this repo.
+- **pod042**: The NAS successor — plain Debian 13 on the old TrueNAS hardware.
 - **OpenClaw**: pod042's predecessor. Sunsetting; treat any remaining reference as legacy.

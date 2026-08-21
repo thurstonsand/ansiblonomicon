@@ -4,7 +4,6 @@ from pathlib import Path
 from typing import Any
 
 from harness_filters import agent_harness_resolve_sources
-import pytest
 import yaml
 
 ANSIBLE_ROOT = Path(__file__).parents[3]
@@ -40,7 +39,9 @@ CATALOGUE = [
 ]
 
 
-def resolve(profile: str, extra: list[dict[str, Any]] | None = None) -> list[dict[str, Any]]:
+def resolve(
+    profile: str, extra: list[dict[str, Any]] | None = None
+) -> list[dict[str, Any]]:
     return agent_harness_resolve_sources(CATALOGUE, profile, extra)
 
 
@@ -98,7 +99,9 @@ def test_catalogue_is_a_pass_through_for_unknown_profile_markers() -> None:
 
 
 def real_config() -> dict[str, Any]:
-    document = yaml.safe_load((ANSIBLE_ROOT / "agent-harness.config.yml").read_text())
+    document: dict[str, Any] = yaml.safe_load(
+        (ANSIBLE_ROOT / "agent-harness.config.yml").read_text()
+    )
     assert isinstance(document, dict)
     return document
 

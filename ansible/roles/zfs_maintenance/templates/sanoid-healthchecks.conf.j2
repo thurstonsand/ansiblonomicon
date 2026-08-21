@@ -1,0 +1,4 @@
+[Service]
+LoadCredential=hc-ping:{{ alerting_state_dir }}/checks/{{ zfs_maintenance_sanoid_check }}.url
+ExecStart=
+ExecStart={{ alerting_bin_dir }}/hc-run {{ zfs_maintenance_sanoid_check }} -- /usr/sbin/sanoid --cron

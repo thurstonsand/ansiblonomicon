@@ -1,0 +1,127 @@
+#!/usr/bin/env bash
+# Managed by ansible (role: restic_backup) — edit the role, not this file.
+#
+# Offsite backup of the black-box subset to Backblaze B2 (ticket 04). The
+# Healthchecks producer contract (ticket 12) wraps this externally: the systemd
+# units run `hc-run <check> -- restic-backup <mode>` (role: alerting).
+#
+# Modes:
+#   backup       ZFS-snapshot every source, back it up, release the snapshots
+#   maintenance  forget + prune to the retention policy, then restic check
+set -euo pipefail
+
+readonly zfs={{ restic_backup_zfs_bin }}
+readonly staging_root={{ restic_backup_staging_root }}
+
+mode="${1:-}"
+case "$mode" in
+  backup | maintenance) ;;
+  *)
+    printf 'usage: %s backup|maintenance\n' "${0##*/}" >&2
+    exit 64
+    ;;
+esac
+readonly mode
+
+log() { printf '[restic-%s] %s\n' "$mode" "$*"; }
+warn() { printf '[restic-%s] WARNING: %s\n' "$mode" "$*" >&2; }
+die() {
+  printf '[restic-%s] ERROR: %s\n' "$mode" "$*" >&2
+  exit 1
+}
+
+# Secrets: the 1Password service account token arrives as a systemd credential;
+# everything else is read from 1Password at run time and never touches disk.
+credentials_dir="${CREDENTIALS_DIRECTORY:-}"
+[[ -n "$credentials_dir" ]] || die "no systemd credentials directory; run this through its unit"
+OP_SERVICE_ACCOUNT_TOKEN="$(tr -d '\r\n' <"${credentials_dir}/op-token")"
+export OP_SERVICE_ACCOUNT_TOKEN
+
+op_read() {
+  local value
+  value="$(/usr/bin/op read --no-newline "$1")" || die "could not read $1 from 1Password"
+  [[ -n "$value" ]] || die "$1 is empty"
+  printf '%s' "$value"
+}
+
+load_repository() {
+  RESTIC_PASSWORD="$(op_read '{{ restic_backup_op_b2_item }}/repository password')"
+  B2_ACCOUNT_ID="$(op_read '{{ restic_backup_op_b2_item }}/key id')"
+  B2_ACCOUNT_KEY="$(op_read '{{ restic_backup_op_b2_item }}/applicationKey')"
+  RESTIC_REPOSITORY="b2:$(op_read '{{ restic_backup_op_b2_item }}/bucket'):{{ restic_backup_repository_path }}"
+  export RESTIC_PASSWORD B2_ACCOUNT_ID B2_ACCOUNT_KEY RESTIC_REPOSITORY
+}
+
+staged=()
+snapshotted=()
+
+# The unit runs with PrivateMounts=yes and a RuntimeDirectory, so leftovers die
+# with the process either way; this is the tidy path.
+# shellcheck disable=SC2329  # invoked from the EXIT trap
+release_sources() {
+  local path dataset
+  for path in ${staged[@]+"${staged[@]}"}; do
+    umount "$path" || warn "could not unmount ${path}"
+  done
+  for dataset in ${snapshotted[@]+"${snapshotted[@]}"}; do
+    "$zfs" destroy "${dataset}@${snap}" || warn "could not destroy ${dataset}@${snap}"
+  done
+}
+
+# Snapshot a dataset and bind the snapshot (or a subpath of it) under the
+# staging root, at a path mirroring the live one. restic sees a path that is
+# stable across runs, which is what parent-snapshot selection and forget need.
+stage_source() {
+  local dataset="$1" subpath="${2:-}"
+  local live="/mnt/${dataset}${subpath:+/$subpath}"
+  local source="/mnt/${dataset}/.zfs/snapshot/${snap}${subpath:+/$subpath}"
+  local target="${staging_root}${live}"
+
+  "$zfs" snapshot "${dataset}@${snap}" || die "could not snapshot ${dataset}"
+  snapshotted+=("$dataset")
+  ls "$source" >/dev/null || die "snapshot directory did not appear at ${source}"
+
+  mkdir -p "$target"
+  mount --bind "$source" "$target" || die "could not bind ${source} to ${target}"
+  staged+=("$target")
+}
+
+run_backup() {
+  snap="restic-$(date -u +%Y%m%dT%H%M%SZ)"
+  readonly snap
+  trap release_sources EXIT
+
+  mkdir -p "$staging_root"
+{% for source in restic_backup_sources %}
+  stage_source {{ source.dataset }}{{ ' ' ~ source.subpath if source.subpath is defined else '' }}
+{% endfor %}
+
+  log "backing up ${staged[*]}"
+  restic backup \
+    --host {{ restic_backup_host_tag }} \
+    --tag scheduled \
+{% for exclude in restic_backup_excludes %}
+    --exclude "{{ restic_backup_staging_root }}{{ exclude }}" \
+{% endfor %}
+    "${staged[@]}"
+}
+
+run_maintenance() {
+  log "forgetting outside {{ restic_backup_keep_daily }}d/{{ restic_backup_keep_weekly }}w/{{ restic_backup_keep_monthly }}m, then pruning"
+  restic forget \
+    --host {{ restic_backup_host_tag }} \
+    --keep-daily {{ restic_backup_keep_daily }} \
+    --keep-weekly {{ restic_backup_keep_weekly }} \
+    --keep-monthly {{ restic_backup_keep_monthly }} \
+    --prune
+
+  log "checking repository"
+  restic check
+}
+
+load_repository
+case "$mode" in
+  backup) run_backup ;;
+  maintenance) run_maintenance ;;
+esac
+log "succeeded"

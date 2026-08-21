@@ -19,17 +19,28 @@
   delegate_to: localhost
   become: false
 
+# rsync's --no-recursive also drops --dirs, and without it rsync skips the
+# source directory outright — a stack's top-level plain files never arrive.
+# --dirs puts that level back; the directory exclude leaves each container's
+# subtree to its own sync pass. The dir mode and times come from the config
+# tree, not the checkout, or rsync and the directory tasks undo each other on
+# every run.
 - name: Rsync plain files to {{ sync_dest | basename }}
+  vars:
+    sync_files_recurse: "{{ sync_recurse | default(true) }}"
   ansible.posix.synchronize:
     src: "{{ sync_src }}/"
     dest: "{{ sync_dest }}/"
-    recursive: "{{ sync_recurse | default(true) }}"
+    recursive: "{{ sync_files_recurse }}"
+    dirs: "{{ not sync_files_recurse }}"
     delete: false
     owner: false
     group: false
-    rsync_opts:
-      - "--exclude=*.j2"
-  become: false
+    rsync_opts: >-
+      {{
+        ['--exclude=*.j2', '--omit-dir-times', '--chmod=D' ~ docker_stack_dir_mode]
+        + ([] if sync_files_recurse else ['--exclude=*/'])
+      }}
   register: docker_stack_sync_rsync_result
 
 - name: Fix ownership on rsynced files

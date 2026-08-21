@@ -1,5 +1,7 @@
 # Pod042: OpenClaw sunset, dev box rebuild
 
+> **Superseded 2026-08-19** by [bunker-rebuild](../bunker-rebuild/map.md). The pod042 VM retires at that effort's cutover; the Debian host itself takes the pod042 name and the agent platform is redesigned on incus (durable instance **pascal** + ephemeral workers — see [bunker-rebuild ticket 07](../bunker-rebuild/tickets/07-agent-platform-on-proxmox.md)). Salvaged as designs: the self-management loop, the `op` launcher role, the comms design. All remaining tickets closed as overtaken or unresolved ideas; the decision record below stands.
+
 ## Destination
 
 OpenClaw (VM, playbook, config, DNS) is fully sunset, and **pod042** — a lean, agent-ready dev VM on TrueNAS — is running: converging itself from this repo on a timer, reaching the TrueNAS Docker daemon over SSH, self-healing via a resident agent, and reporting back to Thurston. Execution is in scope for this map: the destination is the running machine, not just its design docs.

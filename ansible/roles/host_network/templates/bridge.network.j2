@@ -1,0 +1,10 @@
+[Match]
+Name={{ host_network_bridge }}
+
+[Network]
+Address={{ host_network_address }}
+Gateway={{ host_network_gateway }}
+DNS={{ host_network_dns }}
+{% for id in host_network_vlan_ids %}
+VLAN={{ host_network_bridge }}.{{ id }}
+{% endfor %}

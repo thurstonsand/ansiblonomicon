@@ -6,7 +6,7 @@
   ansible.builtin.file:
     path: "{{ docker.config_dir }}/{{ container_dir.path | basename }}"
     state: directory
-    mode: "0750"
+    mode: "{{ docker_stack_dir_mode }}"
     owner: "{{ docker.user.puid }}"
     group: "{{ docker.user.pgid }}"
 

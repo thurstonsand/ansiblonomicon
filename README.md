@@ -40,7 +40,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 │   ├── darwin.config.yml    # macOS-specific config
 │   ├── work.config.yml     # Work macOS-specific config
 │   ├── openclaw.config.yml  # Retained OpenClaw reference config
-│   ├── pod042.config.yml    # pod042 Debian dev VM config
+│   ├── pod042.config.yml    # pod042 Debian host config (the NAS successor)
 │   ├── archlinux.config.yml # Arch Linux-specific config
 │   ├── Brewfile             # Homebrew packages, casks, and MAS apps
 │   ├── requirements.yml     # Ansible Galaxy dependencies
@@ -71,7 +71,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 - `poe laptop` — Apply macOS Ansible playbook (auto-detects work vs personal)
 - `poe laptop --check` — Dry-run mode (shows what would change without applying)
 - `poe openclaw` — Apply the retained OpenClaw reference playbook
-- `poe pod042` — Converge pod042 from inside its persistent checkout
+- `poe pod042` — Converge the pod042 host from inside its local checkout
 - `poe truenas` — Apply TrueNAS Ansible playbook
 - `poe udmp` — Apply UDMP Ansible playbook
 - `poe list-tags [playbook]` — List the `--tags` a playbook offers (defaults to this machine's own)

@@ -1,6 +1,8 @@
 ---
-# pod042 configures itself from its persistent ansiblonomicon checkout.
-# Run on the VM with: uv run poe pod042
+# pod042 — the Bunker. Plain Debian 13 on the old NAS hardware: ZFS storage
+# services, the docker stacks, and the host's own dev environment.
+# It configures itself from its persistent ansiblonomicon checkout.
+# Run on the host with: uv run poe pod042
 - name: Configure pod042
   hosts: pod042
   vars_files:
@@ -18,9 +20,13 @@
         that:
           - ansible_connection == "local"
           - ansible_facts.hostname == hostname
+          # The retired pod042 VM shares the hostname until cutover; this
+          # playbook must only ever converge the physical machine. The VM
+          # converge test opts out with -e pod042_allow_virtual=true.
+          - ansible_facts.virtualization_role != "guest" or (pod042_allow_virtual | default(false) | bool)
         fail_msg: >-
-          This playbook runs only inside pod042. SSH to pod042 and run
-          `uv run poe pod042` from the ansiblonomicon checkout.
+          This playbook runs only on the physical pod042 host. SSH to pod042
+          and run `uv run poe pod042` from the ansiblonomicon checkout.
       tags: [always]
 
     - name: Remove retired managed paths
@@ -35,6 +41,9 @@
       tags: [always]
 
   tasks:
+    # ===================
+    # Base system
+    # ===================
     - name: Update apt cache and upgrade all packages
       become: true
       ansible.builtin.apt:
@@ -104,76 +113,6 @@
         state: present
       tags: [apt]
 
-    - name: Pin the TrueNAS SSH host key
-      tags: [ssh]
-      block:
-        - name: Ensure SSH configuration directory exists
-          ansible.builtin.file:
-            path: "{{ ansible_facts.env.HOME }}/.ssh"
-            state: directory
-            mode: "0700"
-
-        - name: Scan the TrueNAS SSH host key
-          ansible.builtin.command:
-            argv:
-              - ssh-keyscan
-              - -T
-              - "5"
-              - -t
-              - ed25519
-              - "{{ pod042_truenas_host }}"
-          register: pod042_truenas_host_key_scan
-          changed_when: false
-          check_mode: false
-
-        - name: Select the TrueNAS ED25519 host key
-          ansible.builtin.set_fact:
-            pod042_truenas_host_keys: >-
-              {{ pod042_truenas_host_key_scan.stdout_lines
-                 | select('match', '^\S+ ssh-ed25519 ')
-                 | list }}
-
-        - name: Require exactly one TrueNAS ED25519 host key
-          ansible.builtin.assert:
-            that: pod042_truenas_host_keys | length == 1
-            fail_msg: TrueNAS did not return exactly one ED25519 SSH host key.
-
-        - name: Compute the TrueNAS SSH host key fingerprint
-          ansible.builtin.command:
-            argv:
-              - ssh-keygen
-              - -lf
-              - "-"
-            stdin: "{{ pod042_truenas_host_keys | first }}\n"
-          register: pod042_truenas_host_key_details
-          changed_when: false
-          check_mode: false
-
-        - name: Verify the TrueNAS SSH host key fingerprint
-          ansible.builtin.assert:
-            that: pod042_truenas_host_key_fingerprint in pod042_truenas_host_key_details.stdout
-            fail_msg: >-
-              TrueNAS returned an unexpected SSH host key. Refusing to update
-              the pod042 trust store.
-
-        - name: Trust the verified TrueNAS SSH host key
-          ansible.builtin.copy:
-            dest: "{{ ansible_facts.env.HOME }}/.ssh/known_hosts_pod042"
-            content: |
-              {{ pod042_truenas_host_keys | first
-                 | regex_replace('^\S+', 'truenas') }}
-            mode: "0600"
-
-    - name: Mount pod042 shared storage
-      become: true
-      ansible.posix.mount:
-        path: "{{ pod042_nfs_path }}"
-        src: "{{ pod042_nfs_source }}"
-        fstype: nfs4
-        opts: rw,hard,_netdev
-        state: mounted
-      tags: [nfs, storage]
-
     - name: Use zsh as the login shell
       become: true
       ansible.builtin.user:
@@ -188,6 +127,309 @@
           tags: [sshd, ssh]
       tags: [sshd, ssh]
 
+    # ===================
+    # Storage
+    # ===================
+    # The stack templates still name the TrueNAS-era pool mountpoints. These
+    # links let them deploy unchanged on move day; they retire when the
+    # templates are repathed onto ark/black-box after the move.
+    - name: Link the TrueNAS-era pool mountpoints
+      become: true
+      ansible.builtin.file:
+        src: "{{ item.src }}"
+        dest: "{{ item.path }}"
+        state: link
+        force: false
+      loop: "{{ pod042_legacy_pool_links }}"
+      loop_control:
+        label: "{{ item.path }}"
+      tags: [storage, legacy-paths]
+
+    # ZFS on Linux defaults to acltype=off. Without POSIX ACLs the named ACL
+    # below cannot be set at all, and Samba has nowhere to keep its extended
+    # attributes; xattr=sa keeps those out of hidden directories.
+    - name: Enable POSIX ACLs on the pools
+      become: true
+      community.general.zfs:
+        name: "{{ item }}"
+        state: present
+        extra_zfs_properties:
+          acltype: posixacl
+          xattr: sa
+      loop: "{{ pod042_pools }}"
+      tags: [storage, zfs, acls]
+
+    - name: Configure alerting
+      ansible.builtin.include_role:
+        name: alerting
+        apply:
+          tags: [alerting]
+      tags: [alerting]
+
+    - name: Configure ZFS maintenance
+      ansible.builtin.include_role:
+        name: zfs_maintenance
+      tags: [storage, zfs, sanoid, snapshots, scrub, smart, smartd, zed]
+
+    - name: Configure SMB shares
+      ansible.builtin.include_role:
+        name: samba
+        apply:
+          tags: [samba, shares]
+      tags: [samba, shares]
+
+    # ===================
+    # Host network (TrueNAS-era topology: br0 + VLAN subinterfaces,
+    # macvlan parents for docker — retires with post-move debridging)
+    # ===================
+    - name: Configure bridge and VLAN interfaces
+      ansible.builtin.include_role:
+        name: host_network
+        apply:
+          become: true
+          tags: [network, host-network]
+      tags: [network, host-network]
+
+    # ===================
+    # Docker
+    # ===================
+    - name: Install the docker engine
+      become: true
+      ansible.builtin.apt:
+        name: "{{ docker_engine_packages + ['acl'] }}"
+        state: present
+      tags: [docker, docker-engine]
+
+    - name: Enable the docker daemon
+      become: true
+      ansible.builtin.systemd_service:
+        name: docker
+        enabled: true
+        state: started
+      tags: [docker, docker-engine]
+
+    - name: Let the reconciling user drive docker
+      become: true
+      ansible.builtin.user:
+        name: "{{ ansible_user_id }}"
+        groups: docker
+        append: true
+      tags: [docker, docker-engine]
+
+    # The tree belongs to the containers' uid/gid ({{ docker.user.id }}, the
+    # TrueNAS-era numbering); docker_stack syncs into it with become, so nobody
+    # needs a login user's write access here.
+    - name: Ensure the docker config tree exists
+      become: true
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+        owner: "{{ docker.user.puid }}"
+        group: "{{ docker.user.pgid }}"
+        mode: "0770"
+      loop:
+        - "{{ docker.config_base }}"
+        - "{{ docker.config_base }}/stacks"
+      tags: [docker, docker-stack-role]
+
+    - name: Create trusted macvlan network
+      tags: [docker, docker-networks]
+      community.docker.docker_network:
+        name: trusted
+        driver: macvlan
+        driver_options:
+          parent: br0.1
+        ipam_config:
+          - subnet: 192.168.1.0/24
+            iprange: 192.168.1.224/27
+        state: present
+
+    - name: Create iot macvlan network
+      tags: [docker, docker-networks]
+      community.docker.docker_network:
+        name: iot
+        driver: macvlan
+        driver_options:
+          parent: br0.2
+        ipam_config:
+          - subnet: 192.168.3.0/24
+            iprange: 192.168.3.224/27
+        state: present
+
+    - name: Create external macvlan network
+      tags: [docker, docker-networks]
+      community.docker.docker_network:
+        name: external
+        driver: macvlan
+        driver_options:
+          parent: br0.3
+        ipam_config:
+          - subnet: 192.168.5.0/24
+            iprange: 192.168.5.224/27
+        state: present
+
+    - name: Create personal macvlan network
+      tags: [docker, docker-networks]
+      community.docker.docker_network:
+        name: personal
+        driver: macvlan
+        driver_options:
+          parent: br0.4
+        ipam_config:
+          - subnet: 192.168.6.0/24
+            iprange: 192.168.6.224/27
+        state: present
+
+    # ===================
+    # Docker stacks
+    # ===================
+    - name: Deploy anypod stack
+      tags: [docker-stack-role, anypod]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, anypod]
+      vars:
+        docker_stack_name: anypod
+
+    # Torrent seeding/removal policy is documented in docs/operations/media-torrent-seeding.md.
+    # Do not use global qBittorrent seed limits to force Arr cleanup; private trackers need long-lived seeds.
+    - name: Deploy arr-apps stack
+      tags: [docker-stack-role, arr-apps]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, arr-apps]
+      vars:
+        docker_stack_name: arr-apps
+
+    - name: Ensure Caddy srv directory exists
+      tags: [docker-stack-role, caddy]
+      become: true
+      ansible.builtin.file:
+        path: "{{ docker.config_base }}/caddy/srv"
+        state: directory
+        mode: "0755"
+        owner: "{{ docker.user.puid }}"
+        group: "{{ docker.user.pgid }}"
+
+    - name: Deploy caddy stack
+      tags: [docker-stack-role, caddy]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, caddy]
+      vars:
+        docker_stack_name: caddy
+
+    - name: Deploy cli-proxy-api stack
+      tags: [docker-stack-role, cli-proxy-api]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, cli-proxy-api]
+      vars:
+        docker_stack_name: cli-proxy-api
+        docker_stack_pull_policy: always
+
+    - name: Deploy cloudflared stack
+      tags: [docker-stack-role, cloudflared]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, cloudflared]
+      vars:
+        docker_stack_name: cloudflared
+
+    - name: Deploy ddclient stack
+      tags: [docker-stack-role, ddclient]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, ddclient]
+      vars:
+        docker_stack_name: ddclient
+
+    - name: Deploy ghost stack
+      tags: [docker-stack-role, ghost]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, ghost]
+      vars:
+        docker_stack_name: ghost
+
+    - name: Restart ghost to pick up theme/routes changes
+      tags: [docker-stack-role, ghost]
+      ansible.builtin.command:
+        cmd: docker restart ghost
+      when: _docker_stack_changed | default(false)
+      changed_when: _docker_stack_changed | default(false)
+
+    - name: Deploy homepage stack
+      tags: [docker-stack-role, homepage]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, homepage]
+      vars:
+        docker_stack_name: homepage
+
+    - name: Deploy isponsorblocktv stack
+      tags: [docker-stack-role, isponsorblocktv]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, isponsorblocktv]
+      vars:
+        docker_stack_name: isponsorblocktv
+
+    - name: Deploy plex stack
+      tags: [docker-stack-role, plex]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, plex]
+      vars:
+        docker_stack_name: plex
+
+    # Torrent seeding/removal policy is documented in docs/operations/media-torrent-seeding.md.
+    # Do not use global qBittorrent seed limits to force Arr cleanup; private trackers need long-lived seeds.
+    - name: Deploy torrent stack
+      tags: [docker-stack-role, torrent]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, torrent]
+      vars:
+        docker_stack_name: torrent
+        docker_stack_pause_containers: [torrent-netns-repair]
+
+    - name: Deploy watchtower stack
+      tags: [docker-stack-role, watchtower]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, watchtower]
+      vars:
+        docker_stack_name: watchtower
+        docker_stack_pull_policy: always
+
+    # ===================
+    # Host tooling
+    # ===================
     - name: Ensure user local bin directory exists
       ansible.builtin.file:
         path: "{{ ansible_facts.env.HOME }}/.local/bin"
@@ -243,6 +485,15 @@
         apply:
           tags: [secrets, onepassword, op]
       tags: [secrets, onepassword, op]
+
+    # Backups follow the service account role: systemd hands the backup units
+    # that 1Password token as a credential, so it has to be on disk first.
+    - name: Configure offsite backups
+      ansible.builtin.include_role:
+        name: restic_backup
+        apply:
+          tags: [restic, backup]
+      tags: [restic, backup]
 
     - name: Install global language tools
       ansible.builtin.include_role:

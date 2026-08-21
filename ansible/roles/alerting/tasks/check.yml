@@ -1,0 +1,34 @@
+---
+# Register one Healthchecks check and drop its ping URL where the job's unit can
+# load it as a systemd credential. Callers pass alerting_check_name,
+# alerting_check_schedule (cron) and alerting_check_grace (seconds).
+- name: Register Healthchecks check {{ alerting_check_name }}
+  ansible.builtin.uri:
+    url: "{{ alerting_healthchecks_api_url }}"
+    method: POST
+    headers:
+      X-Api-Key: "{{ alerting_healthchecks_api_key }}"
+    body_format: json
+    body:
+      name: "{{ alerting_check_name }}"
+      slug: "{{ alerting_check_name }}"
+      schedule: "{{ alerting_check_schedule }}"
+      tz: "{{ alerting_healthchecks_timezone }}"
+      grace: "{{ alerting_check_grace | int }}"
+      channels: "*"
+      unique: [name]
+    status_code: [200, 201]
+  register: alerting_check_response
+  changed_when: alerting_check_response.status == 201
+  no_log: true
+
+- name: Install the ping URL for {{ alerting_check_name }}
+  become: true
+  ansible.builtin.copy:
+    dest: "{{ alerting_state_dir }}/checks/{{ alerting_check_name }}.url"
+    content: "{{ alerting_check_response.json.ping_url }}\n"
+    owner: root
+    group: root
+    mode: "0600"
+  when: not ansible_check_mode
+  no_log: true

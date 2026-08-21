@@ -1,0 +1,79 @@
+---
+# smbclient comes along because the bring-up battery and every later
+# "is the share still there?" check are written against it.
+- name: Install samba
+  become: true
+  ansible.builtin.apt:
+    name:
+      - samba
+      - smbclient
+    state: present
+
+- name: Ensure the shared media group exists
+  become: true
+  ansible.builtin.group:
+    name: "{{ samba_media_group }}"
+    gid: "{{ samba_media_gid }}"
+    state: present
+
+- name: Ensure share paths carry setgid group-write semantics
+  become: true
+  ansible.builtin.file:
+    path: "{{ item.path }}"
+    state: directory
+    owner: root
+    group: "{{ samba_media_group }}"
+    mode: "2775"
+  loop: "{{ samba_shares }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Configure samba
+  become: true
+  ansible.builtin.template:
+    src: smb.conf.j2
+    dest: /etc/samba/smb.conf
+    owner: root
+    group: root
+    mode: "0644"
+    validate: testparm -s %s
+  notify: Reload smbd
+
+- name: Add SMB users to the shared media group
+  become: true
+  ansible.builtin.user:
+    name: "{{ item.name }}"
+    groups: "{{ samba_media_group }}"
+    append: true
+  loop: "{{ samba_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+
+- name: Read the samba account database
+  become: true
+  ansible.builtin.command:
+    argv: [pdbedit, -L]
+  register: samba_account_list
+  changed_when: false
+  check_mode: false
+
+- name: Provision SMB passwords
+  become: true
+  ansible.builtin.command:
+    argv: [smbpasswd, -s, -a, "{{ item.name }}"]
+    stdin: |-
+      {{ lookup('env', item.password_env) }}
+      {{ lookup('env', item.password_env) }}
+  loop: "{{ samba_users }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: item.name not in samba_account_list.stdout
+  changed_when: true
+  no_log: true
+
+- name: Enable smbd
+  become: true
+  ansible.builtin.systemd_service:
+    name: smbd
+    enabled: true
+    state: started

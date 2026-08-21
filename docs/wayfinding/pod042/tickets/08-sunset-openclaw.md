@@ -1,6 +1,5 @@
 ---
-status: open
-claimed: subagent-vm-shutdown
+status: closed
 type: task
 blocked-by: []
 ---
@@ -16,3 +15,7 @@ Execution is split: **phase 1** (shut the VM down, stop it consuming resources) 
 ### Phase 1 log
 
 On 2026-07-24, VM 12 (`OpenClaw`) was gracefully shut down through TrueNAS middleware and its runtime autostart was disabled. It changed from `RUNNING` with `autostart: true` to `STOPPED`/`SHUTOFF` with `autostart: false`; the Ansible inventory now preserves that state. No VM, zvol, repository configuration, DNS, or Zero Trust resources were deleted.
+
+## Resolution
+
+Closed 2026-08-19: overtaken by events. openclaw declared dead during bunker-rebuild ticket 13 sign-off; the VM tears down at bunker-rebuild cutover with the rest of TrueNAS.
