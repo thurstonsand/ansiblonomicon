@@ -1,7 +1,7 @@
 """Tests for host-profile resolution of the shared source catalogue."""
 
 from pathlib import Path
-from typing import Any
+from typing import Any, cast
 
 from harness_filters import agent_harness_resolve_sources
 import yaml
@@ -62,9 +62,9 @@ def test_plugin_level_exclusion_removes_plugin_for_profile() -> None:
     assert names == ["everywhere", "shorthand-plugin"]
 
 
-def test_profile_exclusion_list_replaces_base_exclusions() -> None:
+def test_profile_exclusion_list_extends_base_exclusions() -> None:
     shared = next(s for s in resolve("work") if s.get("repo") == "example/shared")
-    assert shared["plugins"][0]["exclude_skills"] == ["alpha", "gamma"]
+    assert shared["plugins"][0]["exclude_skills"] == ["alpha", "beta", "gamma"]
 
 
 def test_base_exclusions_apply_when_profile_has_no_override() -> None:
@@ -103,7 +103,7 @@ def real_config() -> dict[str, Any]:
         (ANSIBLE_ROOT / "agent-harness.config.yml").read_text()
     )
     assert isinstance(document, dict)
-    return document
+    return cast(dict[str, Any], document)
 
 
 def test_real_catalogue_resolves_cleanly_for_every_profile() -> None:
@@ -121,6 +121,21 @@ def test_real_catalogue_resolves_cleanly_for_every_profile() -> None:
             for plugin in source["plugins"]:
                 if isinstance(plugin, dict):
                     assert "exclude_skills_by_profile" not in plugin
+
+
+def test_real_work_profile_preserves_mattpocock_base_exclusions() -> None:
+    config = real_config()
+    catalogue = config["agent_harness_source_catalogue"]
+    source = next(item for item in catalogue if item.get("repo") == "mattpocock/skills")
+    base_plugin = source["plugins"][0]
+    resolved_source = next(
+        item
+        for item in agent_harness_resolve_sources(catalogue, "work")
+        if item.get("repo") == "mattpocock/skills"
+    )
+    resolved_plugin = resolved_source["plugins"][0]
+
+    assert set(base_plugin["exclude_skills"]) <= set(resolved_plugin["exclude_skills"])
 
 
 def test_real_work_profile_is_a_strict_subset_of_personal() -> None:

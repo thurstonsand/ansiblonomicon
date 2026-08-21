@@ -858,7 +858,11 @@ def agent_harness_resolve_sources(
             resolved_plugin.pop("excluded_on", None)
             exclusions_by_profile = resolved_plugin.pop("exclude_skills_by_profile", {})
             if profile in exclusions_by_profile:
-                resolved_plugin["exclude_skills"] = list(exclusions_by_profile[profile])
+                base_exclusions = resolved_plugin.get("exclude_skills", [])
+                profile_exclusions = exclusions_by_profile[profile]
+                resolved_plugin["exclude_skills"] = list(
+                    dict.fromkeys([*base_exclusions, *profile_exclusions])
+                )
             resolved_plugins.append(resolved_plugin)
 
         resolved_source["plugins"] = resolved_plugins

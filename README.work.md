@@ -97,7 +97,7 @@ The `repo` field accepts full git URLs (ending in `.git`) or the short `owner/na
 | -------------- | ------------------------------------------------- |
 | `agents/work/` | Gitignored local plugin with work-specific skills |
 
-Added to `agent_harness_sources_base` in `work.config.yml`.
+Added to `agent_harness_host_sources` in `work.config.yml`.
 
 ## Local Agent Instructions
 

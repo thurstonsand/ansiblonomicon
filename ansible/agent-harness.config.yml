@@ -111,4 +111,7 @@ agent_harness_target_agents: >-
      + (agent_harness_target_agents_extra | default([])) }}
 agent_harness_sources: >-
   {{ agent_harness_source_catalogue
-     | agent_harness_resolve_sources(agent_harness_profile, agent_harness_sources_extra | default([])) }}
+     | agent_harness_resolve_sources(
+         agent_harness_profile,
+         (agent_harness_host_sources | default([])) + (agent_harness_sources_extra | default([]))
+       ) }}

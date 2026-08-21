@@ -19,7 +19,7 @@ agent_harness_profile: work
 agent_harness_link_glimpse: true
 
 # Work-only in-repo plugins. Shared and restricted sources live in the catalogue.
-agent_harness_sources_extra:
+agent_harness_host_sources:
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: project-management
