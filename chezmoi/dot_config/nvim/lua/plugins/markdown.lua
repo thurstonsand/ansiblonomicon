@@ -39,6 +39,7 @@ return {
     "ice345/markdown-table-wrap.nvim",
     ft = { "markdown" },
     opts = {
+      preview_mode = "inline",
       max_width_ratio = 0.9,
       min_col_width = 8,
       max_col_width = 50,

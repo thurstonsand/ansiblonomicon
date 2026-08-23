@@ -2,6 +2,10 @@ font-family = {{ .fonts.mono }}
 # also change the window title at the top
 window-title-font-family = {{ .fonts.mono }} Bold
 font-size = {{ .fonts.size }}
+# BerkeleyMono has no Dingbats, and macOS hands ❁ to a Korean font (0.81em) while ✴ ✦ land in Menlo
+# (0.57em), so pi's footer provider icons come out at wildly different sizes. Zapf Dingbats covers
+# the whole block at one scale; on hosts without it this line falls back harmlessly.
+font-codepoint-map = U+2726,U+2734,U+2741=Zapf Dingbats
 
 # if not inheriting from a previous window
 working-directory = {{ .chezmoi.homeDir }}/{{ .developDir }}
