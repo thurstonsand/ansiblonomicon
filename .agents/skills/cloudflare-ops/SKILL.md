@@ -1,6 +1,12 @@
 ---
 name: cloudflare-ops
-description: Guidance on how to observe Cloudflare resources. Use this before asking the Cloudflare MCP about workers, logs, or AI Gateway behavior.
+description: Inspects and manages this project's Cloudflare account. Use for DNS, Zero Trust Access, tunnels, Workers, logs, analytics, or AI Gateway operations.
+mcpServers:
+  cloudflare-api:
+    url: https://mcp.cloudflare.com/mcp
+    headers:
+      Authorization: "Bearer ${CLOUDFLARE_API_TOKEN}"
+    includeTools: [search, execute]
 ---
 
 # Cloudflare ops

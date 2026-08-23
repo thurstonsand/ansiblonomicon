@@ -58,6 +58,13 @@ def op_command() -> str:
     return str(wrapper) if wrapper is not None else "op"
 
 
+def uses_service_account() -> bool:
+    return service_account_op_wrapper() is not None or (
+        os.environ.get("AMP_ORB") == "1"
+        and bool(os.environ.get("OP_SERVICE_ACCOUNT_TOKEN"))
+    )
+
+
 def secrets_for_hostname(config: dict[str, str], hostname: str) -> dict[str, str]:
     return {
         key: value
@@ -68,13 +75,13 @@ def secrets_for_hostname(config: dict[str, str], hostname: str) -> dict[str, str
 
 def op_environment() -> dict[str, str]:
     env = os.environ.copy()
-    if service_account_op_wrapper() is None:
+    if not uses_service_account():
         env.pop("OP_SERVICE_ACCOUNT_TOKEN", None)
     return env
 
 
 def resolve_op_account() -> str | None:
-    if service_account_op_wrapper() is not None:
+    if uses_service_account():
         return None
 
     result = subprocess.run(

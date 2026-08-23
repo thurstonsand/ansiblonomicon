@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# This repository has no long-lived orb services to repair after wake-up.
-:
+if [[ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]]; then
+  direnv allow .
+  uv run scripts/init-secrets.py
+fi

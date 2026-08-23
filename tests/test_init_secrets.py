@@ -29,11 +29,26 @@ def test_system_op_removes_service_account_token(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
     monkeypatch.setattr(MODULE.Path, "home", lambda: tmp_path)
+    monkeypatch.delenv("AMP_ORB", raising=False)
     monkeypatch.setenv("OP_SERVICE_ACCOUNT_TOKEN", "token")
 
     assert MODULE.service_account_op_wrapper() is None
     assert MODULE.op_command() == "op"
     assert "OP_SERVICE_ACCOUNT_TOKEN" not in MODULE.op_environment()
+
+
+def test_orb_op_uses_service_account_token(
+    tmp_path: Path, monkeypatch: MonkeyPatch
+) -> None:
+    monkeypatch.setattr(MODULE.Path, "home", lambda: tmp_path)
+    monkeypatch.setenv("AMP_ORB", "1")
+    monkeypatch.setenv("OP_SERVICE_ACCOUNT_TOKEN", "token")
+
+    assert MODULE.service_account_op_wrapper() is None
+    assert MODULE.op_command() == "op"
+    assert MODULE.uses_service_account()
+    assert MODULE.op_environment()["OP_SERVICE_ACCOUNT_TOKEN"] == "token"
+    assert MODULE.resolve_op_account() is None
 
 
 def test_machine_secrets_are_filtered_for_pod042() -> None:

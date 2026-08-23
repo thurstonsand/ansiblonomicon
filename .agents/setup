@@ -24,12 +24,15 @@ export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
 EOF
 fi
 
-step "Install lint toolchains"
+step "Install toolchains"
 mise use --global --yes \
   node@lts \
   go@1.26 \
   golangci-lint@latest \
+  1password-cli@latest \
+  direnv@latest \
   just@latest \
+  opentofu@latest \
   stylua@latest \
   uv@latest
 

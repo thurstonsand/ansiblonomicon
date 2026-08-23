@@ -60,6 +60,36 @@ resource "cloudflare_record" "root" {
   ttl     = 1
 }
 
+resource "cloudflare_record" "amp_subdomain" {
+  zone_id = local.zone_id
+  name    = "amp.${local.zone_name}"
+  type    = "A"
+  content = "34.49.94.208"
+  comment = "Amp custom domain routing"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_record" "amp_subdomain_wildcard" {
+  zone_id = local.zone_id
+  name    = "*.amp.${local.zone_name}"
+  type    = "A"
+  content = "34.49.94.208"
+  comment = "Amp custom domain routing"
+  proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_record" "amp_subdomain_certificate" {
+  zone_id = local.zone_id
+  name    = "_acme-challenge_g7k2v6l6lx7vbw24.amp.${local.zone_name}"
+  type    = "CNAME"
+  content = "12428719-4b6d-49ea-be5c-d7b14acdf3ca.9.authorize.certificatemanager.goog"
+  comment = "Amp custom domain TLS authorization"
+  proxied = false
+  ttl     = 1
+}
+
 resource "cloudflare_record" "www" {
   zone_id = local.zone_id
   name    = "www"
@@ -107,6 +137,15 @@ resource "cloudflare_record" "atproto_its" {
   content = "\"did=did:plc:qttpvwkp4xxt4zwa7mqh6qqk\""
   comment = "for bluesky domain"
   proxied = false
+  ttl     = 1
+}
+
+resource "cloudflare_record" "amp_subdomain_verification" {
+  zone_id = local.zone_id
+  name    = "_amp-challenge.amp.${local.zone_name}"
+  type    = "TXT"
+  content = "amp-domain-verification=80110d6d7cb147aa8263c63c85dac2535e24472465204b9195eec7237adf9a12"
+  comment = "Amp custom domain ownership verification"
   ttl     = 1
 }
 
@@ -165,4 +204,3 @@ resource "cloudflare_record" "snippethost_gitlab_verification" {
   comment = "GitLab Pages domain verification for snippethost"
   ttl     = 1
 }
-
