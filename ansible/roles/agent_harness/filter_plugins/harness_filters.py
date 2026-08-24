@@ -378,13 +378,15 @@ def _resolve_plugin(
     if not _profile_admits(plugin, profile, profile_names, label):
         return None
 
-    if "target_agents" in plugin:
+    target_agents = _collapse_selection(
+        plugin.get("target_agents"), profile, profile_names, label, "target_agents"
+    )
+    if target_agents == []:
+        # Declared for other profiles only: the plugin serves no harness here.
+        return None
+    if target_agents is not None:
         resolved["target_agents"] = _require_known(
-            _require_string_list(plugin["target_agents"], label, "target_agents"),
-            harness_names,
-            label,
-            "target_agents",
-            "harness",
+            target_agents, harness_names, label, "target_agents", "harness"
         )
     if "exclude_data" in plugin:
         resolved["exclude_data"] = _require_string_list(
@@ -827,12 +829,20 @@ def agent_harness_filter_resources(
     resources: list[dict[str, Any]],
     target_agent: str,
     name_transform: str = "preserve",
+    explicit_only: bool = False,
 ) -> list[dict[str, Any]]:
-    """Select resources for an agent and transform their deployment names."""
+    """Select resources for an agent and transform their deployment names.
+
+    An explicit-only agent receives just the resources that name it in
+    target_agents; untargeted resources, which normally go everywhere, skip it.
+    """
     filtered_resources: list[dict[str, Any]] = []
     resources_by_name: dict[str, dict[str, Any]] = {}
     for resource in resources:
-        if resource["target_agents"] and target_agent not in resource["target_agents"]:
+        if not resource["target_agents"]:
+            if explicit_only:
+                continue
+        elif target_agent not in resource["target_agents"]:
             continue
         transformed_resource = {
             **resource,

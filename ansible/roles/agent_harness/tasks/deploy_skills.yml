@@ -9,7 +9,8 @@
   ansible.builtin.set_fact:
     agent_harness_agent_specific_skills: >-
       {{ agent_harness_plugin_resources.skills
-         | agent_harness_filter_resources(agent_harness_target_agent, agent_harness_agent_config.name_transform) }}
+         | agent_harness_filter_resources(agent_harness_target_agent, agent_harness_agent_config.name_transform,
+                                          agent_harness_target_agent in agent_harness_explicit_only_agents) }}
 
 - name: Ensure skills directory exists
   ansible.builtin.file:

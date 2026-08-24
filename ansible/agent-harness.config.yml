@@ -4,6 +4,9 @@ agent_harness_profile: personal
 agent_harness_profiles:
   personal:
     target_agents: [claude, amp, codex, opencode, pi]
+    # Amp's catalogue is hosted (rendered by amp_publish); locally it receives
+    # only plugins that name it, so machine-bound skills can still deploy.
+    explicit_only: [amp]
   work:
     target_agents: [claude, pi]
   pod042:
@@ -29,7 +32,9 @@ agent_harness_sources:
     excluded_on: [work]
     plugins:
       - name: agent-browser
-        target_agents: [claude, amp, opencode, pi]
+        target_agents:
+          amp_publish: [amp]
+          "*": [claude, opencode, pi]
 
   - repo: modem-dev/hunk
     excluded_on: [work]
@@ -66,7 +71,9 @@ agent_harness_sources:
           work: [grill-me, tui-screenshot] # tui-screenshot drives tuistory, which the work mirror cannot install
           "*": [grill-me] # the pi plugin ships its own grill-me
       - name: project-management
-        target_agents: [claude, amp, codex, opencode]
+        target_agents:
+          amp_publish: [amp]
+          "*": [claude, codex, opencode]
         exclude_skills:
           work: [tui-screenshot]
       - name: claude
@@ -79,5 +86,9 @@ agent_harness_sources:
         included_on: [work]
       - name: homelab
         excluded_on: [work] # no NAS reachable from the work machine
+        # amp is named so truenas-docker-ops stays a machine-local Amp skill
+        # despite amp being explicit-only; in an orb it makes no sense, hence
+        # the amp_publish exclusion.
+        target_agents: [claude, amp, codex, opencode, pi]
         exclude_skills:
-          amp_publish: [truenas-docker-ops] # machine-bound skills make no sense in an orb
+          amp_publish: [truenas-docker-ops]

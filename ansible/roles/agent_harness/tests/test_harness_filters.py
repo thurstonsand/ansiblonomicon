@@ -1144,6 +1144,20 @@ def test_agent_harness_filter_resources_rejects_duplicate_destinations() -> None
 
 
 @pytest.mark.unit
+def test_explicit_only_agents_receive_just_the_resources_naming_them() -> None:
+    resources: list[Any] = [
+        {"name": "everyone", "source": "/a", "origin": "o", "target_agents": []},
+        {"name": "amp-only", "source": "/b", "origin": "o", "target_agents": ["amp"]},
+    ]
+
+    explicit = agent_harness_filter_resources(resources, "amp", explicit_only=True)
+    normal = agent_harness_filter_resources(resources, "amp")
+
+    assert [r["name"] for r in explicit] == ["amp-only"]
+    assert [r["name"] for r in normal] == ["everyone", "amp-only"]
+
+
+@pytest.mark.unit
 def test_agent_harness_filter_resources_rejects_transformed_name_collisions() -> None:
     resources: list[Any] = [
         {

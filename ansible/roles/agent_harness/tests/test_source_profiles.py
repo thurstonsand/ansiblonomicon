@@ -216,14 +216,19 @@ def test_non_bool_hooks_is_fatal() -> None:
         resolve_one({"name": "p", "hooks": "false"})
 
 
-@pytest.mark.parametrize(
-    "field_name", ["included_on", "excluded_on", "target_agents", "exclude_data"]
-)
+@pytest.mark.parametrize("field_name", ["included_on", "excluded_on", "exclude_data"])
 def test_a_bare_string_where_a_list_belongs_is_fatal(field_name: str) -> None:
     with pytest.raises(
         ValueError, match=rf"{field_name} must be a list of strings, got 'pi'"
     ):
         resolve_one({"name": "p", field_name: "pi"})
+
+
+def test_a_bare_string_target_agents_is_fatal() -> None:
+    with pytest.raises(
+        ValueError, match=r"target_agents must be a list or a profile-keyed map"
+    ):
+        resolve_one({"name": "p", "target_agents": "pi"})
 
 
 def test_a_non_string_list_entry_is_fatal() -> None:
@@ -243,6 +248,32 @@ def test_an_unknown_target_harness_is_fatal() -> None:
         ValueError, match=r"target_agents names unknown harness 'cursor'"
     ):
         resolve_one({"name": "p", "target_agents": ["cursor"]})
+
+
+def test_profile_keyed_target_agents_collapse_per_profile() -> None:
+    plugin: dict[str, Any] = {
+        "name": "p",
+        "target_agents": {"amp_publish": ["amp"], "*": ["claude", "pi"]},
+    }
+
+    assert resolve_one(dict(plugin))["target_agents"] == ["claude", "pi"]
+    assert resolve_one(dict(plugin), "amp_publish")["target_agents"] == ["amp"]
+
+
+def test_target_agents_for_other_profiles_only_drops_the_plugin() -> None:
+    source: dict[str, Any] = {
+        "local": "/agents",
+        "plugins": [{"name": "p", "target_agents": {"amp_publish": ["amp"]}}],
+    }
+
+    assert resolve_sources([source])[0]["plugins"] == []
+
+
+def test_profile_keyed_target_agents_reject_unknown_harnesses() -> None:
+    with pytest.raises(
+        ValueError, match=r"target_agents names unknown harness 'cursor'"
+    ):
+        resolve_one({"name": "p", "target_agents": {"*": ["cursor"]}})
 
 
 @pytest.mark.parametrize("field_name", ["included_on", "excluded_on"])

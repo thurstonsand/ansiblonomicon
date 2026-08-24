@@ -2,6 +2,10 @@
 # Which agents to deploy to, from the host's capability profile
 agent_harness_target_agents: "{{ agent_harness_profiles[agent_harness_profile].target_agents }}"
 
+# Agents that receive only plugins naming them in target_agents; untargeted
+# plugins, which normally deploy everywhere, skip these
+agent_harness_explicit_only_agents: "{{ agent_harness_profiles[agent_harness_profile].explicit_only | default([]) }}"
+
 # Uncommitted host-local sources appended after the committed ones
 # Supports both git repos and local paths
 agent_harness_sources_extra: []
