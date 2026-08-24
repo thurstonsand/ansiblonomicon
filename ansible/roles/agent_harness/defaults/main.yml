@@ -1,34 +1,25 @@
 ---
-# Which agents to deploy to
-agent_harness_target_agents:
-  - claude
+# Which agents to deploy to, from the host's capability profile
+agent_harness_target_agents: "{{ agent_harness_profiles[agent_harness_profile].target_agents }}"
 
-# Uncommitted host-local sources appended after the committed catalogue
+# Uncommitted host-local sources appended after the committed ones
 # Supports both git repos and local paths
 agent_harness_sources_extra: []
-#   # Git sources - clone from GitHub
+#   # Git sources - clone from GitHub, updated on the interval below
 #   - repo: anthropics/claude-code
-#     pull: false  # override global pull setting per-repo
 #     plugins:
-#       - frontend-design                    # short form: enable entire plugin
-#       - name: memory                       # long form: with exclusions
-#         exclude_skills: [unwanted-skill]
-#       - path: plugins/custom-plugin        # explicit path to plugin dir
+#       - name: memory                       # manifest-resolved via plugin.json
+#         exclude_skills: [unwanted-skill]   # or a {profile: [...]} map
 #
 #   # Local sources - use existing directory
 #   - local: "{{ playbook_dir }}/../ai-resources"
 #     plugins:
-#       - my-plugin                          # short form: plugins/{name}/
-#       - name: another-plugin
-#         path: custom/path/to/plugin
-#         exclude_skills: [skip-this]
+#       - name: my-plugin                    # manifest-resolved: {local}/my-plugin
+#       - name: another-plugin               # explicit map: no manifest needed
+#         skills:
+#           deployed-name: path/to/skill-dir # relative to the local path above
 
-# Git update behavior (can be overridden per-source with 'pull' key)
-# false (default): clone if missing, never pull (fast, predictable)
-# true: always pull latest (use with -e agent_harness_update=true)
-agent_harness_update: false
-
-# Minimum time between remote update checks for git sources with pull enabled
+# Minimum time between remote update checks for git sources
 # Defaults to once per day
 agent_harness_update_interval_seconds: 86400
 

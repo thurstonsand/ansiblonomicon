@@ -1,5 +1,5 @@
 ---
-# Shared agent skill/plugin catalogue and host capability profiles.
+# Agent skill/plugin sources and host capability profiles.
 agent_harness_profile: personal
 agent_harness_profiles:
   personal:
@@ -12,73 +12,50 @@ agent_harness_profiles:
   amp_publish:
     target_agents: [amp]
 
-agent_harness_source_catalogue:
+agent_harness_sources:
+  # Manifest-resolved: plugin.json lists 25 skills; we admit 5.
   - repo: mattpocock/skills
-    pull: true
     plugins:
       - name: mattpocock-skills
-        prefix: ""
-        exclude_skills:
-          - ask-matt
-          - code-review
-          - codebase-design
-          - diagnosing-bugs
-          - domain-modeling
-          - grill-me
-          - grilling
-          - handoff
-          - grill-with-docs
-          - improve-codebase-architecture
-          - triage
-          - implement
-          - setup-matt-pocock-skills
-          - tdd
-          - prototype
-          - research
-          - to-spec
-          - to-tickets
-          - wait-what
-          - wayfinder
+        include_skills:
+          - resolving-merge-conflicts
+          - teach
+          - to-questionnaire
+          - wizard
+          - writing-for-agents
 
+  # Manifest-resolved: their marketplace already curates to one skill.
   - repo: vercel-labs/agent-browser
-    pull: true
     excluded_on: [work]
     plugins:
       - name: agent-browser
         target_agents: [claude, amp, opencode, pi]
-        skills: skills
-        exclude_skills:
-          - dogfood
-          - slack
-          - vercel-sandbox
 
   - repo: modem-dev/hunk
-    pull: true
     excluded_on: [work]
     plugins:
       - name: hunk
-        path: skills
-        prefix: ""
-        exclude_skills:
-          # Hunk maintainer-only: both need a hunk source checkout we do not have.
-          - hunk-launch-video
-          - hunk-release
+        skills:
+          hunk-review: skills/hunk-review
+          hunk-extensions: skills/hunk-extensions
 
+  # No manifest upstream: explicit map.
   - repo: remorses/tuistory
-    pull: true
     excluded_on: [work]
     plugins:
       - name: tuistory
-        path: skills/tuistory
+        skills:
+          tuistory: skills/tuistory
 
+  # Pairs with the nurb uv tool, which is installed on the laptop only.
   - repo: Shpigford/nurb
-    pull: true
-    # Pairs with the nurb uv tool, which is installed on the laptop only.
     excluded_on: [work, pod042]
     plugins:
       - name: nurb
-        path: skills/nurb
+        skills:
+          nurb: skills/nurb
 
+  # Local plugins: all manifest-resolved via their plugin.json.
   - local: "{{ playbook_dir }}/../../agents"
     plugins:
       - name: pi
@@ -86,34 +63,21 @@ agent_harness_source_catalogue:
       - name: project-management
         target_agents: [pi]
         exclude_skills:
-          - grill-me
-        exclude_skills_by_profile:
-          work: # tui-screenshot drives tuistory, which the work mirror cannot install
-            - grill-me
-            - tui-screenshot
+          work: [grill-me, tui-screenshot] # tui-screenshot drives tuistory, which the work mirror cannot install
+          "*": [grill-me] # the pi plugin ships its own grill-me
       - name: project-management
         target_agents: [claude, amp, codex, opencode]
-        exclude_skills_by_profile:
-          work:
-            - tui-screenshot
+        exclude_skills:
+          work: [tui-screenshot]
       - name: claude
         target_agents: [claude]
-        exclude_skills_by_profile:
-          work:
-            - retitle
+        exclude_skills:
+          work: [retitle]
       - name: codex
         target_agents: [codex]
       - name: work
         included_on: [work]
       - name: homelab
         excluded_on: [work] # no NAS reachable from the work machine
-        exclude_skills_by_profile:
-          amp_publish: # machine-bound skills make no sense in an orb
-            - truenas-docker-ops
-
-agent_harness_target_agents: >-
-  {{ agent_harness_profiles[agent_harness_profile].target_agents
-     + (agent_harness_target_agents_extra | default([])) }}
-agent_harness_sources: >-
-  {{ agent_harness_source_catalogue
-     | agent_harness_resolve_sources(agent_harness_profile, agent_harness_sources_extra | default([])) }}
+        exclude_skills:
+          amp_publish: [truenas-docker-ops] # machine-bound skills make no sense in an orb

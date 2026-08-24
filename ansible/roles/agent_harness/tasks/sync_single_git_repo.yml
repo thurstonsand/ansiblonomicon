@@ -21,11 +21,9 @@
 
 - name: Compute repository update policy
   ansible.builtin.set_fact:
-    agent_harness_repo_pull_enabled: "{{ agent_harness_git_source.pull | default(agent_harness_update) | bool }}"
     agent_harness_repo_should_update: >-
       {{
-        (agent_harness_git_source.pull | default(agent_harness_update) | bool)
-        and agent_harness_repo_git_dir.stat.exists
+        agent_harness_repo_git_dir.stat.exists
         and (
           (not agent_harness_repo_update_stamp.stat.exists)
           or (
@@ -51,6 +49,4 @@
     state: touch
     mode: "0644"
   delegate_to: "{{ agent_harness_source_delegate_host }}"
-  when:
-    - agent_harness_repo_pull_enabled
-    - not agent_harness_repo_git_dir.stat.exists or agent_harness_repo_should_update
+  when: not agent_harness_repo_git_dir.stat.exists or agent_harness_repo_should_update

@@ -12,20 +12,13 @@
     msg: "Agent source not found: {{ agent_harness_agent_info.source }} (from {{ agent_harness_agent_info.origin }})"
   when: not agent_harness_agent_source_stat.stat.exists
 
-- name: Resolve agent frontmatter name
-  ansible.builtin.set_fact:
-    agent_harness_agent_frontmatter_name: >-
-      {{ ((agent_harness_agent_config.name_transform | default('preserve')) == 'preserve')
-         | ternary(agent_harness_agent_info.display_name | default(agent_harness_agent_info.name),
-                   agent_harness_agent_info.name) }}
-
 - name: Transform agent file for target
   ansible.builtin.set_fact:
     agent_harness_transformed_agent: >-
       {{ agent_harness_agent_info.source
          | agent_harness_transform_skill(agent_harness_target_agent, models,
                                          agent_harness_agent_info.plugin_root | default(''),
-                                         agent_harness_agent_frontmatter_name) }}
+                                         agent_harness_agent_info.name) }}
 
 - name: Copy agent file
   ansible.builtin.copy:

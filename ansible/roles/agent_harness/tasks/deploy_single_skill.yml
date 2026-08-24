@@ -82,20 +82,13 @@
       {{ lookup('ansible.builtin.file', agent_harness_skill_info.source + '/SKILL.md', rstrip=false) }}
   when: not agent_harness_skill_j2_stat.stat.exists
 
-- name: Resolve skill frontmatter name
-  ansible.builtin.set_fact:
-    agent_harness_skill_frontmatter_name: >-
-      {{ ((agent_harness_agent_config.name_transform | default('preserve')) == 'preserve')
-         | ternary(agent_harness_skill_info.display_name | default(agent_harness_skill_info.name),
-                   agent_harness_skill_info.name) }}
-
 - name: Transform SKILL.md for target agent
   ansible.builtin.set_fact:
     agent_harness_transformed_skill: >-
       {{ agent_harness_skill_source_content
          | agent_harness_transform_skill_content(agent_harness_target_agent, models,
                                                  agent_harness_skill_info.plugin_root | default(''),
-                                                 agent_harness_skill_frontmatter_name) }}
+                                                 agent_harness_skill_info.name) }}
 
 - name: Deploy SKILL.md
   ansible.builtin.copy:

@@ -8,16 +8,12 @@
     state: directory
     mode: "0755"
 
-- name: Collect hook files from all plugin sources
-  ansible.builtin.set_fact:
-    agent_harness_hook_sources: "{{ agent_harness_sources | agent_harness_find_plugin_hooks(agent_harness_cache_dir) }}"
-
 - name: Deploy hook fragments with PLUGIN_ROOT resolved
   ansible.builtin.copy:
     content: "{{ item.content }}"
     dest: "{{ agent_harness_cache_dir }}/hooks/{{ item.name }}.json"
     mode: "0644"
-  loop: "{{ agent_harness_hook_sources }}"
+  loop: "{{ agent_harness_plugin_resources.hooks }}"
   loop_control:
     label: "{{ item.name }}"
 
@@ -34,4 +30,4 @@
   loop: "{{ agent_harness_existing_hooks.files }}"
   loop_control:
     label: "{{ item.path | basename }}"
-  when: (item.path | basename | splitext | first) not in (agent_harness_hook_sources | map(attribute='name') | list)
+  when: (item.path | basename | splitext | first) not in (agent_harness_plugin_resources.hooks | map(attribute='name') | list)

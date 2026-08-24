@@ -10,7 +10,7 @@
 
 - name: Sync skill repositories # noqa: latest[git]
   ansible.builtin.include_tasks: sync_single_git_repo.yml
-  loop: "{{ agent_harness_sources | selectattr('repo', 'defined') | list }}"
+  loop: "{{ agent_harness_resolved_sources | selectattr('repo', 'defined') | list }}"
   loop_control:
     loop_var: agent_harness_git_source
     label: "{{ agent_harness_git_source.repo }}"

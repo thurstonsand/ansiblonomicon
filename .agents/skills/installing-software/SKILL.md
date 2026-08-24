@@ -63,12 +63,12 @@ These are managed as dotfiles via chezmoi, then applied by Ansible through the c
 
 ## Skills / agents
 
-- Source catalogue, host capability profiles, and profile exclusions: `ansible/agent-harness.config.yml`
+- Harness sources, host capability profiles, and profile exclusions: `ansible/agent-harness.config.yml`
 - Committed host customization: profiles and profile selectors in `ansible/agent-harness.config.yml`
 - Uncommitted host-only extras: `agent_harness_sources_extra` in the host's local config
 - Role defaults and supported source/plugin keys: `ansible/roles/agent_harness/defaults/main.yml`
 - Target agent filesystem/layout rules: `ansible/roles/agent_harness/vars/agents.yml`
-- Discovery/filter behavior: `ansible/roles/agent_harness/filter_plugins/harness_filters.py`
+- Resolution/filter behavior: `ansible/roles/agent_harness/filter_plugins/harness_filters.py`
 
 ## Other install/update paths you may want to check
 

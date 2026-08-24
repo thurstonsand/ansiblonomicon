@@ -19,7 +19,7 @@ Repo-local skills at `.agents/skills/` (`cloudflare-ops`, `installing-software`)
 
 ## Adapted from mattpocock/skills
 
-Each of these is on the `exclude_skills` list for the `mattpocock-skills` plugin, so ours wins. Upstream keeps moving, so each row records the upstream commit our copy was last reconciled against.
+None of these is on the `include_skills` list for the `mattpocock-skills` plugin, so ours wins: that plugin admits five upstream skills by name and nothing else. Upstream keeps moving, so each row records the upstream commit our copy was last reconciled against.
 
 | ours                                               | upstream                                                        | synced to            | divergence                                                                                                                                                                                                                                  |
 | -------------------------------------------------- | --------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

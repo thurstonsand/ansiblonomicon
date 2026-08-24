@@ -83,13 +83,12 @@ go_tools_extra:
 
 agent_harness_sources_extra:
   - repo: https://scm.internal/scm/proj/plugin-marketplace.git
-    pull: true
     plugins:
       - name: my-plugin
       - name: another-plugin
+        skills:
+          deployed-name: skills/some-skill
 ```
-
-The `repo` field accepts full git URLs (ending in `.git`) or the short `owner/name` form (auto-expanded to GitHub). Use `exclude_skills` on any plugin entry to skip specific skills.
 
 ## Agent Harness Local Plugin
 

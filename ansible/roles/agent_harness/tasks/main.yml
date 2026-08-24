@@ -14,13 +14,23 @@
         | ternary(agent_harness_cache_dir, lookup('env', 'HOME') ~ '/.cache/ansiblonomicon-harness')
       }}
 
+- name: Resolve sources for this host profile
+  ansible.builtin.set_fact:
+    agent_harness_resolved_sources: >-
+      {{ agent_harness_sources
+         | agent_harness_resolve_sources(
+             agent_harness_profile,
+             agent_harness_profiles.keys() | list,
+             agent_harness_agents.keys() | list,
+             agent_harness_sources_extra) }}
+
 - name: Clone git repositories
   ansible.builtin.include_tasks: clone_git_repos.yml
-  when: (agent_harness_sources | agent_harness_get_git_sources) | length > 0
+  when: agent_harness_resolved_sources | selectattr('repo', 'defined') | list | length > 0
 
 - name: Build plugin resources from all sources
   ansible.builtin.set_fact:
-    agent_harness_plugin_resources: "{{ agent_harness_sources | agent_harness_build_plugin_resources(agent_harness_effective_cache_dir) }}"
+    agent_harness_plugin_resources: "{{ agent_harness_resolved_sources | agent_harness_build_plugin_resources(agent_harness_effective_cache_dir) }}"
 
 - name: Deploy skills to target agents
   ansible.builtin.include_tasks: deploy_skills.yml

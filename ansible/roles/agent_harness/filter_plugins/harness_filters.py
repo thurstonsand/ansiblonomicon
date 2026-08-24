@@ -1,7 +1,6 @@
 """Filter plugins for agent_harness role."""
 
-from collections.abc import Mapping
-from copy import deepcopy
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
@@ -9,31 +8,53 @@ import re
 from typing import Any, TypedDict, cast
 
 
-class PluginLongForm(TypedDict, total=False):
-    """Long form plugin config with optional exclusions and agent targeting."""
+class PluginEntry(TypedDict, total=False):
+    """A plugin as declared in the config, before profile resolution."""
 
     name: str
-    path: str
-    skills: str | list[str]  # override skills search paths within plugin
-    agents: str | list[str]  # override agents search paths within plugin
-    exclude_skills: list[str]
-    exclude_agents: list[str]
-    exclude_data: list[str]  # rsync --exclude patterns for deployed files
     target_agents: list[str]
-    hooks: bool  # deploy hooks from this plugin (default: true)
-    prefix: (
-        str | None
-    )  # override the name prefix applied to resources (None = use plugin name, "" = no prefix)
+    included_on: list[str]
+    excluded_on: list[str]
+    skills: dict[str, str]  # explicit {deploy_name: path} map
+    agents: dict[str, str]  # explicit {deploy_name: path} map
+    include_skills: list[str] | dict[str, list[str]]
+    exclude_skills: list[str] | dict[str, list[str]]
+    include_agents: list[str] | dict[str, list[str]]
+    exclude_agents: list[str] | dict[str, list[str]]
+    hooks: bool
+    exclude_data: list[str]  # rsync --exclude patterns for deployed files
+
+
+SourceConfig = dict[str, Any]  # Union of git/local source dicts from Ansible
+
+SOURCE_FIELDS = frozenset({"repo", "local", "included_on", "excluded_on", "plugins"})
+PLUGIN_FIELDS = frozenset(
+    {
+        "name",
+        "target_agents",
+        "included_on",
+        "excluded_on",
+        "skills",
+        "agents",
+        "include_skills",
+        "exclude_skills",
+        "include_agents",
+        "exclude_agents",
+        "hooks",
+        "exclude_data",
+    }
+)
+RESOURCE_KINDS = ("skills", "agents")
+ANY_PROFILE = "*"
 
 
 @dataclass
 class ResourceInfo:
-    """Info about a discovered resource (skill or agent)."""
+    """A skill or agent resolved to a path on disk."""
 
     name: str
     source: str
     origin: str
-    display_name: str = ""
     plugin_root: str = ""
     target_agents: list[str] = field(default_factory=list)
     exclude_data: list[str] = field(default_factory=list)
@@ -44,7 +65,6 @@ class ResourceInfo:
             "name": self.name,
             "source": self.source,
             "origin": self.origin,
-            "display_name": self.display_name or self.name,
             "plugin_root": self.plugin_root,
             "target_agents": list(self.target_agents),
             "exclude_data": list(self.exclude_data),
@@ -52,83 +72,101 @@ class ResourceInfo:
 
 
 @dataclass
-class PluginResources:
-    """All resources discovered from plugin sources."""
+class HookFragment:
+    """A resolved hook fragment ready for deployment."""
 
-    skills: list[ResourceInfo] = field(default_factory=list)
-    agents: list[ResourceInfo] = field(default_factory=list)
+    name: str
+    content: str
+    plugin_root: str = ""
+
+    def to_dict(self) -> dict[str, str]:
+        return {"name": self.name, "content": self.content}
+
+
+@dataclass
+class PluginResources:
+    """Everything one pass over the resolved sources produced."""
+
+    by_kind: dict[str, list[ResourceInfo]] = field(
+        default_factory=lambda: {kind: [] for kind in RESOURCE_KINDS}
+    )
+    hooks: dict[str, HookFragment] = field(default_factory=dict)
+
+    def add_hooks(self, fragment: HookFragment) -> None:
+        """Record a fragment, collapsing duplicates and rejecting conflicts.
+
+        One plugin may legitimately be declared twice (different target_agents),
+        which yields the same fragment twice; two different plugins sharing a
+        name would silently overwrite each other's cache file instead.
+        """
+        existing = self.hooks.get(fragment.name)
+        if existing is None:
+            self.hooks[fragment.name] = fragment
+            return
+        if existing.content != fragment.content:
+            msg = (
+                f"plugin {fragment.name}: conflicting hook fragments from "
+                f"{existing.plugin_root} and {fragment.plugin_root}"
+            )
+            raise ValueError(msg)
 
     def to_dict(self) -> dict[str, list[dict[str, Any]]]:
         """Convert to dict for Ansible/Jinja2 compatibility."""
         return {
-            "skills": [s.to_dict() for s in self.skills],
-            "agents": [a.to_dict() for a in self.agents],
+            **{
+                kind: [resource.to_dict() for resource in resources]
+                for kind, resources in self.by_kind.items()
+            },
+            "hooks": [fragment.to_dict() for fragment in self.hooks.values()],
         }
-
-
-@dataclass
-class PluginConfig:
-    """Unified plugin configuration from marketplace entry or plugin.json."""
-
-    name: str
-    source_path: str  # path to plugin directory (relative to repo root or absolute)
-    skills_paths: list[str]  # paths to look for skills (relative to plugin root)
-    agents_paths: list[str]  # paths to look for agents (relative to plugin root)
 
 
 @dataclass
 class ResolvedPlugin:
-    """Result of resolving a plugin specification."""
+    """A plugin after profile resolution, with selections keyed by kind.
 
-    config: PluginConfig | None
-    plugin_path: Path | None
-    exclude_skills: list[str] = field(default_factory=list)
-    exclude_agents: list[str] = field(default_factory=list)
-    exclude_data: list[str] = field(default_factory=list)
+    A selection of ``None`` was never declared; an empty list was declared and
+    is empty, which for an include means nothing ships.
+    """
+
+    name: str
     target_agents: list[str] = field(default_factory=list)
-    include_hooks: bool = True
-    prefix_override: str | None = (
-        None  # None = use config.name, "" = no prefix, other = literal prefix
-    )
-
-    @property
-    def is_valid(self) -> bool:
-        """Check if plugin was successfully resolved."""
-        return self.config is not None and self.plugin_path is not None
+    explicit: dict[str, dict[str, str] | None] = field(default_factory=dict)
+    include: dict[str, list[str] | None] = field(default_factory=dict)
+    exclude: dict[str, list[str] | None] = field(default_factory=dict)
+    hooks: bool = True
+    exclude_data: list[str] = field(default_factory=list)
 
     @classmethod
-    def empty(cls) -> ResolvedPlugin:
-        """Create an empty/invalid result."""
-        return cls(config=None, plugin_path=None)
-
-
-@dataclass
-class GitSourceConfig:
-    """Configuration for a git-based source."""
-
-    repo: str
-    pull: bool = True
-    plugins: list[str | PluginLongForm] = field(default_factory=list)
-
-    @classmethod
-    def from_dict(cls, d: dict[str, Any]) -> GitSourceConfig:
-        """Create from a raw dict (e.g., from Ansible YAML)."""
+    def from_dict(cls, plugin: Mapping[str, Any]) -> ResolvedPlugin:
+        """Read back a plugin dict produced by agent_harness_resolve_sources."""
         return cls(
-            repo=d["repo"],
-            pull=d.get("pull", True),
-            plugins=list(d.get("plugins", [])),
+            name=plugin["name"],
+            target_agents=list(plugin.get("target_agents", [])),
+            explicit={
+                kind: dict(plugin[kind]) if plugin.get(kind) is not None else None
+                for kind in RESOURCE_KINDS
+            },
+            include={
+                kind: _optional_list(plugin.get(f"include_{kind}"))
+                for kind in RESOURCE_KINDS
+            },
+            exclude={
+                kind: _optional_list(plugin.get(f"exclude_{kind}"))
+                for kind in RESOURCE_KINDS
+            },
+            hooks=plugin.get("hooks", True),
+            exclude_data=list(plugin.get("exclude_data", [])),
         )
 
-    def to_dict(self) -> dict[str, Any]:
-        """Convert to plain dict for Ansible (which can't serialize dataclasses)."""
-        return {
-            "repo": self.repo,
-            "pull": self.pull,
-            "plugins": list(self.plugins),
-        }
+    @property
+    def explicit_mode(self) -> bool:
+        """An explicit map for either kind takes the whole plugin off manifests."""
+        return any(self.explicit[kind] is not None for kind in RESOURCE_KINDS)
 
 
-SourceConfig = dict[str, Any]  # Union of git/local source dicts from Ansible
+def _optional_list(value: Any) -> list[str] | None:
+    return None if value is None else [str(entry) for entry in cast(list[Any], value)]
 
 
 def _repo_to_cache_name(repo: str) -> str:
@@ -145,83 +183,292 @@ def _repo_to_cache_name(repo: str) -> str:
     return name.strip("-")
 
 
-def _get_skills_paths(config: Mapping[str, str | list[str] | None]) -> list[str]:
-    """Extract skills paths from a plugin config dict.
+# =============================================================================
+# Profile resolution: config in, concrete per-profile config out
+# =============================================================================
 
-    Args:
-        config: Plugin config dict (from marketplace entry or plugin.json)
 
-    Returns:
-        List of normalized skill paths, defaults to ["skills"]
+def _source_label(source: Mapping[str, Any]) -> str:
+    return str(source.get("repo") or source.get("local") or source)
+
+
+def _reject_unknown_fields(
+    entry: Mapping[str, Any], known: frozenset[str], label: str
+) -> None:
+    unknown = sorted(set(entry) - known)
+    if unknown:
+        msg = f"{label}: unknown field(s) {', '.join(unknown)}"
+        raise ValueError(msg)
+
+
+def _require_string_list(value: Any, label: str, field_name: str) -> list[str]:
+    """Accept only a real list of strings; a bare string is an error, not an iterable."""
+    if isinstance(value, str) or not isinstance(value, Sequence):
+        msg = f"{label}: {field_name} must be a list of strings, got {value!r}"
+        raise ValueError(msg)
+    entries = list(cast(Sequence[Any], value))
+    for entry in entries:
+        if not isinstance(entry, str):
+            msg = f"{label}: {field_name} entries must be strings, got {entry!r}"
+            raise ValueError(msg)
+    return cast(list[str], entries)
+
+
+def _require_bool(value: Any, label: str, field_name: str) -> bool:
+    if not isinstance(value, bool):
+        msg = f"{label}: {field_name} must be true or false, got {value!r}"
+        raise ValueError(msg)
+    return value
+
+
+def _require_known(
+    entries: list[str], known: set[str], label: str, field_name: str, noun: str
+) -> list[str]:
+    for entry in entries:
+        if entry not in known:
+            msg = (
+                f"{label}: {field_name} names unknown {noun} {entry!r} "
+                f"(known: {', '.join(sorted(known))})"
+            )
+            raise ValueError(msg)
+    return entries
+
+
+def _require_string_map(value: Any, label: str, field_name: str) -> dict[str, str]:
+    if not isinstance(value, Mapping):
+        msg = f"{label}: {field_name} must be a {{name: path}} map, got {value!r}"
+        raise ValueError(msg)
+    resolved: dict[str, str] = {}
+    for key, entry in cast(Mapping[Any, Any], value).items():
+        if not isinstance(key, str) or not isinstance(entry, str):
+            msg = (
+                f"{label}: {field_name} must map strings to paths, "
+                f"got {key!r}: {entry!r}"
+            )
+            raise ValueError(msg)
+        resolved[key] = entry
+    return resolved
+
+
+def _as_plugin_mapping(plugin: Any, source_label: str) -> Mapping[str, Any]:
+    """Conform an untrusted plugin entry from YAML into a mapping."""
+    if not isinstance(plugin, Mapping):
+        msg = f"{source_label}: plugin entry must be a mapping, got {plugin!r}"
+        raise ValueError(msg)
+    return cast(Mapping[str, Any], plugin)
+
+
+def _profile_admits(
+    entry: Mapping[str, Any], profile: str, profile_names: set[str], label: str
+) -> bool:
+    """Validate the profile scoping of a source or plugin and apply it."""
+    scope: dict[str, list[str]] = {}
+    for field_name in ("included_on", "excluded_on"):
+        if field_name in entry:
+            entries = _require_string_list(entry[field_name], label, field_name)
+            scope[field_name] = _require_known(
+                entries, profile_names, label, field_name, "profile"
+            )
+    included_on = scope.get("included_on", [])
+    if included_on and profile not in included_on:
+        return False
+    return profile not in scope.get("excluded_on", [])
+
+
+def _collapse_selection(
+    spec: Any, profile: str, profile_names: set[str], label: str, field_name: str
+) -> list[str] | None:
+    """Reduce a selection list or profile-keyed map to this profile's list.
+
+    A profile key fully replaces the ``"*"`` fallback; the two never merge.
+    ``None`` means the field was never declared, so nothing is filtered; an
+    empty list means it was declared and selects nothing.
     """
-    skills_field: str | list[str] | None = config.get("skills")
-    if skills_field is None:
-        return ["skills"]
+    if spec is None:
+        return None
+    if isinstance(spec, Mapping):
+        selected = cast(Mapping[str, Any], spec)
+        keys = list(selected)
+        for index, key in enumerate(keys):
+            if key == ANY_PROFILE:
+                if index != len(keys) - 1:
+                    msg = (
+                        f"{label}: {field_name} lists {ANY_PROFILE!r} before "
+                        f"{keys[index + 1]!r}; the fallback must come last"
+                    )
+                    raise ValueError(msg)
+            elif key not in profile_names:
+                msg = f"{label}: {field_name} names unknown profile {key!r}"
+                raise ValueError(msg)
+            _require_string_list(selected[key], label, f"{field_name}[{key}]")
+        if profile in selected:
+            return list(cast(list[str], selected[profile]))
+        if ANY_PROFILE in selected:
+            return list(cast(list[str], selected[ANY_PROFILE]))
+        return []
+    if isinstance(spec, Sequence) and not isinstance(spec, str):
+        return _require_string_list(spec, label, field_name)
+    msg = f"{label}: {field_name} must be a list or a profile-keyed map, got {spec!r}"
+    raise ValueError(msg)
 
-    if isinstance(skills_field, str):
-        return [skills_field.lstrip("./")]
 
-    # Must be list[str]
-    return [p.lstrip("./") for p in skills_field]
+def _resolve_plugin(
+    plugin: Mapping[str, Any],
+    profile: str,
+    profile_names: set[str],
+    harness_names: set[str],
+    source_label: str,
+) -> dict[str, Any] | None:
+    """Validate one plugin entry and collapse it for a single profile."""
+    name = plugin.get("name")
+    if not name or not isinstance(name, str):
+        msg = f"{source_label}: plugin entry is missing a name: {dict(plugin)!r}"
+        raise ValueError(msg)
+
+    label = f"{source_label}: plugin {name}"
+    _reject_unknown_fields(plugin, PLUGIN_FIELDS, label)
+    explicit_kinds = [kind for kind in RESOURCE_KINDS if plugin.get(kind) is not None]
+
+    resolved: dict[str, Any] = {"name": name}
+    for kind in RESOURCE_KINDS:
+        explicit = plugin.get(kind)
+        selections = {
+            f"{selector}_{kind}": _collapse_selection(
+                plugin.get(f"{selector}_{kind}"),
+                profile,
+                profile_names,
+                label,
+                f"{selector}_{kind}",
+            )
+            for selector in ("include", "exclude")
+        }
+        declared = [
+            field_name
+            for field_name, selection in selections.items()
+            if selection is not None
+        ]
+
+        if len(declared) == 2:
+            msg = f"{label}: include_{kind} and exclude_{kind} are mutually exclusive"
+            raise ValueError(msg)
+        if explicit is not None and declared:
+            msg = (
+                f"{label}: the explicit {kind} map already selects resources; "
+                f"drop include_{kind}/exclude_{kind}"
+            )
+            raise ValueError(msg)
+        if explicit_kinds and declared:
+            msg = (
+                f"{label}: the explicit {explicit_kinds[0]} map puts this plugin in "
+                f"explicit mode, so there is no manifest to select from; "
+                f"drop {declared[0]}"
+            )
+            raise ValueError(msg)
+
+        if explicit is not None:
+            resolved[kind] = _require_string_map(explicit, label, kind)
+        resolved.update(
+            {
+                field_name: selection
+                for field_name, selection in selections.items()
+                if selection is not None
+            }
+        )
+
+    if not _profile_admits(plugin, profile, profile_names, label):
+        return None
+
+    if "target_agents" in plugin:
+        resolved["target_agents"] = _require_known(
+            _require_string_list(plugin["target_agents"], label, "target_agents"),
+            harness_names,
+            label,
+            "target_agents",
+            "harness",
+        )
+    if "exclude_data" in plugin:
+        resolved["exclude_data"] = _require_string_list(
+            plugin["exclude_data"], label, "exclude_data"
+        )
+    if "hooks" in plugin:
+        resolved["hooks"] = _require_bool(plugin["hooks"], label, "hooks")
+    return resolved
 
 
-def _get_agents_paths(config: Mapping[str, str | list[str] | None]) -> list[str]:
-    """Extract agents paths from a plugin config dict.
+def agent_harness_resolve_sources(
+    sources: list[SourceConfig],
+    profile: str,
+    profile_names: list[str],
+    harness_names: list[str],
+    extra_sources: list[SourceConfig] | None = None,
+) -> list[SourceConfig]:
+    """Validate the declared sources and resolve them for one host profile."""
+    known_profiles = set(profile_names)
+    known_harnesses = set(harness_names)
+    resolved_sources: list[SourceConfig] = []
 
-    Args:
-        config: Plugin config dict (from marketplace entry or plugin.json)
+    for source in [*sources, *(extra_sources or [])]:
+        label = f"source {_source_label(source)}"
+        _reject_unknown_fields(source, SOURCE_FIELDS, label)
+        if ("repo" in source) == ("local" in source):
+            msg = f"{label}: declare exactly one of repo or local"
+            raise ValueError(msg)
+        origin_key = "repo" if "repo" in source else "local"
+        if not source[origin_key] or not isinstance(source[origin_key], str):
+            msg = f"{label}: {origin_key} must be a non-empty string"
+            raise ValueError(msg)
+        plugins = source.get("plugins", [])
+        if not isinstance(plugins, Sequence) or isinstance(plugins, str):
+            msg = f"{label}: plugins must be a list, got {plugins!r}"
+            raise ValueError(msg)
 
-    Returns:
-        List of normalized agent paths, defaults to ["agents"]
+        resolved_plugins = [
+            resolved
+            for plugin in cast(Sequence[Any], plugins)
+            if (
+                resolved := _resolve_plugin(
+                    _as_plugin_mapping(plugin, label),
+                    profile,
+                    known_profiles,
+                    known_harnesses,
+                    label,
+                )
+            )
+        ]
+        if not _profile_admits(source, profile, known_profiles, label):
+            continue
+
+        resolved_source: dict[str, Any] = {origin_key: source[origin_key]}
+        resolved_source["plugins"] = resolved_plugins
+        resolved_sources.append(resolved_source)
+
+    return resolved_sources
+
+
+# =============================================================================
+# Filesystem resolution: resolved config in, resources on disk out
+# =============================================================================
+
+
+def _join_within(root: Path, relative: str, label: str, what: str) -> Path:
+    """Join an upstream-supplied relative path under a root it may not escape.
+
+    Manifest and marketplace values come from repositories we do not control,
+    and the result of this join is what gets rsynced onto the machine.
     """
-    agents_field: str | list[str] | None = config.get("agents")
-    if agents_field is None:
-        return ["agents"]
-
-    if isinstance(agents_field, str):
-        return [agents_field.lstrip("./")]
-
-    return [p.lstrip("./") for p in agents_field]
-
-
-def _normalize_path_field(value: str | list[str]) -> list[str]:
-    """Normalize a string or list of strings into a list of cleaned paths."""
-    if isinstance(value, str):
-        return [value.lstrip("./")]
-    return [p.lstrip("./") for p in value]
+    candidate = Path(relative)
+    if candidate.is_absolute():
+        msg = f"{label}: {what} {relative!r} must be relative, not absolute"
+        raise ValueError(msg)
+    joined = root / candidate
+    if not joined.resolve().is_relative_to(root.resolve()):
+        msg = f"{label}: {what} {relative!r} escapes {root}"
+        raise ValueError(msg)
+    return joined
 
 
-def _prefixed_names(
-    plugin_name: str, resource_name: str, prefix_override: str | None = None
-) -> tuple[str, str]:
-    """Build (deploy_name, display_name) for a plugin-namespaced resource.
-
-    Mirrors how Claude Code namespaces plugin resources as ``plugin:resource``,
-    while keeping a filesystem-safe ``plugin-resource`` for the on-disk name.
-
-    A root-level resource (resource_name == plugin_name) is the plugin itself;
-    it is not double-prefixed.
-
-    prefix_override controls the prefix independently of the plugin name:
-    - None  → use plugin_name (default behaviour)
-    - ""    → no prefix; resource_name is used as-is
-    - other → use the supplied string as the prefix
-    """
-    prefix = plugin_name if prefix_override is None else prefix_override
-    if not prefix or resource_name == prefix:
-        return resource_name, resource_name
-    return f"{prefix}-{resource_name}", f"{prefix}:{resource_name}"
-
-
-def _load_plugin_json(plugin_path: Path) -> dict[str, str | list[str] | None] | None:
-    """Load and parse plugin.json from a plugin directory.
-
-    Args:
-        plugin_path: Path to the plugin directory
-
-    Returns:
-        Parsed plugin config dict, or None if not found/invalid
-    """
+def _load_plugin_json(plugin_path: Path) -> dict[str, Any] | None:
+    """Load and parse .claude-plugin/plugin.json from a plugin directory."""
     plugin_json_path = plugin_path / ".claude-plugin" / "plugin.json"
     if not plugin_json_path.exists():
         return None
@@ -233,21 +480,26 @@ def _load_plugin_json(plugin_path: Path) -> dict[str, str | list[str] | None] | 
         return None
 
 
-def _find_plugin_in_marketplace(
-    repo_path: Path, plugin_name: str
-) -> PluginConfig | None:
+def _find_skill_md(directory: Path) -> Path | None:
+    """Find SKILL.md or SKILL.md.j2 in a directory, case-insensitive.
+
+    Returns the path to the skill file if found, or None if not found.
+    """
+    if not directory.is_dir():
+        return None
+    for entry in directory.iterdir():
+        if entry.is_file() and entry.name.lower() in ("skill.md", "skill.md.j2"):
+            return entry
+    return None
+
+
+def _find_in_marketplace(
+    repo_path: Path, plugin_name: str, label: str
+) -> tuple[Path, dict[str, Any]] | None:
     """Look up a plugin by name in marketplace.json.
 
-    Handles the `strict` field:
-    - strict: true (default): load plugin.json from plugin directory
-    - strict: false: use marketplace entry as the plugin config
-
-    Args:
-        repo_path: Path to the cloned repository
-        plugin_name: Name of the plugin to find
-
-    Returns:
-        PluginConfig if found, None otherwise
+    Honours `strict`: strict (the default) merges the plugin's own plugin.json
+    under the marketplace entry; strict false makes the entry the whole manifest.
     """
     marketplace_path = repo_path / ".claude-plugin" / "marketplace.json"
     if not marketplace_path.exists():
@@ -259,636 +511,306 @@ def _find_plugin_in_marketplace(
     except json.JSONDecodeError, OSError:
         return None
 
-    plugins = marketplace.get("plugins", [])
     plugin_root = marketplace.get("metadata", {}).get("pluginRoot", "")
+    if plugin_root:
+        _join_within(repo_path, str(plugin_root), label, "marketplace pluginRoot")
 
-    for plugin_entry in plugins:
-        if plugin_entry.get("name") != plugin_name:
+    for entry in marketplace.get("plugins", []):
+        if entry.get("name") != plugin_name:
             continue
-
-        # Found the plugin - resolve its source path
-        source = plugin_entry.get("source", "")
-
-        # Handle different source formats
-        if isinstance(source, dict):
-            # External source (github, url) - not supported for now
+        source = entry.get("source", "")
+        # Dict sources point at another repo; we only resolve in-tree plugins.
+        if not isinstance(source, str):
             continue
-        elif isinstance(source, str):
-            # Relative path
-            if plugin_root and not source.startswith(("./", "/")):
-                source = f"{plugin_root}/{source}"
-            source = source.lstrip("./")
-        else:
-            continue
+        if plugin_root and not source.startswith(("./", "/")):
+            source = f"{plugin_root}/{source}"
+        plugin_path = _join_within(repo_path, source, label, "marketplace source")
 
-        plugin_path = repo_path / source
-
-        # Check strict mode
-        strict = plugin_entry.get("strict", True)
-
-        if strict:
-            # Load plugin.json and merge with marketplace entry
-            plugin_json = _load_plugin_json(plugin_path)
-            if plugin_json:
-                # Marketplace entry overrides plugin.json for specified fields
-                merged_config = {**plugin_json, **plugin_entry}
-                skills_paths = _get_skills_paths(merged_config)
-                agents_paths = _get_agents_paths(merged_config)
-            else:
-                # No plugin.json but strict=true, use marketplace entry
-                skills_paths = _get_skills_paths(plugin_entry)
-                agents_paths = _get_agents_paths(plugin_entry)
-        else:
-            # strict=false: marketplace entry IS the config
-            skills_paths = _get_skills_paths(plugin_entry)
-            agents_paths = _get_agents_paths(plugin_entry)
-
-        return PluginConfig(
-            name=plugin_name,
-            source_path=source,
-            skills_paths=skills_paths,
-            agents_paths=agents_paths,
-        )
-
-    return None
-
-
-def _check_standalone_plugin(repo_path: Path, plugin_name: str) -> PluginConfig | None:
-    """Check if the repo is a standalone plugin (not a marketplace).
-
-    A standalone plugin has .claude-plugin/plugin.json at the repo root.
-
-    Args:
-        repo_path: Path to the cloned repository
-        plugin_name: Name of the plugin to find
-
-    Returns:
-        PluginConfig if this is a standalone plugin matching the name, None otherwise
-    """
-    plugin_json = _load_plugin_json(repo_path)
-    if plugin_json is None:
-        return None
-
-    # Check if the plugin name matches
-    if plugin_json.get("name") != plugin_name:
-        return None
-
-    return PluginConfig(
-        name=plugin_name,
-        source_path=".",
-        skills_paths=_get_skills_paths(plugin_json),
-        agents_paths=_get_agents_paths(plugin_json),
-    )
-
-
-def _find_skill_md(directory: Path) -> Path | None:
-    """Find SKILL.md or SKILL.md.j2 in a directory, case-insensitive.
-
-    Returns the path to the skill file if found, or None if not found.
-    """
-    if not directory.exists():
-        return None
-    for entry in directory.iterdir():
-        if entry.is_file() and entry.name.lower() in ("skill.md", "skill.md.j2"):
-            return entry
-    return None
-
-
-def _discover_skills_in_plugin(
-    plugin_path: Path, skills_paths: list[str], root_skill_name: str
-) -> list[str]:
-    """Discover all skills within a plugin directory.
-
-    Looks for directories containing SKILL.md files (case-insensitive).
-
-    Args:
-        plugin_path: Path to the plugin directory
-        skills_paths: List of paths to search for skills (relative to plugin root)
-        root_skill_name: Name to use if the plugin root itself is a skill
-
-    Returns:
-        List of skill names found
-    """
-    skills: list[str] = []
-
-    # Check if plugin root has SKILL.md (plugin is the skill)
-    if _find_skill_md(plugin_path):
-        skills.append(root_skill_name)
-
-    # Search each skills path
-    for skills_base in skills_paths:
-        skills_dir = plugin_path / skills_base
-        if not skills_dir.exists() or not skills_dir.is_dir():
-            continue
-
-        # An explicit path that is itself a skill dir (contains SKILL.md) — the
-        # form used by plugin.json skill lists, e.g. "skills/productivity/foo".
-        # Take it directly rather than scanning one level deeper.
-        if _find_skill_md(skills_dir):
-            skills.append(skills_dir.name)
-            continue
-
-        # Otherwise treat it as a search root and scan one level down for skills
-        # (the bare "skills/" convention). We intentionally do not recurse deeper.
-        for entry in skills_dir.iterdir():
-            if entry.is_dir() and _find_skill_md(entry):
-                skills.append(entry.name)
-
-    return skills
-
-
-def _get_skill_source_path(
-    plugin_path: Path, skill_name: str, skills_paths: list[str], root_skill_name: str
-) -> str | None:
-    """Get the full path to a skill within a plugin.
-
-    Args:
-        plugin_path: Path to the plugin directory
-        skill_name: Name of the skill
-        skills_paths: List of paths to search for skills
-        root_skill_name: Name used for root-level skill (for matching)
-
-    Returns:
-        Full path to skill directory, or None if not found
-    """
-    # Check if plugin root is the skill
-    if _find_skill_md(plugin_path) and skill_name == root_skill_name:
-        return str(plugin_path)
-
-    # Search skills paths
-    for skills_base in skills_paths:
-        skills_dir = plugin_path / skills_base
-
-        # Explicit path that is itself the named skill dir
-        if skills_dir.name == skill_name and _find_skill_md(skills_dir):
-            return str(skills_dir)
-
-        # Search root: the named skill lives one level down
-        skill_dir = skills_dir / skill_name
-        if skill_dir.exists() and _find_skill_md(skill_dir):
-            return str(skill_dir)
-
-    return None
-
-
-def _discover_agents_in_plugin(plugin_path: Path, agents_paths: list[str]) -> list[str]:
-    """Discover all agents within a plugin directory.
-
-    Looks for .md files in agent directories.
-
-    Args:
-        plugin_path: Path to the plugin directory
-        agents_paths: List of paths to search for agents (relative to plugin root)
-
-    Returns:
-        List of agent names found (without .md extension)
-    """
-    agents: list[str] = []
-
-    for agent_base in agents_paths:
-        agent_dir = plugin_path / agent_base
-        if not agent_dir.exists() or not agent_dir.is_dir():
-            continue
-
-        for entry in agent_dir.iterdir():
-            if entry.is_file() and entry.suffix == ".md":
-                agents.append(entry.stem)
-
-    return agents
-
-
-def _get_agent_source_path(
-    plugin_path: Path, agent_name: str, agents_paths: list[str]
-) -> str | None:
-    """Get the full path to an agent within a plugin.
-
-    Args:
-        plugin_path: Path to the plugin directory
-        agent_name: Name of the agent (without .md extension)
-        agents_paths: List of paths to search for agents
-
-    Returns:
-        Full path to agent file, or None if not found
-    """
-    for agent_base in agents_paths:
-        agent_file = plugin_path / agent_base / f"{agent_name}.md"
-        if agent_file.exists():
-            return str(agent_file)
-
-    return None
-
-
-def _resolve_plugin_from_repo(
-    repo_path: Path, plugin_spec: str | PluginLongForm
-) -> ResolvedPlugin:
-    """Resolve a plugin specification from a git repo.
-
-    Args:
-        repo_path: Path to the cloned repository
-        plugin_spec: Plugin name (str) or PluginLongForm dict
-
-    Returns:
-        ResolvedPlugin with config and paths, or empty if not resolvable
-    """
-    exclude_skills: list[str] = []
-    exclude_agents: list[str] = []
-    exclude_data: list[str] = []
-    target_agents: list[str] = []
-    include_hooks = True
-    prefix_override: str | None = None
-
-    skills_override: str | list[str] | None = None
-    agents_override: str | list[str] | None = None
-
-    if isinstance(plugin_spec, str):
-        plugin_name = plugin_spec
-        explicit_path = None
-    else:
-        plugin_name = plugin_spec.get("name", "")
-        explicit_path = plugin_spec.get("path")
-        skills_override = plugin_spec.get("skills")
-        agents_override = plugin_spec.get("agents")
-        exclude_skills = list(plugin_spec.get("exclude_skills", []))
-        exclude_agents = list(plugin_spec.get("exclude_agents", []))
-        exclude_data = list(plugin_spec.get("exclude_data", []))
-        target_agents = list(plugin_spec.get("target_agents", []))
-        include_hooks = plugin_spec.get("hooks", True)
-        prefix_override = plugin_spec.get("prefix")
-
-    def _apply_overrides(config: PluginConfig) -> PluginConfig:
-        """Apply skills/agents path overrides from the plugin spec."""
-        if skills_override is not None:
-            config.skills_paths = _normalize_path_field(skills_override)
-        if agents_override is not None:
-            config.agents_paths = _normalize_path_field(agents_override)
-        return config
-
-    # If explicit path, use it directly
-    if explicit_path:
-        plugin_path = repo_path / explicit_path.removeprefix("./")
+        if not entry.get("strict", True):
+            return plugin_path, dict(entry)
         plugin_json = _load_plugin_json(plugin_path)
+        manifest = {**plugin_json, **entry} if plugin_json else dict(entry)
+        return plugin_path, manifest
 
-        # Infer name from path if not provided
-        if not plugin_name:
-            plugin_name = plugin_path.name
+    return None
 
-        # When path is explicit with no plugin.json, scan the directory
-        # itself for the skill. Agents are not root-scanned: a manifest-less
-        # path: source is a skill source, and root-scanning would treat loose
-        # *.md files (README, CHANGELOG) as agents.
-        no_config_default = {
-            "skills": ["."],
-            "agents": [],
-        }
-        config = _apply_overrides(
-            PluginConfig(
-                name=plugin_name,
-                source_path=explicit_path,
-                skills_paths=_get_skills_paths(plugin_json or no_config_default),
-                agents_paths=_get_agents_paths(plugin_json or no_config_default),
-            )
+
+def _find_manifest(
+    source_root: Path, is_repo: bool, plugin_name: str, label: str
+) -> tuple[Path, dict[str, Any]] | None:
+    """Locate a plugin's root directory and its Claude manifest."""
+    if not is_repo:
+        plugin_path = _join_within(source_root, plugin_name, label, "plugin name")
+        plugin_json = _load_plugin_json(plugin_path)
+        return None if plugin_json is None else (plugin_path, plugin_json)
+
+    if found := _find_in_marketplace(source_root, plugin_name, label):
+        return found
+
+    plugin_json = _load_plugin_json(source_root)
+    if plugin_json is not None and plugin_json.get("name") == plugin_name:
+        return source_root, plugin_json
+    return None
+
+
+def _manifest_dirs(
+    plugin_root: Path, manifest: Mapping[str, Any], kind: str, label: str
+) -> list[Path]:
+    """Read the manifest's skills/agents paths, defaulting to the conventional dir."""
+    declared = manifest.get(kind)
+    if declared is None:
+        relatives = [kind]
+    elif isinstance(declared, str):
+        relatives = [declared]
+    else:
+        relatives = [str(path) for path in cast(list[Any], declared)]
+    return [
+        _join_within(plugin_root, relative, label, f"manifest {kind} path")
+        for relative in relatives
+    ]
+
+
+def _discover_skills(
+    plugin_root: Path, plugin_name: str, manifest: Mapping[str, Any], label: str
+) -> list[tuple[str, Path]]:
+    """Find the skills a manifest exposes, one level deep at most."""
+    # A plugin that is itself a skill has no inner skills to enumerate; walking
+    # its paths as well would report the same directory twice.
+    if _find_skill_md(plugin_root):
+        return [(plugin_name, plugin_root)]
+
+    found: list[tuple[str, Path]] = []
+    for skills_dir in _manifest_dirs(plugin_root, manifest, "skills", label):
+        if not skills_dir.is_dir():
+            continue
+        if _find_skill_md(skills_dir):
+            found.append((skills_dir.name, skills_dir))
+            continue
+        found.extend(
+            (entry.name, entry)
+            for entry in sorted(skills_dir.iterdir())
+            if _find_skill_md(entry)
         )
-        return ResolvedPlugin(
-            config=config,
-            plugin_path=plugin_path,
-            exclude_skills=exclude_skills,
-            exclude_agents=exclude_agents,
-            exclude_data=exclude_data,
-            target_agents=target_agents,
-            include_hooks=include_hooks,
-            prefix_override=prefix_override,
+    return found
+
+
+def _discover_agents(
+    plugin_root: Path, plugin_name: str, manifest: Mapping[str, Any], label: str
+) -> list[tuple[str, Path]]:
+    """Find the agent markdown files a manifest exposes."""
+    del plugin_name
+    found: list[tuple[str, Path]] = []
+    for agents_dir in _manifest_dirs(plugin_root, manifest, "agents", label):
+        if not agents_dir.is_dir():
+            continue
+        found.extend(
+            (entry.stem, entry)
+            for entry in sorted(agents_dir.iterdir())
+            if entry.is_file() and entry.suffix == ".md"
         )
-
-    # Try marketplace lookup
-    config = _find_plugin_in_marketplace(repo_path, plugin_name)
-    if config:
-        _apply_overrides(config)
-        plugin_path = repo_path / config.source_path
-        return ResolvedPlugin(
-            config=config,
-            plugin_path=plugin_path,
-            exclude_skills=exclude_skills,
-            exclude_agents=exclude_agents,
-            exclude_data=exclude_data,
-            target_agents=target_agents,
-            include_hooks=include_hooks,
-            prefix_override=prefix_override,
-        )
-
-    # Try standalone plugin
-    config = _check_standalone_plugin(repo_path, plugin_name)
-    if config:
-        _apply_overrides(config)
-        return ResolvedPlugin(
-            config=config,
-            plugin_path=repo_path,
-            exclude_skills=exclude_skills,
-            exclude_agents=exclude_agents,
-            exclude_data=exclude_data,
-            target_agents=target_agents,
-            include_hooks=include_hooks,
-            prefix_override=prefix_override,
-        )
-
-    return ResolvedPlugin.empty()
+    return found
 
 
-def _resolve_plugin_from_local(
-    local_path: str, plugin_spec: str | PluginLongForm
-) -> ResolvedPlugin:
-    """Resolve a plugin specification from a local path.
+def _apply_selection(
+    found: list[tuple[str, Path]],
+    include: list[str] | None,
+    exclude: list[str] | None,
+    label: str,
+    kind: str,
+) -> list[tuple[str, Path]]:
+    """Narrow discovered resources, rejecting selections that match nothing.
 
-    Args:
-        local_path: Base path to local plugins
-        plugin_spec: Plugin name (str) or PluginLongForm dict
-
-    Returns:
-        ResolvedPlugin with config and paths
+    ``None`` means the selector was never declared and nothing is filtered;
+    an empty include list ships nothing.
     """
-    exclude_skills: list[str] = []
-    exclude_agents: list[str] = []
-    exclude_data: list[str] = []
-    target_agents: list[str] = []
-    include_hooks = True
-    prefix_override: str | None = None
-    skills_override: str | list[str] | None = None
-    agents_override: str | list[str] | None = None
-    base_path = Path(local_path)
+    discovered = {name for name, _ in found}
+    for selector, entries in (("include", include), ("exclude", exclude)):
+        for entry in entries or []:
+            if entry not in discovered:
+                msg = (
+                    f"{label}: {selector}_{kind} names {entry!r}, which the plugin "
+                    f"does not provide (found: {', '.join(sorted(discovered)) or 'none'})"
+                )
+                raise ValueError(msg)
 
-    if isinstance(plugin_spec, str):
-        plugin_name = plugin_spec
-        explicit_path = None
-    else:
-        plugin_name = plugin_spec.get("name", "")
-        explicit_path = plugin_spec.get("path")
-        skills_override = plugin_spec.get("skills")
-        agents_override = plugin_spec.get("agents")
-        exclude_skills = list(plugin_spec.get("exclude_skills", []))
-        exclude_agents = list(plugin_spec.get("exclude_agents", []))
-        exclude_data = list(plugin_spec.get("exclude_data", []))
-        target_agents = list(plugin_spec.get("target_agents", []))
-        include_hooks = plugin_spec.get("hooks", True)
-        prefix_override = plugin_spec.get("prefix")
+    if include is not None:
+        return [(name, path) for name, path in found if name in include]
+    return [(name, path) for name, path in found if name not in (exclude or [])]
 
-    # Determine plugin path
-    if explicit_path:
-        plugin_path = base_path / explicit_path.removeprefix("./")
-        if not plugin_name:
-            plugin_name = plugin_path.name
-    else:
-        # Try plugins/{name} structure first
-        plugin_path = base_path / "plugins" / plugin_name
-        # Then try {name} directly under base_path
-        if not plugin_path.exists():
-            plugin_path = base_path / plugin_name
-        # Finally fall back to base_path itself (standalone plugin)
-        if not plugin_path.exists():
-            plugin_path = base_path
 
-    plugin_json = _load_plugin_json(plugin_path)
+def _explicit_skills(
+    source_root: Path, mapping: dict[str, str], label: str
+) -> list[tuple[str, Path]]:
+    resolved: list[tuple[str, Path]] = []
+    for name, relative in mapping.items():
+        skill_dir = _join_within(source_root, relative, label, f"skill {name!r} path")
+        if _find_skill_md(skill_dir) is None:
+            msg = f"{label}: skill {name!r} at {skill_dir} has no SKILL.md"
+            raise ValueError(msg)
+        resolved.append((name, skill_dir))
+    return resolved
 
-    no_config_default = {"skills": ["."], "agents": ["."]} if explicit_path else {}
-    config = PluginConfig(
-        name=plugin_name,
-        source_path=str(plugin_path),
-        skills_paths=_get_skills_paths(plugin_json or no_config_default),
-        agents_paths=_get_agents_paths(plugin_json or no_config_default),
-    )
 
-    if skills_override is not None:
-        config.skills_paths = _normalize_path_field(skills_override)
-    if agents_override is not None:
-        config.agents_paths = _normalize_path_field(agents_override)
+def _explicit_agents(
+    source_root: Path, mapping: dict[str, str], label: str
+) -> list[tuple[str, Path]]:
+    resolved: list[tuple[str, Path]] = []
+    for name, relative in mapping.items():
+        agent_file = _join_within(source_root, relative, label, f"agent {name!r} path")
+        if not agent_file.is_file() or agent_file.suffix != ".md":
+            msg = f"{label}: agent {name!r} at {agent_file} is not a .md file"
+            raise ValueError(msg)
+        resolved.append((name, agent_file))
+    return resolved
 
-    return ResolvedPlugin(
-        config=config,
-        plugin_path=plugin_path,
-        exclude_skills=exclude_skills,
-        exclude_agents=exclude_agents,
-        exclude_data=exclude_data,
-        target_agents=target_agents,
-        include_hooks=include_hooks,
-        prefix_override=prefix_override,
-    )
+
+DISCOVERERS: dict[
+    str, Callable[[Path, str, Mapping[str, Any], str], list[tuple[str, Path]]]
+] = {"skills": _discover_skills, "agents": _discover_agents}
+
+EXPLICIT_RESOLVERS: dict[
+    str, Callable[[Path, dict[str, str], str], list[tuple[str, Path]]]
+] = {"skills": _explicit_skills, "agents": _explicit_agents}
 
 
 def agent_harness_build_plugin_resources(
     sources: list[SourceConfig], cache_dir: str
 ) -> dict[str, list[dict[str, Any]]]:
-    """Build lists of skills and agents from plugin-based sources config.
+    """Resolve every plugin in the resolved sources to files on disk.
 
     Args:
-        sources: List of source configs (git repos or local paths)
+        sources: Sources already resolved for this profile
         cache_dir: Path to the cache directory for git repos
 
     Returns:
-        Dict with 'skills' and 'agents' keys for Ansible/Jinja2
+        Dict with 'skills', 'agents' and 'hooks' keys for Ansible/Jinja2
     """
-    skills: list[ResourceInfo] = []
-    agents: list[ResourceInfo] = []
+    resources = PluginResources()
 
     for source in sources:
-        if "repo" in source:
-            # Git source
-            repo = source["repo"]
-            repo_cache_name = _repo_to_cache_name(repo)
-            repo_path = Path(cache_dir) / repo_cache_name
-            plugins = source.get("plugins", [])
+        is_repo = "repo" in source
+        if is_repo:
+            origin = source["repo"]
+            source_root = Path(cache_dir) / _repo_to_cache_name(origin)
+        else:
+            origin = "local"
+            source_root = Path(source["local"])
+        source_label = f"source {_source_label(source)}"
 
-            for plugin_spec in plugins:
-                resolved = _resolve_plugin_from_repo(repo_path, plugin_spec)
-                if not resolved.is_valid:
+        for entry in source.get("plugins", []):
+            plugin = ResolvedPlugin.from_dict(_as_plugin_mapping(entry, source_label))
+            label = f"{source_label}: plugin {plugin.name}"
+
+            # An explicit map decides the whole plugin: no manifest is consulted
+            # for either kind, and the plugin contributes no hooks. Its root is
+            # the source, which is all ${CLAUDE_PLUGIN_ROOT} has to point at.
+            manifest: Mapping[str, Any] | None = None
+            plugin_root = source_root
+            if not plugin.explicit_mode:
+                located = _find_manifest(source_root, is_repo, plugin.name, label)
+                if located is None:
+                    msg = (
+                        f"{label}: no manifest found under {source_root} and no "
+                        f"explicit skills/agents map to fall back on"
+                    )
+                    raise ValueError(msg)
+                plugin_root, manifest = located
+
+            for kind in RESOURCE_KINDS:
+                explicit = plugin.explicit[kind]
+                if manifest is None:
+                    found = (
+                        []
+                        if explicit is None
+                        else EXPLICIT_RESOLVERS[kind](source_root, explicit, label)
+                    )
+                else:
+                    found = _apply_selection(
+                        DISCOVERERS[kind](plugin_root, plugin.name, manifest, label),
+                        plugin.include[kind],
+                        plugin.exclude[kind],
+                        label,
+                        kind,
+                    )
+
+                resources.by_kind[kind].extend(
+                    ResourceInfo(
+                        name=name,
+                        source=str(path),
+                        origin=origin,
+                        plugin_root=str(plugin_root),
+                        target_agents=list(plugin.target_agents),
+                        exclude_data=list(plugin.exclude_data),
+                    )
+                    for name, path in found
+                )
+
+            if manifest is None or not plugin.hooks:
+                continue
+            hooks = _read_plugin_hooks(plugin_root, manifest, label)
+            if hooks is not None:
+                hooks = hooks.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_root))
+                hooks = hooks.replace("$CLAUDE_PLUGIN_ROOT", str(plugin_root))
+                resources.add_hooks(
+                    HookFragment(
+                        name=plugin.name,
+                        content=hooks,
+                        plugin_root=str(plugin_root),
+                    )
+                )
+
+    return resources.to_dict()
+
+
+def _read_plugin_hooks(
+    plugin_path: Path, manifest: Mapping[str, Any], label: str
+) -> str | None:
+    """Read hook definitions from the manifest already resolved for this plugin.
+
+    The manifest's "hooks" key takes precedence (mirrors Claude Code behavior).
+    Falls back to hooks/hooks.json only when the manifest has no hooks field.
+    """
+    declared: Any = manifest.get("hooks")
+    match declared:
+        case dict():
+            return json.dumps(cast(dict[str, Any], declared))
+        case str():
+            return _read_hooks_file(
+                _join_within(plugin_path, declared, label, "hooks path")
+            )
+        case list():
+            merged: dict[str, Any] = {}
+            for path_ref in cast(list[Any], declared):
+                if not isinstance(path_ref, str):
                     continue
-
-                config = resolved.config
-                plugin_path = resolved.plugin_path
-                assert config is not None
-                assert plugin_path is not None
-
-                # For root-level skills, use plugin name (or repo name as fallback)
-                root_skill_name = config.name or repo.split("/")[-1]
-
-                # Discover and add skills
-                discovered_skills = _discover_skills_in_plugin(
-                    plugin_path, config.skills_paths, root_skill_name
+                content = _read_hooks_file(
+                    _join_within(plugin_path, path_ref, label, "hooks path")
                 )
-                for skill_name in discovered_skills:
-                    if skill_name in resolved.exclude_skills:
+                if content:
+                    try:
+                        fragment: dict[str, Any] = json.loads(content)
+                        merged.update(fragment)
+                    except json.JSONDecodeError:
                         continue
-                    source_path = _get_skill_source_path(
-                        plugin_path, skill_name, config.skills_paths, root_skill_name
-                    )
-                    if source_path:
-                        deploy_name, display_name = _prefixed_names(
-                            config.name, skill_name, resolved.prefix_override
-                        )
-                        skills.append(
-                            ResourceInfo(
-                                name=deploy_name,
-                                source=source_path,
-                                origin=repo,
-                                display_name=display_name,
-                                plugin_root=str(plugin_path),
-                                target_agents=resolved.target_agents,
-                                exclude_data=resolved.exclude_data,
-                            )
-                        )
+            return json.dumps(merged) if merged else None
+        case _:
+            return _read_hooks_file(plugin_path / "hooks" / "hooks.json")
 
-                # Discover and add agents
-                discovered_agents = _discover_agents_in_plugin(
-                    plugin_path, config.agents_paths
-                )
-                for agent_name in discovered_agents:
-                    if agent_name in resolved.exclude_agents:
-                        continue
-                    source_path = _get_agent_source_path(
-                        plugin_path, agent_name, config.agents_paths
-                    )
-                    if source_path:
-                        deploy_name, display_name = _prefixed_names(
-                            config.name, agent_name, resolved.prefix_override
-                        )
-                        agents.append(
-                            ResourceInfo(
-                                name=deploy_name,
-                                source=source_path,
-                                origin=repo,
-                                display_name=display_name,
-                                plugin_root=str(plugin_path),
-                                target_agents=resolved.target_agents,
-                                exclude_data=resolved.exclude_data,
-                            )
-                        )
 
-        elif "local" in source:
-            # Local source
-            local_path = source["local"]
-            plugins = source.get("plugins", [])
-
-            for plugin_spec in plugins:
-                resolved = _resolve_plugin_from_local(local_path, plugin_spec)
-                if not resolved.is_valid:
-                    continue
-
-                config = resolved.config
-                plugin_path = resolved.plugin_path
-                assert config is not None
-                assert plugin_path is not None
-
-                # Discover and add skills
-                discovered_skills = _discover_skills_in_plugin(
-                    plugin_path, config.skills_paths, config.name
-                )
-                for skill_name in discovered_skills:
-                    if skill_name in resolved.exclude_skills:
-                        continue
-                    source_path = _get_skill_source_path(
-                        plugin_path, skill_name, config.skills_paths, config.name
-                    )
-                    if source_path:
-                        # Local (in-repo) bundles are not plugin-prefixed: their
-                        # names are hand-managed here, so bare names are kept for
-                        # cleaner invocation. Only external repos get prefixed.
-                        skills.append(
-                            ResourceInfo(
-                                name=skill_name,
-                                source=source_path,
-                                origin="local",
-                                display_name=skill_name,
-                                target_agents=resolved.target_agents,
-                                exclude_data=resolved.exclude_data,
-                            )
-                        )
-
-                # Discover and add agents
-                discovered_agents = _discover_agents_in_plugin(
-                    plugin_path, config.agents_paths
-                )
-                for agent_name in discovered_agents:
-                    if agent_name in resolved.exclude_agents:
-                        continue
-                    source_path = _get_agent_source_path(
-                        plugin_path, agent_name, config.agents_paths
-                    )
-                    if source_path:
-                        # Local bundles are not prefixed (see skills above).
-                        agents.append(
-                            ResourceInfo(
-                                name=agent_name,
-                                source=source_path,
-                                origin="local",
-                                display_name=agent_name,
-                                target_agents=resolved.target_agents,
-                                exclude_data=resolved.exclude_data,
-                            )
-                        )
-
-    return PluginResources(skills=skills, agents=agents).to_dict()
+def _read_hooks_file(path: Path) -> str | None:
+    """Read a hooks file, resolving relative paths."""
+    resolved = path.resolve()
+    if resolved.exists():
+        try:
+            return resolved.read_text()
+        except OSError:
+            pass
+    return None
 
 
 def agent_harness_repo_to_cache_name(repo: str) -> str:
     """Public filter: normalize a repo identifier to a filesystem-safe cache name."""
     return _repo_to_cache_name(repo)
-
-
-def agent_harness_resolve_sources(
-    catalogue: list[SourceConfig],
-    profile: str,
-    extra_sources: list[SourceConfig] | None = None,
-) -> list[SourceConfig]:
-    """Resolve the canonical source catalogue for one host profile."""
-    resolved_sources: list[SourceConfig] = []
-
-    for source in [*catalogue, *(extra_sources or [])]:
-        included_on = source.get("included_on", [])
-        if (included_on and profile not in included_on) or profile in source.get(
-            "excluded_on", []
-        ):
-            continue
-
-        resolved_source = deepcopy(source)
-        resolved_source.pop("included_on", None)
-        resolved_source.pop("excluded_on", None)
-        resolved_plugins: list[str | dict[str, Any]] = []
-
-        for plugin in resolved_source.get("plugins", []):
-            if isinstance(plugin, str):
-                resolved_plugins.append(plugin)
-                continue
-            included_on = plugin.get("included_on", [])
-            if (included_on and profile not in included_on) or profile in plugin.get(
-                "excluded_on", []
-            ):
-                continue
-
-            resolved_plugin = deepcopy(plugin)
-            resolved_plugin.pop("included_on", None)
-            resolved_plugin.pop("excluded_on", None)
-            exclusions_by_profile = resolved_plugin.pop("exclude_skills_by_profile", {})
-            if profile in exclusions_by_profile:
-                base_exclusions = resolved_plugin.get("exclude_skills", [])
-                profile_exclusions = exclusions_by_profile[profile]
-                resolved_plugin["exclude_skills"] = list(
-                    dict.fromkeys([*base_exclusions, *profile_exclusions])
-                )
-            resolved_plugins.append(resolved_plugin)
-
-        resolved_source["plugins"] = resolved_plugins
-        resolved_sources.append(resolved_source)
-
-    return resolved_sources
-
-
-def agent_harness_get_git_sources(sources: list[SourceConfig]) -> list[dict[str, Any]]:
-    """Extract only git sources from the sources list.
-
-    Args:
-        sources: List of source configs
-
-    Returns:
-        List of git source configs as dicts (Ansible can't serialize dataclasses)
-    """
-    return [GitSourceConfig.from_dict(s).to_dict() for s in sources if "repo" in s]
 
 
 def _transform_resource_name(name: str, name_transform: str) -> str:
@@ -1090,130 +1012,6 @@ def agent_harness_transform_skill(
     )
 
 
-@dataclass
-class HookFragment:
-    """A resolved hook fragment ready for deployment."""
-
-    name: str
-    content: str
-
-    def to_dict(self) -> dict[str, str]:
-        return {"name": self.name, "content": self.content}
-
-
-def _resolve_hook_eligible_plugins(
-    source: SourceConfig, cache_dir: str
-) -> list[tuple[str, Path]]:
-    """Get (plugin_name, plugin_path) pairs for plugins with hooks enabled."""
-    results: list[tuple[str, Path]] = []
-
-    if "repo" in source:
-        repo = source["repo"]
-        repo_cache_name = _repo_to_cache_name(repo)
-        repo_path = Path(cache_dir) / repo_cache_name
-
-        for plugin_spec in source.get("plugins", []):
-            resolved = _resolve_plugin_from_repo(repo_path, plugin_spec)
-            if (
-                resolved.is_valid
-                and resolved.include_hooks
-                and resolved.config
-                and resolved.plugin_path
-            ):
-                results.append((resolved.config.name, resolved.plugin_path))
-
-    elif "local" in source:
-        local_path = source["local"]
-        for plugin_spec in source.get("plugins", []):
-            resolved = _resolve_plugin_from_local(local_path, plugin_spec)
-            if (
-                resolved.is_valid
-                and resolved.include_hooks
-                and resolved.config
-                and resolved.plugin_path
-            ):
-                results.append((resolved.config.name, resolved.plugin_path))
-
-    return results
-
-
-def agent_harness_find_plugin_hooks(
-    sources: list[SourceConfig], cache_dir: str
-) -> list[dict[str, str]]:
-    """Find hook definitions in plugins and return resolved fragments.
-
-    Checks two locations per plugin (first match wins):
-    1. hooks/hooks.json — standalone hook file
-    2. .claude-plugin/plugin.json "hooks" key — inline hooks
-
-    Replaces ${CLAUDE_PLUGIN_ROOT} with the absolute plugin path.
-
-    Returns list of dicts with 'name' and 'content' keys.
-    """
-    fragments: list[HookFragment] = []
-
-    for source in sources:
-        for plugin_name, plugin_path in _resolve_hook_eligible_plugins(
-            source, cache_dir
-        ):
-            content = _read_plugin_hooks(plugin_path)
-            if content is None:
-                continue
-
-            content = content.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_path))
-            content = content.replace("$CLAUDE_PLUGIN_ROOT", str(plugin_path))
-            fragments.append(HookFragment(name=plugin_name, content=content))
-
-    return [f.to_dict() for f in fragments]
-
-
-def _read_plugin_hooks(plugin_path: Path) -> str | None:
-    """Read hook definitions from a plugin.
-
-    plugin.json "hooks" key takes precedence (mirrors Claude Code behavior).
-    Falls back to hooks/hooks.json only when plugin.json has no hooks field.
-    """
-    plugin_json = plugin_path / ".claude-plugin" / "plugin.json"
-    if plugin_json.exists():
-        try:
-            data: dict[str, Any] = json.loads(plugin_json.read_text())
-        except OSError, json.JSONDecodeError:
-            data = {}
-        hooks = data.get("hooks")
-        match hooks:
-            case dict():
-                return json.dumps(hooks)
-            case str():
-                return _read_hooks_file(plugin_path / hooks)
-            case list():
-                merged: dict[str, Any] = {}
-                for path_ref in cast(list[Any], hooks):
-                    if isinstance(path_ref, str):
-                        content = _read_hooks_file(plugin_path / path_ref)
-                        if content:
-                            try:
-                                fragment: dict[str, Any] = json.loads(content)
-                                merged.update(fragment)
-                            except json.JSONDecodeError:
-                                continue
-                return json.dumps(merged) if merged else None
-            case _:
-                pass
-
-    return _read_hooks_file(plugin_path / "hooks" / "hooks.json")
-
-
-def _read_hooks_file(path: Path) -> str | None:
-    """Read a hooks file, resolving relative paths."""
-    resolved = path.resolve()
-    if resolved.exists():
-        try:
-            return resolved.read_text()
-        except OSError:
-            pass
-    return None
-
-
 class FilterModule:
     """Ansible filter plugin for agent harness."""
 
@@ -1221,10 +1019,8 @@ class FilterModule:
         return {
             "agent_harness_build_plugin_resources": agent_harness_build_plugin_resources,
             "agent_harness_resolve_sources": agent_harness_resolve_sources,
-            "agent_harness_get_git_sources": agent_harness_get_git_sources,
             "agent_harness_filter_resources": agent_harness_filter_resources,
             "agent_harness_transform_skill": agent_harness_transform_skill,
             "agent_harness_transform_skill_content": agent_harness_transform_skill_content,
             "agent_harness_repo_to_cache_name": agent_harness_repo_to_cache_name,
-            "agent_harness_find_plugin_hooks": agent_harness_find_plugin_hooks,
         }

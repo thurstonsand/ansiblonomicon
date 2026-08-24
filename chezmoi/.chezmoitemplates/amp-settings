@@ -1,9 +1,6 @@
-  "amp.experimental.dojoMode": true,
-  "amp.experimental.codeReviewSkill": true,
-  "amp.git.commit.ampThread.enabled": false,
-  "amp.git.commit.coauthor.enabled": false,
-  "amp.agent.deepReasoningEffort": "high",
-  "amp.tools.disable": [],
+  "amp.showCosts": false,
+  "amp.remoteThreadCreation.enabled": true,
+  "amp.skills.disableClaudeCodeSkills": true,
   "amp.keymap": {
     "permission-gate-toggle": "alt+a"
   }

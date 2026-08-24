@@ -99,7 +99,7 @@ def merge_harness_hooks(settings: dict[str, Any]) -> dict[str, Any]:
     for hook_file in hook_files:
         try:
             fragment = json.loads(hook_file.read_text())
-        except (json.JSONDecodeError, OSError):
+        except json.JSONDecodeError, OSError:
             continue
 
         fragment_hooks = fragment.get("hooks", {})
@@ -139,7 +139,7 @@ def main() -> None:
         try:
             existing = json.loads(TARGET.read_text())
             merged = preserve_key_order(merged, existing)
-        except (json.JSONDecodeError, OSError):
+        except json.JSONDecodeError, OSError:
             pass
 
     json.dump(merged, sys.stdout, indent=2)
