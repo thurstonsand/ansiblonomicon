@@ -20,6 +20,7 @@ def main() -> None:
     tool = doc.setdefault("tool", tomlkit.table())
     uv = tool.setdefault("uv", tomlkit.table())
     uv["environments"] = [WORK_ENVIRONMENT]
+    uv["required-environments"] = [WORK_ENVIRONMENT]
 
     with open(path, "w", encoding="utf-8") as handle:
         handle.write(tomlkit.dumps(doc))

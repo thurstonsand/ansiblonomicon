@@ -542,9 +542,10 @@ def _find_manifest(
 ) -> tuple[Path, dict[str, Any]] | None:
     """Locate a plugin's root directory and its Claude manifest."""
     if not is_repo:
-        plugin_path = _join_within(source_root, plugin_name, label, "plugin name")
-        plugin_json = _load_plugin_json(plugin_path)
-        return None if plugin_json is None else (plugin_path, plugin_json)
+        plugin_json = _load_plugin_json(source_root)
+        if plugin_json is not None and plugin_json.get("name") == plugin_name:
+            return source_root, plugin_json
+        return None
 
     if found := _find_in_marketplace(source_root, plugin_name, label):
         return found

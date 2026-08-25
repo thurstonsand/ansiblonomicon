@@ -5,6 +5,7 @@
     url: https://api.github.com/repos/earendil-works/pi/releases/latest
     return_content: true
   register: pi_release_latest
+  check_mode: false
   changed_when: false
 
 - name: Compute pi release tag
@@ -36,7 +37,9 @@
   register: pi_release_existing
 
 - name: Install pi release
-  when: not pi_release_existing.stat.exists
+  when:
+    - not pi_release_existing.stat.exists
+    - not ansible_check_mode
   block:
     - name: Ensure pi version directory exists
       ansible.builtin.file:

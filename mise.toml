@@ -412,7 +412,7 @@ git pull --rebase
 # Re-resolve the masked lock against Artifactory wheel-only, backing off any
 # release the mirror lacks a macOS-arm64 wheel for. See README.work.md.
 uv run --no-project --with tomlkit python scripts/work_lock_environment.py pyproject.toml
-uv lock --no-build
+uv lock --no-build --upgrade
 cp -f "$pyproject_bak" pyproject.toml
 uv sync --dev
 '''

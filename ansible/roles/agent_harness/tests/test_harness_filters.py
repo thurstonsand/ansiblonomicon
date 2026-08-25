@@ -255,7 +255,7 @@ def test_standalone_plugin_json_with_a_different_name_is_fatal(
 
 
 @pytest.mark.unit
-def test_local_plugin_resolves_under_the_source_root(
+def test_local_plugin_resolves_from_its_root(
     local_root: Path, cache_dir: Path, make_skill: MakeSkill, make_agent: MakeAgent
 ) -> None:
     plugin_root = write_manifest(local_root / "mine", {"name": "mine"})
@@ -263,7 +263,7 @@ def test_local_plugin_resolves_under_the_source_root(
     make_agent(plugin_root / "agents" / "helper.md")
 
     result = agent_harness_build_plugin_resources(
-        [local_source(local_root, [{"name": "mine"}])], str(cache_dir)
+        [local_source(plugin_root, [{"name": "mine"}])], str(cache_dir)
     )
 
     assert names(result["skills"]) == ["alpha"]
@@ -273,10 +273,11 @@ def test_local_plugin_resolves_under_the_source_root(
 
 
 @pytest.mark.unit
-def test_local_plugin_without_a_manifest_is_fatal(
+def test_local_source_cannot_point_at_a_parent_catalogue(
     local_root: Path, cache_dir: Path, make_skill: MakeSkill
 ) -> None:
-    make_skill(local_root / "mine" / "skills" / "alpha")
+    plugin_root = write_manifest(local_root / "mine", {"name": "mine"})
+    make_skill(plugin_root / "skills" / "alpha")
 
     with pytest.raises(ValueError, match=r"plugin mine: no manifest found"):
         agent_harness_build_plugin_resources(
@@ -593,11 +594,11 @@ def test_manifest_resource_paths_may_not_escape_the_plugin(
 def test_manifest_hook_paths_may_not_escape_the_plugin(
     local_root: Path, cache_dir: Path, escape: str
 ) -> None:
-    write_manifest(local_root / "mine", {"name": "mine", "hooks": escape})
+    plugin_root = write_manifest(local_root / "mine", {"name": "mine", "hooks": escape})
 
     with pytest.raises(ValueError, match=r"plugin mine: hooks path"):
         agent_harness_build_plugin_resources(
-            [local_source(local_root, [{"name": "mine"}])], str(cache_dir)
+            [local_source(plugin_root, [{"name": "mine"}])], str(cache_dir)
         )
 
 
@@ -605,13 +606,13 @@ def test_manifest_hook_paths_may_not_escape_the_plugin(
 def test_a_hook_path_in_a_list_may_not_escape_the_plugin(
     local_root: Path, cache_dir: Path
 ) -> None:
-    write_manifest(
+    plugin_root = write_manifest(
         local_root / "mine", {"name": "mine", "hooks": ["./hooks/a.json", "../b.json"]}
     )
 
     with pytest.raises(ValueError, match=r"plugin mine: hooks path"):
         agent_harness_build_plugin_resources(
-            [local_source(local_root, [{"name": "mine"}])], str(cache_dir)
+            [local_source(plugin_root, [{"name": "mine"}])], str(cache_dir)
         )
 
 
@@ -796,7 +797,7 @@ def test_sources_are_walked_in_order(
     result = agent_harness_build_plugin_resources(
         [
             repo_source([{"name": "remote"}]),
-            local_source(local_root, [{"name": "mine"}]),
+            local_source(plugin_root, [{"name": "mine"}]),
         ],
         str(cache_dir),
     )
@@ -854,7 +855,7 @@ def test_hooks_file_is_collected_with_plugin_root_resolved(
     )
 
     result = agent_harness_build_plugin_resources(
-        [local_source(local_root, [{"name": "mine"}])], str(cache_dir)
+        [local_source(plugin_root, [{"name": "mine"}])], str(cache_dir)
     )
 
     assert names(result["hooks"]) == ["mine"]
@@ -880,7 +881,7 @@ def test_inline_manifest_hooks_take_precedence_over_the_hooks_file(
     (hooks_dir / "hooks.json").write_text(json.dumps({"SessionStart": "standalone"}))
 
     result = agent_harness_build_plugin_resources(
-        [local_source(local_root, [{"name": "mine"}])], str(cache_dir)
+        [local_source(plugin_root, [{"name": "mine"}])], str(cache_dir)
     )
 
     assert "inline" in result["hooks"][0]["content"]
@@ -900,7 +901,7 @@ def test_manifest_hooks_path_reference_is_read(
     )
 
     result = agent_harness_build_plugin_resources(
-        [local_source(local_root, [{"name": "mine"}])], str(cache_dir)
+        [local_source(plugin_root, [{"name": "mine"}])], str(cache_dir)
     )
 
     assert "from-path" in result["hooks"][0]["content"]
@@ -918,7 +919,7 @@ def test_a_list_of_hook_files_is_merged(local_root: Path, cache_dir: Path) -> No
     (hooks_dir / "b.json").write_text(json.dumps({"WorktreeCreate": ["b"]}))
 
     result = agent_harness_build_plugin_resources(
-        [local_source(local_root, [{"name": "mine"}])], str(cache_dir)
+        [local_source(plugin_root, [{"name": "mine"}])], str(cache_dir)
     )
 
     merged = json.loads(result["hooks"][0]["content"])
@@ -929,10 +930,10 @@ def test_a_list_of_hook_files_is_merged(local_root: Path, cache_dir: Path) -> No
 def test_a_plugin_without_hooks_contributes_no_fragment(
     local_root: Path, cache_dir: Path
 ) -> None:
-    write_manifest(local_root / "mine", {"name": "mine"})
+    plugin_root = write_manifest(local_root / "mine", {"name": "mine"})
 
     result = agent_harness_build_plugin_resources(
-        [local_source(local_root, [{"name": "mine"}])], str(cache_dir)
+        [local_source(plugin_root, [{"name": "mine"}])], str(cache_dir)
     )
 
     assert result["hooks"] == []
@@ -999,7 +1000,7 @@ def test_marketplace_entry_hooks_win_over_plugin_json(
 def test_one_plugin_declared_twice_yields_a_single_fragment(
     local_root: Path, cache_dir: Path
 ) -> None:
-    write_manifest(
+    plugin_root = write_manifest(
         local_root / "mine",
         {"name": "mine", "hooks": {"SessionStart": [{"hooks": [{"command": "x"}]}]}},
     )
@@ -1007,7 +1008,7 @@ def test_one_plugin_declared_twice_yields_a_single_fragment(
     result = agent_harness_build_plugin_resources(
         [
             local_source(
-                local_root,
+                plugin_root,
                 [
                     {"name": "mine", "target_agents": ["pi"]},
                     {"name": "mine", "target_agents": ["claude"]},
@@ -1024,7 +1025,7 @@ def test_one_plugin_declared_twice_yields_a_single_fragment(
 def test_two_plugins_sharing_a_name_with_different_hooks_is_fatal(
     local_root: Path, repo_path: Path, cache_dir: Path
 ) -> None:
-    write_manifest(
+    plugin_root = write_manifest(
         local_root / "mine",
         {"name": "mine", "hooks": {"SessionStart": [{"hooks": [{"command": "x"}]}]}},
     )
@@ -1038,7 +1039,7 @@ def test_two_plugins_sharing_a_name_with_different_hooks_is_fatal(
     ):
         agent_harness_build_plugin_resources(
             [
-                local_source(local_root, [{"name": "mine"}]),
+                local_source(plugin_root, [{"name": "mine"}]),
                 repo_source([{"name": "mine"}]),
             ],
             str(cache_dir),
@@ -1054,7 +1055,7 @@ def test_hooks_false_opts_a_plugin_out(local_root: Path, cache_dir: Path) -> Non
     assert plugin_root.exists()
 
     result = agent_harness_build_plugin_resources(
-        [local_source(local_root, [{"name": "mine", "hooks": False}])], str(cache_dir)
+        [local_source(plugin_root, [{"name": "mine", "hooks": False}])], str(cache_dir)
     )
 
     assert result["hooks"] == []

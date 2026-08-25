@@ -8,7 +8,7 @@ All fields live in `chezmoi/.chezmoidata/local.toml`:
 
 | Field                                | Consumed by                                              |
 | ------------------------------------ | -------------------------------------------------------- |
-| `email` / `signingKey`               | `dot_config/git/allowed_signers.tmpl`                    |
+| `workEmail` / `workSigningKey`       | Git and Jujutsu identity templates                       |
 | `[[scm]]`                            | git / SCM templates, `nvim` gitbrowse host URLs          |
 | `goLocalImports` / `goplsBuildFlags` | Go tooling templates                                     |
 | `[work_models]`                      | pi models/settings, Claude Code overlay                  |
@@ -28,7 +28,7 @@ All fields live in `chezmoi/.chezmoidata/local.toml`:
 | File                                                           | Purpose                                                        |
 | -------------------------------------------------------------- | -------------------------------------------------------------- |
 | `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json` | Work-machine overrides merged onto base during `chezmoi apply` |
-| `chezmoi/.chezmoitemplates/local/resolve-overlay.py`           | Script that merges overlay with base                           |
+| `chezmoi/.chezmoitemplates/resolve-overlay.py`                 | Script that merges overlay with base                           |
 | `chezmoi/dot_claude/hooks/local/`                              | Work-only hook scripts deployed to `~/.claude/hooks/local/`    |
 
 ### Merge Semantics
@@ -85,6 +85,7 @@ agent_harness_sources_extra:
   - repo: https://scm.internal/scm/proj/plugin-marketplace.git
     plugins:
       - name: my-plugin
+        include_skills: []
       - name: another-plugin
         skills:
           deployed-name: skills/some-skill
@@ -131,9 +132,9 @@ Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `lo
 
 #### Mirror lag and wheel-only resolution
 
-The work `mise run pull` re-resolves the masked lock with `uv lock --no-build`, not a plain `uv sync`. This allows for differences in sources across machines, including mixups with source dist and wheels for different os's. A version-only resolve would pin that release and then fail trying to build it from source. `--no-build` forbids the source fallback, so resolution backs off to the newest version the mirror serves as an installable wheel.
+The work `mise run pull` re-resolves the masked lock with `uv lock --no-build --upgrade`, not a plain `uv sync`. This allows for differences in sources across machines, including mixups with source dist and wheels for different os's. A version-only resolve would pin that release and then fail trying to build it from source. `--no-build` forbids the source fallback, while `--upgrade` prevents the canonical lock from keeping an incompatible release pinned, so resolution backs off to the newest version the mirror serves as an installable wheel.
 
-This only bites when the lock targets a single platform — with the canonical multi-platform lock, another platform's wheel keeps the unbuildable version pinned. So `mise run pull` transiently injects a single-platform `[tool.uv] environments` restriction, runs the wheel-only resolve, then restores `pyproject.toml` from a backup before syncing. The restriction is never committed, so no mirror version details leak to git, and the canonical `pyproject.toml` stays platform-agnostic.
+This only bites when the lock targets a single platform — with the canonical multi-platform lock, another platform's wheel keeps the unbuildable version pinned. So `mise run pull` transiently injects single-platform `[tool.uv] environments` and `required-environments` restrictions, runs the wheel-only resolve, then restores `pyproject.toml` from a backup before syncing. The restrictions are never committed, so no mirror version details leak to git, and the canonical `pyproject.toml` stays platform-agnostic.
 
 The mechanism is generic (no per-package pins, no version numbers anywhere) and self-heals: once the mirror carries the macOS-arm64 wheel, the work lock picks up the newer version automatically. A personal machine resolves the same `pyproject.toml` against `pypi.org`, where the wheel exists, so it floats to the latest. "Latest" thus differs per machine by what each index actually serves.
 
@@ -143,8 +144,8 @@ The pi extensions `package-lock.json` (`chezmoi/private_dot_pi/agent/extensions/
 
 ## Ansible Local Tasks
 
-| File                           | Purpose                                                                                             |
-| ------------------------------ | --------------------------------------------------------------------------------------------------- |
+| File                           | Purpose                                                                                              |
+| ------------------------------ | ---------------------------------------------------------------------------------------------------- |
 | `ansible/tasks/work.local.yml` | Machine-local Ansible tasks included by `work.yml` (gitignored, runs via `mise laptop --tags local`) |
 
 The work playbook conditionally includes this file if it exists. Place any work-specific automation here that shouldn't live in git.

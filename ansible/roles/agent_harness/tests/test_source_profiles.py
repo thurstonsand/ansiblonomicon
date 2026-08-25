@@ -402,7 +402,7 @@ def test_real_work_profile_excludes_claude_retitle() -> None:
         for source in agent_harness_resolve_sources(
             config["agent_harness_sources"], "work", real_profiles(), HARNESSES
         )
-        if "local" in source
+        if any(plugin["name"] == "claude" for plugin in source["plugins"])
     )
 
     assert "retitle" in plugin_named(local, "claude")["exclude_skills"]
@@ -413,20 +413,20 @@ def test_real_config_scopes_work_plugin_to_work_profile() -> None:
     sources = config["agent_harness_sources"]
 
     def local_plugin_names(profile: str) -> set[str]:
-        local = next(
-            source
+        return {
+            plugin["name"]
             for source in agent_harness_resolve_sources(
                 sources, profile, real_profiles(), HARNESSES
             )
             if "local" in source
-        )
-        return {plugin["name"] for plugin in local["plugins"]}
+            for plugin in source["plugins"]
+        }
 
     assert "work" in local_plugin_names("work")
     assert "work" not in local_plugin_names("personal")
 
 
-def test_real_work_profile_is_a_strict_subset_of_personal() -> None:
+def test_real_work_profile_only_adds_its_machine_local_source() -> None:
     config = real_config()
     sources = config["agent_harness_sources"]
 
@@ -438,4 +438,5 @@ def test_real_work_profile_is_a_strict_subset_of_personal() -> None:
             )
         }
 
-    assert names("work") <= names("personal")
+    work_only = "{{ playbook_dir }}/../../agents/work"
+    assert names("work") - {work_only} <= names("personal")

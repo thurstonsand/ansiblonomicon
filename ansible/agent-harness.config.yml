@@ -60,11 +60,14 @@ agent_harness_sources:
         skills:
           nurb: skills/nurb
 
-  # Local plugins: all manifest-resolved via their plugin.json.
-  - local: "{{ playbook_dir }}/../../agents"
+  # Local plugins: all manifest-resolved via their plugin.json
+  - local: "{{ playbook_dir }}/../../agents/pi"
     plugins:
       - name: pi
         target_agents: [pi]
+
+  - local: "{{ playbook_dir }}/../../agents/project-management"
+    plugins:
       - name: project-management
         target_agents: [pi]
         exclude_skills:
@@ -76,16 +79,28 @@ agent_harness_sources:
           "*": [claude, codex, opencode]
         exclude_skills:
           work: [tui-screenshot]
+
+  - local: "{{ playbook_dir }}/../../agents/claude"
+    plugins:
       - name: claude
         target_agents: [claude]
         exclude_skills:
           work: [retitle]
+
+  - local: "{{ playbook_dir }}/../../agents/codex"
+    plugins:
       - name: codex
         target_agents: [codex]
+
+  - local: "{{ playbook_dir }}/../../agents/work"
+    included_on: [work]
+    plugins:
       - name: work
-        included_on: [work]
+
+  - local: "{{ playbook_dir }}/../../agents/homelab"
+    excluded_on: [work] # no NAS reachable from the work machine
+    plugins:
       - name: homelab
-        excluded_on: [work] # no NAS reachable from the work machine
         # amp is named so truenas-docker-ops stays a machine-local Amp skill
         # despite amp being explicit-only; in an orb it makes no sense, hence
         # the amp_publish exclusion.
