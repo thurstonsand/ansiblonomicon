@@ -28,7 +28,6 @@ apt_packages:
   - gh
   - golang-go
   - jq
-  - just
   - lazygit
   - libasound2-dev
   - openssh-client

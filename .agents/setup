@@ -26,12 +26,12 @@ fi
 
 step "Install toolchains"
 mise use --global --yes \
+  python@3.14 \
   node@lts \
   go@1.26 \
   golangci-lint@latest \
   1password-cli@latest \
-  direnv@latest \
-  just@latest \
+  hk@latest \
   opentofu@latest \
   stylua@latest \
   uv@latest
@@ -41,7 +41,7 @@ if ! command -v wrangler >/dev/null 2>&1 || [[ "$(wrangler --version)" != 4.* ]]
 fi
 
 step "Sync Python dependencies"
-UV_PYTHON_PREFERENCE=only-managed uv sync --locked --dev
+UV_PYTHON="$(mise which python)" uv sync --locked --dev
 
 step "Sync TypeScript dependencies"
 mapfile -t package_locks < <(

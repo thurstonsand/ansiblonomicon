@@ -31,8 +31,8 @@ Stacks are deployed via Ansible, not manually:
 
 ```bash
 # From ansiblonomicon repo
-poe truenas           # Full playbook
-poe truenas -t stacks # Just stacks
+mise truenas           # Full playbook
+mise truenas -t stacks # Just stacks
 ```
 
 but you can run ad-hoc commands against the docker containers/compose files on the truenas host. Changes will not be preserved unless they are made to the ansiblonomicon repo.

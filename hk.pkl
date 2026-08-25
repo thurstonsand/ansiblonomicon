@@ -1,0 +1,156 @@
+amends "package://github.com/jdx/hk/releases/download/v1.56.1/hk@1.56.1#/Config.pkl"
+
+import "package://github.com/jdx/hk/releases/download/v1.56.1/hk@1.56.1#/Builtins.pkl"
+
+// The normalizer's whole job is a path transformation, so its tests assert on the
+// paths it would hand ansible-lint rather than on a verdict that costs 1.4s a row.
+// No tmpdir: a dry run writes nothing worth isolating, and a sandbox cwd would put
+// the test somewhere ./scripts does not resolve from.
+local function normalizes(paths: List<String>, lintables: String): StepTest = new StepTest {
+  files = paths
+  env { ["ANSIBLE_LINT_STAGED_DRY_RUN"] = "1" }
+  tmpdir = false
+  expect { stdout = lintables }
+}
+
+// Unlike wt and ghosttykit, no step here dispatches into `mise run check`. A step
+// with no glob always runs, and this repo's full graph is 27.3s, so the sibling
+// shape would have doubled the commit cost instead of cutting it. Every step below
+// is glob'd, and `check` never mutates: the mutating form lives in `fix`. Every step
+// with a `fix` leaves `stage` unset, which hk reads as that step's own glob; naming
+// the same paths twice only invites the two to drift apart.
+local linters = new Mapping<String, Step> {
+  ["ansible"] {
+    glob = List("ansible/**/*.yml", "ansible/**/*.yaml")
+    // Structured argv rather than a shell string: role directories can contain
+    // spaces, and hk expands an exact `{{files}}` to one argument per file.
+    check = new Command {
+      argv = List("./scripts/ansible-lint-staged.sh", "{{files}}")
+    }
+    tests {
+      ["role task file collapses to the role"] =
+        normalizes(List("ansible/roles/foo/tasks/main.yml"), "roles/foo\n")
+      ["role meta file collapses to the role"] =
+        normalizes(List("ansible/roles/foo/meta/main.yml"), "roles/foo\n")
+      ["playbook passes through"] =
+        normalizes(List("ansible/playbooks/truenas.yml"), "playbooks/truenas.yml\n")
+      ["group_vars passes through"] =
+        normalizes(
+          List("ansible/inventory/control/group_vars/all.yml"),
+          "inventory/control/group_vars/all.yml\n"
+        )
+      // The playbook line following immediately is what proves the role appears
+      // once: a substring assertion cannot count on its own.
+      ["two files in one role dedupe"] =
+        normalizes(
+          List(
+            "ansible/roles/foo/tasks/main.yml",
+            "ansible/roles/foo/meta/main.yml",
+            "ansible/playbooks/truenas.yml"
+          ),
+          "roles/foo\nplaybooks/truenas.yml\n"
+        )
+      ["a role name with a space survives"] =
+        normalizes(List("ansible/roles/my role/tasks/main.yml"), "roles/my role\n")
+      ["a path outside ansible/ is refused"] {
+        files = List("pyproject.toml")
+        env { ["ANSIBLE_LINT_STAGED_DRY_RUN"] = "1" }
+        tmpdir = false
+        expect {
+          code = 2
+          stderr = "is not under ansible/"
+        }
+      }
+    }
+  }
+
+  // `ruff check --force-exclude {{files}}`, then `--fix` only if that fails.
+  // `--unsafe-fixes` stays in the manual `fix` task, where a human reads the diff.
+  ["ruff-check"] = (Builtins.ruff) {}
+  ["ruff-format"] = (Builtins.ruff_format) {}
+
+  // stylua resolves stylua.toml from its own cwd, and this repo's lives beside
+  // the Neovim config rather than at the root.
+  ["stylua"] {
+    glob = "**/*.lua"
+    workspace_indicator = "stylua.toml"
+    check = "cd {{workspace}} && stylua --check {{workspace_files}}"
+    fix = "cd {{workspace}} && stylua {{workspace_files}}"
+  }
+
+  // No glob: basedpyright reads pyproject.toml and judges the project as a whole,
+  // so a staged file list would not narrow the work anyway.
+  ["basedpyright"] {
+    check = "basedpyright"
+  }
+
+  ["pi"] {
+    glob = List(
+      "chezmoi/private_dot_pi/agent/extensions/**/*.ts",
+      "chezmoi/private_dot_pi/agent/extensions/**/*.json",
+      "chezmoi/private_dot_pi/agent/permissions/**/*.ts",
+      "chezmoi/private_dot_pi/agent/permissions/**/*.json"
+    )
+    exclude = "**/node_modules/**"
+    // The lint scripts discover their own packages and lint each in full; they
+    // take a mode, not a file list.
+    check = "./scripts/pi-lint.sh"
+    fix = "./scripts/pi-lint.sh --format"
+  }
+
+  ["amp"] {
+    glob = List(
+      "chezmoi/dot_config/amp/plugins/**/*.ts",
+      "chezmoi/dot_config/amp/plugins/**/*.json"
+    )
+    exclude = "**/node_modules/**"
+    // amp-lint.sh writes by default; --check is the non-mutating form.
+    check = "./scripts/amp-lint.sh --check"
+    fix = "./scripts/amp-lint.sh --format"
+  }
+
+  ["session-recovery"] {
+    glob = List(
+      "chezmoi/dot_local/lib/session-recovery/**/*.ts",
+      "chezmoi/dot_local/lib/session-recovery/**/*.json",
+      "chezmoi/dot_claude/scripts/session-recovery/**/*.ts",
+      "chezmoi/dot_claude/scripts/session-recovery/**/*.json"
+    )
+    exclude = "**/node_modules/**"
+    check = "./scripts/session-recovery-lint.sh"
+    fix = "./scripts/session-recovery-lint.sh --format"
+  }
+
+  // Both Go subprojects carry a go.mod, so workspace_indicator fans these out per
+  // project without naming either path.
+  ["go-fmt"] = (Builtins.go_fmt) {}
+  ["go-lint"] = (Builtins.golangci_lint) {}
+  ["go-test"] {
+    glob = "**/*.go"
+    workspace_indicator = "go.mod"
+    check = "cd {{workspace}} && go test ./..."
+  }
+}
+
+hooks {
+  ["pre-commit"] {
+    fix = true
+    // Staged versus unstaged is the review ledger here, and the fixing steps
+    // stage what they rewrite. Without a stash, ruff-format reformats a file
+    // whose unstaged hunks nobody has read yet and stages the whole thing.
+    // "git" rather than "patch-file" because as of 1.56.1 they are the same code
+    // path — StashMethod::PatchFile is declared and never matched, and git.rs
+    // says "removed patch-file custom path for now". Naming the mechanism hk
+    // actually runs means an upgrade that reinstates the patch path cannot
+    // change what happens here without this line changing too.
+    stash = "git"
+    steps = linters
+  }
+  ["check"] {
+    steps = linters
+  }
+  ["fix"] {
+    fix = true
+    steps = linters
+  }
+}

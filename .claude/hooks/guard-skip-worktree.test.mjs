@@ -38,7 +38,7 @@ const cases = [
 
   // Tier 2: ask — git commands mentioned in string content
   [
-    `cat > /tmp/msg.txt << 'EOF'\nuse poe pull instead of git pull\nEOF\ngit commit -F /tmp/msg.txt`,
+    `cat > /tmp/msg.txt << 'EOF'\nuse mise run pull instead of git pull\nEOF\ngit commit -F /tmp/msg.txt`,
     "ask",
     "pass",
     "git pull inside heredoc body",
@@ -65,7 +65,7 @@ const cases = [
   ["git push origin main", "pass", "pass", "git push"],
   ["git add .", "pass", "pass", "git add"],
   ["git commit -m 'test'", "pass", "pass", "git commit"],
-  ["uv run poe pull", "pass", "pass", "poe pull (safe alternative)"],
+  ["mise run pull", "pass", "pass", "mise run pull (safe alternative)"],
 
   // Non-Bash tool
   [

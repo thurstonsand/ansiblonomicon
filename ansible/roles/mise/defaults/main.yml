@@ -1,0 +1,5 @@
+---
+mise_upgrade_interval_seconds: 86400
+mise_cache_dir: "{{ ansible_facts['env']['HOME'] }}/.cache/ansible-mise"
+mise_binary: "{{ ansible_facts['env']['HOME'] }}/.local/bin/mise"
+mise_installer_url: https://mise.run

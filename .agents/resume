@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+# The enter hook never fires here, so trust and bootstrap are invoked directly.
+mise trust --quiet
+
 if [[ -n "${OP_SERVICE_ACCOUNT_TOKEN:-}" ]]; then
-  direnv allow .
-  uv run scripts/init-secrets.py
+  mise run bootstrap
 fi

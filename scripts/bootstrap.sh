@@ -88,6 +88,29 @@ else
     echo "==> chezmoi already installed"
 fi
 
+# Install mise (provides this repo's toolchain, venv, and environment)
+# The official installer, not a package manager: package-managed mise refuses
+# `mise self-update`, which is how the language_tools role keeps it current.
+if ! command -v mise &>/dev/null; then
+    echo "==> Installing mise..."
+    curl -fsSL https://mise.run | sh
+    export PATH="$HOME/.local/bin:$PATH"
+else
+    echo "==> mise already installed"
+fi
+
+# Install uv (host tool: mise's bootstrap task syncs .venv with it)
+if ! command -v uv &>/dev/null; then
+    echo "==> Installing uv..."
+    if [[ "$PLATFORM" == "darwin" ]]; then
+        brew install uv
+    elif [[ "$PLATFORM" == "archlinux" ]]; then
+        sudo pacman -S --noconfirm uv
+    fi
+else
+    echo "==> uv already installed"
+fi
+
 # Install 1Password CLI (required for secrets in Ansible and Chezmoi)
 if ! command -v op &>/dev/null; then
     echo "==> Installing 1Password CLI..."
@@ -131,7 +154,9 @@ fi
 
 echo "==> Bootstrap complete!"
 echo ""
-echo "Next step: run the appropriate playbook, e.g.:"
-echo "    uv run poe laptop"
-echo "    uv run poe truenas"
-echo "    uv run poe openclaw"
+echo "Next step: let mise build the environment, then open a new shell:"
+echo "    mise trust && mise run bootstrap"
+echo ""
+echo "Then run the appropriate playbook, e.g.:"
+echo "    mise laptop"
+echo "    mise truenas"

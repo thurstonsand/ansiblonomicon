@@ -1,6 +1,5 @@
 ---
 # OpenClaw (Debian VM) configuration playbook
-# Run locally on the VM or remotely over SSH with: uv run poe openclaw
 
 - name: Configure openclaw
   hosts: >-

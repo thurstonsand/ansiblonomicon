@@ -193,7 +193,7 @@ def main() -> None:
         "# Cached secrets - DO NOT COMMIT",
         f"# Generated: {datetime.now(UTC).isoformat()}",
         "# Source: .secrets.jsonc",
-        "# Regenerate: poe init-secrets",
+        "# Regenerate: mise run secrets:init",
         "",
     ]
     for key, value in resolved_secrets.items():
@@ -211,7 +211,7 @@ def main() -> None:
         dev_vars_lines = [
             "# Cached secrets for local development - DO NOT COMMIT",
             f"# Generated: {datetime.now(UTC).isoformat()}",
-            "# Regenerate: poe init-secrets",
+            "# Regenerate: mise run secrets:init",
             "",
         ]
         for worker_var, env_var in var_mapping.items():

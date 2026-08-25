@@ -21,7 +21,7 @@ const ASK_PATTERNS = [
 ];
 
 const REASON =
-  "uv.lock has skip-worktree set. Use `poe pull` instead — it handles the mask/unmask cycle.";
+  "uv.lock has skip-worktree set. Use `mise run pull` instead — it handles the mask/unmask cycle.";
 
 function hasSkipWorktree() {
   try {

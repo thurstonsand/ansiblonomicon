@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Inject a transient single-platform ``[tool.uv]`` environments restriction.
 
-Used by ``poe pull`` on the work machine to force wheel-only lock resolution;
+Used by ``mise run pull`` on the work machine to force wheel-only lock resolution;
 see README.work.md.
 """
 

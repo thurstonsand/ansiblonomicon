@@ -3,23 +3,24 @@
 ## Setup
 
 ```sh
-./scripts/bootstrap.sh                  # new machine: Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI
+./scripts/bootstrap.sh                  # new machine: Xcode CLI, Homebrew, Ansible, chezmoi, mise, uv, 1Password CLI
 ./scripts/bootstrap.sh --ignore-certs   # behind a TLS-intercepting proxy
 ```
 
-`direnv allow` does the rest — `uv sync --dev`, venv activation, `ANSIBLE_CONFIG` and `SUDO_ASKPASS`, pre-commit install, Pi extension deps, and secret resolution. Sudo is answered from 1Password; no manual password entry.
+`mise trust` does the rest — `uv sync --dev`, venv activation, `ANSIBLE_CONFIG` and `SUDO_ASKPASS`, the commit hook, Pi extension deps, and secret resolution. Sudo is answered from 1Password; no manual password entry.
 
 ## Working here
 
-`ansible/` declares what a host should have. `chezmoi/` holds what lands in `$HOME`, delivered by the `chezmoi` role during reconciliation. Anything an agent consumes lives in `agents/`, anything I read lives in `docs/`, and `scripts/` holds what Poe shells out to.
+`ansible/` declares what a host should have. `chezmoi/` holds what lands in `$HOME`, delivered by the `chezmoi` role during reconciliation. Anything an agent consumes lives in `agents/`, anything I read lives in `docs/`, and `scripts/` holds what the mise tasks shell out to.
 
 Every host reconciles the same way:
 
 ```sh
-uv run poe <host>          # laptop | truenas | udmp | pod042
-uv run poe <host> --check  # dry run
-uv run poe <host> -t chezmoi
-uv run poe list-tags       # what this machine's playbook offers; takes an optional playbook name
+mise <host>                # laptop | truenas | udmp | pod042
+mise <host> --check        # dry run
+mise <host> -t chezmoi
+mise reconcile             # whichever of those this machine's hostname selects
+mise run reconcile:tags    # what this machine's playbook offers; takes an optional playbook name
 ```
 
 Gotcha: running this WILL change the host that the agent itself is running in, so be aware of what changes will actually apply.
@@ -27,9 +28,11 @@ Gotcha: running this WILL change the host that the agent itself is running in, s
 Verification:
 
 ```sh
-uv run poe lint            # everything
-uv run poe lint:{ansible,python,nvim,workers,pi,session-recovery,amp,cli-tools}
-uv run poe lint:pi -f      # -f applies formatting first, on any TypeScript subtask
+mise run check             # every non-mutating check
+mise run fix               # every formatter and autofixer
+mise run python:lint       # or ansible:lint, nvim:fmt:check, workers:typecheck,
+                           # pi:check, amp:check, session-recovery:check
+mise tasks                 # the full list; --all adds the two Go subprojects
 uv run pytest
 ```
 
@@ -40,7 +43,7 @@ uv run pytest
 
 ### Secrets
 
-Add an `op://` SecretRef to `.secrets.jsonc`, then `uv run poe init-secrets`. Consumers read it three ways: Ansible through `lookup('env', 'NAME')`, Terraform through a `TF_VAR_*` variable, chezmoi through an `op-secret` wrapper template in `.chezmoitemplates/`.
+Add an `op://` SecretRef to `.secrets.jsonc`, then `mise run secrets:init`. Consumers read it three ways: Ansible through `lookup('env', 'NAME')`, Terraform through a `TF_VAR_*` variable, chezmoi through an `op-secret` wrapper template in `.chezmoitemplates/`.
 
 ### Retiring managed state
 
@@ -51,20 +54,20 @@ Deleting a file from the repo does not remove it from a host. Declare the retire
 One playbook per machine, selected by hostname. `macos.yml` layers `darwin.config.yml` over the shared config; `work.yml` takes `work.config.yml` instead, plus an untracked `work.config.local.yml` for anything that cannot be committed.
 
 ```sh
-uv run poe laptop -t homebrew          # also: chezmoi, language-tools
+mise laptop -t homebrew    # also: chezmoi, language-tools
 ```
 
 Homebrew formulae, casks, and Mac App Store apps come from `ansible/Brewfile`, with `Brewfile.work` for the work machine. System preferences live in the `macos_defaults` role, grouped by domain so they can be applied piecemeal.
 
-The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json` files are masked with `skip-worktree` there. Use `uv run poe pull`, and be careful with `merge`, `rebase`, or `stash pop` on work. Confirm a version exists on the mirror before bumping a dependency.
+The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json` files are masked with `skip-worktree` there. Use `mise run pull`, and be careful with `merge`, `rebase`, or `stash pop` on work. Confirm a version exists on the mirror before bumping a dependency.
 
 ## TrueNAS
 
 One playbook, two declaration sites: stacks are templated under `ansible/stacks/` and rendered by the `docker_stack` role; everything else — apps, and all of `local.truenas` — is declared in `inventory/targets/group_vars/truenas.yml`.
 
 ```sh
-uv run poe list-tags truenas     # then reconcile just the stack you touched
-uv run poe truenas -t <tag>
+mise run reconcile:tags truenas  # then reconcile just the stack you touched
+mise truenas -t <tag>
 ```
 
 Compose files and container data live apart on disk — `/mnt/performance/docker/stacks/{stack}/compose.yaml` versus `/mnt/performance/docker/{stack}/{container}/config`. Host addresses, ports, domains, and the macvlan network tiers are all declared in `group_vars/truenas.yml` under `lan`; take values from there rather than hardcoding.
@@ -74,7 +77,7 @@ Compose files and container data live apart on disk — `/mnt/performance/docker
 The home router.
 
 ```sh
-uv run poe udmp -t nextdns            # or multicast-querier
+mise udmp -t nextdns       # or multicast-querier
 ```
 
 ## Agent tooling
@@ -87,16 +90,16 @@ Spans every host and every harness. Driven by `roles/agent_harness/vars/agents.y
 - **Pi** at `chezmoi/private_dot_pi/agent/`: extensions under `extensions/`, permission rules under `permissions/`, external packages referenced from `settings.json.tmpl`.
 - **Amp User Skills** are rendered from the Amp-targeted `agent_harness` sources by the `amp_publish` profile and published on git push. Overrideable by explicitly specifying `amp` as a target of a skill.
 - **Codex** at `chezmoi/.chezmoitemplates/codex-config.toml.tmpl` — the declared keys only. Codex and the ChatGPT app write into the file as well, so it's additive.
-- **Session recovery**: the shared core at `chezmoi/dot_local/lib/session-recovery/`, consumed by a Pi extension at `private_dot_pi/agent/extensions/session-recovery/` and a Claude script at `dot_claude/scripts/session-recovery/`. User config sits at `dot_config/session-recovery/`. Consumers carry no devDeps and borrow the core's toolchain, so lint it through `poe lint:session-recovery` rather than from inside a consumer.
+- **Session recovery**: the shared core at `chezmoi/dot_local/lib/session-recovery/`, consumed by a Pi extension at `private_dot_pi/agent/extensions/session-recovery/` and a Claude script at `dot_claude/scripts/session-recovery/`. User config sits at `dot_config/session-recovery/`. Consumers carry no devDeps and borrow the core's toolchain, so lint it through `mise run session-recovery:check` rather than from inside a consumer.
 
 ## Cloudflare
 
 Split by tool, not by resource. Terraform owns anything with lifecycle — DNS, tunnels, Zero Trust, R2, rulesets, zone settings — at `terraform/cloudflare/`, applied with OpenTofu. Wrangler owns deployable code: Workers at `wrangler/{aig,hooks}/` and Pages sites at `cloudflare-pages/`.
 
 ```sh
-uv run poe tfp             # plan; tfi and tfa for init and apply
-uv run poe wrangler        # both Workers; wrangler:aig and wrangler:hooks individually
-uv run poe pages-deploy
+mise run edge:plan         # plan; edge:init and edge:apply for init and apply
+mise run edge:deploy       # both Workers; edge:deploy:aig and :hooks individually
+mise run edge:deploy:tesla
 ```
 
 Worker deploys manage their own secrets through the deploy scripts; pass `--force-secret` to overwrite existing ones.

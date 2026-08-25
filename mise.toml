@@ -1,0 +1,435 @@
+monorepo_root = true
+
+[monorepo]
+config_roots = [
+  "ansible/roles/shp/files/shp",
+  "ansible/roles/sessions/files/sessions",
+]
+
+[tools]
+python = "3.14"
+node = "24"
+stylua = "2.5.2"
+opentofu = "1.12.6"
+hk = "1.56.1"
+
+[env]
+_.python.venv = { path = ".venv", create = true }
+# Pin uv to mise's interpreter. Left unpinned, uv downloads a Python of its own
+# and silently rebuilds .venv underneath mise; pointed at a path, it errors
+# instead of falling back to Homebrew's python, whose relinking on
+# `brew upgrade` breaks ansible-core's module loader mid-run.
+# Ask mise for the path it resolved rather than rebuilding it from xdg_data_home
+# and the version spec: that spelling ignores MISE_DATA_DIR and names the `3.14`
+# alias directory instead of the concrete install pyvenv.cfg records.
+UV_PYTHON = { value = "{{ tools.python.path }}/bin/python", tools = true }
+ANSIBLE_CONFIG = "{{config_root}}/ansible/ansible.cfg"
+SUDO_ASKPASS = "{{config_root}}/ansible/sudo-askpass.sh"
+_.file = ".env"
+
+[hooks]
+enter = "mise run --quiet bootstrap"
+
+[tasks.bootstrap]
+description = "Prepare the repo for a new shell"
+depends = ["bootstrap:*"]
+
+[tasks."bootstrap:deps"]
+description = "Sync Python dependencies into .venv"
+run = "uv sync --dev"
+# pyvenv.cfg is a source so that deleting .venv resyncs it: mise recreates the
+# venv during env resolution, and the fresh mtime invalidates the cache.
+sources = ["pyproject.toml", "uv.lock", ".venv/pyvenv.cfg"]
+outputs = { auto = true }
+quiet = true
+
+# No sources/outputs: mise's output globs do not match dotfiles, so naming .env
+# there leaves the task permanently stale. Two stats are cheaper than the wrong
+# answer, and this way a deleted .env comes back.
+[tasks."bootstrap:secrets"]
+description = "Regenerate the .env secrets cache from .secrets.jsonc"
+run = '''
+if [ ! -f .env ] || [ .secrets.jsonc -nt .env ]; then
+  uv run scripts/init-secrets.py
+  # mise resolves `_.file = ".env"` before it runs the enter hook, so the process
+  # that triggers this write never sees the values it just generated. An
+  # interactive shell self-heals at the next prompt; a one-shot reconcile does
+  # not, and reads empty credentials instead of failing.
+  echo "mise: wrote .env; these secrets are NOT in the current environment." >&2
+  echo "mise: start a new shell or rerun the command to pick them up." >&2
+fi
+'''
+quiet = true
+
+[tasks."bootstrap:pi-ext"]
+description = "Install pi extension dev dependencies for IDE type checking"
+run = '''
+cd chezmoi/private_dot_pi/agent/extensions
+# The work machine skips the install (npm rewrites package-lock to the internal
+# mirror), but still writes the stamp: a task that succeeds without producing its
+# declared output is stale forever and re-runs on every shell entry.
+if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
+  npm install --silent
+fi
+mkdir -p node_modules
+touch node_modules/mise-deps-stamp
+'''
+sources = [
+  "chezmoi/private_dot_pi/agent/extensions/package.json",
+  "chezmoi/private_dot_pi/agent/extensions/package-lock.json",
+]
+outputs = [
+  "chezmoi/private_dot_pi/agent/extensions/node_modules/mise-deps-stamp",
+]
+quiet = true
+
+# No sources/outputs: the task cache lives in mise's state dir, outside the repo,
+# so a delete-and-reclone at the same path would skip this entirely and never set
+# the skip-worktree bits. And a merge or rebase can clear those bits with no
+# mtime to show for it. Reapplying every entry costs about 8ms.
+[tasks."bootstrap:git"]
+description = "Install the hk commit hook and hide work-machine lockfile rewrites"
+run = '''
+# git 2.54+ config hooks: hk registers hook.hk-pre-commit.command in .git/config
+# instead of dropping a shim in .git/hooks. Nothing here pins core.hooksPath any
+# more, because a config hook cannot be shadowed by a global hooksPath — which is
+# the only thing the pin, and .envrc's unset-install-restore dance around it,
+# ever defended against.
+# --mise wraps the hook in `mise x`, so a commit from an editor or a GUI that
+# never activated mise still finds hk and the tools its steps shell out to.
+if [ -d .git ] && [ -z "$(git config --local --get hook.hk-pre-commit.command || true)" ]; then
+  hk install --mise
+fi
+
+if [ "$(hostname -s)" = "ML-DFC6YK6VJQ" ]; then
+  # Same three the `pull` task unmasks across a rebase; the two-entry list this
+  # inherited from .envrc left the permissions lockfile rewriting itself visibly.
+  for f in uv.lock \
+           chezmoi/private_dot_pi/agent/extensions/package-lock.json \
+           chezmoi/private_dot_pi/agent/permissions/package-lock.json; do
+    # `git ls-files -v` prefixes a skip-worktree entry with S. Ask before writing:
+    # the flag is git index state, not something a timestamp can stand in for.
+    case "$(git ls-files -v -- "$f")" in
+      S*) ;;
+      *) git update-index --skip-worktree "$f" 2>/dev/null ;;
+    esac
+  done
+fi
+'''
+quiet = true
+
+# ---------------------------------------------------------------------------
+# Reconcile: converge a machine against this repo
+# ---------------------------------------------------------------------------
+
+[tasks.reconcile]
+description = "Reconcile this machine, dispatching on hostname"
+dir = "ansible"
+usage = '''
+flag "-c --check" help="Dry-run mode (no changes made)"
+flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
+'''
+run = '''
+case "$(hostname -s)" in
+  ML-*)   set -- -i inventory/control/macos.ini playbooks/work.yml ;;
+  pod042) set -- -i inventory/targets/pod042.yml playbooks/pod042.yml ;;
+  *)      set -- -i inventory/control/macos.ini playbooks/macos.yml ;;
+esac
+ansible-playbook "$@" --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+'''
+
+[tasks."reconcile:laptop"]
+description = "Reconcile this laptop (auto-detects work vs personal)"
+alias = "laptop"
+dir = "ansible"
+usage = '''
+flag "-c --check" help="Dry-run mode (no changes made)"
+flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
+'''
+run = '''
+case "$(hostname -s)" in
+  ML-*) playbook=work.yml ;;
+  *)    playbook=macos.yml ;;
+esac
+ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+'''
+
+[tasks."reconcile:truenas"]
+description = "Reconcile truenas, the vault (storage, media, and its stacks)"
+alias = "truenas"
+dir = "ansible"
+usage = '''
+flag "-c --check" help="Dry-run mode (no changes made)"
+flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
+'''
+run = '''
+case "$(uname)" in
+  Darwin) ctrl=inventory/control/macos.ini ;;
+  *)      ctrl=inventory/control/linux.ini ;;
+esac
+ansible-playbook -i inventory/targets -i "$ctrl" playbooks/truenas.yml --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+'''
+
+[tasks."reconcile:udmp"]
+description = "Reconcile the UDM Pro router"
+alias = "udmp"
+dir = "ansible"
+usage = '''
+flag "-c --check" help="Dry-run mode (no changes made)"
+flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
+'''
+run = '''
+case "$(uname)" in
+  Darwin) ctrl=inventory/control/macos.ini ;;
+  *)      ctrl=inventory/control/linux.ini ;;
+esac
+ansible-playbook -i inventory/targets -i "$ctrl" playbooks/udmp.yml --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+'''
+
+[tasks."reconcile:pod042"]
+description = "Reconcile pod042, the Bunker (storage, stacks, and its own dev environment)"
+alias = "pod042"
+dir = "ansible"
+usage = '''
+flag "-c --check" help="Dry-run mode (no changes made)"
+flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
+'''
+run = '''
+if [ "$(hostname -s)" != "pod042" ]; then
+  echo "pod042 must run on pod042; SSH there first." >&2
+  exit 1
+fi
+ansible-playbook -i inventory/targets/pod042.yml playbooks/pod042.yml --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+'''
+
+[tasks."reconcile:tags"]
+description = "List the --tags a playbook offers (defaults to this machine's own)"
+usage = '''
+arg "[playbook]" help="Playbook to inspect: macos, work, truenas, udmp, pod042"
+'''
+run = "./scripts/list-tags.sh ${usage_playbook:-}"
+
+# ---------------------------------------------------------------------------
+# Edge: Cloudflare
+# ---------------------------------------------------------------------------
+
+[tasks."edge:init"]
+description = "Initialize the Cloudflare OpenTofu working directory"
+dir = "terraform/cloudflare"
+run = "tofu init"
+
+[tasks."edge:plan"]
+description = "Plan the Cloudflare OpenTofu changes"
+dir = "terraform/cloudflare"
+run = "tofu plan"
+
+[tasks."edge:apply"]
+description = "Apply the Cloudflare OpenTofu changes"
+dir = "terraform/cloudflare"
+usage = '''
+flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
+'''
+run = "tofu apply ${usage_yes:+-auto-approve}"
+
+[tasks."edge:deploy"]
+description = "Deploy every Cloudflare Worker (aig + hooks)"
+depends = ["edge:deploy:aig", "edge:deploy:hooks"]
+
+[tasks."edge:deploy:aig"]
+description = "Deploy the aig Worker, managing its secrets"
+usage = '''
+flag "-f --force-secret" help="Update secrets even if they exist"
+'''
+run = "uv run scripts/aig_deploy.py ${usage_force_secret:+--force-secret}"
+
+[tasks."edge:deploy:hooks"]
+description = "Deploy the hooks Worker, managing its secrets"
+usage = '''
+flag "-f --force-secret" help="Update secrets even if they exist"
+'''
+run = "uv run scripts/hooks_deploy.py ${usage_force_secret:+--force-secret}"
+
+[tasks."edge:deploy:tesla"]
+description = "Deploy the tesla Cloudflare Pages site"
+dir = "cloudflare-pages/tesla"
+run = "wrangler pages deploy"
+
+# ---------------------------------------------------------------------------
+# Checks: component first, verb second. `check` never mutates; `fix` may.
+# ---------------------------------------------------------------------------
+
+# `//ansible/...` rather than `//...`: the latter matches the monorepo root too,
+# which would make this task depend on itself.
+[tasks.check]
+description = "Run every non-mutating check across the repo"
+depends = [
+  "ansible:lint",
+  "python:fmt:check",
+  "python:lint",
+  "python:typecheck",
+  "nvim:fmt:check",
+  "workers:typecheck",
+  "pi:check",
+  "amp:check",
+  "session-recovery:check",
+  "//ansible/...:check",
+]
+
+[tasks.fix]
+description = "Run every mutating formatter and autofixer across the repo"
+depends = [
+  "python:fmt",
+  "python:lint:fix",
+  "nvim:fmt",
+  "pi:fix",
+  "amp:fix",
+  "session-recovery:fix",
+  "//ansible/...:fmt",
+]
+
+[tasks."ansible:lint"]
+description = "Lint the Ansible tree (online: refreshes galaxy collections)"
+dir = "ansible"
+run = "ansible-lint"
+
+[tasks."python:lint"]
+description = "Report ruff lint findings"
+run = "ruff check ."
+
+# Separate from `python:lint` because --unsafe-fixes rewrites code in ways worth
+# reading; it stays out of the commit path and off `check`.
+[tasks."python:lint:fix"]
+description = "Apply ruff lint fixes, including unsafe ones"
+run = "ruff check --fix --unsafe-fixes ."
+
+[tasks."python:fmt"]
+description = "Format Python sources with ruff"
+run = "ruff format ."
+
+[tasks."python:fmt:check"]
+description = "Report Python sources ruff would reformat"
+run = "ruff format --check ."
+
+[tasks."python:typecheck"]
+description = "Type-check Python with basedpyright"
+run = "basedpyright"
+
+[tasks."nvim:fmt"]
+description = "Format Neovim Lua with StyLua"
+dir = "chezmoi/dot_config/nvim"
+run = "stylua ."
+
+[tasks."nvim:fmt:check"]
+description = "Report Neovim Lua files StyLua would reformat"
+dir = "chezmoi/dot_config/nvim"
+run = "stylua --check ."
+
+[tasks."workers:typecheck"]
+description = "Type-check every Cloudflare Worker via a wrangler dry run"
+depends = ["workers:typecheck:aig", "workers:typecheck:hooks"]
+
+[tasks."workers:typecheck:aig"]
+description = "Type-check the aig Worker via a wrangler dry run"
+dir = "wrangler/aig"
+run = "wrangler deploy --dry-run"
+
+[tasks."workers:typecheck:hooks"]
+description = "Type-check the hooks Worker via a wrangler dry run"
+dir = "wrangler/hooks"
+run = "wrangler deploy --dry-run"
+
+[tasks."pi:check"]
+description = "Lint and type-check the pi extensions"
+run = "./scripts/pi-lint.sh"
+
+[tasks."pi:fix"]
+description = "Format and autofix the pi extensions, then type-check"
+run = "./scripts/pi-lint.sh --format"
+
+[tasks."amp:check"]
+description = "Lint, type-check, and test the Amp plugins"
+run = "./scripts/amp-lint.sh --check"
+
+[tasks."amp:fix"]
+description = "Format and autofix the Amp plugins, then type-check and test"
+run = "./scripts/amp-lint.sh --format"
+
+[tasks."session-recovery:check"]
+description = "Lint and type-check the session-recovery library and its Pi entry"
+run = "./scripts/session-recovery-lint.sh"
+
+[tasks."session-recovery:fix"]
+description = "Format and autofix session-recovery, then type-check"
+run = "./scripts/session-recovery-lint.sh --format"
+
+# ---------------------------------------------------------------------------
+# Upkeep
+# ---------------------------------------------------------------------------
+
+[tasks."secrets:init"]
+description = "Force-regenerate .env and worker .dev.vars from 1Password"
+run = ["rm -f .env", "uv run scripts/init-secrets.py"]
+
+[tasks."deps:update"]
+description = "Update every tracked lockfile (python + typescript)"
+depends = ["deps:update:uv", "deps:update:ts"]
+
+[tasks."deps:update:uv"]
+description = "Upgrade the Python lockfile to the newest allowed releases"
+run = '''
+if [ "$(hostname -s)" = "ML-DFC6YK6VJQ" ]; then
+  echo "The work lock is re-resolved against the mirror by 'mise run pull'; it already tracks the newest wheel Artifactory serves." >&2
+  exit 1
+fi
+uv lock --upgrade
+uv sync --dev
+'''
+
+[tasks."deps:update:ts"]
+description = "Update dependencies for tracked TypeScript agent packages"
+run = "./scripts/ts-package-deps.sh"
+
+# bash, not mise's default sh: the trap that restores the skip-worktree mask has
+# to survive every exit path, and this is the one task where losing it leaves the
+# index rewritten.
+[tasks.pull]
+description = "git pull --rebase, preserving the work machine's local-only lockfiles"
+shell = "bash -c"
+run = '''
+set -euo pipefail
+if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
+  git pull --rebase
+  exit 0
+fi
+
+locks="uv.lock chezmoi/private_dot_pi/agent/extensions/package-lock.json chezmoi/private_dot_pi/agent/permissions/package-lock.json"
+pyproject_bak=$(mktemp)
+cp pyproject.toml "$pyproject_bak"
+trap 'cp -f "$pyproject_bak" pyproject.toml; rm -f "$pyproject_bak"; git update-index --skip-worktree $locks' EXIT
+git update-index --no-skip-worktree $locks
+git checkout -- $locks
+git pull --rebase
+# Re-resolve the masked lock against Artifactory wheel-only, backing off any
+# release the mirror lacks a macOS-arm64 wheel for. See README.work.md.
+uv run --no-project --with tomlkit python scripts/work_lock_environment.py pyproject.toml
+uv lock --no-build
+cp -f "$pyproject_bak" pyproject.toml
+uv sync --dev
+'''
+
+[tasks."chezmoi:diff"]
+description = "Show what chezmoi would change (source -> home), excluding lockfiles"
+run = "./scripts/chezmoi-diff.sh"
+
+[tasks."chezmoi:re-add"]
+description = "Update the chezmoi source from local changes (dry-run unless --apply)"
+usage = '''
+flag "-a --apply" help="Actually apply changes (default: dry-run)"
+'''
+run = '''
+if [ -n "${usage_apply:-}" ]; then
+  chezmoi re-add
+else
+  chezmoi re-add --dry-run
+fi
+'''

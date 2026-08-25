@@ -41,9 +41,7 @@ cask "bruno"
 
 # Languages & build tools
 brew "go"
-brew "just"
 brew "libpq", link: true
-brew "mise"
 brew "oven-sh/bun/bun", trusted: true
 brew "poetry"
 brew "uv"

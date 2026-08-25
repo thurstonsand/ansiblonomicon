@@ -1,6 +1,6 @@
 ---
 # TrueNAS configuration playbook
-# Run with: uv run poe truenas
+# Run with: mise truenas
 - name: Configure TrueNAS
   hosts: truenas
   become: true

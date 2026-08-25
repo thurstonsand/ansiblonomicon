@@ -1,6 +1,6 @@
 ---
 # macOS configuration playbook
-# Run with: uv run poe laptop
+# Run with: mise laptop
 
 - name: Configure host
   hosts: 127.0.0.1
@@ -30,7 +30,7 @@
         that: ansible_hostname == hostname
         fail_msg: >-
           This playbook is for the personal machine ('{{ hostname }}').
-          Current host: '{{ ansible_hostname }}'. Use 'poe laptop' instead.
+          Current host: '{{ ansible_hostname }}'. Use 'mise laptop' instead.
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["always"]
 
@@ -40,6 +40,13 @@
       tags: ["always"]
 
   tasks:
+    - name: Install and update mise
+      ansible.builtin.include_role:
+        name: mise
+        apply:
+          tags: ["mise"]
+      tags: ["mise"]
+
     - name: Install packages with brew bundle
       ansible.builtin.include_role:
         name: homebrew

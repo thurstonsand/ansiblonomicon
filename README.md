@@ -11,12 +11,12 @@ System configuration via Ansible + Chezmoi, replacing nix-darwin + home-manager.
 ./scripts/bootstrap.sh --ignore-certs
 
 # After changes
-uv run poe laptop
+mise laptop
 ```
 
 ### Sudo Access
 
-Ansible uses `SUDO_ASKPASS` to get the sudo password from 1Password automatically. Just run `poe laptop` — no manual password entry needed.
+Ansible uses `SUDO_ASKPASS` to get the sudo password from 1Password automatically. Just run `mise laptop` — no manual password entry needed.
 
 Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 
@@ -68,30 +68,28 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 
 ## Commands
 
-- `poe laptop` — Apply macOS Ansible playbook (auto-detects work vs personal)
-- `poe laptop --check` — Dry-run mode (shows what would change without applying)
-- `poe openclaw` — Apply the retained OpenClaw reference playbook
-- `poe pod042` — Converge the pod042 host from inside its local checkout
-- `poe truenas` — Apply TrueNAS Ansible playbook
-- `poe udmp` — Apply UDMP Ansible playbook
-- `poe list-tags [playbook]` — List the `--tags` a playbook offers (defaults to this machine's own)
-- `poe cz-diff` — Preview dotfile changes (source → home), excluding lockfiles
-- `poe cz-status` — Show files that differ between source and home
-- `poe cz-re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)
-- `poe cz-managed` — List all files managed by chezmoi
-- `poe cz-edit <file>` — Edit a managed file in source dir
-- `poe tfi` — Terraform init (Cloudflare)
-- `poe tfp` — Terraform plan (Cloudflare)
-- `poe tfa` — Terraform apply (Cloudflare)
-- `poe pages-deploy` — Deploy Cloudflare Pages (tesla)
-- `poe wrangler` — Deploy all Workers (aig + hooks)
-- `poe wrangler:aig` — Deploy aig (AI Gateway proxy) Worker
-- `poe wrangler:hooks` — Deploy hooks (webhook gateway) Worker
-- `poe lint:pi` — Lint and type-check pi extension packages (`--format` applies Biome formatting/fixes first)
-- `poe lint:amp` — Format, lint, and type-check Amp plugin sources
-- `poe update-deps` — Update every tracked lockfile (python + typescript)
-- `poe update-deps:ts` — Update tracked TypeScript agent packages (Pi extension packages and Amp plugin sources)
-- `poe update-deps:uv` — Upgrade `uv.lock` to the newest allowed releases and sync (personal machines only)
+- `mise laptop` — Apply macOS Ansible playbook (auto-detects work vs personal)
+- `mise laptop --check` — Dry-run mode (shows what would change without applying)
+- `mise pod042` — Converge the pod042 host from inside its local checkout
+- `mise truenas` — Apply TrueNAS Ansible playbook
+- `mise udmp` — Apply UDMP Ansible playbook
+- `mise run reconcile:tags [playbook]` — List the `--tags` a playbook offers (defaults to this machine's own)
+- `mise run chezmoi:diff` — Preview dotfile changes (source → home), excluding lockfiles
+- `mise run chezmoi:re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)
+- `mise run edge:init` — Terraform init (Cloudflare)
+- `mise run edge:plan` — Terraform plan (Cloudflare)
+- `mise run edge:apply` — Terraform apply (Cloudflare)
+- `mise run edge:deploy:tesla` — Deploy Cloudflare Pages (tesla)
+- `mise run edge:deploy` — Deploy all Workers (aig + hooks)
+- `mise run edge:deploy:aig` — Deploy aig (AI Gateway proxy) Worker
+- `mise run edge:deploy:hooks` — Deploy hooks (webhook gateway) Worker
+- `mise run check` — Every non-mutating check across the repo; `mise run fix` for the mutating half
+- `mise run pi:check` — Lint and type-check pi extension packages (`pi:fix` formats and autofixes first)
+- `mise run amp:check` — Lint, type-check, and test Amp plugin sources
+- `mise run deps:update` — Update every tracked lockfile (python + typescript)
+- `mise run deps:update:ts` — Update tracked TypeScript agent packages (Pi extension packages and Amp plugin sources)
+- `mise run deps:update:uv` — Upgrade `uv.lock` to the newest allowed releases and sync (personal machines only)
+- `mise tasks` — List every task; `--all` includes the Go subprojects
 
 ## Design
 

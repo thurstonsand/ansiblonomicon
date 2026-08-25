@@ -29,13 +29,15 @@
 
 - name: Update shp Go dependencies and tools
   when: shp_upgrade_due
-  ansible.builtin.command:
-    argv:
-      - just
-      - update-deps
+  ansible.builtin.shell: |
+    set -euo pipefail
+    go get -u -t ./...
+    go mod tidy
+  args:
     chdir: "{{ role_path }}/files/shp"
+    executable: /bin/bash
   environment:
-    PATH: "{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims:{{ ansible_facts['env']['PATH'] }}"
+    PATH: "{{ ansible_facts['env']['PATH'] }}:{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims"
   register: shp_update_deps
   changed_when: shp_update_deps.stdout | length > 0 or shp_update_deps.stderr | length > 0
 
@@ -49,7 +51,7 @@
 - name: Compute shp source checksum
   ansible.builtin.shell: |
     set -euo pipefail
-    find . -type f \( -name '*.go' -o -name 'go.mod' -o -name 'go.sum' -o -name '.golangci.yml' -o -name 'justfile' \) -print0 \
+    find . -type f \( -name '*.go' -o -name 'go.mod' -o -name 'go.sum' -o -name '.golangci.yml' -o -name 'mise.toml' \) -print0 \
       | sort -z \
       | xargs -0 shasum -a 256 \
       | shasum -a 256 \
@@ -80,6 +82,8 @@
       - "{{ ansible_facts['env']['HOME'] }}/.local/bin/shp"
       - .
     chdir: "{{ role_path }}/files/shp"
+  environment:
+    PATH: "{{ ansible_facts['env']['PATH'] }}:{{ ansible_facts['env']['HOME'] }}/.local/share/mise/shims"
   when: >-
     not shp_binary.stat.exists
     or shp_stored_checksum is failed

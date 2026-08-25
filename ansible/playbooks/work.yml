@@ -1,6 +1,6 @@
 ---
 # Work macOS configuration playbook (corporate laptop)
-# Run with: uv run poe laptop
+# Run with: mise laptop
 
 - name: Configure work host
   hosts: 127.0.0.1
@@ -28,7 +28,7 @@
         that: ansible_hostname is match(hostname_prefix)
         fail_msg: >-
           This playbook is for the work laptop (hostname prefix '{{ hostname_prefix }}').
-          Current host: '{{ ansible_hostname }}'. Use 'poe laptop' instead.
+          Current host: '{{ ansible_hostname }}'. Use 'mise laptop' instead.
       tags: ["always"]
 
     - name: Display system info
@@ -37,6 +37,13 @@
       tags: ["always"]
 
   tasks:
+    - name: Install and update mise
+      ansible.builtin.include_role:
+        name: mise
+        apply:
+          tags: ["mise"]
+      tags: ["mise"]
+
     - name: Install packages with brew bundle
       ansible.builtin.include_role:
         name: homebrew

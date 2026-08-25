@@ -1,6 +1,6 @@
 ---
 # UniFi Dream Machine Pro configuration playbook
-# Run with: poe udmp
+# Run with: mise udmp
 - name: Configure UDMP
   hosts: udmp
 

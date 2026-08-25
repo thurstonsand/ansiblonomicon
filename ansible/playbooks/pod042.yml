@@ -2,7 +2,7 @@
 # pod042 — the Bunker. Plain Debian 13 on the old NAS hardware: ZFS storage
 # services, the docker stacks, and the host's own dev environment.
 # It configures itself from its persistent ansiblonomicon checkout.
-# Run on the host with: uv run poe pod042
+# Run on the host with: mise pod042
 - name: Configure pod042
   hosts: pod042
   vars_files:
@@ -26,7 +26,7 @@
           - ansible_facts.virtualization_role != "guest" or (pod042_allow_virtual | default(false) | bool)
         fail_msg: >-
           This playbook runs only on the physical pod042 host. SSH to pod042
-          and run `uv run poe pod042` from the ansiblonomicon checkout.
+          and run `mise pod042` from the ansiblonomicon checkout.
       tags: [always]
 
     - name: Remove retired managed paths
@@ -44,6 +44,13 @@
     # ===================
     # Base system
     # ===================
+    - name: Install and update mise
+      ansible.builtin.include_role:
+        name: mise
+        apply:
+          tags: [mise]
+      tags: [mise]
+
     - name: Update apt cache and upgrade all packages
       become: true
       ansible.builtin.apt:

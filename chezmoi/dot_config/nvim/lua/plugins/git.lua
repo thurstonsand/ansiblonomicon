@@ -8,7 +8,7 @@ local function hunk_editor_env()
 
   return {
     -- hunk's `git diff` omits --no-optional-locks; without this, background
-    -- sessions grab index.lock mid-commit and kill pre-commit's stash dance
+    -- sessions grab index.lock mid-commit and kill the commit hook's stash dance
     GIT_OPTIONAL_LOCKS = "0",
     EDITOR = vim.fn.expand("~/.local/libexec/hunk/nvim"),
     NVIM_OUTER_SERVER = server,

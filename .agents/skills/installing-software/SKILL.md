@@ -34,7 +34,7 @@ Use this skill when changing how software is installed in this repo.
 - Installation and role ordering: `ansible/playbooks/pod042.yml`
 - Pod042 SSH identities and host configuration: `chezmoi/private_dot_ssh/`
 - NFS mount and Docker environment: `ansible/playbooks/pod042.yml`, `chezmoi/dot_zshenv.tmpl`
-- Run `uv run poe pod042` only on hostname `pod042`.
+- Run `mise pod042` only on hostname `pod042`.
 
 ## Language-specific package managers
 

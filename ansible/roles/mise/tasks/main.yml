@@ -1,0 +1,72 @@
+---
+# Everything this repo runs goes through mise, so this role has to come before
+# the homebrew role: `brew bundle cleanup --force` prunes the Homebrew mise the
+# moment it leaves the Brewfile, and a reconcile that deletes its own
+# interpreter with no replacement on disk leaves the host unbootstrappable.
+- name: Check for the standalone mise install
+  ansible.builtin.stat:
+    path: "{{ mise_binary }}"
+  register: mise_installed
+
+# get_url is the usual shape for this, but it probes with HEAD in check mode
+# and mise.run answers 405. Piping the installer sidesteps that and still reads
+# `creates` under --check, so a missing mise reports as a would-change without
+# anything being fetched or run.
+- name: Install mise from the official installer
+  when: not mise_installed.stat.exists
+  ansible.builtin.shell:
+    cmd: set -o pipefail && curl -fsSL {{ mise_installer_url }} | sh
+    executable: /bin/bash
+    creates: "{{ mise_binary }}"
+  environment:
+    MISE_INSTALL_PATH: "{{ mise_binary }}"
+
+- name: Check mise upgrade stamp
+  when: not ansible_check_mode
+  ansible.builtin.stat:
+    path: "{{ mise_cache_dir }}/upgrade.stamp"
+  register: mise_upgrade_stamp
+
+- name: Determine if a mise upgrade is due
+  when: not ansible_check_mode
+  ansible.builtin.set_fact:
+    mise_upgrade_due: >-
+      {{
+        (not mise_upgrade_stamp.stat.exists)
+        or (
+          (now().timestamp() | int) - (mise_upgrade_stamp.stat.mtime | int)
+          >= (mise_upgrade_interval_seconds | int)
+        )
+      }}
+
+# --no-plugins keeps this to the mise binary; refreshing every plugin git repo
+# on each run buys nothing the language_tools installs do not already cover.
+- name: Update mise itself
+  when: not ansible_check_mode and mise_upgrade_due
+  ansible.builtin.command:
+    argv:
+      - "{{ mise_binary }}"
+      - self-update
+      - --yes
+      - --no-plugins
+  register: mise_self_update
+  changed_when: "'already up to date' not in mise_self_update.stdout"
+
+- name: Ensure the mise cache directory exists
+  when: not ansible_check_mode and mise_upgrade_due
+  ansible.builtin.file:
+    path: "{{ mise_cache_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: Record the mise upgrade timestamp
+  when: not ansible_check_mode and mise_upgrade_due
+  ansible.builtin.file:
+    path: "{{ mise_cache_dir }}/upgrade.stamp"
+    state: touch
+    mode: "0644"
+
+- name: Show mise upgrade status
+  when: not (mise_upgrade_due | default(true))
+  ansible.builtin.debug:
+    msg: "Skipped mise self-update; last run < 24h ago"

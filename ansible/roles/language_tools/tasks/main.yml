@@ -111,7 +111,7 @@
 - name: Install tools declared in mise config
   when: language_tools_update_due and mise_tool_config | length > 0
   ansible.builtin.command:
-    argv: ["mise", "install"]
+    argv: [mise, "install"]
   register: language_tools_mise_config_install
   changed_when: "'✓ installed' in language_tools_mise_config_install.stdout + language_tools_mise_config_install.stderr"
 

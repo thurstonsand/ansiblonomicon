@@ -20,7 +20,6 @@ apt_packages:
   - gh
   - gpg
   - jq
-  - just
   - lazygit
   - nfs-common
   - openssh-client
@@ -42,6 +41,11 @@ apt_packages:
   - zsh-autosuggestions
   - zsh-syntax-highlighting
 
+# mise comes from the official installer via the mise role now, the same way it
+# does on the laptops, so it is no longer declared as an apt repo below. Whatever
+# a previous converge already installed stays on disk untouched; ~/.local/bin
+# precedes /usr/bin, so the standalone build wins anyway. Retiring the leftovers
+# waits on the general apt-removal mechanism.
 apt_retired_repos:
   - >-
     deb [arch=amd64 signed-by=/usr/share/keyrings/nodesource.asc]
@@ -76,15 +80,6 @@ apt_external_repos:
     key_path: /usr/share/keyrings/nodesource.asc
     packages:
       - nodejs
-
-  - name: mise
-    url: https://mise.jdx.dev/deb
-    suites: stable
-    components: main
-    key_url: https://mise.jdx.dev/gpg-key.pub
-    key_path: /etc/apt/keyrings/mise-archive-keyring.asc
-    packages:
-      - mise
 
 mise_global_tools_base:
   - node@lts

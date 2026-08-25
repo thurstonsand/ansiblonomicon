@@ -256,7 +256,11 @@ ssh "thurston@${NEW_IP}" 'sudo -n true' 2>/dev/null || {
   ssh -t "thurston@${NEW_IP}" 'su - -c "usermod -aG sudo thurston && echo \"thurston ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/thurston"' || \
   ssh -t "thurston@${NEW_IP}" 'sudo sh -c "echo \"thurston ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/thurston"'
 }
-ssh "thurston@${NEW_IP}" 'sudo apt-get update -qq && sudo apt-get install -y -qq git curl python3 pipx direnv zfsutils-linux && pipx ensurepath && pipx install uv 2>/dev/null || true'
+ssh "thurston@${NEW_IP}" 'sudo apt-get update -qq && sudo apt-get install -y -qq git curl python3 pipx zfsutils-linux && pipx ensurepath && pipx install uv 2>/dev/null || true'
+# mise, not direnv, is what loads .env into the reconcile now. Same official
+# installer the mise role runs (ansible/roles/mise), landing the same
+# user-owned ~/.local/bin/mise, so this is not a second source.
+ssh "thurston@${NEW_IP}" 'curl -fsSL https://mise.run | sh'
 ssh "thurston@${NEW_IP}" '[ -d ansiblonomicon ] || git clone https://github.com/thurstonsand/ansiblonomicon.git'
 say "Delivering the 1Password service-account token..."
 op read "op://agent/1Password Service Account Auth Token: agent/credential" | \
@@ -285,7 +289,13 @@ ssh "thurston@${NEW_IP}" 'test -f /mnt/black-box/docker/anypod/anypod/cookies/co
 note "Known first-run behaviors (rig-proven): neovim Mason may blow its 600s timeout on a"
 note "cold cache — re-run converges clean. restic-backup.timer fires a REAL full backup"
 note "immediately on enable (Persistent=true) — intended; ~29G re-read, small upload (dedup)."
-ssh -t "thurston@${NEW_IP}" 'cd ansiblonomicon && direnv allow 2>/dev/null; uv sync -q && uv run poe init-secrets && uv run poe pod042' \
+# Three separate mise invocations on purpose: .env does not exist until
+# secrets:init writes it, and mise only reads it when it resolves the environment
+# at process start. The pod042 run is the one that needs those secrets.
+# PATH is set explicitly because chezmoi has not laid down .zshenv yet, and a
+# non-interactive ssh command does not pick up ~/.local/bin on its own. Both
+# mise and pipx's uv live there.
+ssh -t "thurston@${NEW_IP}" 'cd ansiblonomicon && export PATH="$HOME/.local/bin:$PATH" && mise trust --quiet && mise exec -- uv sync -q && mise run secrets:init && mise pod042' \
   || { warn "Reconcile failed — this is where 2B takes over. Do not re-run blindly."; exit 1; }
 write_env BRINGUP_RECONCILE "done"
 

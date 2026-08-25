@@ -15,6 +15,11 @@ import {
 const GIT_MUTATION_SUBCOMMANDS = [
   "stash",
   "add",
+  // `git stage` is an alias for add, and `update-index --add/--skip-worktree`
+  // reaches the index without either. Omitting them left a way around this hook
+  // that reads as innocuous plumbing.
+  "stage",
+  "update-index",
   "commit",
   "push",
   "pull",

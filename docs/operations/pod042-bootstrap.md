@@ -1,6 +1,6 @@
 # Pod042 bootstrap
 
-Pod042 manages itself after its first successful `poe pod042` converge. This runbook records the manual-once path from an empty TrueNAS VM to that boundary. It is deliberately not an automated rebuild pipeline.
+Pod042 manages itself after its first successful `mise pod042` converge. This runbook records the manual-once path from an empty TrueNAS VM to that boundary. It is deliberately not an automated rebuild pipeline.
 
 ## Fixed inputs
 
@@ -112,8 +112,8 @@ From the repository checkout on the workstation, preview and then apply only pod
 set -a
 source .env
 set +a
-uv run poe truenas --check --tags pod042
-uv run poe truenas --tags pod042
+mise truenas --check -t pod042
+mise truenas -t pod042
 ```
 
 This creates the shared filesystem dataset and NFS export, the 80 GiB boot zvol, and the stopped VM. The VM has no SPICE display and no declared CDROM device.
@@ -213,8 +213,12 @@ SSH_AUTH_SOCK="$onepassword_agent" ssh thurstonsand@192.168.1.94 '
   set -eu
   curl -LsSf https://astral.sh/uv/install.sh -o /tmp/uv-install.sh
   sh /tmp/uv-install.sh
+  curl -LsSf https://mise.run -o /tmp/mise-install.sh
+  sh /tmp/mise-install.sh
   cd ~/code/ansiblonomicon
-  ~/.local/bin/uv run poe pod042
+  export PATH="$HOME/.local/bin:$PATH"
+  mise trust --quiet
+  mise pod042
 '
 
 ssh thurstonsand@192.168.1.94 'cat > /tmp/merge-pi-oauth.py' <<'PY'
@@ -254,7 +258,7 @@ Only the service-account token and the single unmanaged `openai-codex` OAuth cre
 Verify the managed agent boundary and a guest reboot:
 
 ```sh
-ssh thurstonsand@192.168.1.94 'test -x ~/.npm-global/bin/pi; test -f ~/.pi/agent/settings.json; cd ~/code/ansiblonomicon && ~/.local/bin/uv run poe pod042 --check'
+ssh thurstonsand@192.168.1.94 'test -x ~/.npm-global/bin/pi; test -f ~/.pi/agent/settings.json; cd ~/code/ansiblonomicon && ~/.local/bin/mise pod042 --check'
 ssh thurstonsand@192.168.1.94 'sudo systemctl reboot' || true
 until ssh -o ConnectTimeout=5 thurstonsand@192.168.1.94 'test "$(hostname -s)" = pod042'; do sleep 5; done
 ```
@@ -273,9 +277,9 @@ Fill this during the build rather than reconstructing it later.
 - Temporary CDROM device ID: `56`
 - `cloud-init status --wait`: done with no errors on `.94`; hostname, static route, `1000:1000` identity, and 78.5 GiB root filesystem verified
 - Seed detached and SSH restored: passed; VM devices contain only the boot zvol and expected NIC
-- First local `poe pod042` converge: passed after correcting pod042's Chezmoi config to use service-account mode; second converge changed zero tasks
+- First local `mise pod042` converge: passed after correcting pod042's Chezmoi config to use service-account mode; second converge changed zero tasks
 - Pi OAuth bootstrap: copied only the workstation's unmanaged `openai-codex` credential through SSH stdin; Pi 0.82.0 replied `pod042-ready`
-- Guest reboot returned unattended: passed; post-reboot `poe pod042 --check` changed zero tasks
+- Guest reboot returned unattended: passed; post-reboot `mise pod042 --check` changed zero tasks
 - On-VM Pi handoff session: `019f9762-b802-7e44-9291-665af00d0421` acknowledged hostname, checkout, clean `178d0fd` HEAD, and the Phase 2 mission
 - Phase 2 development baseline: Node 24, audited shell/tool roles, Docker client-only packages, shpool, sessions, terminal theme, tmux plugins, and pod042 guidance in the existing project-local software-provisioning skill converged; repeat converge changed zero tasks
 - Workstation integration: the macOS terminal-theme detector mirrors to pod042; `gty ssh pod042` exposes the GhosttyKit clipboard bridge, and Pi loads the managed `@thurstonsand/pi-paste` package for `alt+v` and `/paste`

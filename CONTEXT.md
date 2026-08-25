@@ -11,7 +11,7 @@
 - **TrueNAS app**: A catalog app declared in `truenas_apps` and applied through the middleware rather than Docker directly.
 - **`local.truenas`**: The in-repo Ansible collection that speaks to TrueNAS middleware — VMs, datasets, shares, apps, scrub and SMART schedules.
 - **Chezmoi source**: The `chezmoi/` tree in this repo.
-- **SecretRef**: An `op://vault/item/field` pointer in `.secrets.jsonc`. The committed form of a secret; the value itself exists only in the uncommitted `.env` by `poe init-secrets`.
+- **SecretRef**: An `op://vault/item/field` pointer in `.secrets.jsonc`. The committed form of a secret; the value itself exists only in the uncommitted `.env` by `mise run secrets:init`.
 - **Agent harness**: A coding agent runtime — Pi, Claude Code, Amp, Codex, OpenCode, Gemini. Each has its own config shape; the `agent_harness` role reconciles one declaration across all of them.
 - **Pi**: My favorite AI agent harness. Extends through TypeScript **extensions** loaded straight from source, plus **packages** pulled from separate repos.
 - **Amp**: My other favorite AI agent harness. Extends through TypeScript **plugins** (different from **Agent plugins**).

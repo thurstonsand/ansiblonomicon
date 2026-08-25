@@ -1,0 +1,101 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended",
+    "customManagers:biomeVersions",
+    ":configMigration",
+    ":maintainLockFilesWeekly",
+    "security:minimumReleaseAgeNpm",
+    "abandonments:recommended",
+    ":enableVulnerabilityAlertsWithAdditionalLabel(security)"
+  ],
+  "ignorePaths": [
+    "**/node_modules/**",
+    "ansible/stacks/ghost/ghost/**",
+    "docs/wayfinding/**/prototypes/**"
+  ],
+  "dependencyDashboard": true,
+  "timezone": "America/New_York",
+  "labels": ["dependencies"],
+  "schedule": ["* * * * 1"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)hk\\.pkl$/"],
+      "matchStrings": [
+        "package://github\\.com/jdx/hk/releases/download/v(?<currentValue>[^/]+)/hk@[^#]+#/(?<depType>Config|Builtins)\\.pkl"
+      ],
+      "depNameTemplate": "hk",
+      "packageNameTemplate": "jdx/hk",
+      "datasourceTemplate": "github-releases",
+      "versioningTemplate": "semver-coerced",
+      "extractVersionTemplate": "^v(?<version>.+)",
+      "autoReplaceStringTemplate": "package://github.com/jdx/hk/releases/download/v{{{newValue}}}/hk@{{{newValue}}}#/{{{depType}}}.pkl"
+    },
+    {
+      "description": "The stack compose files are Jinja templates, and unquoted interpolations like `{{ docker.config_dir }}/foo:/bar` are not parseable YAML. The built-in docker-compose manager parses before it extracts, so on those files it returns nothing at all rather than failing loudly, and two of the thirteen stacks would silently go untracked. Reading the image lines textually ignores the templating entirely and covers every stack the same way. Any tag pinned to a real version gets a PR; the `:latest` and `:nightly` tags most stacks run have nothing to compare against and produce none, which is correct, because watchtower already pulls those nightly.",
+      "customType": "regex",
+      "managerFilePatterns": ["/(^|/)compose\\.yaml\\.j2$/"],
+      "matchStrings": [
+        "image:\\s*(?<depName>[^\\s:{}]+):(?<currentValue>[^\\s@{}]+)"
+      ],
+      "datasourceTemplate": "docker",
+      "versioningTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions"
+    },
+    {
+      "matchManagers": ["gomod"],
+      "groupName": "Go modules"
+    },
+    {
+      "matchManagers": ["npm"],
+      "groupName": "npm packages"
+    },
+    {
+      "matchManagers": ["mise"],
+      "groupName": "mise tools"
+    },
+    {
+      "matchDatasources": ["docker"],
+      "groupName": "Docker images"
+    },
+    {
+      "description": "The two Go config roots ask for `go = \"latest\"` and `golangci-lint = \"latest\"` deliberately: these are throwaway CLIs that should build against whatever toolchain the machine last installed, and pinning them would mean a PR every time either project releases. The mise manager extracts `latest` with a real datasource attached and no skip reason, so it has to be turned off by name rather than left to be ignored on its own.",
+      "matchManagers": ["mise"],
+      "matchFileNames": [
+        "ansible/roles/shp/files/shp/mise.toml",
+        "ansible/roles/sessions/files/sessions/mise.toml"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "hk is pinned twice, once as a mise tool and once in the two package URLs at the top of hk.pkl, and the two have to move together or hk runs one version while validating its config against another. Both the mise manager and the custom manager above resolve hk to jdx/hk on github-releases, so matching on that pair collects every one of them into a single PR.",
+      "matchDatasources": ["github-releases"],
+      "matchPackageNames": ["jdx/hk"],
+      "groupName": "hk",
+      "groupSlug": "hk"
+    },
+    {
+      "description": "The Cloudflare provider's v5 is a rewrite rather than a release: resource names and schemas moved, and the migration is written up in terraform/cloudflare/UPGRADE_TO_V5.md but not done. Until that lands, a v5 PR is a plan that destroys and recreates most of the zone.",
+      "matchManagers": ["terraform"],
+      "matchPackageNames": ["cloudflare/cloudflare"],
+      "allowedVersions": "<5"
+    },
+    {
+      "description": "`required_version` in versions.tf is a floor, not a pin, and nothing here needs it raised. The version that actually runs is the opentofu pinned in mise.toml, which Renovate tracks properly. Bumping the floor only narrows what can run the config in exchange for nothing.",
+      "matchManagers": ["terraform"],
+      "matchPackageNames": ["hashicorp/terraform"],
+      "enabled": false
+    },
+    {
+      "description": "@types/node describes the runtime, so it tracks the Node these packages run on rather than the newest DefinitelyTyped release. Types from a later major describe APIs that are not there and hide ones that were removed, and tsc believes them either way. Raise the ceiling when the toolchain in mise.toml moves.",
+      "matchPackageNames": ["@types/node"],
+      "allowedVersions": "<25"
+    }
+  ]
+}

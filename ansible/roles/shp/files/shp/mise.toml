@@ -1,0 +1,47 @@
+[tools]
+go = "latest"
+golangci-lint = "latest"
+
+[tasks.fmt]
+description = "Rewrite Go sources with gofmt"
+run = "gofmt -w ."
+
+[tasks."fmt:check"]
+description = "Report Go sources gofmt would rewrite"
+# `check` has to stay non-mutating for the commit hook, so the gofmt coverage the
+# old `just check` got from running `gofmt -w` is reproduced here in report form.
+run = '''
+unformatted=$(gofmt -l .)
+if [ -n "$unformatted" ]; then
+  echo "gofmt would rewrite:" >&2
+  echo "$unformatted" >&2
+  exit 1
+fi
+'''
+
+[tasks.lint]
+description = "Run golangci-lint"
+run = "golangci-lint run ./..."
+
+[tasks.test]
+description = "Run Go tests"
+run = "go test ./..."
+
+[tasks.build]
+description = "Build the shp binary into the project directory"
+run = "go build -o shp ."
+
+[tasks.install]
+description = "Build the shp binary into ~/.local/bin"
+run = '''
+mkdir -p "$HOME/.local/bin"
+go build -o "$HOME/.local/bin/shp" .
+'''
+
+[tasks."deps:update"]
+description = "Upgrade Go dependencies and tidy go.mod"
+run = ["go get -u -t ./...", "go mod tidy"]
+
+[tasks.check]
+description = "Format check, lint, and test"
+depends = [":fmt:check", ":lint", ":test"]
