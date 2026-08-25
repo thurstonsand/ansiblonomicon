@@ -86,6 +86,7 @@ services:
     environment:
       - MAM_UPDATE_DIR=/data
       - MAM_ID_FILE=/data/MAM.id
+      - HEALTHCHECK_PING_URL={{ torrent_mam_ping_url }}
     healthcheck:
       test: ["CMD-SHELL", "getent hosts am.i.mullvad.net >/dev/null && curl -fsS --max-time 8 https://am.i.mullvad.net/connected | grep -q 'You are connected'"]
       interval: 60s

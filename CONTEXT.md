@@ -4,6 +4,8 @@
 - **Host**: A machine this repo configures. Each host has a playbook, an entry in inventory, and its own config file. Playbooks run against the host they describe.
 - **Reconcile**: One playbook run bringing a host to its declared state. The unit of applying change; always re-runnable, always safe to repeat.
 - **Tag**: The unit of partial reconciliation.
+- **Dev tool**: A binary needed to work on this repo. Pinned in `mise.toml`.
+- **Host tool**: A binary reconciliation installs onto a machine for its own sake. Declared in the Brewfile or a role. `mise`, `uv`, and `chezmoi` are host tools that development also happens to need.
 - **Role**: A unit of capability under `ansible/roles/`. A role owns a thing that can be installed or configured, not a machine that needs configuring.
 - **Docker stack**: A group of containers defined by a compose template in `ansible/stacks/` and rendered onto TrueNAS.
 - **TrueNAS app**: A catalog app declared in `truenas_apps` and applied through the middleware rather than Docker directly.

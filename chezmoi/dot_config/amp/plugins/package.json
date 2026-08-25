@@ -4,10 +4,13 @@
   "version": "1.0.0",
   "type": "module",
   "description": "Amp plugin sources managed by chezmoi",
+  "scripts": {
+    "test": "bun permission-gate/rules.test.ts"
+  },
   "devDependencies": {
-    "@ampcode/plugin": "^0.0.0-20260814002157-gcdc06ea",
-    "@biomejs/biome": "^2.5.8",
-    "@types/node": "^26.2.0",
+    "@ampcode/plugin": "^0.0.0-20260825001040-g9dff10c",
+    "@biomejs/biome": "^2.5.10",
+    "@types/node": "^24.13.3",
     "typescript": "^7.0.2",
     "zod": "^4.4.3"
   }

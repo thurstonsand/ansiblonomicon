@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Historical. Pi 0.84.3 fixed the underlying conflation upstream ([earendil-works/pi#5263](https://github.com/earendil-works/pi/issues/5263)): `AgentSession.setModel` and `setThinkingLevel` now take a `persist` option that defaults to false, so `/model`, `/thinking`, and Ctrl+P cycling are session-scoped and only Ctrl+S inside a selector writes the defaults. The extension and its `pinnedModel` key were deleted; the defaults live in `settings.json.tmpl` alone. The design below remains as the record of what the workaround cost.
 
 ## Decision Summary
 
@@ -91,10 +91,10 @@ Pi's exact matcher (`findExactModelReferenceMatch`) is not exported at the packa
 
 ### Upstream `persistModelSelection` setting in Pi
 
-- **Status:** Open
+- **Status:** Adopted upstream
 - **Open Issue:** The write-then-undo dance exists only because Pi conflates "current model" with "default model."
 - **Discussion:** The clean fix is a Pi setting that makes model selection session-scoped. This extension is the local workaround.
-- **Next step:** Propose upstream; if accepted, this extension reduces to `/pin-model` conveniences or is deleted.
+- **Outcome:** Pi 0.84.3 shipped it as a `persist` option on the session setters rather than a setting, with Ctrl+S in the `/model` and `/thinking` selectors as the deliberate write. Pi also gained a `modelThinkingLevels` map for per-model defaults, which covers the case this extension never handled. The extension was deleted rather than reduced.
 
 ### In-memory pin snapshot at extension load
 

@@ -1,0 +1,9 @@
+[Unit]
+Description=ZFS scrub of %i
+Documentation=man:zpool-scrub(8)
+
+[Service]
+Type=oneshot
+LoadCredential=hark-webhook-url:{{ alerting_state_dir }}/hark-webhook-url
+LoadCredential=hc-ping:{{ alerting_state_dir }}/checks/{{ hostname }}-zfs-scrub-%i.url
+ExecStart={{ alerting_bin_dir }}/hc-run {{ hostname }}-zfs-scrub-%i -- {{ zfs_maintenance_bin_dir }}/zfs-scrub-pool %i

@@ -16,10 +16,7 @@ export type ToolPermissionSubject = {
 
 export type PermissionSubject = ShellPermissionSubject | ToolPermissionSubject;
 
-export function permissionSubjectFromToolCall(
-  amp: PluginAPI,
-  event: ToolCall,
-): PermissionSubject | undefined {
+export function permissionSubjectFromToolCall(amp: PluginAPI, event: ToolCall): PermissionSubject {
   const shellCommand = amp.helpers.shellCommandFromToolCall(event);
   if (shellCommand) {
     return {
@@ -32,5 +29,10 @@ export function permissionSubjectFromToolCall(
     };
   }
 
-  return undefined;
+  return {
+    kind: "tool-call",
+    toolName: event.tool,
+    input: event.input,
+    detail: JSON.stringify(event.input, null, 2),
+  };
 }

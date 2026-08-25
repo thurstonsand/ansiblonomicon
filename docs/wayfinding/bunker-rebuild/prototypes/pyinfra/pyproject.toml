@@ -1,0 +1,11 @@
+# Self-contained: this prototype is deliberately not part of the repo's root
+# project. `uv sync` here, run pyinfra from this directory.
+[project]
+name = "bunker-pyinfra-trial"
+version = "0.1.0"
+description = "pyinfra reproduction of the alerting + zfs_maintenance segment (ticket 19)"
+requires-python = ">=3.11"
+dependencies = ["pyinfra>=3.10"]
+
+[tool.setuptools]
+packages = ["bunker"]

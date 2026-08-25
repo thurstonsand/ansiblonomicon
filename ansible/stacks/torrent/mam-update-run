@@ -1,0 +1,24 @@
+#!/bin/sh
+# mam-update's failures are otherwise invisible: the container's healthcheck only
+# proves the VPN tunnel is up, so a dead MAM session leaves it healthy while every
+# run panics into the logs. Healthchecks is the channel that reaches a human.
+# Deliberately not folded into the docker healthcheck — netns-repair force-recreates
+# unhealthy dependents, and no restart revives an invalidated session.
+set -u
+
+hc_ping() {
+  [ -n "${HEALTHCHECK_PING_URL:-}" ] || return 0
+  curl -fsS --max-time 10 --retry 3 --retry-delay 2 -o /dev/null \
+    "${HEALTHCHECK_PING_URL}$1" ||
+    echo "mam-update-run: ping '${1:-/success}' failed" >&2
+}
+
+hc_ping /start
+mam-update
+status=$?
+if [ "$status" -eq 0 ]; then
+  hc_ping ""
+else
+  hc_ping "/$status"
+fi
+exit "$status"

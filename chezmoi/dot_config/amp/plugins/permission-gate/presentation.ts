@@ -1,18 +1,26 @@
+import type { PermissionRule } from "./rules.ts";
+
 export type ApprovalNote = {
-  ruleLabel: string;
+  kind: "approval";
+  ruleName: string;
   note: string;
 };
 
+export type EditNote = {
+  kind: "edit";
+  ruleName: string;
+  command: string;
+  note?: string;
+};
+
+export type PendingResultNote = ApprovalNote | EditNote;
+
 export type PermissionPromptInput = {
-  ruleLabel: string;
+  ruleName: string;
+  description: string;
   toolName: string;
   detail: string;
 };
-
-export const APPROVE = "Authorize";
-export const APPROVE_WITH_NOTE = "Authorize with directive";
-export const REJECT = "Abort (Esc x3 stops agent)";
-export const REJECT_WITH_NOTE = "Abort with directive";
 
 export const permissionCopy = {
   approvalNoteTitle: "Directive",
@@ -25,28 +33,53 @@ function formatDecisionLog(label: string, note: string): string {
   return `${label}:\n${note}`;
 }
 
-export function formatApprovalNotification({ ruleLabel, note }: ApprovalNote): string {
-  return `Operation authorized (${ruleLabel})\n\n${formatDecisionLog("Authorization log", note)}`;
+export function approvalWithNoteLabel(rule: PermissionRule): string {
+  return `${rule.approveLabel} with directive`;
 }
 
-export function formatApprovalResultNote({ ruleLabel, note }: ApprovalNote): string {
-  return `The user approved this tool use (${ruleLabel}) and provided additional context for how to proceed:\n${note}`;
+export function approvalForThreadLabel(rule: PermissionRule): string {
+  return `${rule.approveLabel} for thread`;
 }
 
-export function formatRejectionNotification(ruleLabel: string, note?: string): string {
-  const aborted = `Operation aborted (${ruleLabel})`;
+export function rejectionWithNoteLabel(rule: PermissionRule): string {
+  return `${rule.rejectLabel} with directive`;
+}
+
+export function formatApprovalNotification({ ruleName, note }: ApprovalNote): string {
+  return `Operation authorized (${ruleName})\n\n${formatDecisionLog("Authorization log", note)}`;
+}
+
+export function formatEditNotification(ruleName: string): string {
+  return `Command edited (${ruleName})`;
+}
+
+export function formatResultNote(note: PendingResultNote): string {
+  if (note.kind === "approval") {
+    return `The user approved this tool use (${note.ruleName}) and provided additional context for how to proceed:\n${note.note}`;
+  }
+
+  const edited = `The user edited this command before execution (${note.ruleName}). The command that actually ran:\n${note.command}`;
+  return note.note ? `${edited}\n\nThe user also provided context:\n${note.note}` : edited;
+}
+
+export function formatRejectionNotification(ruleName: string, note?: string): string {
+  const aborted = `Operation aborted (${ruleName})`;
   return note ? `${aborted}\n\n${formatDecisionLog("Abort log", note)}` : aborted;
 }
 
-export function formatRejectionResultReason(ruleLabel: string, note?: string): string {
-  const blocked = `Blocked by user (${ruleLabel})`;
+export function formatRejectionResultReason(ruleName: string, note?: string): string {
+  const blocked = `Blocked by user (${ruleName})`;
   if (!note) return blocked;
 
-  return `${blocked}\n\nThe user doesn't want to proceed with this tool use (${ruleLabel}), and it was rejected. To tell you how to proceed, the user said:\n${note}`;
+  return `${blocked}\n\nThe user doesn't want to proceed with this tool use, and said:\n${note}`;
+}
+
+export function formatRuleBlockReason(ruleName: string, reason: string): string {
+  return `Blocked by permission rule ${ruleName}\n\n${reason}`;
 }
 
 export function formatNoUiBlockReason(input: PermissionPromptInput): string {
-  return `Blocked ${input.toolName} (${input.ruleLabel}): user confirmation required but no UI available.`;
+  return `Blocked ${input.toolName} (${input.ruleName}): user confirmation required but no UI available.`;
 }
 
 export function formatPermissionPrompt(input: PermissionPromptInput): {
@@ -54,7 +87,7 @@ export function formatPermissionPrompt(input: PermissionPromptInput): {
   body: string;
 } {
   return {
-    title: `! Authorization required: ${input.ruleLabel}`,
-    body: `Confirm.\n\n${input.toolName}: ${input.detail}`,
+    title: `! Authorization required: ${input.ruleName}`,
+    body: `${input.description}\n\n${input.toolName}: ${input.detail}`,
   };
 }

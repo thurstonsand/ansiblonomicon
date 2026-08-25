@@ -1,0 +1,9 @@
+[Unit]
+Description=Host-alive ping to Healthchecks
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+LoadCredential=hc-ping:{{ alerting_state_dir }}/checks/{{ alerting_heartbeat_check }}.url
+ExecStart={{ alerting_bin_dir }}/hc-run {{ alerting_heartbeat_check }} -- /bin/true

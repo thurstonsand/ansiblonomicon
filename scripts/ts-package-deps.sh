@@ -27,11 +27,10 @@ find_pi_package_json() {
   node - "$pi_bin" <<'NODE'
 const fs = require("fs");
 const path = require("path");
-const piBin = process.argv[2];
-const realBin = fs.realpathSync(piBin);
-const packageJson = path.join(path.dirname(realBin), "..", "package.json");
-if (!fs.existsSync(packageJson)) {
-  console.error(`Could not locate package.json next to pi binary: ${packageJson}`);
+const realBin = fs.realpathSync(process.argv[2]);
+const packageJson = path.join(path.dirname(realBin), "..", "..", "package.json");
+if (!fs.existsSync(packageJson) || require(packageJson).name !== "@earendil-works/pi-coding-agent") {
+  console.error(`Expected pi-coding-agent's package.json two levels above ${realBin}, found nothing there.`);
   process.exit(1);
 }
 process.stdout.write(packageJson);
@@ -56,6 +55,21 @@ NODE
 
 PI_PACKAGE_JSON="$(find_pi_package_json)"
 PI_VERSION="$(node -p "require(process.argv[1]).version" "$PI_PACKAGE_JSON")"
+
+# Pi hands extensions its own bundled typebox as a virtual module at runtime, so a
+# package that floats its own copy typechecks against a version it will never run
+# on. Pi pins typebox exactly; match that pin exactly, or the mismatch is silent.
+PI_TYPEBOX_VERSION="$(node -p "require(process.argv[1]).dependencies.typebox ?? ''" "$PI_PACKAGE_JSON")"
+if [[ -z "$PI_TYPEBOX_VERSION" ]]; then
+  echo "Pi ${PI_VERSION} no longer depends on typebox; the virtual-module pin below is stale." >&2
+  exit 1
+fi
+
+# @types/node describes the runtime, so it belongs to the Node these packages are
+# reconciled onto, not to whatever DefinitelyTyped published most recently. Tracking
+# `latest` types APIs that do not exist yet on the installed Node and hides ones that
+# were removed, and tsc believes it either way.
+NODE_TYPES_VERSION="^$(node -p 'process.versions.node.split(".")[0]')"
 
 mapfile -t PACKAGE_DIRS < <(collect_package_dirs)
 
@@ -106,14 +120,23 @@ NODE
 )
 
     AUX_DEPS=()
-    for dep in @types/node typescript @biomejs/biome; do
+    for dep in typescript @biomejs/biome; do
       if package_has_dependency "$dep"; then
         AUX_DEPS+=("$dep@latest")
       fi
     done
+    if package_has_dependency @types/node; then
+      AUX_DEPS+=("@types/node@${NODE_TYPES_VERSION}")
+    fi
 
     if [[ ${#HARNESS_DEPS[@]} -gt 0 || ${#AUX_DEPS[@]} -gt 0 ]]; then
       npm install --save-dev "${HARNESS_DEPS[@]}" "${AUX_DEPS[@]}"
+    fi
+
+    # Separate from the batch above because this one must land without a caret;
+    # a range would let `npm update` float it off pi's pin again.
+    if package_has_dependency typebox; then
+      npm install --save-dev --save-exact "typebox@${PI_TYPEBOX_VERSION}"
     fi
 
     npm update
@@ -121,4 +144,15 @@ NODE
   UPDATED=$((UPDATED + 1))
 done
 
-echo "Updated $UPDATED TypeScript package(s). Pi harness deps pinned to pi ${PI_VERSION}; Amp plugin deps updated to latest."
+# Bumping @biomejs/biome above leaves every biome.json declaring the schema of
+# the version it was written against, which biome then complains about on each
+# lint run. Migrate the configs to match the binary that just landed.
+MIGRATED=0
+while IFS= read -r config; do
+  config_dir="$(dirname "$config")"
+  echo "==> Migrating biome config in $config_dir"
+  (cd "$config_dir" && npx --no-install biome migrate --write)
+  MIGRATED=$((MIGRATED + 1))
+done < <(find "${PI_ROOT_DIRS[@]}" "$AMP_ROOT_DIR" "$SESSION_RECOVERY_DIR" -name biome.json -not -path '*/node_modules/*' | sort)
+
+echo "Updated $UPDATED TypeScript package(s) and $MIGRATED biome config(s). Pi harness deps pinned to pi ${PI_VERSION}, typebox to ${PI_TYPEBOX_VERSION}, @types/node to ${NODE_TYPES_VERSION}; Amp plugin deps updated to latest."

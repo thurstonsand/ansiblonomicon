@@ -2,6 +2,27 @@
 # Register one Healthchecks check and drop its ping URL where the job's unit can
 # load it as a systemd credential. Callers pass alerting_check_name,
 # alerting_check_schedule (cron) and alerting_check_grace (seconds).
+# The unique-POST below updates an existing check and returns 200, so creation
+# status alone under-reports: schedule/grace drift would apply silently. Read the
+# current state first and key changed on create-or-drift.
+- name: Look up Healthchecks check {{ alerting_check_name }}
+  ansible.builtin.uri:
+    url: "{{ alerting_healthchecks_api_url }}?slug={{ alerting_check_name }}"
+    headers:
+      X-Api-Key: "{{ alerting_healthchecks_api_key }}"
+    status_code: [200]
+  check_mode: false
+  register: alerting_check_current
+  no_log: true
+
+- name: Extract current state of {{ alerting_check_name }}
+  ansible.builtin.set_fact:
+    alerting_check_existing: >-
+      {{ alerting_check_current.json.checks
+         | selectattr('slug', 'eq', alerting_check_name)
+         | list | first | default({}) }}
+  no_log: true
+
 - name: Register Healthchecks check {{ alerting_check_name }}
   ansible.builtin.uri:
     url: "{{ alerting_healthchecks_api_url }}"
@@ -19,10 +40,23 @@
       unique: [name]
     status_code: [200, 201]
   register: alerting_check_response
-  changed_when: alerting_check_response.status == 201
+  changed_when: >-
+    alerting_check_response.status == 201
+    or alerting_check_existing.schedule | default('') != alerting_check_schedule
+    or alerting_check_existing.tz | default('') != alerting_healthchecks_timezone
+    or alerting_check_existing.grace | default(-1) | int != alerting_check_grace | int
+  no_log: true
+
+# Jobs that run inside a container cannot load a systemd credential, so they take
+# the URL as a value instead. Empty under --check, where nothing is deployed to
+# read it anyway.
+- name: Expose the ping URL for {{ alerting_check_name }}
+  ansible.builtin.set_fact:
+    alerting_check_ping_url: "{{ alerting_check_response.json.ping_url | default('') }}"
   no_log: true
 
 - name: Install the ping URL for {{ alerting_check_name }}
+  when: not ansible_check_mode and alerting_check_install_url
   become: true
   ansible.builtin.copy:
     dest: "{{ alerting_state_dir }}/checks/{{ alerting_check_name }}.url"
@@ -30,5 +64,4 @@
     owner: root
     group: root
     mode: "0600"
-  when: not ansible_check_mode
   no_log: true

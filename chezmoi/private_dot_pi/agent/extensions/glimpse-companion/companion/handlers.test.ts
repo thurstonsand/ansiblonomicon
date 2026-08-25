@@ -111,17 +111,35 @@ test("manual idle compaction completes while active-run compaction does not", ()
   assert.equal(doneCount, 1);
 });
 
-test("removes compaction status when compaction is cancelled", async () => {
+test("removes compaction status when compaction fails", async () => {
   const { session, messages } = activeSession(true);
-  const controller = new AbortController();
+  const handlers = registerHandlers(session);
 
-  await session.compacting("manual", controller.signal);
+  await session.compacting("manual");
   assert.equal(messages.length, 1);
   assert.equal(messages[0]?.status, "compacting");
 
-  controller.abort();
+  await handlerFor(handlers, "session_compact_failed")(
+    { reason: "manual", aborted: false, errorMessage: "boom" } as never,
+    context(true),
+  );
   assert.equal(messages.length, 2);
   assert.equal(messages[1]?.type, "remove");
+});
+
+test("leaves unrelated status alone when compaction fails", async () => {
+  const { session, messages } = activeSession(true);
+  const handlers = registerHandlers(session);
+
+  session.thinking();
+  assert.equal(messages.length, 1);
+  assert.equal(messages[0]?.status, "thinking");
+
+  await handlerFor(handlers, "session_compact_failed")(
+    { reason: "threshold", aborted: true } as never,
+    context(false),
+  );
+  assert.equal(messages.length, 1);
 });
 
 test("pins completion while unfocused until focus acknowledges it", () => {

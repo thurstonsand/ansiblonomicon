@@ -44,6 +44,12 @@ qBittorrent categories seen in use:
 
 The `myanonamouse` category is private-tracker material and should not be treated like disposable public Arr downloads.
 
+### mam-updater
+
+MAM ties the session to the seedbox's exit IP, so `mam-updater` reports the current gluetun address every 30 minutes. Its container healthcheck only proves the VPN tunnel is up, because that is the one failure `torrent-netns-repair` can fix by recreating the container. A rejected session is not fixable that way, so the run reports to Healthchecks instead, under `<host>-mam-update`.
+
+When that check goes down with `Invalid session`, the session is gone and no restart brings it back. Mint a fresh `mam_id` from the MAM security page and write it to `{config_base}/torrent/mam-updater/data/MAM.id` on the host that owns the session.
+
 ### Prowlarr, Sonarr, and Radarr
 
 The public/private distinction belongs in indexer seed criteria, not qBittorrent global preferences.

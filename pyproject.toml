@@ -56,7 +56,7 @@ help = "Lint and type-check pi extensions (pass --format to apply formatting)"
 cmd = "./scripts/pi-lint.sh ${format:+--format}"
 
 [tool.poe.tasks."lint:amp"]
-help = "Format, lint, and type-check Amp plugins"
+help = "Format, lint, type-check, and test Amp plugins"
 cmd = "./scripts/amp-lint.sh ${format:+--format}"
 
 [tool.poe.tasks."lint:session-recovery"]
@@ -403,6 +403,9 @@ exclude = [
   "build",
   "dist",
   "stubs",
+  # Research prototypes import tools this repo deliberately does not depend on, so
+  # every import is unresolvable here by design. Judging them is the trial's job.
+  "docs/wayfinding/**/prototypes",
 ]
 # Ansible filter plugins aren't proper Python packages; this lets tests import them
 extraPaths = ["ansible/roles/agent_harness/filter_plugins"]

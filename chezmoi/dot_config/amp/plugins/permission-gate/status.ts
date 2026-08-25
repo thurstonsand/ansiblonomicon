@@ -1,8 +1,8 @@
 import type { PluginAPI } from "@ampcode/plugin";
-import type { PermissionGateState, ThreadID } from "./state.ts";
+import type { PermissionGateState, PermissionGateStatus, ThreadID } from "./state.ts";
 
-export function statusText(enabled: boolean): string {
-  return enabled ? "permissions:on" : "permissions:off";
+export function statusText(status: PermissionGateStatus): string {
+  return `permissions:${status}`;
 }
 
 export type PermissionStatus = {
@@ -17,17 +17,17 @@ export function registerPermissionStatus(
   toggleCommandID: string,
 ): PermissionStatus {
   const statusItem = amp.experimental?.createStatusItem({
-    text: statusText(true),
+    text: statusText("on"),
     url: `command:${toggleCommandID}`,
   });
 
   function activeThreadID(): ThreadID | undefined {
-    return amp.experimental?.activeThread.current?.id;
+    return amp.activeThread.current?.id;
   }
 
   function updateForThread(threadID: ThreadID | undefined): void {
     statusItem?.update({
-      text: statusText(threadID ? state.isEnabled(threadID) : true),
+      text: statusText(threadID ? state.status(threadID) : "on"),
       url: `command:${toggleCommandID}`,
     });
   }
@@ -36,7 +36,7 @@ export function registerPermissionStatus(
     updateForThread(activeThreadID());
   }
 
-  amp.experimental?.activeThread.subscribe((thread) => updateForThread(thread?.id));
+  amp.activeThread.subscribe((thread) => updateForThread(thread?.id));
 
   return { activeThreadID, updateForThread, updateForActiveThread };
 }

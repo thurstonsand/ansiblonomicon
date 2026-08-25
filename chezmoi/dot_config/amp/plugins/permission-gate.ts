@@ -4,6 +4,9 @@ import { registerPermissionHooks } from "./permission-gate/hooks.ts";
 import { PermissionGateState } from "./permission-gate/state.ts";
 import { registerPermissionStatus } from "./permission-gate/status.ts";
 
+export const description =
+  "Prompts before workflow-sensitive Git, file disposal, database, and web-search operations.";
+
 export default function permissionGate(amp: PluginAPI) {
   const state = new PermissionGateState();
   const status = registerPermissionStatus(amp, state, TOGGLE_COMMAND_ID);

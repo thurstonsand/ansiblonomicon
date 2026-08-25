@@ -2,6 +2,7 @@ FROM ghcr.io/gellen89/mam-update:latest AS mam-update
 FROM alpine
 RUN apk add --no-cache ca-certificates curl supercronic
 COPY --from=mam-update /ko-app/mam-update /usr/local/bin/mam-update
+COPY --chmod=755 mam-update-run /usr/local/bin/mam-update-run
 COPY crontab /crontab
 VOLUME /data
 CMD ["supercronic", "/crontab"]

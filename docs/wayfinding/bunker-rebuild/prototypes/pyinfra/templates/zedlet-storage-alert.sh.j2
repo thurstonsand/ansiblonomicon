@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+# zedlet: forward known-bad ZFS events to Hark. Healthy transitions and clean
+# scrub completions stay silent; repeat events are throttled so a failing disk
+# cannot turn into an alert storm.
+set -uo pipefail
+
+class="${ZEVENT_SUBCLASS:-unknown}"
+pool="${ZEVENT_POOL:-unknown}"
+
+case "$class" in
+  statechange)
+    state="${ZEVENT_VDEV_STATE_STR:-UNKNOWN}"
+    [[ "$state" == "ONLINE" ]] && exit 0
+    title="ZFS vdev ${state} in ${pool}"
+    body="${ZEVENT_VDEV_PATH:-${ZEVENT_VDEV_GUID:-unknown vdev}} is ${state}
+
+$(zpool status "$pool" 2>&1)"
+    ;;
+  scrub_finish | resilver_finish)
+    status="$(zpool status -x "$pool" 2>&1)"
+    [[ "$status" == *"is healthy"* ]] && exit 0
+    title="ZFS ${class//_/ } left ${pool} unhealthy"
+    body="$(zpool status "$pool" 2>&1)"
+    ;;
+  *)
+    title="ZFS ${class} on ${pool}"
+    body="$(zpool status "$pool" 2>&1)"
+    ;;
+esac
+
+throttle_dir=/run/zed-storage-alert
+mkdir -p "$throttle_dir"
+stamp="${throttle_dir}/${pool//\//_}-${class}"
+now="$(date +%s)"
+if [[ -f "$stamp" ]]; then
+  last="$(< "$stamp")"
+  if (( now - last < {{ zfs_maintenance_zed_throttle_seconds }} )); then
+    exit 0
+  fi
+fi
+echo "$now" > "$stamp"
+
+exec {{ alerting_bin_dir }}/storage-alert "$title" "$body"

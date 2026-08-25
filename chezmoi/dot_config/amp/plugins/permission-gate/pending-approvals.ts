@@ -1,17 +1,17 @@
-import type { ApprovalNote } from "./presentation.ts";
+import type { PendingResultNote } from "./presentation.ts";
 
 function key(threadID: string, toolUseID: string): string {
   return `${threadID}\0${toolUseID}`;
 }
 
 class PendingApprovalNotes {
-  private readonly byThreadAndToolUseID = new Map<string, ApprovalNote>();
+  private readonly byThreadAndToolUseID = new Map<string, PendingResultNote>();
 
-  remember(threadID: string, toolUseID: string, note: ApprovalNote): void {
+  remember(threadID: string, toolUseID: string, note: PendingResultNote): void {
     this.byThreadAndToolUseID.set(key(threadID, toolUseID), note);
   }
 
-  consume(threadID: string, toolUseID: string): ApprovalNote | undefined {
+  consume(threadID: string, toolUseID: string): PendingResultNote | undefined {
     const noteKey = key(threadID, toolUseID);
     const note = this.byThreadAndToolUseID.get(noteKey);
     this.byThreadAndToolUseID.delete(noteKey);

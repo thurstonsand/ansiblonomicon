@@ -6,3 +6,6 @@
 # pi-web-tools replaced parallel-web-tools; the orphaned copy kept registering a
 # competing fetch_web/search_web pair alongside it.
 .pi/agent/extensions/parallel-web-tools
+# Pi 0.84.3 made /model and /thinking session-scoped, so nothing clobbers the
+# defaults this extension existed to restore.
+.pi/agent/extensions/pin-model

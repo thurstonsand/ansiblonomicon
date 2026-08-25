@@ -29,4 +29,6 @@ echo "==> biome $MODE $ROOT_DIR"
   fi
   echo "==> tsc $ROOT_DIR"
   npx tsc --noEmit
+  echo "==> test $ROOT_DIR"
+  npm test
 )

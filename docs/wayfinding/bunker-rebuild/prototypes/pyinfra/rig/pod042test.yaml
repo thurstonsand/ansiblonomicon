@@ -1,0 +1,12 @@
+base: template://debian-13
+vmType: vz
+arch: aarch64
+cpus: 8
+memory: 12GiB
+disk: 80GiB
+mountType: virtiofs
+mounts:
+  - location: "~/Develop/ansiblonomicon"
+    writable: false
+ssh:
+  loadDotSSHPubKeys: true

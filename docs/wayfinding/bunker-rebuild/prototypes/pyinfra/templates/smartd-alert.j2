@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# smartd -M exec handler: the report arrives on stdin, the summary in the
+# SMARTD_* environment.
+set -uo pipefail
+
+device="${SMARTD_DEVICESTRING:-${SMARTD_DEVICE:-unknown device}}"
+failtype="${SMARTD_FAILTYPE:-SMART event}"
+message="${SMARTD_MESSAGE:-}"
+report="$(cat)"
+
+exec {{ alerting_bin_dir }}/storage-alert \
+  "SMART ${failtype} on ${device}" \
+  "${message}
+
+${report}"

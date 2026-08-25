@@ -37,8 +37,6 @@ export class CompanionSession {
   private readonly focus = new TerminalFocusTracker();
   private doneDismissalTimer: NodeJS.Timeout | undefined;
   private doneNeedsAcknowledgement = false;
-  private compactionSignal: AbortSignal | undefined;
-  private compactionAbortListener: (() => void) | undefined;
 
   get isEnabled(): boolean {
     return this.enabled;
@@ -117,18 +115,19 @@ export class CompanionSession {
     this.send(COMPANION_STATUS.error, toolName);
   }
 
-  async compacting(reason: string, signal: AbortSignal): Promise<void> {
+  async compacting(reason: string): Promise<void> {
     if (!this.active) return;
-    this.trackCompaction(signal);
     await this.connection.ensureConnected();
-    if (signal.aborted) return;
     this.send(COMPANION_STATUS.compacting, reason);
   }
 
   compacted(isIdle: boolean): void {
-    this.clearCompactionState();
     if (!this.active || !isIdle) return;
     this.done();
+  }
+
+  compactionFailed(): void {
+    if (this.lastStatus === COMPANION_STATUS.compacting) this.sendRemove();
   }
 
   done(): void {
@@ -189,7 +188,6 @@ export class CompanionSession {
   }
 
   private send(status: CompanionStatusLabel, detail?: string): void {
-    if (status !== COMPANION_STATUS.compacting) this.clearCompactionState();
     if (status !== COMPANION_STATUS.done) this.clearDoneState();
     if (this.lastStatus === status && this.lastDetail === detail) return;
     this.lastStatus = status;
@@ -233,27 +231,6 @@ export class CompanionSession {
     this.resend();
   }
 
-  private trackCompaction(signal: AbortSignal): void {
-    this.clearCompactionState();
-    this.compactionSignal = signal;
-    this.compactionAbortListener = () => this.compactionAborted();
-    signal.addEventListener("abort", this.compactionAbortListener, { once: true });
-    if (signal.aborted) this.compactionAborted();
-  }
-
-  private compactionAborted(): void {
-    this.clearCompactionState();
-    if (this.lastStatus === COMPANION_STATUS.compacting) this.sendRemove();
-  }
-
-  private clearCompactionState(): void {
-    if (this.compactionAbortListener) {
-      this.compactionSignal?.removeEventListener("abort", this.compactionAbortListener);
-    }
-    this.compactionSignal = undefined;
-    this.compactionAbortListener = undefined;
-  }
-
   private clearDoneState(): void {
     if (this.doneDismissalTimer) clearTimeout(this.doneDismissalTimer);
     this.doneDismissalTimer = undefined;
@@ -270,7 +247,6 @@ export class CompanionSession {
 
   private teardown(): void {
     this.focus.stop();
-    this.clearCompactionState();
     this.clearDoneState();
     if (this.connection.isConnected) this.sendRemove();
     this.connection.end();

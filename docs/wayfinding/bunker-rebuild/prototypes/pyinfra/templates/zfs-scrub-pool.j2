@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+# Scrub one pool, wait for it, and fail loudly if the pool is not healthy
+# afterwards. Run under hc-run, so the exit status is what Healthchecks sees.
+set -uo pipefail
+
+pool="${1:?usage: zfs-scrub-pool <pool>}"
+
+if ! zpool scrub -w "$pool"; then
+  {{ alerting_bin_dir }}/storage-alert "ZFS scrub failed to run on ${pool}" \
+    "$(zpool status "$pool" 2>&1)"
+  exit 1
+fi
+
+status="$(zpool status -x "$pool" 2>&1)"
+if [[ "$status" != *"is healthy"* ]]; then
+  {{ alerting_bin_dir }}/storage-alert "ZFS scrub found problems on ${pool}" "$status"
+  exit 1
+fi

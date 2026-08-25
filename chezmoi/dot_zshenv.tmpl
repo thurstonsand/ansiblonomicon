@@ -29,6 +29,7 @@ _evalcache() {
     local cache_tmp
     local generation_status
     cache_tmp=$(mktemp "$cache_file.tmp.XXXXXX") || return
+    trap "rm -f ${(q)cache_tmp}" EXIT INT TERM HUP
 
     if {
       echo "# $cache_key"
@@ -39,7 +40,6 @@ _evalcache() {
       zcompile "$cache_file" 2>/dev/null || true
     else
       generation_status=$?
-      rm -f "$cache_tmp"
       print -u2 "_evalcache: failed to refresh $cache_key (status $generation_status)"
       [[ -f "$cache_file" ]] || return "$generation_status"
     fi

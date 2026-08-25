@@ -405,6 +405,25 @@
 
     # Torrent seeding/removal policy is documented in docs/operations/media-torrent-seeding.md.
     # Do not use global qBittorrent seed limits to force Arr cleanup; private trackers need long-lived seeds.
+    - name: Register the MAM session update check
+      tags: [docker-stack-role, torrent]
+      ansible.builtin.include_role:
+        name: alerting
+        tasks_from: check.yml
+        apply:
+          tags: [docker-stack-role, torrent]
+      vars:
+        alerting_check_name: "{{ ansible_facts.hostname }}-mam-update"
+        alerting_check_schedule: "*/30 * * * *"
+        alerting_check_grace: 5400
+        alerting_check_install_url: false
+
+    - name: Publish the MAM ping URL to the torrent stack
+      tags: [docker-stack-role, torrent]
+      ansible.builtin.set_fact:
+        torrent_mam_ping_url: "{{ alerting_check_ping_url }}"
+      no_log: true
+
     - name: Deploy torrent stack
       tags: [docker-stack-role, torrent]
       ansible.builtin.include_role:
