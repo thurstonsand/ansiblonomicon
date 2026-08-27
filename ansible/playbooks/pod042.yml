@@ -410,6 +410,45 @@
       vars:
         docker_stack_name: plex
 
+    - name: Register the PON monitor check
+      tags: [docker-stack-role, pon-monitor]
+      ansible.builtin.include_role:
+        name: alerting
+        tasks_from: check.yml
+        apply:
+          tags: [docker-stack-role, pon-monitor]
+      vars:
+        alerting_check_name: "{{ ansible_facts.hostname }}-pon-monitor"
+        alerting_check_schedule: "*/5 * * * *"
+        alerting_check_grace: 1800
+        alerting_check_install_url: false
+
+    - name: Publish the PON monitor ping URL to its stack
+      tags: [docker-stack-role, pon-monitor]
+      ansible.builtin.set_fact:
+        pon_monitor_ping_url: "{{ alerting_check_ping_url }}"
+      no_log: true
+
+    - name: Ensure the PON monitor data directory exists
+      become: true
+      tags: [docker-stack-role, pon-monitor]
+      ansible.builtin.file:
+        path: "{{ docker.config_base }}/pon-monitor/pon-monitor/data"
+        state: directory
+        mode: "0755"
+        owner: "{{ docker.user.puid }}"
+        group: "{{ docker.user.pgid }}"
+
+    - name: Deploy pon-monitor stack
+      tags: [docker-stack-role, pon-monitor]
+      ansible.builtin.include_role:
+        name: docker_stack
+        apply:
+          become: true
+          tags: [docker-stack-role, pon-monitor]
+      vars:
+        docker_stack_name: pon-monitor
+
     # Torrent seeding/removal policy is documented in docs/operations/media-torrent-seeding.md.
     # Do not use global qBittorrent seed limits to force Arr cleanup; private trackers need long-lived seeds.
     - name: Register the MAM session update check

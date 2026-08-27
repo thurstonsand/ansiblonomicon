@@ -143,6 +143,29 @@ lan:
         https: 443
       domain: thurstons.house
 
+# The XGS-PON stick that bypasses the AT&T gateway. It is reachable on its LCT
+# management address through the UDMP's static route for 192.168.11.0/24 — lose
+# that route and both the internet and this monitor go with it.
+# Its log lives in RAM, so pon-monitor captures state at failure rather than
+# waiting for a human who is about to power-cycle the evidence away.
+pon:
+  stick:
+    ip: 192.168.11.1
+    user: root
+    metrics_path: /cgi-bin/luci/8311/metrics
+  probe_urls:
+    - https://1.1.1.1
+    - https://8.8.8.8
+  sample_interval: 15
+  # Two consecutive failures, so a single dropped probe cannot fire a capture.
+  failures_before_capture: 2
+  samples_max_bytes: 33554432
+  samples_keep: 3
+  # Alerts spool to disk when the WAN is down, since that is when they are
+  # raised; the cap bounds a long Hark outage.
+  spool_keep: 50
+  healthcheck_interval: 300
+
 # Docker engine. The apt repo itself is declared in pod042.config.yml
 # (apt_external_repos.docker); the daemon packages are host facts.
 docker_engine_packages:

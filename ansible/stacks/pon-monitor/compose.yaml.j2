@@ -1,0 +1,31 @@
+services:
+  pon-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: build
+    container_name: pon-monitor
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+    user: "{{ docker.user.id }}"
+    volumes:
+      - {{ docker.config_dir }}/pon-monitor/data:/data
+      - /etc/localtime:/etc/localtime:ro
+    environment:
+      - PON_METRICS_URL=https://{{ pon.stick.ip }}{{ pon.stick.metrics_path }}
+      - PON_STICK_HOST={{ pon.stick.ip }}
+      - PON_STICK_USER={{ pon.stick.user }}
+      - PON_STICK_PASSWORD={{ lookup('env', 'XGS_PON_PASSWORD') }}
+      - PON_PROBE_URLS={{ pon.probe_urls | join(' ') }}
+      - PON_SAMPLE_INTERVAL={{ pon.sample_interval }}
+      - PON_FAILURES_BEFORE_CAPTURE={{ pon.failures_before_capture }}
+      - PON_SAMPLES_PATH=/data/samples.jsonl
+      - PON_SAMPLES_MAX_BYTES={{ pon.samples_max_bytes }}
+      - PON_SAMPLES_KEEP={{ pon.samples_keep }}
+      - PON_CAPTURES_DIR=/data/captures
+      - PON_SPOOL_DIR=/data/spool
+      - PON_SPOOL_KEEP={{ pon.spool_keep }}
+      - PON_HARK_WEBHOOK_URL={{ lookup('env', 'HARK_WEBHOOK_URL') }}
+      - PON_HEALTHCHECK_PING_URL={{ pon_monitor_ping_url }}
+      - PON_HEALTHCHECK_INTERVAL={{ pon.healthcheck_interval }}
+    restart: unless-stopped
