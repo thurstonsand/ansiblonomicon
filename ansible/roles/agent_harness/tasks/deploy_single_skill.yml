@@ -18,10 +18,29 @@
   delegate_to: "{{ agent_harness_source_delegate_host }}"
   register: agent_harness_skill_j2_stat
 
+- name: Find skill templates
+  ansible.builtin.find:
+    paths: "{{ agent_harness_skill_info.source }}"
+    patterns: "*.j2"
+    excludes: "SKILL.md.j2"
+    recurse: true
+  delegate_to: "{{ agent_harness_source_delegate_host }}"
+  register: agent_harness_skill_templates
+
+- name: Collect rendered template destinations
+  ansible.builtin.set_fact:
+    agent_harness_skill_rendered: >-
+      {{ agent_harness_skill_templates.files | map(attribute='path')
+         | map('relpath', agent_harness_skill_info.source)
+         | map('regex_replace', '\.j2$', '') | list }}
+
+# Rendered files have no counterpart in the source tree, so rsync --delete would
+# remove each one before the template task puts it back.
 - name: Build rsync exclude options
   ansible.builtin.set_fact:
     agent_harness_skill_rsync_opts: >-
       {{ ['--omit-dir-times', '--exclude=SKILL.md', '--exclude=.git', '--exclude=.claude-plugin', '--exclude=*.j2']
+         + (agent_harness_skill_rendered | map('regex_replace', '^(.*)$', '--exclude=/\1') | list)
          + (agent_harness_skill_info.exclude_data | default([]) | map('regex_replace', '^(.*)$', '--exclude=\1') | list) }}
     agent_harness_skill_sync_label: "{{ agent_harness_target_agent }}:{{ agent_harness_skill_info.name }}"
 
@@ -69,6 +88,17 @@
         'rsync:',
       ] + (agent_harness_skill_sync_result.stdout_lines | default([])) }}
   when: (agent_harness_skill_sync_result.stdout_lines | default([])) | length > 0
+
+- name: Render skill templates {{ agent_harness_skill_sync_label }}
+  ansible.builtin.template:
+    src: "{{ item.path }}"
+    dest: >-
+      {{ agent_harness_agent_config.skills_dir }}/{{ agent_harness_skill_info.name }}/{{
+         item.path | relpath(agent_harness_skill_info.source) | regex_replace('\.j2$', '') }}
+    mode: preserve
+  loop: "{{ agent_harness_skill_templates.files }}"
+  loop_control:
+    label: "{{ item.path | relpath(agent_harness_skill_info.source) }}"
 
 - name: Load SKILL.md.j2 template content
   ansible.builtin.set_fact:

@@ -25,7 +25,7 @@ services:
       - PON_CAPTURES_DIR=/data/captures
       - PON_SPOOL_DIR=/data/spool
       - PON_SPOOL_KEEP={{ pon.spool_keep }}
-      - PON_HARK_WEBHOOK_URL={{ lookup('env', 'HARK_WEBHOOK_URL') }}
+      - PON_HARK_WEBHOOK_URL={{ lookup('env', 'HARK_WEBHOOK_URL_POD042') }}
       - PON_HEALTHCHECK_PING_URL={{ pon_monitor_ping_url }}
       - PON_HEALTHCHECK_INTERVAL={{ pon.healthcheck_interval }}
     restart: unless-stopped
