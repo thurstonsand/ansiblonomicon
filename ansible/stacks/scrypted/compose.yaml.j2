@@ -1,6 +1,7 @@
 services:
   scrypted:
-    image: koush/scrypted
+    # Upstream froze the stable tags at v0.143.0 (Nov 2025); `beta` is the live release channel.
+    image: koush/scrypted:beta
     container_name: scrypted
     networks:
       personal:

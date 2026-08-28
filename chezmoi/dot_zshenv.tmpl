@@ -13,17 +13,21 @@ ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 _evalcache() {
   local cmd=$1
   shift
-  local cache_file="$ZSH_CACHE_DIR/${cmd##*/}_init.zsh"
-  local binary=$(command -v "$cmd" 2>/dev/null)
-  local cache_key="$cmd $*"
+  local binary=$(whence -p "$cmd" 2>/dev/null)
 
   if [[ -z "$binary" ]]; then
     print -u2 "_evalcache: command not found: $cmd"
     return 127
   fi
 
+  # Subcommand belongs in the filename: `mise activate` and `mise completion`
+  # otherwise share one cache and overwrite each other every startup.
+  local slug="${cmd##*/}${*:+_${(j:_:)@}}"
+  local cache_file="$ZSH_CACHE_DIR/${slug//[^A-Za-z0-9_-]/_}_init.zsh"
+  local cache_key="$binary $*"
+
   if [[ ! -f "$cache_file" ]] || \
-     [[ -n "$binary" && "$binary" -nt "$cache_file" ]] || \
+     [[ "$binary" -nt "$cache_file" ]] || \
      [[ "$cache_key" != "$(head -1 "$cache_file" 2>/dev/null | sed 's/^# //')" ]]; then
     mkdir -p "$ZSH_CACHE_DIR"
     local cache_tmp

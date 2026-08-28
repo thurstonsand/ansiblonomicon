@@ -205,6 +205,7 @@ mas "WhatsApp Messenger", id: 310633997
 # =============================================================================
 # Hardware & Drivers
 # =============================================================================
+brew "smartmontools"
 cask "bazecor"
 cask "displaylink"
 cask "elgato-camera-hub"
