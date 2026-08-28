@@ -5,7 +5,7 @@
       - alerting_hark_webhook_url | length > 0
       - alerting_healthchecks_api_key | length > 0
     fail_msg: >-
-      HARK_WEBHOOK_URL and HEALTHCHECKS_API_KEY must be resolved before
+      HARK_WEBHOOK_URL_POD042 and HEALTHCHECKS_API_KEY must be resolved before
       configuring alerting. Run `mise run secrets:init`.
   no_log: true
 

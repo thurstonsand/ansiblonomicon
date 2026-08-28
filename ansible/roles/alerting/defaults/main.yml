@@ -3,7 +3,7 @@
 # events POST to Hark. Both secrets arrive as SecretRefs resolved into the env.
 alerting_bin_dir: /usr/local/bin
 alerting_state_dir: /etc/alerting
-alerting_hark_webhook_url: "{{ lookup('env', 'HARK_WEBHOOK_URL') }}"
+alerting_hark_webhook_url: "{{ lookup('env', 'HARK_WEBHOOK_URL_POD042') }}"
 alerting_healthchecks_api_key: "{{ lookup('env', 'HEALTHCHECKS_API_KEY') }}"
 alerting_healthchecks_api_url: https://healthchecks.io/api/v3/checks/
 alerting_healthchecks_timezone: America/New_York

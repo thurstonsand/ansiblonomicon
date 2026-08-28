@@ -79,9 +79,9 @@ agent_harness_sources:
           "*": [claude, codex, opencode]
         exclude_skills:
           work: [tui-screenshot]
-
-  - local: "{{ playbook_dir }}/../../agents/claude"
-    plugins:
+          # notify's script carries a live webhook credential once rendered,
+          # and the Amp catalogue is hosted.
+          amp_publish: [notify]
       - name: claude
         target_agents: [claude]
         exclude_skills:
