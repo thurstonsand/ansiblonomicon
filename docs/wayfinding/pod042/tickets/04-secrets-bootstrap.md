@@ -17,7 +17,7 @@ Three branches settled; the delivery mechanism awaits [Agent-native secrets tool
 
 - **Service account**: reuse OpenClaw's existing SA (already scoped to the `agent` vault, which holds 66 of 68 `.secrets.jsonc` refs — the two outliers are Mac login passwords pod042 never needs). Rename openclaw→pod042 references as touched.
 - **Git credential**: the user's **personal SSH key** lives on the box — deliberate choice over a scoped deploy key ("it's all my infra"). Recorded risk: full GitHub account access rides on an unattended VM.
-- **Amp auth**: reuse the existing `AMPCODE_API_KEY` item from the agent vault. Recorded coupling: revoking it breaks both pod042 and the cli-proxy-api stack together.
+- **Amp auth**: reuse the existing Amp API key item from the agent vault. pod042 is its only consumer now that cli-proxy-api no longer proxies Amp, and it has no `.secrets.jsonc` ref — the box reads it from the vault directly.
 
 ### Final resolution (2026-07-24)
 

@@ -69,7 +69,10 @@ cd chezmoi/private_dot_pi/agent/extensions
 # mirror), but still writes the stamp: a task that succeeds without producing its
 # declared output is stale forever and re-runs on every shell entry.
 if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
-  npm install --silent
+  # --no-audit: the audit endpoint is a separate service from the registry and
+  # can hang for minutes while package fetches are fine. It blocks every shell
+  # entry when it does, and it tells us nothing we act on here.
+  npm install --silent --no-audit
 fi
 mkdir -p node_modules
 touch node_modules/mise-deps-stamp

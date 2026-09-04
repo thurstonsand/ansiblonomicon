@@ -43,43 +43,6 @@ quota-exceeded:
 ws-auth: false
 request-log: false # nothing rotates these; they once grew to 282G, 28% of the pool
 disable-cooling: false
-ampcode:
-  upstream-url: https://ampcode.com
-  upstream-api-key: "{{ lookup('env', 'AMPCODE_API_KEY') }}"
-  restrict-management-to-localhost: false
-  model-mappings:
-    # Map any dated/preview suffix versions to stable model names
-    # Model versions sourced from ansible/models.yml
-    # Gemini models (order matters: more specific patterns first)
-    - from: "{{ models.google.gemini_25_flash_lite.cli_proxy_api.pattern }}"
-      to: "{{ models.google.gemini_25_flash_lite.version }}"
-      regex: true
-    - from: "{{ models.google.gemini_25_flash.cli_proxy_api.pattern }}"
-      to: "{{ models.google.gemini_25_flash.version }}"
-      regex: true
-    - from: "{{ models.google.gemini_25_pro.cli_proxy_api.pattern }}"
-      to: "{{ models.google.gemini_25_pro.version }}"
-      regex: true
-    - from: "{{ models.google.gemini_31_pro.cli_proxy_api.pattern }}"
-      to: "{{ models.google.gemini_31_pro.version }}"
-      regex: true
-    - from: "{{ models.google.gemini_3_flash.cli_proxy_api.pattern }}"
-      to: "{{ models.google.gemini_3_flash.version }}"
-      regex: true
-    - from: "{{ models.google.gemini_3_pro.cli_proxy_api.pattern }}"
-      to: "{{ models.google.gemini_3_pro.version }}"
-      regex: true
-    # Claude models
-    - from: "{{ models.anthropic.sonnet.cli_proxy_api.pattern }}"
-      to: "{{ models.anthropic.sonnet.version }}"
-      regex: true
-    - from: "{{ models.anthropic.opus.cli_proxy_api.pattern }}"
-      to: "{{ models.anthropic.opus.version }}"
-      regex: true
-    - from: "{{ models.anthropic.haiku.cli_proxy_api.pattern }}"
-      to: "{{ models.anthropic.haiku.version }}"
-      regex: true
-  force-model-mappings: false
 payload:
   default: []
   override: []
