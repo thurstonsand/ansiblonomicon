@@ -1,0 +1,8 @@
+source = "github.com/thurstonsand/unifi"
+repository = "thurstonsand/terraform-provider-unifi"
+version = "0.56.0-ansiblonomicon.5"
+
+[platforms]
+darwin_arm64 = "02bbddd4586c5f051c975d9757db7a28b5065317de2a8edfd13b0f5ba9478029"
+linux_amd64 = "ee7c2491fcf789bad6c225a81f1a48838c5056a0bf708a19e8ed6b5efab07bda"
+linux_arm64 = "c8cef9a494c8d59f82bf59f19dd4ec98e6da4314b979ae39ed9b20d9b6a89e4d"

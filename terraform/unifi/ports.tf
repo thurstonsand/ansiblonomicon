@@ -39,7 +39,18 @@ resource "unifi_port_profile" "infrastructure_trunk" {
 }
 
 resource "unifi_device" "udmp" {
+  mac               = "e4:38:83:1a:a0:45"
   forget_on_destroy = false
+
+  ethernet_override {
+    ifname        = "eth8"
+    network_group = "WAN"
+  }
+
+  ethernet_override {
+    ifname        = "eth9"
+    network_group = "WAN2"
+  }
 
   port_override {
     index           = 1
@@ -64,7 +75,29 @@ resource "unifi_device" "udmp" {
   }
 }
 
+resource "unifi_device" "power_distribution_pro" {
+  mac               = "d8:b3:70:2c:b7:45"
+  allow_adoption    = true
+  forget_on_destroy = false
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "unifi_device" "u7_pro_max" {
+  mac               = "94:2a:6f:2c:f0:d2"
+  allow_adoption    = true
+  forget_on_destroy = false
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 resource "unifi_device" "pro_max_24_poe" {
+  mac               = "f4:e2:c6:ab:91:02"
+  allow_adoption    = true
   forget_on_destroy = false
 
   port_override {

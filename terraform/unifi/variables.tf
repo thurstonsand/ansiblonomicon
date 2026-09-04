@@ -13,6 +13,11 @@ variable "unifi_api_url" {
   default = "https://10.10.20.1"
 }
 
+variable "unifi_wan_mac_override" {
+  type      = string
+  sensitive = true
+}
+
 variable "yorha_passphrase" {
   type      = string
   sensitive = true

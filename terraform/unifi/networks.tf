@@ -5,7 +5,6 @@ resource "unifi_network" "bunker" {
   auto_scale          = false
   setting_preference  = "manual"
   ipv6_interface_type = "none"
-  multicast_dns       = false
 
   dhcp_server = {
     enabled = true
@@ -26,7 +25,6 @@ resource "unifi_network" "yorha" {
   auto_scale          = false
   setting_preference  = "manual"
   ipv6_interface_type = "none"
-  multicast_dns       = true
 
   dhcp_server = {
     enabled = true
@@ -47,7 +45,6 @@ resource "unifi_network" "lunar_tear" {
   auto_scale          = false
   setting_preference  = "manual"
   ipv6_interface_type = "none"
-  multicast_dns       = true
 
   dhcp_server = {
     enabled = true
@@ -68,7 +65,6 @@ resource "unifi_network" "scanners" {
   auto_scale          = false
   setting_preference  = "manual"
   ipv6_interface_type = "none"
-  multicast_dns       = true
 
   dhcp_server = {
     enabled = true
@@ -89,7 +85,6 @@ resource "unifi_network" "the_village" {
   auto_scale          = false
   setting_preference  = "manual"
   ipv6_interface_type = "none"
-  multicast_dns       = false
 
   dhcp_server = {
     enabled = true
