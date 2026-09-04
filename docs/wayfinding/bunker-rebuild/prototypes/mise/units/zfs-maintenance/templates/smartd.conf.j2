@@ -1,0 +1,1 @@
+DEVICESCAN -a -o on -S on -n standby,q -s {{ ENV.ZFS_SMART_SCHEDULE }} -W {{ ENV.ZFS_SMART_TEMP_LIMITS }} -m <nomailer> -M exec {{ ENV.ZFS_BIN_DIR }}/smartd-alert

@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+#MISE description="Remove paths declared retired in .miseremove"
+#MISE depends=["//:ledger-begin"]
+set -uo pipefail
+# shellcheck source-path=SCRIPTDIR source=../../../lib/reconcile.sh
+source "$RECONCILE_LIB"
+reconcile::begin base
+
+# Deleting a file from the repo does not remove it from a host. The manifest is
+# how a removal stays declarative: every run deletes every path listed, and says
+# nothing on the runs after the first.
+[[ -r "$RECONCILE_MANIFEST" ]] || {
+  echo "no retirement manifest at $RECONCILE_MANIFEST" >&2
+  exit 1
+}
+
+while read -r entry; do
+  [[ -z "$entry" || "$entry" == \#* ]] && continue
+  case "$entry" in
+    / | . | '~' | '~'[!/]* | */../* | ../* | */..)
+      echo "invalid .miseremove path: $entry" >&2
+      exit 1
+      ;;
+    /*) path="$entry" ;;
+    '~'/*) path="${HOME}/${entry#\~/}" ;;
+    *) path="${HOME}/${entry}" ;;
+  esac
+  reconcile::absent "$path"
+done <"$RECONCILE_MANIFEST"

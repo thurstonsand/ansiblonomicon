@@ -1,0 +1,5 @@
+# The prototype lives inside the ansiblonomicon checkout, whose own root
+# mise.toml would otherwise layer over it and install the repo's whole toolset.
+# A ceiling stops config discovery above this directory, which is also the only
+# way to make a monorepo root actually be the root.
+ceiling_paths = ["{{ config_root | dirname }}"]

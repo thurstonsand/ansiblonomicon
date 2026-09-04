@@ -1,11 +1,28 @@
 ---
+# Global npm packages live inside the node install directory, and node gets
+# bumped outside of converges too (mise install/up from any shell, a renovate
+# run), which orphans every global until the next reconcile. A postinstall on
+# the node tool makes mise itself reinstall them into whatever node it just
+# installed, so the trigger is the bump, not the next playbook run.
+- name: Reinstall global npm packages whenever mise installs a node
+  ansible.builtin.set_fact:
+    language_tools_mise_tool_config: >-
+      {{
+        mise_tool_config | combine(
+          (npm_global_packages | length > 0) | ternary({
+            'tools.node.postinstall':
+              '"$MISE_TOOL_INSTALL_PATH/bin/npm" install -g ' ~ (npm_global_packages | join(' '))
+          }, {})
+        )
+      }}
+
 - name: Compute managed language tools fingerprint
   ansible.builtin.set_fact:
     language_tools_managed_packages_fingerprint: >-
       {{
         {
           'mise': mise_global_tools,
-          'mise_config': mise_tool_config,
+          'mise_config': language_tools_mise_tool_config,
           'npm': npm_global_packages,
           'uv': uv_global_tools,
           'bun': bun_global_packages,
@@ -17,7 +34,7 @@
     language_tools_managed_packages_present: >-
       {{
         (mise_global_tools | length > 0)
-        or (mise_tool_config | length > 0)
+        or (language_tools_mise_tool_config | length > 0)
         or (npm_global_packages | length > 0)
         or (uv_global_tools | length > 0)
         or (bun_global_packages | length > 0)
@@ -27,7 +44,7 @@
       }}
 
 - name: Read current mise tool config
-  when: mise_tool_config | length > 0
+  when: language_tools_mise_tool_config | length > 0
   ansible.builtin.command:
     argv:
       - mise
@@ -36,7 +53,7 @@
       - "--file"
       - "{{ language_tools_mise_global_config }}"
       - "{{ item.key }}"
-  loop: "{{ mise_tool_config | dict2items }}"
+  loop: "{{ language_tools_mise_tool_config | dict2items }}"
   loop_control:
     label: "{{ item.key }}"
   register: language_tools_mise_config_current
@@ -109,7 +126,7 @@
     'upgraded' in (language_tools_mise_result.stderr | lower)
 
 - name: Install tools declared in mise config
-  when: language_tools_update_due and mise_tool_config | length > 0
+  when: language_tools_update_due and language_tools_mise_tool_config | length > 0
   ansible.builtin.command:
     argv: [mise, "install"]
   register: language_tools_mise_config_install

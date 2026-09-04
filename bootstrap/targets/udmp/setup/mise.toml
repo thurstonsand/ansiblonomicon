@@ -1,0 +1,58 @@
+[bootstrap.directories."/root/.ssh"]
+owner = "root"
+group = "root"
+mode = "0700"
+
+[bootstrap.directories."/data/ssh"]
+owner = "root"
+group = "root"
+mode = "0700"
+
+[bootstrap.files."/data/ssh/authorized_keys"]
+source = "files/authorized_keys"
+owner = "root"
+group = "root"
+mode = "0600"
+notify = ["ssh-keys-restore"]
+
+[bootstrap.files."/root/.ssh/authorized_keys"]
+source = "files/authorized_keys"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/systemd/system/ssh-keys-restore.service"]
+content = '''
+[Unit]
+Description=Restore root SSH authorized keys
+After=network.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/bin/sh -c 'install -d -o root -g root -m 0700 /root/.ssh && install -o root -g root -m 0600 /data/ssh/authorized_keys /root/.ssh/authorized_keys'
+
+[Install]
+WantedBy=multi-user.target
+'''
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["ssh-keys-restore"]
+
+[bootstrap.files."/etc/ssh/sshd_config.d/mise-bootstrap.conf"]
+content = "AcceptEnv NEXTDNS_PROFILE_ID\n"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["ssh"]
+
+[bootstrap.services.ssh]
+state = "running"
+enabled = true
+on_change = "reload_or_restart"
+
+[bootstrap.services.ssh-keys-restore]
+state = "running"
+enabled = true
+on_change = "restart"

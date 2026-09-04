@@ -28,7 +28,7 @@ fi
 
 declare -a inventory=()
 case "$playbook" in
-  truenas | udmp) inventory=(-i inventory/targets -i "$control") ;;
+  truenas) inventory=(-i inventory/targets -i "$control") ;;
   pod042) inventory=(-i inventory/targets/pod042.yml) ;;
   *) inventory=(-i "$control") ;;
 esac

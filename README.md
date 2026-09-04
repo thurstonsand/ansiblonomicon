@@ -53,13 +53,14 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 │       ├── work.yml         # Work macOS playbook
 │       ├── openclaw.yml     # Retained OpenClaw reference playbook
 │       ├── pod042.yml       # pod042 local-only playbook
-│       ├── truenas.yml      # TrueNAS playbook
-│       └── udmp.yml         # UDMP playbook
+│       └── truenas.yml      # TrueNAS playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
 ├── agents/                   # Reusable AI agent bundles (source for agent_harness role)
 ├── .agents/                  # Project-local Claude/Pi skills for this repo
+├── bootstrap/                # Native mise host bootstrap projects and remote inventory
 ├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
+├── terraform/unifi/          # UniFi Network application (VLANs, zones, WLANs, ports)
 ├── wrangler/                 # Cloudflare Workers (deployed via wrangler)
 └── scripts/
     ├── bootstrap.sh          # One-liner bootstrap for new machines
@@ -72,7 +73,8 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 - `mise laptop --check` — Dry-run mode (shows what would change without applying)
 - `mise pod042` — Converge the pod042 host from inside its local checkout
 - `mise truenas` — Apply TrueNAS Ansible playbook
-- `mise udmp` — Apply UDMP Ansible playbook
+- `mise udmp` — Reconcile UDM Pro host state with native mise remote bootstrap
+- `mise udmp --check` — Preview UDM Pro host-state changes
 - `mise run reconcile:tags [playbook]` — List the `--tags` a playbook offers (defaults to this machine's own)
 - `mise run chezmoi:diff` — Preview dotfile changes (source → home), excluding lockfiles
 - `mise run chezmoi:re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)

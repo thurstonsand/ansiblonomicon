@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Push one event notification to Hark. Producers: zed, smartd, scrub failures.
+# Usage: storage-alert <title> [body...]   (body may also arrive on stdin)
+set -uo pipefail
+
+url_file="{{ ENV.ALERTING_STATE_DIR }}/hark-webhook-url"
+if [[ -n "${CREDENTIALS_DIRECTORY:-}" && -r "${CREDENTIALS_DIRECTORY}/hark-webhook-url" ]]; then
+  url_file="${CREDENTIALS_DIRECTORY}/hark-webhook-url"
+fi
+
+if (( $# == 0 )); then
+  echo "usage: storage-alert <title> [body...]" >&2
+  exit 64
+fi
+
+title="$1"
+shift
+body="$*"
+if [[ -z "$body" && ! -t 0 ]]; then
+  body="$(cat)"
+fi
+body="${body:-(no detail)}"
+
+if [[ ! -r "$url_file" ]]; then
+  echo "storage-alert: no readable webhook url at ${url_file}" >&2
+  exit 1
+fi
+
+payload="$(jq -nc \
+  --arg title "{{ ENV.ALERTING_SOURCE }}: ${title}" \
+  --arg body "${body:0:7900}" \
+  '{title: $title, body: $body}')"
+
+if ! curl -fsS --max-time 15 --retry 3 --retry-delay 5 \
+  -H 'Content-Type: application/json' \
+  -H "Idempotency-Key: $(date +%s)-$$" \
+  --data-binary "$payload" \
+  -o /dev/null \
+  "$(< "$url_file")"; then
+  echo "storage-alert: delivery failed for: ${title}" >&2
+  exit 1
+fi

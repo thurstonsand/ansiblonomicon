@@ -1,0 +1,40 @@
+[bootstrap.files."/data/multicast-querier.sh"]
+content = '''
+#!/bin/sh
+set -eu
+
+for bridge in br0 br20 br30 br40 br50; do
+  path="/sys/class/net/$bridge/bridge/multicast_querier"
+  test -e "$path"
+  printf '1\n' > "$path"
+done
+'''
+owner = "root"
+group = "root"
+mode = "0755"
+notify = ["multicast-querier"]
+
+[bootstrap.files."/etc/systemd/system/multicast-querier.service"]
+content = '''
+[Unit]
+Description=Enable multicast querier on trusted-domain bridges
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/data/multicast-querier.sh
+
+[Install]
+WantedBy=multi-user.target
+'''
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["multicast-querier"]
+
+[bootstrap.services.multicast-querier]
+state = "running"
+enabled = true
+on_change = "restart"

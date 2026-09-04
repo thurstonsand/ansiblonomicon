@@ -1,0 +1,11 @@
+[Unit]
+Description=ZFS scrub of {{ pool }}
+
+[Timer]
+Unit=zfs-scrub-pool@{{ pool }}.service
+OnCalendar={{ calendar }}
+Persistent=true
+RandomizedDelaySec=600
+
+[Install]
+WantedBy=timers.target

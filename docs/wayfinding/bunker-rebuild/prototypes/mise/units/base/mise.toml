@@ -1,0 +1,8 @@
+# The base unit. Everything every host needs, which for this trial is exactly
+# one thing: retiring paths the repo no longer declares. It has no [env] of its
+# own — the manifest path is a host fact and stays at the monorepo root.
+
+[tasks.converge]
+description = "Reconcile the base system"
+depends = ["//:ledger-begin", ":retire"]
+run = "true"

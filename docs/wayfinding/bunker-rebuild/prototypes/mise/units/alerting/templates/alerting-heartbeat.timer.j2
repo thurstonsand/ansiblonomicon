@@ -1,0 +1,9 @@
+[Unit]
+Description=Host-alive ping to Healthchecks
+
+[Timer]
+OnCalendar={{ ENV.ALERTING_HEARTBEAT_CALENDAR }}
+Persistent=false
+
+[Install]
+WantedBy=timers.target

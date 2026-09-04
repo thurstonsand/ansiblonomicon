@@ -1,0 +1,63 @@
+# pod042 — the monorepo root. This file is the playbook: it names the units,
+# carries the host facts every unit inherits, and owns the entrypoints.
+#
+# Everything a unit decides for itself lives in units/<name>/mise.toml. Nothing
+# in this file knows how alerting or zfs-maintenance work.
+monorepo_root = true
+
+[monorepo]
+config_roots = ["units/*"]
+
+[settings]
+# mise runs the dependency graph in parallel, which is right for builds and
+# wrong for reconciliation: the first run of this prototype had four tasks
+# fighting over the dpkg lock and three Healthchecks registrations racing each
+# other through the same read-modify-write. Convergence is serial work.
+jobs = 1
+
+[tools]
+# The reconciler's own dependency: mise has no file-templating primitive, so the
+# template engine is pinned here like any other tool. This is the one place the
+# "config manager is just the tool manager" collapse pays a visible dividend.
+"github:mitsuhiko/minijinja" = { version = "2.24.0", exe = "minijinja-cli" }
+
+[env]
+# Host facts (group_vars/pod042.yml). Scalars live here; mise config has no
+# structured type, so lists of dicts live in host/pod042.json.
+RECONCILE_HOST = "{{ exec(command='hostname -s') | trim }}"
+RECONCILE_FACTS = "{{ config_root }}/host/pod042.json"
+RECONCILE_LIB = "{{ config_root }}/lib/reconcile.sh"
+RECONCILE_LEDGER = "/run/mise-reconcile.ledger"
+RECONCILE_MANIFEST = "{{ config_root }}/.miseremove"
+
+# Alerting endpoints. The rig points these at its mock; production would read
+# them from the process environment the same way the Ansible role does.
+ALERTING_HEALTHCHECKS_API_URL = "{{ env.ALERTING_HEALTHCHECKS_API_URL | default(value='https://healthchecks.io/api/v3/checks/') }}"
+ALERTING_HEALTHCHECKS_API_KEY = "{{ env.HEALTHCHECKS_API_KEY | default(value='') }}"
+ALERTING_HARK_WEBHOOK_URL = "{{ env.HARK_WEBHOOK_URL | default(value='') }}"
+
+[tasks.converge]
+description = "Reconcile the whole segment"
+depends = [
+  "//units/base:converge",
+  "//units/alerting:converge",
+  "//units/zfs-maintenance:converge",
+]
+depends_post = ["report"]
+run = "true"
+
+[tasks.plan]
+description = "Reconcile in check mode: report drift, change nothing"
+# Task env is not passed to `depends`, so check mode has to travel through a
+# nested invocation rather than through the dependency graph.
+run = "RECONCILE_CHECK=1 mise run converge"
+
+[tasks.ledger-begin]
+description = "Truncate the change ledger for this run"
+hide = true
+run = 'sudo install -m 0644 -o "$(id -un)" /dev/null "$RECONCILE_LEDGER"'
+
+[tasks.report]
+description = "Print the change summary for this run"
+hide = true
+run = 'bash "{{ config_root }}/lib/report.sh"'

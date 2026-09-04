@@ -1,0 +1,39 @@
+# The zfs-maintenance unit — roles/zfs_maintenance.
+#
+# Snapshots, scrubs, SMART tests and ZFS event handling. Everything that has
+# something to say says it through alerting, which is why this config imports
+# alerting's contract file. That import is half of meta/main.yml: it puts
+# alerting's paths in scope even on a run that only reconciles scrubs. The other
+# half — alerting's scripts existing before these units reference them — is the
+# `depends` edge on :converge below.
+
+[env]
+_.file = "../alerting/interface.env"
+# Dotenv cannot compute a path relative to the unit that exported it, so the
+# sourceable half of the contract is rebuilt here by hand.
+ALERTING_CHECK_LIB = "{{ config_root }}/../alerting/lib/check.sh"
+
+ZFS_BIN_DIR = "{{ env.ZFS_BIN_DIR | default(value='/usr/local/bin') }}"
+ZFS_SANOID_CHECK = "{{ env.RECONCILE_HOST }}-sanoid"
+ZFS_SANOID_SCHEDULE = "{{ env.ZFS_SANOID_SCHEDULE | default(value='0 * * * *') }}"
+ZFS_SANOID_GRACE = "{{ env.ZFS_SANOID_GRACE | default(value='1800') }}"
+ZFS_SMART_SCHEDULE = "{{ env.ZFS_SMART_SCHEDULE | default(value='(S/../.././02|L/../01/./03)') }}"
+ZFS_SMART_TEMP_LIMITS = "{{ env.ZFS_SMART_TEMP_LIMITS | default(value='4,45,55') }}"
+ZFS_ZED_THROTTLE_SECONDS = "{{ env.ZFS_ZED_THROTTLE_SECONDS | default(value='900') }}"
+ZFS_ZED_EVENTS = "{{ env.ZFS_ZED_EVENTS | default(value='statechange data scrub_finish resilver_finish') }}"
+
+# [env] holds strings, so every default that is a list or a table has to leave
+# the config and live in JSON beside it. The renderer layers this under the
+# host facts, which is the merge mise cannot do itself.
+RECONCILE_DEFAULTS = "{{ config_root }}/defaults.json"
+
+[tasks.converge]
+description = "Reconcile ZFS maintenance"
+depends = [
+  "//units/alerting:converge",
+  ":sanoid",
+  ":scrub",
+  ":smartd",
+  ":zed",
+]
+run = "true"

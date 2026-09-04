@@ -1,0 +1,38 @@
+#!/usr/bin/env bash
+#MISE description="Configure pool scrubs"
+#MISE depends=["//units/alerting:converge"]
+set -uo pipefail
+# shellcheck source-path=SCRIPTDIR source=../../../lib/reconcile.sh
+source "$RECONCILE_LIB"
+# shellcheck source-path=SCRIPTDIR source=../../alerting/lib/check.sh
+source "$ALERTING_CHECK_LIB"
+reconcile::begin zfs-maintenance
+
+templates="${MISE_TASK_DIR}/../templates"
+
+reconcile::template "$templates/zfs-scrub-pool.j2" "$ZFS_BIN_DIR/zfs-scrub-pool" 0755 root root
+
+while read -r entry; do
+  pool="$(jq -r '.pool' <<<"$entry")"
+  alerting::check "${RECONCILE_HOST}-zfs-scrub-${pool}" \
+    "$(jq -r '.healthchecks_schedule' <<<"$entry")" \
+    "$(jq -r '.healthchecks_grace' <<<"$entry")"
+done < <(jq -c '.scrubs[]' "$RECONCILE_FACTS")
+
+reconcile::template "$templates/zfs-scrub-pool@.service.j2" \
+  /etc/systemd/system/zfs-scrub-pool@.service 0644 root root
+reconcile::notify_if_changed daemon-reload
+
+while read -r entry; do
+  pool="$(jq -r '.pool' <<<"$entry")"
+  reconcile::template "$templates/zfs-scrub-pool@.timer.j2" \
+    "/etc/systemd/system/zfs-scrub-pool@${pool}.timer" 0644 root root \
+    -D "pool=${pool}" -D "calendar=$(jq -r '.calendar' <<<"$entry")"
+  reconcile::notify_if_changed daemon-reload
+done < <(jq -c '.scrubs[]' "$RECONCILE_FACTS")
+
+reconcile::flush
+
+while read -r pool; do
+  reconcile::unit "zfs-scrub-pool@${pool}.timer"
+done < <(jq -r '.scrubs[].pool' "$RECONCILE_FACTS")

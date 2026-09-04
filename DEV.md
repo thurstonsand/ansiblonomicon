@@ -77,8 +77,14 @@ Compose files and container data live apart on disk — `/mnt/performance/docker
 The home router.
 
 ```sh
-mise udmp -t nextdns       # or multicast-querier
+mise udmp                  # OS services through native mise remote bootstrap
+mise udmp --check          # preview OS changes
+mise udmp --update-mise    # refresh the system-wide remote mise executable
+mise run unifi:plan        # Network application resources
+mise run unifi:apply
 ```
+
+Remote inventory in `bootstrap/mise.toml`. Resources in `terraform/unifi/`.
 
 ## Agent tooling
 

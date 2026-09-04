@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+#MISE description="Configure SMART monitoring"
+#MISE depends=["//units/alerting:converge"]
+set -uo pipefail
+# shellcheck source-path=SCRIPTDIR source=../../../lib/reconcile.sh
+source "$RECONCILE_LIB"
+reconcile::begin zfs-maintenance
+
+templates="${MISE_TASK_DIR}/../templates"
+
+reconcile::apt smartmontools
+reconcile::template "$templates/smartd-alert.j2" "$ZFS_BIN_DIR/smartd-alert" 0755 root root
+reconcile::template "$templates/smartd.conf.j2" /etc/smartd.conf 0644 root root
+# `systemctl enable smartd` refuses to operate on a linked unit; smartd.service
+# is an Alias= of smartmontools.service, so the canonical name is the one to use.
+reconcile::notify_if_changed smartmontools
+
+reconcile::unit smartmontools
+reconcile::flush

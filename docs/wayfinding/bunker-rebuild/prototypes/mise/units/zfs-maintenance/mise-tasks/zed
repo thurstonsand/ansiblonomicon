@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+#MISE description="Configure the ZFS event daemon"
+#MISE depends=["//units/alerting:converge"]
+set -uo pipefail
+# shellcheck source-path=SCRIPTDIR source=../../../lib/reconcile.sh
+source "$RECONCILE_LIB"
+reconcile::begin zfs-maintenance
+
+templates="${MISE_TASK_DIR}/../templates"
+
+reconcile::apt zfs-zed
+
+for event in $ZFS_ZED_EVENTS; do
+  reconcile::template "$templates/zedlet-storage-alert.sh.j2" \
+    "/etc/zfs/zed.d/${event}-storage-alert.sh" 0755 root root
+  reconcile::notify_if_changed zfs-zed
+done
+
+reconcile::unit zfs-zed
+reconcile::flush
+
+# Without autoreplace the hot spare never activates on its own.
+while read -r pool; do
+  reconcile::zpool_property "$pool" autoreplace on
+done < <(jq -r '.pools_autoreplace[]' "$RECONCILE_FACTS")

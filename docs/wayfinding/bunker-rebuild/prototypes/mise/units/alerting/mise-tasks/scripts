@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+#MISE description="Install the alerting scripts and credential"
+#MISE depends=["//:ledger-begin"]
+set -uo pipefail
+# shellcheck source-path=SCRIPTDIR source=../../../lib/reconcile.sh
+source "$RECONCILE_LIB"
+reconcile::begin alerting
+
+if [[ -z "$ALERTING_HARK_WEBHOOK_URL" || -z "$ALERTING_HEALTHCHECKS_API_KEY" ]]; then
+  echo "HARK_WEBHOOK_URL and HEALTHCHECKS_API_KEY must be resolved before" >&2
+  echo "configuring alerting. Run \`mise run secrets:init\`." >&2
+  exit 1
+fi
+
+templates="${MISE_TASK_DIR}/../templates"
+
+reconcile::apt curl jq
+reconcile::dir "$ALERTING_STATE_DIR" 0700 root root
+reconcile::dir "$ALERTING_STATE_DIR/checks" 0700 root root
+reconcile::template "$templates/hark-webhook-url.j2" \
+  "$ALERTING_STATE_DIR/hark-webhook-url" 0600 root root
+reconcile::template "$templates/storage-alert.j2" "$ALERTING_BIN_DIR/storage-alert" 0755 root root
+reconcile::template "$templates/hc-run.j2" "$ALERTING_BIN_DIR/hc-run" 0755 root root

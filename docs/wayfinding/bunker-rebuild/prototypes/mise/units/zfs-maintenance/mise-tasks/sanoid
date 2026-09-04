@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+#MISE description="Configure sanoid snapshots"
+#MISE depends=["//units/alerting:converge"]
+set -uo pipefail
+# shellcheck source-path=SCRIPTDIR source=../../../lib/reconcile.sh
+source "$RECONCILE_LIB"
+# shellcheck source-path=SCRIPTDIR source=../../alerting/lib/check.sh
+source "$ALERTING_CHECK_LIB"
+reconcile::begin zfs-maintenance
+
+templates="${MISE_TASK_DIR}/../templates"
+
+reconcile::apt sanoid
+# Debian ships sanoid without its config directory.
+reconcile::dir /etc/sanoid 0755 root root
+reconcile::template "$templates/sanoid.conf.j2" /etc/sanoid/sanoid.conf 0644 root root
+
+alerting::check "$ZFS_SANOID_CHECK" "$ZFS_SANOID_SCHEDULE" "$ZFS_SANOID_GRACE"
+
+reconcile::dir /etc/systemd/system/sanoid.service.d 0755 root root
+reconcile::template "$templates/sanoid-healthchecks.conf.j2" \
+  /etc/systemd/system/sanoid.service.d/10-healthchecks.conf 0644 root root
+reconcile::notify_if_changed daemon-reload
+
+reconcile::flush
+reconcile::unit sanoid.timer

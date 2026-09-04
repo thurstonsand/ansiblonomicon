@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# Run a scheduled job under a Healthchecks check: ping /start, then the job's
+# exit status. Notification failure never masks job failure — a ping that fails
+# is logged to the journal and otherwise ignored.
+#
+# Usage: hc-run <check-name> -- <command> [args...]
+set -uo pipefail
+
+if (( $# == 0 )); then
+  echo "usage: hc-run <check-name> -- <command> [args...]" >&2
+  exit 64
+fi
+
+check="$1"
+shift
+[[ "${1:-}" == "--" ]] && shift
+if (( $# == 0 )); then
+  echo "hc-run: no command given for check ${check}" >&2
+  exit 64
+fi
+
+url_file="{{ ENV.ALERTING_STATE_DIR }}/checks/${check}.url"
+if [[ -n "${CREDENTIALS_DIRECTORY:-}" && -r "${CREDENTIALS_DIRECTORY}/hc-ping" ]]; then
+  url_file="${CREDENTIALS_DIRECTORY}/hc-ping"
+fi
+
+hc_ping() {
+  local suffix="$1"
+  if [[ ! -r "$url_file" ]]; then
+    echo "hc-run: no ping url at ${url_file}; skipping ping${suffix}" >&2
+    return 0
+  fi
+  curl -fsS --max-time 10 --retry 3 --retry-delay 2 -o /dev/null \
+    "$(< "$url_file")${suffix}" \
+    || echo "hc-run: ping '${suffix:-/success}' failed for ${check}" >&2
+  return 0
+}
+
+hc_ping /start
+"$@"
+status=$?
+if (( status == 0 )); then
+  hc_ping ""
+else
+  hc_ping "/${status}"
+fi
+exit "$status"
