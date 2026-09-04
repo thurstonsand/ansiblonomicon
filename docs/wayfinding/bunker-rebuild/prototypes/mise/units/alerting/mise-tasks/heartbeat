@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+#MISE description="Register the host-alive check and install its timer"
+#MISE depends=[":scripts"]
+set -uo pipefail
+# shellcheck source-path=SCRIPTDIR source=../../../lib/reconcile.sh
+source "$RECONCILE_LIB"
+# shellcheck source-path=SCRIPTDIR source=../../alerting/lib/check.sh
+source "$ALERTING_CHECK_LIB"
+reconcile::begin alerting
+
+templates="${MISE_TASK_DIR}/../templates"
+
+alerting::check "$ALERTING_HEARTBEAT_CHECK" "$ALERTING_HEARTBEAT_SCHEDULE" "$ALERTING_HEARTBEAT_GRACE"
+
+for suffix in service timer; do
+  reconcile::template "$templates/alerting-heartbeat.${suffix}.j2" \
+    "/etc/systemd/system/alerting-heartbeat.${suffix}" 0644 root root
+  reconcile::notify_if_changed daemon-reload
+done
+
+# Ansible needs `meta: flush_handlers` here so the timer sees its units. The
+# same requirement, spelled as an explicit call.
+reconcile::flush
+reconcile::unit alerting-heartbeat.timer

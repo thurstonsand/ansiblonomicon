@@ -1,0 +1,43 @@
+#!/usr/bin/env bash
+#MISE description="Install, update, and verify NextDNS"
+
+set -euo pipefail
+
+install_nextdns() (
+  workdir=$(mktemp -d)
+  trap 'rm -rf "$workdir"' EXIT
+
+  release_url=$(curl --fail --head --location --silent --show-error \
+    --output /dev/null --write-out '%{url_effective}' \
+    https://github.com/nextdns/nextdns/releases/latest)
+  version=${release_url##*/v}
+  [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]
+
+  archive_name="nextdns_${version}_linux_arm64.tar.gz"
+  release_base="https://github.com/nextdns/nextdns/releases/download/v${version}"
+  curl --fail --location --silent --show-error \
+    --output "$workdir/checksums.txt" "$release_base/checksums.txt"
+  checksum=$(awk -v archive="$archive_name" '$2 == archive { print $1 }' "$workdir/checksums.txt")
+  [[ "$checksum" =~ ^[a-f0-9]{64}$ ]]
+
+  curl --fail --location --silent --show-error \
+    --output "$workdir/$archive_name" "$release_base/$archive_name"
+  printf '%s  %s\n' "$checksum" "$workdir/$archive_name" | sha256sum --check --status
+  tar -xzf "$workdir/$archive_name" -C "$workdir"
+  install -o root -g root -m 0755 "$workdir/nextdns" /usr/bin/nextdns
+  /usr/bin/nextdns install
+)
+
+if ! /usr/bin/nextdns version >/dev/null 2>&1; then
+  install_nextdns
+fi
+
+/usr/bin/nextdns upgrade
+
+if ! systemctl cat nextdns.service >/dev/null 2>&1; then
+  /usr/bin/nextdns install
+fi
+
+systemctl enable --now nextdns.service
+systemctl is-active --quiet nextdns.service
+/usr/bin/nextdns version

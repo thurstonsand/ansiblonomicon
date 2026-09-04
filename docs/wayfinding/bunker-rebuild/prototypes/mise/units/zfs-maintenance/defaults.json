@@ -1,0 +1,12 @@
+{
+  "sanoid_template": {
+    "frequently": 0,
+    "hourly": 24,
+    "daily": 7,
+    "monthly": 1,
+    "yearly": 0
+  },
+  "sanoid_datasets": [],
+  "scrubs": [],
+  "pools_autoreplace": []
+}

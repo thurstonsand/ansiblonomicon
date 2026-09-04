@@ -87,6 +87,7 @@ blocked-by: []
 Blocking lives in `blocked-by:`, a list of ticket numbers. A ticket is **unblocked** when every ticket blocking it is closed; the **frontier** is the open, unblocked, unclaimed tickets: the edge of the known. The skill ships a script, [scripts/frontier.py](./scripts/frontier.py), that reads every ticket's frontmatter and prints the frontier:
 
 ```sh
+# declares uv inline and must be called exactly as written
 <skill-dir>/scripts/frontier.py docs/wayfinding/<effort-slug>
 ```
 

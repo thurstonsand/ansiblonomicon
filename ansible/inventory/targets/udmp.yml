@@ -1,8 +1,0 @@
----
-all:
-  children:
-    udmp:
-      hosts:
-        192.168.1.1:
-          ansible_user: root
-          ansible_python_interpreter: /usr/bin/python3

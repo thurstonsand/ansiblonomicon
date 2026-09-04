@@ -1,0 +1,12 @@
+min_version = "2026.8.12"
+
+[bootstrap.remote]
+exclude = [".env", "*.local.*"]
+
+[bootstrap.remote.hosts.udmp]
+host = "10.10.20.1"
+user = "root"
+source = "targets/udmp"
+tags = ["network"]
+ssh_options = ["SendEnv=NEXTDNS_PROFILE_ID"]
+remote_mise = "/usr/local/bin/mise"

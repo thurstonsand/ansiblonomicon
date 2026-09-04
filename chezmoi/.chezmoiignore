@@ -126,11 +126,7 @@ Library/Application Support/Code/User/mcp.json
 # App caches and generated files
 **/__pycache__/
 **/*.pyc
-Library/Application Support/PrusaSlicer/cache/
 **/node_modules/
-
-# Documentation files (keep in source, don't deploy)
-.ssh/README.md
 
 # Extension dev artifacts (for IDE type checking, not deployed)
 **/*.pyi

@@ -1,0 +1,29 @@
+# The alerting unit — roles/alerting.
+#
+# One channel, one contract: scheduled jobs report to Healthchecks, events POST
+# to Hark. This [env] block is defaults/main.yml. Each private default is
+# wrapped in `env.X | default(...)` because mise's precedence runs the wrong way
+# for roles: a bare value here would override the host fact at the monorepo
+# root, where Ansible's defaults/ is the *lowest* precedence layer.
+
+[env]
+# The public half of the interface, imported by every unit that installs a job
+# speaking this contract. This is meta/main.yml's dependency, minus the
+# ordering — that travels separately, as a `depends` edge.
+_.file = "interface.env"
+
+ALERTING_HEARTBEAT_SCHEDULE = "{{ env.ALERTING_HEARTBEAT_SCHEDULE | default(value='*/15 * * * *') }}"
+ALERTING_HEARTBEAT_GRACE = "{{ env.ALERTING_HEARTBEAT_GRACE | default(value='900') }}"
+ALERTING_HEARTBEAT_CALENDAR = "{{ env.ALERTING_HEARTBEAT_CALENDAR | default(value='*:0/15') }}"
+ALERTING_SOURCE = "{{ env.RECONCILE_HOST }}"
+ALERTING_HEARTBEAT_CHECK = "{{ env.RECONCILE_HOST }}-heartbeat"
+
+# A dotenv file holds strings, not paths relative to the unit that exports it,
+# so the sourceable half of the interface is rebuilt from config_root here and
+# again in every consumer.
+ALERTING_CHECK_LIB = "{{ config_root }}/lib/check.sh"
+
+[tasks.converge]
+description = "Reconcile alerting"
+depends = ["//:ledger-begin", ":scripts", ":heartbeat"]
+run = "true"

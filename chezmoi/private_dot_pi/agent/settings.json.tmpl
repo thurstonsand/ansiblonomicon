@@ -11,16 +11,16 @@
         "default" (dict "provider" .work_gateway.openai_provider "model" (trimSuffix "[1m]" .work_models.gpt_sol.version))
         "librarian" .work_models.gpt_sol.pi_alias
         "autoTitle" .work_models.sonnet.pi_alias
-        "handoff" .work_models.gpt_terra.pi_alias
+        "handoff" .work_models.gpt_sol.pi_alias
         "vibe" .work_models.sonnet.pi_alias
         "enabledModels" (list
           (printf "%s:medium" .work_models.gpt_sol.pi_alias)
           (printf "%s:medium" .work_models.opus.pi_alias))
         "handoffRoster" (list
           (printf "%s:medium" .work_models.opus.pi_alias)
+          (printf "%s:low" .work_models.gpt_sol.pi_alias)
           (printf "%s:medium" .work_models.gpt_sol.pi_alias)
-          (printf "%s:high" .work_models.gpt_sol.pi_alias)
-          (printf "%s:high" .work_models.gpt_terra.pi_alias)) -}}
+          (printf "%s:high" .work_models.gpt_sol.pi_alias)) -}}
 {{-   $_ := set $profile "packages" (append (concat .piWorkPackages (list
         "git:github.com/nicobailon/pi-powerline-footer"
         "git:github.com/thurstonsand/pi-permissions@downgrade"
@@ -34,9 +34,9 @@
 {{-   $profile = dict
         "default" (dict "provider" "doppelclaude" "model" .models.anthropic.opus.version)
         "librarian" .models.openai.gpt_sol.agent_harness.aliases.pi
-        "autoTitle" .models.openai.gpt_terra.agent_harness.aliases.pi
-        "handoff" .models.openai.gpt_terra.agent_harness.aliases.pi
-        "vibe" .models.openai.gpt_terra.agent_harness.aliases.pi
+        "autoTitle" .models.openai.gpt_luna.agent_harness.aliases.pi
+        "handoff" .models.openai.gpt_sol.agent_harness.aliases.pi
+        "vibe" .models.openai.gpt_luna.agent_harness.aliases.pi
         "enabledModels" (list
           (printf "%s:medium" .models.anthropic.opus.agent_harness.aliases.pi)
           (printf "%s:medium" .models.anthropic.fable.agent_harness.aliases.pi)
@@ -44,9 +44,9 @@
         "handoffRoster" (list
           (printf "%s:medium" .models.anthropic.opus.agent_harness.aliases.pi)
           (printf "%s:medium" .models.anthropic.fable.agent_harness.aliases.pi)
+          (printf "%s:low" .models.openai.gpt_sol.agent_harness.aliases.pi)
           (printf "%s:medium" .models.openai.gpt_sol.agent_harness.aliases.pi)
-          (printf "%s:high" .models.openai.gpt_sol.agent_harness.aliases.pi)
-          (printf "%s:high" .models.openai.gpt_terra.agent_harness.aliases.pi)) -}}
+          (printf "%s:high" .models.openai.gpt_sol.agent_harness.aliases.pi)) -}}
 {{-   $useLocalPackages := eq .chezmoi.os "darwin" -}}
 {{-   $personalPackages := list
         (dict "npm" "pi-permissions" "local" "/Users/thurstonsand/Develop/pi-permissions")

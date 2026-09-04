@@ -1,0 +1,20 @@
+{
+  "scrubs": [
+    {
+      "pool": "ark",
+      "calendar": "*-*-01 04:00:00",
+      "healthchecks_schedule": "0 4 1 * *",
+      "healthchecks_grace": 86400
+    },
+    {
+      "pool": "black-box",
+      "calendar": "*-*-05 04:00:00",
+      "healthchecks_schedule": "0 4 5 * *",
+      "healthchecks_grace": 7200
+    }
+  ],
+  "sanoid_datasets": [
+    { "dataset": "black-box", "template": "production", "recursive": true }
+  ],
+  "pools_autoreplace": ["ark"]
+}

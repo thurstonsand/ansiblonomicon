@@ -1,0 +1,14 @@
+min_version = "2026.8.12"
+
+[bootstrap]
+config_roots = [
+  "setup",
+  "multicast-querier",
+  "nextdns",
+]
+
+[bootstrap.secrets]
+nextdns_profile_id = "NEXTDNS_PROFILE_ID"
+
+[task_config]
+includes = ["nextdns/mise-tasks"]

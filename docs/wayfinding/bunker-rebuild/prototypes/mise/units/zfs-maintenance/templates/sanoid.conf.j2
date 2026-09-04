@@ -1,0 +1,15 @@
+{% for entry in sanoid_datasets %}
+[{{ entry.dataset }}]
+	use_template = {{ entry.template | default('production') }}
+	recursive = {{ 'yes' if entry.recursive | default(true) else 'no' }}
+{% for key, value in (entry.overrides | default({})).items() %}
+	{{ key }} = {{ value }}
+{% endfor %}
+
+{% endfor %}
+[template_production]
+{% for key, value in sanoid_template.items() %}
+	{{ key }} = {{ value }}
+{% endfor %}
+	autosnap = yes
+	autoprune = yes

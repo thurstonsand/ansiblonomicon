@@ -173,18 +173,11 @@ ansible-playbook -i inventory/targets -i "$ctrl" playbooks/truenas.yml --diff ${
 [tasks."reconcile:udmp"]
 description = "Reconcile the UDM Pro router"
 alias = "udmp"
-dir = "ansible"
 usage = '''
 flag "-c --check" help="Dry-run mode (no changes made)"
-flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
+flag "--update-mise" help="Install this machine's mise version on the UDM Pro"
 '''
-run = '''
-case "$(uname)" in
-  Darwin) ctrl=inventory/control/macos.ini ;;
-  *)      ctrl=inventory/control/linux.ini ;;
-esac
-ansible-playbook -i inventory/targets -i "$ctrl" playbooks/udmp.yml --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
-'''
+run = "mise -C bootstrap bootstrap remote udmp --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/usr/local/bin/mise}"
 
 [tasks."reconcile:pod042"]
 description = "Reconcile pod042, the Bunker (storage, stacks, and its own dev environment)"
@@ -205,7 +198,7 @@ ansible-playbook -i inventory/targets/pod042.yml playbooks/pod042.yml --diff ${u
 [tasks."reconcile:tags"]
 description = "List the --tags a playbook offers (defaults to this machine's own)"
 usage = '''
-arg "[playbook]" help="Playbook to inspect: macos, work, truenas, udmp, pod042"
+arg "[playbook]" help="Playbook to inspect: macos, work, truenas, pod042"
 '''
 run = "./scripts/list-tags.sh ${usage_playbook:-}"
 
@@ -230,6 +223,32 @@ usage = '''
 flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
 '''
 run = "tofu apply ${usage_yes:+-auto-approve}"
+
+# ---------------------------------------------------------------------------
+# UniFi
+# ---------------------------------------------------------------------------
+
+[tasks."unifi:init"]
+description = "Initialize the UniFi OpenTofu working directory"
+dir = "terraform/unifi"
+run = "tofu init"
+
+[tasks."unifi:plan"]
+description = "Plan the UniFi OpenTofu changes"
+dir = "terraform/unifi"
+run = "tofu plan"
+
+[tasks."unifi:apply"]
+description = "Apply the UniFi OpenTofu changes"
+dir = "terraform/unifi"
+usage = '''
+flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
+'''
+run = "tofu apply ${usage_yes:+-auto-approve}"
+
+# ---------------------------------------------------------------------------
+# Edge deployables
+# ---------------------------------------------------------------------------
 
 [tasks."edge:deploy"]
 description = "Deploy every Cloudflare Worker (aig + hooks)"

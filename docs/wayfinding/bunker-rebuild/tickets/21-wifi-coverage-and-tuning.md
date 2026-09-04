@@ -1,7 +1,7 @@
 ---
 status: open
 type: task
-blocked-by: []
+blocked-by: [26]
 ---
 
 # WiFi coverage survey and RF tuning at the new house
@@ -9,6 +9,16 @@ blocked-by: []
 ## Question
 
 The wireless layer has never been surveyed. It was tuned reactively at the pre-move house, once, on 2026-08-28, and only because the Haiku fans were slow enough over the `baf` integration to be worth chasing. What that chase found argues the whole 2.4GHz layer deserves a deliberate pass at the new house rather than another accident.
+
+### Temporary single-AP placement
+
+Until the electrician installs the permanent Ethernet runs, the only U7 Pro Max remains in the basement. Auto radio control currently selects channel 6 at 20 MHz and the 23 dBm maximum on 2.4 GHz, channel 161 at 40 MHz and the 29 dBm maximum on 5 GHz, and channel 85 at 160 MHz and 21 dBm on 6 GHz. A blanket Max setting would therefore change little beyond raising the shortest-range band; leave Auto in place.
+
+For temporary coverage, place the AP flat, as high and as near the house's horizontal center as the existing cable allows, with the LED face upward toward the occupied floors. Keep it clear of the metal rack, ducts, concrete, electrical panels, and large pipes; an open shelf near the basement ceiling or stair opening beats the rack top. This is temporary placement guidance, not the final survey result.
+
+Network 10.5.67's WiFi Doctor currently offers one bulk operation containing `Optimize 2.4 GHz Channels for IoT`, a device firmware update, `5/6 GHz Inter-Roaming Enhancement`, and wired AP connectivity optimization. The interface exposes neither a field-level preview nor separate approval for these actions, and public Ubiquiti documentation does not define the two named transformations. Do not run it: 2.4 GHz already uses the narrow 20 MHz channel required by IoT, inter-AP roaming has no job with one AP, and the bundle would bypass both the Official-channel update policy and OpenTofu-owned WLAN state. Re-evaluate transparent, individually controlled equivalents after permanent AP placement and the measured survey.
+
+An Apple client reported that YoRHa used a separate 6 GHz network name despite the controller and AP both advertising the exact `YoRHa` SSID on live 2.4, 5, and 6 GHz virtual APs. The WLAN uses WPA3 and required PMF across all bands, matching Apple's published requirements. Treat the warning as client-side stale classification or a UniFi MLO interoperability defect, not evidence of a split SSID. Forget and rejoin YoRHa first; if the warning survives, A/B test the explicitly enabled MLO setting before changing bands or names.
 
 ### What the pre-move house looked like before tuning
 

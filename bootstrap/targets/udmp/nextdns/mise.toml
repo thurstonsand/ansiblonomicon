@@ -1,0 +1,26 @@
+[bootstrap.files."/data/nextdns.conf"]
+content = '''
+max-ttl 5s
+report-client-info true
+detect-captive-portals false
+hardened-privacy false
+use-hosts true
+timeout 5s
+setup-router true
+log-queries false
+cache-size 10MB
+bogus-priv true
+listen localhost:53
+profile {{ secret(name="nextdns_profile_id") }}
+cache-max-age 0s
+max-inflight-requests 256
+debug false
+control /var/run/nextdns.sock
+discovery-dns
+mdns all
+auto-activate true
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"

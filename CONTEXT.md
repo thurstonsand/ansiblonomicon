@@ -1,9 +1,10 @@
 # Context
 
 - **Ansiblonomicon**: This repo. The single declarative source for every machine I own — laptops, NAS, router, dev VM, and for the Cloudflare edge in front of them.
-- **Host**: A machine this repo configures. Each host has a playbook, an entry in inventory, and its own config file. Playbooks run against the host they describe.
-- **Reconcile**: One playbook run bringing a host to its declared state. The unit of applying change; always re-runnable, always safe to repeat.
-- **Tag**: The unit of partial reconciliation.
+- **Host**: A machine this repo configures. Ansible-managed hosts have a playbook and inventory entry; migrated hosts have a native mise bootstrap target under `bootstrap/targets/`.
+- **Reconcile**: One host run bringing the machine to its declared state. The unit of applying change; always re-runnable, always safe to repeat.
+- **Tag**: The unit of partial Ansible reconciliation.
+- **Bootstrap target**: A host configuration under `bootstrap/targets/`, applied locally or through `mise bootstrap remote`. New host-state work migrates to this native mise model as its existing Ansible unit is touched.
 - **Dev tool**: A binary needed to work on this repo. Pinned in `mise.toml`.
 - **Host tool**: A binary reconciliation installs onto a machine for its own sake. Declared in the Brewfile or a role. `mise`, `uv`, and `chezmoi` are host tools that development also happens to need.
 - **Role**: A unit of capability under `ansible/roles/`. A role owns a thing that can be installed or configured, not a machine that needs configuring.
@@ -20,3 +21,12 @@
 - **Work machine**: The corporate laptop. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions, and cannot easily be extended.
 - **pod042**: The NAS successor — plain Debian 13 on the old TrueNAS hardware.
 - **OpenClaw**: pod042's predecessor. Sunsetting; treat any remaining reference as legacy.
+
+## Unifi Networks
+
+- **Bunker**: Infrastructure; Native, untagged
+- **YoRHa**: Administrators
+- **Lunar Tear**: Household and guests
+- **Scanners**: Controllable devices
+- **The Village**: IoT
+- **Transporter**: VPN

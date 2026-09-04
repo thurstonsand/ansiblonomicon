@@ -54,10 +54,9 @@ Host pod042
 {{- end }}
 
 Host udmp
-  ForwardAgent yes
+  HostName 10.10.20.1
   User root
   HostKeyAlias udmp
-  ProxyCommand ~/.local/libexec/ssh-smart-proxy udmp 192.168.1.1 22 udmp-ssh.thurstons.house
 
 Host *
   ServerAliveInterval 60
