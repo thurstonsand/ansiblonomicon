@@ -206,7 +206,9 @@ Everything, at the price of a runtime. `lib/reconcile.sh` gives each primitive t
 def zpool_property(pool: str, prop: str, value: str):
     current = host.get_fact(ZfsPoolProperty, pool=pool, prop=prop)
     if current != value:
-        yield StringCommand("zpool", "set", QuoteString(f"{prop}={value}"), QuoteString(pool))
+        yield StringCommand(
+            "zpool", "set", QuoteString(f"{prop}={value}"), QuoteString(pool)
+        )
 ```
 
 ```bash

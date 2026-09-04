@@ -18,8 +18,6 @@ models:
       max_input: 1000000
       max_output: 64000
       vision: true
-      cli_proxy_api:
-        pattern: "^claude-fable-5-1"
       agent_harness:
         aliases:
           claude: "claude-fable-5-1[1m]"
@@ -36,8 +34,6 @@ models:
       max_input: 200000
       max_output: 64000
       vision: true
-      cli_proxy_api:
-        pattern: "^claude-haiku-4-5"
       agent_harness:
         aliases:
           claude: "haiku"
@@ -54,8 +50,6 @@ models:
       max_input: 1000000
       max_output: 128000
       vision: true
-      cli_proxy_api:
-        pattern: "^claude-sonnet-5"
       agent_harness:
         aliases:
           claude: "sonnet"
@@ -73,8 +67,6 @@ models:
       max_output: 128000
       vision: true
       supports_temperature: false
-      cli_proxy_api:
-        pattern: "^claude-opus-5"
       agent_harness:
         aliases:
           claude: "opus[1m]"
@@ -197,61 +189,6 @@ models:
         include: true
         thinking: true
       zed: true
-
-    # CLI proxy only - backward compat for versioned names
-    gemini_31_pro:
-      version: "gemini-3.1-pro-high"
-      display_name: "Gemini 3.1 Pro"
-      max_input: 1000000
-      max_output: 65536
-      vision: true
-      cli_proxy_api:
-        pattern: "^gemini-3\\\\.1-pro"
-
-    gemini_3_flash:
-      version: "gemini-3-flash-preview"
-      display_name: "Gemini 3 Flash"
-      max_input: 1000000
-      max_output: 65536
-      vision: true
-      cli_proxy_api:
-        pattern: "^gemini-3-flash"
-
-    gemini_3_pro:
-      version: "gemini-3-pro-preview"
-      display_name: "Gemini 3 Pro"
-      max_input: 1000000
-      max_output: 65536
-      vision: true
-      cli_proxy_api:
-        pattern: "^gemini-3-pro"
-
-    gemini_25_flash:
-      version: "gemini-2.5-flash"
-      display_name: "Gemini 2.5 Flash"
-      max_input: 1000000
-      max_output: 65536
-      vision: true
-      cli_proxy_api:
-        pattern: "^gemini-2\\\\.5-flash"
-
-    gemini_25_flash_lite:
-      version: "gemini-2.5-flash-lite"
-      display_name: "Gemini 2.5 Flash Lite"
-      max_input: 1000000
-      max_output: 65536
-      vision: true
-      cli_proxy_api:
-        pattern: "^gemini-2\\\\.5-flash-lite"
-
-    gemini_25_pro:
-      version: "gemini-2.5-pro"
-      display_name: "Gemini 2.5 Pro"
-      max_input: 1000000
-      max_output: 65536
-      vision: true
-      cli_proxy_api:
-        pattern: "^gemini-2\\\\.5-pro"
 
 # =============================================================================
 # CLI PROXY API - Non-model-specific configuration

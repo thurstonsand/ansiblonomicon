@@ -1,6 +1,6 @@
 # Agent-native 1Password secrets for pod042
 
-Researched 2026-07-24. This assesses a headless Debian 13 VM with the already-decided, read-scoped `agent`-vault service account. It does not revisit the service-account, personal-SSH-key, or shared-`AMPCODE_API_KEY` decisions in [Secrets bootstrap for pod042](../tickets/04-secrets-bootstrap.md).
+Researched 2026-07-24. This assesses a headless Debian 13 VM with the already-decided, read-scoped `agent`-vault service account. It does not revisit the service-account, personal-SSH-key, or Amp-API-key decisions in [Secrets bootstrap for pod042](../tickets/04-secrets-bootstrap.md).
 
 ## Decision
 

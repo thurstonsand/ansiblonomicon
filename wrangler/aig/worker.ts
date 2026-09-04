@@ -10,7 +10,7 @@
 const GATEWAY_BASE = "https://gateway.ai.cloudflare.com/v1";
 const ORIGIN = "https://cli-proxy-api.thurstons.house";
 
-type RequestCategory = "provider" | "amp_metadata" | "other";
+type RequestCategory = "provider" | "other";
 
 type AnalyticsIndex = "response" | "empty_content_fix";
 
@@ -49,41 +49,18 @@ function getRequestCategory(pathname: string): RequestCategory {
   if (first === "v1" || first === "v1beta") return "provider";
   if (first === "api" && second === "provider") return "provider";
 
-  const ampMetadataPaths = [
-    "internal",
-    "user",
-    "auth",
-    "meta",
-    "telemetry",
-    "threads",
-    "ads",
-    "otel",
-    "tab",
-  ];
-  if (first === "api" && ampMetadataPaths.includes(second)) return "amp_metadata";
-
   return "other";
 }
 
 // For reference, these paths go DIRECT to origin (not through AI Gateway):
 // /v0/management/*     - CLIProxyAPI management API
 // /v1internal:*        - Internal Gemini CLI (localhost-only proxy)
-// /api/internal/*      - Amp internal management
-// /api/user/*          - Amp user management
-// /api/auth/*          - Amp auth
-// /api/meta/*          - Amp metadata
-// /api/telemetry/*     - Telemetry
-// /api/threads/*       - Conversation threads
-// /api/ads/*           - Ads
-// /api/otel/*          - OpenTelemetry
-// /api/tab/*           - Tab management
 // /anthropic/callback  - OAuth callbacks
 // /codex/callback
 // /google/callback
 // /iflow/callback
 // /antigravity/callback
 // /auth/*              - Root auth
-// /threads/*           - Root threads
 // /docs/*              - Docs
 // /settings/*          - Settings
 // /keep-alive          - Health check
@@ -133,7 +110,7 @@ function getStatusBucket(status: number): string {
 }
 
 function getConversationId(headers: Headers): string | undefined {
-  return headers.get("x-amp-thread-id") ?? headers.get("x-opencode-session-id") ?? undefined;
+  return headers.get("x-opencode-session-id") ?? undefined;
 }
 
 export default {
