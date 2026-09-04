@@ -45,5 +45,5 @@ Do not pursue bulk fleet updates, Site Manager Blueprints and Drift Inspector, S
 
 - Record the installed Network, switch, and AP versions without forcing an update.
 - Evaluate each candidate against its stated prerequisite and record accept, reject, or defer with evidence.
-- Put accepted stable configuration in `terraform/unifi/` when provider 0.55.0 can round-trip it. Keep unsupported controller state manual and document its exact recovery path.
+- Put accepted stable configuration in `terraform/unifi/` when the pinned provider fork can round-trip it. Keep unsupported controller state manual and document its exact recovery path.
 - Require representative packet or client testing only for the behavior changed, followed by a full **No changes** OpenTofu plan.

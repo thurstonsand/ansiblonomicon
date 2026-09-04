@@ -231,8 +231,13 @@ run = "tofu apply ${usage_yes:+-auto-approve}"
 # UniFi
 # ---------------------------------------------------------------------------
 
+[tasks."unifi:provider:install"]
+description = "Install the pinned UniFi provider into OpenTofu's filesystem mirror"
+run = "uv run scripts/install_unifi_provider.py"
+
 [tasks."unifi:init"]
 description = "Initialize the UniFi OpenTofu working directory"
+depends = ["unifi:provider:install"]
 dir = "terraform/unifi"
 run = "tofu init"
 
@@ -248,6 +253,10 @@ usage = '''
 flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
 '''
 run = "tofu apply ${usage_yes:+-auto-approve}"
+
+[tasks."unifi:smoke"]
+description = "Read-only smoke checks for the WAS-110 WAN path"
+run = "uv run scripts/unifi_smoke.py"
 
 # ---------------------------------------------------------------------------
 # Edge deployables

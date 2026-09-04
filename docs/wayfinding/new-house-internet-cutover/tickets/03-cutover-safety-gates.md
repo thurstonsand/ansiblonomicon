@@ -34,7 +34,7 @@ The UDM Pro's official numbering is not symmetric:
 | UDMP 1 | Bunker access and physical recovery |
 | UDMP 2 | YoRHa access and wired test client |
 | UDMP 9 | Temporary RJ45 Internet from a BGW620 LAN port |
-| UDMP 10 | SFP+ Internet containing the WAS-110, forced to 10 Gb/s |
+| UDMP 10 | SFP+ Internet containing the WAS-110, required to link at 10 Gb/s full duplex |
 | UDMP 11 | SFP+ LAN to a Pro Max 24 PoE SFP+ port over the existing 10G DAC or fiber pair |
 
 Choose the switch's permanent port numbers later when the house is wired. For this cutover, record which 2.5 GbE PoE port powers the U7 Pro Max and which 1 GbE access port manages the Power Distribution Pro. The switch uplink and AP port use native Bunker and allow every VLAN; the PDU port is a Bunker access port.
@@ -154,7 +154,7 @@ Choose the switch's permanent port numbers later when the house is wired. For th
 
 ### Phase 2: prepare the direct WAN without moving fiber
 
-1. **Create port 10 as the dormant direct WAN.** Insert the WAS-110 into UDMP port 10 with its fiber disconnected. At **Settings > Internet**, assign physical port 10 as a DHCP Internet source named `WAS-110`; keep port 9 preferred until all preparation passes. Enable MAC clone and enter the concealed BGW620 WAN MAC from `AT&T Router`. In Port Manager, force physical port 10 to 10 Gb/s rather than Auto. Never clone the MAC onto port 9 or a LAN port.
+1. **Create port 10 as the dormant direct WAN.** Insert the WAS-110 into UDMP port 10 with its fiber disconnected. At **Settings > Internet**, assign physical port 10 as a DHCP Internet source named `WAS-110`; keep port 9 preferred until all preparation passes. Enable MAC clone and enter the concealed BGW620 WAN MAC from `AT&T Router`. Require the live link to report 10 Gb/s full duplex. The completed cutover later showed that the controller retained Auto negotiation with no port override while satisfying that link requirement, so do not add an unproven forced-speed write merely to restate the negotiated result. Never clone the MAC onto port 9 or a LAN port.
 
 2. **Create the LCT interface route.** At Network 9.4 or later open **Settings > Policy Table > Create New Policy > Route**. On 9.3 use **Settings > Policy Engine > Policy-Based Routes > Create Route**; on 9.2 or earlier use **Settings > Routing > Static Routes**. Set name `WAS-110`, device Gateway, type Interface, value the physical port 10 Internet source, and destination `192.168.11.0/24`.
 

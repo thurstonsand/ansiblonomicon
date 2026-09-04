@@ -15,13 +15,14 @@ terraform {
     skip_region_validation      = true
     skip_requesting_account_id  = true
     skip_s3_checksum            = true
+    use_lockfile                = true
     use_path_style              = true
   }
 
   required_providers {
     unifi = {
-      source  = "ubiquiti-community/unifi"
-      version = "0.55.0"
+      source  = "github.com/thurstonsand/unifi"
+      version = "0.56.0-ansiblonomicon.5"
     }
   }
 }

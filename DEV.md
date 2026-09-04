@@ -80,8 +80,10 @@ The home router.
 mise udmp                  # OS services through native mise remote bootstrap
 mise udmp --check          # preview OS changes
 mise udmp --update-mise    # refresh the system-wide remote mise executable
+mise run unifi:init        # install the verified provider fork and initialize OpenTofu
 mise run unifi:plan        # Network application resources
 mise run unifi:apply
+mise run unifi:smoke       # read-only WAN, LCT, DNS, link, and mDNS checks
 ```
 
 Remote inventory in `bootstrap/mise.toml`. Resources in `terraform/unifi/`.
