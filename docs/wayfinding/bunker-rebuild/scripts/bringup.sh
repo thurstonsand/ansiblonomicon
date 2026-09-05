@@ -14,9 +14,9 @@ set -euo pipefail
 
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
   BOLD=$(tput bold); DIM=$(tput dim); RESET=$(tput sgr0)
-  BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3); RED=$(tput setaf 1)
+  BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
 else
-  BOLD=""; DIM=""; RESET=""; BLUE=""; GREEN=""; YELLOW=""; RED=""
+  BOLD=""; DIM=""; RESET=""; BLUE=""; GREEN=""; YELLOW=""
 fi
 
 # Author sets this at the top of the stages section.
@@ -236,7 +236,7 @@ write_env BRINGUP_BIOS "done"
 # ── Stage 4 ───────────────────────────────────────────────────────────────
 stage "Debian install (2B drives via KVM)"
 say "2B drives the installer over the KVM. The choices, for the record:"
-note "hostname pod042 · domain thurstons.house · user thurston"
+note "hostname pod042 · domain thurstons.house · user thurstonsand"
 note "TARGET DISK: the 448G SATA SSD ONLY — never a pool member (4×14T, 2×1T NVMe)"
 note "guided partitioning, whole disk, ext4, no swap partition question fights"
 note "software selection: ssh server + standard utilities, NO desktop"
@@ -245,78 +245,72 @@ ask NEW_IP "IP the new host got (shown on console login, or check UDMP clients):
 write_env BRINGUP_IP "$NEW_IP"
 
 # ── Stage 5 ───────────────────────────────────────────────────────────────
-stage "Bootstrap (machine)"
-say "Pushing ssh key, installing prerequisites, cloning the repo."
-ask_secret INSTALL_PW "The install-time password for user thurston (used once):"
-command -v sshpass >/dev/null || brew install sshpass hudochenkov/sshpass/sshpass 2>/dev/null || true
-sshpass -p "$INSTALL_PW" ssh-copy-id -o StrictHostKeyChecking=accept-new "thurston@${NEW_IP}" 2>/dev/null \
-  || { step "ssh-copy-id needs a hand: run  ssh-copy-id thurston@${NEW_IP}  in another terminal"; pause "key installed?"; }
-ssh "thurston@${NEW_IP}" 'sudo -n true' 2>/dev/null || {
-  say "Granting passwordless sudo (enter the same password when asked):"
-  ssh -t "thurston@${NEW_IP}" 'su - -c "usermod -aG sudo thurston && echo \"thurston ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/thurston"' || \
-  ssh -t "thurston@${NEW_IP}" 'sudo sh -c "echo \"thurston ALL=(ALL) NOPASSWD: ALL\" > /etc/sudoers.d/thurston"'
-}
-ssh "thurston@${NEW_IP}" 'sudo apt-get update -qq && sudo apt-get install -y -qq git curl python3 pipx zfsutils-linux && pipx ensurepath && pipx install uv 2>/dev/null || true'
-# mise, not direnv, is what loads .env into the reconcile now. Same official
-# installer the mise role runs (ansible/roles/mise), landing the same
-# user-owned ~/.local/bin/mise, so this is not a second source.
-ssh "thurston@${NEW_IP}" 'curl -fsSL https://mise.run | sh'
-ssh "thurston@${NEW_IP}" '[ -d ansiblonomicon ] || git clone https://github.com/thurstonsand/ansiblonomicon.git'
-say "Delivering the 1Password service-account token..."
-op read "op://agent/1Password Service Account Auth Token: agent/credential" | \
-  ssh "thurston@${NEW_IP}" 'mkdir -p ~/.config/op-service-account && cat > ~/.config/op-service-account/token && chmod 600 ~/.config/op-service-account/token'
+stage "Native landing zone (machine)"
+say "Installing the operator key and converging the shared native mise target."
+note "The workstation checkout must be clean, pushed, and on the revision intended for pod042."
+mise -C "$REPO_ROOT" pod042:first-access "$NEW_IP" \
+  || { warn "First access failed. Preserve the host and command output; do not run the retired Ansible playbook."; exit 1; }
+ssh "thurstonsand@${NEW_IP}" 'sudo -n true && test -x /usr/local/bin/mise && test -d ~/code/ansiblonomicon/.git'
 write_env BRINGUP_BOOTSTRAP "done"
 
 # ── Stage 6 ───────────────────────────────────────────────────────────────
-stage "Pool import + rename (machine, irreversible-ish)"
-say "capacity → ark, performance → black-box. Import with -f (unclean export is expected)."
-ssh "thurston@${NEW_IP}" 'sudo zpool import' || true
-if ! confirm "Do both pools appear above? Proceed with import+rename?"; then
-  warn "Stop. Call 2B with the output above."; exit 1
+stage "Pool validation, import, and rename (machine)"
+say "Discovering exported pools through stable device identifiers."
+ssh "thurstonsand@${NEW_IP}" 'sudo zpool import -d /dev/disk/by-id' || true
+note "Required identities: capacity=8619294010601504858; performance=131852107186480998."
+if ! confirm "Do both GUIDs and expected topologies appear above? Proceed with read-only validation?"; then
+  warn "Stop. Do not import a pool by device letter."; exit 1
 fi
-ssh "thurston@${NEW_IP}" 'sudo zpool import -f capacity ark && sudo zpool import -f performance black-box'
-ssh "thurston@${NEW_IP}" 'sudo zpool status -x; sudo zfs list -d1 ark black-box | head -20'
-if ! confirm "Both pools ONLINE and datasets visible?"; then exit 1; fi
+ssh "thurstonsand@${NEW_IP}" 'set -eu
+  sudo zpool import -f -N -o readonly=on -d /dev/disk/by-id 8619294010601504858
+  sudo zpool status -P capacity
+  sudo zfs list -H -t snapshot -o name capacity@pre-debian-20260905T050835Z
+  sudo zpool export capacity
+  sudo zpool import -f -N -o readonly=on -d /dev/disk/by-id 131852107186480998
+  sudo zpool status -P performance
+  sudo zfs list -H -t snapshot -o name performance@pre-debian-20260905T050835Z
+  sudo zpool export performance'
+if ! confirm "Are both pools ONLINE with no known data errors and both final snapshots present?"; then exit 1; fi
+ssh "thurstonsand@${NEW_IP}" 'set -eu
+  sudo zpool import -f -N -d /dev/disk/by-id 8619294010601504858 ark
+  sudo zpool import -f -N -d /dev/disk/by-id 131852107186480998 black-box
+  sudo zfs set mountpoint=/mnt/ark ark
+  sudo zfs set mountpoint=/mnt/black-box black-box
+  sudo zfs mount -a
+  sudo test -s /etc/zfs/zpool.cache
+  sudo zpool status -x'
 write_env BRINGUP_POOLS "done"
 
 # ── Stage 7 ───────────────────────────────────────────────────────────────
-stage "Full reconcile (machine, long)"
-say "Running the playbook ON the host (it self-reconciles, like the VM did)."
-note "First run installs everything: docker, stacks, zfs services, samba, alerting."
-say "Preflight: file-shaped bind mounts must exist or docker creates them as root-owned DIRS."
-ssh "thurston@${NEW_IP}" 'test -f /mnt/black-box/docker/anypod/anypod/cookies/cookies.txt 2>/dev/null || test -f /mnt/performance/docker/anypod/anypod/cookies/cookies.txt 2>/dev/null' \
-  && say "✓ anypod cookies.txt present" || warn "anypod cookies.txt missing — anypod will crash-loop; fix before or after, not fatal"
-note "Known first-run behaviors (rig-proven): neovim Mason may blow its 600s timeout on a"
-note "cold cache — re-run converges clean. restic-backup.timer fires a REAL full backup"
-note "immediately on enable (Persistent=true) — intended; ~29G re-read, small upload (dedup)."
-# Three separate mise invocations on purpose: .env does not exist until
-# secrets:init writes it, and mise only reads it when it resolves the environment
-# at process start. The pod042 run is the one that needs those secrets.
-# PATH is set explicitly because chezmoi has not laid down .zshenv yet, and a
-# non-interactive ssh command does not pick up ~/.local/bin on its own. Both
-# mise and pipx's uv live there.
-ssh -t "thurston@${NEW_IP}" 'cd ansiblonomicon && export PATH="$HOME/.local/bin:$PATH" && mise trust --quiet && mise exec -- uv sync -q && mise run secrets:init && mise pod042' \
-  || { warn "Reconcile failed — this is where 2B takes over. Do not re-run blindly."; exit 1; }
+stage "Native reconcile (machine)"
+say "Converging the exact pushed revision through the shared workstation/host target."
+python3 "$REPO_ROOT/scripts/pod042_reconcile.py" --host "$NEW_IP" \
+  || { warn "Native reconciliation failed. Preserve its output and repair the declared resource before rerunning."; exit 1; }
+ssh "thurstonsand@${NEW_IP}" 'sudo zpool status -x; sudo zfs list -H -o name,mountpoint,mounted ark ark/watch black-box black-box/docker'
 write_env BRINGUP_RECONCILE "done"
 
 # ── Stage 8 ───────────────────────────────────────────────────────────────
 stage "Verification battery (machine)"
 FAIL=0
 check() { if eval "$2"; then say "✓ $1"; else warn "✗ $1"; FAIL=1; fi; }
-check "pools healthy"        "ssh thurston@${NEW_IP} 'sudo zpool status -x' | grep -q 'all pools are healthy'"
-check "QuickSync visible"    "ssh thurston@${NEW_IP} 'ls /dev/dri/renderD128' >/dev/null 2>&1"
-check "docker stacks up"     "[ \$(ssh thurston@${NEW_IP} 'docker ps -q | wc -l') -ge 10 ]"
-check "plex answering"       "ssh thurston@${NEW_IP} 'curl -sf -o /dev/null -m 5 http://localhost:32400/identity'"
-check "samba share"          "ssh thurston@${NEW_IP} 'smbclient -L localhost -N 2>/dev/null | grep -q media'"
-check "alerting heartbeat"   "ssh thurston@${NEW_IP} 'systemctl is-active alerting-heartbeat.timer' | grep -q active"
+check "pools healthy"        "ssh thurstonsand@${NEW_IP} 'sudo zpool status -x' | grep -q 'all pools are healthy'"
+check "QuickSync visible"    "ssh thurstonsand@${NEW_IP} 'ls /dev/dri/renderD128' >/dev/null 2>&1"
+check "docker stacks up"     "[ \$(ssh thurstonsand@${NEW_IP} 'docker ps -q | wc -l') -ge 10 ]"
+check "plex answering"       "ssh thurstonsand@${NEW_IP} 'curl -sf -o /dev/null -m 5 http://localhost:32400/identity'"
+check "samba share"          "ssh thurstonsand@${NEW_IP} 'smbclient -L localhost -N 2>/dev/null | grep -q media'"
+check "alerting heartbeat"   "ssh thurstonsand@${NEW_IP} 'systemctl is-active alerting-heartbeat.timer' | grep -q active"
 say "smartd could not be tested in the rig (ConditionVirtualization=no) — verifying live:"
-check "smartd running"       "ssh thurston@${NEW_IP} 'systemctl is-active smartd' | grep -q active"
-[[ $FAIL == 0 ]] && write_env BRINGUP_VERIFIED "$(date -u +%s)" || warn "Failures above — 2B's problem now. The passing subset still works."
+check "smartd running"       "ssh thurstonsand@${NEW_IP} 'systemctl is-active smartd' | grep -q active"
+if [[ $FAIL == 0 ]]; then
+  write_env BRINGUP_VERIFIED "$(date -u +%s)"
+else
+  warn "Failures above — 2B's problem now. The passing subset still works."
+fi
 
 # ── Stage 9 ───────────────────────────────────────────────────────────────
 stage "Acceptance (you)"
 step "Play something on Plex from the TV — confirm it transcodes (dashboard shows (hw))."
-step "Finder → Network: mount the media share with user thurston + op item 'Samba media (pod042)'."
+step "Finder → Network: mount the media share with user thurstonsand + op item 'Samba media (pod042)'."
 step "Phone got the Hark heartbeat? (First one within 15 min.)"
 note "Post-move queue (with 2B): ticket-10 dataset rebuild, caddy gateway + debridging,"
 note "UDMP wipe + terraform, incus + pascal, ticket 17 purge, CONTEXT.md rewrite."

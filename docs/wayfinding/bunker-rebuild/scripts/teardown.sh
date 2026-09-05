@@ -14,9 +14,9 @@ set -euo pipefail
 
 if [[ -t 1 ]] && command -v tput >/dev/null 2>&1 && [[ "$(tput colors 2>/dev/null || echo 0)" -ge 8 ]]; then
   BOLD=$(tput bold); DIM=$(tput dim); RESET=$(tput sgr0)
-  BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3); RED=$(tput setaf 1)
+  BLUE=$(tput setaf 4); GREEN=$(tput setaf 2); YELLOW=$(tput setaf 3)
 else
-  BOLD=""; DIM=""; RESET=""; BLUE=""; GREEN=""; YELLOW=""; RED=""
+  BOLD=""; DIM=""; RESET=""; BLUE=""; GREEN=""; YELLOW=""
 fi
 
 # Author sets this at the top of the stages section.
@@ -194,6 +194,8 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_FILE="${SCRIPT_DIR}/.cutover-state"
 NAS_HOST="${NAS_HOST:-truenas}"
 
+# Arguments are complete remote command strings supplied by this script.
+# shellcheck disable=SC2029
 run_nas() { ssh "$NAS_HOST" "$@"; }
 
 TOTAL_STAGES=7
@@ -242,25 +244,36 @@ stage "Final safety snapshots (machine)"
 STAMP="premove-final-$(date -u +%Y%m%dT%H%M%SZ)"
 say "Recursive snapshot @${STAMP} on both pools via the middleware."
 for DS in performance capacity; do
-  run_nas "midclt call zfs.snapshot.create '{\"dataset\": \"$DS\", \"name\": \"$STAMP\", \"recursive\": true}' >/dev/null" \
-    && say "snapshotted ${DS}@${STAMP}" || warn "snapshot failed on ${DS} — investigate before continuing"
+  if run_nas "midclt call zfs.snapshot.create '{\"dataset\": \"$DS\", \"name\": \"$STAMP\", \"recursive\": true}' >/dev/null"; then
+    say "snapshotted ${DS}@${STAMP}"
+  else
+    warn "snapshot failed on ${DS} — investigate before continuing"
+  fi
 done
 write_env TEARDOWN_FINAL_SNAP "$STAMP"
 
 # ── Stage 5 ───────────────────────────────────────────────────────────────
 stage "Stop services (machine)"
-say "Stopping every docker stack and VM. Downtime begins here."
+say "Stopping every docker stack, VM, and file-sharing service. Downtime begins here."
 if ! confirm "Take everything down now?"; then exit 1; fi
+# Expansion belongs on the NAS, not this workstation.
+# shellcheck disable=SC2016
 run_nas 'docker stop $(docker ps -q) 2>/dev/null || true'
 say "containers stopped: $(run_nas 'docker ps -q | wc -l' | tr -d ' ') still running (want 0)"
 run_nas 'midclt call vm.query | python3 -c "import json,sys; [print(v[\"id\"], v[\"name\"], v[\"status\"][\"state\"]) for v in json.load(sys.stdin)]"' || true
 step "If any VM above shows RUNNING, it gets stopped next."
+# shellcheck disable=SC2016
 run_nas 'midclt call vm.query | python3 -c "import json,sys; [print(v[\"id\"]) for v in json.load(sys.stdin) if v[\"status\"][\"state\"]==\"RUNNING\"]" | while read -r id; do midclt call vm.poweroff "$id"; done' || true
+run_nas 'midclt call service.stop cifs >/dev/null; midclt call service.stop nfs >/dev/null'
 write_env TEARDOWN_SERVICES_STOPPED "$(date -u +%s)"
 
 # ── Stage 6 ───────────────────────────────────────────────────────────────
-stage "Shutdown (machine)"
-say "Graceful OS shutdown — pools close clean; Debian imports them with -f."
+stage "Export pools and shut down (machine)"
+say "Exporting both pools cleanly before shutdown."
+warn "Any shell whose current directory is inside a pool can block export."
+if ! confirm "Export capacity and performance now?"; then exit 1; fi
+run_nas 'cd / && sudo zpool export capacity && sudo zpool export performance'
+say "Both exports succeeded. The Debian import may still require -f because the host identity changes."
 warn "After this, the machine is dark until the new house."
 if ! confirm "Shut the NAS down NOW?"; then exit 1; fi
 run_nas 'sudo shutdown -h now' 2>/dev/null || run_nas 'midclt call system.shutdown "{}"' 2>/dev/null || true
