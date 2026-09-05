@@ -1,0 +1,25 @@
+[bootstrap.hooks.pre-packages]
+run = "scripts/ensure-contrib"
+
+[bootstrap.packages]
+"apt:linux-headers-amd64" = "latest"
+"apt:zfs-dkms" = "latest"
+"apt:zfsutils-linux" = "latest"
+
+[bootstrap.files."/etc/apt/sources.list.d/zfs-contrib.sources"]
+source = "files/zfs-contrib.sources"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.services.zfs-import-cache]
+enabled = true
+
+[bootstrap.services.zfs-mount]
+enabled = true
+
+[bootstrap.services."zfs-import.target"]
+enabled = true
+
+[bootstrap.services."zfs.target"]
+enabled = true

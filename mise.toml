@@ -182,20 +182,31 @@ flag "--update-mise" help="Install this machine's mise version on the UDM Pro"
 '''
 run = "mise -C bootstrap bootstrap remote udmp --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/usr/local/bin/mise}"
 
-[tasks."reconcile:pod042"]
-description = "Reconcile pod042, the Bunker (storage, stacks, and its own dev environment)"
-alias = "pod042"
-dir = "ansible"
+[tasks."pod042:first-access"]
+description = "Turn a fresh password-accessible Debian install into the pod042 landing zone"
 usage = '''
-flag "-c --check" help="Dry-run mode (no changes made)"
-flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
+arg "<host>" help="Fresh Debian address or resolvable name"
+flag "--replace-host-key" help="Forget the prior SSH host key before connecting"
 '''
 run = '''
-if [ "$(hostname -s)" != "pod042" ]; then
-  echo "pod042 must run on pod042; SSH there first." >&2
-  exit 1
-fi
-ansible-playbook -i inventory/targets/pod042.yml playbooks/pod042.yml --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+python3 scripts/pod042_first_access.py \
+  "${usage_host}" \
+  ${usage_replace_host_key:+--replace-host-key}
+'''
+
+[tasks."reconcile:pod042"]
+description = "Reconcile pod042 through its native mise bootstrap target"
+alias = "pod042"
+usage = '''
+arg "[capability]" help="Only reconcile one capability, such as base or storage"
+flag "-c --check" help="Show changes without applying them"
+flag "--update-mise" help="Update the system-wide mise binary before reconciling"
+'''
+run = '''
+python3 scripts/pod042_reconcile.py \
+  ${usage_capability:+"${usage_capability}"} \
+  ${usage_check:+--check} \
+  ${usage_update_mise:+--update-mise}
 '''
 
 [tasks."reconcile:tags"]

@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+pid="$PPID"
+source_mise=""
+while [[ "$pid" -gt 1 ]]; do
+  executable="$(readlink "/proc/${pid}/exe" 2>/dev/null || true)"
+  if [[ "${executable##*/}" == mise ]]; then
+    source_mise="$executable"
+    break
+  fi
+  pid="$(awk '{print $4}' "/proc/${pid}/stat")"
+done
+
+if [[ -z "$source_mise" ]]; then
+  source_mise="$(command -v mise)"
+fi
+
+target_mise=/usr/local/bin/mise
+if sudo test -x "$target_mise" && sudo cmp -s "$source_mise" "$target_mise"; then
+  exit 0
+fi
+
+sudo install -o root -g root -m 0755 "$source_mise" "$target_mise"

@@ -3,6 +3,13 @@ min_version = "2026.8.12"
 [bootstrap.remote]
 exclude = [".env", "*.local.*"]
 
+[bootstrap.remote.hosts.pod042]
+host = "pod042"
+user = "thurstonsand"
+source = "targets/pod042"
+tags = ["storage"]
+remote_mise = "/usr/local/bin/mise"
+
 [bootstrap.remote.hosts.udmp]
 host = "10.10.20.1"
 user = "root"

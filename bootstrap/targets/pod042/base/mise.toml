@@ -1,0 +1,32 @@
+[bootstrap.directories."/home/thurstonsand/.ssh"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0700"
+
+[bootstrap.files."/home/thurstonsand/.ssh/authorized_keys"]
+source = "files/operator.pub"
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0600"
+
+[bootstrap.files."/etc/sudoers.d/thurstonsand"]
+content = "thurstonsand ALL=(ALL:ALL) NOPASSWD: ALL\n"
+owner = "root"
+group = "root"
+mode = "0440"
+
+[bootstrap.files."/etc/ssh/sshd_config.d/00-ansiblonomicon.conf"]
+content = '''
+PasswordAuthentication no
+PermitRootLogin no
+PubkeyAuthentication yes
+'''
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["ssh"]
+
+[bootstrap.services.ssh]
+state = "running"
+enabled = true
+on_change = "reload_or_restart"
