@@ -166,7 +166,7 @@ def test_check_uses_native_bootstrap_plan(monkeypatch: pytest.MonkeyPatch) -> No
     assert calls == [
         [
             "env",
-            f"MISE_CEILING_PATHS={pod042_reconcile.TARGET_ROOT.parent}",
+            f"MISE_CEILING_PATHS={pod042_reconcile.TARGET_ROOT}",
             "mise",
             "-C",
             str(pod042_reconcile.TARGET_ROOT / "base"),

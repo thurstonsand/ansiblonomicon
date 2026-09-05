@@ -179,7 +179,8 @@ def isolated_mise_command(ceiling: Path, directory: Path) -> list[str]:
 def run_local(capability: str | None, check_mode: bool) -> None:
     assert_hostname(None)
     target = target_for(capability)
-    command = isolated_mise_command(TARGET_ROOT.parent, target)
+    ceiling = TARGET_ROOT.parent if target == TARGET_ROOT else TARGET_ROOT
+    command = isolated_mise_command(ceiling, target)
     if check_mode:
         run_command([*command, "bootstrap", "plan"])
     else:
