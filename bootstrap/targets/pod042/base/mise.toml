@@ -1,3 +1,28 @@
+[settings]
+jobs = 1
+system_packages.managers = ["apt"]
+
+[bootstrap.packages]
+"apt:ca-certificates" = "latest"
+"apt:curl" = "latest"
+"apt:git" = "latest"
+"apt:openssh-server" = "latest"
+"apt:sudo" = "latest"
+
+[bootstrap.groups.thurstonsand]
+
+[bootstrap.users.thurstonsand]
+group = "thurstonsand"
+groups = ["sudo"]
+home = "/home/thurstonsand"
+shell = "/bin/bash"
+create_home = true
+
+[bootstrap.directories."/home/thurstonsand/code"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
 [bootstrap.directories."/home/thurstonsand/.ssh"]
 owner = "thurstonsand"
 group = "thurstonsand"
@@ -30,3 +55,9 @@ notify = ["ssh"]
 state = "running"
 enabled = true
 on_change = "reload_or_restart"
+
+[bootstrap.repos]
+"/home/thurstonsand/code/ansiblonomicon" = { url = "https://github.com/thurstonsand/ansiblonomicon.git" }
+
+[tasks.bootstrap]
+run = "scripts/install-system-mise"

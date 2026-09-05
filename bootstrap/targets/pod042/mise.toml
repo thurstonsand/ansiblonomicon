@@ -38,4 +38,4 @@ mode = "0755"
 "/home/thurstonsand/code/ansiblonomicon" = { url = "https://github.com/thurstonsand/ansiblonomicon.git" }
 
 [tasks.bootstrap]
-run = "scripts/install-system-mise"
+run = "base/scripts/install-system-mise"
