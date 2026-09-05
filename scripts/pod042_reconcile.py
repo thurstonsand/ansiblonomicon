@@ -158,7 +158,7 @@ def fast_forward_remote_checkout(host: str, branch: str, revision: str) -> None:
 
 
 def target_for(capability: str | None) -> Path:
-    if capability is None or capability == "base":
+    if capability is None:
         return TARGET_ROOT
     target = TARGET_ROOT / capability
     if not (target / "mise.toml").is_file():

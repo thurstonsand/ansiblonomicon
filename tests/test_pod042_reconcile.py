@@ -169,7 +169,7 @@ def test_check_uses_native_bootstrap_plan(monkeypatch: pytest.MonkeyPatch) -> No
             f"MISE_CEILING_PATHS={pod042_reconcile.TARGET_ROOT.parent}",
             "mise",
             "-C",
-            str(pod042_reconcile.TARGET_ROOT),
+            str(pod042_reconcile.TARGET_ROOT / "base"),
             "bootstrap",
             "plan",
         ]
