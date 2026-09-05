@@ -23,4 +23,4 @@ The amd64 Debian 13 OrbStack VM was destroyed and recreated. A blank replacement
 
 The later operator instruction to complete the real build expanded the cutover beyond this ticket's original no-pool boundary. The real host imported both known GUIDs read-only first, verified the final snapshots and exact topology, exported them, then explicitly renamed and mounted them as `ark` and `black-box`. That operator action is recorded here but remains outside automatic reconciliation.
 
-Evidence is under [`artifacts/cutover-2026-09-05/`](../artifacts/cutover-2026-09-05/). The deployed clean revision is `ff41cebc3f2702ca6f4e9f85f8bf4ff477ebbb74` on `agent/pod042-cutover`; the primary working tree and its staged review state were left untouched.
+Evidence is under [`artifacts/cutover-2026-09-05/`](../artifacts/cutover-2026-09-05/). The clean deployment branch is `agent/pod042-cutover`; the primary working tree and its staged review state were left untouched.
