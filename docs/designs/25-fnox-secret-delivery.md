@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted. Agent-launch and shell-environment rules are superseded by [unattended automation identity](26-unattended-automation-identity.md).
 
 ## Decision Summary
 

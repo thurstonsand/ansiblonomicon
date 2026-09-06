@@ -20,6 +20,14 @@ Ansible uses `SUDO_ASKPASS` to get the sudo password from 1Password automaticall
 
 Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 
+### Automation credentials
+
+The shared automation identity gives fnox unattended access to the agent vault. Run `mise --no-env exec -- python3 scripts/automation_identity.py` once to enroll or rotate it through attended desktop authentication, then `mise trust` for this repository. `--no-env` allows initial enrollment before project credentials can resolve. See [the identity design](docs/designs/26-unattended-automation-identity.md) for environment boundaries.
+
+Repo-local mise configuration loads six selected Cloudflare, Access and R2 credentials through native fnox export when entering ansiblonomicon and removes them on exit. Mise caches computed environments on disk using its native session-key encryption. Programs launched here, including Pi, inherit those six values. No secrets are exported globally. Agents launch normally without fetching the whole host set; MCPs resolve their own credentials, and Pi resolves its Parallel key only when a web operation needs it. OpenCode retains Parallel; Zed does not.
+
+Explicit `scripts/fnox-host exec -- COMMAND` still resolves the whole host set and can request Private-vault authorization. Use `scripts/fnox-host get NAME` for a single declared credential. Do not export the automation service-account token into your shell.
+
 ### Terminal theme sync
 
 On macOS, `dark-notify` acts as the source of truth for terminal theme state. An Ansible-managed `terminal_theme` role installs a user LaunchAgent (`house.thurstons.terminal-theme-watch`), the `~/.local/bin/terminal-theme-watch` watcher, `~/.local/bin/terminal-theme-switch.py`, and the shared zsh helper at `~/.config/zsh/terminal-theme.zsh`. Together they keep `~/.terminal-bg`, Codex, Hunk, and tmux in sync while reloading the LaunchAgent only when the theme manager changes. The role owns `~/.config/hunk/config.toml` and injects the current Gruvbox Hard custom theme block from `hunk_gruvbox_theme.py`; this takes effect once the installed Hunk release supports custom themes.

@@ -1,10 +1,5 @@
 import = ["fnox.toml"]
 
-[providers.agent]
-type = "1password"
-token = { secret = "FNOX_HOST_OP_TOKEN" }
-auth_command = ""
-
 [secrets]
 CLOUDFLARE_TOKEN = { provider = "agent", value = "op://agent/5cimwvc3mbcr6cikiv3wcmhekm/tunnel/token" }
 CLI_PROXY_API_ADMIN_KEY = { provider = "agent", value = "op://agent/vf3jsatixwtzauzoebt66xkiqe/admin apikey" }
@@ -25,7 +20,6 @@ RADARR_API_KEY = { provider = "agent", value = "op://agent/sil4v5ljh7d52fam7s2nx
 SONARR_API_KEY = { provider = "agent", value = "op://agent/oqqqt2eb5lbh4gjnxuo4jgmouu/apikey" }
 TORRENT_WIREGUARD_PRIVATE_KEY = { provider = "agent", value = "op://agent/hyqqxr44mqyzudmu327t2aowpu/wireguard/private key" }
 TORRENT_WIREGUARD_ADDRESS = { provider = "agent", value = "op://agent/hyqqxr44mqyzudmu327t2aowpu/wireguard/address" }
-FNOX_HOST_OP_TOKEN = { env = false }
 HARK_WEBHOOK_URL_POD042 = { provider = "agent", value = "op://agent/u3wmydm5i7fe3cgdxx6c7juhxq/add more/pod042 webhook url" }
 HEALTHCHECKS_API_KEY = { provider = "agent", value = "op://agent/injsaejfgmueiievbdiuioggui/add more/api key" }
 SAMBA_MEDIA_PASSWORD = { provider = "agent", value = "op://agent/rqdlvwpivnndduj4wyhxqwqa4a/password" }

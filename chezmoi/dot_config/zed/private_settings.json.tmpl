@@ -8,17 +8,6 @@
 // command palette (cmd-shift-p / ctrl-shift-p)
 {{- $m := .models }}
 {
-{{- if .aigEnabled }}
-  "context_servers": {
-    "Parallel Search": {
-      "settings": {},
-
-      "enabled": true,
-      "url": "https://search-mcp.parallel.ai/mcp",
-      "headers": { "Authorization": "Bearer {{ secret "PARALLEL_API_KEY" }}" }
-    }
-  },
-{{- end }}
   "colorize_brackets": true,
   "audio": {
     "experimental.rodio_audio": true

@@ -55,11 +55,13 @@ _evalcache() {
 # SECTION 2: Environment variables, aliases, and PATH
 # =============================================================================
 
-# Start tmux from a clean direnv root so the server never inherits a project env.
-# Use a function rather than an alias so it also works in non-interactive zsh.
-tmux() {
+# Start tmux outside project configuration so its server does not retain project credentials.
+tmux() (
+  local clean_env
+  clean_env="$(mise -C / hook-env -s zsh)" || return
+  eval "$clean_env"
   direnv exec / "$(whence -p tmux)" "$@"
-}
+)
 
 # Environment variables
 export XDG_CONFIG_HOME="$HOME/.config"
@@ -75,11 +77,6 @@ if [[ -n "${SSH_CONNECTION:-}" ]]; then
   export POWERLINE_NERD_FONTS=1
 fi
 
-{{- range $agent := list "pi" "amp" "codex" "gemini" "opencode" }}
-{{ $agent }}() {
-  {{ joinPath (dir $.chezmoi.sourceDir) "scripts/fnox-host" | quote }} exec -- {{ $agent }} "$@"
-}
-{{- end }}
 {{- if eq .chezmoi.hostname "pod042" }}
 export EDITOR="nvim"
 {{- else if eq .chezmoi.hostname "openclaw" }}

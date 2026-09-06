@@ -8,16 +8,16 @@ enabled = false
 
 [providers.agent]
 type = "1password"
-account = "PQ7X5W7V6FDADHPFFEO62TLFEM"
+token = { secret = "FNOX_HOST_OP_TOKEN" }
 auth_command = ""
 
 [secrets]
 NEXTDNS_PROFILE_ID = { provider = "agent", value = "op://agent/db7ivx7ja3sc74k4yml5qrg4ra/profile id" }
-CLOUDFLARE_API_TOKEN = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/credential" }
+CLOUDFLARE_API_TOKEN = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/credential", env = true }
 PARENT_HOME_IP = { provider = "agent", value = "op://agent/5cimwvc3mbcr6cikiv3wcmhekm/parent home ip" }
-CLOUDFLARE_AI_GATEWAY_API_TOKEN = { provider = "agent", value = "op://agent/5cimwvc3mbcr6cikiv3wcmhekm/ai gateway/api token" }
-AWS_ACCESS_KEY_ID = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/access key" }
-AWS_SECRET_ACCESS_KEY = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/secret access key" }
+CLOUDFLARE_AI_GATEWAY_API_TOKEN = { provider = "agent", value = "op://agent/5cimwvc3mbcr6cikiv3wcmhekm/ai gateway/api token", env = true }
+AWS_ACCESS_KEY_ID = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/access key", env = true }
+AWS_SECRET_ACCESS_KEY = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/secret access key", env = true }
 UNIFI_USERNAME = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/local admin/user" }
 UNIFI_PASSWORD = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/local admin/password" }
 UNIFI_WAN_MAC_OVERRIDE = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/wan/mac clone" }
@@ -25,8 +25,8 @@ YORHA_PASSPHRASE = { provider = "agent", value = "op://agent/skmsezufiiwrbsna7ti
 LUNAR_TEAR_PASSPHRASE = { provider = "agent", value = "op://agent/p6kdhsa7nr7yxqf4gixob52qru/wireless network password" }
 THE_VILLAGE_PASSPHRASE = { provider = "agent", value = "op://agent/dt2x5v3l737zc7orz3ay6wsb4m/wireless network password" }
 SCANNERS_PASSPHRASE = { provider = "agent", value = "op://agent/3uf6msjlzhqeutxucr67ga4weu/wireless network password" }
-CF_ACCESS_CLIENT_ID = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client id" }
-CF_ACCESS_CLIENT_SECRET = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client secret" }
+CF_ACCESS_CLIENT_ID = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client id", env = true }
+CF_ACCESS_CLIENT_SECRET = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client secret", env = true }
 CLI_PROXY_API_KEY = { provider = "agent", value = "op://agent/vf3jsatixwtzauzoebt66xkiqe/apikey" }
 PARALLEL_API_KEY = { provider = "agent", value = "op://agent/ujvwlvzywxv4z654bro2wjkaqq/credential" }
 EIGHTCTL_EMAIL = { provider = "agent", value = "op://agent/fxseiurccsgzesskccvfvihsgm/username" }

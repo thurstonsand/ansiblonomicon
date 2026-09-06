@@ -15,7 +15,11 @@ hk = "1.56.1"
 fnox = "latest"
 "npm:mcp-remote" = "latest"
 
+[settings]
+env_cache = true
+
 [env]
+_.source = { path = "scripts/project-secrets.sh", tools = true, redact = true }
 _.python.venv = { path = ".venv", create = true }
 # Pin uv to mise's interpreter. Left unpinned, uv downloads a Python of its own
 # and silently rebuilds .venv underneath mise; pointed at a path, it errors

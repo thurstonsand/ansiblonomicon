@@ -5,12 +5,20 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 import pwd
+import shlex
 import socket
 import stat
 import subprocess
 import sys
 import tomllib
 from typing import cast
+
+from automation_identity import (
+    IdentityError,
+    clean_environment,
+    identity_path,
+    read_identity,
+)
 
 ROOT = Path(__file__).resolve().parents[1]
 HOST_PROFILES = {
@@ -75,20 +83,13 @@ def load_declaration(path: Path, *, host: bool) -> set[str]:
     secrets = table(config.get("secrets", {}), f"{path.name}: secrets")
     for name, raw_declaration in secrets.items():
         declaration = table(raw_declaration, f"{path.name}: {name}")
-        if (
-            path.name in {"fnox.pod042.toml", "fnox.orb.toml"}
-            and name == TOKEN_NAME
-            and declaration == {"env": False}
-        ):
-            continue
         if declaration.keys() - {"provider", "value", "env", "description"}:
             raise ConfigurationError(f"{path.name}: {name} has unsupported settings")
         if not declaration.get("provider") or not declaration.get("value"):
             raise ConfigurationError(f"{path.name}: {name} needs provider and value")
-        if declaration.get("env", "exec") not in ("exec", False):
-            raise ConfigurationError(
-                f"{path.name}: {name} cannot enter ordinary shells"
-            )
+        export = declaration.get("env", "exec")
+        if export != "exec" and export is not False and export is not True:
+            raise ConfigurationError(f"{path.name}: {name} has invalid export policy")
     return set(secrets)
 
 
@@ -122,29 +123,22 @@ def authentication_environment(
     inherited: dict[str, str],
     secret_keys: set[str],
     token: str | None,
+    *,
+    native_identity: bool = False,
 ) -> dict[str, str]:
-    environment = {
-        key: value
-        for key, value in inherited.items()
-        if key not in secret_keys
-        and not key.startswith("FNOX_")
-        and key
-        not in {
-            "OP_SERVICE_ACCOUNT_TOKEN",
-            "OP_CONNECT_HOST",
-            "OP_CONNECT_TOKEN",
-            "OP_ACCOUNT",
-        }
-    }
+    environment = clean_environment(inherited, secret_keys)
     if profile in {"pod042", "orb"}:
-        if not token or not token.strip() or "\n" in token or "\r" in token:
+        if not native_identity and (
+            not token or not token.strip() or "\n" in token or "\r" in token
+        ):
             raise ConfigurationError(f"{profile} requires a nonempty service token")
         environment = {
             key: value
             for key, value in environment.items()
             if not key.startswith("OP_SESSION_")
         }
-        environment[TOKEN_NAME] = token
+        if token is not None:
+            environment[TOKEN_NAME] = token
     if profile == "work" and (account := inherited.get("FNOX_WORK_ACCOUNT")):
         environment["FNOX_WORK_ACCOUNT"] = account
     return environment
@@ -186,12 +180,26 @@ def build_command(
 ) -> FnoxCommand:
     if profile not in PROFILES:
         raise ConfigurationError(f"unsupported profile: {profile}")
-    if operation not in {"get", "exec"} or not arguments:
-        raise ConfigurationError("expected get NAME or exec COMMAND")
+    if operation not in {"get", "exec", "export"} or (
+        operation != "export" and not arguments
+    ):
+        raise ConfigurationError("expected get NAME, exec COMMAND, or export")
+    if operation == "export" and arguments:
+        raise ConfigurationError("export does not accept arguments")
     keys = declared_keys(root)
-    environment = authentication_environment(profile, inherited, keys, token)
-    # A device cannot contain config.toml, so global configuration cannot appear later.
-    environment["FNOX_CONFIG_DIR"] = "/dev/null"
+    if not inherited.get("HOME"):
+        raise ConfigurationError("HOME is required for the native host identity")
+    home = Path(inherited["HOME"])
+    identity = identity_path(home)
+    native = identity.exists() or identity.is_symlink()
+    if native:
+        configured_token = read_identity(identity, home.stat().st_uid)
+        if token is not None and token != configured_token:
+            raise ConfigurationError("native and injected automation identities differ")
+    environment = authentication_environment(
+        profile, inherited, keys, token, native_identity=native
+    )
+    environment["FNOX_CONFIG_DIR"] = str(identity.parent)
     command = [
         fnox,
         "--config",
@@ -205,6 +213,8 @@ def build_command(
     ]
     if operation == "get":
         command.extend(["get", *arguments])
+    elif operation == "export":
+        command.extend(["export", "--format", "shell"])
     else:
         command.extend(
             ["exec", "--", *child_command(arguments, environment, profile=profile)]
@@ -235,6 +245,11 @@ def inherited_execution(profile: str, operation: str, command: list[str]) -> int
             )
         print(os.environ[command[0]])
         return 0
+    if operation == "export":
+        for key, declaration in declarations.items():
+            if declaration.get("env") is True:
+                print(f"export {shlex.quote(key)}={shlex.quote(os.environ[key])}")
+        return 0
     invocation = child_command(command, dict(os.environ), profile=profile)
     os.execv(invocation[0], invocation)
 
@@ -246,6 +261,7 @@ def main() -> int:
     )
     commands = parser.add_subparsers(dest="operation", required=True)
     commands.add_parser("profile")
+    commands.add_parser("export")
     get = commands.add_parser("get")
     get.add_argument("name")
     execute = commands.add_parser("exec")
@@ -260,24 +276,30 @@ def main() -> int:
     if arguments.operation == "profile":
         print(profile)
         return 0
-    command = [arguments.name] if arguments.operation == "get" else arguments.command
+    command: list[str] = []
+    if arguments.operation == "get":
+        command = [arguments.name]
+    elif arguments.operation == "exec":
+        command = arguments.command
     if command and command[0] == "--":
         command = command[1:]
-    if not command:
+    if not command and arguments.operation != "export":
         parser.error("exec requires a command after --")
     if context is not None:
         return inherited_execution(profile, arguments.operation, command)
     token = None
-    if profile == "pod042":
-        token = read_token(TOKEN_PATH, pwd.getpwnam("thurstonsand").pw_uid)
-    elif profile == "orb":
-        token = os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
+    identity = identity_path(Path.home())
+    if not (identity.exists() or identity.is_symlink()):
+        if profile == "pod042":
+            token = read_token(TOKEN_PATH, pwd.getpwnam("thurstonsand").pw_uid)
+        elif profile == "orb":
+            token = os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
     binary = "fnox"
     if profile == "pod042":
         binary = "/usr/local/bin/fnox"
     elif profile in {"macos", "work"}:
         binary = subprocess.check_output(
-            ["mise", "-C", str(ROOT), "which", "fnox"], text=True
+            ["mise", "--no-env", "-C", str(ROOT), "which", "fnox"], text=True
         ).strip()
     invocation = build_command(
         ROOT,
@@ -296,6 +318,7 @@ def entrypoint() -> None:
         code = main()
     except (
         ConfigurationError,
+        IdentityError,
         OSError,
         tomllib.TOMLDecodeError,
         subprocess.CalledProcessError,

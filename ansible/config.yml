@@ -26,6 +26,7 @@ mise_global_tools_base:
   - node@lts
   - npm@latest
   - golangci-lint@latest
+  - fnox@latest
 
 # Tools whose mise config goes beyond a version string, written straight to
 # mise's global config file (see the language_tools role).

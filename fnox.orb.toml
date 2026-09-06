@@ -1,9 +1,3 @@
 import = ["fnox.toml"]
 
-[providers.agent]
-type = "1password"
-token = { secret = "FNOX_HOST_OP_TOKEN" }
-auth_command = ""
-
 [secrets]
-FNOX_HOST_OP_TOKEN = { env = false }
