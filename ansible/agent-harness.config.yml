@@ -41,8 +41,8 @@ agent_harness_sources:
     plugins:
       - name: hunk
         skills:
-          hunk-review: skills/hunk-review
-          hunk-extensions: skills/hunk-extensions
+          hunk-review: packages/hunk/skills/hunk-review
+          hunk-extensions: packages/hunk/skills/hunk-extensions
 
   # No manifest upstream: explicit map.
   - repo: remorses/tuistory
@@ -82,6 +82,9 @@ agent_harness_sources:
           # notify's script carries a live webhook credential once rendered,
           # and the Amp catalogue is hosted.
           amp_publish: [notify]
+
+  - local: "{{ playbook_dir }}/../../agents/claude"
+    plugins:
       - name: claude
         target_agents: [claude]
         exclude_skills:

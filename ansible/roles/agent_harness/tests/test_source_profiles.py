@@ -3,7 +3,10 @@
 from pathlib import Path
 from typing import Any
 
-from harness_filters import agent_harness_resolve_sources
+from harness_filters import (
+    agent_harness_build_plugin_resources,
+    agent_harness_resolve_sources,
+)
 import pytest
 import yaml
 
@@ -393,6 +396,22 @@ def test_real_config_resolves_cleanly_for_every_profile() -> None:
             assert "excluded_on" not in source
             for plugin in source["plugins"]:
                 assert plugin["name"]
+
+
+def test_real_amp_publish_local_sources_have_valid_resources(tmp_path: Path) -> None:
+    config = real_config()
+    sources = agent_harness_resolve_sources(
+        config["agent_harness_sources"], "amp_publish", real_profiles(), HARNESSES
+    )
+    local_sources = [source for source in sources if "local" in source]
+    for source in local_sources:
+        source["local"] = source["local"].replace(
+            "{{ playbook_dir }}", str(ANSIBLE_ROOT / "playbooks")
+        )
+
+    resources = agent_harness_build_plugin_resources(local_sources, str(tmp_path))
+
+    assert resources["skills"]
 
 
 def test_real_work_profile_excludes_claude_retitle() -> None:
