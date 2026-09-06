@@ -5,6 +5,7 @@ import subprocess
 import sys
 import tomllib
 from typing import Any
+from unittest.mock import Mock
 
 import pytest
 
@@ -40,6 +41,8 @@ def test_target_declares_serial_native_landing_zone() -> None:
     assert target["settings"]["system_packages"]["managers"] == ["apt"]
     assert "bootstrap" not in target
     assert base["bootstrap"]["users"]["thurstonsand"]["groups"] == ["sudo"]
+    assert base["bootstrap"]["users"]["thurstonsand"]["shell"] == "/usr/bin/zsh"
+    assert base["bootstrap"]["packages"]["apt:zsh"] == "latest"
     assert base["bootstrap"]["repos"][pod042_reconcile.REMOTE_CHECKOUT] == {
         "url": "https://github.com/thurstonsand/ansiblonomicon.git"
     }
@@ -221,6 +224,67 @@ def test_check_uses_native_bootstrap_plan(monkeypatch: pytest.MonkeyPatch) -> No
     ]
 
 
+@pytest.mark.parametrize(
+    "capability", ["base", "operator", "agent-harness", "remote-development"]
+)
+def test_base_packages_precede_local_accounts(
+    monkeypatch: pytest.MonkeyPatch, capability: str
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+
+    pod042_reconcile.run_local(capability, check_mode=False)
+
+    assert len(calls) == 2
+    assert "MISE_ENV=base" in calls[0]
+    assert calls[0][-4:] == ["bootstrap", "--only", "packages", "--yes"]
+    assert calls[1][-2:] == ["bootstrap", "--yes"]
+    assert "--only" not in calls[1]
+
+
+@pytest.mark.parametrize("check_mode", [False, True])
+@pytest.mark.parametrize("initial", [False, True])
+def test_remote_base_packages_precede_accounts(
+    monkeypatch: pytest.MonkeyPatch, check_mode: bool, initial: bool
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(
+        pod042_reconcile,
+        "local_deploy_revision",
+        Mock(return_value=("main", "revision")),
+    )
+    monkeypatch.setattr(
+        pod042_reconcile, "remote_checkout_exists", Mock(return_value=not initial)
+    )
+    monkeypatch.setattr(
+        pod042_reconcile, "validate_remote_checkout", Mock(return_value="revision")
+    )
+    monkeypatch.setattr(pod042_reconcile, "fast_forward_remote_checkout", Mock())
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+
+    pod042_reconcile.run_remote("pod042", "base", check_mode, not initial, initial)
+
+    bootstraps = [command for command in calls if "bootstrap" in command]
+    if check_mode:
+        assert len(bootstraps) == 1
+        assert "--dry-run" in bootstraps[0]
+        assert "--only" not in bootstraps[0]
+    else:
+        assert len(bootstraps) == 2
+        packages, accounts = bootstraps
+        assert packages[packages.index("--remote-env") + 1] == "base"
+        assert packages[-2:] == ["--only", "packages"]
+        assert (
+            accounts[accounts.index("--remote-env") + 1] == "base,repositories,storage"
+        )
+        assert "--only" not in accounts
+        # Packages do not install system mise; both remote passes stage their binary.
+        assert "--remote-mise" not in packages
+        assert "--remote-mise" not in accounts
+
+
 def test_initial_remote_bootstrap_stages_matching_mise() -> None:
     command = pod042_reconcile.remote_bootstrap_command(
         "10.10.10.99", None, check_mode=False, install_mise=True
@@ -307,8 +371,8 @@ def test_local_capability_selects_only_consumed_secrets(
     monkeypatch.setattr(pod042_reconcile, "assert_hostname", accept_hostname)
     monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
     pod042_reconcile.run_local(capability, False)
-    assert len(calls) == 1
-    command = calls[0]
+    assert len(calls) == (2 if capability == "operator" else 1)
+    command = calls[-1]
     assert {
         command[index + 1]
         for index, argument in enumerate(command)

@@ -18,7 +18,6 @@
 "apt:tmux" = "latest"
 "apt:unzip" = "latest"
 "apt:zip" = "latest"
-"apt:zsh" = "latest"
 "apt:zsh-autosuggestions" = "latest"
 "apt:zsh-syntax-highlighting" = "latest"
 
@@ -77,6 +76,7 @@ node_bin=$(dirname "$(mise which node)")
 "$node_bin/npm" install -g --allow-scripts=agent-browser @earendil-works/pi-coding-agent agent-browser hunkdiff sideshow t3
 mise reshim
 ''',
+  "uv tool install --upgrade nurb",
 ]
 
 [tasks."operator:agents"]

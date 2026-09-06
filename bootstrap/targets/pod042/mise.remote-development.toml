@@ -1,3 +1,17 @@
+[bootstrap.packages]
+"apt:polkitd" = "latest"
+
+[bootstrap.directories."/home/thurstonsand/.config/t3code"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.files."/home/thurstonsand/.config/t3code/npmrc"]
+source = "remote-development/t3.npmrc"
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0644"
+
 [bootstrap.directories."/home/thurstonsand/.config/systemd/user"]
 owner = "thurstonsand"
 group = "thurstonsand"

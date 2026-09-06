@@ -10,6 +10,12 @@ Native files own the Amp unit and one T3 drop-in, not the vendor's `t3code.servi
 
 Enrollment must happen before enabling automatic reconciliation: missing T3 enrollment or Amp login state fails instead of claiming completion. Applying native files alone does not enable either service. Do not run the service CLI or helper with sudo. Only `loginctl enable-linger thurstonsand` receives privilege; the helper performs this after its user, hostname, and enrollment guards.
 
+## Runtime prerequisites
+
+Debian `polkitd` supplies the stock authorization policy for a user's own linger request, which T3's installer makes even when linger is already enabled. No custom privilege rule or root T3 process is needed.
+
+T3 alone selects `~/.config/t3code/npmrc` through `NPM_CONFIG_USERCONFIG`. Its `allow-scripts=node-pty` permission lets npm 12 build the native terminal module in vendor-managed runtime installs and updates. Project-scoped npm installs reject the equivalent CLI/environment allowlist; other npm consumers keep their own policy. A runtime installed before this permission needs a one-time `npm --prefix <runtime> rebuild node-pty` with this config selected, followed by a real PTY test. The global CLI's working module does not validate the vendor runtime's separate copy.
+
 ## Initial human enrollment
 
 In an interactive SSH login as `thurstonsand` on pod042:

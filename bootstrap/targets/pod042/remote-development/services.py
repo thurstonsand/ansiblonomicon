@@ -49,6 +49,7 @@ def main() -> None:
         )
     os.environ["HOME"] = str(HOME)
     os.environ["T3CODE_HOME"] = str(HOME / ".local/share/t3code")
+    os.environ["NPM_CONFIG_USERCONFIG"] = str(HOME / ".config/t3code/npmrc")
     os.environ["PATH"] = (
         f"{HOME}/.local/bin:{HOME}/.amp/bin:{HOME}/.opencode/bin:"
         f"{SHIMS}:/usr/local/bin:/usr/bin:/bin"
@@ -127,7 +128,7 @@ def main() -> None:
         run("systemctl", "--user", "is-enabled", "--quiet", unit)
         run("systemctl", "--user", "is-active", "--quiet", unit)
     print(
-        "Both user services are enabled and active. This is not an authenticated remote-session probe."
+        "Systemd startup checks passed, not remote readiness. Verify live connections and check for subsequent crashes before declaring completion."
     )
 
 

@@ -273,6 +273,23 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                 ]
             )
     else:
+        if "base" in capabilities_for(capability):
+            # Mise applies accounts before packages; the login shell must exist first.
+            run_command(
+                [
+                    "env",
+                    f"MISE_CEILING_PATHS={TARGET_ROOT.parent}",
+                    f"MISE_TRUSTED_CONFIG_PATHS={TARGET_ROOT}",
+                    "MISE_ENV=base",
+                    "mise",
+                    "-C",
+                    str(TARGET_ROOT),
+                    "bootstrap",
+                    "--only",
+                    "packages",
+                    "--yes",
+                ]
+            )
         run_command([*command, "bootstrap", "--yes"])
 
 
@@ -335,6 +352,14 @@ def run_remote(
     elif branch != "main":
         fail("first bootstrap requires the workstation checkout on main")
     if initial or install_mise:
+        if not check_mode:
+            run_command(
+                [
+                    *remote_bootstrap_command(host, "base", False, True),
+                    "--only",
+                    "packages",
+                ]
+            )
         run_command(
             remote_bootstrap_command(host, None, check_mode, install_mise or initial)
         )

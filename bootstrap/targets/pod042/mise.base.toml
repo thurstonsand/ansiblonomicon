@@ -4,6 +4,7 @@
 "apt:git" = "latest"
 "apt:openssh-server" = "latest"
 "apt:sudo" = "latest"
+"apt:zsh" = "latest"
 
 [bootstrap.groups.thurstonsand]
 
@@ -11,7 +12,7 @@
 group = "thurstonsand"
 groups = ["sudo"]
 home = "/home/thurstonsand"
-shell = "/bin/bash"
+shell = "/usr/bin/zsh"
 create_home = true
 
 [bootstrap.directories."/home/thurstonsand/code"]

@@ -53,9 +53,8 @@ agent_harness_sources:
         skills:
           tuistory: skills/tuistory
 
-  # Pairs with the nurb uv tool, which is installed on the laptop only.
   - repo: Shpigford/nurb
-    excluded_on: [work, pod042]
+    excluded_on: [work]
     plugins:
       - name: nurb
         skills:

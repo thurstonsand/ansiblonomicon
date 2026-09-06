@@ -2,6 +2,8 @@
 
 `operator/mise.toml` is the operator's global runtime and utility inventory. `mise.operator.toml` declares Debian packages, the global mise config needed to install chezmoi, the sessions binary directory, and TPM's checkout.
 
+Base owns the zsh package and the operator's `/usr/bin/zsh` login shell; the guarded driver applies base packages before accounts, including on first access, so SSH never receives a shell path that has not been installed.
+
 The remaining installation steps are named mise tasks, ordered through dependencies:
 
 1. `operator:tools`: install and update the inventory, reconcile npm globals beside Node, including T3, and refresh shims.
