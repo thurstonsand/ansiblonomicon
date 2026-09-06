@@ -93,6 +93,11 @@ export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/
 {{- end }}
 typeset -U path
 path=(
+{{- if eq .chezmoi.hostname "pod042" }}
+  "$HOME/.local/bin"
+  "$HOME/.amp/bin"
+  "$HOME/.opencode/bin"
+{{- end }}
 {{- if eq .chezmoi.os "darwin" }}
   "/opt/homebrew/bin"
   "/opt/homebrew/sbin"

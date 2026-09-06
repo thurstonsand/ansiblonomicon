@@ -64,7 +64,7 @@ sudo -u thurstonsand env -i \
 '''
 
 [tasks."operator:setup"]
-description = "Install operator tools, build sessions, apply dotfiles, then install tmux plugins"
+description = "Install operator tools and agents, build sessions, apply dotfiles, then install tmux plugins"
 depends = ["operator:tmux"]
 
 [tasks."operator:tools"]
@@ -74,13 +74,40 @@ run = [
   "mise upgrade --yes",
   '''
 node_bin=$(dirname "$(mise which node)")
-"$node_bin/npm" install -g --allow-scripts=agent-browser @earendil-works/pi-coding-agent agent-browser hunkdiff sideshow
+"$node_bin/npm" install -g --allow-scripts=agent-browser @earendil-works/pi-coding-agent agent-browser hunkdiff sideshow t3
 mise reshim
 ''',
 ]
 
-[tasks."operator:sessions"]
+[tasks."operator:agents"]
 depends = ["operator:tools"]
+dir = "/home/thurstonsand"
+shell = "bash -c"
+run = '''
+set -euo pipefail
+export PATH="$HOME/.local/bin:$HOME/.amp/bin:$HOME/.opencode/bin:$PATH"
+if [ ! -x "$HOME/.amp/bin/amp" ]; then
+  curl -fsSL https://ampcode.com/install.sh | bash
+fi
+ln -sfn "$HOME/.amp/bin/amp" "$HOME/.local/bin/amp"
+if [ ! -x "$HOME/.local/bin/claude" ]; then
+  curl -fsSL https://claude.ai/install.sh | bash
+fi
+if [ ! -x "$HOME/.local/bin/codex" ]; then
+  curl -fsSL https://chatgpt.com/codex/install.sh | bash
+fi
+if [ ! -x "$HOME/.opencode/bin/opencode" ]; then
+  curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
+fi
+test -x "$HOME/.amp/bin/amp"
+test -x "$HOME/.local/bin/claude"
+test -x "$HOME/.local/bin/codex"
+test -x "$HOME/.opencode/bin/opencode"
+mise --no-config --no-env uninstall --all amp codex claude opencode npm:t3
+'''
+
+[tasks."operator:sessions"]
+depends = ["operator:agents"]
 dir = "/home/thurstonsand"
 sources = [
   "/home/thurstonsand/code/ansiblonomicon/ansible/roles/sessions/files/sessions/**/*.go",

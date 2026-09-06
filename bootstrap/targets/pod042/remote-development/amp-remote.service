@@ -8,9 +8,9 @@ StartLimitBurst=5
 Type=simple
 WorkingDirectory=/home/thurstonsand/code/ansiblonomicon
 Environment=HOME=/home/thurstonsand
-Environment=PATH=/home/thurstonsand/.local/share/mise/shims:/home/thurstonsand/.local/bin:/usr/local/bin:/usr/bin:/bin
-ExecStart=/home/thurstonsand/.local/share/mise/shims/amp --no-tui --remote-control-terminal --runner-id pod042-ansiblonomicon
-Restart=on-failure
+Environment=PATH=/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.opencode/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/thurstonsand/.amp/bin/amp --no-tui --remote-control-terminal --runner-id pod042-ansiblonomicon
+Restart=always
 RestartSec=10
 StandardInput=null
 StandardOutput=journal

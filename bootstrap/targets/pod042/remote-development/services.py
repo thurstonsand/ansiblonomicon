@@ -31,7 +31,7 @@ def require_t3() -> None:
 def require_amp() -> None:
     if not (HOME / ".local/share/amp/secrets.json").is_file():
         raise SystemExit(
-            "Amp login state missing. Run amp interactively as thurstonsand first."
+            "Amp login state missing. Run amp login as thurstonsand first."
         )
 
 
@@ -49,7 +49,10 @@ def main() -> None:
         )
     os.environ["HOME"] = str(HOME)
     os.environ["T3CODE_HOME"] = str(HOME / ".local/share/t3code")
-    os.environ["PATH"] = f"{SHIMS}:{HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin"
+    os.environ["PATH"] = (
+        f"{HOME}/.local/bin:{HOME}/.amp/bin:{HOME}/.opencode/bin:"
+        f"{SHIMS}:/usr/local/bin:/usr/bin:/bin"
+    )
     os.environ["XDG_RUNTIME_DIR"] = f"/run/user/{os.getuid()}"
     os.environ["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path=/run/user/{os.getuid()}/bus"
     os.chdir(HOME)

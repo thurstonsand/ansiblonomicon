@@ -1,5 +1,5 @@
 [tools]
-node = { version = "lts", postinstall = '"$MISE_TOOL_INSTALL_PATH/bin/npm" install -g --allow-scripts=agent-browser @earendil-works/pi-coding-agent agent-browser hunkdiff sideshow' }
+node = { version = "lts", postinstall = '"$MISE_TOOL_INSTALL_PATH/bin/npm" install -g --allow-scripts=agent-browser @earendil-works/pi-coding-agent agent-browser hunkdiff sideshow t3' }
 npm = "latest"
 python = "3.14"
 uv = "latest"
@@ -17,8 +17,3 @@ lazygit = "latest"
 fzf = "latest"
 cloudflared = "latest"
 herdr = "latest"
-amp = "latest"
-codex = "latest"
-claude = "latest"
-opencode = "latest"
-"npm:t3" = "latest"
