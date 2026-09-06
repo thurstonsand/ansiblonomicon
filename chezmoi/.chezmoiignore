@@ -6,8 +6,6 @@
 .chezmoiscripts/darwin/**
 .config/linearmouse/
 .config/nextdns.conf
-.local/bin/code
-.local/libexec/codeEditor
 .local/bin/btt-paste-image.sh
 .local/bin/delta
 .mactop/
@@ -23,11 +21,18 @@ Library/
 {{ if ne .chezmoi.hostname "pod042" }}
 .ssh/id_ed25519_git
 .ssh/id_ed25519_git.pub
+.config/zsh/terminal-theme.zsh
+.config/hunk/config.toml
+.local/bin/terminal_theme_common.py
+.local/bin/terminal-theme-switch.py
+.local/bin/hunk_gruvbox_theme.py
 {{ end }}
 
-# OpenClaw is headless; Ghostty helpers are workstation-only.
-{{ if eq .chezmoi.hostname "openclaw" }}
+# The NAS is headless; desktop integrations remain on workstations.
+{{ if eq .chezmoi.hostname "pod042" }}
 .config/ghostty/
+.config/zed/
+.config/eightctl/
 .local/bin/ide
 {{ end }}
 
@@ -66,16 +71,6 @@ Library/
 .pi/agent/extensions/session-recovery/tsconfig.json
 .claude/scripts/session-recovery/tsconfig.json
 
-# Pi source-clone extension: only useful on work (pi installed from release tarball)
-{{ if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-.pi/agent/extensions/pi-source.ts
-{{ end }}
-
-# Pi global MCP config: only rendered when pi_mcp_json is populated (gitignored local.toml)
-{{ if not .pi_mcp_json }}
-.pi/agent/mcp.json
-{{ end }}
-
 # Personal agent configs
 .codex/
 .oracle/
@@ -105,6 +100,16 @@ Library/Application Support/Code/User/mcp.json
 .claude/hooks/retitle.py
 .claude/hooks/set-title.py
 
+{{ end }}
+
+# Pi source-clone extension: only useful on work (pi installed from release tarball)
+{{ if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+.pi/agent/extensions/pi-source.ts
+{{ end }}
+
+# Pi global MCP config: only rendered when pi_mcp_json is populated (gitignored local.toml)
+{{ if not .pi_mcp_json }}
+.pi/agent/mcp.json
 {{ end }}
 
 # Data-driven: skip uv/pip config when no indexes defined

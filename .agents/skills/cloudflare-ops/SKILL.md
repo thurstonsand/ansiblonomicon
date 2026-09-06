@@ -17,9 +17,9 @@ Guidance for how to use the Cloudflare MCP for this project.
 - For custom metrics only, ask about **Analytics Engine** datasets **`aig_events`** and **`llms_usage`**.
 - Only use **worker tails** when you explicitly need a live stream.
 - For actual live tails, use Wrangler from the worker directory:
-  - `cd wrangler/aig && ../../scripts/fnox-host exec -- wrangler tail --format pretty`
-  - `cd wrangler/llms && ../../scripts/fnox-host exec -- wrangler tail --format pretty`
-  - `cd wrangler/hooks && ../../scripts/fnox-host exec -- wrangler tail --format pretty`
+  - `cd wrangler/aig && ../../scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN -- wrangler tail --format pretty`
+  - `cd wrangler/llms && ../../scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN -- wrangler tail --format pretty`
+  - `cd wrangler/hooks && ../../scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN -- wrangler tail --format pretty`
 
 ## Important repo facts
 

@@ -16,12 +16,12 @@ git:
     order: "topo-order"
     showGraph: always
 {{- if lookPath "hunk" }}
-  pagers:
-    - pager: hunk pager
+  diffRenderers:
+    - command: hunk pager
       colorArg: always
 {{- else if lookPath "delta" }}
-  pagers:
-    - pager: delta --paging=never
+  diffRenderers:
+    - command: delta --paging=never
       colorArg: always
 {{- end }}
   autoFetch: false

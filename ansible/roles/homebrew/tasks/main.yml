@@ -75,8 +75,6 @@
   environment:
     MAS_NO_AUTO_INDEX: "1"
     SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
-    HOMEBREW_SUDO_ASKPASS_PASS: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS'] | default(omit) }}"
-    HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
   block:
     - name: Ensure mas is installed
       ansible.builtin.command:
@@ -132,8 +130,6 @@
   environment:
     HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS: "1"
     SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
-    HOMEBREW_SUDO_ASKPASS_PASS: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS'] | default(omit) }}"
-    HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
   register: homebrew_result
   changed_when: "'Installing' in homebrew_result.stdout or 'Upgrading' in homebrew_result.stdout or 'Restarting' in homebrew_result.stdout"
 
@@ -144,8 +140,6 @@
   environment:
     HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS: "1"
     SUDO_ASKPASS: "{{ ansible_facts['env']['SUDO_ASKPASS'] | default(omit) }}"
-    HOMEBREW_SUDO_ASKPASS_PASS: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS'] | default(omit) }}"
-    HOMEBREW_SUDO_ASKPASS_PASS_WORK: "{{ ansible_facts['env']['HOMEBREW_SUDO_ASKPASS_PASS_WORK'] | default(omit) }}"
   register: homebrew_cleanup_result
   changed_when: "'Uninstalling' in homebrew_cleanup_result.stdout"
 

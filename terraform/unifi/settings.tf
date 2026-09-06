@@ -16,6 +16,11 @@ resource "unifi_setting" "site" {
       "apple_airPlay",
       "homeKit",
     ]
-    custom_services = []
+    custom_services = [
+      {
+        name    = "Philips Hue"
+        address = "_hue._tcp.local"
+      },
+    ]
   }
 }

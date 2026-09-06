@@ -17,7 +17,7 @@ OpenTofu owns:
 - stable device port assignments after physical adoption
 - the disabled Internet 1 backup and primary WAS-110 DHCP WAN, including priority, failover mode, and the sensitive cloned MAC
 - the `192.168.11.0/24` WAS-110 LCT interface route
-- Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, and Scanners, restricted to Apple AirPlay and HomeKit
+- Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, and Scanners, restricted to Apple AirPlay, HomeKit, and the `_hue._tcp.local` custom service
 - Network-device automatic update policy
 
 Manual state remains manual because the provider cannot represent or safely round-trip it:
@@ -25,7 +25,7 @@ Manual state remains manual because the provider cannot represent or safely roun
 - console first-run ownership, Local Access Only recovery administration, and SSH
 - the first native-LAN transition from `192.168.1.1` to Bunker at `10.10.10.1`
 - physical reset and adoption of switches, power devices, and APs
-- Power Distribution Pro outlet control; OpenTofu observes the device and its outlet state, but the provider excludes every `outlet_*` field from device updates
+- Power Distribution Pro outlet control and outlet names; OpenTofu observes the device and its outlet state, but the provider excludes every `outlet_*` field from device updates. Rename outlets in the controller UI. A `postcondition` on the device fails the plan if outlets 5 and 7 stop reporting `relay_state = true`, and the `pdu_outlet_names` check warns when an expected name goes missing
 - the initial WAS-110 profile and service identity
 
 The live secret values and controller object IDs belong in 1Password and remote state, never HCL or this README.

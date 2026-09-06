@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Resume cannot change the runner's environment. Its supplied identity is only
-# for the later `scripts/fnox-host --orb exec -- <command>` launch.
+# for the later `scripts/fnox-host --orb exec --secret NAME -- COMMAND` launch.
 unset OP_SERVICE_ACCOUNT_TOKEN FNOX_HOST_OP_TOKEN OP_CONNECT_TOKEN OP_CONNECT_HOST
 mise trust --quiet
 mise run bootstrap

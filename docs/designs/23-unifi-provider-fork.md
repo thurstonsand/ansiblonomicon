@@ -117,7 +117,11 @@ Stable switch and AP MAC addresses identify owned equipment and may appear in HC
 
 ### 6. The PDU has no relay mutation path
 
-The provider adopts and observes the PDU, but its resource schema exposes outlet state as computed-only and its SDK removes every `outlet_*` key at the final device-update boundary. HCL cannot express relay or cycle changes. Runtime checks may assert that critical outlets remain powered.
+The provider adopts and observes the PDU, but its resource schema exposes outlet state as computed-only and its SDK removes every `outlet_*` key at the final device-update boundary. HCL cannot express relay or cycle changes. Outlet names go with them: `name` lives inside `outlet_overrides`, so naming an outlet is a controller-side act, recorded here rather than declared.
+
+A name-only merge modelled on `port_override` is not a safe substitute. `DeviceOutletOverrides` marks `relay_state` and `cycle_enabled` `omitempty`, so an outlet that is off round-trips through the struct with its key absent, and the controller's reading of an absent key cannot be probed safely on a PDU that powers the gateway. This is the failure class of #430. A write path would have to bypass the struct with raw JSON and refuse to invent entries; the cost is not worth a label.
+
+The outlets are therefore asserted rather than declared. `unifi_device.power_distribution_pro` carries a `postcondition` failing the plan unless outlets 5 and 7 both report `relay_state = true`, and the `pdu_outlet_names` check warns, without blocking, when an expected outlet name is missing.
 
 ## Edge Cases & Failure Modes
 
@@ -185,7 +189,7 @@ The provider adopts and observes the PDU, but its resource schema exposes outlet
   - Files: fork device resource/tests and `terraform/unifi/ports.tf`.
   - Work: Declare stable identities and adoption; diagnose and fix PDU normalization; expose no relay writes.
   - Validation: No unexpected device update, clean plan, adopted/online inventory, critical PDU outlets still powered.
-  - Progress: Provider release `v0.56.0-ansiblonomicon.5` makes outlet attributes computed-only, removes their model-to-request conversion, and normalizes block-less device state to empty collections so imported devices no longer plan perpetual updates. The SDK excludes every `outlet_*` key from the final device patch, including the separate port action path. OpenTofu imported the Power Distribution Pro without a controller write; the only follow-up change set `forget_on_destroy = false` through a tested state-only path that performs no controller request. The refreshed plan reports **No changes**, all 20 observed outlets remain powered, and the eight-check smoke gate passes.
+  - Progress: Provider release `v0.56.0-ansiblonomicon.5` makes outlet attributes computed-only, removes their model-to-request conversion, and normalizes block-less device state to empty collections so imported devices no longer plan perpetual updates. The runtime assertions decision 6 anticipated now exist: a `postcondition` gating outlets 5 and 7, and a warning-only name check, both verified live by inverting the expected name and watching the warning fire. The SDK excludes every `outlet_*` key from the final device patch, including the separate port action path. OpenTofu imported the Power Distribution Pro without a controller write; the only follow-up change set `forget_on_destroy = false` through a tested state-only path that performs no controller request. The refreshed plan reports **No changes**, all 20 observed outlets remain powered, and the eight-check smoke gate passes.
 
 - [ ] Phase 4: Finish operator workflow
   - Goal: Reduce reconstruction to the initial trust ceremony and physical actions.

@@ -8,7 +8,10 @@ import os
 from pathlib import Path
 import subprocess
 import sys
+import tomllib
 from typing import NoReturn, cast
+
+from automation_identity import IdentityError, identity_path, read_identity
 
 ROOT = Path(__file__).resolve().parent.parent
 RECONCILE = ROOT / "scripts" / "pod042_reconcile.py"
@@ -48,6 +51,30 @@ def command(
     )
 
 
+def op_command(
+    argv: list[str], *, input_text: str | None = None
+) -> subprocess.CompletedProcess[str]:
+    try:
+        token = read_identity(identity_path(Path.home()), os.getuid())
+    except FileNotFoundError:
+        fail(
+            "shared automation identity is missing; enroll it with "
+            "mise --no-env exec -- python3 scripts/automation_identity.py"
+        )
+    environment = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.startswith(("OP_", "FNOX_"))
+    }
+    environment["OP_SERVICE_ACCOUNT_TOKEN"] = token
+    return command(
+        ["op", *argv],
+        capture_output=True,
+        input_text=input_text,
+        env=environment,
+    )
+
+
 def replace_login_fields(item: dict[str, object], password: str) -> dict[str, object]:
     item["title"] = ITEM
     fields = item.get("fields")
@@ -70,26 +97,34 @@ def replace_login_fields(item: dict[str, object], password: str) -> dict[str, ob
 
 
 def password_item() -> tuple[dict[str, object], bool]:
-    existing = command(
-        [
-            "op",
-            "item",
-            "get",
-            ITEM,
-            "--vault",
-            VAULT,
-            "--format=json",
-            "--reveal",
-        ],
-        check=False,
-        capture_output=True,
-    )
-    if existing.returncode == 0:
-        item = cast(dict[str, object], json.loads(existing.stdout))
-        return item, True
-    template = command(["op", "item", "template", "get", "Login"], capture_output=True)
-    item = cast(dict[str, object], json.loads(template.stdout))
-    return item, False
+    listing = op_command(["item", "list", "--vault", VAULT, "--format=json"])
+    entries = json.loads(listing.stdout)
+    if not isinstance(entries, list):
+        fail("1Password item list must be a list")
+    matches: list[str] = []
+    for raw_entry in cast(list[object], entries):
+        if not isinstance(raw_entry, dict):
+            fail("1Password item metadata must be an object")
+        entry = cast(dict[str, object], raw_entry)
+        if not isinstance(entry.get("title"), str):
+            fail("1Password item metadata has no title")
+        if entry["title"] == ITEM:
+            item_id = entry.get("id")
+            if not isinstance(item_id, str) or not item_id:
+                fail("existing pod042 Login item has no ID")
+            matches.append(item_id)
+    if len(matches) > 1:
+        fail("multiple pod042 items exist in the agent vault")
+    if matches:
+        result = op_command(
+            ["item", "get", matches[0], "--vault", VAULT, "--format=json", "--reveal"]
+        )
+    else:
+        result = op_command(["item", "template", "get", "Login"])
+    item = json.loads(result.stdout)
+    if not isinstance(item, dict):
+        fail("1Password Login item must be an object")
+    return cast(dict[str, object], item), bool(matches)
 
 
 def store_password(password: str) -> None:
@@ -99,10 +134,10 @@ def store_password(password: str) -> None:
         item_id = item.get("id")
         if not isinstance(item_id, str):
             fail("existing pod042 Login item has no ID")
-        argv = ["op", "item", "edit", item_id, "--vault", VAULT]
+        argv = ["item", "edit", item_id, "--vault", VAULT]
     else:
-        argv = ["op", "item", "create", "--vault", VAULT, "-"]
-    command(argv, capture_output=True, input_text=payload)
+        argv = ["item", "create", "--vault", VAULT, "-"]
+    op_command(argv, input_text=payload)
 
 
 def install_key(host: str, password: str) -> None:
@@ -186,8 +221,11 @@ def main() -> int:
         return run(sys.argv[1:])
     except (
         FirstAccessError,
+        IdentityError,
+        OSError,
         subprocess.CalledProcessError,
         json.JSONDecodeError,
+        tomllib.TOMLDecodeError,
     ) as error:
         print(f"pod042 first access: {error}", file=sys.stderr)
         return 1

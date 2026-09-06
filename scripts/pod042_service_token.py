@@ -56,7 +56,7 @@ def secret_command(arguments: Sequence[str], *, token: str, label: str) -> None:
 def probe_token(token: str) -> None:
     inherited = dict(os.environ)
     inherited["PATH"] = "/usr/local/bin:/usr/bin:/bin"
-    invocation = fnox_host.build_command(
+    invocation = fnox_host.prepare_invocation(
         reconcile.ROOT,
         "pod042",
         "get",
@@ -237,8 +237,8 @@ def install_remote_token(host: str) -> None:
             "pod042 must match the workstation revision; reconcile it first"
         )
     reconcile.run_command(ssh_command(host, ["sudo", "-n", "true"]))
-    binary = reconcile.command_output(["mise", "which", "fnox"])
-    invocation = fnox_host.build_command(
+    binary = reconcile.command_output(["mise", "--no-env", "which", "fnox"])
+    invocation = fnox_host.prepare_invocation(
         reconcile.ROOT,
         profile,
         "get",

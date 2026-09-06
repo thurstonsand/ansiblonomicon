@@ -126,7 +126,7 @@ case "$(hostname -s)" in
   pod042) exec python3 ../scripts/pod042_reconcile.py ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
   *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
 esac
-../scripts/fnox-host exec -- ansible-playbook "$@" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+ansible-playbook "$@" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
 '''
 
 [tasks."reconcile:laptop"]
@@ -143,7 +143,7 @@ case "$(hostname -s)" in
   Thurstons-MacBook-Pro) playbook=macos.yml ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-../scripts/fnox-host exec -- ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
 '''
 
 [tasks."reconcile:udmp"]
@@ -153,7 +153,7 @@ usage = '''
 flag "-c --check" help="Dry-run mode (no changes made)"
 flag "--update-mise" help="Install this machine's mise version on the UDM Pro"
 '''
-run = "./scripts/fnox-host exec -- mise -C bootstrap bootstrap remote udmp --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/usr/local/bin/mise}"
+run = "./scripts/fnox-host exec --secret NEXTDNS_PROFILE_ID -- mise -C bootstrap bootstrap remote udmp --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/usr/local/bin/mise}"
 
 [tasks."pod042:first-access"]
 description = "Turn a fresh password-accessible Debian install into the pod042 landing zone"
@@ -203,12 +203,12 @@ run = "./scripts/list-tags.sh ${usage_playbook:-}"
 [tasks."edge:init"]
 description = "Initialize the Cloudflare OpenTofu working directory"
 dir = "terraform/cloudflare"
-run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" init'
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY -- python3 "{{config_root}}/scripts/tofu.py" cloudflare init'
 
 [tasks."edge:plan"]
 description = "Plan the Cloudflare OpenTofu changes"
 dir = "terraform/cloudflare"
-run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" plan'
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret CLOUDFLARE_API_TOKEN --secret PARENT_HOME_IP -- python3 "{{config_root}}/scripts/tofu.py" cloudflare plan'
 
 [tasks."edge:apply"]
 description = "Apply the Cloudflare OpenTofu changes"
@@ -216,7 +216,7 @@ dir = "terraform/cloudflare"
 usage = '''
 flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
 '''
-run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" apply ${usage_yes:+-auto-approve}'
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret CLOUDFLARE_API_TOKEN --secret PARENT_HOME_IP -- python3 "{{config_root}}/scripts/tofu.py" cloudflare apply ${usage_yes:+-auto-approve}'
 
 # ---------------------------------------------------------------------------
 # UniFi
@@ -230,12 +230,12 @@ run = "uv run scripts/install_unifi_provider.py"
 description = "Initialize the UniFi OpenTofu working directory"
 depends = ["unifi:provider:install"]
 dir = "terraform/unifi"
-run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" init'
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY -- python3 "{{config_root}}/scripts/tofu.py" unifi init'
 
 [tasks."unifi:plan"]
 description = "Plan the UniFi OpenTofu changes"
 dir = "terraform/unifi"
-run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" plan'
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret UNIFI_USERNAME --secret UNIFI_PASSWORD --secret UNIFI_WAN_MAC_OVERRIDE --secret YORHA_PASSPHRASE --secret LUNAR_TEAR_PASSPHRASE --secret THE_VILLAGE_PASSPHRASE --secret SCANNERS_PASSPHRASE -- python3 "{{config_root}}/scripts/tofu.py" unifi plan'
 
 [tasks."unifi:apply"]
 description = "Apply the UniFi OpenTofu changes"
@@ -243,11 +243,11 @@ dir = "terraform/unifi"
 usage = '''
 flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
 '''
-run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" apply ${usage_yes:+-auto-approve}'
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret UNIFI_USERNAME --secret UNIFI_PASSWORD --secret UNIFI_WAN_MAC_OVERRIDE --secret YORHA_PASSPHRASE --secret LUNAR_TEAR_PASSPHRASE --secret THE_VILLAGE_PASSPHRASE --secret SCANNERS_PASSPHRASE -- python3 "{{config_root}}/scripts/tofu.py" unifi apply ${usage_yes:+-auto-approve}'
 
 [tasks."unifi:smoke"]
 description = "Read-only smoke checks for the WAS-110 WAN path"
-run = "./scripts/fnox-host exec -- uv run scripts/unifi_smoke.py"
+run = "./scripts/fnox-host exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD -- uv run scripts/unifi_smoke.py"
 
 # ---------------------------------------------------------------------------
 # Edge deployables
@@ -262,19 +262,19 @@ description = "Deploy the aig Worker, managing its secrets"
 usage = '''
 flag "-f --force-secret" help="Update secrets even if they exist"
 '''
-run = "./scripts/fnox-host exec -- uv run scripts/aig_deploy.py ${usage_force_secret:+--force-secret}"
+run = "./scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN --secret CLI_PROXY_API_KEY --secret CLOUDFLARE_AI_GATEWAY_API_TOKEN --secret CF_ACCESS_CLIENT_ID --secret CF_ACCESS_CLIENT_SECRET -- uv run scripts/aig_deploy.py ${usage_force_secret:+--force-secret}"
 
 [tasks."edge:deploy:hooks"]
 description = "Deploy the hooks Worker, managing its secrets"
 usage = '''
 flag "-f --force-secret" help="Update secrets even if they exist"
 '''
-run = "./scripts/fnox-host exec -- uv run scripts/hooks_deploy.py ${usage_force_secret:+--force-secret}"
+run = "./scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN --secret GOG_GMAIL_PUSH_TOKEN --secret OPENCLAW_HOOKS_TOKEN --secret OPENCLAW_GATEWAY_TOKEN --secret TELEGRAM_WEBHOOK_SECRET --secret ELEVENLABS_VOICE_TOKEN -- uv run scripts/hooks_deploy.py ${usage_force_secret:+--force-secret}"
 
 [tasks."edge:deploy:tesla"]
 description = "Deploy the tesla Cloudflare Pages site"
 dir = "cloudflare-pages/tesla"
-run = '"{{config_root}}/scripts/fnox-host" exec -- wrangler pages deploy'
+run = '"{{config_root}}/scripts/fnox-host" exec --secret CLOUDFLARE_API_TOKEN -- wrangler pages deploy'
 
 # ---------------------------------------------------------------------------
 # Checks: component first, verb second. `check` never mutates; `fix` may.
@@ -389,8 +389,9 @@ run = "./scripts/session-recovery-lint.sh --format"
 # ---------------------------------------------------------------------------
 
 [tasks."secrets:check"]
-description = "Resolve this host's declared secrets without printing values"
-run = "./scripts/fnox-host exec -- true"
+description = "Verify one declared credential without printing its value"
+usage = 'arg "<name>" help="Canonical credential name; Private/work credentials can require desktop authentication"'
+run = './scripts/fnox-host get "$usage_name" >/dev/null'
 
 [tasks."secrets:retire"]
 description = "Remove this checkout's obsolete secret cache files"
@@ -445,6 +446,9 @@ uv sync --dev
 
 [tasks."chezmoi:diff"]
 description = "Show what chezmoi would change (source -> home), excluding lockfiles"
+# Without raw, mise captures stdout to apply redactions, the script sees a pipe
+# instead of a terminal, and the delta pager branch never fires.
+raw = true
 run = "./scripts/chezmoi-diff.sh"
 
 [tasks."chezmoi:re-add"]
@@ -462,8 +466,8 @@ fi
 
 [tasks."edge:dev:aig"]
 description = "Run the AIG Worker locally with fnox secrets"
-run = "./scripts/fnox-host exec -- uv run scripts/worker_dev.py aig --port 8787"
+run = "./scripts/fnox-host exec --secret CLI_PROXY_API_KEY --secret CLOUDFLARE_AI_GATEWAY_API_TOKEN --secret CF_ACCESS_CLIENT_ID --secret CF_ACCESS_CLIENT_SECRET -- uv run scripts/worker_dev.py aig --port 8787"
 
 [tasks."edge:dev:hooks"]
 description = "Run the hooks Worker locally with fnox secrets"
-run = "./scripts/fnox-host exec -- uv run scripts/worker_dev.py hooks --port 8788"
+run = "./scripts/fnox-host exec --secret GOG_GMAIL_PUSH_TOKEN --secret OPENCLAW_HOOKS_TOKEN --secret OPENCLAW_GATEWAY_TOKEN --secret TELEGRAM_WEBHOOK_SECRET --secret ELEVENLABS_VOICE_TOKEN -- uv run scripts/worker_dev.py hooks --port 8788"

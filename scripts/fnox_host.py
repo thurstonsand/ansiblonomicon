@@ -2,6 +2,7 @@
 
 import argparse
 from dataclasses import dataclass
+import json
 import os
 from pathlib import Path
 import pwd
@@ -28,6 +29,7 @@ HOST_PROFILES = {
 }
 PROFILES = ("macos", "work", "pod042", "orb")
 EXEC_PROFILE = "ANSIBLONOMICON_EXEC_PROFILE"
+EXEC_KEYS = "ANSIBLONOMICON_EXEC_KEYS"
 TOKEN_NAME = "FNOX_HOST_OP_TOKEN"
 TOKEN_PATH = Path("/home/thurstonsand/.config/op-service-account/token")
 
@@ -82,6 +84,8 @@ def load_declaration(path: Path, *, host: bool) -> set[str]:
         raise ConfigurationError(f"{path.name}: root must be true")
     secrets = table(config.get("secrets", {}), f"{path.name}: secrets")
     for name, raw_declaration in secrets.items():
+        if name == TOKEN_NAME:
+            raise ConfigurationError("provider token must not be a host secret")
         declaration = table(raw_declaration, f"{path.name}: {name}")
         if declaration.keys() - {"provider", "value", "env", "description"}:
             raise ConfigurationError(f"{path.name}: {name} has unsupported settings")
@@ -168,7 +172,7 @@ class FnoxCommand:
     environment: dict[str, str]
 
 
-def build_command(
+def prepare_invocation(
     root: Path,
     profile: str,
     operation: str,
@@ -177,6 +181,7 @@ def build_command(
     token: str | None,
     *,
     fnox: str = "fnox",
+    secrets: list[str] | None = None,
 ) -> FnoxCommand:
     if profile not in PROFILES:
         raise ConfigurationError(f"unsupported profile: {profile}")
@@ -187,6 +192,28 @@ def build_command(
     if operation == "export" and arguments:
         raise ConfigurationError("export does not accept arguments")
     keys = declared_keys(root)
+    declarations = host_declarations(root, profile)
+    inherited_values(root, profile, inherited)
+    if operation == "get":
+        if len(arguments) != 1:
+            raise ConfigurationError("get requires exactly one secret name")
+        validate_names(arguments, declarations)
+    if operation == "exec":
+        validate_execution_names(secrets or [], declarations)
+        invocation = child_command(arguments, inherited, profile=profile)
+        values = resolve_values(
+            root, profile, secrets or [], inherited, token, fnox=fnox
+        )
+        environment = clean_environment(inherited, keys)
+        environment = {
+            key: value
+            for key, value in environment.items()
+            if not key.startswith(("OP_", "FNOX_"))
+        }
+        environment.update(values)
+        environment[EXEC_PROFILE] = profile
+        environment[EXEC_KEYS] = json.dumps(sorted(values))
+        return FnoxCommand(invocation, environment)
     if not inherited.get("HOME"):
         raise ConfigurationError("HOME is required for the native host identity")
     home = Path(inherited["HOME"])
@@ -215,43 +242,116 @@ def build_command(
         command.extend(["get", *arguments])
     elif operation == "export":
         command.extend(["export", "--format", "shell"])
-    else:
-        command.extend(
-            ["exec", "--", *child_command(arguments, environment, profile=profile)]
-        )
     return FnoxCommand(command, environment)
 
 
-def inherited_execution(profile: str, operation: str, command: list[str]) -> int:
+def host_declarations(root: Path, profile: str) -> dict[str, dict[str, object]]:
     declarations: dict[str, dict[str, object]] = {}
-    for path in (ROOT / "fnox.toml", ROOT / f"fnox.{profile}.toml"):
+    for path in (root / "fnox.toml", root / f"fnox.{profile}.toml"):
+        load_declaration(path, host=path.name != "fnox.toml")
         with path.open("rb") as source:
-            config = tomllib.load(source)
-        declarations.update(config["secrets"])
-    expected = {
-        key
-        for key, declaration in declarations.items()
-        if declaration.get("env") is not False
-    }
-    actual = declared_keys(ROOT) & os.environ.keys()
-    if actual != expected or any(not os.environ[key] for key in expected):
+            declarations.update(tomllib.load(source).get("secrets", {}))
+    return declarations
+
+
+def validate_names(
+    names: list[str], declarations: dict[str, dict[str, object]]
+) -> None:
+    if not names or any(
+        name == TOKEN_NAME or name not in declarations for name in names
+    ):
+        raise ConfigurationError(
+            "request must select declared host secrets, not provider tokens"
+        )
+
+
+def validate_execution_names(
+    names: list[str], declarations: dict[str, dict[str, object]]
+) -> None:
+    validate_names(names, declarations)
+    for name in names:
+        if declarations[name].get("env") is False:
+            raise ConfigurationError(
+                f"{name} is get-only and cannot be selected for exec"
+            )
+
+
+def inherited_values(
+    root: Path, profile: str, environment: dict[str, str]
+) -> dict[str, str]:
+    context = environment.get(EXEC_PROFILE)
+    scope = environment.get(EXEC_KEYS)
+    if context is None and scope is None:
+        return {}
+    if context != profile:
+        raise ConfigurationError("scoped secret profile does not match this launch")
+    try:
+        decoded: object = json.loads(scope) if scope is not None else None
+    except (ValueError, TypeError):
+        decoded = None
+    if not isinstance(decoded, list) or not decoded:
+        raise ConfigurationError("malformed scoped secret keys")
+    names: list[str] = []
+    for name in cast(list[object], decoded):
+        if not isinstance(name, str) or name in names:
+            raise ConfigurationError("malformed scoped secret keys")
+        names.append(name)
+    validate_execution_names(names, host_declarations(root, profile))
+    if any(not environment.get(name) for name in names):
         raise ConfigurationError(
             "incomplete scoped secret environment; start a fresh authenticated launch"
         )
-    if operation == "get":
-        if command[0] not in expected:
+    return {name: environment[name] for name in names}
+
+
+def resolved_output(invocation: FnoxCommand, *, name: str | None = None) -> str:
+    result = subprocess.run(
+        invocation.argv,
+        env=invocation.environment,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode:
+        label = f" for {name}" if name is not None else ""
+        raise ConfigurationError(f"secret resolution failed{label}")
+    return result.stdout
+
+
+def resolve_values(
+    root: Path,
+    profile: str,
+    names: list[str],
+    inherited: dict[str, str],
+    token: str | None,
+    *,
+    fnox: str = "fnox",
+) -> dict[str, str]:
+    validate_names(names, host_declarations(root, profile))
+    cached = inherited_values(root, profile, inherited)
+    values: dict[str, str] = {}
+    for name in dict.fromkeys(names):
+        if name in cached:
+            values[name] = cached[name]
+            continue
+        value = resolved_output(
+            prepare_invocation(
+                root,
+                profile,
+                "get",
+                [name],
+                inherited,
+                token,
+                fnox=fnox,
+            ),
+            name=name,
+        ).removesuffix("\n")
+        if not value or "\0" in value:
             raise ConfigurationError(
-                "requested secret is not available in this process context"
+                f"secret resolution returned an invalid value for {name}"
             )
-        print(os.environ[command[0]])
-        return 0
-    if operation == "export":
-        for key, declaration in declarations.items():
-            if declaration.get("env") is True:
-                print(f"export {shlex.quote(key)}={shlex.quote(os.environ[key])}")
-        return 0
-    invocation = child_command(command, dict(os.environ), profile=profile)
-    os.execv(invocation[0], invocation)
+        values[name] = value
+    return values
 
 
 def main() -> int:
@@ -264,7 +364,8 @@ def main() -> int:
     commands.add_parser("export")
     get = commands.add_parser("get")
     get.add_argument("name")
-    execute = commands.add_parser("exec")
+    execute = commands.add_parser("exec", allow_abbrev=False)
+    execute.add_argument("--secret", action="append", required=True)
     execute.add_argument("command", nargs=argparse.REMAINDER)
     arguments = parser.parse_args()
     context = os.environ.get(EXEC_PROFILE)
@@ -273,6 +374,7 @@ def main() -> int:
     )
     if context is not None and context != profile:
         raise ConfigurationError("scoped secret profile does not match this launch")
+    cached = inherited_values(ROOT, profile, dict(os.environ))
     if arguments.operation == "profile":
         print(profile)
         return 0
@@ -281,27 +383,55 @@ def main() -> int:
         command = [arguments.name]
     elif arguments.operation == "exec":
         command = arguments.command
-    if command and command[0] == "--":
+    if arguments.operation == "exec":
+        if not command or command[0] != "--":
+            parser.error("exec requires a command after --")
         command = command[1:]
+        validate_execution_names(arguments.secret, host_declarations(ROOT, profile))
+    elif arguments.operation == "get":
+        validate_names(command, host_declarations(ROOT, profile))
     if not command and arguments.operation != "export":
         parser.error("exec requires a command after --")
-    if context is not None:
-        return inherited_execution(profile, arguments.operation, command)
+    if arguments.operation == "exec":
+        names = arguments.secret
+    elif arguments.operation == "get":
+        names = command
+    else:
+        names = [
+            key
+            for key, declaration in host_declarations(ROOT, profile).items()
+            if declaration.get("env") is True
+        ]
     token = None
-    identity = identity_path(Path.home())
-    if not (identity.exists() or identity.is_symlink()):
-        if profile == "pod042":
-            token = read_token(TOKEN_PATH, pwd.getpwnam("thurstonsand").pw_uid)
-        elif profile == "orb":
-            token = os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
     binary = "fnox"
-    if profile == "pod042":
-        binary = "/usr/local/bin/fnox"
-    elif profile in {"macos", "work"}:
-        binary = subprocess.check_output(
-            ["mise", "--no-env", "-C", str(ROOT), "which", "fnox"], text=True
-        ).strip()
-    invocation = build_command(
+    if context is None or set(names) - cached.keys():
+        identity = identity_path(Path.home())
+        if not (identity.exists() or identity.is_symlink()):
+            if profile == "pod042":
+                token = read_token(TOKEN_PATH, pwd.getpwnam("thurstonsand").pw_uid)
+            elif profile == "orb":
+                token = os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
+        if profile == "pod042":
+            binary = "/usr/local/bin/fnox"
+        elif profile in {"macos", "work"}:
+            binary = subprocess.check_output(
+                ["mise", "--no-env", "-C", str(ROOT), "which", "fnox"], text=True
+            ).strip()
+    if arguments.operation == "get" or (
+        arguments.operation == "export" and context is not None
+    ):
+        values = (
+            resolve_values(ROOT, profile, names, dict(os.environ), token, fnox=binary)
+            if names
+            else {}
+        )
+        if arguments.operation == "get":
+            print(values[command[0]])
+        else:
+            for key, value in values.items():
+                print(f"export {shlex.quote(key)}={shlex.quote(value)}")
+        return 0
+    invocation = prepare_invocation(
         ROOT,
         profile,
         arguments.operation,
@@ -309,7 +439,11 @@ def main() -> int:
         dict(os.environ),
         token,
         fnox=binary,
+        secrets=arguments.secret if arguments.operation == "exec" else None,
     )
+    if arguments.operation == "export":
+        print(resolved_output(invocation), end="")
+        return 0
     os.execvpe(invocation.argv[0], invocation.argv, invocation.environment)
 
 

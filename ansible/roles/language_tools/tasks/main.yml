@@ -170,6 +170,24 @@
   environment:
     PATH: "{{ language_tools_mise_path }}"
 
+- name: Locate uv tool environments
+  when: language_tools_retired_uv_tools | length > 0
+  ansible.builtin.command:
+    argv: ["{{ language_tools_uv_command }}", tool, dir]
+  register: language_tools_uv_root
+  changed_when: false
+  check_mode: false
+
+- name: Remove retired uv tools
+  ansible.builtin.command:
+    argv:
+      - "{{ language_tools_uv_command }}"
+      - tool
+      - uninstall
+      - "{{ item }}"
+    removes: "{{ language_tools_uv_root.stdout }}/{{ item }}"
+  loop: "{{ language_tools_retired_uv_tools }}"
+
 - name: Install global uv tools
   when: language_tools_update_due and uv_global_tools | length > 0
   ansible.builtin.command:

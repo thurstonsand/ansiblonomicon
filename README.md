@@ -16,7 +16,7 @@ mise laptop
 
 ### Sudo Access
 
-Ansible uses `SUDO_ASKPASS` to get the sudo password from 1Password automatically. Just run `mise laptop` — no manual password entry needed.
+Run `mise laptop` normally, without a credential exec wrapper. Only an actual sudo password request makes `SUDO_ASKPASS` read the Private-vault password from 1Password; that read can require desktop authorization.
 
 Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 
@@ -26,7 +26,7 @@ The shared automation identity gives fnox unattended access to the agent vault. 
 
 Repo-local mise configuration loads six selected Cloudflare, Access and R2 credentials through native fnox export when entering ansiblonomicon and removes them on exit. Mise caches computed environments on disk using its native session-key encryption. Programs launched here, including Pi, inherit those six values. No secrets are exported globally. Agents launch normally without fetching the whole host set; MCPs resolve their own credentials, and Pi resolves its Parallel key only when a web operation needs it. OpenCode retains Parallel; Zed does not.
 
-Explicit `scripts/fnox-host exec -- COMMAND` still resolves the whole host set and can request Private-vault authorization. Use `scripts/fnox-host get NAME` for a single declared credential. Do not export the automation service-account token into your shell.
+Use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND` to give a command only its declared credentials. Selection is mandatory; there is no whole-host or `--all` mode. Agent-vault reads use the unattended identity; only consumers that actually request Private or corporate credentials use desktop authentication. Use `scripts/fnox-host get NAME` for one credential, or `mise run secrets:check NAME` to test its resolution without printing it. Do not export the automation service-account token into your shell. See [consumer-scoped credentials](docs/designs/27-consumer-scoped-credentials.md).
 
 ### Terminal theme sync
 

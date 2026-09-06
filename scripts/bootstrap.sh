@@ -124,20 +124,6 @@ else
     echo "==> 1Password CLI already installed"
 fi
 
-# Verify 1Password is signed in (required for secrets)
-# op account list returns 0 even when not signed in, so we test an actual read
-if ! op account get &>/dev/null; then
-    echo ""
-    echo "ERROR: 1Password CLI is not signed in."
-    echo ""
-    echo "To sign in, run:"
-    echo "    op signin"
-    echo ""
-    echo "Then re-run this script."
-    exit 1
-fi
-echo "==> 1Password CLI signed in"
-
 # Install Ansible Galaxy requirements (if requirements.yml exists)
 if [[ -f "$REPO_DIR/ansible/requirements.yml" ]]; then
     echo "==> Installing Ansible Galaxy requirements..."

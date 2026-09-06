@@ -77,13 +77,8 @@ if [[ -n "${SSH_CONNECTION:-}" ]]; then
   export POWERLINE_NERD_FONTS=1
 fi
 
-{{- if eq .chezmoi.hostname "pod042" }}
 export EDITOR="nvim"
-{{- else if eq .chezmoi.hostname "openclaw" }}
-export EDITOR="nvim"
-{{- else }}
-export EDITOR="$HOME/.local/libexec/codeEditor --wait"
-{{- end }}
+export VISUAL="nvim"
 {{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
 
 # 1Password SSH agent

@@ -1,0 +1,33 @@
+[bootstrap.directories."/home/thurstonsand/.config/systemd/user"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.config/systemd/user/t3code.service.d"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.files."/home/thurstonsand/.config/systemd/user/amp-remote.service"]
+source = "remote-development/amp-remote.service"
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0644"
+
+[bootstrap.files."/home/thurstonsand/.config/systemd/user/t3code.service.d/operator.conf"]
+source = "remote-development/t3-operator.conf"
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0644"
+
+[bootstrap.hooks.final]
+run = "python3 remote-development/services.py apply"
+
+[tasks."remote-development:reconcile"]
+run = "python3 remote-development/services.py apply"
+
+[tasks."remote-development:status"]
+run = "python3 remote-development/services.py status"
+
+[tasks."remote-development:plan"]
+run = "python3 remote-development/services.py plan"

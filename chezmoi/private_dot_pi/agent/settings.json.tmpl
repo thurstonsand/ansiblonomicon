@@ -133,7 +133,7 @@
 {{- end }}
   "glimpse": {
     "companion": {
-      "enabled": true,
+      "enabled": {{ ne .chezmoi.hostname "pod042" }},
       "tools": {
         "interview": {
           "status": "Interviewing"

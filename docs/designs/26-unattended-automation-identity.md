@@ -1,6 +1,6 @@
 # Unattended automation identity
 
-Status: Accepted
+Status: Accepted; execution scope superseded by [27: Consumer-scoped credentials](27-consumer-scoped-credentials.md).
 
 ## Decision
 

@@ -1,0 +1,20 @@
+[Unit]
+Description=Amp outbound remote development for pod042
+AssertPathExists=%h/.local/share/amp/secrets.json
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=/home/thurstonsand/code/ansiblonomicon
+Environment=HOME=/home/thurstonsand
+Environment=PATH=/home/thurstonsand/.local/share/mise/shims:/home/thurstonsand/.local/bin:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/thurstonsand/.local/share/mise/shims/amp --no-tui --remote-control-terminal --runner-id pod042-ansiblonomicon
+Restart=on-failure
+RestartSec=10
+StandardInput=null
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

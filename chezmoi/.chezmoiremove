@@ -25,3 +25,14 @@
 .openclaw/openclaw.json
 .config/rclone/rclone.conf
 Library/Application Support/Storj
+
+.local/libexec/codeEditor
+.local/bin/code
+.cctools/config.json
+.config/find-session/config.json
+Library/Application Support/Code/User/settings.json
+Library/Application Support/Code/User/keybindings.json
+Library/Application Support/Code/User/mcp.json
+Library/Application Support/Code - Insiders/User/settings.json
+Library/Application Support/Code - Insiders/User/keybindings.json
+Library/Application Support/Code - Insiders/User/mcp.json

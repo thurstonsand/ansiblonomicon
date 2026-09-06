@@ -256,6 +256,8 @@ def main(args: list[str]) -> None:
     if len(args) < 2 or args[0] != "--":
         raise ReconcileError("Usage: reconcile.py [--check] -- CHILD ARGS")
     key = os.environ.pop("HEALTHCHECKS_API_KEY", "")
+    os.environ.pop("ANSIBLONOMICON_EXEC_PROFILE", None)
+    os.environ.pop("ANSIBLONOMICON_EXEC_KEYS", None)
     if not re.fullmatch(r"[A-Za-z0-9_-]+", key):
         raise ReconcileError("HEALTHCHECKS_API_KEY missing or invalid")
     urls = reconcile(Healthchecks(key), check_only)

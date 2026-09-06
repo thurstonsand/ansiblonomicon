@@ -1,0 +1,105 @@
+[bootstrap.packages]
+"apt:build-essential" = "latest"
+"apt:pkg-config" = "latest"
+"apt:libssl-dev" = "latest"
+"apt:direnv" = "latest"
+"apt:eza" = "latest"
+"apt:fd-find" = "latest"
+"apt:git-delta" = "latest"
+"apt:gh" = "latest"
+"apt:jq" = "latest"
+"apt:htop" = "latest"
+"apt:netcat-openbsd" = "latest"
+"apt:openssh-client" = "latest"
+"apt:python3-venv" = "latest"
+"apt:ripgrep" = "latest"
+"apt:rsync" = "latest"
+"apt:sqlite3" = "latest"
+"apt:tmux" = "latest"
+"apt:unzip" = "latest"
+"apt:zip" = "latest"
+"apt:zsh" = "latest"
+"apt:zsh-autosuggestions" = "latest"
+"apt:zsh-syntax-highlighting" = "latest"
+
+[bootstrap.directories."/home/thurstonsand/.config"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.config/mise"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.local"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.local/bin"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.files."/home/thurstonsand/.config/mise/config.toml"]
+source = "operator/mise.toml"
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0644"
+
+[bootstrap.repos]
+"/home/thurstonsand/.config/tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm.git" }
+
+[bootstrap.hooks.final]
+run = '''
+sudo -u thurstonsand env -i \
+  HOME=/home/thurstonsand USER=thurstonsand LOGNAME=thurstonsand \
+  PATH=/usr/local/bin:/usr/bin:/bin \
+  MISE_GLOBAL_CONFIG_FILE=/home/thurstonsand/.config/mise/config.toml \
+  MISE_CEILING_PATHS=/home/thurstonsand/code/ansiblonomicon/bootstrap/targets \
+  MISE_TRUSTED_CONFIG_PATHS=/home/thurstonsand/.config/mise/config.toml:/home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042 \
+  MISE_ENV=operator \
+  /usr/local/bin/mise -C /home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042 run operator:setup
+'''
+
+[tasks."operator:setup"]
+description = "Install operator tools, build sessions, apply dotfiles, then install tmux plugins"
+depends = ["operator:tmux"]
+
+[tasks."operator:tools"]
+dir = "/home/thurstonsand"
+run = [
+  "mise install --yes",
+  "mise upgrade --yes",
+  '''
+node_bin=$(dirname "$(mise which node)")
+"$node_bin/npm" install -g --allow-scripts=agent-browser @earendil-works/pi-coding-agent agent-browser hunkdiff sideshow
+mise reshim
+''',
+]
+
+[tasks."operator:sessions"]
+depends = ["operator:tools"]
+dir = "/home/thurstonsand"
+sources = [
+  "/home/thurstonsand/code/ansiblonomicon/ansible/roles/sessions/files/sessions/**/*.go",
+  "/home/thurstonsand/code/ansiblonomicon/ansible/roles/sessions/files/sessions/go.mod",
+  "/home/thurstonsand/code/ansiblonomicon/ansible/roles/sessions/files/sessions/go.sum",
+]
+outputs = ["/home/thurstonsand/.local/bin/sessions"]
+run = "go -C /home/thurstonsand/code/ansiblonomicon/ansible/roles/sessions/files/sessions build -o /home/thurstonsand/.local/bin/sessions ."
+
+[tasks."operator:dotfiles"]
+depends = ["operator:sessions"]
+dir = "/home/thurstonsand"
+run = [
+  "chezmoi init --source=/home/thurstonsand/code/ansiblonomicon/chezmoi",
+  "chezmoi --source=/home/thurstonsand/code/ansiblonomicon/chezmoi apply --force",
+]
+
+[tasks."operator:tmux"]
+depends = ["operator:dotfiles"]
+dir = "/home/thurstonsand"
+env.TMUX_PLUGIN_MANAGER_PATH = "/home/thurstonsand/.config/tmux/plugins"
+run = "/home/thurstonsand/.config/tmux/plugins/tpm/bin/install_plugins"

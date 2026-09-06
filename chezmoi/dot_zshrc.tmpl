@@ -36,6 +36,8 @@ bindkey -r -M emacs '^[a'
 {{- if eq .chezmoi.os "darwin" }}
 # Autosuggestions (via Homebrew)
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null || :
+{{- else if eq .chezmoi.hostname "pod042" }}
+source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 {{- else }}
 # Autosuggestions
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null || :
@@ -44,6 +46,8 @@ source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev
 {{- if eq .chezmoi.os "darwin" }}
 # Syntax highlighting (via Homebrew)
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null || :
+{{- else if eq .chezmoi.hostname "pod042" }}
+source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
 {{- else }}
 # Syntax highlighting
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null || :

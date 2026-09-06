@@ -1,4 +1,5 @@
 ---
+language_tools_retired_uv_tools: []
 language_tools_update_interval_seconds: 86400
 language_tools_cache_dir: "{{ ansible_facts['env']['HOME'] }}/.cache/ansible-language-tools"
 language_tools_mise_global_config: "{{ ansible_facts['env']['HOME'] }}/.config/mise/config.toml"

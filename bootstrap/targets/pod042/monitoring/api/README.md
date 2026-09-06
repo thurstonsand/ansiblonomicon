@@ -2,10 +2,10 @@
 
 `reconcile.py` is a Python 3.13 stdlib adapter for the Healthchecks v3 API. Native bootstrap owns host resources; it has no demonstrated REST metadata resource, so this adapter owns only the five checks in `checks.toml`.
 
-Run inside `scripts/fnox-host exec`, with `HEALTHCHECKS_API_KEY` resolved into the process environment:
+Resolve only `HEALTHCHECKS_API_KEY` into the adapter's process environment:
 
 ```sh
-python3 bootstrap/targets/pod042/monitoring/api/reconcile.py [--check] -- CHILD ARGS
+scripts/fnox-host exec --secret HEALTHCHECKS_API_KEY -- python3 bootstrap/targets/pod042/monitoring/api/reconcile.py [--check] -- CHILD ARGS
 ```
 
 The adapter verifies the declared Hark integration's ID, name, and kind before writing anything, rejects duplicate managed slugs, and writes only missing or drifted managed checks. It never changes unrelated checks or sends pings, pauses, resumes, or deletes. Run one reconciliation at a time: the API does not provide an atomic create-if-slug-absent operation that rejects duplicates without updating existing checks.
@@ -20,7 +20,7 @@ The child receives these returned credentials in its environment:
 | `pod042-sanoid` | `POD042_SANOID_PING_URL` |
 | `pod042-sanoid-prune` | `POD042_SANOID_PRUNE_PING_URL` |
 
-The adapter removes `HEALTHCHECKS_API_KEY`, `OP_*`, and `FNOX_*` before executing the child. Other host environment values remain available. It never stores credentials or provider responses on disk. The caller must keep child output secret-safe; native bootstrap persists only these scoped ping URLs in root-owned mode-0600 secret files.
+The adapter removes `HEALTHCHECKS_API_KEY`, `OP_*`, `FNOX_*`, and both fnox-host scope markers before executing the child. Other host environment values remain available. It never stores credentials or provider responses on disk. The caller must keep child output secret-safe; native bootstrap persists only these scoped ping URLs in root-owned mode-0600 secret files.
 
 `--check` performs GET requests only and reports proposed changes using local slugs and field names, never remote values or identifiers. Missing checks cause exit 1 before child execution because no real ping URLs exist yet. With all checks present, it passes their actual URLs to the child even if metadata drifts. **The caller must supply a read-only child command, such as native bootstrap's plan, when using `--check`.** The adapter does not translate child arguments or sandbox child actions.
 

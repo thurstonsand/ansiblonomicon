@@ -30,6 +30,8 @@ CAPABILITIES = (
     "monitoring",
     "datasets",
     "snapshots",
+    "operator",
+    "remote-development",
 )
 LANDING_CAPABILITIES = ("base", "repositories", "storage")
 
@@ -174,6 +176,10 @@ def fast_forward_remote_checkout(host: str, branch: str, revision: str) -> None:
 def capabilities_for(capability: str | None) -> tuple[str, ...]:
     if capability is None:
         return CAPABILITIES
+    if capability == "operator":
+        return ("base", "operator")
+    if capability == "remote-development":
+        return ("base", "operator", "remote-development")
     if capability == "storage":
         return ("repositories", "storage")
     if capability == "maintenance":
@@ -234,6 +240,13 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             "-B",
             str(ROOT / "scripts/fnox-host"),
             "exec",
+            "--secret",
+            "HARK_WEBHOOK_URL_POD042",
+            *(
+                ["--secret", "HEALTHCHECKS_API_KEY"]
+                if "monitoring" in capabilities_for(capability)
+                else []
+            ),
             "--",
             *command,
         ]

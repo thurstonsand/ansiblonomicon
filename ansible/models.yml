@@ -28,20 +28,21 @@ models:
         thinking: true
       zed: true
 
-    haiku:
-      version: "claude-haiku-4-5-20251001"
-      display_name: "Claude Haiku 4.5"
-      max_input: 200000
-      max_output: 64000
+    opus:
+      version: "claude-opus-5"
+      display_name: "Claude Opus 5"
+      max_input: 1000000
+      max_output: 128000
       vision: true
+      supports_temperature: false
       agent_harness:
         aliases:
-          claude: "haiku"
-          opencode: "anthropic/claude-haiku-4-5-20251001"
-          pi: "doppelclaude/claude-haiku-4-5"
+          claude: "opus[1m]"
+          opencode: "anthropic/claude-opus-5"
+          pi: "doppelclaude/claude-opus-5"
       vscode:
         include: true
-        thinking: false
+        thinking: true
       zed: true
 
     sonnet:
@@ -60,21 +61,20 @@ models:
         thinking: true
       zed: true
 
-    opus:
-      version: "claude-opus-5"
-      display_name: "Claude Opus 5"
-      max_input: 1000000
-      max_output: 128000
+    haiku:
+      version: "claude-haiku-4-5-20251001"
+      display_name: "Claude Haiku 4.5"
+      max_input: 200000
+      max_output: 64000
       vision: true
-      supports_temperature: false
       agent_harness:
         aliases:
-          claude: "opus[1m]"
-          opencode: "anthropic/claude-opus-5"
-          pi: "doppelclaude/claude-opus-5"
+          claude: "haiku"
+          opencode: "anthropic/claude-haiku-4-5-20251001"
+          pi: "doppelclaude/claude-haiku-4-5"
       vscode:
         include: true
-        thinking: true
+        thinking: false
       zed: true
 
   # ===========================================================================
@@ -98,14 +98,11 @@ models:
     gpt_sol:
       version: "gpt-5.6-sol"
       display_name: "GPT 5.6 Sol"
-      # Check current subscription-backed Codex limits with:
+      # Check current subscription-backed limits with:
       # codex debug models | jq -r '.models[] | select(.slug=="gpt-5.6-sol") | {slug, context_window, max_context_window, effective_context_window_percent}'
-      max_input: 372000
+      max_input: 272000
       max_output: 128000
       vision: true
-      codex:
-        # 95% of the 372K window leaves room for compaction.
-        auto_compact_token_limit: 353000
       agent_harness:
         aliases:
           pi: "openai-codex/gpt-5.6-sol"
@@ -159,10 +156,12 @@ models:
   # GOOGLE
   # ===========================================================================
   google:
+    # Confirm the current generation with:
+    # curl -s "https://generativelanguage.googleapis.com/v1beta/models?key=$GEMINI_API_KEY&pageSize=200" | jq -r '.models[] | "\(.name) \(.inputTokenLimit)"'
     gemini_pro:
       version: "gemini-3.1-pro-preview"
       display_name: "Gemini 3.1 Pro"
-      max_input: 1000000
+      max_input: 1048576
       max_output: 65536
       vision: true
       agent_harness:
@@ -175,30 +174,30 @@ models:
       zed: true
 
     gemini_flash:
-      version: "gemini-3.5-flash"
-      display_name: "Gemini 3.5 Flash"
-      max_input: 1000000
+      version: "gemini-3.8-flash"
+      display_name: "Gemini 3.8 Flash"
+      max_input: 1048576
       max_output: 65536
       vision: true
       agent_harness:
         aliases:
-          opencode: google/gemini-3.5-flash
-          pi: google/gemini-3.5-flash
+          opencode: google/gemini-3.8-flash
+          pi: google/gemini-3.8-flash
       vscode:
         include: true
         thinking: true
       zed: true
 
     gemini_flash_lite:
-      version: "gemini-3.1-flash-lite-preview"
-      display_name: "Gemini 3.1 Flash Lite"
-      max_input: 1000000
+      version: "gemini-3.5-flash-lite"
+      display_name: "Gemini 3.5 Flash Lite"
+      max_input: 1048576
       max_output: 65536
       vision: true
       agent_harness:
         aliases:
-          opencode: google/gemini-3.1-flash-lite-preview
-          pi: google/gemini-3.1-flash-lite-preview
+          opencode: google/gemini-3.5-flash-lite
+          pi: google/gemini-3.5-flash-lite
       vscode:
         include: true
         thinking: true

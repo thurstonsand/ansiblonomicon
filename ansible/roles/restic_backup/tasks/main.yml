@@ -6,7 +6,9 @@
       - restic_backup_account_id | length > 0
       - restic_backup_account_key | length > 0
       - restic_backup_password | length > 0
-    fail_msg: Run reconciliation through fnox-host with the pod042 host set.
+    fail_msg: >-
+      Select RESTIC_B2_BUCKET, RESTIC_B2_KEY_ID, RESTIC_B2_APPLICATION_KEY,
+      and RESTIC_REPOSITORY_PASSWORD explicitly with fnox-host exec --secret.
   no_log: true
 
 - name: Create private backup credential directory

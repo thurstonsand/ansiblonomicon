@@ -92,7 +92,6 @@ brew "pngpaste"
 brew "thurstonsand/tap/ghosttykit-nightly", trusted: true, restart_service: true
 cask "ghostty"
 cask "thurstonsand/tap/wt"
-cask "visual-studio-code"
 cask "zed"
 
 # =============================================================================

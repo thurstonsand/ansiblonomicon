@@ -286,3 +286,31 @@ def test_wrong_local_hostname_fails_before_reconcile(
 def test_check_and_update_mise_are_incompatible() -> None:
     with pytest.raises(pod042_reconcile.ReconcileError, match="cannot be combined"):
         pod042_reconcile.run(["--check", "--update-mise"])
+
+
+@pytest.mark.parametrize(
+    "capability,expected",
+    [
+        ("alerting", {"HARK_WEBHOOK_URL_POD042"}),
+        ("monitoring", {"HARK_WEBHOOK_URL_POD042", "HEALTHCHECKS_API_KEY"}),
+        ("operator", set[str]()),
+    ],
+)
+def test_local_capability_selects_only_consumed_secrets(
+    monkeypatch: pytest.MonkeyPatch, capability: str, expected: set[str]
+) -> None:
+    calls: list[list[str]] = []
+
+    def accept_hostname(_host: str | None) -> None:
+        pass
+
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", accept_hostname)
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+    pod042_reconcile.run_local(capability, False)
+    assert len(calls) == 1
+    command = calls[0]
+    assert {
+        command[index + 1]
+        for index, argument in enumerate(command)
+        if argument == "--secret"
+    } == expected

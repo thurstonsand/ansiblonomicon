@@ -5,8 +5,7 @@ sourceDir = {{ .chezmoi.sourceDir | quote }}
 umask = 0o22
 
 [edit]
-  command = "code"
-  args = ["--wait"]
+  command = "nvim"
 
 [diff]
   pager = "delta"
