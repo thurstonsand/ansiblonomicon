@@ -1,0 +1,66 @@
+[bootstrap.packages]
+"apt:sanoid" = "latest"
+
+[bootstrap.secrets]
+sanoid_ping_url = "POD042_SANOID_PING_URL"
+sanoid_prune_ping_url = "POD042_SANOID_PRUNE_PING_URL"
+
+[bootstrap.directories."/etc/sanoid"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.directories."/etc/systemd/system/sanoid.service.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.directories."/etc/systemd/system/sanoid-prune.service.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/sanoid/sanoid.conf"]
+source = "snapshots/sanoid.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/usr/local/bin/sanoid-run"]
+source = "snapshots/sanoid-run.py"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/alerting/checks/pod042-sanoid.url"]
+content = '{{ secret(name="sanoid_ping_url") }}'
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/alerting/checks/pod042-sanoid-prune.url"]
+content = '{{ secret(name="sanoid_prune_ping_url") }}'
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/systemd/system/sanoid.service.d/healthchecks.conf"]
+source = "snapshots/sanoid-healthchecks.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/systemd/system/sanoid-prune.service.d/healthchecks.conf"]
+source = "snapshots/prune-healthchecks.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.services."sanoid.timer"]
+enabled = true
+on_change = "restart"
+
+[bootstrap.hooks.final]
+run = "sudo -n systemctl daemon-reload"

@@ -1,6 +1,6 @@
 # pod042 Healthchecks metadata
 
-`reconcile.py` is a Python 3.13 stdlib adapter for the Healthchecks v3 API. Native bootstrap owns host resources; it has no demonstrated REST metadata resource, so this adapter owns only the three checks in `checks.toml`.
+`reconcile.py` is a Python 3.13 stdlib adapter for the Healthchecks v3 API. Native bootstrap owns host resources; it has no demonstrated REST metadata resource, so this adapter owns only the five checks in `checks.toml`.
 
 Run inside `scripts/fnox-host exec`, with `HEALTHCHECKS_API_KEY` resolved into the process environment:
 
@@ -17,6 +17,8 @@ The child receives these returned credentials in its environment:
 | `pod042-heartbeat` | `POD042_HEARTBEAT_PING_URL` |
 | `pod042-scrub-ark` | `POD042_SCRUB_ARK_PING_URL` |
 | `pod042-scrub-black-box` | `POD042_SCRUB_BLACK_BOX_PING_URL` |
+| `pod042-sanoid` | `POD042_SANOID_PING_URL` |
+| `pod042-sanoid-prune` | `POD042_SANOID_PRUNE_PING_URL` |
 
 The adapter removes `HEALTHCHECKS_API_KEY`, `OP_*`, and `FNOX_*` before executing the child. Other host environment values remain available. It never stores credentials or provider responses on disk. The caller must keep child output secret-safe; native bootstrap persists only these scoped ping URLs in root-owned mode-0600 secret files.
 
@@ -26,4 +28,4 @@ HTTPS requests go directly to `healthchecks.io`, without environment proxies or 
 
 Full reconciliation and full `--check` require Healthchecks API availability, just as their declared secret set requires the provider. This is intentional: they must not silently skip remote desired state. An explicit `mise pod042 base` remains independent of Healthchecks for SSH/sudo repair.
 
-All schedules use the physically verified `America/Los_Angeles` timezone. Ark's three-day grace covers the observed 45-hour scrub. Black-box's two-hour grace covers the packaged timer's one-hour jitter and its roughly six-minute scrub. Creating checks does not arm monitoring: heartbeat and actual scrub runs activate them after their jobs and scoped credentials are installed.
+All schedules use the physically verified `America/Los_Angeles` timezone. Ark's three-day grace covers the observed 45-hour scrub. Black-box's two-hour grace covers the packaged timer's one-hour jitter and its roughly six-minute scrub. Sanoid snapshot and prune checks each run every 15 minutes with 15 minutes of grace. Their finish-only hooks report each native unit's result independently; the Sanoid adapter treats stderr as failure because Sanoid can warn about failed ZFS operations and still exit zero. Creating checks does not arm monitoring: heartbeat, actual scrub runs, and Sanoid runs activate them after their jobs and scoped credentials are installed.

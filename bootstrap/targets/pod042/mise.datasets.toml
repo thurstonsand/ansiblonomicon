@@ -1,0 +1,18 @@
+[bootstrap.packages]
+"apt:acl" = "latest"
+
+[bootstrap.groups.media]
+gid = 3000
+
+[bootstrap.directories."/mnt/.pod042-migration"]
+owner = "root"
+group = "root"
+mode = "0700"
+
+[bootstrap.directories."/var/lib/pod042-storage-migration"]
+owner = "root"
+group = "root"
+mode = "0700"
+
+[bootstrap.hooks.final]
+run = "sudo -n /usr/bin/python3 datasets/reconcile.py apply"

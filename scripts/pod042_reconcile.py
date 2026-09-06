@@ -28,6 +28,8 @@ CAPABILITIES = (
     "alerting",
     "maintenance",
     "monitoring",
+    "datasets",
+    "snapshots",
 )
 LANDING_CAPABILITIES = ("base", "repositories", "storage")
 
@@ -178,6 +180,18 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("repositories", "storage", "alerting", "maintenance")
     if capability == "monitoring":
         return ("repositories", "storage", "alerting", "maintenance", "monitoring")
+    if capability == "datasets":
+        return ("repositories", "storage", "alerting", "maintenance", "datasets")
+    if capability == "snapshots":
+        return (
+            "repositories",
+            "storage",
+            "alerting",
+            "maintenance",
+            "monitoring",
+            "datasets",
+            "snapshots",
+        )
     if capability not in CAPABILITIES:
         fail(f"unknown pod042 capability: {capability}")
     return (capability,)
@@ -225,6 +239,16 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         ]
     if check_mode:
         run_command([*command, "bootstrap", "plan"])
+        if "datasets" in capabilities_for(capability):
+            run_command(
+                [
+                    "sudo",
+                    "-n",
+                    "/usr/bin/python3",
+                    str(TARGET_ROOT / "datasets/reconcile.py"),
+                    "check",
+                ]
+            )
         if "maintenance" in capabilities_for(capability):
             run_command(
                 [

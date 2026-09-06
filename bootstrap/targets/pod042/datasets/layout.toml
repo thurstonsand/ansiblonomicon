@@ -1,0 +1,42 @@
+[properties]
+compression = "lz4"
+checksum = "on"
+sync = "standard"
+dedup = "off"
+recordsize = "128K"
+acltype = "posix"
+aclmode = "discard"
+aclinherit = "discard"
+xattr = "sa"
+atime = "off"
+readonly = "off"
+canmount = "on"
+
+[creation]
+casesensitivity = "sensitive"
+normalization = "none"
+encryption = "off"
+
+[datasets."ark/media"]
+mountpoint = "/mnt/ark/media"
+shared = true
+
+[datasets."ark/anypod"]
+mountpoint = "/mnt/ark/anypod"
+shared = true
+
+[datasets."black-box/docker"]
+mountpoint = "/mnt/black-box/docker"
+shared = false
+
+[datasets."black-box/docker/anypod"]
+mountpoint = "/mnt/black-box/docker/anypod"
+shared = false
+
+[datasets."black-box/docker/plex"]
+mountpoint = "/mnt/black-box/docker/plex"
+shared = false
+
+[datasets."black-box/agents"]
+mountpoint = "/mnt/black-box/agents"
+shared = false

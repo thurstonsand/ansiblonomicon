@@ -29,3 +29,21 @@ tz = "America/Los_Angeles"
 grace = 7200
 methods = "POST"
 manual_resume = false
+
+[[checks]]
+slug = "pod042-sanoid"
+name = "pod042-sanoid"
+schedule = "*/15 * * * *"
+tz = "America/Los_Angeles"
+grace = 900
+methods = "POST"
+manual_resume = false
+
+[[checks]]
+slug = "pod042-sanoid-prune"
+name = "pod042-sanoid-prune"
+schedule = "*/15 * * * *"
+tz = "America/Los_Angeles"
+grace = 900
+methods = "POST"
+manual_resume = false

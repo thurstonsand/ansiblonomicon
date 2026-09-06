@@ -11,7 +11,13 @@ from uuid import UUID
 
 from pod042_storage import POOLS, clean_scrub
 
-CHECKS = ("pod042-heartbeat", "pod042-scrub-ark", "pod042-scrub-black-box")
+CHECKS = (
+    "pod042-heartbeat",
+    "pod042-scrub-ark",
+    "pod042-scrub-black-box",
+    "pod042-sanoid",
+    "pod042-sanoid-prune",
+)
 
 
 def ping(phase: str, check: str, scrub: str | None) -> None:

@@ -15,6 +15,8 @@ PING_ENV = {
     "pod042-heartbeat": "POD042_HEARTBEAT_PING_URL",
     "pod042-scrub-ark": "POD042_SCRUB_ARK_PING_URL",
     "pod042-scrub-black-box": "POD042_SCRUB_BLACK_BOX_PING_URL",
+    "pod042-sanoid": "POD042_SANOID_PING_URL",
+    "pod042-sanoid-prune": "POD042_SANOID_PRUNE_PING_URL",
 }
 
 
@@ -197,8 +199,13 @@ def declarations() -> tuple[Channel, list[Metadata]]:
         Metadata.parse({**item, "channels": channel.id})
         for item in records(config.get("checks"))
     ]
-    if len(desired) != 3 or {check.slug for check in desired} != PING_ENV.keys():
-        raise ReconcileError("Declaration must contain exactly the three pod042 checks")
+    if (
+        len(desired) != len(PING_ENV)
+        or {check.slug for check in desired} != PING_ENV.keys()
+    ):
+        raise ReconcileError(
+            "Declaration must contain exactly the managed pod042 checks"
+        )
     if any(
         not check.schedule
         or check.tz != "America/Los_Angeles"

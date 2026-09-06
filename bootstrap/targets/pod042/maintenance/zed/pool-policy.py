@@ -99,14 +99,14 @@ def upgrade_features() -> None:
             raise RuntimeError(
                 f"Feature upgrade requires a scrub within 35 days: {pool}"
             )
-    checkpoint = datetime.now(UTC).strftime("pre-feature-upgrade-%Y%m%dT%H%M%SZ")
+    snapshot = datetime.now(UTC).strftime("pre-feature-upgrade-%Y%m%dT%H%M%SZ")
     for pool in pending:
         subprocess.run(
-            ["/usr/sbin/zfs", "snapshot", "-r", f"{pool}@{checkpoint}"],
+            ["/usr/sbin/zfs", "snapshot", "-r", f"{pool}@{snapshot}"],
             check=True,
         )
     print(
-        f"Preserved checkpoint {checkpoint}; feature upgrades cannot be undone",
+        f"Preserved pre-upgrade snapshot {snapshot}; feature upgrades cannot be undone",
         flush=True,
     )
     for pool in pending:

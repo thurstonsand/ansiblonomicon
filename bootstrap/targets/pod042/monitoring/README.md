@@ -1,6 +1,6 @@
 # Storage job monitoring
 
-`mise pod042 monitoring` resolves the pod042 secret set, reconciles the three declared Healthchecks checks, then passes their scoped ping URLs to native bootstrap secret resources. Only the ping URLs persist, under `/etc/alerting/checks` with root ownership and mode 0600. The Healthchecks management key does not reach bootstrap or runtime jobs.
+`mise pod042 monitoring` resolves the pod042 secret set, reconciles the five declared Healthchecks checks, then passes their scoped ping URLs to native bootstrap secret resources. Monitoring owns the heartbeat and two scrub credentials; the `snapshots` capability owns the two Sanoid credentials. Only the ping URLs persist, under `/etc/alerting/checks` with root ownership and mode 0600. The Healthchecks management key does not reach bootstrap or runtime jobs.
 
 The heartbeat runs at boot and every fifteen minutes. It checks both SMART and ZED services independently; either failure marks the heartbeat failed. Its timer uses America/Los_Angeles, matching the host and check declarations.
 
