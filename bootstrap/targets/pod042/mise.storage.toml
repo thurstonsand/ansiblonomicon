@@ -1,5 +1,5 @@
 [bootstrap.hooks.pre-packages]
-run = "scripts/ensure-contrib"
+run = "storage/scripts/ensure-contrib"
 
 [bootstrap.packages]
 "apt:linux-headers-amd64" = "latest"
@@ -7,7 +7,7 @@ run = "scripts/ensure-contrib"
 "apt:zfsutils-linux" = "latest"
 
 [bootstrap.files."/etc/apt/sources.list.d/zfs-contrib.sources"]
-source = "files/zfs-contrib.sources"
+source = "storage/files/zfs-contrib.sources"
 owner = "root"
 group = "root"
 mode = "0644"

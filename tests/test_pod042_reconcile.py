@@ -28,18 +28,19 @@ def test_target_declares_serial_native_landing_zone() -> None:
         (MODULE_PATH.parents[1] / "bootstrap/targets/pod042/mise.toml").read_text()
     )
     base = tomllib.loads(
-        (MODULE_PATH.parents[1] / "bootstrap/targets/pod042/base/mise.toml").read_text()
+        (MODULE_PATH.parents[1] / "bootstrap/targets/pod042/mise.base.toml").read_text()
     )
     storage = tomllib.loads(
         (
-            MODULE_PATH.parents[1] / "bootstrap/targets/pod042/storage/mise.toml"
+            MODULE_PATH.parents[1] / "bootstrap/targets/pod042/mise.storage.toml"
         ).read_text()
     )
 
     assert target["settings"]["jobs"] == 1
     assert target["settings"]["system_packages"]["managers"] == ["apt"]
-    assert target["bootstrap"]["users"]["thurstonsand"]["groups"] == ["sudo"]
-    assert target["bootstrap"]["repos"][pod042_reconcile.REMOTE_CHECKOUT] == {
+    assert "bootstrap" not in target
+    assert base["bootstrap"]["users"]["thurstonsand"]["groups"] == ["sudo"]
+    assert base["bootstrap"]["repos"][pod042_reconcile.REMOTE_CHECKOUT] == {
         "url": "https://github.com/thurstonsand/ansiblonomicon.git"
     }
     assert (
@@ -48,10 +49,55 @@ def test_target_declares_serial_native_landing_zone() -> None:
         ]
         == "PasswordAuthentication no\nPermitRootLogin no\nPubkeyAuthentication yes\n"
     )
-    assert target["bootstrap"]["config_roots"] == ["base", "storage"]
-    assert target["bootstrap"]["packages"]["apt:zfsutils-linux"] == "latest"
+    assert base["bootstrap"]["files"][
+        "/etc/ssh/sshd_config.d/99-ansiblonomicon.conf"
+    ] == {"state": "absent"}
+    assert storage["bootstrap"]["packages"]["apt:zfsutils-linux"] == "latest"
     assert storage["bootstrap"]["services"]["zfs-import-cache"]["enabled"] is True
     assert storage["bootstrap"]["services"]["zfs-mount"]["enabled"] is True
+
+
+def test_capability_environments_are_explicit_and_disjoint() -> None:
+    target_root = MODULE_PATH.parents[1] / "bootstrap/targets/pod042"
+    environment_files = {
+        path.stem.removeprefix("mise."): tomllib.loads(path.read_text())
+        for path in target_root.glob("mise.*.toml")
+    }
+    assert set(environment_files) == set(pod042_reconcile.CAPABILITIES)
+
+    exclusive_tables = (
+        "packages",
+        "groups",
+        "users",
+        "directories",
+        "files",
+        "services",
+        "repos",
+    )
+    owners: dict[tuple[str, str], str] = {}
+    for capability, config in environment_files.items():
+        bootstrap = config.get("bootstrap", {})
+        for table in exclusive_tables:
+            for resource in bootstrap.get(table, {}):
+                key = (table, resource)
+                assert key not in owners, (
+                    f"{table} resource {resource!r} belongs to both "
+                    f"{owners[key]!r} and {capability!r}"
+                )
+                owners[key] = capability
+        for task in config.get("tasks", {}):
+            key = ("tasks", task)
+            assert key not in owners, (
+                f"task {task!r} belongs to both {owners[key]!r} and {capability!r}"
+            )
+            owners[key] = capability
+
+    inventory = tomllib.loads(
+        (MODULE_PATH.parents[1] / "bootstrap/mise.toml").read_text()
+    )
+    assert tuple(inventory["bootstrap"]["remote"]["hosts"]["pod042"]["mise_env"]) == (
+        pod042_reconcile.CAPABILITIES
+    )
 
 
 def test_local_deploy_revision_requires_clean_checkout(
@@ -166,10 +212,11 @@ def test_check_uses_native_bootstrap_plan(monkeypatch: pytest.MonkeyPatch) -> No
     assert calls == [
         [
             "env",
-            f"MISE_CEILING_PATHS={pod042_reconcile.TARGET_ROOT}",
+            f"MISE_CEILING_PATHS={pod042_reconcile.TARGET_ROOT.parent}",
+            "MISE_ENV=base",
             "mise",
             "-C",
-            str(pod042_reconcile.TARGET_ROOT / "base"),
+            str(pod042_reconcile.TARGET_ROOT),
             "bootstrap",
             "plan",
         ]
@@ -185,9 +232,20 @@ def test_initial_remote_bootstrap_stages_matching_mise() -> None:
     assert "thurstonsand@10.10.10.99" in command
     assert "--source" in command
     assert "targets/pod042" in command
+    remote_env = command.index("--remote-env")
+    assert command[remote_env + 1] == "base,storage"
     assert "--remote-mise" not in command
     assert not any(argument.startswith("--install-mise") for argument in command)
     assert "ansible" not in " ".join(command)
+
+
+def test_unknown_capability_fails_before_building_a_command() -> None:
+    with pytest.raises(
+        pod042_reconcile.ReconcileError, match="unknown pod042 capability"
+    ):
+        pod042_reconcile.remote_bootstrap_command(
+            "pod042", "not-real", check_mode=False, install_mise=False
+        )
 
 
 def test_remote_commands_can_override_the_identity_agent(

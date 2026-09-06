@@ -38,7 +38,7 @@ The immediate operational scenario is narrower than rebuilding every NAS service
 ### Operator CLI
 
 - `mise pod042` converges all pod042 host capabilities.
-- `mise pod042 <capability>` converges one named config root. Initial names follow the desired-state boundaries: `base`, then later `identity`, `network`, `storage`, `sharing`, `containers`, `services`, `backup`, and `agents`.
+- `mise pod042 <capability>` converges one named mise config environment. Initial names follow the desired-state boundaries: `base`, then later `identity`, `network`, `storage`, `sharing`, `containers`, `services`, `backup`, and `agents`.
 - `mise pod042 --check` reads actual state and reports changes without mutation.
 - `mise pod042 <capability> --check` checks only that capability.
 - `mise pod042 --update-mise` deliberately updates the system-wide target binary before reconciliation.
@@ -47,11 +47,11 @@ The command inspects the local hostname. On `pod042`, it runs the persistent tar
 
 ### Bootstrap target
 
-`bootstrap/targets/pod042/` is the only desired-state declaration. Its root composes concrete capability config roots and pins serial execution. Local execution reads it from `/home/thurstonsand/code/ansiblonomicon`; initial remote execution may stage it before that checkout exists.
+`bootstrap/targets/pod042/` is the only desired-state declaration. Its root pins serial execution, and `mise.<capability>.toml` environments compose every resource class into full or partial runs. Local execution reads it from `/home/thurstonsand/code/ansiblonomicon`; initial remote execution may stage it before that checkout exists.
 
-Each capability owns a coherent outcome, its files, and any custom status/apply implementation. It does not carry speculative defaults or exported environment interfaces. Shared facts move to the target root only after more than one capability consumes them.
+Each capability owns a coherent outcome, its files, and any custom status/apply implementation. It does not carry speculative defaults. Shared resources move to the target root rather than relying on environment precedence, and hooks do not branch on `MISE_ENV`. Capability names avoid mise's automatic operating-system environment names.
 
-A target-level `.miseremove` declares retired paths. Full check and converge process it; capability-only runs may defer unrelated removals until the next full run.
+Retired files and directories use native `state = "absent"` declarations in their owning capability, so partial and full plans report the same removal when that capability runs.
 
 ### First-access workflow
 
@@ -203,7 +203,7 @@ The KVM already supplies reliable video, HID, and virtual media. Automating inst
 - **A custom task fails after earlier changes:** it exits nonzero, later work does not run, and a rerun safely resumes convergence.
 - **A required secret is unavailable:** secret preflight fails before mutation; an existing cache may support explicitly allowed offline reconciliation after ticket 33 defines that policy.
 - **A secret renderer fails:** output contains no secret value; the VM gauntlet searches all captured output and staging for a sentinel.
-- **A capability-only run leaves an unrelated retired path:** the path remains until a full reconcile. This is deliberate and visible, not an `always` behavior mise does not possess.
+- **A capability-only run omits another capability's retired path:** the path remains until its owning capability or a full reconcile runs.
 - **TrueNAS pools were not exported cleanly:** installation stops. The accepted backup refresh waiver does not waive clean pool export or disk identity checks.
 
 ## Alternatives
@@ -248,8 +248,8 @@ The KVM already supplies reliable video, HID, and virtual media. Automating inst
 
 - [x] Phase 2: First-access and retirement workflow
   - Goal: Turn stock password-accessible Debian into the landing zone without exposing credentials or losing SSH.
-  - Files: `bootstrap/targets/pod042/base/`, target `.miseremove`, tests, and the cutover ticket evidence.
-  - Work: Add hidden password capture and JSON-stdin 1Password item create/update; install the operator key; declaratively own `thurstonsand`, passwordless sudo, key-only sshd, required base packages, system mise, and the user-owned public checkout; verify a second SSH connection before closing password access; implement validated retirement planning/apply only if native mise cannot express it.
+  - Files: `bootstrap/targets/pod042/mise.base.toml`, `bootstrap/targets/pod042/base/`, tests, and the cutover ticket evidence.
+  - Work: Add hidden password capture and JSON-stdin 1Password item create/update; install the operator key; declaratively own `thurstonsand`, passwordless sudo, key-only sshd, required base packages, system mise, the user-owned public checkout, and native `state = "absent"` retirements; verify a second SSH connection before closing password access.
   - Validation: Secret-sentinel tests, mocked command-flow tests, native bootstrap plan, shell lint, and an isolated SSH transition smoke test.
 
 - [x] Phase 3: Destructive landing-zone VM gauntlet

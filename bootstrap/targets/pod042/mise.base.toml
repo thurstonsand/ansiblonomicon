@@ -1,7 +1,3 @@
-[settings]
-jobs = 1
-system_packages.managers = ["apt"]
-
 [bootstrap.packages]
 "apt:ca-certificates" = "latest"
 "apt:curl" = "latest"
@@ -29,7 +25,7 @@ group = "thurstonsand"
 mode = "0700"
 
 [bootstrap.files."/home/thurstonsand/.ssh/authorized_keys"]
-source = "files/operator.pub"
+source = "base/files/operator.pub"
 owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0600"
@@ -51,6 +47,9 @@ group = "root"
 mode = "0644"
 notify = ["ssh"]
 
+[bootstrap.files."/etc/ssh/sshd_config.d/99-ansiblonomicon.conf"]
+state = "absent"
+
 [bootstrap.services.ssh]
 state = "running"
 enabled = true
@@ -60,4 +59,4 @@ on_change = "reload_or_restart"
 "/home/thurstonsand/code/ansiblonomicon" = { url = "https://github.com/thurstonsand/ansiblonomicon.git" }
 
 [tasks.bootstrap]
-run = "scripts/install-system-mise"
+run = "base/scripts/install-system-mise"

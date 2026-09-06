@@ -41,6 +41,10 @@ uv run pytest
 - Prefer extending a role over adding one.
 - Facts belong in `config.yml` or `<host>.config.yml`, not usually inline in a task.
 
+### Native bootstrap capabilities
+
+A capability lives in `bootstrap/targets/<host>/mise.<capability>.toml`; the target's `mise.toml` holds settings and resources shared by multiple capabilities. Register capability order in both the host driver and `bootstrap/mise.toml`. Keep resource ownership disjoint across capability files because mise environments resolve collisions last-wins, reserve mise's OS environment names, and keep hooks independent of `MISE_ENV`. Retire managed files and directories with native `state = "absent"` declarations.
+
 ### Secrets
 
 Add an `op://` SecretRef to `.secrets.jsonc`, then `mise run secrets:init`. Consumers read it three ways: Ansible through `lookup('env', 'NAME')`, Terraform through a `TF_VAR_*` variable, chezmoi through an `op-secret` wrapper template in `.chezmoitemplates/`.

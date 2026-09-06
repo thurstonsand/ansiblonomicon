@@ -20,6 +20,7 @@ EXPECTED_HOSTNAME = "pod042"
 REMOTE_USER = "thurstonsand"
 OPERATOR_PUBLIC_KEY = TARGET_ROOT / "base" / "files" / "operator.pub"
 IDENTITY_AGENT_ENV = "POD042_SSH_IDENTITY_AGENT"
+CAPABILITIES = ("base", "storage")
 
 
 class ReconcileError(Exception):
@@ -157,13 +158,12 @@ def fast_forward_remote_checkout(host: str, branch: str, revision: str) -> None:
     remote_git(host, "merge", "--ff-only", revision)
 
 
-def target_for(capability: str | None) -> Path:
+def capabilities_for(capability: str | None) -> tuple[str, ...]:
     if capability is None:
-        return TARGET_ROOT
-    target = TARGET_ROOT / capability
-    if not (target / "mise.toml").is_file():
+        return CAPABILITIES
+    if capability not in CAPABILITIES:
         fail(f"unknown pod042 capability: {capability}")
-    return target
+    return (capability,)
 
 
 def isolated_mise_command(ceiling: Path, directory: Path) -> list[str]:
@@ -178,9 +178,15 @@ def isolated_mise_command(ceiling: Path, directory: Path) -> list[str]:
 
 def run_local(capability: str | None, check_mode: bool) -> None:
     assert_hostname(None)
-    target = target_for(capability)
-    ceiling = TARGET_ROOT.parent if target == TARGET_ROOT else TARGET_ROOT
-    command = isolated_mise_command(ceiling, target)
+    environments = ",".join(capabilities_for(capability))
+    command = [
+        "env",
+        f"MISE_CEILING_PATHS={TARGET_ROOT.parent}",
+        f"MISE_ENV={environments}",
+        "mise",
+        "-C",
+        str(TARGET_ROOT),
+    ]
     if check_mode:
         run_command([*command, "bootstrap", "plan"])
     else:
@@ -193,7 +199,7 @@ def remote_bootstrap_command(
     check_mode: bool,
     install_mise: bool,
 ) -> list[str]:
-    source = target_for(capability).relative_to(BOOTSTRAP_ROOT)
+    environments = ",".join(capabilities_for(capability))
     command = [
         *isolated_mise_command(ROOT, BOOTSTRAP_ROOT),
         "bootstrap",
@@ -201,7 +207,9 @@ def remote_bootstrap_command(
         "--host",
         f"{REMOTE_USER}@{host}",
         "--source",
-        str(source),
+        str(TARGET_ROOT.relative_to(BOOTSTRAP_ROOT)),
+        "--remote-env",
+        environments,
         "--ssh-option",
         f"IdentityFile={OPERATOR_PUBLIC_KEY}",
         "--ssh-option",
