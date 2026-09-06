@@ -1,5 +1,4 @@
 [bootstrap.packages]
-"apt:smartmontools" = "latest"
 "apt:zfs-zed" = "latest"
 
 [bootstrap.files."/etc/smartd.conf"]

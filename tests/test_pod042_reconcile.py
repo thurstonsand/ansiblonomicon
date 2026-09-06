@@ -231,7 +231,7 @@ def test_initial_remote_bootstrap_stages_matching_mise() -> None:
     assert "--source" in command
     assert "targets/pod042" in command
     remote_env = command.index("--remote-env")
-    assert command[remote_env + 1] == "base,storage"
+    assert command[remote_env + 1] == "base,repositories,storage"
     assert "--remote-mise" not in command
     assert not any(argument.startswith("--install-mise") for argument in command)
     assert "ansible" not in " ".join(command)

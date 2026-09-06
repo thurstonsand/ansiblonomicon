@@ -20,8 +20,8 @@ EXPECTED_HOSTNAME = "pod042"
 REMOTE_USER = "thurstonsand"
 OPERATOR_PUBLIC_KEY = TARGET_ROOT / "base" / "files" / "operator.pub"
 IDENTITY_AGENT_ENV = "POD042_SSH_IDENTITY_AGENT"
-CAPABILITIES = ("base", "storage", "alerting", "maintenance")
-LANDING_CAPABILITIES = ("base", "storage")
+CAPABILITIES = ("base", "repositories", "storage", "alerting", "maintenance")
+LANDING_CAPABILITIES = ("base", "repositories", "storage")
 
 
 class ReconcileError(Exception):
@@ -162,8 +162,10 @@ def fast_forward_remote_checkout(host: str, branch: str, revision: str) -> None:
 def capabilities_for(capability: str | None) -> tuple[str, ...]:
     if capability is None:
         return CAPABILITIES
+    if capability == "storage":
+        return ("repositories", "storage")
     if capability == "maintenance":
-        return ("storage", "alerting", "maintenance")
+        return ("repositories", "storage", "alerting", "maintenance")
     if capability not in CAPABILITIES:
         fail(f"unknown pod042 capability: {capability}")
     return (capability,)

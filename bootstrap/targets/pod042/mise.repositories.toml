@@ -1,0 +1,17 @@
+[bootstrap.files."/etc/apt/sources.list.d/zfs-contrib.sources"]
+source = "storage/files/zfs-contrib.sources"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/apt/sources.list.d/smartmontools-backports.sources"]
+source = "storage/files/smartmontools-backports.sources"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/apt/preferences.d/smartmontools"]
+source = "storage/files/smartmontools.pref"
+owner = "root"
+group = "root"
+mode = "0644"

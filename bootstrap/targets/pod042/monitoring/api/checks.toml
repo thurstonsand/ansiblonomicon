@@ -1,0 +1,31 @@
+[channel]
+id = "98c59eb4-d96e-4bf9-a376-e5a2548ca7d0"
+name = "Hark"
+kind = "webhook"
+
+[[checks]]
+slug = "pod042-heartbeat"
+name = "pod042-heartbeat"
+schedule = "*/15 * * * *"
+tz = "America/Los_Angeles"
+grace = 900
+methods = "POST"
+manual_resume = false
+
+[[checks]]
+slug = "pod042-scrub-ark"
+name = "pod042-scrub-ark"
+schedule = "0 0 1 * *"
+tz = "America/Los_Angeles"
+grace = 259200
+methods = "POST"
+manual_resume = false
+
+[[checks]]
+slug = "pod042-scrub-black-box"
+name = "pod042-scrub-black-box"
+schedule = "0 0 1 * *"
+tz = "America/Los_Angeles"
+grace = 7200
+methods = "POST"
+manual_resume = false

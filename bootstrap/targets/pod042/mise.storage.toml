@@ -1,16 +1,15 @@
 [bootstrap.hooks.pre-packages]
-run = "storage/scripts/ensure-contrib"
+run = [
+  "env MISE_ENV=repositories mise bootstrap files apply --yes",
+  "mise bootstrap packages apply --update --yes",
+  "mise bootstrap packages upgrade apt:smartmontools --yes",
+]
 
 [bootstrap.packages]
+"apt:smartmontools" = "latest"
 "apt:linux-headers-amd64" = "latest"
 "apt:zfs-dkms" = "latest"
 "apt:zfsutils-linux" = "latest"
-
-[bootstrap.files."/etc/apt/sources.list.d/zfs-contrib.sources"]
-source = "storage/files/zfs-contrib.sources"
-owner = "root"
-group = "root"
-mode = "0644"
 
 [bootstrap.services.zfs-import-cache]
 enabled = true
