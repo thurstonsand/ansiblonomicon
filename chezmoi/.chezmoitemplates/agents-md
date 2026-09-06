@@ -88,6 +88,7 @@ If you're reaching for a subagent, consider the following:
 | ---------------- | ----------------------------- | ---------------| -----| ------------ | ----- | ------------------------------------------------------------------------------------- |
 | claude-opus-5    | default workhose              | medium         | 5    | 7            | 7     | also great for prose or thinking through medium-sized problems                        |
 | claude-fable-5-1 | planning, highest-impact work | medium         | 2    | 9            | 8     | human stays in the loop (request before firing); reserve for highest-impact scenarios |
+| gpt-6-astra      | long-horizon agentic work     | medium         | 3    | 9            | 6     | best at terminal/tool-driven tasks spanning many files; use high for tricky debugging |
 | gpt-5.6-sol      | focused implementer           | medium         | 5    | 7            | 5     | use only at request of user or for adversarial review (at high thinking)              |
 | gpt-5.6-sol      | exploration subagent          | low            | 6    | 6            | 5     | digging for answers/explanations                                                      |
 {{- end }}
@@ -102,6 +103,8 @@ If you're reaching for a subagent, consider the following:
 Try to pick the right agent for the job. If it's not in the list, don't consider it. Also on the table: adversarial cross-lab reviews of your plans and implementations: OpenAI models reviewing Anthropic plans/implementations and vice versa.
 {{- if not $isWork }}
 Note that you should request permission before firing off a Fable model for review.
+
+Astra is the newest arrival and still being felt out: it leads Terminal-Bench 4.0 and computer use, and burns roughly a third of Sol's tokens for the same work, but it is quirky, and its prose is drier and less polished than Opus or Fable. Send it execution and investigation, not writing.
 {{- end }}
 
 {{- if stat (joinPath .homeDir ".agents" "local.md") }}

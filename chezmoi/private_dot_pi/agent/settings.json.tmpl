@@ -40,10 +40,13 @@
         "enabledModels" (list
           (printf "%s:medium" .models.anthropic.opus.agent_harness.aliases.pi)
           (printf "%s:medium" .models.anthropic.fable.agent_harness.aliases.pi)
+          (printf "%s:medium" .models.openai.gpt_astra.agent_harness.aliases.pi)
           (printf "%s:medium" .models.openai.gpt_sol.agent_harness.aliases.pi))
         "handoffRoster" (list
           (printf "%s:medium" .models.anthropic.opus.agent_harness.aliases.pi)
           (printf "%s:medium" .models.anthropic.fable.agent_harness.aliases.pi)
+          (printf "%s:medium" .models.openai.gpt_astra.agent_harness.aliases.pi)
+          (printf "%s:high" .models.openai.gpt_astra.agent_harness.aliases.pi)
           (printf "%s:low" .models.openai.gpt_sol.agent_harness.aliases.pi)
           (printf "%s:medium" .models.openai.gpt_sol.agent_harness.aliases.pi)
           (printf "%s:high" .models.openai.gpt_sol.agent_harness.aliases.pi)) -}}
