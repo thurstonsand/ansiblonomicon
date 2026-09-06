@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="chezmoi/dot_config/amp/plugins"
+ROOT_DIR="chezmoi/dot_config/private_amp/plugins"
 WRITE_FLAG="--write"
 MODE="write"
 

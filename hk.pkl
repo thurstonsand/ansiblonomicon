@@ -100,8 +100,8 @@ local linters = new Mapping<String, Step> {
 
   ["amp"] {
     glob = List(
-      "chezmoi/dot_config/amp/plugins/**/*.ts",
-      "chezmoi/dot_config/amp/plugins/**/*.json"
+      "chezmoi/dot_config/private_amp/plugins/**/*.ts",
+      "chezmoi/dot_config/private_amp/plugins/**/*.json"
     )
     exclude = "**/node_modules/**"
     // amp-lint.sh writes by default; --check is the non-mutating form.

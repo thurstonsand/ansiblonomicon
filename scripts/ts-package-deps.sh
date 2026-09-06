@@ -5,7 +5,7 @@ PI_ROOT_DIRS=(
   "chezmoi/private_dot_pi/agent/extensions"
   "chezmoi/private_dot_pi/agent/permissions"
 )
-AMP_ROOT_DIR="chezmoi/dot_config/amp/plugins"
+AMP_ROOT_DIR="chezmoi/dot_config/private_amp/plugins"
 SESSION_RECOVERY_DIR="chezmoi/dot_local/lib/session-recovery"
 
 find_pi_package_json() {

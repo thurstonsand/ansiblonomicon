@@ -29,7 +29,7 @@ def test_profile_and_linux_layout() -> None:
         Path(harness.filters.__file__)
         == REPO / "ansible/roles/agent_harness/filter_plugins/harness_filters.py"
     )
-    assert not any(source.get("repo") == "Shpigford/nurb" for source in sources)
+    assert any(source.get("repo") == "Shpigford/nurb" for source in sources)
     assert not any(
         source.get("local", "").endswith("agents/work") for source in sources
     )
