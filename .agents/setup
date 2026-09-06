@@ -48,7 +48,7 @@ mapfile -t package_locks < <(
   find \
     chezmoi/private_dot_pi/agent/extensions \
     chezmoi/private_dot_pi/agent/permissions \
-    chezmoi/dot_config/amp/plugins \
+    chezmoi/dot_config/private_amp/plugins \
     chezmoi/dot_local/lib/session-recovery \
     -name package-lock.json \
     -not -path '*/node_modules/*' \
