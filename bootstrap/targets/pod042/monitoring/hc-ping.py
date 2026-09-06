@@ -11,16 +11,20 @@ from uuid import UUID
 
 from pod042_storage import POOLS, clean_scrub
 
+CHECKS = ("pod042-heartbeat", "pod042-scrub-ark", "pod042-scrub-black-box")
 
-def ping(phase: str, scrub: str | None) -> None:
-    path = Path(os.environ["CREDENTIALS_DIRECTORY"]) / "healthchecks-url"
+
+def ping(phase: str, check: str, scrub: str | None) -> None:
+    if os.geteuid() != 0:
+        raise ValueError("Root is required")
+    path = Path("/etc/alerting/checks") / f"{check}.url"
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     with os.fdopen(descriptor, encoding="utf-8") as credential:
         metadata = os.fstat(credential.fileno())
         if (
             not stat.S_ISREG(metadata.st_mode)
             or metadata.st_uid != 0
-            or stat.S_IMODE(metadata.st_mode) not in (0o400, 0o600)
+            or stat.S_IMODE(metadata.st_mode) != 0o600
             or metadata.st_nlink != 1
         ):
             raise ValueError("Unsafe credential file")
@@ -65,10 +69,11 @@ def ping(phase: str, scrub: str | None) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("phase", choices=("start", "finish"))
+    parser.add_argument("check", choices=CHECKS)
     parser.add_argument("--scrub", choices=POOLS)
     args = parser.parse_args()
     try:
-        ping(args.phase, args.scrub)
+        ping(args.phase, args.check, args.scrub)
     except (OSError, ValueError, KeyError, RuntimeError, http.client.HTTPException):
         print(
             "hc-ping: notification failed; check credentials and connectivity",
