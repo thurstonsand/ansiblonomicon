@@ -1,0 +1,62 @@
+[bootstrap.packages]
+"apt:smartmontools" = "latest"
+"apt:zfs-zed" = "latest"
+
+[bootstrap.files."/etc/smartd.conf"]
+source = "maintenance/smart/smartd.conf"
+notify = ["smartmontools"]
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/usr/local/bin/smartd-alert"]
+source = "maintenance/smart/smartd-alert.py"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/zfs/zed.d/zed.rc"]
+source = "maintenance/zed/zed.rc"
+notify = ["zfs-zed"]
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/zfs/zed.d/all-storage-alert"]
+source = "maintenance/zed/storage-alert.py"
+notify = ["zfs-zed"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/zfs/zed.d/statechange-notify.sh"]
+state = "absent"
+
+[bootstrap.files."/etc/zfs/zed.d/data-notify.sh"]
+state = "absent"
+
+[bootstrap.files."/etc/zfs/zed.d/scrub_finish-notify.sh"]
+state = "absent"
+
+[bootstrap.files."/etc/zfs/zed.d/resilver_finish-notify.sh"]
+state = "absent"
+
+[bootstrap.files."/etc/zfs/zed.d/deadman-slot_off.sh"]
+state = "absent"
+
+[bootstrap.files."/etc/zfs/zed.d/statechange-slot_off.sh"]
+state = "absent"
+
+[bootstrap.files."/etc/zfs/zed.d/resilver_finish-start-scrub.sh"]
+state = "absent"
+
+[bootstrap.services.smartmontools]
+enabled = true
+on_change = "restart"
+
+[bootstrap.services.zfs-zed]
+enabled = true
+on_change = "restart"
+
+[bootstrap.hooks.final]
+run = "sudo -n /usr/bin/python3 maintenance/zed/pool-policy.py --apply"

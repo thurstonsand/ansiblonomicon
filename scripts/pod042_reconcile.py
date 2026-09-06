@@ -20,7 +20,7 @@ EXPECTED_HOSTNAME = "pod042"
 REMOTE_USER = "thurstonsand"
 OPERATOR_PUBLIC_KEY = TARGET_ROOT / "base" / "files" / "operator.pub"
 IDENTITY_AGENT_ENV = "POD042_SSH_IDENTITY_AGENT"
-CAPABILITIES = ("base", "storage", "alerting")
+CAPABILITIES = ("base", "storage", "alerting", "maintenance")
 LANDING_CAPABILITIES = ("base", "storage")
 
 
@@ -162,6 +162,8 @@ def fast_forward_remote_checkout(host: str, branch: str, revision: str) -> None:
 def capabilities_for(capability: str | None) -> tuple[str, ...]:
     if capability is None:
         return CAPABILITIES
+    if capability == "maintenance":
+        return ("storage", "alerting", "maintenance")
     if capability not in CAPABILITIES:
         fail(f"unknown pod042 capability: {capability}")
     return (capability,)
@@ -200,6 +202,13 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         ]
     if check_mode:
         run_command([*command, "bootstrap", "plan"])
+        if "maintenance" in capabilities_for(capability):
+            run_command(
+                [
+                    "/usr/bin/python3",
+                    str(TARGET_ROOT / "maintenance/zed/pool-policy.py"),
+                ]
+            )
     else:
         run_command([*command, "bootstrap", "--yes"])
 
@@ -213,8 +222,10 @@ def remote_bootstrap_command(
     selected = (
         LANDING_CAPABILITIES if capability is None else capabilities_for(capability)
     )
-    if "alerting" in selected:
-        fail("alerting requires the persistent checkout and installed service token")
+    if any(item not in LANDING_CAPABILITIES for item in selected):
+        fail(
+            "alerting and maintenance require the persistent checkout and installed service token"
+        )
     environments = ",".join(selected)
     command = [
         *isolated_mise_command(ROOT, BOOTSTRAP_ROOT),
