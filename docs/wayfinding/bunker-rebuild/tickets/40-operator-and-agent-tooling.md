@@ -22,6 +22,6 @@ Audit the old playbook package list and roles without preserving them by inertia
 
 ## Implementation state
 
-Native operator and remote-development declarations are implemented locally. Template rendering, task ordering, and static checks pass. The first NAS deployment, provider/Amp/T3 enrollment, and disconnect-persistence checks remain pending. Harness-managed skill catalogues remain a separate migration item.
+Operator tools and vendor-installed agents are installed on pod042. Codex, Claude, Amp and T3 enrollment are complete; T3's vendor boot unit is retained. Native harness reconciliation now reuses the shared catalogue and resolver for Claude, Amp, Codex, OpenCode and Pi, with Amp's hosted catalogue policy preserved. Full deployment and authenticated remote-session/disconnect checks are in progress.
 
-See [operator setup](../../../../bootstrap/targets/pod042/operator/README.md) and [remote enrollment](../../../../bootstrap/targets/pod042/remote-development/README.md).
+See [operator setup](../../../../bootstrap/targets/pod042/operator/README.md), [harness resources](../../../../bootstrap/targets/pod042/agent-harness/README.md), and [remote enrollment](../../../../bootstrap/targets/pod042/remote-development/README.md).

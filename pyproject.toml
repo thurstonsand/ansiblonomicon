@@ -87,6 +87,11 @@ reportUnusedImport = "warning"
 reportUnusedVariable = "warning"
 
 [[tool.basedpyright.executionEnvironments]]
+root = "bootstrap/targets/pod042/agent-harness"
+pythonVersion = "3.14"
+extraPaths = ["ansible/roles/agent_harness/filter_plugins"]
+
+[[tool.basedpyright.executionEnvironments]]
 root = "bootstrap/targets/pod042"
 pythonVersion = "3.13"
 extraPaths = ["bootstrap/targets/pod042/maintenance"]

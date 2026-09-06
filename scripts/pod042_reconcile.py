@@ -31,6 +31,7 @@ CAPABILITIES = (
     "datasets",
     "snapshots",
     "operator",
+    "agent-harness",
     "remote-development",
 )
 LANDING_CAPABILITIES = ("base", "repositories", "storage")
@@ -178,8 +179,10 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return CAPABILITIES
     if capability == "operator":
         return ("base", "operator")
+    if capability == "agent-harness":
+        return ("base", "operator", "agent-harness")
     if capability == "remote-development":
-        return ("base", "operator", "remote-development")
+        return ("base", "operator", "agent-harness", "remote-development")
     if capability == "storage":
         return ("repositories", "storage")
     if capability == "maintenance":

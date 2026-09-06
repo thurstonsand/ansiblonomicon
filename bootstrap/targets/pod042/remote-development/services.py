@@ -22,7 +22,7 @@ def output(*command: str) -> str:
 
 def require_t3() -> None:
     status = json.loads(output(str(SHIMS / "t3"), "connect", "status", "--json"))
-    if not all(status[key] is True for key in ("desired", "authenticated", "linked")):
+    if not all(status[key] is True for key in ("desired", "authenticated")):
         raise SystemExit(
             "T3 enrollment missing. Run t3 connect --headless with the documented T3CODE_HOME."
         )
@@ -69,7 +69,7 @@ def main() -> None:
                 "--property=LoadState,ActiveState,UnitFileState,NeedDaemonReload",
             )
         print(
-            "Apply: enable operator linger if absent; vendor-idempotent t3 service install; reload and enable/start Amp, restarting only on unit changes."
+            "Apply: enable operator linger if absent; vendor-idempotent t3 service install; start both services, restarting only on unit changes."
         )
         return
     if action == "apply":
@@ -98,8 +98,12 @@ def main() -> None:
         }
         run("systemctl", "--user", "daemon-reload")
         run(str(SHIMS / "t3"), "service", "install")
-        if changed["t3code.service"]:
-            run("systemctl", "--user", "restart", "t3code.service")
+        run(
+            "systemctl",
+            "--user",
+            "restart" if changed["t3code.service"] else "start",
+            "t3code.service",
+        )
         run("systemctl", "--user", "enable", "amp-remote.service")
         run(
             "systemctl",

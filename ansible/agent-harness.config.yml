@@ -10,7 +10,8 @@ agent_harness_profiles:
   work:
     target_agents: [claude, pi]
   pod042:
-    target_agents: [pi]
+    target_agents: [claude, amp, codex, opencode, pi]
+    explicit_only: [amp]
   # CI rendering of Amp user skills for orbs, not a host.
   amp_publish:
     target_agents: [amp]

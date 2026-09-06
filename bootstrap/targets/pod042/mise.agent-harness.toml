@@ -1,0 +1,11 @@
+[bootstrap.hooks.final]
+run = '''
+sudo -u thurstonsand env -i \
+  HOME=/home/thurstonsand USER=thurstonsand LOGNAME=thurstonsand \
+  PATH=/usr/local/bin:/usr/bin:/bin \
+  MISE_GLOBAL_CONFIG_FILE=/home/thurstonsand/.config/mise/config.toml \
+  /usr/local/bin/mise -C /home/thurstonsand exec -- bash -euc '
+    uv run --script /home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042/agent-harness/reconcile.py
+    chezmoi --source=/home/thurstonsand/code/ansiblonomicon/chezmoi apply --force
+  '
+'''
