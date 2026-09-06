@@ -5,8 +5,6 @@
 - **Reconcile**: One host run bringing the machine to its declared state. The unit of applying change; always re-runnable, always safe to repeat.
 - **Tag**: The unit of partial Ansible reconciliation.
 - **Bootstrap target**: A host configuration under `bootstrap/targets/`, applied locally or through `mise bootstrap remote`. New host-state work migrates to this native mise model as its existing Ansible unit is touched.
-- **Landing zone**: The minimum fresh-host state required before pod042 may leave TrueNAS: a VM-proven Debian-to-SSH-to-native-mise path that survives reboot and produces the same clean result from remote and local reconciliation. It restores manageability, not services; the ZFS pools remain untouched until their separately approved capability is ready.
-- **Host capability**: One coherent part of a host's desired state, owned by a bootstrap-target config root and used as the boundary for partial reconciliation. Examples include `base`, `network`, `storage`, and `containers`; implementation tools such as Docker are not capability names.
 - **Dev tool**: A binary needed to work on this repo. Pinned in `mise.toml`.
 - **Host tool**: A binary reconciliation installs onto a machine for its own sake. Declared in the Brewfile or a role. `mise`, `uv`, and `chezmoi` are host tools that development also happens to need.
 - **Role**: A unit of capability under `ansible/roles/`. A role owns a thing that can be installed or configured, not a machine that needs configuring.
