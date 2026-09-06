@@ -1,10 +1,12 @@
 # Fresh datasets and legacy quarantine
 
-`layout.toml` declares the six active filesystems. The native capability owns the `media` group and ACL package; its final hook converges ZFS properties through the GUID-guarded helper because mise has no dataset resource. `mise pod042 --check` also runs the helper's read-only check. Explicit mountpoints and local property values keep active children writable and mountable when their pool roots become unmounted, read-only legacy storage. `overlay=off` also prevents later mounts from silently covering files written into an unmounted destination. OpenZFS 2.3.9 reports system-attribute xattrs as `xattr=on`; declaring that canonical value rather than its `sa` alias avoids perpetual reconciliation drift.
+`layout.toml` declares exactly three active filesystems: `ark/media`, `black-box/docker`, and `black-box/agents`. AnyPod's archive is the ordinary directory `/mnt/ark/media/anypod`; AnyPod's database and Plex remain at `/mnt/black-box/docker/anypod/db` and `/mnt/black-box/docker/plex/config` as ordinary directories within Docker. The native capability owns the `media` group and ACL package; its final hook converges ZFS properties through the GUID-guarded helper because mise has no dataset resource. `mise pod042 --check` also runs the helper's read-only check. Explicit mountpoints and local property values keep active children writable and mountable when their pool roots become unmounted, read-only legacy storage. `overlay=off` also prevents later mounts from silently covering files written into an unmounted destination. OpenZFS 2.3.9 reports system-attribute xattrs as `xattr=on`; declaring that canonical value rather than its `sa` alias avoids perpetual reconciliation drift.
 
 Every active filesystem must have a **local** `org.ansiblonomicon:layout=fresh-v1` marker and matching immutable creation properties. Normal reconciliation additionally requires a **local** `org.ansiblonomicon:migration=verified` marker. It refuses to adopt existing TrueNAS filesystems, ignores no unknown children, and never deletes datasets or snapshots. Service directory ownership stays with the copied numeric identities until each stack declares its image-specific policy. Shared roots are `root:media` with mode `2775`.
 
-## One-time migration
+## Initial migration record
+
+The sequence below describes the completed six-dataset migration, not a procedure to replay against the consolidated layout. `migrate.py` retains its original source mappings for that historical operation. The current declaration deliberately omits its three superseded targets.
 
 Do not run full reconciliation or activate Sanoid until migration verification finishes. Its runtime guard also refuses unverified snapshot targets. This operation assumes no application consumers are running.
 
@@ -18,12 +20,26 @@ Do not run full reconciliation or activate Sanoid until migration verification f
 
 `copy` is deliberately one-shot. On interruption, preserve the sources and inspect the pending destination. A repeat refuses existing files instead of assuming that a partial file is complete. Reset only a positively identified, still-pending destination after reviewing any child dataset contributions, then prepare and copy it again. Never reset a verified dataset. `migrate.py verify GROUP` is read-only but requires the original migration source names and mounts. Run it before quarantine. A later comparison must update its fixed source mappings to the archived names and explicitly restore temporary read-only mounts.
 
+## Three-dataset consolidation
+
+Stop Sanoid's timer and verify snapshot/prune jobs and all consumers are inactive. Record all current dataset and snapshot GUIDs and volume reservations, then take held recursive snapshots on both quiescent pools. Copy the three superseded filesystems into new staging directories on their destination filesystems with numeric ownership, modes, timestamps, hardlinks and xattrs preserved. Use same-pool block cloning and refuse existing destinations. Verify copies before cutover; no consumer starts during this operation.
+
+Unmount each source before renaming it, checking its GUID and the newly exposed mount stub. Docker child stubs must be empty before their paths can receive ordinary directories. Archive the sources with filesystem `zfs rename -u`, using these non-colliding names outside Sanoid's configured roots:
+
+| Source | Archive | Ordinary directory |
+| --- | --- | --- |
+| `ark/anypod` | `ark/legacy/consolidated-20260906-anypod` | `/mnt/ark/media/anypod` |
+| `black-box/docker/anypod` | `black-box/legacy/consolidated-20260906-anypod` | `/mnt/black-box/docker/anypod` |
+| `black-box/docker/plex` | `black-box/legacy/consolidated-20260906-plex` | `/mnt/black-box/docker/plex` |
+
+The existing reconciliation helper already classifies these archives under `legacy`; it needs no new archive exception. Apply its local readonly, canmount=off and mountpoint=none policy after the GUID-preserving renames. Retain every snapshot and reservation, including snapshots taken after the original migration. Stage-to-final directory renames are individually atomic, not a transaction across all three copies. On interruption inspect the root-private ledger and actual GUIDs rather than replaying a one-shot copy or cutover.
+
 ## Accounting
 
 | Source | Destination or disposition |
 | --- | --- |
 | `ark/watch/media/{movies,podcasts,tv}` and `downloads` | One `ark/media` filesystem; one cp invocation preserves download/library hardlinks |
-| `ark/watch/anypod`, except `data/db` | `ark/anypod`, preserving its internal tree |
+| `ark/watch/anypod`, except `data/db` | Ordinary directory `ark/media/anypod`, preserving its internal tree |
 | `ark/watch/anypod/data/db` | `black-box/docker/anypod/db`; the bulk copy has no second writable database |
 | Old `black-box/docker` | Fresh `black-box/docker`, preserving dormant configs without activating services |
 | `black-box/apps/plex` | `black-box/docker/plex`, retaining `config/` placement |

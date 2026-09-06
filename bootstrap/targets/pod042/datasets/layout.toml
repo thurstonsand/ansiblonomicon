@@ -22,20 +22,8 @@ encryption = "off"
 mountpoint = "/mnt/ark/media"
 shared = true
 
-[datasets."ark/anypod"]
-mountpoint = "/mnt/ark/anypod"
-shared = true
-
 [datasets."black-box/docker"]
 mountpoint = "/mnt/black-box/docker"
-shared = false
-
-[datasets."black-box/docker/anypod"]
-mountpoint = "/mnt/black-box/docker/anypod"
-shared = false
-
-[datasets."black-box/docker/plex"]
-mountpoint = "/mnt/black-box/docker/plex"
 shared = false
 
 [datasets."black-box/agents"]

@@ -44,15 +44,15 @@ class SanoidRunTest(unittest.TestCase):
                     stderr=subprocess.PIPE,
                 )
 
-    def test_verified_roots_and_children(self):
+    def test_verified_roots_without_children(self):
         properties = (
             "org.ansiblonomicon:layout\tfresh-v1\tlocal\n"
             "org.ansiblonomicon:migration\tverified\tlocal\n"
         )
         results = [
             subprocess.CompletedProcess([], 0, stdout=sanoid_run.POOLS["black-box"]),
-            subprocess.CompletedProcess([], 0, stdout=properties * 3),
-            subprocess.CompletedProcess([], 0, stdout=properties * 2),
+            subprocess.CompletedProcess([], 0, stdout=properties),
+            subprocess.CompletedProcess([], 0, stdout=properties),
         ]
         with patch.object(sanoid_run.subprocess, "run", side_effect=results) as run:
             sanoid_run.verify_datasets()
@@ -68,6 +68,8 @@ class SanoidRunTest(unittest.TestCase):
         )
         for invalid in (
             "",
+            properties * 2,
+            properties * 3,
             properties.replace("verified", "pending"),
             properties.replace("local", "inherited from black-box"),
             properties + "org.ansiblonomicon:migration\t-\t-\n",

@@ -39,10 +39,8 @@ def verify_datasets() -> None:
             timeout=30,
         )
         rows = result.stdout.splitlines()
-        if set(rows) != expected or any(
-            rows.count(row) * 2 != len(rows) for row in expected
-        ):
-            raise ValueError(f"Unverified snapshot dataset tree: {dataset}")
+        if set(rows) != expected or len(rows) != len(expected):
+            raise ValueError(f"Unverified dataset or unexpected descendants: {dataset}")
 
 
 def main(args: list[str]) -> int:

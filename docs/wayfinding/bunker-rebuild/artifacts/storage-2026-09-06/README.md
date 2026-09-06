@@ -2,17 +2,19 @@
 
 Verified on Debian 13 pod042 at deployed revision `42cbcca`, after the operator authorized direct physical implementation. No retired Ansible playbook ran, no application consumer was activated, and no original dataset or snapshot was destroyed.
 
+This records the initial six-dataset commissioning. The operator subsequently approved consolidating to three active datasets; the current declaration and guarded procedure are in the [dataset README](../../../../../bootstrap/targets/pod042/datasets/README.md). Consolidation verification will be recorded separately rather than rewriting this historical evidence.
+
 ## Preservation and fresh layout
 
 All five production copy groups completed before quarantine. Counts below describe unique regular files in each copy group.
 
-| Group | Files | Logical bytes | Content verification |
-| --- | ---: | ---: | --- |
-| Docker | 56,042 | 26,525,572,881 | 55,997 full hashes, 1 large-file sample |
-| Plex | 48,896 | 38,859,691,627 | 48,735 full hashes, 1 large-file sample |
-| AnyPod database | 4 | 9,846,784 | 4 full hashes |
-| Media | 133,113 | 11,555,718,940,481 | 121,004 full hashes, 48 large-file samples |
-| AnyPod archive | 3,131 | 678,860,290,570 | 1,847 full hashes, 4 large-file samples |
+| Group           |   Files |      Logical bytes | Content verification                       |
+| --------------- | ------: | -----------------: | ------------------------------------------ |
+| Docker          |  56,042 |     26,525,572,881 | 55,997 full hashes, 1 large-file sample    |
+| Plex            |  48,896 |     38,859,691,627 | 48,735 full hashes, 1 large-file sample    |
+| AnyPod database |       4 |          9,846,784 | 4 full hashes                              |
+| Media           | 133,113 | 11,555,718,940,481 | 121,004 full hashes, 48 large-file samples |
+| AnyPod archive  |   3,131 |    678,860,290,570 | 1,847 full hashes, 4 large-file samples    |
 
 The verifier also checked namespace, required metadata and hardlink relationships. The media verification traversal counted 133,208 paths and 12,011,678,147,065 logical bytes when including hardlinks. Large-file sampling is not a full hash of every large file. Cross-dataset block cloning was demonstrated with synthetic data, a real podcast and a 31 GB movie before production copying. All three nonempty AnyPod SQLite files passed immutable read-only `PRAGMA integrity_check`; no WAL or rollback journal was present.
 
