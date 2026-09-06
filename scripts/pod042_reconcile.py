@@ -20,7 +20,15 @@ EXPECTED_HOSTNAME = "pod042"
 REMOTE_USER = "thurstonsand"
 OPERATOR_PUBLIC_KEY = TARGET_ROOT / "base" / "files" / "operator.pub"
 IDENTITY_AGENT_ENV = "POD042_SSH_IDENTITY_AGENT"
-CAPABILITIES = ("base", "repositories", "storage", "alerting", "maintenance")
+CONTROL_PATH_ENV = "POD042_SSH_CONTROL_PATH"
+CAPABILITIES = (
+    "base",
+    "repositories",
+    "storage",
+    "alerting",
+    "maintenance",
+    "monitoring",
+)
 LANDING_CAPABILITIES = ("base", "repositories", "storage")
 
 
@@ -55,6 +63,8 @@ def ssh_options() -> list[str]:
     ]
     if identity_agent := os.environ.get(IDENTITY_AGENT_ENV):
         options.extend(["-o", f"IdentityAgent={identity_agent}"])
+    if control_path := os.environ.get(CONTROL_PATH_ENV):
+        options.extend(["-o", f"ControlPath={control_path}"])
     return options
 
 
@@ -166,6 +176,8 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("repositories", "storage")
     if capability == "maintenance":
         return ("repositories", "storage", "alerting", "maintenance")
+    if capability == "monitoring":
+        return ("repositories", "storage", "alerting", "maintenance", "monitoring")
     if capability not in CAPABILITIES:
         fail(f"unknown pod042 capability: {capability}")
     return (capability,)
@@ -193,6 +205,15 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         "-C",
         str(TARGET_ROOT),
     ]
+    if "monitoring" in capabilities_for(capability):
+        command = [
+            sys.executable,
+            "-B",
+            str(TARGET_ROOT / "monitoring/api/reconcile.py"),
+            *(["--check"] if check_mode else []),
+            "--",
+            *command,
+        ]
     if "alerting" in capabilities_for(capability):
         command = [
             sys.executable,
@@ -246,6 +267,8 @@ def remote_bootstrap_command(
     ]
     if identity_agent := os.environ.get(IDENTITY_AGENT_ENV):
         command.extend(["--ssh-option", f"IdentityAgent={identity_agent}"])
+    if control_path := os.environ.get(CONTROL_PATH_ENV):
+        command.extend(["--ssh-option", f"ControlPath={control_path}"])
     command.append("--yes")
     if not install_mise:
         command.extend(["--remote-mise", "/usr/local/bin/mise"])

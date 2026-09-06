@@ -1,0 +1,77 @@
+[bootstrap.secrets]
+heartbeat_ping_url = "POD042_HEARTBEAT_PING_URL"
+ark_scrub_ping_url = "POD042_SCRUB_ARK_PING_URL"
+black_box_scrub_ping_url = "POD042_SCRUB_BLACK_BOX_PING_URL"
+
+[bootstrap.directories."/etc/alerting/checks"]
+owner = "root"
+group = "root"
+mode = "0700"
+
+[bootstrap.directories."/etc/systemd/system/zfs-scrub@.service.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/alerting/checks/pod042-heartbeat.url"]
+content = '{{ secret(name="heartbeat_ping_url") }}'
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/alerting/checks/pod042-scrub-ark.url"]
+content = '{{ secret(name="ark_scrub_ping_url") }}'
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/alerting/checks/pod042-scrub-black-box.url"]
+content = '{{ secret(name="black_box_scrub_ping_url") }}'
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/usr/local/bin/hc-ping"]
+source = "monitoring/hc-ping.py"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/systemd/system/zfs-scrub@.service.d/healthchecks.conf"]
+source = "monitoring/scrub-healthchecks.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/systemd/system/pod042-heartbeat.service"]
+source = "monitoring/pod042-heartbeat.service"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["pod042-heartbeat.timer"]
+
+[bootstrap.files."/etc/systemd/system/pod042-heartbeat.timer"]
+source = "monitoring/pod042-heartbeat.timer"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["pod042-heartbeat.timer"]
+
+[bootstrap.services."pod042-heartbeat.timer"]
+enabled = true
+on_change = "restart"
+
+[bootstrap.services."zfs-scrub-monthly@ark.timer"]
+enabled = true
+on_change = "restart"
+
+[bootstrap.services."zfs-scrub-monthly@black-box.timer"]
+enabled = true
+on_change = "restart"
+
+# An idle scrub service's drop-in can change without a managed timer needing an action.
+[bootstrap.hooks.final]
+run = "sudo -n systemctl daemon-reload"

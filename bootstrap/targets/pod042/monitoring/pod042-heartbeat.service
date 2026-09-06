@@ -1,0 +1,12 @@
+[Unit]
+Description=Report pod042 and storage monitoring health
+After=network-online.target smartmontools.service zfs-zed.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+LoadCredential=healthchecks-url:/etc/alerting/checks/pod042-heartbeat.url
+ExecStart=/usr/bin/systemctl is-active --quiet smartmontools.service
+ExecStart=/usr/bin/systemctl is-active --quiet zfs-zed.service
+ExecStopPost=-/usr/local/bin/hc-ping finish
+TimeoutStartSec=60

@@ -1,0 +1,10 @@
+[Unit]
+Description=Report pod042 health every fifteen minutes
+
+[Timer]
+OnBootSec=2min
+OnCalendar=*-*-* *:0/15:00 America/Los_Angeles
+Persistent=true
+
+[Install]
+WantedBy=timers.target

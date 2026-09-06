@@ -89,6 +89,7 @@ reportUnusedVariable = "warning"
 [[tool.basedpyright.executionEnvironments]]
 root = "bootstrap/targets/pod042"
 pythonVersion = "3.13"
+extraPaths = ["bootstrap/targets/pod042/maintenance"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"

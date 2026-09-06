@@ -1,6 +1,6 @@
 # Maintenance activation gates
 
-The registered maintenance capability configures pool properties and SMART/ZED event monitoring. Selecting it includes storage and alerting. Deployment remains pending review. No self-test schedules or timers are enabled; those wait for physical drive-capability probes and Healthchecks registration. The final hook changes only the three named pool properties after checking both pool GUIDs; running `python3 maintenance/zed/pool-policy.py` without `--apply` is read-only and also runs during `mise pod042 --check`.
+The registered maintenance capability configures pool properties and SMART/ZED event monitoring. Selecting it includes storage and alerting. Daily short and staggered monthly long self-tests run through smartd 7.5. The monitoring capability owns Healthchecks-backed heartbeat and monthly scrub timers. The final hook changes only the three named pool properties after checking both pool GUIDs; running `python3 maintenance/zed/pool-policy.py` without `--apply` is read-only and also runs during `mise pod042 --check`.
 
 ## Registered spares are not manual spares
 
@@ -20,7 +20,7 @@ All notifications call `/usr/local/bin/storage-alert`, not the checkout or a cre
 
 ## SMART schedule and probe
 
-All eight devices currently receive health monitoring only, using whole-device `/dev/disk/by-id` paths. The following schedules are proposed for the next rollout, not installed. No device scan, KVM device, optical device, or partition is declared. Times use the physical host's America/Los_Angeles timezone. Smartd polls within the scheduled hour rather than guaranteeing the exact minute, and long tests take precedence over same-hour short tests.
+All eight devices receive health monitoring and scheduled self-tests through whole-device `/dev/disk/by-id` paths. No device scan, KVM device, optical device, or partition is declared. Times use the physical host's America/Los_Angeles timezone. Smartd polls within the scheduled hour rather than guaranteeing the exact minute, and long tests take precedence over same-hour short tests.
 
 | Serial | Daily short hour | Monthly long day and hour |
 | --- | --- | --- |
@@ -30,12 +30,12 @@ All eight devices currently receive health monitoring only, using whole-device `
 | 7LG2VNYK | 05 | 13 at 05 |
 | ZTM0M2V7 | 06 | 16 at 06 |
 | S6P6NL0W307869J | 07 | 19 at 07 |
-| S6S1NS0T644144F | Pending capability probe | Reserve 22 at 08 if supported |
-| S59ANM0W427759V | Pending capability probe | Reserve 25 at 09 if supported |
+| S6S1NS0T644144F | 08 | 22 at 08 |
+| S59ANM0W427759V | 09 | 25 at 09 |
 
-The two NVMe devices have health monitoring but no self-test schedule yet. Neither `smartctl` nor `nvme` was installed during inspection. Deploy the declared native `apt:smartmontools = "latest"` package, then inspect `smartctl -x -j /dev/disk/by-id/nvme-eui.00253856214128f6` and the corresponding `0025385431913a57` device without starting tests. Check Optional Admin Commands for self-test support and inspect the self-test log. Probe all six ATA devices too before activation. If NVMe self-tests are unsupported, retain health monitoring and record the exception instead of scheduling guaranteed failures.
+Physical probes confirmed self-test support on all eight drives. One NVMe rejected smartctl 7.4's namespace-specific self-test log request; the broadcast namespace succeeded. The official 7.5 backport fixed that lookup and added NVMe scheduling to smartd. Both logs read successfully with unmodified commands after the upgrade. Long tests supersede the same-hour short, and smartd skips a scheduled test while another remains in progress.
 
-Package installation may start packaged services. Deploying the capability also installs event monitoring and runs the pool-property hook; it is not a package-only operation. The capability enables SMART/ZED services and restarts them when their configuration changes. Self-test scheduling remains a separate change after the probes.
+Package installation may start packaged services. Deploying the capability also installs event monitoring and runs the pool-property hook; it is not a package-only operation. The capability enables SMART/ZED services and restarts them when their configuration changes. The file-change notifications reload the declared schedule.
 
 ## Read-only physical checks
 

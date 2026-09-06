@@ -1,6 +1,17 @@
 [bootstrap.packages]
 "apt:zfs-zed" = "latest"
 
+[bootstrap.directories."/usr/local/lib/python3.13/dist-packages"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/usr/local/lib/python3.13/dist-packages/pod042_storage.py"]
+source = "maintenance/pod042_storage.py"
+owner = "root"
+group = "root"
+mode = "0644"
+
 [bootstrap.files."/etc/smartd.conf"]
 source = "maintenance/smart/smartd.conf"
 notify = ["smartmontools"]

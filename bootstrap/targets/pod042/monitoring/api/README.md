@@ -24,4 +24,6 @@ The adapter removes `HEALTHCHECKS_API_KEY`, `OP_*`, and `FNOX_*` before executin
 
 HTTPS requests go directly to `healthchecks.io`, without environment proxies or redirects, with a 15-second socket timeout. API response errors suppress payloads, URLs, and exception details. A failed write can have succeeded remotely; rerun to discover actual state. There is no provider cache or automatic retry.
 
+Full reconciliation and full `--check` require Healthchecks API availability, just as their declared secret set requires the provider. This is intentional: they must not silently skip remote desired state. An explicit `mise pod042 base` remains independent of Healthchecks for SSH/sudo repair.
+
 All schedules use the physically verified `America/Los_Angeles` timezone. Ark's three-day grace covers the observed 45-hour scrub. Black-box's two-hour grace covers the packaged timer's one-hour jitter and its roughly six-minute scrub. Creating checks does not arm monitoring: heartbeat and actual scrub runs activate them after their jobs and scoped credentials are installed.

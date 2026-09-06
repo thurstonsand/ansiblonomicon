@@ -4,12 +4,15 @@ import http.client
 import os
 from pathlib import Path
 import stat
+import subprocess
 import sys
 import urllib.parse
 from uuid import UUID
 
+from pod042_storage import POOLS, clean_scrub
 
-def ping(phase: str) -> None:
+
+def ping(phase: str, scrub: str | None) -> None:
     path = Path(os.environ["CREDENTIALS_DIRECTORY"]) / "healthchecks-url"
     descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     with os.fdopen(descriptor, encoding="utf-8") as credential:
@@ -37,6 +40,17 @@ def ping(phase: str) -> None:
             and os.environ.get("EXIT_CODE") == "exited"
             and os.environ.get("EXIT_STATUS") == "0"
         )
+        if succeeded and scrub is not None:
+            try:
+                succeeded = clean_scrub(scrub)
+            except (
+                OSError,
+                ValueError,
+                KeyError,
+                TypeError,
+                subprocess.SubprocessError,
+            ):
+                succeeded = False
         suffix = "/0" if succeeded else "/fail"
     connection = http.client.HTTPSConnection("hc-ping.com", timeout=15)
     try:
@@ -51,9 +65,10 @@ def ping(phase: str) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("phase", choices=("start", "finish"))
+    parser.add_argument("--scrub", choices=POOLS)
     args = parser.parse_args()
     try:
-        ping(args.phase)
+        ping(args.phase, args.scrub)
     except (OSError, ValueError, KeyError, RuntimeError, http.client.HTTPException):
         print(
             "hc-ping: notification failed; check credentials and connectivity",
