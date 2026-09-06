@@ -1,0 +1,4 @@
+#!/usr/bin/env python3
+from fnox_host import entrypoint
+
+entrypoint()

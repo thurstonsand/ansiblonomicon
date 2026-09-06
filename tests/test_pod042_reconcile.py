@@ -49,9 +49,6 @@ def test_target_declares_serial_native_landing_zone() -> None:
         ]
         == "PasswordAuthentication no\nPermitRootLogin no\nPubkeyAuthentication yes\n"
     )
-    assert base["bootstrap"]["files"][
-        "/etc/ssh/sshd_config.d/99-ansiblonomicon.conf"
-    ] == {"state": "absent"}
     assert storage["bootstrap"]["packages"]["apt:zfsutils-linux"] == "latest"
     assert storage["bootstrap"]["services"]["zfs-import-cache"]["enabled"] is True
     assert storage["bootstrap"]["services"]["zfs-mount"]["enabled"] is True

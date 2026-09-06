@@ -1,0 +1,248 @@
+"""Select a declared host identity and delegate secret resolution to fnox."""
+
+import argparse
+from dataclasses import dataclass
+import os
+from pathlib import Path
+import pwd
+import socket
+import stat
+import sys
+import tomllib
+from typing import cast
+
+ROOT = Path(__file__).resolve().parents[1]
+HOST_PROFILES = {
+    "Thurstons-MacBook-Pro": "macos",
+    "ML-DFC6YK6VJQ": "work",
+    "pod042": "pod042",
+}
+PROFILES = ("macos", "work", "pod042", "orb")
+TOKEN_NAME = "FNOX_HOST_OP_TOKEN"
+TOKEN_PATH = Path("/home/thurstonsand/.config/op-service-account/token")
+
+
+class ConfigurationError(Exception):
+    pass
+
+
+def select_profile(hostname: str, *, orb: bool) -> str:
+    if orb:
+        return "orb"
+    short_hostname = hostname.split(".", 1)[0]
+    if short_hostname not in HOST_PROFILES:
+        raise ConfigurationError(
+            f"unregistered host {short_hostname!r}; expected "
+            + ", ".join(HOST_PROFILES)
+        )
+    return HOST_PROFILES[short_hostname]
+
+
+def table(value: object, label: str) -> dict[str, object]:
+    if not isinstance(value, dict):
+        raise ConfigurationError(f"{label} must be a table")
+    return cast(dict[str, object], value)
+
+
+def load_declaration(path: Path, *, host: bool) -> set[str]:
+    with path.open("rb") as source:
+        config = tomllib.load(source)
+    allowed = {
+        "root",
+        "env",
+        "if_missing",
+        "prompt_auth",
+        "daemon",
+        "providers",
+        "secrets",
+    }
+    if host:
+        allowed.add("import")
+    if extra := config.keys() - allowed:
+        raise ConfigurationError(f"{path.name}: unsupported settings: {sorted(extra)}")
+    if host and config.get("import") != ["fnox.toml"]:
+        raise ConfigurationError(f"{path.name}: must import only fnox.toml")
+    required = {"env": "exec", "if_missing": "error", "prompt_auth": False}
+    for key, value in required.items():
+        if (not host or key in config) and config.get(key) != value:
+            raise ConfigurationError(f"{path.name}: {key} must be {value!r}")
+    if (not host or "daemon" in config) and config.get("daemon") != {"enabled": False}:
+        raise ConfigurationError(f"{path.name}: daemon must be disabled")
+    if not host and config.get("root") is not True:
+        raise ConfigurationError(f"{path.name}: root must be true")
+    secrets = table(config.get("secrets", {}), f"{path.name}: secrets")
+    for name, raw_declaration in secrets.items():
+        declaration = table(raw_declaration, f"{path.name}: {name}")
+        if (
+            path.name in {"fnox.pod042.toml", "fnox.orb.toml"}
+            and name == TOKEN_NAME
+            and declaration == {"env": False}
+        ):
+            continue
+        if declaration.keys() - {"provider", "value", "env", "description"}:
+            raise ConfigurationError(f"{path.name}: {name} has unsupported settings")
+        if not declaration.get("provider") or not declaration.get("value"):
+            raise ConfigurationError(f"{path.name}: {name} needs provider and value")
+        if declaration.get("env", "exec") not in ("exec", False):
+            raise ConfigurationError(
+                f"{path.name}: {name} cannot enter ordinary shells"
+            )
+    return set(secrets)
+
+
+def declared_keys(root: Path) -> set[str]:
+    keys = load_declaration(root / "fnox.toml", host=False)
+    for profile in PROFILES:
+        keys.update(load_declaration(root / f"fnox.{profile}.toml", host=True))
+    return keys
+
+
+def read_token(path: Path, owner: int) -> str:
+    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(descriptor, "r") as source:
+        metadata = os.fstat(source.fileno())
+        if (
+            not stat.S_ISREG(metadata.st_mode)
+            or stat.S_IMODE(metadata.st_mode) != 0o600
+            or metadata.st_uid != owner
+        ):
+            raise ConfigurationError(
+                "service token must be an operator-owned mode-0600 regular file"
+            )
+        token = source.read().strip()
+    if not token or "\n" in token or "\r" in token:
+        raise ConfigurationError("service token must be one nonempty line")
+    return token
+
+
+def authentication_environment(
+    profile: str,
+    inherited: dict[str, str],
+    secret_keys: set[str],
+    token: str | None,
+) -> dict[str, str]:
+    environment = {
+        key: value
+        for key, value in inherited.items()
+        if key not in secret_keys
+        and not key.startswith("FNOX_")
+        and key
+        not in {
+            "OP_SERVICE_ACCOUNT_TOKEN",
+            "OP_CONNECT_HOST",
+            "OP_CONNECT_TOKEN",
+            "OP_ACCOUNT",
+        }
+    }
+    if profile in {"pod042", "orb"}:
+        if not token or not token.strip() or "\n" in token or "\r" in token:
+            raise ConfigurationError(f"{profile} requires a nonempty service token")
+        environment = {
+            key: value
+            for key, value in environment.items()
+            if not key.startswith("OP_SESSION_")
+        }
+        environment[TOKEN_NAME] = token
+    if profile == "work" and (account := inherited.get("FNOX_WORK_ACCOUNT")):
+        environment["FNOX_WORK_ACCOUNT"] = account
+    return environment
+
+
+def child_command(command: list[str], environment: dict[str, str]) -> list[str]:
+    if "=" in command[0]:
+        raise ConfigurationError(
+            "exec requires an executable, not an environment assignment"
+        )
+    scrub = sorted(key for key in environment if key.startswith(("OP_", "FNOX_")))
+    args = ["/usr/bin/env"]
+    for key in scrub:
+        args.extend(["-u", key])
+    args.extend(["--", *command])
+    return args
+
+
+@dataclass
+class FnoxCommand:
+    argv: list[str]
+    environment: dict[str, str]
+
+
+def build_command(
+    root: Path,
+    profile: str,
+    operation: str,
+    arguments: list[str],
+    inherited: dict[str, str],
+    token: str | None,
+    *,
+    fnox: str = "fnox",
+) -> FnoxCommand:
+    if profile not in PROFILES:
+        raise ConfigurationError(f"unsupported profile: {profile}")
+    if operation not in {"get", "exec"} or not arguments:
+        raise ConfigurationError("expected get NAME or exec COMMAND")
+    keys = declared_keys(root)
+    environment = authentication_environment(profile, inherited, keys, token)
+    # A device cannot contain config.toml, so global configuration cannot appear later.
+    environment["FNOX_CONFIG_DIR"] = "/dev/null"
+    command = [
+        fnox,
+        "--config",
+        str(root.resolve() / f"fnox.{profile}.toml"),
+        "--profile",
+        profile,
+        "--no-daemon",
+        "--non-interactive",
+        "--if-missing",
+        "error",
+    ]
+    if operation == "get":
+        command.extend(["get", *arguments])
+    else:
+        command.extend(["exec", "--", *child_command(arguments, environment)])
+    return FnoxCommand(command, environment)
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--orb", action="store_true", help="Use the supplied Orb service identity"
+    )
+    commands = parser.add_subparsers(dest="operation", required=True)
+    commands.add_parser("profile")
+    get = commands.add_parser("get")
+    get.add_argument("name")
+    execute = commands.add_parser("exec")
+    execute.add_argument("command", nargs=argparse.REMAINDER)
+    arguments = parser.parse_args()
+    profile = select_profile(socket.gethostname(), orb=arguments.orb)
+    if arguments.operation == "profile":
+        print(profile)
+        return 0
+    command = [arguments.name] if arguments.operation == "get" else arguments.command
+    if command and command[0] == "--":
+        command = command[1:]
+    if not command:
+        parser.error("exec requires a command after --")
+    token = None
+    if profile == "pod042":
+        token = read_token(TOKEN_PATH, pwd.getpwnam("thurstonsand").pw_uid)
+    elif profile == "orb":
+        token = os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
+    invocation = build_command(
+        ROOT, profile, arguments.operation, command, dict(os.environ), token
+    )
+    os.execvpe(invocation.argv[0], invocation.argv, invocation.environment)
+
+
+def entrypoint() -> None:
+    try:
+        code = main()
+    except (ConfigurationError, OSError, tomllib.TOMLDecodeError) as error:
+        print(f"fnox-host: {error}", file=sys.stderr)
+        raise SystemExit(1) from None
+    raise SystemExit(code)
+
+
+if __name__ == "__main__":
+    entrypoint()

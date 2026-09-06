@@ -12,6 +12,7 @@ node = "24"
 stylua = "2.5.2"
 opentofu = "1.12.6"
 hk = "1.56.1"
+fnox = "latest"
 
 [env]
 _.python.venv = { path = ".venv", create = true }
@@ -193,6 +194,13 @@ python3 scripts/pod042_first_access.py \
   "${usage_host}" \
   ${usage_replace_host_key:+--replace-host-key}
 '''
+
+[tasks."pod042:install-service-token"]
+description = "Install or rotate pod042's 1Password service-account token"
+usage = '''
+flag "--host <host>" default="pod042" help="Pod042 SSH address or configured alias"
+'''
+run = 'python3 scripts/pod042_service_token.py --host "${usage_host}"'
 
 [tasks."reconcile:pod042"]
 description = "Reconcile pod042 through its native mise bootstrap target"

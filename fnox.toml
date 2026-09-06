@@ -1,0 +1,45 @@
+root = true
+env = "exec"
+if_missing = "error"
+prompt_auth = false
+
+[daemon]
+enabled = false
+
+[providers.agent]
+type = "1password"
+account = "PQ7X5W7V6FDADHPFFEO62TLFEM"
+auth_command = ""
+
+[secrets]
+NEXTDNS_PROFILE_ID = { provider = "agent", value = "op://agent/db7ivx7ja3sc74k4yml5qrg4ra/profile id" }
+CLOUDFLARE_API_TOKEN = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/credential" }
+PARENT_HOME_IP = { provider = "agent", value = "op://agent/5cimwvc3mbcr6cikiv3wcmhekm/parent home ip" }
+CLOUDFLARE_AI_GATEWAY_API_TOKEN = { provider = "agent", value = "op://agent/5cimwvc3mbcr6cikiv3wcmhekm/ai gateway/api token" }
+AWS_ACCESS_KEY_ID = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/access key" }
+AWS_SECRET_ACCESS_KEY = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/secret access key" }
+UNIFI_USERNAME = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/local admin/user" }
+UNIFI_PASSWORD = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/local admin/password" }
+UNIFI_WAN_MAC_OVERRIDE = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/wan/mac clone" }
+YORHA_PASSPHRASE = { provider = "agent", value = "op://agent/skmsezufiiwrbsna7tihtxo4fe/wireless network password" }
+LUNAR_TEAR_PASSPHRASE = { provider = "agent", value = "op://agent/p6kdhsa7nr7yxqf4gixob52qru/wireless network password" }
+THE_VILLAGE_PASSPHRASE = { provider = "agent", value = "op://agent/dt2x5v3l737zc7orz3ay6wsb4m/wireless network password" }
+SCANNERS_PASSPHRASE = { provider = "agent", value = "op://agent/3uf6msjlzhqeutxucr67ga4weu/wireless network password" }
+CF_ACCESS_CLIENT_ID = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client id" }
+CF_ACCESS_CLIENT_SECRET = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client secret" }
+CLI_PROXY_API_KEY = { provider = "agent", value = "op://agent/vf3jsatixwtzauzoebt66xkiqe/apikey" }
+RCLONE_STORJ_ACCESS_KEY_ID = { provider = "agent", value = "op://agent/4x7rextk7rbmdxps3uft2nt5qu/access key id" }
+RCLONE_STORJ_SECRET_ACCESS_KEY = { provider = "agent", value = "op://agent/4x7rextk7rbmdxps3uft2nt5qu/secret access key" }
+PARALLEL_API_KEY = { provider = "agent", value = "op://agent/ujvwlvzywxv4z654bro2wjkaqq/credential" }
+EIGHTCTL_EMAIL = { provider = "agent", value = "op://agent/fxseiurccsgzesskccvfvihsgm/username" }
+EIGHTCTL_PASSWORD = { provider = "agent", value = "op://agent/fxseiurccsgzesskccvfvihsgm/password" }
+HARK_WEBHOOK_URL_2B = { provider = "agent", value = "op://agent/u3wmydm5i7fe3cgdxx6c7juhxq/add more/2B webhook url" }
+HOMEPAGE_HOMEASSISTANT_API_KEY = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/apikey" }
+HA_MCP_URL = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/ha-mcp/url" }
+HA_MCP_OAUTH_CLIENT_ID = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/ha-mcp/oauth client id" }
+HA_MCP_OAUTH_CLIENT_SECRET = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/ha-mcp/oauth client secret" }
+OPENCLAW_GATEWAY_TOKEN = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/gateway/gateway token" }
+OPENCLAW_HOOKS_TOKEN = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/gateway/hooks token" }
+GOG_GMAIL_PUSH_TOKEN = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/gog/push token" }
+TELEGRAM_WEBHOOK_SECRET = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/9s telegram/webhook secret" }
+ELEVENLABS_VOICE_TOKEN = { provider = "agent", value = "op://agent/cmi23o4fiidhzdgclf6dyuzxaq/voice token" }

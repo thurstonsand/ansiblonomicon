@@ -1,0 +1,20 @@
+import = ["fnox.toml"]
+
+[providers.personal]
+type = "1password"
+account = "PQ7X5W7V6FDADHPFFEO62TLFEM"
+auth_command = ""
+
+[providers.work]
+type = "1password"
+account = { secret = "FNOX_WORK_ACCOUNT" }
+auth_command = ""
+
+[secrets]
+HOMEBREW_SUDO_ASKPASS_PASS_WORK = { provider = "personal", value = "op://Private/Crowdstrike Okta/password" }
+ANTHROPIC_AUTH_TOKEN = { provider = "work", value = "op://Private/xg2nzqad3xccpjrcjjtq3zc4ra/dwtkda6l2u3vqthl6nal54e4ly" }
+BITBUCKET_TOKEN = { provider = "work", value = "op://Private/htfleji6niyqanjjznh3ho7ig4/credential" }
+GITLAB_ACCESS_TOKEN = { provider = "work", value = "op://Employee/uvouduqgbabir7wsb3zimhkjq4/aokr7uxluwvrx3mv4ihhgtrb3i" }
+LOGSCALE_VIPER_SPOG_TOKEN = { provider = "work", value = "op://Employee/j34qyvjnwrcu6s4txdvv5qhccy/jtr42nh2zhaoqwpmnyuw5bevue" }
+N8N_API_KEY = { provider = "work", value = "op://Employee/gtnalojcl4bj6h3zwvovxqrjni/credential" }
+SOURCEGRAPH_TOKEN = { provider = "work", value = "op://Employee/mqgzeud7kpjlx6wtf2k76lwrlq/credential" }

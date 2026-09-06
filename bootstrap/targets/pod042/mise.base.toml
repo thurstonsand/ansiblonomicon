@@ -47,8 +47,20 @@ group = "root"
 mode = "0644"
 notify = ["ssh"]
 
-[bootstrap.files."/etc/ssh/sshd_config.d/99-ansiblonomicon.conf"]
-state = "absent"
+[bootstrap.directories."/etc/mise"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/mise/host-tools.toml"]
+content = '''
+[tools]
+fnox = "latest"
+op = "latest"
+'''
+owner = "root"
+group = "root"
+mode = "0644"
 
 [bootstrap.services.ssh]
 state = "running"
@@ -59,4 +71,19 @@ on_change = "reload_or_restart"
 "/home/thurstonsand/code/ansiblonomicon" = { url = "https://github.com/thurstonsand/ansiblonomicon.git" }
 
 [tasks.bootstrap]
-run = "base/scripts/install-system-mise"
+run = [
+  "base/scripts/install-system-mise",
+  "sudo -H env MISE_DATA_DIR=/opt/mise MISE_GLOBAL_CONFIG_FILE=/etc/mise/host-tools.toml /usr/local/bin/mise -C / install --yes --jobs 1",
+  "sudo -H env MISE_DATA_DIR=/opt/mise MISE_GLOBAL_CONFIG_FILE=/etc/mise/host-tools.toml /usr/local/bin/mise -C / upgrade --yes --jobs 1",
+  '''
+set -eu
+for tool in fnox op; do
+  source="/opt/mise/installs/$tool/latest/$tool"
+  target="/usr/local/bin/$tool"
+  sudo test -x "$source"
+  if [ "$(readlink "$target")" != "$source" ]; then
+    sudo ln -sfnT "$source" "$target"
+  fi
+done
+''',
+]
