@@ -309,12 +309,11 @@ def main() -> None:
     ).strip()
     if marker != "fresh-v1":
         raise ValueError("Destination is not a prepared fresh dataset")
+    if copy.target.is_symlink():
+        raise ValueError("The destination must not be a symlink")
     for path, expected in (
         (copy.source, copy.source_dataset),
-        (
-            copy.target.parent if args.group == "anypod-db" else copy.target,
-            copy.dataset,
-        ),
+        (copy.target if copy.target.exists() else copy.target.parent, copy.dataset),
     ):
         mounted = subprocess.check_output(
             ["findmnt", "-n", "-o", "SOURCE", "-T", str(path)], text=True

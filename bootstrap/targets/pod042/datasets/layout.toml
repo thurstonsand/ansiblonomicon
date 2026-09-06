@@ -11,6 +11,7 @@ xattr = "sa"
 atime = "off"
 readonly = "off"
 canmount = "on"
+overlay = "off"
 
 [creation]
 casesensitivity = "sensitive"

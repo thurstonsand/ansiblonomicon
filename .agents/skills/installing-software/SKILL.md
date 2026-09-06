@@ -1,82 +1,49 @@
 ---
 name: installing-software
-description: Use when adding, removing, or updating software. Explains how to properly manage that installation via Ansible, which should be the default choice for all software management. Includes agent software such as skills, agents, extensions, etc.
+description: Use when adding, removing, or updating software, including agent skills, extensions and packages. Find its declared Ansible or native mise host configuration before changing the machine.
 ---
 
 # Installing Software
 
-Use this skill when changing how software is installed in this repo.
-
-## Start Here
-
-- Shared package lists: `ansible/config.yml`
-- Agent-harness source catalogue and host profiles: `ansible/agent-harness.config.yml`
-- macOS host-specific additions: `ansible/darwin.config.yml`
-- Pod042 host-specific packages and tools: `ansible/pod042.config.yml`
+Manage host software through this repo's desired state. Use the host's existing reconciliation path; inspect native resource support before adding a small adapter for a demonstrated gap.
 
 ## macOS
 
-- Homebrew / casks / MAS: `ansible/Brewfile`
-- How Brew Bundle is applied: `ansible/playbooks/macos.yml`
-- macOS-built local tools:
-  - `ansible/roles/ghostty_nav/tasks/main.yml`
-  - `ansible/roles/uvc_util/tasks/main.yml`
+- Homebrew and Mac App Store apps: `ansible/Brewfile`, with `ansible/Brewfile.work` for work.
+- Shared package and language-tool lists: `ansible/config.yml`; host additions in `ansible/darwin.config.yml` and `ansible/work.config.yml`.
+- Reconciliation: `ansible/playbooks/macos.yml` and `ansible/playbooks/work.yml`, selected through `mise laptop`.
+- Locally built utilities: the corresponding role under `ansible/roles/`, including `ghostty_nav` and `uvc_util`.
+- Claude Code and opencode: their roles referenced by the macOS playbook.
 
-## OpenClaw / Debian
+## pod042
 
-- Base apt packages: `ansible/debian.config.yml`
-- External apt repos + repo packages: `ansible/debian.config.yml`
-- How apt / apt repos are applied: `ansible/playbooks/openclaw.yml`
+Use native mise at `bootstrap/targets/pod042/`. The remaining Ansible pod042 config and stack templates are migration references, not executable deployment authority. Never run retired Ansible playbooks on the fresh Debian host.
 
-## Pod042
+- Declare packages and files in the capability that owns them. `mise.repositories.toml` owns APT sources and preferences; storage's native pre-package phase installs repository files before refreshing/installing packages.
+- System fnox/op tools: the `/etc/mise/host-tools.toml` declaration in `mise.base.toml`. Use normal registry backends and `latest`, with backend-managed integrity rather than handwritten version/hash installers.
+- Register new capability order in `scripts/pod042_reconcile.py` and `bootstrap/mise.toml`, keeping resource ownership disjoint. Include real prerequisites in `capabilities_for`.
+- Deploy through guarded `mise pod042 [capability] [--check]`, locally or from the operator machine. It verifies the exact hostname and clean, pushed, matching Git revisions.
+- Read `bootstrap/targets/pod042/datasets/README.md` before changing storage layout or its migration state; full reconciliation refuses pending migrations.
+- Use native `state = "absent"` for retired managed paths. A deleted source file does not remove deployed state.
 
-- Apt packages, external repositories, and host-specific language tools: `ansible/pod042.config.yml`
-- Installation and role ordering: `ansible/playbooks/pod042.yml`
-- Pod042 SSH identities and host configuration: `chezmoi/private_dot_ssh/`
-- NFS mount and Docker environment: `ansible/playbooks/pod042.yml`, `chezmoi/dot_zshenv.tmpl`
-- Run `mise pod042` only on hostname `pod042`.
+## UDMP
 
-## Language-specific package managers
+Native capabilities live under `bootstrap/targets/udmp/`. Use `mise udmp` for OS reconciliation; Network application resources belong to OpenTofu under `terraform/unifi/`.
 
-- npm globals: `ansible/config.yml`, `ansible/darwin.config.yml`, `ansible/debian.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
-- bun globals: `ansible/config.yml`, `ansible/debian.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
-- uv tools: `ansible/config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
-- Go tools: `ansible/config.yml`, `ansible/debian.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
-- Rust / cargo packages: `ansible/config.yml`, `ansible/debian.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
-- Ruby gems: `ansible/config.yml`, `ansible/darwin.config.yml`, `ansible/pod042.config.yml`, and the corresponding host playbook
+## Pi extensions and packages
 
-## Script/install-sh based tools
+Pi itself is installed by `ansible/roles/pi_release/`. Its extensions and package declarations are dotfiles delivered through chezmoi and the Ansible `chezmoi` role.
 
-- Claude Code: `ansible/playbooks/macos.yml`, `ansible/playbooks/openclaw.yml`
-- opencode: `ansible/playbooks/macos.yml`, `ansible/playbooks/openclaw.yml`
-- chezmoi bootstrap on Debian: `ansible/playbooks/openclaw.yml`
+- Config and packages: `chezmoi/private_dot_pi/agent/settings.json.tmpl`.
+- Local extension sources: `chezmoi/private_dot_pi/agent/extensions/`.
+- TypeScript maintenance commands: `scripts/pi-lint.sh`, `scripts/amp-lint.sh`, `scripts/ts-package-deps.sh`.
 
-## Pi extensions
+## Skills and agents
 
-These are managed as dotfiles via chezmoi, then applied by Ansible through the chezmoi role.
+- Source catalogue, host profiles and exclusions: `ansible/agent-harness.config.yml`.
+- Host-only additions: `agent_harness_sources_extra` in the host's local config.
+- Source/plugin keys: `ansible/roles/agent_harness/defaults/main.yml`.
+- Harness layout: `ansible/roles/agent_harness/vars/agents.yml`.
+- Resolution and filtering: `ansible/roles/agent_harness/filter_plugins/harness_filters.py`.
 
-- Pi config / extension sources: `chezmoi/private_dot_pi/agent/settings.json.tmpl`
-- Local pi extension packages: `chezmoi/private_dot_pi/agent/extensions/`
-- Pi custom footer/status behavior: `chezmoi/private_dot_pi/agent/extensions/pi-powerline-footer-custom/`
-- How chezmoi is applied: `ansible/roles/chezmoi/tasks/main.yml`
-- TypeScript agent package maintenance scripts: `scripts/pi-lint.sh`, `scripts/amp-lint.sh`, `scripts/ts-package-deps.sh`
-
-## Skills / agents
-
-- Harness sources, host capability profiles, and profile exclusions: `ansible/agent-harness.config.yml`
-- Committed host customization: profiles and profile selectors in `ansible/agent-harness.config.yml`
-- Uncommitted host-only extras: `agent_harness_sources_extra` in the host's local config
-- Role defaults and supported source/plugin keys: `ansible/roles/agent_harness/defaults/main.yml`
-- Target agent filesystem/layout rules: `ansible/roles/agent_harness/vars/agents.yml`
-- Resolution/filter behavior: `ansible/roles/agent_harness/filter_plugins/harness_filters.py`
-
-## Other install/update paths you may want to check
-
-- tmux plugins: `ansible/tasks/tmux_plugins.yml`
-- Periodic update scripts/timers for npm, bun, uv, cargo, gems, Go: `ansible/roles/system_maintenance/tasks/main.yml`
-- Docker here is specifically for the TrueNAS instance:
-  - `ansible/playbooks/truenas.yml`
-  - `ansible/inventory/targets/group_vars/truenas.yml`
-  - `ansible/stacks/`
-  - `ansible/roles/docker_stack/tasks/main.yml`
-- Ansible collections used by these playbooks: `ansible/requirements.yml`
+Keep agent configuration and skills in their declared sources rather than editing installed copies.
