@@ -52,7 +52,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 │       ├── macos.yml        # macOS playbook
 │       ├── work.yml         # Work macOS playbook
 │       ├── openclaw.yml     # Retained OpenClaw reference playbook
-│       ├── pod042.yml       # pod042 local-only playbook
+│       ├── pod042.yml       # retired pod042 migration evidence
 │       └── truenas.yml      # TrueNAS playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
@@ -71,7 +71,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 
 - `mise laptop` — Apply macOS Ansible playbook (auto-detects work vs personal)
 - `mise laptop --check` — Dry-run mode (shows what would change without applying)
-- `mise pod042` — Converge the pod042 host from inside its local checkout
+- `mise pod042 [capability]` — Reconcile pod042 locally or over SSH (`--check` previews changes)
 - `mise truenas` — Apply TrueNAS Ansible playbook
 - `mise udmp` — Reconcile UDM Pro host state with native mise remote bootstrap
 - `mise udmp --check` — Preview UDM Pro host-state changes
@@ -103,14 +103,14 @@ SSH aliases are configured via chezmoi (`~/.ssh/config`). Existing infrastructur
 
 | Target                                            | Alias         | Description                                 |
 | ------------------------------------------------- | ------------- | ------------------------------------------- |
-| `192.168.1.68:22` / `truenas-ssh.thurstons.house` | `ssh truenas` | TrueNAS SCALE server (Docker stacks, media) |
-| `192.168.1.94:22`                                 | `ssh pod042`  | Debian development VM                       |
+| `192.168.1.68:22` / `truenas-ssh.thurstons.house` | `ssh truenas` | Retired TrueNAS address                     |
+| `10.10.10.187:22`                                 | `ssh pod042`  | Debian 13 NAS                               |
 | `192.168.1.89:22222` / `haos-ssh.thurstons.house` | `ssh haos`    | Home Assistant OS                           |
 | `192.168.1.1:22` / `udmp-ssh.thurstons.house`     | `ssh udmp`    | UniFi Dream Machine Pro                     |
 
 ## Platform Support
 
 - **macOS** (Darwin) — Primary, fully supported
-- **Debian** (pod042) — Local-only, self-converging development VM
-- **TrueNAS** — Docker stacks plus first-class VM modeling via the in-repo `local.truenas` collection
+- **Debian** (pod042) — Physical NAS reconciled locally or over SSH with native mise bootstrap resources
+- **TrueNAS** — Retired migration source; its declarations remain until replacement capabilities absorb them
 - **Arch Linux** (omarchy) — Future, structure ready

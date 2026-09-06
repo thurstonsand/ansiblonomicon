@@ -31,7 +31,6 @@ export class CompanionSession {
   private warnedUnsupported = false;
   private followCursorSupport: FollowCursorSupport = { supported: true };
   private glimpseLoaded = false;
-  private readonly project = basename(process.cwd());
   private readonly connection = new CompanionConnection();
   private readonly attention = new AttentionTracker();
   private readonly focus = new TerminalFocusTracker();
@@ -48,6 +47,12 @@ export class CompanionSession {
 
   private get active(): boolean {
     return this.enabled && this.followCursorSupport.supported;
+  }
+
+  // The session's cwd, not the process's: switching to a session from another
+  // project relabels the companion.
+  private get project(): string {
+    return basename(this.lastCtx?.cwd ?? process.cwd());
   }
 
   noteContext(ctx: ExtensionContext): void {

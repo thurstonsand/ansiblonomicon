@@ -1,17 +1,19 @@
 # Context
 
 - **Ansiblonomicon**: This repo. The single declarative source for every machine I own — laptops, NAS, router, dev VM, and for the Cloudflare edge in front of them.
-- **Host**: A machine this repo configures. Ansible-managed hosts have a playbook and inventory entry; migrated hosts have a native mise bootstrap target under `bootstrap/targets/`.
+- **Host**: A machine this repo configures. Ansible-managed hosts have a playbook and inventory entry; mise hosts have a native mise bootstrap target under `bootstrap/targets/`.
 - **Reconcile**: One host run bringing the machine to its declared state. The unit of applying change; always re-runnable, always safe to repeat.
 - **Tag**: The unit of partial Ansible reconciliation.
 - **Bootstrap target**: A host configuration under `bootstrap/targets/`, applied locally or through `mise bootstrap remote`. New host-state work migrates to this native mise model as its existing Ansible unit is touched.
+- **Landing zone**: The minimum fresh-host state required before pod042 may leave TrueNAS: a VM-proven Debian-to-SSH-to-native-mise path that survives reboot and produces the same clean result from remote and local reconciliation. It restores manageability, not services; the ZFS pools remain untouched until their separately approved capability is ready.
+- **Host capability**: One coherent part of a host's desired state, owned by a bootstrap-target config root and used as the boundary for partial reconciliation. Examples include `base`, `network`, `storage`, and `containers`; implementation tools such as Docker are not capability names.
 - **Dev tool**: A binary needed to work on this repo. Pinned in `mise.toml`.
 - **Host tool**: A binary reconciliation installs onto a machine for its own sake. Declared in the Brewfile or a role. `mise`, `uv`, and `chezmoi` are host tools that development also happens to need.
 - **Role**: A unit of capability under `ansible/roles/`. A role owns a thing that can be installed or configured, not a machine that needs configuring.
 - **Docker stack**: A group of containers defined by a compose template in `ansible/stacks/` and rendered onto TrueNAS.
 - **TrueNAS app**: A catalog app declared in `truenas_apps` and applied through the middleware rather than Docker directly.
 - **`local.truenas`**: The in-repo Ansible collection that speaks to TrueNAS middleware — VMs, datasets, shares, apps, scrub and SMART schedules.
-- **UniFi provider fork**: The permanent `thurstonsand/terraform-provider-unifi` fork that supplies controller fields absent upstream. Its release branch stays rebased on upstream, publishes multi-platform GitHub Releases, and enters OpenTofu through ansiblonomicon's verified filesystem-mirror installer.
+- **UniFi provider fork**: `thurstonsand/terraform-provider-unifi` that supplies controller fields absent upstream. Its release branch stays rebased on upstream, publishes multi-platform GitHub Releases, and enters OpenTofu through ansiblonomicon's verified filesystem-mirror installer.
 - **Chezmoi source**: The `chezmoi/` tree in this repo.
 - **SecretRef**: An `op://vault/item/field` pointer in `.secrets.jsonc`. The committed form of a secret; the value itself exists only in the uncommitted `.env` by `mise run secrets:init`.
 - **Agent harness**: A coding agent runtime — Pi, Claude Code, Amp, Codex, OpenCode, Gemini. Each has its own config shape; the `agent_harness` role reconciles one declaration across all of them.
@@ -21,7 +23,7 @@
 - **Session recovery**: The shared library that lets an interrupted agent session be picked back up, with a common core and per-harness entry points.
 - **Work machine**: The corporate laptop. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions, and cannot easily be extended.
 - **pod042**: The NAS successor — plain Debian 13 on the old TrueNAS hardware.
-- **OpenClaw**: pod042's predecessor. Sunsetting; treat any remaining reference as legacy.
+- **OpenClaw**: pod042's predecessor. Sunsetting; treat any remaining reference as legacy and removeable.
 
 ## Unifi Networks
 

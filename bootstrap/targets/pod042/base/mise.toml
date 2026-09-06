@@ -1,0 +1,63 @@
+[settings]
+jobs = 1
+system_packages.managers = ["apt"]
+
+[bootstrap.packages]
+"apt:ca-certificates" = "latest"
+"apt:curl" = "latest"
+"apt:git" = "latest"
+"apt:openssh-server" = "latest"
+"apt:sudo" = "latest"
+
+[bootstrap.groups.thurstonsand]
+
+[bootstrap.users.thurstonsand]
+group = "thurstonsand"
+groups = ["sudo"]
+home = "/home/thurstonsand"
+shell = "/bin/bash"
+create_home = true
+
+[bootstrap.directories."/home/thurstonsand/code"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.ssh"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0700"
+
+[bootstrap.files."/home/thurstonsand/.ssh/authorized_keys"]
+source = "files/operator.pub"
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0600"
+
+[bootstrap.files."/etc/sudoers.d/thurstonsand"]
+content = "thurstonsand ALL=(ALL:ALL) NOPASSWD: ALL\n"
+owner = "root"
+group = "root"
+mode = "0440"
+
+[bootstrap.files."/etc/ssh/sshd_config.d/00-ansiblonomicon.conf"]
+content = '''
+PasswordAuthentication no
+PermitRootLogin no
+PubkeyAuthentication yes
+'''
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["ssh"]
+
+[bootstrap.services.ssh]
+state = "running"
+enabled = true
+on_change = "reload_or_restart"
+
+[bootstrap.repos]
+"/home/thurstonsand/code/ansiblonomicon" = { url = "https://github.com/thurstonsand/ansiblonomicon.git" }
+
+[tasks.bootstrap]
+run = "scripts/install-system-mise"

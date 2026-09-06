@@ -4,8 +4,8 @@ Include ~/.ssh/config.d/*.conf
 # SSH via Cloudflare Tunnel (hostname-based access)
 # Uses ssh-smart-proxy: tries local connection first, falls back to cloudflared access ssh
 
-Host glkvm
-  HostName 192.168.1.34
+Host pod042-kvm
+  HostName 10.10.10.34
   User root
   IdentityFile ~/.ssh/id_ecdsa_glkvm
 
@@ -45,10 +45,12 @@ Host truenas-dev
 {{- if ne .chezmoi.hostname "pod042" }}
 
 Host pod042
-  HostName 192.168.1.94
+  HostName 10.10.10.187
   User thurstonsand
   ForwardAgent yes
   HostKeyAlias pod042
+  IdentityFile ~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub
+  IdentitiesOnly yes
   RequestTTY yes
 
 {{- end }}

@@ -102,7 +102,7 @@ resource "unifi_device" "pro_max_24_poe" {
 
   port_override {
     index           = 1
-    name            = "Bunker access"
+    name            = "pod042-kvm"
     poe_mode        = "auto"
     port_profile_id = unifi_port_profile.bunker_access.id
   }

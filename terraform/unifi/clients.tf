@@ -15,3 +15,11 @@ resource "unifi_client" "kitchen_homepod" {
   name           = "Apple HomePod - Kitchen"
   allow_existing = true
 }
+
+resource "unifi_client" "pod042_kvm" {
+  mac              = "94:83:c4:c0:d7:7b"
+  name             = "pod042-kvm"
+  fixed_ip         = "10.10.10.34"
+  local_dns_record = "pod042-kvm"
+  allow_existing   = true
+}

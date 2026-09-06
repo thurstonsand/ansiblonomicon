@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 type: research
 blocked-by: []
 ---
