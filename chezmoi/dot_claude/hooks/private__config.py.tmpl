@@ -2,7 +2,7 @@
 
 API_URL = "https://aig.thurstons.house/v1/messages"
 MODEL = "{{ .models.anthropic.sonnet.version }}"
-TOKEN = "{{ template "llm-api-key" . }}"
+TOKEN = "{{ secret "CLI_PROXY_API_KEY" }}"
 MAX_CONTEXT_BYTES = 2_000_000
 
 TITLE_PROMPT = """

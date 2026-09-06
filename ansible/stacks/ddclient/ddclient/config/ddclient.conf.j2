@@ -10,5 +10,5 @@ postscript=/config/trigger-tofu-apply.sh
 protocol=cloudflare,                              \
 zone=thurstons.house,                             \
 login=token,                                      \
-password={{ lookup('env', 'DDCLIENT_CF_API_TOKEN') }} \
+password={{ lookup('env', 'CLOUDFLARE_API_TOKEN') }} \
 storj.thurstons.house

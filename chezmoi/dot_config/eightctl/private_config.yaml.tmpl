@@ -1,2 +1,2 @@
-email: "{{ template "eightctl-email" . }}"
-password: "{{ template "eightctl-password" . }}"
+email: "{{ secret "EIGHTCTL_EMAIL" }}"
+password: "{{ secret "EIGHTCTL_PASSWORD" }}"

@@ -1,14 +1,9 @@
 ---
-# Chezmoi dotfile management
-# This role initializes chezmoi and applies dotfiles from the configured source.
-
-- name: Select effective chezmoi source path
-  ansible.builtin.set_fact:
-    chezmoi_effective_source_dir: >-
-      {{
-        ((ansible_connection | default('ssh')) == 'local')
-        | ternary(chezmoi_source_dir, ansible_facts.env.HOME ~ '/.cache/ansible/chezmoi-source')
-      }}
+- name: Require a local complete repository checkout
+  ansible.builtin.assert:
+    that:
+      - (ansible_connection | default('ssh')) == 'local'
+    fail_msg: Remote hosts must reconcile their persistent checkout through native mise.
 
 - name: Select chezmoi binary path
   ansible.builtin.set_fact:
@@ -18,56 +13,17 @@
         | ternary('/opt/homebrew/bin/chezmoi', ansible_facts.env.HOME ~ '/.local/share/mise/shims/chezmoi')
       }}
 
-- name: Stage chezmoi source on remote hosts
-  when: (ansible_connection | default('ssh')) != 'local'
-  ansible.posix.synchronize:
-    src: "{{ chezmoi_source_dir }}/"
-    dest: "{{ chezmoi_effective_source_dir }}/"
-    delete: true
-    recursive: true
-    checksum: true
-    rsync_opts:
-      - --delete-excluded
-      - --exclude=.git
-      - --exclude=node_modules/
-      - --exclude=**/node_modules/
-      - --exclude=__pycache__/
-      - --exclude=**/__pycache__/
-      - --exclude=**/*.pyc
-  delegate_to: localhost
-  check_mode: false
-
-- name: Remove generated artifacts from staged chezmoi source
-  when: (ansible_connection | default('ssh')) != 'local'
-  ansible.builtin.shell: |
-    set -euo pipefail
-    find {{ chezmoi_effective_source_dir | quote }} -type d \( -name .git -o -name node_modules -o -name __pycache__ \) -prune -exec rm -rf {} +
-    find {{ chezmoi_effective_source_dir | quote }} -type f -name '*.pyc' -delete
-  args:
-    executable: /bin/bash
-  changed_when: false
-  check_mode: false
-
 - name: Check if chezmoi is initialized
   ansible.builtin.stat:
     path: "{{ ansible_facts.env.HOME }}/.config/chezmoi/chezmoi.toml"
   register: chezmoi_config
-
-- name: Read 1Password service account token for chezmoi
-  when: chezmoi_op_service_account_token_path | length > 0
-  ansible.builtin.slurp:
-    src: "{{ chezmoi_op_service_account_token_path }}"
-  register: chezmoi_op_service_account_token
-  failed_when: false
-  no_log: true
 
 - name: Initialize or refresh chezmoi config from source
   ansible.builtin.command:
     argv:
       - "{{ chezmoi_bin }}"
       - init
-      - "--source={{ chezmoi_effective_source_dir }}"
-  register: chezmoi_init
+      - "--source={{ chezmoi_source_dir }}"
   changed_when: not chezmoi_config.stat.exists
   check_mode: false
 
@@ -75,33 +31,27 @@
   ansible.builtin.command:
     argv:
       - "{{ chezmoi_bin }}"
-      - "--source={{ chezmoi_effective_source_dir }}"
-      - diff
-      - --no-pager
-      - --color=true
-  register: chezmoi_diff
-  environment:
-    OP_SERVICE_ACCOUNT_TOKEN: "{{ chezmoi_op_service_account_token.content | default('') | b64decode | trim }}"
+      - "--source={{ chezmoi_source_dir }}"
+      - status
+  register: chezmoi_status
   changed_when: false
-  failed_when: false
   check_mode: false
+  no_log: true
 
-- name: Show what chezmoi would change
-  when: chezmoi_diff.stdout | length > 0
+- name: Show changed chezmoi paths
   ansible.builtin.debug:
-    msg: "{{ chezmoi_diff.stdout }}"
+    msg: "{{ chezmoi_status.stdout_lines }}"
+  when: chezmoi_status.stdout | length > 0
 
 - name: Apply chezmoi dotfiles
   ansible.builtin.command:
     argv:
       - "{{ chezmoi_bin }}"
-      - "--source={{ chezmoi_effective_source_dir }}"
+      - "--source={{ chezmoi_source_dir }}"
       - apply
       - --force
-  register: chezmoi_apply
-  environment:
-    OP_SERVICE_ACCOUNT_TOKEN: "{{ chezmoi_op_service_account_token.content | default('') | b64decode | trim }}"
-  changed_when: chezmoi_diff.stdout | length > 0
+  changed_when: true
+  no_log: true
   when:
     - not ansible_check_mode
-    - chezmoi_diff.stdout | length > 0
+    - chezmoi_status.stdout | length > 0

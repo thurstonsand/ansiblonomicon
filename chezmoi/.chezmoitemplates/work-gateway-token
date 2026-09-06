@@ -1,1 +1,0 @@
-{{- template "op-secret" list "ANTHROPIC_AUTH_TOKEN" "op://Private/xg2nzqad3xccpjrcjjtq3zc4ra/dwtkda6l2u3vqthl6nal54e4ly" "EU7WV" -}}

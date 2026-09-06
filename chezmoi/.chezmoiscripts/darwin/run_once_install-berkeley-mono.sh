@@ -5,12 +5,8 @@
 set -euo pipefail
 
 FONT_DIR="$HOME/Library/Fonts"
-OP_ACCOUNT_PREFIX="PQ7X5"
-
-resolve_op_account() {
-  op account list --format=json \
-    | jq -re --arg prefix "$OP_ACCOUNT_PREFIX" '[.[] | select(.account_uuid | startswith($prefix))][0].account_uuid'
-}
+OP_ACCOUNT="PQ7X5W7V6FDADHPFFEO62TLFEM"
+unset OP_SERVICE_ACCOUNT_TOKEN OP_CONNECT_HOST OP_CONNECT_TOKEN
 
 # Check if font files are already present
 EXPECTED_FILES=(
@@ -33,7 +29,6 @@ if [[ $MISSING -eq 0 ]]; then
 fi
 
 # Verify 1Password item exists before attempting download
-OP_ACCOUNT=$(resolve_op_account)
 if ! op item get "Berkeley Mono Font" --vault Private --account "$OP_ACCOUNT" > /dev/null 2>&1; then
   echo "Warning: 1Password item 'Private/Berkeley Mono Font' not available — skipping font install."
   exit 0

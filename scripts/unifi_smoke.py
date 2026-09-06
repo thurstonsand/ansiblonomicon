@@ -528,8 +528,8 @@ def controller_base_url(value: str) -> str:
 
 def main() -> int:
     try:
-        username = required_env("TF_VAR_unifi_username")
-        password = required_env("TF_VAR_unifi_password")
+        username = required_env("UNIFI_USERNAME")
+        password = required_env("UNIFI_PASSWORD")
         # TF_VAR_ names are lowercase by OpenTofu convention; the default matches
         # terraform/unifi/variables.tf so an exported override still wins.
         base_url = controller_base_url(

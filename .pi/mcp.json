@@ -6,13 +6,13 @@
     "cloudflare-api": {
       "url": "https://mcp.cloudflare.com/mcp",
       "auth": "bearer",
-      "bearerTokenEnv": "CLOUDFLARE_API_TOKEN",
+      "bearerToken": "!\"$HOME/.local/bin/fnox-host\" get CLOUDFLARE_API_TOKEN",
       "directTools": true
     },
     "home-assistant": {
       "url": "https://ha.thurstons.house/api/mcp",
       "auth": "bearer",
-      "bearerTokenEnv": "HOMEPAGE_HOMEASSISTANT_API_KEY"
+      "bearerToken": "!\"$HOME/.local/bin/fnox-host\" get HOMEPAGE_HOMEASSISTANT_API_KEY"
     }
   }
 }

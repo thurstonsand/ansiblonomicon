@@ -30,7 +30,8 @@ restic_backup_bin_dir: /usr/local/bin
 restic_backup_zfs_bin: /usr/sbin/zfs
 restic_backup_staging_root: /run/restic-backup/src
 
-# 1Password references, resolved at run time by the service account token that
-# systemd hands the unit as a credential.
-restic_backup_op_token_path: "{{ ansible_facts['env']['HOME'] }}/.config/op-service-account/token"
-restic_backup_op_b2_item: op://agent/Backblaze
+restic_backup_credentials_dir: /etc/restic-backup
+restic_backup_repository: "b2:{{ lookup('env', 'RESTIC_B2_BUCKET') }}:{{ restic_backup_repository_path }}"
+restic_backup_account_id: "{{ lookup('env', 'RESTIC_B2_KEY_ID') }}"
+restic_backup_account_key: "{{ lookup('env', 'RESTIC_B2_APPLICATION_KEY') }}"
+restic_backup_password: "{{ lookup('env', 'RESTIC_REPOSITORY_PASSWORD') }}"

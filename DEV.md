@@ -7,7 +7,7 @@
 ./scripts/bootstrap.sh --ignore-certs   # behind a TLS-intercepting proxy
 ```
 
-`mise trust` does the rest — `uv sync --dev`, venv activation, `ANSIBLE_CONFIG` and `SUDO_ASKPASS`, the commit hook, Pi extension deps, and secret resolution. Sudo is answered from 1Password; no manual password entry.
+`mise trust` does the rest — `uv sync --dev`, venv activation, `ANSIBLE_CONFIG` and `SUDO_ASKPASS`, the commit hook, Pi extension deps. Reconciliation resolves credentials through fnox before starting consumers.
 
 ## Working here
 
@@ -16,7 +16,7 @@
 Every host reconciles the same way:
 
 ```sh
-mise <host>                # laptop | truenas | udmp | pod042
+mise <host>                # laptop | udmp | pod042
 mise <host> --check        # dry run
 mise <host> -t chezmoi
 mise reconcile             # whichever of those this machine's hostname selects
@@ -47,11 +47,11 @@ A capability lives in `bootstrap/targets/<host>/mise.<capability>.toml`; the tar
 
 ### Secrets
 
-Add an `op://` SecretRef to `.secrets.jsonc`, then `mise run secrets:init`. Consumers read it three ways: Ansible through `lookup('env', 'NAME')`, Terraform through a `TF_VAR_*` variable, chezmoi through an `op-secret` wrapper template in `.chezmoitemplates/`.
+Declare shared `op://` references in `fnox.toml` and host-only references in `fnox.<host>.toml`.
 
 ### Retiring managed state
 
-Deleting a file from the repo does not remove it from a host. Declare the retirement instead: `.ansibleremove` for Ansible-managed paths, consumed by the macOS and pod042 playbooks; `.chezmoiremove` for dotfiles, consumed wherever chezmoi applies. TrueNAS and UDMP require manual cleanup.
+Deleting a file from the repo does not remove it from a host. Declare the retirement instead: `.ansibleremove` for Ansible-managed paths, consumed by the macOS playbooks; `.chezmoiremove` for dotfiles, consumed wherever chezmoi applies. Native bootstrap owns pod042 and UDMP removals through `state = "absent"`.
 
 ## macOS
 
@@ -65,16 +65,9 @@ Homebrew formulae, casks, and Mac App Store apps come from `ansible/Brewfile`, w
 
 The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json` files are masked with `skip-worktree` there. Use `mise run pull`, and be careful with `merge`, `rebase`, or `stash pop` on work. Confirm a version exists on the mirror before bumping a dependency.
 
-## TrueNAS
+## pod042
 
-One playbook, two declaration sites: stacks are templated under `ansible/stacks/` and rendered by the `docker_stack` role; everything else — apps, and all of `local.truenas` — is declared in `inventory/targets/group_vars/truenas.yml`.
-
-```sh
-mise run reconcile:tags truenas  # then reconcile just the stack you touched
-mise truenas -t <tag>
-```
-
-Compose files and container data live apart on disk — `/mnt/performance/docker/stacks/{stack}/compose.yaml` versus `/mnt/performance/docker/{stack}/{container}/config`. Host addresses, ports, domains, and the macvlan network tiers are all declared in `group_vars/truenas.yml` under `lan`; take values from there rather than hardcoding.
+The physical Debian NAS, declared in `bootstrap/targets/pod042/`.
 
 ## UDMP
 

@@ -7,8 +7,8 @@
   api_base: https://aig.thurstons.house/v1
   api_key_name: llm-api-key
   headers:
-    CF-Access-Client-Id: {{ template "cf-access-client-id" $ }}
-    CF-Access-Client-Secret: {{ template "cf-access-client-secret" $ }}
+    CF-Access-Client-Id: {{ secret "CF_ACCESS_CLIENT_ID" }}
+    CF-Access-Client-Secret: {{ secret "CF_ACCESS_CLIENT_SECRET" }}
 {{- end }}
 {{- end }}
 {{- range $key, $model := .models.openai }}
@@ -19,8 +19,8 @@
   api_base: https://aig.thurstons.house/v1
   api_key_name: llm-api-key
   headers:
-    CF-Access-Client-Id: {{ template "cf-access-client-id" $ }}
-    CF-Access-Client-Secret: {{ template "cf-access-client-secret" $ }}
+    CF-Access-Client-Id: {{ secret "CF_ACCESS_CLIENT_ID" }}
+    CF-Access-Client-Secret: {{ secret "CF_ACCESS_CLIENT_SECRET" }}
 {{- end }}
 {{- $variants := index $model "variants" }}
 {{- if $variants }}
@@ -31,8 +31,8 @@
   api_base: https://aig.thurstons.house/v1
   api_key_name: llm-api-key
   headers:
-    CF-Access-Client-Id: {{ template "cf-access-client-id" $ }}
-    CF-Access-Client-Secret: {{ template "cf-access-client-secret" $ }}
+    CF-Access-Client-Id: {{ secret "CF_ACCESS_CLIENT_ID" }}
+    CF-Access-Client-Secret: {{ secret "CF_ACCESS_CLIENT_SECRET" }}
 {{- end }}
 {{- end }}
 {{- end }}
@@ -45,7 +45,7 @@
   api_base: https://aig.thurstons.house/v1
   api_key_name: llm-api-key
   headers:
-    CF-Access-Client-Id: {{ template "cf-access-client-id" $ }}
-    CF-Access-Client-Secret: {{ template "cf-access-client-secret" $ }}
+    CF-Access-Client-Id: {{ secret "CF_ACCESS_CLIENT_ID" }}
+    CF-Access-Client-Secret: {{ secret "CF_ACCESS_CLIENT_SECRET" }}
 {{- end }}
 {{- end }}

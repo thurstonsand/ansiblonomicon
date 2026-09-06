@@ -26,7 +26,7 @@ On macOS, `dark-notify` acts as the source of truth for terminal theme state. An
 
 ### Retiring managed paths
 
-Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, work macOS, pod042, and OpenClaw run removes listed files, symlinks, or directories idempotently, including tagged runs. Relative and `~/` entries resolve beneath the managed user's home; absolute paths are used verbatim. TrueNAS and UDMP do not consume this manifest.
+Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work macOS run removes listed files, symlinks, or directories idempotently, including tagged runs. Relative and `~/` entries resolve beneath the managed user's home; absolute paths are used verbatim. Native pod042 and UDMP resources use `state = "absent"` instead.
 
 ## Structure
 
@@ -34,13 +34,12 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 ├── .ansibleremove             # Retired paths removed from user-managed hosts
 ├── ansible/
 │   ├── ansible.cfg          # Ansible configuration
-│   ├── inventory/           # Host definitions (localhost, truenas, openclaw)
+│   ├── inventory/           # Host definitions
 │   ├── config.yml           # Shared configuration variables
 │   ├── agent-harness.config.yml # Agent skill catalogue + host capability profiles
 │   ├── darwin.config.yml    # macOS-specific config
 │   ├── work.config.yml     # Work macOS-specific config
-│   ├── openclaw.config.yml  # Retained OpenClaw reference config
-│   ├── pod042.config.yml    # pod042 Debian host config (the NAS successor)
+│   ├── pod042.config.yml    # Retained pod042 service migration declarations
 │   ├── archlinux.config.yml # Arch Linux-specific config
 │   ├── Brewfile             # Homebrew packages, casks, and MAS apps
 │   ├── requirements.yml     # Ansible Galaxy dependencies
@@ -51,9 +50,6 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 │   └── playbooks/
 │       ├── macos.yml        # macOS playbook
 │       ├── work.yml         # Work macOS playbook
-│       ├── openclaw.yml     # Retained OpenClaw reference playbook
-│       ├── pod042.yml       # retired pod042 migration evidence
-│       └── truenas.yml      # TrueNAS playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
 ├── agents/                   # Reusable AI agent bundles (source for agent_harness role)
@@ -72,7 +68,6 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal macOS, wo
 - `mise laptop` — Apply macOS Ansible playbook (auto-detects work vs personal)
 - `mise laptop --check` — Dry-run mode (shows what would change without applying)
 - `mise pod042 [capability]` — Reconcile pod042 locally or over SSH (`--check` previews changes)
-- `mise truenas` — Apply TrueNAS Ansible playbook
 - `mise udmp` — Reconcile UDM Pro host state with native mise remote bootstrap
 - `mise udmp --check` — Preview UDM Pro host-state changes
 - `mise run reconcile:tags [playbook]` — List the `--tags` a playbook offers (defaults to this machine's own)
@@ -101,12 +96,11 @@ See [nixonomicon/docs/designs/nix-to-chezmoi-ansible-migration.md](https://githu
 
 SSH aliases are configured via chezmoi (`~/.ssh/config`). Existing infrastructure aliases use `ssh-smart-proxy` for LAN access with Cloudflare Access fallback; pod042 is LAN-only until its Amp remote terminal is configured.
 
-| Target                                            | Alias         | Description                                 |
-| ------------------------------------------------- | ------------- | ------------------------------------------- |
-| `192.168.1.68:22` / `truenas-ssh.thurstons.house` | `ssh truenas` | Retired TrueNAS address                     |
-| `10.10.10.187:22`                                 | `ssh pod042`  | Debian 13 NAS                               |
-| `192.168.1.89:22222` / `haos-ssh.thurstons.house` | `ssh haos`    | Home Assistant OS                           |
-| `192.168.1.1:22` / `udmp-ssh.thurstons.house`     | `ssh udmp`    | UniFi Dream Machine Pro                     |
+| Target                                            | Alias        | Description             |
+| ------------------------------------------------- | ------------ | ----------------------- |
+| `10.10.10.187:22`                                 | `ssh pod042` | Debian 13 NAS           |
+| `192.168.1.89:22222` / `haos-ssh.thurstons.house` | `ssh haos`   | Home Assistant OS       |
+| `192.168.1.1:22` / `udmp-ssh.thurstons.house`     | `ssh udmp`   | UniFi Dream Machine Pro |
 
 ## Platform Support
 

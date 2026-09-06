@@ -3,9 +3,8 @@ name: cloudflare-ops
 description: Inspects and manages this project's Cloudflare account. Use for DNS, Zero Trust Access, tunnels, Workers, logs, analytics, or AI Gateway operations.
 mcpServers:
   cloudflare-api:
-    url: https://mcp.cloudflare.com/mcp
-    headers:
-      Authorization: "Bearer ${CLOUDFLARE_API_TOKEN}"
+    command: /bin/sh
+    args: ["-c", 'exec "$HOME/.local/bin/mcp-credentials" cloudflare-api']
     includeTools: [search, execute]
 ---
 
@@ -18,9 +17,9 @@ Guidance for how to use the Cloudflare MCP for this project.
 - For custom metrics only, ask about **Analytics Engine** datasets **`aig_events`** and **`llms_usage`**.
 - Only use **worker tails** when you explicitly need a live stream.
 - For actual live tails, use Wrangler from the worker directory:
-  - `cd wrangler/aig && wrangler tail --format pretty`
-  - `cd wrangler/llms && wrangler tail --format pretty`
-  - `cd wrangler/hooks && wrangler tail --format pretty`
+  - `cd wrangler/aig && ../../scripts/fnox-host exec -- wrangler tail --format pretty`
+  - `cd wrangler/llms && ../../scripts/fnox-host exec -- wrangler tail --format pretty`
+  - `cd wrangler/hooks && ../../scripts/fnox-host exec -- wrangler tail --format pretty`
 
 ## Important repo facts
 

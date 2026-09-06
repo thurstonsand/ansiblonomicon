@@ -210,6 +210,7 @@ def test_check_uses_native_bootstrap_plan(monkeypatch: pytest.MonkeyPatch) -> No
         [
             "env",
             f"MISE_CEILING_PATHS={pod042_reconcile.TARGET_ROOT.parent}",
+            f"MISE_TRUSTED_CONFIG_PATHS={pod042_reconcile.TARGET_ROOT}",
             "MISE_ENV=base",
             "mise",
             "-C",

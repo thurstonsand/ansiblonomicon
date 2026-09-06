@@ -6,7 +6,7 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart={{ alerting_bin_dir }}/hc-run restic-backup -- {{ restic_backup_bin_dir }}/restic-backup backup
-LoadCredential=op-token:{{ restic_backup_op_token_path }}
+LoadCredential=repository:{{ restic_backup_credentials_dir }}/credentials
 LoadCredential=hc-ping:{{ alerting_state_dir }}/checks/restic-backup.url
 RuntimeDirectory=restic-backup
 CacheDirectory=restic-backup

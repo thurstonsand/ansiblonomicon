@@ -414,7 +414,7 @@ def test_checked_in_host_sets_with_real_fnox(
         else:
             assert child[key] == "sentinel-" + key
     assert not any(key.startswith(("OP_", "FNOX_")) for key in child)
-    counts = {"macos": 33, "work": 38, "pod042": 59, "orb": 31}
+    counts = {"macos": 28, "work": 34, "pod042": 55, "orb": 27}
     assert len(set(child) & fnox_host.declared_keys(root)) == counts[profile]
     calls = [
         json.loads(line)

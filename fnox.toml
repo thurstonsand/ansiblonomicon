@@ -28,15 +28,11 @@ SCANNERS_PASSPHRASE = { provider = "agent", value = "op://agent/3uf6msjlzhqeutxu
 CF_ACCESS_CLIENT_ID = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client id" }
 CF_ACCESS_CLIENT_SECRET = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client secret" }
 CLI_PROXY_API_KEY = { provider = "agent", value = "op://agent/vf3jsatixwtzauzoebt66xkiqe/apikey" }
-RCLONE_STORJ_ACCESS_KEY_ID = { provider = "agent", value = "op://agent/4x7rextk7rbmdxps3uft2nt5qu/access key id" }
-RCLONE_STORJ_SECRET_ACCESS_KEY = { provider = "agent", value = "op://agent/4x7rextk7rbmdxps3uft2nt5qu/secret access key" }
 PARALLEL_API_KEY = { provider = "agent", value = "op://agent/ujvwlvzywxv4z654bro2wjkaqq/credential" }
 EIGHTCTL_EMAIL = { provider = "agent", value = "op://agent/fxseiurccsgzesskccvfvihsgm/username" }
 EIGHTCTL_PASSWORD = { provider = "agent", value = "op://agent/fxseiurccsgzesskccvfvihsgm/password" }
 HARK_WEBHOOK_URL_2B = { provider = "agent", value = "op://agent/u3wmydm5i7fe3cgdxx6c7juhxq/add more/2B webhook url" }
 HOMEPAGE_HOMEASSISTANT_API_KEY = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/apikey" }
-HA_MCP_URL = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/ha-mcp/url" }
-HA_MCP_OAUTH_CLIENT_ID = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/ha-mcp/oauth client id" }
 HA_MCP_OAUTH_CLIENT_SECRET = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/ha-mcp/oauth client secret" }
 OPENCLAW_GATEWAY_TOKEN = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/gateway/gateway token" }
 OPENCLAW_HOOKS_TOKEN = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/gateway/hooks token" }

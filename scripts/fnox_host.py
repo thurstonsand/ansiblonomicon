@@ -7,6 +7,7 @@ from pathlib import Path
 import pwd
 import socket
 import stat
+import subprocess
 import sys
 import tomllib
 from typing import cast
@@ -18,6 +19,7 @@ HOST_PROFILES = {
     "pod042": "pod042",
 }
 PROFILES = ("macos", "work", "pod042", "orb")
+EXEC_PROFILE = "ANSIBLONOMICON_EXEC_PROFILE"
 TOKEN_NAME = "FNOX_HOST_OP_TOKEN"
 TOKEN_PATH = Path("/home/thurstonsand/.config/op-service-account/token")
 
@@ -148,7 +150,9 @@ def authentication_environment(
     return environment
 
 
-def child_command(command: list[str], environment: dict[str, str]) -> list[str]:
+def child_command(
+    command: list[str], environment: dict[str, str], *, profile: str | None = None
+) -> list[str]:
     if "=" in command[0]:
         raise ConfigurationError(
             "exec requires an executable, not an environment assignment"
@@ -157,7 +161,10 @@ def child_command(command: list[str], environment: dict[str, str]) -> list[str]:
     args = ["/usr/bin/env"]
     for key in scrub:
         args.extend(["-u", key])
-    args.extend(["--", *command])
+    args.append("--")
+    if profile is not None:
+        args.append(f"{EXEC_PROFILE}={profile}")
+    args.extend(command)
     return args
 
 
@@ -199,8 +206,37 @@ def build_command(
     if operation == "get":
         command.extend(["get", *arguments])
     else:
-        command.extend(["exec", "--", *child_command(arguments, environment)])
+        command.extend(
+            ["exec", "--", *child_command(arguments, environment, profile=profile)]
+        )
     return FnoxCommand(command, environment)
+
+
+def inherited_execution(profile: str, operation: str, command: list[str]) -> int:
+    declarations: dict[str, dict[str, object]] = {}
+    for path in (ROOT / "fnox.toml", ROOT / f"fnox.{profile}.toml"):
+        with path.open("rb") as source:
+            config = tomllib.load(source)
+        declarations.update(config["secrets"])
+    expected = {
+        key
+        for key, declaration in declarations.items()
+        if declaration.get("env") is not False
+    }
+    actual = declared_keys(ROOT) & os.environ.keys()
+    if actual != expected or any(not os.environ[key] for key in expected):
+        raise ConfigurationError(
+            "incomplete scoped secret environment; start a fresh authenticated launch"
+        )
+    if operation == "get":
+        if command[0] not in expected:
+            raise ConfigurationError(
+                "requested secret is not available in this process context"
+            )
+        print(os.environ[command[0]])
+        return 0
+    invocation = child_command(command, dict(os.environ), profile=profile)
+    os.execv(invocation[0], invocation)
 
 
 def main() -> int:
@@ -215,7 +251,12 @@ def main() -> int:
     execute = commands.add_parser("exec")
     execute.add_argument("command", nargs=argparse.REMAINDER)
     arguments = parser.parse_args()
-    profile = select_profile(socket.gethostname(), orb=arguments.orb)
+    context = os.environ.get(EXEC_PROFILE)
+    profile = select_profile(
+        socket.gethostname(), orb=arguments.orb or context == "orb"
+    )
+    if context is not None and context != profile:
+        raise ConfigurationError("scoped secret profile does not match this launch")
     if arguments.operation == "profile":
         print(profile)
         return 0
@@ -224,13 +265,28 @@ def main() -> int:
         command = command[1:]
     if not command:
         parser.error("exec requires a command after --")
+    if context is not None:
+        return inherited_execution(profile, arguments.operation, command)
     token = None
     if profile == "pod042":
         token = read_token(TOKEN_PATH, pwd.getpwnam("thurstonsand").pw_uid)
     elif profile == "orb":
         token = os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
+    binary = "fnox"
+    if profile == "pod042":
+        binary = "/usr/local/bin/fnox"
+    elif profile in {"macos", "work"}:
+        binary = subprocess.check_output(
+            ["mise", "-C", str(ROOT), "which", "fnox"], text=True
+        ).strip()
     invocation = build_command(
-        ROOT, profile, arguments.operation, command, dict(os.environ), token
+        ROOT,
+        profile,
+        arguments.operation,
+        command,
+        dict(os.environ),
+        token,
+        fnox=binary,
     )
     os.execvpe(invocation.argv[0], invocation.argv, invocation.environment)
 
@@ -238,7 +294,12 @@ def main() -> int:
 def entrypoint() -> None:
     try:
         code = main()
-    except (ConfigurationError, OSError, tomllib.TOMLDecodeError) as error:
+    except (
+        ConfigurationError,
+        OSError,
+        tomllib.TOMLDecodeError,
+        subprocess.CalledProcessError,
+    ) as error:
         print(f"fnox-host: {error}", file=sys.stderr)
         raise SystemExit(1) from None
     raise SystemExit(code)

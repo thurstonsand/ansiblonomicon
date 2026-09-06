@@ -7,7 +7,7 @@ Conflicts=restic-backup.service
 [Service]
 Type=oneshot
 ExecStart={{ alerting_bin_dir }}/hc-run restic-maintenance -- {{ restic_backup_bin_dir }}/restic-backup maintenance
-LoadCredential=op-token:{{ restic_backup_op_token_path }}
+LoadCredential=repository:{{ restic_backup_credentials_dir }}/credentials
 LoadCredential=hc-ping:{{ alerting_state_dir }}/checks/restic-maintenance.url
 CacheDirectory=restic-backup
 Environment=RESTIC_CACHE_DIR=/var/cache/restic-backup

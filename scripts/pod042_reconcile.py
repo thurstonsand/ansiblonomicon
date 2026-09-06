@@ -20,7 +20,8 @@ EXPECTED_HOSTNAME = "pod042"
 REMOTE_USER = "thurstonsand"
 OPERATOR_PUBLIC_KEY = TARGET_ROOT / "base" / "files" / "operator.pub"
 IDENTITY_AGENT_ENV = "POD042_SSH_IDENTITY_AGENT"
-CAPABILITIES = ("base", "storage")
+CAPABILITIES = ("base", "storage", "alerting")
+LANDING_CAPABILITIES = ("base", "storage")
 
 
 class ReconcileError(Exception):
@@ -182,11 +183,21 @@ def run_local(capability: str | None, check_mode: bool) -> None:
     command = [
         "env",
         f"MISE_CEILING_PATHS={TARGET_ROOT.parent}",
+        f"MISE_TRUSTED_CONFIG_PATHS={TARGET_ROOT}",
         f"MISE_ENV={environments}",
         "mise",
         "-C",
         str(TARGET_ROOT),
     ]
+    if "alerting" in capabilities_for(capability):
+        command = [
+            sys.executable,
+            "-B",
+            str(ROOT / "scripts/fnox-host"),
+            "exec",
+            "--",
+            *command,
+        ]
     if check_mode:
         run_command([*command, "bootstrap", "plan"])
     else:
@@ -199,7 +210,12 @@ def remote_bootstrap_command(
     check_mode: bool,
     install_mise: bool,
 ) -> list[str]:
-    environments = ",".join(capabilities_for(capability))
+    selected = (
+        LANDING_CAPABILITIES if capability is None else capabilities_for(capability)
+    )
+    if "alerting" in selected:
+        fail("alerting requires the persistent checkout and installed service token")
+    environments = ",".join(selected)
     command = [
         *isolated_mise_command(ROOT, BOOTSTRAP_ROOT),
         "bootstrap",
@@ -242,14 +258,24 @@ def run_remote(
         fail("pod042 checkout is missing; use the first-access bootstrap")
     elif branch != "main":
         fail("first bootstrap requires the workstation checkout on main")
-    run_command(
-        remote_bootstrap_command(
-            host,
-            capability,
-            check_mode,
-            install_mise or initial,
+    if initial or install_mise:
+        run_command(
+            remote_bootstrap_command(host, None, check_mode, install_mise or initial)
         )
-    )
+        if initial:
+            return
+    command = [
+        "/usr/bin/python3",
+        "-B",
+        f"{REMOTE_CHECKOUT}/scripts/pod042_reconcile.py",
+    ]
+    if capability:
+        command.append(capability)
+    if check_mode:
+        if validate_remote_checkout(host, branch) != revision:
+            fail("check requires matching revisions; reconcile the checkout first")
+        command.append("--check")
+    run_command(ssh_command(host, command))
 
 
 def build_parser() -> argparse.ArgumentParser:

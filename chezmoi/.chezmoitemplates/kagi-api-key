@@ -1,1 +1,0 @@
-{{- template "op-secret" list "KAGI_API_KEY" "op://agent/lsu7wrxh2rlobvdus3mj2uuhnq/apikey" -}}

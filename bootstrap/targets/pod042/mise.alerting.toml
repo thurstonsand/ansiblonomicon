@@ -1,0 +1,28 @@
+[bootstrap.packages]
+"apt:python3" = "latest"
+
+[bootstrap.secrets]
+hark_webhook_url = "HARK_WEBHOOK_URL_POD042"
+
+[bootstrap.directories."/etc/alerting"]
+owner = "root"
+group = "root"
+mode = "0700"
+
+[bootstrap.files."/etc/alerting/hark-webhook-url"]
+content = '{{ secret(name="hark_webhook_url") }}'
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.directories."/usr/local/bin"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/usr/local/bin/storage-alert"]
+source = "alerting/storage-alert.py"
+owner = "root"
+group = "root"
+mode = "0755"

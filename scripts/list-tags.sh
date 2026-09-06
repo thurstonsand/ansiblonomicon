@@ -7,10 +7,15 @@ playbook="${1:-}"
 
 if [[ -z "$playbook" ]]; then
   case "$(hostname -s)" in
-    ML-*) playbook=work ;;
+    ML-DFC6YK6VJQ) playbook=work ;;
     pod042) playbook=pod042 ;;
-    *) playbook=macos ;;
+    Thurstons-MacBook-Pro) playbook=macos ;;
+    *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
   esac
+fi
+
+if [[ "$playbook" == pod042 ]]; then
+  exec python3 -B -c 'import sys; sys.path.insert(0, "../scripts"); from pod042_reconcile import CAPABILITIES; print("\n".join(CAPABILITIES))'
 fi
 
 if [[ ! -f "playbooks/$playbook.yml" ]]; then
@@ -26,11 +31,4 @@ else
   control=inventory/control/linux.ini
 fi
 
-declare -a inventory=()
-case "$playbook" in
-  truenas) inventory=(-i inventory/targets -i "$control") ;;
-  pod042) inventory=(-i inventory/targets/pod042.yml) ;;
-  *) inventory=(-i "$control") ;;
-esac
-
-exec ansible-playbook "${inventory[@]}" "playbooks/$playbook.yml" --list-tags
+exec ansible-playbook -i "$control" "playbooks/$playbook.yml" --list-tags

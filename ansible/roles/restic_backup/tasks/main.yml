@@ -1,4 +1,33 @@
 ---
+- name: Require resolved backup credentials before mutation
+  ansible.builtin.assert:
+    that:
+      - lookup('env', 'RESTIC_B2_BUCKET') | length > 0
+      - restic_backup_account_id | length > 0
+      - restic_backup_account_key | length > 0
+      - restic_backup_password | length > 0
+    fail_msg: Run reconciliation through fnox-host with the pod042 host set.
+  no_log: true
+
+- name: Create private backup credential directory
+  become: true
+  ansible.builtin.file:
+    path: "{{ restic_backup_credentials_dir }}"
+    state: directory
+    owner: root
+    group: root
+    mode: "0700"
+
+- name: Render retained backup credentials
+  become: true
+  ansible.builtin.template:
+    src: credentials.sh.j2
+    dest: "{{ restic_backup_credentials_dir }}/credentials"
+    owner: root
+    group: root
+    mode: "0600"
+  no_log: true
+
 - name: Install restic and its runtime dependencies
   become: true
   ansible.builtin.apt:
@@ -6,20 +35,6 @@
       - restic
       - curl
     state: present
-
-- name: Require the 1Password service account token
-  ansible.builtin.stat:
-    path: "{{ restic_backup_op_token_path }}"
-  register: restic_backup_token_file
-
-- name: Assert the service account token exists
-  ansible.builtin.assert:
-    that:
-      - restic_backup_token_file.stat.exists
-      - restic_backup_token_file.stat.size | int > 0
-    fail_msg: >-
-      {{ restic_backup_op_token_path }} is missing; run the op_service_account
-      role first — systemd hands that token to the backup units as a credential.
 
 - name: Register Healthchecks check for the backup job
   ansible.builtin.include_role:

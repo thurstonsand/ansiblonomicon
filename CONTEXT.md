@@ -13,7 +13,7 @@
 - **`local.truenas`**: The in-repo Ansible collection that speaks to TrueNAS middleware — VMs, datasets, shares, apps, scrub and SMART schedules.
 - **UniFi provider fork**: `thurstonsand/terraform-provider-unifi` that supplies controller fields absent upstream. Its release branch stays rebased on upstream, publishes multi-platform GitHub Releases, and enters OpenTofu through ansiblonomicon's verified filesystem-mirror installer.
 - **Chezmoi source**: The `chezmoi/` tree in this repo.
-- **SecretRef**: An `op://vault/item/field` pointer in `.secrets.jsonc`. The committed form of a secret; the value itself exists only in the uncommitted `.env` by `mise run secrets:init`.
+- **SecretRef**: An `op://vault/item/field` pointer in `fnox.toml` or `fnox.<host>.toml`. Fnox resolves one host set for a consumer process.
 - **Agent harness**: A coding agent runtime — Pi, Claude Code, Amp, Codex, OpenCode, Gemini. Each has its own config shape; the `agent_harness` role reconciles one declaration across all of them.
 - **Pi**: My favorite AI agent harness. Extends through TypeScript **extensions** loaded straight from source, plus **packages** pulled from separate repos.
 - **Amp**: My other favorite AI agent harness. Extends through TypeScript **plugins** (different from **Agent plugins**).

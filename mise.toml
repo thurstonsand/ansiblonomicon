@@ -13,6 +13,7 @@ stylua = "2.5.2"
 opentofu = "1.12.6"
 hk = "1.56.1"
 fnox = "latest"
+"npm:mcp-remote" = "latest"
 
 [env]
 _.python.venv = { path = ".venv", create = true }
@@ -26,7 +27,6 @@ _.python.venv = { path = ".venv", create = true }
 UV_PYTHON = { value = "{{ tools.python.path }}/bin/python", tools = true }
 ANSIBLE_CONFIG = "{{config_root}}/ansible/ansible.cfg"
 SUDO_ASKPASS = "{{config_root}}/ansible/sudo-askpass.sh"
-_.file = ".env"
 
 [hooks]
 enter = "mise run --quiet bootstrap"
@@ -42,24 +42,6 @@ run = "uv sync --dev"
 # venv during env resolution, and the fresh mtime invalidates the cache.
 sources = ["pyproject.toml", "uv.lock", ".venv/pyvenv.cfg"]
 outputs = { auto = true }
-quiet = true
-
-# No sources/outputs: mise's output globs do not match dotfiles, so naming .env
-# there leaves the task permanently stale. Two stats are cheaper than the wrong
-# answer, and this way a deleted .env comes back.
-[tasks."bootstrap:secrets"]
-description = "Regenerate the .env secrets cache from .secrets.jsonc"
-run = '''
-if [ ! -f .env ] || [ .secrets.jsonc -nt .env ]; then
-  uv run scripts/init-secrets.py
-  # mise resolves `_.file = ".env"` before it runs the enter hook, so the process
-  # that triggers this write never sees the values it just generated. An
-  # interactive shell self-heals at the next prompt; a one-shot reconcile does
-  # not, and reads empty credentials instead of failing.
-  echo "mise: wrote .env; these secrets are NOT in the current environment." >&2
-  echo "mise: start a new shell or rerun the command to pick them up." >&2
-fi
-'''
 quiet = true
 
 [tasks."bootstrap:pi-ext"]
@@ -135,11 +117,12 @@ flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 '''
 run = '''
 case "$(hostname -s)" in
-  ML-*)   set -- -i inventory/control/macos.ini playbooks/work.yml ;;
-  pod042) set -- -i inventory/targets/pod042.yml playbooks/pod042.yml ;;
-  *)      set -- -i inventory/control/macos.ini playbooks/macos.yml ;;
+  ML-DFC6YK6VJQ) set -- -i inventory/control/macos.ini playbooks/work.yml ;;
+  Thurstons-MacBook-Pro) set -- -i inventory/control/macos.ini playbooks/macos.yml ;;
+  pod042) exec python3 ../scripts/pod042_reconcile.py ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
+  *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
 esac
-ansible-playbook "$@" --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+../scripts/fnox-host exec -- ansible-playbook "$@" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
 '''
 
 [tasks."reconcile:laptop"]
@@ -152,26 +135,11 @@ flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 '''
 run = '''
 case "$(hostname -s)" in
-  ML-*) playbook=work.yml ;;
-  *)    playbook=macos.yml ;;
+  ML-DFC6YK6VJQ) playbook=work.yml ;;
+  Thurstons-MacBook-Pro) playbook=macos.yml ;;
+  *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
-'''
-
-[tasks."reconcile:truenas"]
-description = "Reconcile truenas, the vault (storage, media, and its stacks)"
-alias = "truenas"
-dir = "ansible"
-usage = '''
-flag "-c --check" help="Dry-run mode (no changes made)"
-flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
-'''
-run = '''
-case "$(uname)" in
-  Darwin) ctrl=inventory/control/macos.ini ;;
-  *)      ctrl=inventory/control/linux.ini ;;
-esac
-ansible-playbook -i inventory/targets -i "$ctrl" playbooks/truenas.yml --diff ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+../scripts/fnox-host exec -- ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
 '''
 
 [tasks."reconcile:udmp"]
@@ -181,7 +149,7 @@ usage = '''
 flag "-c --check" help="Dry-run mode (no changes made)"
 flag "--update-mise" help="Install this machine's mise version on the UDM Pro"
 '''
-run = "mise -C bootstrap bootstrap remote udmp --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/usr/local/bin/mise}"
+run = "./scripts/fnox-host exec -- mise -C bootstrap bootstrap remote udmp --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/usr/local/bin/mise}"
 
 [tasks."pod042:first-access"]
 description = "Turn a fresh password-accessible Debian install into the pod042 landing zone"
@@ -231,12 +199,12 @@ run = "./scripts/list-tags.sh ${usage_playbook:-}"
 [tasks."edge:init"]
 description = "Initialize the Cloudflare OpenTofu working directory"
 dir = "terraform/cloudflare"
-run = "tofu init"
+run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" init'
 
 [tasks."edge:plan"]
 description = "Plan the Cloudflare OpenTofu changes"
 dir = "terraform/cloudflare"
-run = "tofu plan"
+run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" plan'
 
 [tasks."edge:apply"]
 description = "Apply the Cloudflare OpenTofu changes"
@@ -244,7 +212,7 @@ dir = "terraform/cloudflare"
 usage = '''
 flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
 '''
-run = "tofu apply ${usage_yes:+-auto-approve}"
+run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" apply ${usage_yes:+-auto-approve}'
 
 # ---------------------------------------------------------------------------
 # UniFi
@@ -258,12 +226,12 @@ run = "uv run scripts/install_unifi_provider.py"
 description = "Initialize the UniFi OpenTofu working directory"
 depends = ["unifi:provider:install"]
 dir = "terraform/unifi"
-run = "tofu init"
+run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" init'
 
 [tasks."unifi:plan"]
 description = "Plan the UniFi OpenTofu changes"
 dir = "terraform/unifi"
-run = "tofu plan"
+run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" plan'
 
 [tasks."unifi:apply"]
 description = "Apply the UniFi OpenTofu changes"
@@ -271,11 +239,11 @@ dir = "terraform/unifi"
 usage = '''
 flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
 '''
-run = "tofu apply ${usage_yes:+-auto-approve}"
+run = '"{{config_root}}/scripts/fnox-host" exec -- python3 "{{config_root}}/scripts/tofu.py" apply ${usage_yes:+-auto-approve}'
 
 [tasks."unifi:smoke"]
 description = "Read-only smoke checks for the WAS-110 WAN path"
-run = "uv run scripts/unifi_smoke.py"
+run = "./scripts/fnox-host exec -- uv run scripts/unifi_smoke.py"
 
 # ---------------------------------------------------------------------------
 # Edge deployables
@@ -290,19 +258,19 @@ description = "Deploy the aig Worker, managing its secrets"
 usage = '''
 flag "-f --force-secret" help="Update secrets even if they exist"
 '''
-run = "uv run scripts/aig_deploy.py ${usage_force_secret:+--force-secret}"
+run = "./scripts/fnox-host exec -- uv run scripts/aig_deploy.py ${usage_force_secret:+--force-secret}"
 
 [tasks."edge:deploy:hooks"]
 description = "Deploy the hooks Worker, managing its secrets"
 usage = '''
 flag "-f --force-secret" help="Update secrets even if they exist"
 '''
-run = "uv run scripts/hooks_deploy.py ${usage_force_secret:+--force-secret}"
+run = "./scripts/fnox-host exec -- uv run scripts/hooks_deploy.py ${usage_force_secret:+--force-secret}"
 
 [tasks."edge:deploy:tesla"]
 description = "Deploy the tesla Cloudflare Pages site"
 dir = "cloudflare-pages/tesla"
-run = "wrangler pages deploy"
+run = '"{{config_root}}/scripts/fnox-host" exec -- wrangler pages deploy'
 
 # ---------------------------------------------------------------------------
 # Checks: component first, verb second. `check` never mutates; `fix` may.
@@ -416,9 +384,13 @@ run = "./scripts/session-recovery-lint.sh --format"
 # Upkeep
 # ---------------------------------------------------------------------------
 
-[tasks."secrets:init"]
-description = "Force-regenerate .env and worker .dev.vars from 1Password"
-run = ["rm -f .env", "uv run scripts/init-secrets.py"]
+[tasks."secrets:check"]
+description = "Resolve this host's declared secrets without printing values"
+run = "./scripts/fnox-host exec -- true"
+
+[tasks."secrets:retire"]
+description = "Remove this checkout's obsolete secret cache files"
+run = "rm -f -- .env wrangler/aig/.dev.vars wrangler/hooks/.dev.vars"
 
 [tasks."deps:update"]
 description = "Update every tracked lockfile (python + typescript)"
@@ -483,3 +455,11 @@ else
   chezmoi re-add --dry-run
 fi
 '''
+
+[tasks."edge:dev:aig"]
+description = "Run the AIG Worker locally with fnox secrets"
+run = "./scripts/fnox-host exec -- uv run scripts/worker_dev.py aig --port 8787"
+
+[tasks."edge:dev:hooks"]
+description = "Run the hooks Worker locally with fnox secrets"
+run = "./scripts/fnox-host exec -- uv run scripts/worker_dev.py hooks --port 8788"

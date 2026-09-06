@@ -1,1 +1,0 @@
-{{- template "op-secret" list "PARCEL_API_KEY" "op://agent/p6jb7zrrk7ypz53uhylvtxgk6u/api key" -}}

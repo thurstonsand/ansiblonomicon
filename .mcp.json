@@ -2,15 +2,16 @@
   "mcpServers": {
     "cloudflare-api": {
       "type": "http",
-      "url": "https://mcp.cloudflare.com/mcp"
+      "url": "https://mcp.cloudflare.com/mcp",
+      "headersHelper": "\"$HOME/.local/bin/mcp-credentials\" cloudflare-headers"
     },
     "ha-mcp": {
       "type": "http",
-      "url": "${HA_MCP_URL}",
+      "url": "https://fdsnaiutiizykhbtju3uhpmumkqhtmmi.ui.nabu.casa/api/webhook/mcp_f141049789c73e0737d49d93be07428b",
       "auth": "oauth",
       "oauth": {
-        "clientId": "${HA_MCP_OAUTH_CLIENT_ID}",
-        "clientSecret": "${HA_MCP_OAUTH_CLIENT_SECRET}"
+        "clientId": "hamcp-048465ed8f4940f50c891bfa3015792a",
+        "clientSecret": "!\"$HOME/.local/bin/fnox-host\" get HA_MCP_OAUTH_CLIENT_SECRET"
       }
     }
   }

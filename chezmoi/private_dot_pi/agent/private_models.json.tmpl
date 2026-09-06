@@ -4,7 +4,7 @@
 {{- if $isWork }}
     "{{ .work_gateway.anthropic_provider }}": {
       "baseUrl": "{{ .work_gateway.base_url }}",
-      "apiKey": "{{ template "work-gateway-token" $ }}",
+      "apiKey": "{{ secret "ANTHROPIC_AUTH_TOKEN" }}",
       "api": "anthropic-messages",
       "authHeader": true,
       "headers": {"anthropic-beta": "context-1m-2025-08-07", "User-Agent": "pi-coding-agent"},
@@ -44,7 +44,7 @@
     },
     "{{ .work_gateway.openai_provider }}": {
       "baseUrl": "{{ .work_gateway.base_url }}/v1",
-      "apiKey": "{{ template "work-gateway-token" $ }}",
+      "apiKey": "{{ secret "ANTHROPIC_AUTH_TOKEN" }}",
       "api": "openai-responses",
       "headers": {"User-Agent": "pi-coding-agent"},
       "compat": {"supportsStrictMode": true, "supportsOpenAIGrammarTools": true},

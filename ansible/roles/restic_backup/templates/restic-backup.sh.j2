@@ -30,27 +30,12 @@ die() {
   exit 1
 }
 
-# Secrets: the 1Password service account token arrives as a systemd credential;
-# everything else is read from 1Password at run time and never touches disk.
 credentials_dir="${CREDENTIALS_DIRECTORY:-}"
 [[ -n "$credentials_dir" ]] || die "no systemd credentials directory; run this through its unit"
-OP_SERVICE_ACCOUNT_TOKEN="$(tr -d '\r\n' <"${credentials_dir}/op-token")"
-export OP_SERVICE_ACCOUNT_TOKEN
-
-op_read() {
-  local value
-  value="$(/usr/bin/op read --no-newline "$1")" || die "could not read $1 from 1Password"
-  [[ -n "$value" ]] || die "$1 is empty"
-  printf '%s' "$value"
-}
-
-load_repository() {
-  RESTIC_PASSWORD="$(op_read '{{ restic_backup_op_b2_item }}/repository password')"
-  B2_ACCOUNT_ID="$(op_read '{{ restic_backup_op_b2_item }}/key id')"
-  B2_ACCOUNT_KEY="$(op_read '{{ restic_backup_op_b2_item }}/applicationKey')"
-  RESTIC_REPOSITORY="b2:$(op_read '{{ restic_backup_op_b2_item }}/bucket'):{{ restic_backup_repository_path }}"
-  export RESTIC_PASSWORD B2_ACCOUNT_ID B2_ACCOUNT_KEY RESTIC_REPOSITORY
-}
+# shellcheck source=/dev/null
+source "${credentials_dir}/repository"
+: "${RESTIC_PASSWORD:?}" "${B2_ACCOUNT_ID:?}" "${B2_ACCOUNT_KEY:?}" "${RESTIC_REPOSITORY:?}"
+export RESTIC_PASSWORD B2_ACCOUNT_ID B2_ACCOUNT_KEY RESTIC_REPOSITORY
 
 staged=()
 snapshotted=()
@@ -119,7 +104,6 @@ run_maintenance() {
   restic check
 }
 
-load_repository
 case "$mode" in
   backup) run_backup ;;
   maintenance) run_maintenance ;;

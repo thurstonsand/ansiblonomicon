@@ -75,8 +75,10 @@ if [[ -n "${SSH_CONNECTION:-}" ]]; then
   export POWERLINE_NERD_FONTS=1
 fi
 
-{{- if .aigEnabled }}
-export PARALLEL_API_KEY="{{ template "parallel-api-key" . }}"
+{{- range $agent := list "pi" "amp" "codex" "gemini" "opencode" }}
+{{ $agent }}() {
+  {{ joinPath (dir $.chezmoi.sourceDir) "scripts/fnox-host" | quote }} exec -- {{ $agent }} "$@"
+}
 {{- end }}
 {{- if eq .chezmoi.hostname "pod042" }}
 export EDITOR="nvim"

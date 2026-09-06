@@ -20,15 +20,9 @@ Library/
 {{ end }}
 
 # Agent-host files
-{{ if not (or (eq .chezmoi.hostname "clawdbot") (eq .chezmoi.hostname "openclaw")) }}
-.ssh/id_ed25519_nas
-.ssh/id_ed25519_nas.pub
-{{ end }}
 {{ if ne .chezmoi.hostname "pod042" }}
 .ssh/id_ed25519_git
 .ssh/id_ed25519_git.pub
-.ssh/id_ed25519_pod042_truenas
-.ssh/id_ed25519_pod042_truenas.pub
 {{ end }}
 
 # OpenClaw is headless; Ghostty helpers are workstation-only.
@@ -37,11 +31,9 @@ Library/
 .local/bin/ide
 {{ end }}
 
-# ideo and local OpenClaw CLI remote config are personal to this Mac.
+# ideo is personal to this Mac.
 {{ if ne .chezmoi.hostname "Thurstons-MacBook-Pro" }}
 .local/bin/ideo
-.local/libexec/openclaw-op-secret
-.openclaw/
 {{ end }}
 
 # Work-only utilities
@@ -61,7 +53,6 @@ Library/
 # Tools not installed on work Mac
 .config/opencode/
 .config/eightctl/
-.config/rclone/
 .config/amp/
 .config/gh/
 .config/hunk/
@@ -98,7 +89,6 @@ Library/
 
 # Library — exclude personal/unavailable apps
 Library/Application Support/io.datasette.llm/
-Library/Application Support/Storj/
 Library/Application Support/PrusaSlicer/
 Library/Application Support/Code - Insiders/
 Library/Application Support/Cursor/

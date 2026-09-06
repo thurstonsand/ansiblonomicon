@@ -1,6 +1,9 @@
 ---
 # Shared configuration variables
 
+cloudflare_account_id: f052696250a2530e9afce0df33177b65
+cloudflare_tunnel_id: bdf40586-2e80-4b11-8b28-669a4f92251e
+
 # User configuration
 configure_user: thurstonsand
 

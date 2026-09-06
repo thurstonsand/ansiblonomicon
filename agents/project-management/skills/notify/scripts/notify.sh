@@ -21,21 +21,21 @@ if [[ -z $body && ! -t 0 ]]; then
 fi
 [[ -n $body ]] || usage
 
-webhook="${HARK_WEBHOOK_URL_2B:-{{ lookup('env', 'HARK_WEBHOOK_URL_2B') }}}"
-[[ -n $webhook ]] ||
-  { echo "notify: no webhook url was baked in; reconcile with HARK_WEBHOOK_URL_2B resolved" >&2; exit 1; }
+webhook_url="$("$HOME/.local/bin/fnox-host" get HARK_WEBHOOK_URL_2B)" || exit 1
+[[ -n $webhook_url ]] || { echo "notify: empty webhook credential" >&2; exit 1; }
 
 payload="$(jq -nc \
   --arg body "${body:0:2000}" \
   --arg url "$tap_url" \
   '{body: $body} + (if $url == "" then {} else {url: $url} end)')"
 
-if ! curl -fsS --max-time 15 --retry 2 --retry-delay 3 \
-  -H 'Content-Type: application/json' \
-  -H "Idempotency-Key: $(date +%s)-$$" \
-  --data-binary "$payload" \
-  -o /dev/null \
-  "$webhook"; then
+# Curl reads the credential URL from stdin, never from its argument list.
+if ! printf '%s' "$webhook_url" | jq -Rrs '"url = " + tojson' |
+  curl -fs --config - --max-time 15 --retry 2 --retry-delay 3 \
+    -H 'Content-Type: application/json' \
+    -H "Idempotency-Key: $(date +%s)-$$" \
+    --data-binary "$payload" \
+    -o /dev/null; then
   echo "notify: delivery failed: ${body:0:60}" >&2
   exit 1
 fi

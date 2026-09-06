@@ -1,1 +1,0 @@
-{{- template "op-secret" list "PARALLEL_API_KEY" "op://agent/ujvwlvzywxv4z654bro2wjkaqq/credential" -}}

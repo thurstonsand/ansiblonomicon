@@ -7,5 +7,4 @@ auth_command = ""
 
 [secrets]
 HOMEBREW_SUDO_ASKPASS_PASS = { provider = "personal", value = "op://Private/Apple Macbook Login/password" }
-STORJ_UPLINK_CLI_CREDENTIAL = { provider = "agent", value = "op://agent/5f6o4iokeci4mfsebhio2ykqie/credential" }
 POD042_SERVICE_ACCOUNT_TOKEN = { provider = "personal", value = "op://agent/gvsmrehmd3icpq3c5uow7s6mh4/credential", env = false }

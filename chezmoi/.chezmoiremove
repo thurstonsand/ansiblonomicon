@@ -13,3 +13,15 @@
 # Pi 0.84.3 made /model and /thinking session-scoped, so nothing clobbers the
 # defaults this extension existed to restore.
 .pi/agent/extensions/pin-model
+
+# Retired TrueNAS SSH identities and OpenClaw client protocol.
+.ssh/id_ed25519_nas
+.ssh/id_ed25519_nas.pub
+.ssh/id_ed25519_pod042_truenas
+.ssh/id_ed25519_pod042_truenas.pub
+.ssh/known_hosts_pod042
+.local/bin/openclaw-op-secret
+.local/libexec/openclaw-op-secret
+.openclaw/openclaw.json
+.config/rclone/rclone.conf
+Library/Application Support/Storj

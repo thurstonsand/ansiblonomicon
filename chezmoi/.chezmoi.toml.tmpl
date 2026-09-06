@@ -11,12 +11,9 @@ umask = 0o22
 [diff]
   pager = "delta"
 
-{{- if eq .chezmoi.hostname "pod042" }}
-[onepassword]
-  command = {{ joinPath .chezmoi.homeDir ".local/bin/op" | quote }}
-  prompt = false
-  mode = "service"
-{{- end }}
+[secret]
+  command = {{ joinPath (dir .chezmoi.sourceDir) "scripts/fnox-host" | quote }}
+  args = ["get"]
 
 [data]
   # Machine-specific variables (OS-dependent)

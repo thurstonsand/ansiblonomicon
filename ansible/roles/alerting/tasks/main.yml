@@ -6,7 +6,7 @@
       - alerting_healthchecks_api_key | length > 0
     fail_msg: >-
       HARK_WEBHOOK_URL_POD042 and HEALTHCHECKS_API_KEY must be resolved before
-      configuring alerting. Run `mise run secrets:init`.
+      configuring alerting. Run through `scripts/fnox-host exec --` to resolve declared credentials.
   no_log: true
 
 - name: Install alerting dependencies

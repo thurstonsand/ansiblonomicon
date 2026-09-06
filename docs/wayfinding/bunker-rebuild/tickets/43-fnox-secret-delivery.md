@@ -18,13 +18,13 @@ Fresh pod042 never runs its retired Ansible playbook. Keep local/remote native d
 
 ## Completion evidence
 
-- [ ] Account for all 95 old index entries and every additional active text-secret reference. Migrate active consumers, remove dormant declarations and legacy executable paths, and leave vault items untouched.
+- [x] Account for all 95 old index entries and every additional active text-secret reference. Migrate active consumers, remove dormant declarations and legacy executable paths, and leave vault items untouched.
 - [x] Prove native root/host composition with the installed fnox binary and fake op. One effective set per host, no operation groups, no stale/global/local/sync fallback, strict missing-secret errors and explicit account routing.
 - [ ] Prove direct chezmoi generic secrets, invocation caching, skip-secrets, and documented partial-apply failure behavior. Automated reconciliation preflights credentials and never logs secret-bearing diffs.
 - [x] Prove pod042 attended token installation, rotation and failure preservation, then activate it on the physical NAS.
-- [ ] Switch mise, chezmoi, Terraform, Workers, agent/MCP launches and Orb together. Remove `.env`/`.dev.vars` loaders, cache generation and ambient secret exports; retire owned materializations without touching unrelated projects.
-- [ ] Fix root pod042 dispatch and resolve remote secrets from its guarded persistent checkout. First access remains independent of fnox identity.
-- [ ] Pass focused tests and `mise run check`, including sentinel leakage tests and effective key/provider assertions.
+- [x] Switch tracked mise, chezmoi, Terraform, Workers, agent/MCP launches and Orb consumers together. Remove `.env`/`.dev.vars` loaders, cache generation and ambient secret exports; retire owned materializations without touching unrelated projects.
+- [x] Fix root pod042 dispatch and resolve remote secrets from its guarded persistent checkout. First access remains independent of fnox identity.
+- [x] Pass focused tests and `mise run check`, including sentinel leakage tests and effective key/provider assertions.
 - [ ] Verify macos, work, Orb and pod042 separately. Work gets the one-time local-source review notice; do not claim its uncommitted consumers work until checked there.
 - [ ] Prove Hark delivery survives checkout/provider unavailability and delivery errors preserve the producer's failure. Confirm an authorized live notification.
 
@@ -34,7 +34,7 @@ Phase 1's disconnected launcher and declarations are implemented in `scripts/fno
 
 The launcher tests use fake credentials with the real installed fnox binary. They cover exact `macos`/work/pod042 selection, unknown-host rejection, explicit Orb selection, private token files, actual checked-in root/host composition, provider-token removal, stale environment cleanup, strict failure before child execution, single-key reads, isolated global/local overrides and child exit status. Fable found a validator/config mismatch and a subprocess cancellation bug; the corrected launcher accepts only the declared service-token slot and becomes fnox with `exec`. Permanent SIGINT/SIGTERM tests prove delayed graceful cleanup and exit status preservation. After the final retained-service declarations, all 35 launcher tests, the full 297-test Python suite and `mise run check` passed. Fable verified the corrections. The fake op now handles account flags before the verb; permanent tests assert actual native batches and provider routing rather than silently falling back to individual reads. These results do not establish live provider or deployment readiness.
 
-The [consumer inventory](../research/fnox-consumer-inventory.md) accounts for all 95 old entries: 67 retained, 21 retired, five canonical aliases and two ordinary identifiers. The declarations contain 69 unique remote references; the injected host sets contain 33 macos, 38 work, 59 pod042 and 31 Orb keys. Work account metadata/local-source review and the other hosts' live identity proofs remain pending.
+The [consumer inventory](../research/fnox-consumer-inventory.md) accounts for all 95 old entries: 62 retained, 24 retired, five canonical aliases and four ordinary identifiers. The declarations contain 64 unique remote references after retiring Storj clients and moving HA metadata into native MCP config; the injected host sets contain 28 macos, 34 work, 55 pod042 and 27 Orb keys. Work account metadata/local-source review and the other hosts' live identity proofs remain pending.
 
 The user confirmed Orb retains repository workflow parity, including Cloudflare, UniFi and Workers. Surviving NAS service references migrate under pod042 without activating services. Ticket 38 must remove associated credential declarations when retiring a service; TrueNAS administration/SSH and Storj-node-only references retire now with their already-retired consumers.
 
@@ -58,6 +58,14 @@ The user authorized commit and deployment to physical pod042, preferring direct 
 
 Attended service-token installation passed root/operator candidate and installed-file probes. A second invocation reported unchanged. The retained directory/file are operator-owned modes 0700/0600. Full host exec resolved all 59 declared credentials as both operator and root, with no `OP_` or `FNOX_` authority in either application child. No secret values were logged. Both `ark` and `black-box` remained ONLINE. Existing public consumers still use the legacy resolver; atomic consumer migration and independent Hark delivery remain ahead.
 
+### Consumer switch and independent alerting
+
+Tracked consumers now use fnox, including native chezmoi generic lookups, OpenTofu aliases, prevalidated Worker deploy/dev bindings and process-scoped agent launches. Removed the index/resolver/cache generator, obsolete executable host paths and shell-wide secret exports. Existing checkouts retire their own `.env` and Worker `.dev.vars` through `mise secrets:retire`. Standalone lookups remain native; nested commands validate the explicit process-context marker and complete declared set before reuse. Real macos nested execution and launch from outside the checkout passed without provider authority in children.
+
+Normal pod042 reconciliation now calls the native driver in the clean matching persistent checkout; first access still stages only secret-free base/storage resources. Full reconciliation includes native alerting. Its retained root-only credential and installed Python sender require neither provider nor checkout at delivery time. Work's local-source/account review and the external Orb launch remain attended activation requirements; their live environments are not claimed verified.
+
 ## Follow-up
 
 Ticket 34 owns storage policy and its separate implementation ticket. Healthchecks registration lands with the timers it supervises. This ticket does not enable scrubs, SMART schedules, sanoid or ZFS feature upgrades.
+
+During review, MCP credential lookup moved to connection time and notify resolves its own credential when called. Claude retains its CLI flags without a fnox launch wrapper. Storj rclone/Uplink configuration and credentials retire declaratively, along with the Uplink Brew entry. The alert sender source is `storage-alert.py`, included in Python lint/type checks.

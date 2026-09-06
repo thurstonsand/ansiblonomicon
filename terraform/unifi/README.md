@@ -64,14 +64,14 @@ Known sharp edges:
 - native Bunker may normalize VLAN 1 differently across controller versions. Conform HCL to a harmless imported representation; never apply a VLAN change merely to silence a plan.
 - `unifi_wan` owns both WAN records and the sensitive cloned MAC. The UDM's `ethernet_override` blocks own only the `eth8`/WAN and `eth9`/WAN2 assignments; they do not force port 10 speed or duplex.
 - `unifi_static_route` uses legacy routing endpoints. The imported WAS-110 route has converged without changes; keep requiring a zero-change refreshed plan before touching it.
-- provider authentication does not support 2FA. It uses the Local Access Only recovery account from `.secrets.jsonc`.
+- provider authentication does not support 2FA. It uses the Local Access Only recovery account from `fnox.toml`.
 - Network may normalize the all-AP WLAN group into an explicit ID after creation. If the provider reports an inconsistent result, verify the live WLAN and state before importing or recreating it, clear the taint only after they match, and require a zero-change plan.
 - The provider echoes controller PSKs into state after refresh. This module deliberately uses normal sensitive `passphrase` fields so plans converge; the user accepts R2-state exposure in exchange for OpenTofu ownership. State files remain excluded from Git.
 
 ## Commands
 
 ```sh
-mise run secrets:init
+mise secrets:check
 mise run unifi:provider:install
 mise run unifi:init
 mise run unifi:plan

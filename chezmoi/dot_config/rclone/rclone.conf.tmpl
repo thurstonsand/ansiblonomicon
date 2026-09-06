@@ -1,8 +1,0 @@
-[storj]
-type = s3
-provider = Storj
-access_key_id = {{ template "rclone-access-key-id" . }}
-secret_access_key = {{ template "rclone-secret-access-key" . }}
-endpoint = gateway.storjshare.io
-chunk_size = 64Mi
-disable_checksum = true

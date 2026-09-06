@@ -20,7 +20,6 @@ dev = [
   "mypy>=1.19.1",
   "json-with-comments>=1.2.10",
   "pytest>=9.0.2",
-  "python-dotenv>=1.2.1",
   "tomlkit>=0.13.2",
 ]
 
@@ -29,6 +28,12 @@ dev = [
 line-length = 88
 target-version = "py314"
 extend-exclude = [".venv", ".git", "build", "stubs"]
+
+[tool.ruff.per-file-target-version]
+"bootstrap/targets/pod042/**/*.py" = "py313"
+"scripts/fnox_host.py" = "py313"
+"scripts/pod042_reconcile.py" = "py313"
+"scripts/pod042_service_token.py" = "py313"
 
 [tool.ruff.lint]
 select = [
@@ -80,6 +85,10 @@ reportMissingImports = "error"
 reportMissingTypeStubs = "error"
 reportUnusedImport = "warning"
 reportUnusedVariable = "warning"
+
+[[tool.basedpyright.executionEnvironments]]
+root = "bootstrap/targets/pod042"
+pythonVersion = "3.13"
 
 [tool.pytest.ini_options]
 minversion = "7.0"

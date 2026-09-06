@@ -111,10 +111,6 @@ claude() {
     --plugin-dir ~/code/claude-code-plugin-sourcegraph \
     "$@"
 }
-{{- else if eq .chezmoi.hostname "openclaw" }}
-claude() {
-  command claude --dangerously-skip-permissions "$@"
-}
 {{- else }}
 claude() {
   command claude --dangerously-skip-permissions "$@"
@@ -130,9 +126,3 @@ alias bh='brew home'
 
 # Machine-local overrides (work integrations, extra aliases)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
-{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-
-# Agent CLI integrations
-alias opencode='$HOME/.opencode/bin/opencode'
-
-{{- end }}

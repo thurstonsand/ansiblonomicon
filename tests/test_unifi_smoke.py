@@ -600,13 +600,13 @@ def test_reported_output_never_carries_secrets(capsys: CaptureFixture[str]) -> N
 def test_environment_failure_names_the_variable_only(
     monkeypatch: MonkeyPatch, capsys: CaptureFixture[str]
 ) -> None:
-    monkeypatch.delenv("TF_VAR_unifi_username", raising=False)
-    monkeypatch.setenv("TF_VAR_unifi_password", PASSWORD)
+    monkeypatch.delenv("UNIFI_USERNAME", raising=False)
+    monkeypatch.setenv("UNIFI_PASSWORD", PASSWORD)
 
     assert MODULE.main() == 1
 
     captured = capsys.readouterr()
-    assert "TF_VAR_unifi_username is not set" in captured.err
+    assert "UNIFI_USERNAME is not set" in captured.err
     assert PASSWORD not in captured.err + captured.out
 
 
