@@ -1,6 +1,6 @@
 import type { ExtensionCommandContext, Theme } from "@earendil-works/pi-coding-agent";
-import type { Focusable, TUI } from "@earendil-works/pi-tui";
-import { matchesKey, visibleWidth } from "@earendil-works/pi-tui";
+import type { Focusable, TUI, TuiMouseEvent, TuiMouseEventResult } from "@earendil-works/pi-tui";
+import { matchesKey, truncateToWidth, visibleWidth } from "@earendil-works/pi-tui";
 import { cycleSummary, cycleVerbosity, formatCodexSettings } from "./command.js";
 import { shouldApplyCodexSettings } from "./request.js";
 import { type CodexSettings, loadCodexSettingsState, saveCodexSettings } from "./settings.js";
@@ -19,9 +19,20 @@ export async function showCodexPanel(ctx: ExtensionCommandContext): Promise<void
   );
 }
 
+type PanelAction = "f" | "v" | "s" | "q";
+
+interface ActionHit {
+  row: number;
+  start: number;
+  end: number;
+  action: PanelAction;
+}
+
 class CodexPanel implements Focusable {
   focused = false;
   private settings: CodexSettings;
+  private actionHits: ActionHit[] = [];
+  private pressedAction: PanelAction | undefined;
 
   constructor(
     private readonly tui: TUI,
@@ -55,7 +66,36 @@ class CodexPanel implements Focusable {
     }
   }
 
+  handleMouse(event: TuiMouseEvent): TuiMouseEventResult | undefined {
+    if (event.type === "press") {
+      const wasPressed = this.pressedAction !== undefined;
+      this.pressedAction =
+        event.button === "left"
+          ? this.actionHits.find(
+              (hit) => event.y === hit.row && event.x >= hit.start && event.x < hit.end,
+            )?.action
+          : undefined;
+      if (this.pressedAction) return { handled: true };
+      if (wasPressed) this.tui.requestRender();
+      return undefined;
+    }
+
+    if (event.button !== "left") return undefined;
+    if (event.type === "drag" && this.pressedAction) {
+      this.pressedAction = undefined;
+      return { handled: true };
+    }
+    if (event.type === "click" && this.pressedAction) {
+      const action = this.pressedAction;
+      this.pressedAction = undefined;
+      this.handleInput(action);
+      return { handled: true };
+    }
+    return undefined;
+  }
+
   render(width: number): string[] {
+    this.actionHits = [];
     const innerWidth = Math.max(1, width - 2);
     const lines: string[] = [this.theme.fg("border", `╭${"─".repeat(innerWidth)}╮`)];
 
@@ -66,17 +106,38 @@ class CodexPanel implements Focusable {
     );
     lines.push(this.renderRow(innerWidth, ""));
     lines.push(
-      this.renderActionRow(innerWidth, "f", "Fast priority", this.settings.fast ? "on" : "off"),
+      this.renderActionRow(
+        innerWidth,
+        lines.length,
+        "f",
+        "Fast priority",
+        this.settings.fast ? "on" : "off",
+      ),
     );
-    lines.push(this.renderActionRow(innerWidth, "v", "Verbosity", this.settings.verbosity));
     lines.push(
-      this.renderActionRow(innerWidth, "s", "Reasoning summary", this.settings.reasoningSummary),
+      this.renderActionRow(innerWidth, lines.length, "v", "Verbosity", this.settings.verbosity),
+    );
+    lines.push(
+      this.renderActionRow(
+        innerWidth,
+        lines.length,
+        "s",
+        "Reasoning summary",
+        this.settings.reasoningSummary,
+      ),
     );
     lines.push(this.renderRow(innerWidth, ""));
-    lines.push(this.renderRow(innerWidth, ` ${this.theme.fg("dim", "q/Esc")} close`));
+    lines.push(
+      this.renderControlRow(
+        innerWidth,
+        lines.length,
+        "q",
+        `${this.theme.fg("dim", "q/Esc")} close`,
+      ),
+    );
 
     lines.push(this.theme.fg("border", `╰${"─".repeat(innerWidth)}╯`));
-    return lines;
+    return lines.map((line) => truncateToWidth(line, width));
   }
 
   private update(settings: CodexSettings): void {
@@ -90,13 +151,34 @@ class CodexPanel implements Focusable {
     return this.renderRow(innerWidth, ` ${this.theme.bold(this.theme.fg("accent", "Codex"))}`);
   }
 
-  private renderActionRow(innerWidth: number, key: string, label: string, value: string): string {
+  private renderActionRow(
+    innerWidth: number,
+    row: number,
+    key: PanelAction,
+    label: string,
+    value: string,
+  ): string {
     const keyText = this.theme.bold(key);
     const valueText = this.theme.fg("accent", value);
-    return this.renderRow(innerWidth, ` ${keyText} ${label}: ${valueText}`);
+    return this.renderControlRow(innerWidth, row, key, `${keyText} ${label}: ${valueText}`);
+  }
+
+  private renderControlRow(
+    innerWidth: number,
+    row: number,
+    action: PanelAction,
+    text: string,
+  ): string {
+    const textWidth = visibleWidth(text);
+    if (textWidth + 1 <= innerWidth) {
+      this.actionHits.push({ row, start: 2, end: 2 + textWidth, action });
+    }
+    const content = this.pressedAction === action ? this.theme.bg("selectedBg", text) : text;
+    return this.renderRow(innerWidth, ` ${content}`);
   }
 
   private renderRow(innerWidth: number, content: string): string {
+    content = truncateToWidth(content, innerWidth);
     const pad = Math.max(0, innerWidth - visibleWidth(content));
     return `${this.theme.fg("border", "│")}${content}${" ".repeat(pad)}${this.theme.fg("border", "│")}`;
   }
