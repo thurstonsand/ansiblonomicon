@@ -1,0 +1,9 @@
+{
+  "snapshot": "black-box/agents@autosnap_pod042_prune_proof_ee08158fe0c341c29700345a7426cc5b_frequently",
+  "guid": "14028493236808597026",
+  "phase": "recovered",
+  "raw_exit": 0,
+  "wrapped_exit": 1,
+  "healthchecks_down_confirmed": true,
+  "synthetic_snapshot_removed": true
+}

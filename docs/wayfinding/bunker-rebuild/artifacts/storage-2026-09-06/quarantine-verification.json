@@ -1,0 +1,13 @@
+{
+  "preserved_datasets": 60,
+  "preserved_snapshots": 3758,
+  "active_filesystems": [
+    "ark/anypod",
+    "ark/media",
+    "black-box/agents",
+    "black-box/docker",
+    "black-box/docker/anypod",
+    "black-box/docker/plex"
+  ],
+  "volume_reservations_unchanged": true
+}

@@ -1,0 +1,17 @@
+{
+  "original_snapshot_guids_preserved": 3758,
+  "new_sanoid_snapshots": [
+    "black-box/agents@autosnap_2026-09-06_13:00:16_monthly",
+    "black-box/agents@autosnap_2026-09-06_13:00:16_daily",
+    "black-box/agents@autosnap_2026-09-06_13:00:16_hourly",
+    "black-box/docker@autosnap_2026-09-06_13:00:04_monthly",
+    "black-box/docker@autosnap_2026-09-06_13:00:04_daily",
+    "black-box/docker@autosnap_2026-09-06_13:00:04_hourly",
+    "black-box/docker/anypod@autosnap_2026-09-06_13:00:10_monthly",
+    "black-box/docker/anypod@autosnap_2026-09-06_13:00:10_daily",
+    "black-box/docker/anypod@autosnap_2026-09-06_13:00:10_hourly",
+    "black-box/docker/plex@autosnap_2026-09-06_13:00:21_monthly",
+    "black-box/docker/plex@autosnap_2026-09-06_13:00:21_daily",
+    "black-box/docker/plex@autosnap_2026-09-06_13:00:21_hourly"
+  ]
+}

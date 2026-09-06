@@ -1,0 +1,12 @@
+{
+  "overlay_refusal": true,
+  "native_boot_mounts": [
+    "ark/anypod",
+    "ark/media",
+    "black-box/agents",
+    "black-box/docker",
+    "black-box/docker/anypod",
+    "black-box/docker/plex"
+  ],
+  "shared_uid_cross_writes": true
+}

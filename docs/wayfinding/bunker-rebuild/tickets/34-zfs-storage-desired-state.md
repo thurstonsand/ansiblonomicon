@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 type: grilling
 blocked-by: [31]
 ---
@@ -30,10 +30,18 @@ Independent Hark delivery passed on physical pod042 at `4b605cd`, running from `
 
 `c253536` and `65f47ce` deployed heartbeat and scrub Healthchecks, Debian's monthly scrub timers, and staggered daily short/monthly long SMART tests. All eight drives completed real short self-tests without errors. A paused black-box scrub correctly reported failure; the restarted scrub finished cleanly in 5 minutes 51 seconds and its check recovered. An actual systemd fixture with inaccessible notification credentials preserved the producer's exit status 42. The runtime helper reads root-only scoped credentials directly because this host removes systemd's credential directory before `ExecStopPost`. Failed notification hooks cannot block or overwrite producer results. Fable reviewed the corrections.
 
-The heartbeat is up. Ark's commissioned scrub has a three-day completion grace and is temporarily paused during the bulk copy, with its original start time and 2.81 TB of issued progress preserved. Resume and verify that bookmark before closing; do not report a scrub complete from a successful start command. The host and Healthchecks schedules use America/Los_Angeles. The unrelated `truenas-pon-monitor` and `truenas-mam-update` checks remain for their later service migrations.
+The heartbeat is up. Ark's commissioned scrub has a three-day completion grace. It resumed after the bulk copy with its original start time and 2.81 TB issued-byte bookmark verified; completion remains pending. Do not report a scrub complete from a successful start command. The host and Healthchecks schedules use America/Los_Angeles. The unrelated `truenas-pon-monitor` and `truenas-mam-update` checks remain for their later service migrations.
 
 The operator explicitly authorized feature upgrades. Matching OpenZFS 2.3.9 kernel/userspace, GUID checks, clean recent scrub records and an allowlist preceded enabling `longname` and `large_microzap` on both pools. Recursive pre-feature-upgrade snapshots remain preserved. They protect data, not reversal of feature activation; rescue/import environments must support the enabled features.
 
 ## Fresh dataset rollout
 
-`9701999` declares fresh POSIX filesystems and Sanoid, with independent checks for snapshot and prune jobs. Ordinary reconciliation refuses pending migrations, and Sanoid's runtime guard refuses unverified trees. Source snapshots are held under `pre-dataset-migration-20260906T101855Z`; the preservation inventory records 3,758 snapshot GUIDs. The physical migration is in progress through the [guarded dataset procedure](../../../../bootstrap/targets/pod042/datasets/README.md). Dormant application data is preservation, not approval to launch its services.
+`9701999` declares fresh POSIX filesystems and Sanoid, with independent checks for snapshot and prune jobs. Ordinary reconciliation refuses pending migrations, and Sanoid's runtime guard refuses unverified trees. Source snapshots are held under `pre-dataset-migration-20260906T101855Z`; the preservation inventory records 3,758 snapshot GUIDs. The physical migration completed through the [guarded dataset procedure](../../../../bootstrap/targets/pod042/datasets/README.md). Dormant application data is preservation, not approval to launch its services.
+
+## Resolution
+
+Closed after direct physical implementation, which the operator authorized instead of a separate VM validation and implementation ticket. [Completion evidence](../artifacts/storage-2026-09-06/README.md) records all five copy groups verified, three SQLite integrity checks, six fresh active filesystems, and 62 quarantined datasets. All 60 original dataset GUIDs, 3,758 original snapshot GUIDs, volume sizes and reservations remain intact. Actual mount-overlay refusal, packaged mount-service rehearsal and distinct-UID media-group writes passed.
+
+Sanoid produced 12 real snapshots only on the four approved black-box filesystems. A held synthetic snapshot proved native exit-zero failure, adapter exit 1 and external Healthchecks down; releasing only its hold proved pruning and check recovery. Black-box's post-migration scrub completed cleanly in 5 minutes 41 seconds. Full reconciliation converged, and its independent check reported 74 unchanged resources with no changes or unknowns. The 310-test suite and five Sanoid tests passed; Fable found no critical closure gaps.
+
+Three qualifications remain explicit: ark's resumed scrub must actually finish cleanly before its check recovers; the final layout still needs an attended cold boot, despite passing the real mount service; and legacy reservation release needs a separate operator decision. No consumer activation, backup restoration, Work or Orb commissioning is claimed. SMB, networking, containers, service-specific identities/data authority and backup work continue in tickets 35 through 39.

@@ -1,0 +1,30 @@
+{
+  "observed_at": "2026-09-06T13:18:38.808733+00:00",
+  "checks": {
+    "pod042-sanoid": {
+      "status": "up",
+      "started": false,
+      "n_pings": 3
+    },
+    "pod042-sanoid-prune": {
+      "status": "up",
+      "started": false,
+      "n_pings": 5
+    },
+    "pod042-scrub-black-box": {
+      "status": "up",
+      "started": false,
+      "n_pings": 6
+    },
+    "pod042-heartbeat": {
+      "status": "up",
+      "started": false,
+      "n_pings": 21
+    },
+    "pod042-scrub-ark": {
+      "status": "down",
+      "started": true,
+      "n_pings": 3
+    }
+  }
+}

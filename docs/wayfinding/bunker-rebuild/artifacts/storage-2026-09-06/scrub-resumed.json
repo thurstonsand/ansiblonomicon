@@ -1,0 +1,17 @@
+{
+  "function": "SCRUB",
+  "state": "SCANNING",
+  "start_time": "1788686258",
+  "end_time": "0",
+  "to_examine": "31645878075392",
+  "examined": "9486839709696",
+  "skipped": "43151351808",
+  "processed": "0",
+  "errors": "0",
+  "bytes_per_scan": "9486839709696",
+  "pass_start": "1788686258",
+  "scrub_pause": "0",
+  "scrub_spent_paused": "6017",
+  "issued_bytes_per_scan": "2839562362880",
+  "issued": "2839562362880"
+}

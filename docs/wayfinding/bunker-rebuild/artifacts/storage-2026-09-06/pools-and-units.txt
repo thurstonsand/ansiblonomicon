@@ -1,0 +1,39 @@
+2026-09-06T06:20:15-07:00
+  pool: ark
+ state: ONLINE
+  scan: scrub in progress since Sun Sep  6 02:17:38 2026
+	8.63T / 28.8T scanned at 1.03G/s, 3.37T / 28.7T issued at 414M/s
+	0B repaired, 11.74% done, 17:49:51 to go
+config:
+
+	NAME                              STATE     READ WRITE CKSUM
+	ark                               ONLINE       0     0     0
+	  raidz1-0                        ONLINE       0     0     0
+	    wwn-0x5000cca2adcb1382-part2  ONLINE       0     0     0
+	    wwn-0x5000c500e4098f0f-part2  ONLINE       0     0     0
+	    wwn-0x5000cca2adca3c76-part2  ONLINE       0     0     0
+	    wwn-0x5000cca28ff62c7b-part2  ONLINE       0     0     0
+	spares
+	  wwn-0x5000cca2dbc14ce1-part2    AVAIL
+
+errors: No known data errors
+
+  pool: black-box
+ state: ONLINE
+  scan: scrub repaired 0B in 00:05:41 with 0 errors on Sun Sep  6 06:05:33 2026
+config:
+
+	NAME                                 STATE     READ WRITE CKSUM
+	black-box                            ONLINE       0     0     0
+	  mirror-0                           ONLINE       0     0     0
+	    nvme-eui.0025385431913a57-part2  ONLINE       0     0     0
+	    nvme-eui.00253856214128f6-part2  ONLINE       0     0     0
+
+errors: No known data errors
+ark	feature@longname	enabled
+ark	feature@large_microzap	enabled
+black-box	feature@longname	enabled
+black-box	feature@large_microzap	enabled
+  UNIT LOAD ACTIVE SUB DESCRIPTION
+
+0 loaded units listed.
