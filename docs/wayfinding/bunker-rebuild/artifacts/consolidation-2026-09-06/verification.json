@@ -1,0 +1,246 @@
+{
+  "cutover-verification": {
+    "dataset_guids_preserved": 68,
+    "prior_snapshot_guids_preserved": 3846,
+    "current_snapshot_guids": 3846,
+    "original_datasets": 60,
+    "original_snapshots": 3758,
+    "mounts": [
+      "ark/media",
+      "black-box/agents",
+      "black-box/docker"
+    ],
+    "sqlite": {
+      "anypod.db": "ok",
+      "anypod.db.backup-20260705T002712Z": "ok",
+      "anypod.db.bak_20251028": "ok"
+    },
+    "reservations_unchanged": true
+  },
+  "mount-permission-verification": {
+    "mounts": [
+      "ark/media",
+      "black-box/agents",
+      "black-box/docker"
+    ],
+    "quarantined": 65,
+    "overlay_refusal": "cannot mount '/mnt/black-box/agents': directory is not empty",
+    "hidden_mount_stubs_empty": true,
+    "packaged_zfs_mount_service": true,
+    "media_uids": [
+      62001,
+      62002
+    ],
+    "media_gid": 3000,
+    "shared_write_roots": [
+      "/mnt/ark/media",
+      "/mnt/ark/media/anypod"
+    ],
+    "xattr_alias_canonical": "on\tlocal",
+    "no_policy_drift": true,
+    "scrub": {
+      "function": "SCRUB",
+      "state": "SCANNING",
+      "start_time": "1788686258",
+      "end_time": "0",
+      "to_examine": "31645878075392",
+      "examined": "9486839709696",
+      "skipped": "43153227776",
+      "processed": "0",
+      "errors": "0",
+      "bytes_per_scan": "9486839709696",
+      "pass_start": "1788686258",
+      "scrub_pause": "0",
+      "scrub_spent_paused": "6017",
+      "issued_bytes_per_scan": "8278975397888",
+      "issued": "8278975397888"
+    }
+  },
+  "sanoid-descendant-refusal": {
+    "guard_rejected_verified_child_datasets": true,
+    "error": "Unverified dataset or unexpected descendants: black-box/docker",
+    "sanoid_not_executed": true
+  },
+  "sanoid-snapshot-verification": {
+    "before": 3846,
+    "after": 3846,
+    "added": {},
+    "snapshot_and_prune_exit": 0
+  },
+  "prune-probe": {
+    "name": "black-box/agents@autosnap_1900-01-01_00:00:00_consolidation_frequently",
+    "guid": "8996421023928380295",
+    "hold": "pod042-consolidation-prune-proof"
+  },
+  "prune-failure": {
+    "guid": "8996421023928380295",
+    "only_candidate": "black-box/agents@autosnap_1900-01-01_00:00:00_consolidation_frequently",
+    "native_exit": 0,
+    "native_warning": "cannot destroy snapshot black-box/agents@autosnap_1900-01-01_00:00:00_consolidation_frequently: it's being held. Run 'zfs holds -r black-box/agents@autosnap_1900-01-01_00:00:00_consolidation_frequently' to see holders.\ncould not remove black-box/agents@autosnap_1900-01-01_00:00:00_consolidation_frequently : 256 at /usr/sbin/sanoid line 360.\n",
+    "wrapped_exit": 1
+  },
+  "prune-recovery": {
+    "removed_only_probe_guid": "8996421023928380295",
+    "wrapped_exit": 0,
+    "preserved_snapshots": 3846,
+    "current_snapshots": 3846
+  },
+  "healthchecks-down": {
+    "pod042-sanoid-prune": {
+      "status": "down",
+      "started": false
+    },
+    "pod042-sanoid": {
+      "status": "grace",
+      "started": false
+    },
+    "pod042-heartbeat": {
+      "status": "up",
+      "started": false
+    },
+    "pod042-scrub-black-box": {
+      "status": "up",
+      "started": false
+    },
+    "pod042-scrub-ark": {
+      "status": "down",
+      "started": true
+    }
+  },
+  "healthchecks-up": {
+    "pod042-sanoid-prune": {
+      "status": "up",
+      "started": false
+    },
+    "pod042-sanoid": {
+      "status": "up",
+      "started": false
+    },
+    "pod042-heartbeat": {
+      "status": "up",
+      "started": false
+    },
+    "pod042-scrub-black-box": {
+      "status": "up",
+      "started": false
+    },
+    "pod042-scrub-ark": {
+      "status": "down",
+      "started": true
+    }
+  },
+  "copies": {
+    "anypod": {
+      "source": "black-box/docker/anypod",
+      "guid": "10201127423066540134",
+      "stage": "/mnt/black-box/docker/.pod042-consolidation-20260906-anypod",
+      "paths": 11,
+      "logical_bytes": 9863902,
+      "counters_before": {
+        "bclonesaved": 60416626688,
+        "allocated": 585879945216
+      },
+      "counters_after": {
+        "bclonesaved": 60419616768,
+        "allocated": 585879990272
+      }
+    },
+    "plex": {
+      "source": "black-box/docker/plex",
+      "guid": "14660112101209533254",
+      "stage": "/mnt/black-box/docker/.pod042-consolidation-20260906-plex",
+      "paths": 73233,
+      "logical_bytes": 38859691627,
+      "counters_before": {
+        "bclonesaved": 60419616768,
+        "allocated": 585879990272
+      },
+      "counters_after": {
+        "bclonesaved": 91873816576,
+        "allocated": 586048786432
+      }
+    },
+    "archive": {
+      "source": "ark/anypod",
+      "guid": "13068548920382062002",
+      "stage": "/mnt/ark/media/.pod042-consolidation-20260906-anypod",
+      "paths": 3190,
+      "logical_bytes": 678860290570,
+      "counters_before": {
+        "bclonesaved": 12138864330816,
+        "allocated": 31768201986048
+      },
+      "counters_after": {
+        "bclonesaved": 12814039640640,
+        "allocated": 31769067741184
+      }
+    }
+  },
+  "final": {
+    "revision": "9e8757b0b972d971bcb1925eb8920f1fe433d857",
+    "dataset_guids": 68,
+    "snapshot_guids": 3846,
+    "old_ark_stub_removed": true,
+    "archives": {
+      "archive": "ark/legacy/consolidated-20260906-anypod",
+      "anypod": "black-box/legacy/consolidated-20260906-anypod",
+      "plex": "black-box/legacy/consolidated-20260906-plex"
+    },
+    "all_original_guids_and_reservations_preserved": true,
+    "sqlite": {
+      "anypod.db": "ok",
+      "anypod.db.backup-20260705T002712Z": "ok",
+      "anypod.db.bak_20251028": "ok"
+    },
+    "consumers_inactive": true,
+    "sanoid_timer_active": true,
+    "failed_units": 0,
+    "archive_volume_nodes": 0,
+    "pools": {
+      "ark": {
+        "state": "ONLINE",
+        "pool_guid": "8619294010601504858",
+        "error_count": "0",
+        "scan_stats": {
+          "function": "SCRUB",
+          "state": "SCANNING",
+          "start_time": "1788686258",
+          "end_time": "0",
+          "to_examine": "31645878075392",
+          "examined": "9486839709696",
+          "skipped": "43153227776",
+          "processed": "0",
+          "errors": "0",
+          "bytes_per_scan": "9486839709696",
+          "pass_start": "1788686258",
+          "scrub_pause": "0",
+          "scrub_spent_paused": "6017",
+          "issued_bytes_per_scan": "8444473868288",
+          "issued": "8444473868288"
+        }
+      },
+      "black-box": {
+        "state": "ONLINE",
+        "pool_guid": "131852107186480998",
+        "error_count": "0",
+        "scan_stats": {
+          "function": "SCRUB",
+          "state": "FINISHED",
+          "start_time": "1788699592",
+          "end_time": "1788699933",
+          "to_examine": "585881853952",
+          "examined": "646300381184",
+          "skipped": "22257664",
+          "processed": "0",
+          "errors": "0",
+          "bytes_per_scan": "0",
+          "pass_start": "1788699618",
+          "scrub_pause": "0",
+          "scrub_spent_paused": "0",
+          "issued_bytes_per_scan": "585858981888",
+          "issued": "585858981888"
+        }
+      }
+    }
+  }
+}

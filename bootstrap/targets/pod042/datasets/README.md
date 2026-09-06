@@ -22,7 +22,9 @@ Do not run full reconciliation or activate Sanoid until migration verification f
 
 ## Three-dataset consolidation
 
-Stop Sanoid's timer and verify snapshot/prune jobs and all consumers are inactive. Record all current dataset and snapshot GUIDs and volume reservations, then take held recursive snapshots on both quiescent pools. Copy the three superseded filesystems into new staging directories on their destination filesystems with numeric ownership, modes, timestamps, hardlinks and xattrs preserved. Use same-pool block cloning and refuse existing destinations. Verify copies before cutover; no consumer starts during this operation.
+[Physical consolidation completed on 2026-09-06](../../../../docs/wayfinding/bunker-rebuild/artifacts/consolidation-2026-09-06/README.md), retaining all 68 dataset GUIDs and 3,846 snapshot GUIDs. The following records the guarded procedure, not a command to replay against the archived source names.
+
+Stop Sanoid's timer and verify snapshot/prune jobs and all consumers are inactive. Record all current dataset and snapshot GUIDs and volume reservations, then take held recursive snapshots on both quiescent pools. Copy the three superseded filesystems into new staging directories on their destination filesystems with numeric ownership, modes, timestamps, hardlinks and xattrs preserved. Use GNU `cp --reflink=auto` and refuse existing destinations. Cross-dataset `--reflink=always` rejected the clone ioctl on this host; the automatic path demonstrated OpenZFS block cloning through the actual allocation and cloned-block counters. Verify copies before cutover; no consumer starts during this operation.
 
 Unmount each source before renaming it, checking its GUID and the newly exposed mount stub. Docker child stubs must be empty before their paths can receive ordinary directories. Archive the sources with filesystem `zfs rename -u`, using these non-colliding names outside Sanoid's configured roots:
 

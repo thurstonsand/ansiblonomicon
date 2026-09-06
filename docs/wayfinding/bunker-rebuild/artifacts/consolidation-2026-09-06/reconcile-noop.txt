@@ -1,0 +1,47 @@
+Pseudo-terminal will not be allocated because stdin is not a terminal.
+mise bootstrap: accounts
+mise accounts: already converged
+mise bootstrap: pre-packages hooks
+mise $ env MISE_ENV=repositories mise bootstrap files apply --yes
+mise system files: already converged
+mise $ mise bootstrap packages apply --update --yes
+mise apt: 13 package(s) already installed
+mise $ mise bootstrap packages upgrade apt:smartmontools --yes
+mise $ sudo env DEBIAN_FRONTEND=noninteractive apt-get update
+Hit:1 http://security.debian.org/debian-security trixie-security InRelease
+Hit:2 http://deb.debian.org/debian trixie InRelease
+Hit:3 http://deb.debian.org/debian trixie-updates InRelease
+Hit:4 https://deb.debian.org/debian trixie-backports InRelease
+Reading package lists...
+mise $ sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --only-upgrade -- smartmontools
+Reading package lists...
+Building dependency tree...
+Reading state information...
+smartmontools is already the newest version (7.5-2~bpo13+1).
+0 upgraded, 0 newly installed, 0 to remove and 0 not upgraded.
+mise apt: already up to date
+mise bootstrap: system packages
+mise apt: 13 package(s) already installed
+mise $ sudo /usr/local/bin/mise --no-config --no-env --no-hooks bootstrap __inspect-system-files
+mise bootstrap: system files
+mise system files: already converged
+mise bootstrap: system services
+mise services: already converged
+mise bootstrap: repos
+mise repos: 1 repo(s) already current
+mise bootstrap: tools
+mise all tools are installed
+mise bootstrap: running `bootstrap` task
+[bootstrap] $ base/scripts/install-system-mise
+[bootstrap] $ sudo -H env MISE_DATA_DIR=/opt/mise MISE_GLOBAL_CONFIG_FILE=/etc/…
+mise all tools are installed
+[bootstrap] $ sudo -H env MISE_DATA_DIR=/opt/mise MISE_GLOBAL_CONFIG_FILE=/etc/…
+mise WARN  newer fnox release 1.35.1 (released 2026-09-05, eligible 2026-09-06 12:24 PDT) ignored by minimum_release_age (24h); latest eligible release is 1.35.0
+mise All tools are up to date
+[bootstrap] $ for tool in fnox op; do
+mise bootstrap: final hooks
+mise $ sudo -n /usr/bin/python3 maintenance/zed/pool-policy.py --apply
+mise $ sudo -n systemctl daemon-reload
+mise $ sudo -n /usr/bin/python3 datasets/reconcile.py apply
+Dataset policy apply: 3 active, 65 quarantined
+mise $ sudo -n systemctl daemon-reload

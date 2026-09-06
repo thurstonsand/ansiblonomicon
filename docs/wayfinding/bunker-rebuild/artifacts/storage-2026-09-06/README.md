@@ -2,7 +2,7 @@
 
 Verified on Debian 13 pod042 at deployed revision `42cbcca`, after the operator authorized direct physical implementation. No retired Ansible playbook ran, no application consumer was activated, and no original dataset or snapshot was destroyed.
 
-This records the initial six-dataset commissioning. The operator subsequently approved consolidating to three active datasets; the current declaration and guarded procedure are in the [dataset README](../../../../../bootstrap/targets/pod042/datasets/README.md). Consolidation verification will be recorded separately rather than rewriting this historical evidence.
+This records the initial six-dataset commissioning. The operator subsequently approved consolidating to three active datasets; the current declaration and guarded procedure are in the [dataset README](../../../../../bootstrap/targets/pod042/datasets/README.md). [Consolidation verification](../consolidation-2026-09-06/README.md) records the completed three-dataset cutover separately rather than rewriting this historical evidence.
 
 ## Preservation and fresh layout
 

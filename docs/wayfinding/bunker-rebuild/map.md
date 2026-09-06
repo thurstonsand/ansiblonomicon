@@ -50,7 +50,7 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 
 - [Secrets and host identity](tickets/33-secrets-and-host-identity.md): [Design 25](../../designs/25-fnox-secret-delivery.md) replaces the repository secret cache with fnox, one effective set per `macos`, work, pod042 or Orb environment, native chezmoi secret lookup, and attended pod042 identity bootstrap. `omarchy` is the next planned target. [Ticket 43](tickets/43-fnox-secret-delivery.md) owns the atomic consumer switch and independent Hark delivery before storage maintenance.
 
-- [ZFS storage desired state](tickets/34-zfs-storage-desired-state.md): Six fresh filesystems and monitored maintenance are live through native mise. Original data, 3,758 snapshot GUIDs and legacy reservations remain preserved. Physical copy, permissions, mount refusal, Sanoid failure/recovery and no-op checks passed. Ark's resumed scrub and an attended cold boot of the final layout remain explicit follow-up.
+- [ZFS storage desired state](tickets/34-zfs-storage-desired-state.md): Three fresh filesystems and monitored maintenance are live through native mise: `ark/media`, `black-box/docker`, and `black-box/agents`. The approved consolidation preserved all 68 dataset GUIDs, 3,846 snapshot GUIDs and legacy reservations, with 65 datasets quarantined. Physical copy, permissions, mount refusal, Sanoid failure/recovery and no-op checks passed. Ark's original scrub and an attended cold boot of the final layout remain explicit follow-up.
 
 ## Not yet specified
 
