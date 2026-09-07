@@ -23,3 +23,11 @@ resource "unifi_client" "pod042_kvm" {
   local_dns_record = "pod042-kvm"
   allow_existing   = true
 }
+
+resource "unifi_client" "pod042" {
+  mac              = "a0:36:bc:28:37:41"
+  name             = "pod042"
+  fixed_ip         = "10.10.10.42"
+  local_dns_record = "pod042"
+  allow_existing   = true
+}

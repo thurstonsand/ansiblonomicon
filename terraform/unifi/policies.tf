@@ -107,3 +107,24 @@ resource "unifi_firewall_policy" "lunar_tear_to_scanners" {
     matching_target = "ANY"
   }
 }
+
+resource "unifi_firewall_policy" "lunar_tear_to_pod042_services" {
+  name                 = "Lunar Tear to pod042 services"
+  action               = "ALLOW"
+  protocol             = "tcp"
+  ip_version           = "IPV4"
+  create_allow_respond = true
+
+  source = {
+    zone_id         = unifi_firewall_zone.lunar_tear.id
+    matching_target = "ANY"
+  }
+
+  destination = {
+    zone_id            = unifi_firewall_zone.bunker.id
+    matching_target    = "IP"
+    ips                = ["10.10.10.42"]
+    port               = "80,443,32400"
+    port_matching_type = "SPECIFIC"
+  }
+}

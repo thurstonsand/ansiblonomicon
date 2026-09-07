@@ -23,6 +23,7 @@ IDENTITY_AGENT_ENV = "POD042_SSH_IDENTITY_AGENT"
 CONTROL_PATH_ENV = "POD042_SSH_CONTROL_PATH"
 CAPABILITIES = (
     "base",
+    "network",
     "repositories",
     "storage",
     "alerting",
@@ -34,7 +35,7 @@ CAPABILITIES = (
     "agent-harness",
     "remote-development",
 )
-LANDING_CAPABILITIES = ("base", "repositories", "storage")
+LANDING_CAPABILITIES = ("base", "network", "repositories", "storage")
 
 
 class ReconcileError(Exception):
@@ -177,6 +178,8 @@ def fast_forward_remote_checkout(host: str, branch: str, revision: str) -> None:
 def capabilities_for(capability: str | None) -> tuple[str, ...]:
     if capability is None:
         return CAPABILITIES
+    if capability == "network":
+        return ("network",)
     if capability == "operator":
         return ("base", "operator")
     if capability == "agent-harness":
@@ -270,6 +273,15 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                 [
                     "/usr/bin/python3",
                     str(TARGET_ROOT / "maintenance/zed/pool-policy.py"),
+                ]
+            )
+        if "network" in capabilities_for(capability):
+            run_command(
+                [
+                    "sudo",
+                    "-n",
+                    "/usr/bin/python3",
+                    str(TARGET_ROOT / "network/check.py"),
                 ]
             )
     else:

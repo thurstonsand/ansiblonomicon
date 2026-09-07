@@ -51,6 +51,8 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 - [Secrets and host identity](tickets/33-secrets-and-host-identity.md): [Design 25](../../designs/25-fnox-secret-delivery.md) replaces the repository secret cache with fnox, one effective set per `macos`, work, pod042 or Orb environment, native chezmoi secret lookup, and attended pod042 identity bootstrap. `omarchy` is the next planned target. [Ticket 43](tickets/43-fnox-secret-delivery.md) owns the atomic consumer switch and independent Hark delivery before storage maintenance.
 
 - [ZFS storage desired state](tickets/34-zfs-storage-desired-state.md): Three fresh filesystems and monitored maintenance are live through native mise: `ark/media`, `black-box/docker`, and `black-box/agents`. The approved consolidation preserved all 68 dataset GUIDs, 3,846 snapshot GUIDs and legacy reservations, with 65 datasets quarantined. Physical copy, permissions, mount refusal, Sanoid failure/recovery and no-op checks passed. Ark's original scrub and an attended cold boot of the final layout remain explicit follow-up.
+- [Operator and agent tooling](tickets/40-operator-and-agent-tooling.md): Pod042 has its native operator environment and five harness catalogues; authenticated Amp and T3 services persist independently of SSH, with this thread running through the live NAS runner.
+- [Host network desired state](tickets/36-host-network-desired-state.md): Pod042 remains an untagged Bunker DHCP client at UniFi-reserved `10.10.10.42`, with no host bridge; private Docker/Incus routing, split local/tunnel Caddy ingress, exact local service DNS, layered enforcement, and deferred laptop-controlled power testing define the final contract.
 
 ## Not yet specified
 

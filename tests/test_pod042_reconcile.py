@@ -277,7 +277,8 @@ def test_remote_base_packages_precede_accounts(
         assert packages[packages.index("--remote-env") + 1] == "base"
         assert packages[-2:] == ["--only", "packages"]
         assert (
-            accounts[accounts.index("--remote-env") + 1] == "base,repositories,storage"
+            accounts[accounts.index("--remote-env") + 1]
+            == "base,network,repositories,storage"
         )
         assert "--only" not in accounts
         # Packages do not install system mise; both remote passes stage their binary.
@@ -295,7 +296,7 @@ def test_initial_remote_bootstrap_stages_matching_mise() -> None:
     assert "--source" in command
     assert "targets/pod042" in command
     remote_env = command.index("--remote-env")
-    assert command[remote_env + 1] == "base,repositories,storage"
+    assert command[remote_env + 1] == "base,network,repositories,storage"
     assert "--remote-mise" not in command
     assert not any(argument.startswith("--install-mise") for argument in command)
     assert "ansible" not in " ".join(command)
