@@ -8,13 +8,14 @@ from typing import Any
 import httpx
 import pytest
 
-MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts/pod042_kvm.py"
-SPEC = spec_from_file_location("pod042_kvm", MODULE_PATH)
-assert SPEC is not None
-assert SPEC.loader is not None
-pod042_kvm: Any = module_from_spec(SPEC)
-sys.modules[SPEC.name] = pod042_kvm
-SPEC.loader.exec_module(pod042_kvm)
+ROOT = Path(__file__).resolve().parents[1]
+for name in ("automation_identity", "fnox_host", "pod042_kvm"):
+    spec = spec_from_file_location(name, ROOT / "scripts" / f"{name}.py")
+    assert spec is not None and spec.loader is not None
+    module = module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+pod042_kvm: Any = sys.modules["pod042_kvm"]
 
 
 class RecordingConnection:
@@ -29,6 +30,36 @@ def response(payload: object, status: int = 200) -> httpx.Response:
     return httpx.Response(
         status, json=payload, request=httpx.Request("GET", "https://kvm")
     )
+
+
+def test_op_environment_uses_pod042_service_identity(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def read_token(_path: Path, _owner: int) -> str:
+        return "agent-token"
+
+    monkeypatch.setattr(pod042_kvm.os, "getuid", lambda: 1000)
+    monkeypatch.setattr(pod042_kvm, "read_token", read_token)
+
+    environment = pod042_kvm.op_environment(
+        "pod042",
+        {
+            "PATH": "/usr/bin",
+            "OP_CONNECT_TOKEN": "desktop-token",
+            "OP_SERVICE_ACCOUNT_TOKEN": "stale-token",
+        },
+    )
+
+    assert environment == {
+        "PATH": "/usr/bin",
+        "OP_SERVICE_ACCOUNT_TOKEN": "agent-token",
+    }
+
+
+def test_op_environment_preserves_desktop_authority() -> None:
+    inherited = {"PATH": "/usr/bin", "OP_CONNECT_TOKEN": "desktop-token"}
+
+    assert pod042_kvm.op_environment("Thurstons-MacBook-Pro", inherited) is inherited
 
 
 def test_response_result_conforms_success() -> None:

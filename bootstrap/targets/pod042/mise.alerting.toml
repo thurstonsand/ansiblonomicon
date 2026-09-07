@@ -4,17 +4,19 @@
 [bootstrap.secrets]
 hark_webhook_url = "HARK_WEBHOOK_URL_POD042"
 
+[bootstrap.groups.alerting]
+
 [bootstrap.directories."/etc/alerting"]
 owner = "root"
-group = "root"
-mode = "0700"
+group = "alerting"
+mode = "0750"
 
 [bootstrap.files."/etc/alerting/hark-webhook-url"]
 content = '{{ secret(name="hark_webhook_url") }}'
 template = true
 owner = "root"
-group = "root"
-mode = "0600"
+group = "alerting"
+mode = "0640"
 
 [bootstrap.directories."/usr/local/bin"]
 owner = "root"

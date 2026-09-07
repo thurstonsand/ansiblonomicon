@@ -1,0 +1,5 @@
+Types: deb
+URIs: https://repository.netdata.cloud/repos/stable/debian/
+Suites: trixie/
+By-Hash: Yes
+Signed-By: /etc/apt/keyrings/netdata.asc

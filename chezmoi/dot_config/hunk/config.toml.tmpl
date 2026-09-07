@@ -4,4 +4,4 @@
 {{-   $mode = include $background | trim -}}
 {{- end -}}
 {{- $theme := output "uv" "run" "--script" (joinPath .chezmoi.sourceDir "../ansible/roles/terminal_theme/files/hunk_gruvbox_theme.py") $mode -}}
-{{ include (joinPath .chezmoi.sourceDir "../ansible/roles/terminal_theme/templates/hunk/config.toml.j2") | replace "{{ terminal_theme_hunk_custom_theme }}" $theme }}
+{{ include (joinPath .chezmoi.sourceDir "../ansible/roles/terminal_theme/templates/hunk/config.toml.j2") | replace "{{ terminal_theme_hunk_custom_theme }}" $theme | trim }}

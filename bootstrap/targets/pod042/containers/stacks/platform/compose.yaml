@@ -1,0 +1,47 @@
+services:
+  docker-socket-proxy:
+    image: ghcr.io/tecnativa/docker-socket-proxy:latest
+    environment:
+      CONTAINERS: "1"
+      EVENTS: "0"
+      IMAGES: "1"
+      INFO: "1"
+      PING: "1"
+      VERSION: "1"
+      POST: "0"
+    ports:
+      - "127.0.0.1:2375:2375"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:2375/_ping"]
+      interval: 5s
+      timeout: 2s
+      retries: 6
+    read_only: true
+    restart: unless-stopped
+    tmpfs:
+      - /run
+      - /tmp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+
+  watchtower:
+    image: nickfedor/watchtower:latest
+    environment:
+      TZ: America/Los_Angeles
+      WATCHTOWER_CLEANUP: "true"
+      WATCHTOWER_INCLUDE_RESTARTING: "false"
+      WATCHTOWER_NO_RESTART: "false"
+      WATCHTOWER_NO_STARTUP_MESSAGE: "true"
+      WATCHTOWER_NOTIFICATION_REPORT: "true"
+      WATCHTOWER_NOTIFICATION_URL: "${WATCHTOWER_NOTIFICATION_URL:?required}"
+      WATCHTOWER_SCHEDULE: "0 0 4 * * *"
+      WATCHTOWER_USE_COMPOSE_DEPENDS_ON: "true"
+    restart: unless-stopped
+    networks:
+      - ingress
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+networks:
+  ingress:
+    name: ingress

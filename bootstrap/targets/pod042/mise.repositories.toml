@@ -15,3 +15,27 @@ source = "storage/files/smartmontools.pref"
 owner = "root"
 group = "root"
 mode = "0644"
+
+[bootstrap.files."/etc/apt/keyrings/docker.asc"]
+source = "repositories/files/docker.asc"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/apt/sources.list.d/docker.sources"]
+source = "repositories/files/docker.sources"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/apt/keyrings/netdata.asc"]
+source = "repositories/files/netdata.asc"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/apt/sources.list.d/netdata.sources"]
+source = "repositories/files/netdata.sources"
+owner = "root"
+group = "root"
+mode = "0644"

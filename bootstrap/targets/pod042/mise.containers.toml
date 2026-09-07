@@ -1,0 +1,145 @@
+[bootstrap.hooks.pre-packages]
+run = [
+  "env MISE_ENV=repositories mise bootstrap files apply --yes",
+  "mise bootstrap packages apply --update --yes",
+]
+
+[bootstrap.packages]
+"apt:docker-ce" = "latest"
+"apt:docker-ce-cli" = "latest"
+"apt:containerd.io" = "latest"
+"apt:docker-buildx-plugin" = "latest"
+"apt:docker-compose-plugin" = "latest"
+"apt:netdata" = "latest"
+"apt:netdata-plugin-systemd-units" = "latest"
+"apt:netdata-plugin-systemd-journal" = "latest"
+
+[bootstrap.secrets]
+hark_webhook_url = "HARK_WEBHOOK_URL_POD042"
+
+[bootstrap.groups.docker]
+
+[bootstrap.groups.netdata]
+
+[bootstrap.directories."/etc/docker"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.directories."/etc/systemd/system/docker.service.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.directories."/etc/netdata"]
+owner = "root"
+group = "netdata"
+mode = "0750"
+
+[bootstrap.directories."/etc/netdata/go.d"]
+owner = "root"
+group = "netdata"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/platform"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.files."/etc/docker/daemon.json"]
+source = "containers/config/daemon.json"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["docker"]
+
+[bootstrap.files."/etc/systemd/system/docker.service.d/mounts.conf"]
+source = "containers/config/docker-mounts.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["docker"]
+
+[bootstrap.files."/etc/netdata/netdata.conf"]
+source = "containers/config/netdata.conf"
+owner = "root"
+group = "netdata"
+mode = "0640"
+notify = ["netdata"]
+
+[bootstrap.files."/etc/netdata/.opt-out-from-anonymous-statistics"]
+content = ""
+owner = "root"
+group = "netdata"
+mode = "0640"
+
+[bootstrap.files."/etc/netdata/go.d/docker.conf"]
+source = "containers/config/docker.conf"
+owner = "root"
+group = "netdata"
+mode = "0640"
+notify = ["netdata"]
+
+[bootstrap.files."/etc/netdata/go.d/zfspool.conf"]
+source = "containers/config/zfspool.conf"
+owner = "root"
+group = "netdata"
+mode = "0640"
+notify = ["netdata"]
+
+[bootstrap.files."/etc/netdata/health_alarm_notify.conf"]
+source = "containers/config/hark.conf"
+owner = "root"
+group = "netdata"
+mode = "0640"
+notify = ["netdata"]
+
+[bootstrap.files."/etc/ansiblonomicon/containers/platform/compose.yaml"]
+source = "containers/stacks/platform/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/platform/.env"]
+content = '''
+WATCHTOWER_NOTIFICATION_URL="{{ secret(name="hark_webhook_url") | replace(from="https://", to="generic://") }}?template=json&messageKey=body&titleKey=title"
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.services.containerd]
+enabled = true
+
+[bootstrap.services.docker]
+enabled = true
+on_change = "restart"
+
+[bootstrap.services.netdata]
+enabled = true
+on_change = "restart"
+
+[bootstrap.compose.platform]
+project_dir = "/etc/ansiblonomicon/containers/platform"
+files = ["compose.yaml"]
+env_files = [".env"]
+project_name = "platform"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 120
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.hooks.final]
+run = [
+  "sudo -n systemctl daemon-reload",
+  "sudo -n /usr/bin/python3 containers/finalize.py",
+]

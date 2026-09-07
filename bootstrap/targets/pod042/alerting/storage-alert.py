@@ -35,8 +35,6 @@ def main() -> int:
             "usage: storage-alert <title> [body...] (or body on stdin)", file=sys.stderr
         )
         return 64
-    if os.geteuid() != 0:
-        return fail("run as root to read /etc/alerting/hark-webhook-url")
 
     body = " ".join(sys.argv[2:])
     if not body and not sys.stdin.isatty():
@@ -56,12 +54,12 @@ def main() -> int:
             if (
                 not stat.S_ISREG(metadata.st_mode)
                 or metadata.st_uid != 0
-                or metadata.st_gid != 0
-                or stat.S_IMODE(metadata.st_mode) != 0o600
+                or metadata.st_gid != grp_id("alerting")
+                or stat.S_IMODE(metadata.st_mode) != 0o640
                 or metadata.st_nlink != 1
             ):
                 return fail(
-                    "credential must be a root-owned regular file with mode 0600; reconcile alerting"
+                    "credential must be a root:alerting regular file with mode 0640; reconcile alerting"
                 )
             webhook = credential.read().strip()
         url = urllib.parse.urlsplit(webhook)
@@ -113,6 +111,12 @@ def main() -> int:
     except (OSError, ValueError, http.client.HTTPException):
         return fail("delivery failed; check network, TLS trust, and Hark availability")
     return 0
+
+
+def grp_id(name: str) -> int:
+    import grp
+
+    return grp.getgrnam(name).gr_gid
 
 
 if __name__ == "__main__":

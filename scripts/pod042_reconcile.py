@@ -27,6 +27,7 @@ CAPABILITIES = (
     "repositories",
     "storage",
     "alerting",
+    "containers",
     "maintenance",
     "monitoring",
     "datasets",
@@ -190,6 +191,8 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("repositories", "storage")
     if capability == "maintenance":
         return ("repositories", "storage", "alerting", "maintenance")
+    if capability == "containers":
+        return ("repositories", "storage", "alerting", "containers")
     if capability == "monitoring":
         return ("repositories", "storage", "alerting", "maintenance", "monitoring")
     if capability == "datasets":

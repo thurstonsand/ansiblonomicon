@@ -5,7 +5,9 @@ import argparse
 from collections.abc import Sequence
 from datetime import datetime
 import json
+import os
 from pathlib import Path
+import socket
 import ssl
 import subprocess
 import sys
@@ -14,6 +16,8 @@ import time
 from typing import Protocol, cast
 from urllib.parse import urlsplit, urlunsplit
 
+from automation_identity import clean_environment
+from fnox_host import TOKEN_PATH, ConfigurationError, read_token
 import httpx
 from websockets.sync.client import ClientConnection, connect
 
@@ -59,6 +63,18 @@ class BinarySender(Protocol):
     def send(self, message: bytes) -> object: ...
 
 
+def op_environment(hostname: str, inherited: dict[str, str]) -> dict[str, str]:
+    if hostname.split(".", 1)[0] != "pod042":
+        return inherited
+    try:
+        token = read_token(TOKEN_PATH, os.getuid())
+    except (ConfigurationError, OSError) as error:
+        raise KvmError("pod042 service-account identity is unavailable") from error
+    environment = clean_environment(inherited, set())
+    environment["OP_SERVICE_ACCOUNT_TOKEN"] = token
+    return environment
+
+
 def op_field(field: str) -> str:
     result = subprocess.run(
         [
@@ -72,6 +88,7 @@ def op_field(field: str) -> str:
             field,
             "--reveal",
         ],
+        env=op_environment(socket.gethostname(), dict(os.environ)),
         check=True,
         stdout=subprocess.PIPE,
         text=True,

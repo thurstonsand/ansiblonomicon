@@ -357,6 +357,7 @@ def test_check_and_update_mise_are_incompatible() -> None:
     "capability,expected",
     [
         ("alerting", {"HARK_WEBHOOK_URL_POD042"}),
+        ("containers", {"HARK_WEBHOOK_URL_POD042"}),
         ("monitoring", {"HARK_WEBHOOK_URL_POD042", "HEALTHCHECKS_API_KEY"}),
         ("operator", set[str]()),
     ],
@@ -379,3 +380,12 @@ def test_local_capability_selects_only_consumed_secrets(
         for index, argument in enumerate(command)
         if argument == "--secret"
     } == expected
+
+
+def test_containers_capability_has_real_prerequisites() -> None:
+    assert pod042_reconcile.capabilities_for("containers") == (
+        "repositories",
+        "storage",
+        "alerting",
+        "containers",
+    )

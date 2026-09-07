@@ -1,9 +1,6 @@
 [bootstrap.packages]
 "apt:acl" = "latest"
 
-[bootstrap.groups.media]
-gid = 3000
-
 [bootstrap.directories."/mnt/.pod042-migration"]
 owner = "root"
 group = "root"

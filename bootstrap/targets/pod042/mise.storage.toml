@@ -11,6 +11,9 @@ run = [
 "apt:zfs-dkms" = "latest"
 "apt:zfsutils-linux" = "latest"
 
+[bootstrap.groups.media]
+gid = 3000
+
 [bootstrap.services.zfs-import-cache]
 enabled = true
 
