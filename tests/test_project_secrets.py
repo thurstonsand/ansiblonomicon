@@ -19,7 +19,7 @@ def project(tmp_path: Path) -> tuple[Path, dict[str, str], str]:
     shutil.copyfile(ROOT / "scripts/project-secrets.sh", scripts / "project-secrets.sh")
     provider = scripts / "fnox-host"
     provider.write_text(
-        '#!/bin/bash\nprintf "call\\n" >> "$(dirname "$0")/calls"\n'
+        '#!/bin/bash\nprintf "%s\\n" "$*" >> "$(dirname "$0")/calls"\n'
         'printf "export CLOUDFLARE_API_TOKEN=synthetic-token\\n"\n'
     )
     provider.chmod(0o755)
@@ -90,6 +90,24 @@ def test_native_source_cached_and_bootstrap_bypass(
     )
     assert enrolled.returncode == 0, enrolled.stderr
     assert "enrollment-ran" in enrolled.stdout
+
+
+def test_native_source_selects_orb_profile(
+    project: tuple[Path, dict[str, str], str],
+) -> None:
+    root, environment, mise = project
+    environment["AMP_ORB"] = "1"
+    result = subprocess.run(
+        [mise, "exec", "--", "true"],
+        cwd=root,
+        env=environment,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+    calls = (root / "scripts/calls").read_text().splitlines()
+    assert calls
+    assert set(calls) == {"--orb export"}
 
 
 def test_native_shell_exit_and_clean_tmux_environment(

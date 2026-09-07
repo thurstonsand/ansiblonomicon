@@ -12,8 +12,6 @@ Work activation is pending. Before applying the consumer-switch revision on `ML-
 4. Retire the old owned cache files and restart shells, tmux servers, editors, and agents that inherited them. Verify each required credential with `mise run secrets:check NAME`, direct chezmoi, agent/MCP launch, and the work-local consumers without printing values. Confirm that the work `pi-web-tools@downgrade` package supports `webTools.parallel.apiKeyCommand` before removing its inherited Parallel key; the personal package implements on-demand resolution. Record actual prompt behavior rather than assuming one biometric prompt.
 5. Keep a nonsecret receipt in local `AGENTS.local.md`: design 25, reviewed Git revision, date, exact hostname, full account metadata, reviewed source paths, checks passed, and remaining blockers. Do not mark activation complete until both real accounts and local consumers pass.
 
-An Orb runner likewise needs its supplied identity verified against the consumer's selected credentials before activation. Its secret-free `.agents/resume` does not launch the application or modify the parent runner environment. The actual launch must explicitly use `scripts/fnox-host --orb exec --secret NAME [--secret NAME ...] -- COMMAND`, with `OP_SERVICE_ACCOUNT_TOKEN` supplied privately in the runner environment. Fnox removes provider authentication from the application child. No work or Orb live verification is implied by the committed configuration.
-
 ## Chezmoi Data Layer
 
 All fields live in `chezmoi/.chezmoidata/local.toml`:

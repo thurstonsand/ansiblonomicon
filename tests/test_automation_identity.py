@@ -163,6 +163,20 @@ def test_first_enrollment_creates_a_private_native_directory(sandbox: Sandbox) -
     assert identity.read_identity(path, os.getuid()) == "shared-automation-token"
 
 
+def test_supplied_identity_is_atomically_installed_and_rotated(
+    sandbox: Sandbox,
+) -> None:
+    path = identity.identity_path(sandbox.home)
+    before = identity.current_identity_revision(path)
+    identity.install_identity(path, "orb-token", before)
+    assert identity.read_identity(path, os.getuid()) == "orb-token"
+    assert path.stat().st_mode & 0o777 == 0o600
+    rotated = identity.current_identity_revision(path)
+    identity.install_identity(path, "rotated-orb-token", rotated)
+    assert identity.read_identity(path, os.getuid()) == "rotated-orb-token"
+    assert list(path.parent.iterdir()) == [path]
+
+
 def test_failed_candidate_preserves_existing_identity_without_secret_error(
     sandbox: Sandbox,
 ) -> None:

@@ -1,5 +1,7 @@
 """Enroll the existing shared automation identity in native fnox configuration."""
 
+import argparse
+from collections.abc import Callable
 import json
 import os
 from pathlib import Path
@@ -91,16 +93,61 @@ def file_revision(path: Path) -> tuple[int, ...] | None:
     )
 
 
+def current_identity_revision(destination: Path) -> tuple[int, ...] | None:
+    if not (destination.exists() or destination.is_symlink()):
+        return None
+    read_identity(destination, os.getuid())
+    return file_revision(destination)
+
+
+def install_identity(
+    destination: Path,
+    token: str,
+    previous: tuple[int, ...] | None,
+    verify: Callable[[Path], None] | None = None,
+) -> None:
+    token = validate_token(token)
+    destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    directory_metadata = destination.parent.lstat()
+    if (
+        not stat.S_ISDIR(directory_metadata.st_mode)
+        or directory_metadata.st_uid != os.getuid()
+        or directory_metadata.st_mode & 0o022
+    ):
+        raise IdentityError(
+            "native identity directory must be owned and not writable by others"
+        )
+    with tempfile.TemporaryDirectory(
+        prefix=".enroll-", dir=destination.parent
+    ) as temporary:
+        candidate = Path(temporary) / "config.toml"
+        content = (
+            f"[secrets.{TOKEN_NAME}]\ndefault = {json.dumps(token)}\nenv = false\n"
+        )
+        descriptor = os.open(candidate, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        with os.fdopen(descriptor, "w") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+        if verify is not None:
+            verify(candidate)
+        if file_revision(destination) != previous:
+            raise IdentityError("native identity changed during enrollment")
+        os.replace(candidate, destination)
+        descriptor = os.open(destination.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
+
+
 def enroll(
     destination: Path,
     root: Path,
     fnox: str,
     inherited: dict[str, str],
 ) -> None:
-    previous = None
-    if destination.exists() or destination.is_symlink():
-        read_identity(destination, os.getuid())
-        previous = file_revision(destination)
+    previous = current_identity_revision(destination)
     environment = clean_environment(
         inherited, {"POD042_SERVICE_ACCOUNT_TOKEN", "NEXTDNS_PROFILE_ID"}
     )
@@ -128,30 +175,9 @@ def enroll(
             "desktop authentication could not read the automation identity"
         )
     token = validate_token(result.stdout.strip())
-    destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    directory_metadata = destination.parent.lstat()
-    if (
-        not stat.S_ISDIR(directory_metadata.st_mode)
-        or directory_metadata.st_uid != os.getuid()
-        or directory_metadata.st_mode & 0o022
-    ):
-        raise IdentityError(
-            "native identity directory must be owned and not writable by others"
-        )
-    with tempfile.TemporaryDirectory(
-        prefix=".enroll-", dir=destination.parent
-    ) as temporary:
-        directory = Path(temporary)
-        candidate = directory / "config.toml"
-        content = (
-            f"[secrets.{TOKEN_NAME}]\ndefault = {json.dumps(token)}\nenv = false\n"
-        )
-        descriptor = os.open(candidate, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
-        with os.fdopen(descriptor, "w") as stream:
-            stream.write(content)
-            stream.flush()
-            os.fsync(stream.fileno())
-        environment["FNOX_CONFIG_DIR"] = str(directory)
+
+    def verify(candidate: Path) -> None:
+        environment["FNOX_CONFIG_DIR"] = str(candidate.parent)
         probe = subprocess.run(
             [
                 fnox,
@@ -170,21 +196,29 @@ def enroll(
         )
         if probe.returncode or not probe.stdout.strip():
             raise IdentityError("candidate automation identity failed its fnox probe")
-        if file_revision(destination) != previous:
-            raise IdentityError("native identity changed during enrollment")
-        os.replace(candidate, destination)
-        descriptor = os.open(destination.parent, os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(descriptor)
-        finally:
-            os.close(descriptor)
+
+    install_identity(destination, token, previous, verify)
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "--orb", action="store_true", help="Install the identity supplied by Amp"
+    )
+    arguments = parser.parse_args()
+    destination = identity_path(Path.home())
+    if arguments.orb:
+        token = os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
+        if token is None:
+            raise IdentityError("Orb automation identity was not supplied")
+        previous = current_identity_revision(destination)
+        install_identity(destination, token, previous)
+        print("Orb automation identity installed; no provider token exported.")
+        return
     fnox = subprocess.check_output(
         ["mise", "--no-env", "-C", str(ROOT), "which", "fnox"], text=True
     ).strip()
-    enroll(identity_path(Path.home()), ROOT, fnox, dict(os.environ))
+    enroll(destination, ROOT, fnox, dict(os.environ))
     print("Automation identity enrolled; no provider token exported.")
 
 

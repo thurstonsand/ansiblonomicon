@@ -25,7 +25,7 @@ EOF
 fi
 
 step "Install toolchains"
-mise use --global --yes \
+mise --no-env use --global --yes \
   python@3.14 \
   node@lts \
   go@1.26 \
@@ -36,12 +36,17 @@ mise use --global --yes \
   stylua@latest \
   uv@latest
 
+python_bin="$(mise --no-env which python)"
+node_bin_dir="$(dirname "$(mise --no-env which node)")"
+uv_bin="$(mise --no-env which uv)"
+export PATH="$node_bin_dir:$PATH"
+
 if ! command -v wrangler >/dev/null 2>&1 || [[ "$(wrangler --version)" != 4.* ]]; then
-  npm install --global --prefix "$HOME/.local" --no-audit --no-fund wrangler@4
+  "$node_bin_dir/npm" install --global --prefix "$HOME/.local" --no-audit --no-fund wrangler@4
 fi
 
 step "Sync Python dependencies"
-UV_PYTHON="$(mise which python)" uv sync --locked --dev
+UV_PYTHON="$python_bin" "$uv_bin" sync --locked --dev
 
 step "Sync TypeScript dependencies"
 mapfile -t package_locks < <(
@@ -58,8 +63,10 @@ mapfile -t package_locks < <(
 for package_lock in "${package_locks[@]}"; do
   package_dir="${package_lock%/package-lock.json}"
   printf '    npm ci: %s\n' "$package_dir"
-  npm --prefix "$package_dir" ci --no-audit --no-fund --silent
+  "$node_bin_dir/npm" --prefix "$package_dir" ci --no-audit --no-fund --silent
 done
 
 step "Install Ansible collections"
-uv run ansible-galaxy collection install -r ansible/requirements.yml
+"$repo_root/.venv/bin/ansible-galaxy" collection install -r ansible/requirements.yml
+
+mise --no-env trust --quiet
