@@ -10,6 +10,9 @@
 # execpolicy gates no longer decide anything.
 .codex/rules/10-command-gates.rules
 
+# Keep the Amp permission gate implementation available, but do not load it.
+.config/amp/plugins/permission-gate.ts
+
 # Pi 0.84.3 made /model and /thinking session-scoped, so nothing clobbers the
 # defaults this extension existed to restore.
 .pi/agent/extensions/pin-model
