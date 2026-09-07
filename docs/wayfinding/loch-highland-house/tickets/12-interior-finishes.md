@@ -13,7 +13,7 @@ blocked-by: []
 - master bath sink has a weird gap on its side — find something that fits (off the shelf, or make a simple custom piece, could be a plank of wood)
 - towel holder in the master bath; current frontrunner is a **Yamazaki towel ladder**
 - master bath is missing a toilet paper holder
-- quite a few interior doors don't close well: some are misaligned in the frame, others latch only if pressed really hard. Walk every door, note which is which (hinge sag / strike-plate misalignment / swollen or painted-shut edges), and fix them in one pass — most are a strike-plate move or a longer hinge screw into the stud; the rest are a carpenter/handyman item
+- difficult-to-close doors, including the metal-and-glass front door: follow the [diagnosis and remediation procedure](../research/door-closing-remediation.md), recording the held-handle test, contact point, reveal, and seasonal behavior for each door. Correct hinge/frame alignment before moving a strike; then correct proven strike interference or excessive weather-seal/threshold compression. The front door is done only when it latches and its smart deadbolt completes ten consecutive first-attempt cycles without anyone pushing, pulling, or lifting the door
 - bathroom towel mounting: "Yamazaki Leaning Clothes + Towel Rack with Shelf" vs simple wall hooks for minimalism
 - new flatware and bowls
 - a rug for the bedroom, cat-scratch-proof; the living room shag has survived years of the cat and still looks fine, so that construction is the reference
