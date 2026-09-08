@@ -200,4 +200,4 @@ def test_finalize_converges_package_created_memberships(
         ["systemctl", "restart", "netdata"],
     ]
     with pytest.raises(KeyError):
-        finalize.add_group("netdata", "missing")
+        finalize.add_group_membership("netdata", "missing")

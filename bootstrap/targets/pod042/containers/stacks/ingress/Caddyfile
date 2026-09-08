@@ -39,8 +39,8 @@ netdata.thurstons.house {
 	import local_only host.docker.internal:19999
 }
 
-newtarr.thurstons.house {
-	import local_only newtarr:9705
+neutarr.thurstons.house {
+	import local_only neutarr:9705
 }
 
 plex.thurstons.house {

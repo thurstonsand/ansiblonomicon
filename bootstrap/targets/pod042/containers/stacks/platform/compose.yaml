@@ -29,7 +29,7 @@ services:
   watchtower:
     image: nickfedor/watchtower:latest
     environment:
-      TZ: America/Los_Angeles
+      TZ: America/New_York
       WATCHTOWER_CLEANUP: "true"
       WATCHTOWER_INCLUDE_RESTARTING: "false"
       WATCHTOWER_NO_RESTART: "false"

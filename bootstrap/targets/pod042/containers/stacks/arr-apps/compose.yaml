@@ -2,7 +2,7 @@ services:
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
     environment:
-      TZ: America/Los_Angeles
+      TZ: America/New_York
     healthcheck:
       test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8191/health >/dev/null"]
       interval: 30s
@@ -16,7 +16,7 @@ services:
     environment:
       PUID: "1000"
       PGID: "3000"
-      TZ: America/Los_Angeles
+      TZ: America/New_York
     volumes:
       - /mnt/black-box/docker/arr-apps/prowlarr/config:/config
     healthcheck:
@@ -35,10 +35,10 @@ services:
     environment:
       PUID: "1000"
       PGID: "3000"
-      TZ: America/Los_Angeles
+      TZ: America/New_York
     volumes:
       - /mnt/black-box/docker/arr-apps/sonarr/config:/config
-      - /mnt/ark/media:/watch
+      - /mnt/ark/media:/media
     healthcheck:
       test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8989/ping >/dev/null"]
       interval: 30s
@@ -48,7 +48,6 @@ services:
     networks:
       - default
       - ingress
-      - torrent-arr
     restart: unless-stopped
 
   radarr:
@@ -56,10 +55,10 @@ services:
     environment:
       PUID: "1000"
       PGID: "3000"
-      TZ: America/Los_Angeles
+      TZ: America/New_York
     volumes:
       - /mnt/black-box/docker/arr-apps/radarr/config:/config
-      - /mnt/ark/media:/watch
+      - /mnt/ark/media:/media
     healthcheck:
       test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:7878/ping >/dev/null"]
       interval: 30s
@@ -69,17 +68,16 @@ services:
     networks:
       - default
       - ingress
-      - torrent-arr
     restart: unless-stopped
 
-  newtarr:
+  neutarr:
     image: iampuid0/neutarr:latest
     environment:
       PUID: "1000"
       PGID: "3000"
-      TZ: America/Los_Angeles
+      TZ: America/New_York
     volumes:
-      - /mnt/black-box/docker/arr-apps/newtarr/config:/config
+      - /mnt/black-box/docker/arr-apps/neutarr/config:/config
     networks:
       - default
       - ingress
@@ -125,7 +123,7 @@ services:
     image: ghcr.io/recyclarr/recyclarr:8
     user: "1000:3000"
     environment:
-      TZ: America/Los_Angeles
+      TZ: America/New_York
       SONARR_API_KEY: "${SONARR_API_KEY:?required}"
       RADARR_API_KEY: "${RADARR_API_KEY:?required}"
     volumes:
@@ -142,7 +140,7 @@ services:
     init: true
     user: "1000:3000"
     environment:
-      TZ: America/Los_Angeles
+      TZ: America/New_York
       PORT: "5055"
     volumes:
       - /mnt/black-box/docker/arr-apps/seerr/config:/app/config
@@ -164,6 +162,3 @@ networks:
   ingress:
     external: true
     name: ingress
-  torrent-arr:
-    external: true
-    name: torrent-arr

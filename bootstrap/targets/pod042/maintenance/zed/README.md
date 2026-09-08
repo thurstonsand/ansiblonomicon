@@ -20,7 +20,7 @@ All notifications call `/usr/local/bin/storage-alert`, not the checkout or a cre
 
 ## SMART schedule and probe
 
-All eight devices receive health monitoring and scheduled self-tests through whole-device `/dev/disk/by-id` paths. No device scan, KVM device, optical device, or partition is declared. Times use the physical host's America/Los_Angeles timezone. Smartd polls within the scheduled hour rather than guaranteeing the exact minute, and long tests take precedence over same-hour short tests.
+All eight devices receive health monitoring and scheduled self-tests through whole-device `/dev/disk/by-id` paths. No device scan, KVM device, optical device, or partition is declared. Times use the physical host's America/New_York timezone. Smartd polls within the scheduled hour rather than guaranteeing the exact minute, and long tests take precedence over same-hour short tests.
 
 | Serial | Daily short hour | Monthly long day and hour |
 | --- | --- | --- |

@@ -32,10 +32,6 @@ services:
       ingress:
         aliases:
           - qbittorrent
-          - torrent
-      torrent-arr:
-        aliases:
-          - qbittorrent
 
   qbittorrent:
     image: lscr.io/linuxserver/qbittorrent:latest
@@ -46,8 +42,7 @@ services:
       PGID: "3000"
     volumes:
       - /mnt/black-box/docker/torrent/qbittorrent/config:/config
-      # Keep the established in-container path so restored torrent save paths work.
-      - /mnt/ark/media:/watch
+      - /mnt/ark/media:/media
       - ./qbittorrent-healthcheck.py:/healthcheck.py:ro
       - /etc/localtime:/etc/localtime:ro
     healthcheck:
@@ -88,5 +83,3 @@ networks:
   ingress:
     external: true
     name: ingress
-  torrent-arr:
-    name: torrent-arr

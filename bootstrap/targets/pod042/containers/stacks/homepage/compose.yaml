@@ -26,6 +26,8 @@ services:
     networks:
       ingress: {}
       docker-socket-proxy: {}
+    extra_hosts:
+      - host.docker.internal:host-gateway
     restart: unless-stopped
     volumes:
       - ./config:/app/config

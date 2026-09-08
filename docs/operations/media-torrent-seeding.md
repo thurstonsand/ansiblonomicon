@@ -1,12 +1,12 @@
 # Media torrent seeding policy
 
-This repository manages the TrueNAS media stack: qBittorrent, Prowlarr, Sonarr, and Radarr. The cleanup behavior depends on all four. Do not treat qBittorrent as the single source of truth for seeding policy.
+This repository manages pod042's media stack: qBittorrent, Prowlarr, Sonarr, and Radarr. The cleanup behavior depends on all four. Do not treat qBittorrent as the single source of truth for seeding policy.
 
 ## Intended behavior
 
 - Public tracker downloads may be removed after Sonarr/Radarr successfully import them.
 - Private tracker downloads should remain seedable for ratio and account health.
-- Sonarr/Radarr imports are hardlinks into `/watch/media`, so removing the original download path after a successful import does not remove the library file.
+- Sonarr/Radarr imports are hardlinks within `/media`, so removing the original download path after a successful import does not remove the library file.
 
 ## Responsibilities
 
@@ -46,9 +46,9 @@ The `myanonamouse` category is private-tracker material and should not be treate
 
 ### mam-updater
 
-MAM ties the session to the seedbox's exit IP, so `mam-updater` reports the current gluetun address every 30 minutes. Its container healthcheck only proves the VPN tunnel is up, because that is the one failure `torrent-netns-repair` can fix by recreating the container. A rejected session is not fixable that way, so the run reports to Healthchecks instead, under `<host>-mam-update`.
+MAM ties the session to the seedbox's exit IP, so `mam-updater` reports the current gluetun address every 30 minutes. Compose waits for gluetun's VPN healthcheck before starting it. A rejected session is not fixable through container lifecycle, so each update run reports to Healthchecks under `<host>-mam-update`.
 
-When that check goes down with `Invalid session`, the session is gone and no restart brings it back. Mint a fresh `mam_id` from the MAM security page and write it to `{config_base}/torrent/mam-updater/data/MAM.id` on the host that owns the session.
+When that check goes down with `Invalid session`, the session is gone and no restart brings it back. Mint a fresh `mam_id` from the MAM security page and write it to `/mnt/black-box/docker/torrent/mam-updater/data/MAM.id`.
 
 ### Prowlarr, Sonarr, and Radarr
 
@@ -85,8 +85,8 @@ Safe automatic/manual cleanup criteria for Arr downloads:
    - `myanonamouse`
    - `mam`
 6. If removing torrent content manually, only delete source paths under:
-   - `/mnt/capacity/watch/downloads/sonarr/`
-   - `/mnt/capacity/watch/downloads/radarr/`
+   - `/mnt/ark/media/downloads/sonarr/`
+   - `/mnt/ark/media/downloads/radarr/`
 
 Prefer qBittorrent deletion with `deleteFiles=false` first, then delete source download paths only after import/hardlink verification.
 
@@ -100,7 +100,7 @@ If a private tracker torrent is accidentally removed but the imported media file
 
 1. Find the original qBittorrent info hash in Sonarr/Radarr history (`DownloadId` / `torrentInfoHash`).
 2. Find the original Prowlarr download URL in the grab history event.
-3. Recreate the original download folder under `/mnt/capacity/watch/downloads/sonarr` or `/mnt/capacity/watch/downloads/radarr` using hardlinks from the imported media files.
+3. Recreate the original download folder under `/mnt/ark/media/downloads/sonarr` or `/mnt/ark/media/downloads/radarr` using hardlinks from the imported media files.
 4. Re-add the torrent file to qBittorrent with the original category and save path.
 5. Let qBittorrent recheck. It should return to `stalledUP` or another seeding state when complete.
 

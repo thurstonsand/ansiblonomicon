@@ -14,6 +14,7 @@ opentofu = "1.12.6"
 hk = "1.56.1"
 fnox = "latest"
 "npm:mcp-remote" = "latest"
+"npm:wrangler" = "latest"
 
 [settings]
 env_cache = true
@@ -269,7 +270,7 @@ description = "Deploy the hooks Worker, managing its secrets"
 usage = '''
 flag "-f --force-secret" help="Update secrets even if they exist"
 '''
-run = "./scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN --secret GOG_GMAIL_PUSH_TOKEN --secret OPENCLAW_HOOKS_TOKEN --secret OPENCLAW_GATEWAY_TOKEN --secret TELEGRAM_WEBHOOK_SECRET --secret ELEVENLABS_VOICE_TOKEN -- uv run scripts/hooks_deploy.py ${usage_force_secret:+--force-secret}"
+run = "./scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN --secret GOG_GMAIL_PUSH_TOKEN -- uv run scripts/hooks_deploy.py ${usage_force_secret:+--force-secret}"
 
 [tasks."edge:deploy:tesla"]
 description = "Deploy the tesla Cloudflare Pages site"
@@ -470,4 +471,4 @@ run = "./scripts/fnox-host exec --secret CLI_PROXY_API_KEY --secret CLOUDFLARE_A
 
 [tasks."edge:dev:hooks"]
 description = "Run the hooks Worker locally with fnox secrets"
-run = "./scripts/fnox-host exec --secret GOG_GMAIL_PUSH_TOKEN --secret OPENCLAW_HOOKS_TOKEN --secret OPENCLAW_GATEWAY_TOKEN --secret TELEGRAM_WEBHOOK_SECRET --secret ELEVENLABS_VOICE_TOKEN -- uv run scripts/worker_dev.py hooks --port 8788"
+run = "./scripts/fnox-host exec --secret GOG_GMAIL_PUSH_TOKEN -- uv run scripts/worker_dev.py hooks --port 8788"

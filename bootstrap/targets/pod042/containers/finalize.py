@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Finish package-dependent container platform memberships."""
+"""Manage memberships for package-created users after package installation."""
 
 import grp
 import pwd
 import subprocess
 
 
-def add_group(user: str, group: str) -> bool:
+def add_group_membership(user: str, group: str) -> bool:
     account = pwd.getpwnam(user)
     target = grp.getgrnam(group)
     memberships = [entry.gr_name for entry in grp.getgrall() if user in entry.gr_mem]
@@ -17,7 +17,7 @@ def add_group(user: str, group: str) -> bool:
     return False
 
 
-def remove_group(user: str, group: str) -> bool:
+def remove_group_membership(user: str, group: str) -> bool:
     pwd.getpwnam(user)
     target = grp.getgrnam(group)
     if user in target.gr_mem:
@@ -27,13 +27,14 @@ def remove_group(user: str, group: str) -> bool:
 
 
 def main() -> None:
-    netdata_changed = remove_group("netdata", "docker")
+    # Netdata must reach Docker only through the read-only socket proxy.
+    netdata_changed = remove_group_membership("netdata", "docker")
     for required_user, required_groups in {
         "netdata": ("systemd-journal", "adm", "alerting"),
         "thurstonsand": ("docker", "media"),
     }.items():
         for required_group in required_groups:
-            changed = add_group(required_user, required_group)
+            changed = add_group_membership(required_user, required_group)
             netdata_changed |= required_user == "netdata" and changed
     if netdata_changed:
         subprocess.run(["systemctl", "restart", "netdata"], check=True)

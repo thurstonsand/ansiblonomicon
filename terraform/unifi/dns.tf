@@ -5,7 +5,7 @@ locals {
     "cli-proxy-api.thurstons.house",
     "dash.thurstons.house",
     "netdata.thurstons.house",
-    "newtarr.thurstons.house",
+    "neutarr.thurstons.house",
     "plex.thurstons.house",
     "prowlarr.thurstons.house",
     "radarr.thurstons.house",

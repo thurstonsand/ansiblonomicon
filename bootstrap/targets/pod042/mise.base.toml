@@ -74,6 +74,11 @@ on_change = "reload_or_restart"
 [tasks.bootstrap]
 run = [
   "base/scripts/install-system-mise",
+  '''
+if [ "$(timedatectl show --property=Timezone --value)" != "America/New_York" ]; then
+  sudo -n timedatectl set-timezone America/New_York
+fi
+''',
   "sudo -H env MISE_DATA_DIR=/opt/mise MISE_GLOBAL_CONFIG_FILE=/etc/mise/host-tools.toml /usr/local/bin/mise -C / install --yes --jobs 1",
   "sudo -H env MISE_DATA_DIR=/opt/mise MISE_GLOBAL_CONFIG_FILE=/etc/mise/host-tools.toml /usr/local/bin/mise -C / upgrade --yes --jobs 1",
   '''

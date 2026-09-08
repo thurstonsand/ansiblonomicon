@@ -131,22 +131,6 @@ resource "cloudflare_zero_trust_access_application" "ssh_access" {
 # TODO: Manage VPC services via Terraform when upgrading to CF provider v5
 # Resource should be cloudflare_zero_trust_connectivity_service or similar
 
-# Health webhook endpoint for iOS Shortcuts
-# Uses service token auth - CF validates at edge before worker runs
-resource "cloudflare_zero_trust_access_application" "health_webhook" {
-  account_id       = local.account_id
-  name             = "Health Webhook"
-  type             = "self_hosted"
-  session_duration = "24h"
-  self_hosted_domains = [
-    "hooks.${local.zone_name}/health",
-    "hooks.${local.zone_name}/health/*"
-  ]
-  policies = [
-    cloudflare_zero_trust_access_policy.service_auth.id,
-  ]
-}
-
 # TODO: Add device profile with split tunnel in Include mode when upgrading to provider v5
 # This will route only thurstons.house through WARP, everything else direct
 # Resource: cloudflare_zero_trust_device_custom_profile

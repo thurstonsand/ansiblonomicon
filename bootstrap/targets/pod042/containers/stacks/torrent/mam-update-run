@@ -3,7 +3,6 @@
 set -u
 
 hc_ping() {
-  [ -n "${HEALTHCHECK_PING_URL:-}" ] || return 0
   curl -fsS --max-time 10 --retry 3 --retry-delay 2 -o /dev/null \
     "${HEALTHCHECK_PING_URL}$1" ||
     echo "mam-update-run: ping '${1:-/success}' failed" >&2

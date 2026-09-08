@@ -326,20 +326,11 @@ owner = "root"
 group = "root"
 mode = "0600"
 
-[bootstrap.files."/etc/ansiblonomicon/containers/ingress/Caddyfile"]
-state = "absent"
-
-[bootstrap.files."/etc/ansiblonomicon/containers/ingress/ddclient.conf"]
-state = "absent"
-
 [bootstrap.files."/etc/ansiblonomicon/containers/ingress/trigger-tofu-apply.sh"]
 source = "containers/stacks/ingress/trigger-tofu-apply.sh"
 owner = "thurstonsand"
 group = "media"
 mode = "0750"
-
-[bootstrap.files."/mnt/black-box/docker/ddclient/ddclient/config/trigger-tofu-apply.sh"]
-state = "absent"
 
 [bootstrap.files."/mnt/black-box/docker/ddclient/ddclient/config/ddclient.conf"]
 content = '''

@@ -210,7 +210,7 @@ def declarations() -> tuple[Channel, list[Metadata]]:
         )
     if any(
         not check.schedule
-        or check.tz != "America/Los_Angeles"
+        or check.tz != "America/New_York"
         or check.manual_resume
         or check.methods != "POST"
         for check in desired
