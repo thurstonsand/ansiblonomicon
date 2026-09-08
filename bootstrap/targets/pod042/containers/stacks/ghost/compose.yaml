@@ -31,9 +31,7 @@ services:
       start_period: 60s
     networks:
       default: {}
-      ingress:
-        aliases:
-          - ghost
+      ingress: {}
     volumes:
       - /mnt/black-box/docker/ghost/ghost/var/lib/ghost/content:/var/lib/ghost/content
 

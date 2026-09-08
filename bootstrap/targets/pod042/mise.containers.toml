@@ -114,6 +114,11 @@ owner = "root"
 group = "docker"
 mode = "0750"
 
+[bootstrap.directories."/mnt/black-box/docker/ddclient/ddclient/config"]
+owner = "thurstonsand"
+group = "media"
+mode = "0700"
+
 [bootstrap.directories."/etc/ansiblonomicon/containers/isponsorblocktv"]
 owner = "root"
 group = "docker"
@@ -324,6 +329,40 @@ mode = "0600"
 [bootstrap.files."/etc/ansiblonomicon/containers/ingress/Caddyfile"]
 state = "absent"
 
+[bootstrap.files."/etc/ansiblonomicon/containers/ingress/ddclient.conf"]
+state = "absent"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ingress/trigger-tofu-apply.sh"]
+source = "containers/stacks/ingress/trigger-tofu-apply.sh"
+owner = "thurstonsand"
+group = "media"
+mode = "0750"
+
+[bootstrap.files."/mnt/black-box/docker/ddclient/ddclient/config/trigger-tofu-apply.sh"]
+state = "absent"
+
+[bootstrap.files."/mnt/black-box/docker/ddclient/ddclient/config/ddclient.conf"]
+content = '''
+daemon=300
+syslog=yes
+pid=/var/run/ddclient.pid
+ssl=yes
+use=web
+web='https://cloudflare.com/cdn-cgi/trace'
+web-skip='ip='
+postscript=/usr/local/bin/trigger-tofu-apply
+
+protocol=cloudflare, \
+zone=thurstons.house, \
+login=token, \
+password={{ secret(name="cloudflare_api_token") }} \
+storj.thurstons.house
+'''
+template = true
+owner = "thurstonsand"
+group = "media"
+mode = "0600"
+
 [bootstrap.files."/etc/ansiblonomicon/containers/ingress/.env"]
 content = '''
 CLOUDFLARE_API_TOKEN="{{ secret(name="cloudflare_api_token") }}"
@@ -405,6 +444,18 @@ source = "containers/stacks/torrent/mam-update-run"
 owner = "root"
 group = "root"
 mode = "0755"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/torrent/qbittorrent-healthcheck.py"]
+source = "containers/stacks/torrent/qbittorrent-healthcheck.py"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/torrent/gluetun-auth.toml"]
+source = "containers/stacks/torrent/gluetun-auth.toml"
+owner = "root"
+group = "root"
+mode = "0644"
 
 [bootstrap.files."/etc/ansiblonomicon/containers/torrent/.env"]
 content = '''

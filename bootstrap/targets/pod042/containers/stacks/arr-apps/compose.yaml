@@ -9,8 +9,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 20s
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
     restart: unless-stopped
 
   prowlarr:
@@ -27,8 +25,6 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
     networks:
       - default
       - ingress
@@ -42,15 +38,13 @@ services:
       TZ: America/Los_Angeles
     volumes:
       - /mnt/black-box/docker/arr-apps/sonarr/config:/config
-      - /mnt/ark/media:/data
+      - /mnt/ark/media:/watch
     healthcheck:
       test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8989/ping >/dev/null"]
       interval: 30s
       timeout: 5s
       retries: 5
       start_period: 45s
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
     networks:
       - default
       - ingress
@@ -65,15 +59,13 @@ services:
       TZ: America/Los_Angeles
     volumes:
       - /mnt/black-box/docker/arr-apps/radarr/config:/config
-      - /mnt/ark/media:/data
+      - /mnt/ark/media:/watch
     healthcheck:
       test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:7878/ping >/dev/null"]
       interval: 30s
       timeout: 5s
       retries: 5
       start_period: 45s
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
     networks:
       - default
       - ingress
@@ -88,8 +80,6 @@ services:
       TZ: America/Los_Angeles
     volumes:
       - /mnt/black-box/docker/arr-apps/newtarr/config:/config
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
     networks:
       - default
       - ingress
@@ -111,8 +101,6 @@ services:
     depends_on:
       sonarr:
         condition: service_healthy
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
     restart: unless-stopped
 
   swaparr-radarr:
@@ -131,8 +119,6 @@ services:
     depends_on:
       radarr:
         condition: service_healthy
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
     restart: unless-stopped
 
   recyclarr:
@@ -149,8 +135,6 @@ services:
         condition: service_healthy
       radarr:
         condition: service_healthy
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
     restart: unless-stopped
 
   seerr:
@@ -168,11 +152,12 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    labels:
-      com.centurylinklabs.watchtower.enable: "true"
     networks:
       - default
       - ingress
+    # Plex uses host networking and is not reachable through a Compose network.
+    extra_hosts:
+      - host.docker.internal:host-gateway
     restart: unless-stopped
 
 networks:

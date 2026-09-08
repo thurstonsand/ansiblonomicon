@@ -27,14 +27,14 @@ services:
 
   cloudflared:
     image: cloudflare/cloudflared:latest
+    environment:
+      TUNNEL_TOKEN: "${CLOUDFLARE_TOKEN:?required}"
     command:
       - tunnel
       - --no-autoupdate
       - --metrics
       - 0.0.0.0:2000
       - run
-      - --token
-      - "${CLOUDFLARE_TOKEN:?required}"
     healthcheck:
       test: ["CMD", "cloudflared", "tunnel", "--metrics", "127.0.0.1:2000", "ready"]
       interval: 30s
@@ -51,7 +51,7 @@ services:
       PUID: "1000"
       PGID: "3000"
       TZ: America/Los_Angeles
-      GITHUB_PAT: "${DDCLIENT_GITHUB_PAT:?required}"
+      DDCLIENT_GITHUB_PAT: "${DDCLIENT_GITHUB_PAT:?required}"
     healthcheck:
       test: ["CMD-SHELL", "pgrep -f '[d]dclient' >/dev/null"]
       interval: 30s
@@ -63,6 +63,7 @@ services:
       - ingress
     volumes:
       - /mnt/black-box/docker/ddclient/ddclient/config:/config
+      - ./trigger-tofu-apply.sh:/usr/local/bin/trigger-tofu-apply:ro
       - /etc/localtime:/etc/localtime:ro
 
 networks:

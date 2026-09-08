@@ -29,7 +29,7 @@ def test_ghost_uses_private_database_and_shared_ingress() -> None:
     assert "entrypoint:" not in compose
     assert "condition: service_healthy" in compose
     assert "name: ingress" in compose
-    assert "- ghost" in compose
+    assert "aliases:" not in compose
     assert "/mnt/black-box/docker/ghost/ghost_mysql/var/lib/mysql" in compose
     assert compose.count("restart: unless-stopped") == 2
     for secret in (

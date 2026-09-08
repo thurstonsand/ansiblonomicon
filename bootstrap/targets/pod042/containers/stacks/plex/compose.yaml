@@ -5,7 +5,7 @@ services:
     devices:
       - /dev/dri:/dev/dri
     environment:
-      TZ: America/New_York
+      TZ: America/Los_Angeles
       PLEX_UID: "1000"
       PLEX_GID: "3000"
       UMASK: "002"

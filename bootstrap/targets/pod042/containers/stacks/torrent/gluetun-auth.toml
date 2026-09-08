@@ -1,0 +1,4 @@
+[[roles]]
+name = "homepage"
+routes = ["GET /v1/publicip/ip", "GET /v1/portforward"]
+auth = "none"
