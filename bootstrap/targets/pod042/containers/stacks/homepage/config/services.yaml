@@ -14,7 +14,7 @@
         container: ingress-ddclient-1
     - Netdata:
         icon: netdata.svg
-        href: https://netdata.thurstons.house
+        href: https://app.netdata.cloud/spaces/thurstonsand-space/rooms/all-nodes/dashboards/pod042-operations
         widget:
           type: netdata
           url: http://host.docker.internal:19999

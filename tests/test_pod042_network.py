@@ -76,6 +76,8 @@ def test_network_declaration_owns_physical_contract_and_retirement() -> None:
     config = tomllib.loads((TARGET / "mise.network.toml").read_text())
     bootstrap = config["bootstrap"]
     interfaces = bootstrap["files"]["/etc/network/interfaces"]["content"]
+    assert "auto enp5s0" in interfaces
+    assert "allow-hotplug enp5s0" not in interfaces
     assert "iface enp5s0 inet dhcp" in interfaces
     assert "mtu 1500" in interfaces
     assert "ethtool -s enp5s0 wol g" in interfaces

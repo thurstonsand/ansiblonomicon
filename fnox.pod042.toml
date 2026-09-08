@@ -22,6 +22,8 @@ TORRENT_WIREGUARD_PRIVATE_KEY = { provider = "agent", value = "op://agent/hyqqxr
 TORRENT_WIREGUARD_ADDRESS = { provider = "agent", value = "op://agent/hyqqxr44mqyzudmu327t2aowpu/wireguard/address" }
 HARK_WEBHOOK_URL_POD042 = { provider = "agent", value = "op://agent/u3wmydm5i7fe3cgdxx6c7juhxq/add more/pod042 webhook url" }
 HEALTHCHECKS_API_KEY = { provider = "agent", value = "op://agent/injsaejfgmueiievbdiuioggui/add more/api key" }
+NETDATA_API_TOKEN = { provider = "agent", value = "op://agent/q74zwkzmfylzxpqcajllawf57q/po042 space/api token" }
+NETDATA_CLAIM_TOKEN = { provider = "agent", value = "op://agent/q74zwkzmfylzxpqcajllawf57q/po042 space/claim token" }
 SAMBA_MEDIA_PASSWORD = { provider = "agent", value = "op://agent/rqdlvwpivnndduj4wyhxqwqa4a/password" }
 RESTIC_B2_BUCKET = { provider = "agent", value = "op://agent/Backblaze/bucket" }
 RESTIC_B2_KEY_ID = { provider = "agent", value = "op://agent/Backblaze/key id" }

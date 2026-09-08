@@ -10,6 +10,7 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
+import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "bootstrap/targets/pod042"
@@ -117,8 +118,8 @@ def test_platform_configuration_matches_runtime_boundaries() -> None:
     assert daemon["default-address-pools"] == [{"base": "10.42.0.0/16", "size": 24}]
     assert daemon["live-restore"] is True
     assert "bind to = 127.0.0.1:19999" in netdata
+    assert "172.17.0.1:19999" in netdata
     assert "allow mcp from = localhost" in netdata
-    assert "enabled = no" in netdata
     assert set(bootstrap["packages"]) >= {
         "apt:docker-ce",
         "apt:docker-ce-cli",
@@ -127,6 +128,66 @@ def test_platform_configuration_matches_runtime_boundaries() -> None:
         "apt:docker-compose-plugin",
         "apt:netdata",
     }
+
+
+def test_netdata_cloud_claim_and_dashboard_are_declared() -> None:
+    homepage = (TARGET / "containers/stacks/homepage/config/services.yaml").read_text()
+    bootstrap = tomllib.loads((TARGET / "mise.containers.toml").read_text())[
+        "bootstrap"
+    ]
+    assert (
+        "https://app.netdata.cloud/spaces/thurstonsand-space/rooms/all-nodes/"
+        "dashboards/pod042-operations"
+    ) in homepage
+    netdata_drop_in = bootstrap["files"][
+        "/etc/systemd/system/netdata.service.d/docker.conf"
+    ]
+    assert netdata_drop_in["source"] == "containers/config/netdata-docker.conf"
+    assert netdata_drop_in["notify"] == ["netdata"]
+    netdata_drop_in_source = (
+        TARGET / "containers/config/netdata-docker.conf"
+    ).read_text()
+    assert "Wants=docker.service" in netdata_drop_in_source
+    assert "After=docker.service" in netdata_drop_in_source
+    claim = bootstrap["files"]["/etc/netdata/claim.conf"]
+    assert claim["template"] is True
+    assert (claim["owner"], claim["group"], claim["mode"]) == (
+        "root",
+        "netdata",
+        "0640",
+    )
+    assert 'secret(name="netdata_claim_token")' in claim["content"]
+    assert "NETDATA_CLAIM_TOKEN" not in claim["content"]
+    assert bootstrap["secrets"]["netdata_claim_token"] == "NETDATA_CLAIM_TOKEN"
+
+
+def test_torrent_project_continuously_repairs_stale_gluetun_namespaces() -> None:
+    compose_path = TARGET / "containers/stacks/torrent/compose.yaml"
+    compose = compose_path.read_text()
+    services = yaml.safe_load(compose)["services"]
+    repair = (TARGET / "containers/stacks/torrent/netns-repair.sh").read_text()
+    bootstrap = tomllib.loads((TARGET / "mise.containers.toml").read_text())[
+        "bootstrap"
+    ]
+    installed_repair = bootstrap["files"][
+        "/etc/ansiblonomicon/containers/torrent/netns-repair.sh"
+    ]
+    assert installed_repair["source"] == "containers/stacks/torrent/netns-repair.sh"
+    assert installed_repair["mode"] == "0755"
+    assert "netns-repair:" in compose
+    assert "/var/run/docker.sock:/var/run/docker.sock" in compose
+    assert set(services["netns-repair"]["environment"]["DEPENDENTS"].split()) == {
+        name
+        for name, service in services.items()
+        if service.get("network_mode") == "service:gluetun"
+    }
+    stack = "/etc/ansiblonomicon/containers/torrent"
+    assert f"{stack}:{stack}:ro" in compose
+    assert "docker compose" in repair
+    assert "HostConfig.NetworkMode" in repair
+    assert "State.StartedAt" in repair
+    assert "--force-recreate --no-build --no-deps" in repair
+    subprocess.run(["sh", "-n", str(TARGET / installed_repair["source"])], check=True)
 
 
 def test_netdata_uses_the_shared_host_alert_sender() -> None:

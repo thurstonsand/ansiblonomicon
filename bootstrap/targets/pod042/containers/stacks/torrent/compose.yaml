@@ -79,6 +79,21 @@ services:
         restart: true
     restart: unless-stopped
 
+  netns-repair:
+    image: docker:cli
+    environment:
+      COMPOSE_PROJECT_NAME: torrent
+      DEPENDENTS: qbittorrent mam-updater
+      GLUETUN_SERVICE: gluetun
+      INTERVAL: "60"
+      STACK_FILE: /etc/ansiblonomicon/containers/torrent/compose.yaml
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Compose sends bind paths to the host daemon, so preserve the host path here.
+      - /etc/ansiblonomicon/containers/torrent:/etc/ansiblonomicon/containers/torrent:ro
+    command: ["/bin/sh", "/etc/ansiblonomicon/containers/torrent/netns-repair.sh"]
+    restart: unless-stopped
+
 networks:
   ingress:
     external: true

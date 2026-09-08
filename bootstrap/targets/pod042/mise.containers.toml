@@ -27,6 +27,7 @@ homepage_overseerr_api_key = "HOMEPAGE_OVERSEERR_API_KEY"
 homepage_plex_api_key = "HOMEPAGE_PLEX_API_KEY"
 homepage_unifi_password = "UNIFI_PASSWORD"
 homepage_unifi_username = "UNIFI_USERNAME"
+netdata_claim_token = "NETDATA_CLAIM_TOKEN"
 nextdns_api_key = "NEXTDNS_API_KEY"
 nextdns_profile_id = "NEXTDNS_PROFILE_ID"
 pon_monitor_ping_url = "POD042_PON_MONITOR_PING_URL"
@@ -50,6 +51,11 @@ group = "root"
 mode = "0755"
 
 [bootstrap.directories."/etc/systemd/system/docker.service.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.directories."/etc/systemd/system/netdata.service.d"]
 owner = "root"
 group = "root"
 mode = "0755"
@@ -158,6 +164,13 @@ group = "root"
 mode = "0644"
 notify = ["docker"]
 
+[bootstrap.files."/etc/systemd/system/netdata.service.d/docker.conf"]
+source = "containers/config/netdata-docker.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["netdata"]
+
 [bootstrap.files."/etc/netdata/netdata.conf"]
 source = "containers/config/netdata.conf"
 owner = "root"
@@ -187,6 +200,21 @@ notify = ["netdata"]
 
 [bootstrap.files."/etc/netdata/health_alarm_notify.conf"]
 source = "containers/config/hark.conf"
+owner = "root"
+group = "netdata"
+mode = "0640"
+notify = ["netdata"]
+
+[bootstrap.files."/etc/netdata/claim.conf"]
+content = '''
+[global]
+    url = https://app.netdata.cloud
+    token = {{ secret(name="netdata_claim_token") }}
+    rooms = b25b395e-3ea9-4461-8314-cf6b26889b72
+    proxy = env
+    insecure = no
+'''
+template = true
 owner = "root"
 group = "netdata"
 mode = "0640"
@@ -432,6 +460,12 @@ mode = "0600"
 
 [bootstrap.files."/etc/ansiblonomicon/containers/torrent/mam-update-run"]
 source = "containers/stacks/torrent/mam-update-run"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/torrent/netns-repair.sh"]
+source = "containers/stacks/torrent/netns-repair.sh"
 owner = "root"
 group = "root"
 mode = "0755"

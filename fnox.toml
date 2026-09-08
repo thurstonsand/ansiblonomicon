@@ -12,6 +12,7 @@ token = { secret = "FNOX_HOST_OP_TOKEN" }
 auth_command = ""
 
 [secrets]
+CLAUDE_CODE_OAUTH_TOKEN = { provider = "agent", value = "op://agent/dcwysjru3xojryielllqf272iu/credential" }
 NEXTDNS_PROFILE_ID = { provider = "agent", value = "op://agent/db7ivx7ja3sc74k4yml5qrg4ra/profile id" }
 CLOUDFLARE_API_TOKEN = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/credential", env = true }
 PARENT_HOME_IP = { provider = "agent", value = "op://agent/5cimwvc3mbcr6cikiv3wcmhekm/parent home ip" }

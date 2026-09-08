@@ -46,7 +46,7 @@ The `myanonamouse` category is private-tracker material and should not be treate
 
 ### mam-updater
 
-MAM ties the session to the seedbox's exit IP, so `mam-updater` reports the current gluetun address every 30 minutes. Compose waits for gluetun's VPN healthcheck before starting it. A rejected session is not fixable through container lifecycle, so each update run reports to Healthchecks under `<host>-mam-update`.
+MAM ties the session to the seedbox's exit IP, so `mam-updater` reports the current gluetun address every 30 minutes. Compose waits for gluetun's VPN healthcheck before starting it. The project's `netns-repair` service continuously compares qBittorrent and `mam-updater` network attachments and start times with Gluetun, then recreates only a dependent stranded by a Gluetun restart or replacement. This covers ordinary runtime as well as host startup. A rejected session is not fixable through container lifecycle, so each update run reports to Healthchecks under `<host>-mam-update`.
 
 When that check goes down with `Invalid session`, the session is gone and no restart brings it back. Mint a fresh `mam_id` from the MAM security page and write it to `/mnt/black-box/docker/torrent/mam-updater/data/MAM.id`.
 
