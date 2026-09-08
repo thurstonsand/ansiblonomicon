@@ -12,6 +12,9 @@
         icon: cloudflare.svg
         server: docker-proxy
         container: ingress-ddclient-1
+    - Netdata:
+        icon: netdata.svg
+        href: https://netdata.thurstons.house
     - NextDNS:
         icon: nextdns.svg
         href: "https://my.nextdns.io/{{HOMEPAGE_VAR_NEXTDNS_PROFILE_ID}}/setup"

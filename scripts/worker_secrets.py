@@ -10,9 +10,6 @@ WORKER_BINDINGS = {
         "CF_ACCESS_CLIENT_ID": "CF_ACCESS_CLIENT_ID",
         "CF_ACCESS_CLIENT_SECRET": "CF_ACCESS_CLIENT_SECRET",
     },
-    "hooks": {
-        "GOG_GMAIL_TOKEN": "GOG_GMAIL_PUSH_TOKEN",
-    },
 }
 
 

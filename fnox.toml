@@ -34,8 +34,3 @@ EIGHTCTL_PASSWORD = { provider = "agent", value = "op://agent/fxseiurccsgzesskcc
 HARK_WEBHOOK_URL_2B = { provider = "agent", value = "op://agent/u3wmydm5i7fe3cgdxx6c7juhxq/add more/2B webhook url" }
 HOMEPAGE_HOMEASSISTANT_API_KEY = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/apikey" }
 HA_MCP_OAUTH_CLIENT_SECRET = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/ha-mcp/oauth client secret" }
-OPENCLAW_GATEWAY_TOKEN = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/gateway/gateway token" }
-OPENCLAW_HOOKS_TOKEN = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/gateway/hooks token" }
-GOG_GMAIL_PUSH_TOKEN = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/gog/push token" }
-TELEGRAM_WEBHOOK_SECRET = { provider = "agent", value = "op://agent/7j6q76jedrrd22m7i3ukeciady/9s telegram/webhook secret" }
-ELEVENLABS_VOICE_TOKEN = { provider = "agent", value = "op://agent/cmi23o4fiidhzdgclf6dyuzxaq/voice token" }

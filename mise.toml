@@ -255,8 +255,8 @@ run = "./scripts/fnox-host exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD 
 # ---------------------------------------------------------------------------
 
 [tasks."edge:deploy"]
-description = "Deploy every Cloudflare Worker (aig + hooks)"
-depends = ["edge:deploy:aig", "edge:deploy:hooks"]
+description = "Deploy every Cloudflare Worker"
+depends = ["edge:deploy:aig"]
 
 [tasks."edge:deploy:aig"]
 description = "Deploy the aig Worker, managing its secrets"
@@ -264,13 +264,6 @@ usage = '''
 flag "-f --force-secret" help="Update secrets even if they exist"
 '''
 run = "./scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN --secret CLI_PROXY_API_KEY --secret CLOUDFLARE_AI_GATEWAY_API_TOKEN --secret CF_ACCESS_CLIENT_ID --secret CF_ACCESS_CLIENT_SECRET -- uv run scripts/aig_deploy.py ${usage_force_secret:+--force-secret}"
-
-[tasks."edge:deploy:hooks"]
-description = "Deploy the hooks Worker, managing its secrets"
-usage = '''
-flag "-f --force-secret" help="Update secrets even if they exist"
-'''
-run = "./scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN --secret GOG_GMAIL_PUSH_TOKEN -- uv run scripts/hooks_deploy.py ${usage_force_secret:+--force-secret}"
 
 [tasks."edge:deploy:tesla"]
 description = "Deploy the tesla Cloudflare Pages site"
@@ -349,16 +342,11 @@ run = "stylua --check ."
 
 [tasks."workers:typecheck"]
 description = "Type-check every Cloudflare Worker via a wrangler dry run"
-depends = ["workers:typecheck:aig", "workers:typecheck:hooks"]
+depends = ["workers:typecheck:aig"]
 
 [tasks."workers:typecheck:aig"]
 description = "Type-check the aig Worker via a wrangler dry run"
 dir = "wrangler/aig"
-run = "wrangler deploy --dry-run"
-
-[tasks."workers:typecheck:hooks"]
-description = "Type-check the hooks Worker via a wrangler dry run"
-dir = "wrangler/hooks"
 run = "wrangler deploy --dry-run"
 
 [tasks."pi:check"]
@@ -468,7 +456,3 @@ fi
 [tasks."edge:dev:aig"]
 description = "Run the AIG Worker locally with fnox secrets"
 run = "./scripts/fnox-host exec --secret CLI_PROXY_API_KEY --secret CLOUDFLARE_AI_GATEWAY_API_TOKEN --secret CF_ACCESS_CLIENT_ID --secret CF_ACCESS_CLIENT_SECRET -- uv run scripts/worker_dev.py aig --port 8787"
-
-[tasks."edge:dev:hooks"]
-description = "Run the hooks Worker locally with fnox secrets"
-run = "./scripts/fnox-host exec --secret GOG_GMAIL_PUSH_TOKEN -- uv run scripts/worker_dev.py hooks --port 8788"

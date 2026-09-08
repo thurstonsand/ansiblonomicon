@@ -25,7 +25,7 @@ resource "cloudflare_ruleset" "firewall_custom" {
     }
     description = "skip managed security on AI Gateway machine endpoints"
     enabled     = true
-    expression  = "(http.host in {\"aig.thurstons.house\" \"cli-proxy-api.thurstons.house\" \"hooks.thurstons.house\" })"
+    expression  = "(http.host in {\"aig.thurstons.house\" \"cli-proxy-api.thurstons.house\" })"
     logging {
       enabled = true
     }
