@@ -23,6 +23,7 @@ def good_state() -> tuple[
     str,
     str,
     str,
+    str,
 ]:
     links: list[dict[str, Any]] = [
         {
@@ -58,7 +59,17 @@ def good_state() -> tuple[
         {"dst": "10.10.10.0/24", "dev": "enp5s0", "protocol": "dhcp"},
     ]
     ethernet = "Speed: 2500Mb/s\nWake-on: g\nLink detected: yes\n"
-    return links, addresses, routes, "nameserver 10.10.10.1\n", "1\n", "0\n", ethernet
+    rings = "Current hardware settings:\nRX:\t\t\t4096\nTX:\t\t\t256\n"
+    return (
+        links,
+        addresses,
+        routes,
+        "nameserver 10.10.10.1\n",
+        "1\n",
+        "0\n",
+        ethernet,
+        rings,
+    )
 
 
 def test_network_declaration_owns_physical_contract_and_retirement() -> None:
@@ -68,6 +79,7 @@ def test_network_declaration_owns_physical_contract_and_retirement() -> None:
     assert "iface enp5s0 inet dhcp" in interfaces
     assert "mtu 1500" in interfaces
     assert "ethtool -s enp5s0 wol g" in interfaces
+    assert "ethtool -G enp5s0 rx 4096" in interfaces
     assert "wlo1" not in interfaces
     sysctl = bootstrap["files"]["/etc/sysctl.d/90-pod042-network.conf"]["content"]
     assert "net.ipv4.ip_forward = 1" in sysctl
@@ -97,7 +109,7 @@ def test_live_network_contract_accepts_expected_state() -> None:
 
 
 def test_live_network_contract_reports_boundary_drift() -> None:
-    links, addresses, routes, resolver, _, _, ethernet = good_state()
+    links, addresses, routes, resolver, _, _, ethernet, rings = good_state()
     links[0]["master"] = "br0"
     links.append({"ifname": "br0", "mtu": 1500, "operstate": "UP"})
     addresses[0]["addr_info"][0]["local"] = "10.10.10.187"
@@ -113,6 +125,7 @@ def test_live_network_contract_reports_boundary_drift() -> None:
         "0\n",
         "1\n",
         ethernet.replace("Wake-on: g", "Wake-on: d"),
+        rings.replace("RX:\t\t\t4096", "RX:\t\t\t256"),
     )
     assert errors == [
         "enp5s0 must not be enslaved to a host bridge",
@@ -123,4 +136,5 @@ def test_live_network_contract_reports_boundary_drift() -> None:
         "IPv4 forwarding is not enabled",
         "IPv6 forwarding must remain disabled",
         "enp5s0 magic-packet wake is not enabled",
+        "enp5s0 RX ring is not 4096 entries",
     ]

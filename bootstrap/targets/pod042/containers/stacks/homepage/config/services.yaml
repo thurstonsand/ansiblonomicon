@@ -15,6 +15,10 @@
     - Netdata:
         icon: netdata.svg
         href: https://netdata.thurstons.house
+        widget:
+          type: netdata
+          url: http://host.docker.internal:19999
+          fields: [warnings, criticals]
     - NextDNS:
         icon: nextdns.svg
         href: "https://my.nextdns.io/{{HOMEPAGE_VAR_NEXTDNS_PROFILE_ID}}/setup"

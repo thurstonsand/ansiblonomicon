@@ -24,6 +24,7 @@ def verify(
     ipv4_forwarding: str,
     ipv6_forwarding: str,
     ethernet: str,
+    rings: str,
 ) -> list[str]:
     errors: list[str] = []
     links_by_name = {str(link["ifname"]): link for link in links}
@@ -86,6 +87,12 @@ def verify(
         errors.append(f"{INTERFACE} has no carrier")
     if "Wake-on: g" not in ethernet:
         errors.append(f"{INTERFACE} magic-packet wake is not enabled")
+    current_rings = rings.partition("Current hardware settings:")[2]
+    if not any(
+        line.startswith("RX:") and line.partition(":")[2].strip() == "4096"
+        for line in current_rings.splitlines()
+    ):
+        errors.append(f"{INTERFACE} RX ring is not 4096 entries")
     return errors
 
 
@@ -98,12 +105,16 @@ def main() -> int:
         output("/usr/sbin/sysctl", "-n", "net.ipv4.ip_forward"),
         output("/usr/sbin/sysctl", "-n", "net.ipv6.conf.all.forwarding"),
         output("/usr/sbin/ethtool", INTERFACE),
+        output("/usr/sbin/ethtool", "-g", INTERFACE),
     )
     if errors:
         for error in errors:
             print(f"FAIL  {error}")
         return 1
-    print(f"PASS  {INTERFACE} {ADDRESS} via {GATEWAY}, 2.5 Gb/s, MTU 1500, WOL enabled")
+    print(
+        f"PASS  {INTERFACE} {ADDRESS} via {GATEWAY}, "
+        "2.5 Gb/s, MTU 1500, RX ring 4096, WOL enabled"
+    )
     return 0
 
 
