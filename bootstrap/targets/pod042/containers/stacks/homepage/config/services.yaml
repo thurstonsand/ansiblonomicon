@@ -1,0 +1,103 @@
+---
+- Infrastructure:
+    - Cloudflare DNS:
+        icon: cloudflare.svg
+        href: https://dash.cloudflare.com
+    - Cloudflare Tunnel:
+        icon: cloudflare.svg
+        href: https://one.dash.cloudflare.com
+        server: docker-proxy
+        container: ingress-cloudflared-1
+    - DDClient:
+        icon: cloudflare.svg
+        server: docker-proxy
+        container: ingress-ddclient-1
+    - NextDNS:
+        icon: nextdns.svg
+        href: "https://my.nextdns.io/{{HOMEPAGE_VAR_NEXTDNS_PROFILE_ID}}/setup"
+        widget:
+          type: nextdns
+          profile: "{{HOMEPAGE_VAR_NEXTDNS_PROFILE_ID}}"
+          key: "{{HOMEPAGE_VAR_NEXTDNS_API_KEY}}"
+
+- Media:
+    - Seerr:
+        href: https://seerr.thurstons.house
+        icon: seerr.svg
+        widget:
+          type: overseerr
+          url: https://seerr.thurstons.house
+          key: "{{HOMEPAGE_VAR_OVERSEERR_API_KEY}}"
+    - Plex:
+        href: https://app.plex.tv/desktop/
+        icon: plex.svg
+        widget:
+          type: plex
+          url: https://plex.thurstons.house
+          key: "{{HOMEPAGE_VAR_PLEX_API_KEY}}"
+          fields: [streams, movies, tv]
+    - qBittorrent:
+        href: https://torrent.thurstons.house
+        icon: qbittorrent.svg
+        widget:
+          type: qbittorrent
+          url: https://torrent.thurstons.house
+          username: "{{HOMEPAGE_VAR_QBITTORRENT_USERNAME}}"
+          password: "{{HOMEPAGE_VAR_QBITTORRENT_PASSWORD}}"
+          enableLeechProgress: true
+          enableLeechSize: true
+    - Prowlarr:
+        href: https://prowlarr.thurstons.house
+        icon: prowlarr.svg
+        widget:
+          type: prowlarr
+          url: https://prowlarr.thurstons.house
+          key: "{{HOMEPAGE_VAR_PROWLARR_API_KEY}}"
+    - Radarr:
+        href: https://radarr.thurstons.house
+        icon: radarr.svg
+        widget:
+          type: radarr
+          url: https://radarr.thurstons.house
+          key: "{{HOMEPAGE_VAR_RADARR_API_KEY}}"
+          enableQueue: true
+    - Sonarr:
+        href: https://sonarr.thurstons.house
+        icon: sonarr.svg
+        widget:
+          type: sonarr
+          url: https://sonarr.thurstons.house
+          key: "{{HOMEPAGE_VAR_SONARR_API_KEY}}"
+          enableQueue: true
+
+- Services:
+    - AnyPod:
+        href: https://anypod.thurstons.house
+        icon: mdi-podcast
+    - Ghost:
+        href: https://blog.thurstons.house
+        icon: ghost.svg
+    - CLI Proxy API:
+        href: https://cli-proxy-api.thurstons.house
+        icon: mdi-api
+    - iSponsorBlockTV:
+        icon: mdi-skip-next
+        server: docker-proxy
+        container: isponsorblocktv-isponsorblocktv-1
+    - PON Monitor:
+        icon: mdi-wan
+        server: docker-proxy
+        container: pon-monitor-pon-monitor-1
+
+- Smart Home:
+    - Home Assistant:
+        icon: home-assistant.svg
+        href: https://ha.thurstons.house
+        widget:
+          type: homeassistant
+          url: https://ha.thurstons.house
+          key: "{{HOMEPAGE_VAR_HOMEASSISTANT_API_KEY}}"
+          fields: [people_home, lights_on, switches_on]
+    - Scrypted:
+        icon: scrypted.svg
+        href: https://scrypted.thurstons.house

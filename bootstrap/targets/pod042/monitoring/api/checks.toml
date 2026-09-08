@@ -13,6 +13,24 @@ methods = "POST"
 manual_resume = false
 
 [[checks]]
+slug = "pod042-mam-update"
+name = "pod042-mam-update"
+schedule = "*/30 * * * *"
+tz = "America/Los_Angeles"
+grace = 5400
+methods = "POST"
+manual_resume = false
+
+[[checks]]
+slug = "pod042-pon-monitor"
+name = "pod042-pon-monitor"
+schedule = "*/5 * * * *"
+tz = "America/Los_Angeles"
+grace = 1800
+methods = "POST"
+manual_resume = false
+
+[[checks]]
 slug = "pod042-scrub-ark"
 name = "pod042-scrub-ark"
 schedule = "0 0 1 * *"

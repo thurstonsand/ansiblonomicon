@@ -18,6 +18,8 @@ services:
       retries: 6
     read_only: true
     restart: unless-stopped
+    networks:
+      - docker-socket-proxy
     tmpfs:
       - /run
       - /tmp
@@ -43,5 +45,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
 
 networks:
+  docker-socket-proxy:
+    name: docker-socket-proxy
   ingress:
     name: ingress

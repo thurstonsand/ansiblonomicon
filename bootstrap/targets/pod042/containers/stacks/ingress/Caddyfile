@@ -1,0 +1,68 @@
+{
+	acme_dns cloudflare {env.CLOUDFLARE_API_TOKEN}
+}
+
+(local_only) {
+	@outside not remote_ip 10.10.10.0/24 10.10.20.0/24 10.10.30.0/24
+	respond @outside 403
+	reverse_proxy {args[0]}
+}
+
+thurstons.house, www.thurstons.house, http://thurstons.house, http://www.thurstons.house {
+	file_server
+	root * /srv
+}
+
+anypod.thurstons.house, http://anypod.thurstons.house {
+	reverse_proxy anypod:8024
+}
+
+blog.thurstons.house, http://blog.thurstons.house {
+	reverse_proxy ghost:2368 {
+		header_up X-Forwarded-Proto https
+	}
+}
+
+cli-proxy-api.thurstons.house, http://cli-proxy-api.thurstons.house {
+	reverse_proxy cli-proxy-api:8317
+}
+
+seerr.thurstons.house, http://seerr.thurstons.house {
+	reverse_proxy seerr:5055
+}
+
+dash.thurstons.house {
+	import local_only homepage:3000
+}
+
+netdata.thurstons.house {
+	import local_only host.docker.internal:19999
+}
+
+newtarr.thurstons.house {
+	import local_only newtarr:9705
+}
+
+plex.thurstons.house {
+	import local_only host.docker.internal:32400
+}
+
+prowlarr.thurstons.house {
+	import local_only prowlarr:9696
+}
+
+radarr.thurstons.house {
+	import local_only radarr:7878
+}
+
+scrypted.thurstons.house {
+	import local_only host.docker.internal:11080
+}
+
+sonarr.thurstons.house {
+	import local_only sonarr:8989
+}
+
+torrent.thurstons.house {
+	import local_only qbittorrent:80
+}

@@ -55,6 +55,7 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 - [Host network desired state](tickets/36-host-network-desired-state.md): Pod042 remains an untagged Bunker DHCP client at UniFi-reserved `10.10.10.42`, with no host bridge; private Docker/Incus routing, split local/tunnel Caddy ingress, exact local service DNS, layered enforcement, and deferred laptop-controlled power testing define the final contract.
 - [Container platform desired state](tickets/37-container-platform-desired-state.md): Native mise owns rootful Docker CE and project-scoped Compose reconciliation; runtime stays disposable on the boot SSD, durable state stays on ZFS, Watchtower updates every registry-backed container daily, and native Netdata provides the trusted observability and MCP surface before retained projects return.
 - [Implement the pod042 container platform](tickets/45-implement-container-platform.md): Docker CE, private Compose reconciliation, restricted-socket Watchtower, and native Netdata are live and converged; a monitored Alpine canary passed and retired cleanly, so retained service projects can now return independently.
+- [Service portfolio](tickets/38-service-portfolio.md): Eleven Compose projects return through private bridges and shared ingress; Caddy, cloudflared, and DDClient form the ingress project, while Scrypted remains the host-network UniFi Protect to Apple Home bridge rather than retiring with Frigate.
 
 ## Not yet specified
 

@@ -1,0 +1,22 @@
+services:
+  plex:
+    image: plexinc/pms-docker:plexpass
+    network_mode: host
+    devices:
+      - /dev/dri:/dev/dri
+    environment:
+      TZ: America/New_York
+      PLEX_UID: "1000"
+      PLEX_GID: "3000"
+      UMASK: "002"
+    volumes:
+      - /mnt/black-box/docker/plex/config:/config
+      - /mnt/ark/media:/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "/healthcheck.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 2m
+    restart: unless-stopped

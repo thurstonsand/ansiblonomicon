@@ -1,0 +1,22 @@
+services:
+  scrypted:
+    image: ghcr.io/koush/scrypted
+    network_mode: host
+    environment:
+      SCRYPTED_DOCKER_AVAHI: "true"
+      SCRYPTED_INSECURE_PORT: "11080"
+      SCRYPTED_SECURE_PORT: "10443"
+    volumes:
+      - /mnt/black-box/docker/scrypted/scrypted/server/volume:/server/volume
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - require('http').get('http://127.0.0.1:11080',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 2m
+    restart: unless-stopped

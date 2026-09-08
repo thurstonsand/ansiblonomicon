@@ -12,7 +12,6 @@ resource "cloudflare_zero_trust_access_application" "truenas_app" {
   self_hosted_domains = [
     "cli-proxy-api.${local.zone_name}",
     "anypod.${local.zone_name}/admin/*",
-    "openclaw.${local.zone_name}"
   ]
   policies = [
     cloudflare_zero_trust_access_policy.home_network_bypass.id,

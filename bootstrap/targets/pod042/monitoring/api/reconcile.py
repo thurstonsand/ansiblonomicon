@@ -13,6 +13,8 @@ from uuid import UUID
 
 PING_ENV = {
     "pod042-heartbeat": "POD042_HEARTBEAT_PING_URL",
+    "pod042-mam-update": "POD042_MAM_UPDATE_PING_URL",
+    "pod042-pon-monitor": "POD042_PON_MONITOR_PING_URL",
     "pod042-scrub-ark": "POD042_SCRUB_ARK_PING_URL",
     "pod042-scrub-black-box": "POD042_SCRUB_BLACK_BOX_PING_URL",
     "pod042-sanoid": "POD042_SANOID_PING_URL",

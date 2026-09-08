@@ -14,6 +14,16 @@ resource "cloudflare_tunnel_config" "home" {
   tunnel_id  = cloudflare_tunnel.home.id
 
   config {
+    ingress_rule {
+      hostname = local.zone_name
+      service  = "http://caddy:80"
+    }
+
+    ingress_rule {
+      hostname = "www.${local.zone_name}"
+      service  = "http://caddy:80"
+    }
+
     dynamic "ingress_rule" {
       for_each = local.tunnel_apps
       content {

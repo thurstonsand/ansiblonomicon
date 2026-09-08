@@ -1,0 +1,184 @@
+services:
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    environment:
+      TZ: America/Los_Angeles
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8191/health >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
+
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    environment:
+      PUID: "1000"
+      PGID: "3000"
+      TZ: America/Los_Angeles
+    volumes:
+      - /mnt/black-box/docker/arr-apps/prowlarr/config:/config
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:9696/ping >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    networks:
+      - default
+      - ingress
+    restart: unless-stopped
+
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:develop
+    environment:
+      PUID: "1000"
+      PGID: "3000"
+      TZ: America/Los_Angeles
+    volumes:
+      - /mnt/black-box/docker/arr-apps/sonarr/config:/config
+      - /mnt/ark/media:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:8989/ping >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    networks:
+      - default
+      - ingress
+      - torrent-arr
+    restart: unless-stopped
+
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    environment:
+      PUID: "1000"
+      PGID: "3000"
+      TZ: America/Los_Angeles
+    volumes:
+      - /mnt/black-box/docker/arr-apps/radarr/config:/config
+      - /mnt/ark/media:/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:7878/ping >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    networks:
+      - default
+      - ingress
+      - torrent-arr
+    restart: unless-stopped
+
+  newtarr:
+    image: iampuid0/neutarr:latest
+    environment:
+      PUID: "1000"
+      PGID: "3000"
+      TZ: America/Los_Angeles
+    volumes:
+      - /mnt/black-box/docker/arr-apps/newtarr/config:/config
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    networks:
+      - default
+      - ingress
+    restart: unless-stopped
+
+  swaparr-sonarr:
+    image: ghcr.io/thijmengthn/swaparr:latest
+    environment:
+      BASEURL: http://sonarr:8989
+      APIKEY: "${SONARR_API_KEY:?required}"
+      PLATFORM: sonarr
+      MAX_STRIKES: "6"
+      SCAN_INTERVAL: 30m
+      MAX_DOWNLOAD_TIME: 6h
+      IGNORE_ABOVE_SIZE: 25GB
+      REMOVE_FROM_CLIENT: "true"
+      STRIKE_QUEUED: "false"
+      DRY_RUN: "false"
+    depends_on:
+      sonarr:
+        condition: service_healthy
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
+
+  swaparr-radarr:
+    image: ghcr.io/thijmengthn/swaparr:latest
+    environment:
+      BASEURL: http://radarr:7878
+      APIKEY: "${RADARR_API_KEY:?required}"
+      PLATFORM: radarr
+      MAX_STRIKES: "6"
+      SCAN_INTERVAL: 30m
+      MAX_DOWNLOAD_TIME: 6h
+      IGNORE_ABOVE_SIZE: 25GB
+      REMOVE_FROM_CLIENT: "true"
+      STRIKE_QUEUED: "false"
+      DRY_RUN: "false"
+    depends_on:
+      radarr:
+        condition: service_healthy
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
+
+  recyclarr:
+    image: ghcr.io/recyclarr/recyclarr:8
+    user: "1000:3000"
+    environment:
+      TZ: America/Los_Angeles
+      SONARR_API_KEY: "${SONARR_API_KEY:?required}"
+      RADARR_API_KEY: "${RADARR_API_KEY:?required}"
+    volumes:
+      - /mnt/black-box/docker/arr-apps/recyclarr/config:/config
+    depends_on:
+      sonarr:
+        condition: service_healthy
+      radarr:
+        condition: service_healthy
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    restart: unless-stopped
+
+  seerr:
+    image: ghcr.io/seerr-team/seerr:latest
+    init: true
+    user: "1000:3000"
+    environment:
+      TZ: America/Los_Angeles
+      PORT: "5055"
+    volumes:
+      - /mnt/black-box/docker/arr-apps/seerr/config:/app/config
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://127.0.0.1:5055/api/v1/settings/public"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    networks:
+      - default
+      - ingress
+    restart: unless-stopped
+
+networks:
+  ingress:
+    external: true
+    name: ingress
+  torrent-arr:
+    external: true
+    name: torrent-arr

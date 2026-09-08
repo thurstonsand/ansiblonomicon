@@ -1,0 +1,102 @@
+services:
+  gluetun:
+    image: qmcgaw/gluetun:latest
+    cap_add:
+      - NET_ADMIN
+    environment:
+      VPN_TYPE: wireguard
+      VPN_SERVICE_PROVIDER: mullvad
+      WIREGUARD_PRIVATE_KEY: "${TORRENT_WIREGUARD_PRIVATE_KEY:?required}"
+      WIREGUARD_ADDRESSES: "${TORRENT_WIREGUARD_ADDRESS:?required}"
+      SERVER_COUNTRIES: USA
+      SERVER_CITIES: Atlanta GA
+      # Work around gluetun's PMTUD minMTU/maxMTU panic. Retest after an update.
+      WIREGUARD_MTU: "1320"
+      FIREWALL_INPUT_PORTS: "80,8000"
+      UPDATER_PERIOD: 24h
+      PUID: "1000"
+      PGID: "3000"
+    expose:
+      - "80"
+      - "8000"
+    volumes:
+      - /mnt/black-box/docker/torrent/gluetun/gluetun:/gluetun
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- --timeout=5 https://am.i.mullvad.net/connected | grep -q 'You are connected'"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    restart: unless-stopped
+    networks:
+      default: {}
+      ingress:
+        aliases:
+          - qbittorrent
+          - torrent
+      torrent-arr:
+        aliases:
+          - qbittorrent
+
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    labels:
+      com.centurylinklabs.watchtower.depends-on: torrent-gluetun-1
+    network_mode: service:gluetun
+    environment:
+      WEBUI_PORT: "80"
+      PUID: "1000"
+      PGID: "3000"
+    volumes:
+      - /mnt/black-box/docker/torrent/qbittorrent/config:/config
+      # Keep the established in-container path so restored torrent save paths work.
+      - /mnt/ark/media:/watch
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD", "python3", "/config/healthcheck.py"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      gluetun:
+        condition: service_healthy
+        restart: true
+    restart: unless-stopped
+
+  mam-updater:
+    build:
+      context: .
+      dockerfile: Dockerfile.mam-updater
+    pull_policy: build
+    labels:
+      com.centurylinklabs.watchtower.depends-on: torrent-gluetun-1
+      com.centurylinklabs.watchtower.enable: "false"
+    user: "1000:3000"
+    network_mode: service:gluetun
+    environment:
+      MAM_UPDATE_DIR: /data
+      MAM_ID_FILE: /data/MAM.id
+      HEALTHCHECK_PING_URL: "${TORRENT_MAM_PING_URL:?required}"
+    volumes:
+      - /mnt/black-box/docker/torrent/mam-updater/data:/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test: ["CMD-SHELL", "getent hosts am.i.mullvad.net >/dev/null && curl -fsS --max-time 8 https://am.i.mullvad.net/connected | grep -q 'You are connected'"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 120s
+    depends_on:
+      gluetun:
+        condition: service_healthy
+        restart: true
+    restart: unless-stopped
+
+networks:
+  ingress:
+    external: true
+    name: ingress
+  torrent-arr:
+    name: torrent-arr

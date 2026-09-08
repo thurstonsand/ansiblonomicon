@@ -1,0 +1,38 @@
+services:
+  pon-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    pull_policy: build
+    restart: unless-stopped
+    user: "1000:3000"
+    labels:
+      com.centurylinklabs.watchtower.enable: "false"
+    environment:
+      PON_METRICS_URL: https://192.168.11.1/cgi-bin/luci/8311/metrics
+      PON_STICK_HOST: 192.168.11.1
+      PON_STICK_USER: root
+      PON_STICK_PASSWORD: "${XGS_PON_PASSWORD:?required}"
+      PON_PROBE_URLS: https://1.1.1.1 https://8.8.8.8
+      PON_SAMPLE_INTERVAL: "15"
+      PON_FAILURES_BEFORE_CAPTURE: "2"
+      PON_SAMPLES_PATH: /data/samples.jsonl
+      PON_SAMPLES_MAX_BYTES: "33554432"
+      PON_SAMPLES_KEEP: "3"
+      PON_CAPTURES_DIR: /data/captures
+      PON_SPOOL_DIR: /data/spool
+      PON_SPOOL_KEEP: "50"
+      PON_HARK_WEBHOOK_URL: "${HARK_WEBHOOK_URL_POD042:?required}"
+      PON_HEALTHCHECK_PING_URL: "${PON_MONITOR_PING_URL:?required}"
+      PON_HEALTHCHECK_INTERVAL: "300"
+    volumes:
+      - /mnt/black-box/docker/pon-monitor/pon-monitor/data:/data
+      - /etc/localtime:/etc/localtime:ro
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'test -s /data/samples.jsonl && test -n "$$(find /data/samples.jsonl -mmin -2 -print -quit)"'
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s

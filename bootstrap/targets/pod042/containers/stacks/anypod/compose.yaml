@@ -1,0 +1,52 @@
+services:
+  anypod:
+    image: ghcr.io/thurstonsand/anypod:nightly
+    init: true
+    restart: unless-stopped
+    environment:
+      BASE_URL: https://anypod.thurstons.house
+      COOKIES_PATH: /cookies/cookies.txt
+      LOG_FORMAT: json
+      LOG_INCLUDE_STACKTRACE: "true"
+      LOG_LEVEL: INFO
+      PGID: "3000"
+      POT_PROVIDER_URL: http://bgutil-pot-provider:4416
+      PUID: "1000"
+      SERVER_PORT: "8024"
+      SINGLE_SERVER_MODE: "true"
+      TRUSTED_PROXIES: '["10.42.0.0/16"]'
+      YT_CHANNEL: nightly
+    volumes:
+      - /mnt/black-box/docker/anypod/anypod/config/feeds.yaml:/config/feeds.yaml
+      - /mnt/black-box/docker/anypod/anypod/cookies/cookies.txt:/cookies/cookies.txt
+      - /mnt/ark/media/anypod/data:/data
+      - /mnt/black-box/docker/anypod/db:/data/db
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      bgutil-pot-provider:
+        condition: service_healthy
+    networks:
+      default: {}
+      ingress:
+        aliases:
+          - anypod
+
+  bgutil-pot-provider:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    init: true
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - fetch('http://127.0.0.1:4416/ping').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+networks:
+  ingress:
+    external: true
+    name: ingress

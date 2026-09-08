@@ -11,12 +11,10 @@ locals {
 
   # Apps exposed via Cloudflare Tunnel - single source of truth for DNS + tunnel ingress
   tunnel_apps = [
-    { host = "seerr", service = "http://192.168.5.227:5055" },
-    { host = "podsync", service = "http://192.168.5.228:80" },
-    { host = "anypod", service = "http://192.168.5.231:8024" },
-    { host = "blog", service = "http://192.168.5.233:2368" },
-    { host = "cli-proxy-api", service = "http://192.168.5.235:8317" },
-    { host = "openclaw", service = "http://192.168.1.90:18789" },
+    { host = "seerr", service = "http://caddy:80" },
+    { host = "anypod", service = "http://caddy:80" },
+    { host = "blog", service = "http://caddy:80" },
+    { host = "cli-proxy-api", service = "http://caddy:80" },
   ]
 
   internal_tunnel_apps = []
@@ -38,10 +36,8 @@ locals {
     "blog.${local.zone_name}",
     "overseerr.${local.zone_name}",
     "seerr.${local.zone_name}",
-    "podsync.${local.zone_name}",
     "anypod.${local.zone_name}",
     "cli-proxy-api.${local.zone_name}",
-    "openclaw.${local.zone_name}",
     "aig.${local.zone_name}",
     "hooks.${local.zone_name}",
   ]

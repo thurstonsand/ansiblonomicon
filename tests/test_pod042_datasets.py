@@ -17,7 +17,12 @@ sys.modules[spec.name] = policy
 with patch.object(sys, "path", [str(ROOT / "maintenance"), *sys.path]):
     spec.loader.exec_module(policy)
 
-ACTIVE = {"ark/media", "black-box/docker", "black-box/agents"}
+ACTIVE = {
+    "ark/media",
+    "black-box/agents",
+    "black-box/docker",
+    "black-box/ghost-mysql",
+}
 ARCHIVES = {
     "ark/legacy/consolidated-20260906-anypod",
     "black-box/legacy/consolidated-20260906-anypod",
@@ -42,7 +47,9 @@ def run_check(
         values = {
             policy.LAYOUT: "fresh-v1",
             policy.VERIFIED: "verified",
-            "casesensitivity": "sensitive",
+            "casesensitivity": (
+                "insensitive" if name == "black-box/ghost-mysql" else "sensitive"
+            ),
             "normalization": "none",
             "encryption": "off",
             "mounted": "yes" if name in ACTIVE or mounted_archive else "no",
@@ -70,7 +77,7 @@ def run_check(
     return changes
 
 
-def test_three_active_and_consolidated_archives(
+def test_active_datasets_and_consolidated_archives(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     changes = run_check(monkeypatch)

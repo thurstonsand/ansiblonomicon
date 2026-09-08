@@ -1,0 +1,34 @@
+services:
+  cli-proxy-api:
+    image: eceasy/cli-proxy-api:latest
+    restart: unless-stopped
+    environment:
+      MANAGEMENT_STATIC_PATH: /CLIProxyAPI/static
+    expose:
+      - "8317"
+      - "8085"
+      - "1455"
+      - "54545"
+      - "51121"
+      - "11451"
+    healthcheck:
+      test: ["CMD", "bash", "-c", "exec 3<>/dev/tcp/127.0.0.1/8317"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    networks:
+      ingress:
+        aliases:
+          - cli-proxy-api
+    volumes:
+      - /mnt/black-box/docker/cli-proxy-api/cli-proxy-api/CLIProxyAPI/config.yaml:/CLIProxyAPI/config.yaml
+      - /mnt/black-box/docker/cli-proxy-api/cli-proxy-api/CLIProxyAPI/auths:/CLIProxyAPI/auths
+      - /mnt/black-box/docker/cli-proxy-api/cli-proxy-api/CLIProxyAPI/static:/CLIProxyAPI/static
+
+networks:
+  ingress:
+    external: true
+    name: ingress

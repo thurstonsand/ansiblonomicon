@@ -1,0 +1,6 @@
+services:
+  isponsorblocktv:
+    image: ghcr.io/dmunozv04/isponsorblocktv:latest
+    restart: unless-stopped
+    volumes:
+      - /mnt/black-box/docker/isponsorblocktv/isponsorblocktv/app/data:/app/data

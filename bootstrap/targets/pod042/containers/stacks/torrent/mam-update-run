@@ -1,0 +1,20 @@
+#!/bin/sh
+# Session failures need an alert: container health only proves the VPN is usable.
+set -u
+
+hc_ping() {
+  [ -n "${HEALTHCHECK_PING_URL:-}" ] || return 0
+  curl -fsS --max-time 10 --retry 3 --retry-delay 2 -o /dev/null \
+    "${HEALTHCHECK_PING_URL}$1" ||
+    echo "mam-update-run: ping '${1:-/success}' failed" >&2
+}
+
+hc_ping /start
+mam-update
+status=$?
+if [ "$status" -eq 0 ]; then
+  hc_ping ""
+else
+  hc_ping "/$status"
+fi
+exit "$status"

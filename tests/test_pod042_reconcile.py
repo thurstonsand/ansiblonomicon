@@ -357,7 +357,7 @@ def test_check_and_update_mise_are_incompatible() -> None:
     "capability,expected",
     [
         ("alerting", {"HARK_WEBHOOK_URL_POD042"}),
-        ("containers", {"HARK_WEBHOOK_URL_POD042"}),
+        ("containers", set(pod042_reconcile.CONTAINER_SECRETS)),
         ("monitoring", {"HARK_WEBHOOK_URL_POD042", "HEALTHCHECKS_API_KEY"}),
         ("operator", set[str]()),
     ],

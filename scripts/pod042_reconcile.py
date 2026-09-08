@@ -21,6 +21,31 @@ REMOTE_USER = "thurstonsand"
 OPERATOR_PUBLIC_KEY = TARGET_ROOT / "base" / "files" / "operator.pub"
 IDENTITY_AGENT_ENV = "POD042_SSH_IDENTITY_AGENT"
 CONTROL_PATH_ENV = "POD042_SSH_CONTROL_PATH"
+CONTAINER_SECRETS = (
+    "CLOUDFLARE_API_TOKEN",
+    "CLOUDFLARE_TOKEN",
+    "DDCLIENT_GITHUB_PAT",
+    "GHOST_DB_PASSWORD",
+    "GHOST_MAIL_AUTH_PASS",
+    "GHOST_MYSQL_ROOT_PASSWORD",
+    "HARK_WEBHOOK_URL_POD042",
+    "HEALTHCHECKS_API_KEY",
+    "HOMEPAGE_HOMEASSISTANT_API_KEY",
+    "HOMEPAGE_OVERSEERR_API_KEY",
+    "HOMEPAGE_PLEX_API_KEY",
+    "NEXTDNS_API_KEY",
+    "NEXTDNS_PROFILE_ID",
+    "PROWLARR_API_KEY",
+    "QBITTORRENT_PASSWORD",
+    "QBITTORRENT_USERNAME",
+    "RADARR_API_KEY",
+    "SONARR_API_KEY",
+    "TORRENT_WIREGUARD_ADDRESS",
+    "TORRENT_WIREGUARD_PRIVATE_KEY",
+    "UNIFI_PASSWORD",
+    "UNIFI_USERNAME",
+    "XGS_PON_PASSWORD",
+)
 CAPABILITIES = (
     "base",
     "network",
@@ -230,11 +255,12 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         f"MISE_CEILING_PATHS={TARGET_ROOT.parent}",
         f"MISE_TRUSTED_CONFIG_PATHS={TARGET_ROOT}",
         f"MISE_ENV={environments}",
+        *(("MISE_JOBS=1",) if capability == "containers" else ()),
         "mise",
         "-C",
         str(TARGET_ROOT),
     ]
-    if "monitoring" in capabilities_for(capability):
+    if capability == "containers" or "monitoring" in capabilities_for(capability):
         command = [
             sys.executable,
             "-B",
@@ -244,18 +270,24 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             *command,
         ]
     if "alerting" in capabilities_for(capability):
+        secrets = (
+            CONTAINER_SECRETS
+            if capability == "containers"
+            else (
+                "HARK_WEBHOOK_URL_POD042",
+                *(
+                    ("HEALTHCHECKS_API_KEY",)
+                    if "monitoring" in capabilities_for(capability)
+                    else ()
+                ),
+            )
+        )
         command = [
             sys.executable,
             "-B",
             str(ROOT / "scripts/fnox-host"),
             "exec",
-            "--secret",
-            "HARK_WEBHOOK_URL_POD042",
-            *(
-                ["--secret", "HEALTHCHECKS_API_KEY"]
-                if "monitoring" in capabilities_for(capability)
-                else []
-            ),
+            *(argument for secret in secrets for argument in ("--secret", secret)),
             "--",
             *command,
         ]

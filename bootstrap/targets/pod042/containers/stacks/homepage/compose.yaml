@@ -1,0 +1,44 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    user: "1000:3000"
+    environment:
+      HOMEPAGE_ALLOWED_HOSTS: dash.thurstons.house
+      LOG_TARGETS: stdout
+      HOMEPAGE_VAR_HOMEASSISTANT_API_KEY: "${HOMEPAGE_HOMEASSISTANT_API_KEY:?required}"
+      HOMEPAGE_VAR_NEXTDNS_API_KEY: "${NEXTDNS_API_KEY:?required}"
+      HOMEPAGE_VAR_NEXTDNS_PROFILE_ID: "${NEXTDNS_PROFILE_ID:?required}"
+      HOMEPAGE_VAR_OVERSEERR_API_KEY: "${HOMEPAGE_OVERSEERR_API_KEY:?required}"
+      HOMEPAGE_VAR_PLEX_API_KEY: "${HOMEPAGE_PLEX_API_KEY:?required}"
+      HOMEPAGE_VAR_PROWLARR_API_KEY: "${PROWLARR_API_KEY:?required}"
+      HOMEPAGE_VAR_QBITTORRENT_PASSWORD: "${QBITTORRENT_PASSWORD:?required}"
+      HOMEPAGE_VAR_QBITTORRENT_USERNAME: "${QBITTORRENT_USERNAME:?required}"
+      HOMEPAGE_VAR_RADARR_API_KEY: "${RADARR_API_KEY:?required}"
+      HOMEPAGE_VAR_SONARR_API_KEY: "${SONARR_API_KEY:?required}"
+      HOMEPAGE_VAR_UNIFI_PASSWORD: "${HOMEPAGE_UNIFI_PASSWORD:?required}"
+      HOMEPAGE_VAR_UNIFI_USERNAME: "${HOMEPAGE_UNIFI_USERNAME:?required}"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    labels:
+      com.centurylinklabs.watchtower.enable: "true"
+    networks:
+      ingress:
+        aliases:
+          - homepage
+      docker-socket-proxy: {}
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config
+      - /mnt/black-box/docker/homepage/app/public/images:/app/public/images:ro
+
+networks:
+  ingress:
+    external: true
+    name: ingress
+  docker-socket-proxy:
+    external: true
+    name: docker-socket-proxy

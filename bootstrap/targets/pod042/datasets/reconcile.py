@@ -25,6 +25,7 @@ class Dataset:
     name: str
     mountpoint: str
     shared: bool
+    creation: dict[str, str]
 
 
 def record(value: object) -> dict[str, object]:
@@ -91,9 +92,14 @@ def reconcile(config: Path, mode: str) -> None:
         mountpoint, shared = entry["mountpoint"], entry["shared"]
         if not isinstance(mountpoint, str) or not isinstance(shared, bool):
             raise ValueError(f"Invalid dataset declaration: {name}")
-        if name.split("/")[0] not in POOLS or mountpoint != f"/mnt/{name}":
+        pool = name.split("/")[0]
+        if pool not in POOLS or not mountpoint.startswith(f"/mnt/{pool}/"):
             raise ValueError(f"Unexpected dataset path: {name}")
-        datasets.append(Dataset(name, mountpoint, shared))
+        dataset_creation = {
+            **creation,
+            **strings(entry.get("creation", {})),
+        }
+        datasets.append(Dataset(name, mountpoint, shared, dataset_creation))
     datasets.sort(key=lambda dataset: dataset.name)
     if grp.getgrnam("media").gr_gid != 3000:
         raise ValueError("Expected media group GID 3000")
@@ -117,9 +123,9 @@ def reconcile(config: Path, mode: str) -> None:
             continue
         if existing[dataset.name] != "filesystem":
             raise ValueError(f"Not a filesystem: {dataset.name}")
-        current = properties(dataset.name, [LAYOUT, VERIFIED, *creation])
+        current = properties(dataset.name, [LAYOUT, VERIFIED, *dataset.creation])
         if current[LAYOUT] != Property("fresh-v1", "local") or any(
-            current[key].value != value for key, value in creation.items()
+            current[key].value != value for key, value in dataset.creation.items()
         ):
             raise ValueError(f"Refusing to adopt a legacy filesystem: {dataset.name}")
         if mode != "prepare" and current[VERIFIED] != Property("verified", "local"):
@@ -153,7 +159,7 @@ def reconcile(config: Path, mode: str) -> None:
         if dataset.name not in existing:
             args = ["/usr/sbin/zfs", "create"]
             for key, value in {
-                **creation,
+                **dataset.creation,
                 **values,
                 LAYOUT: "fresh-v1",
                 VERIFIED: "pending",

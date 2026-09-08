@@ -26,6 +26,13 @@ shared = true
 mountpoint = "/mnt/black-box/docker"
 shared = false
 
+[datasets."black-box/ghost-mysql"]
+mountpoint = "/mnt/black-box/docker/ghost/ghost_mysql/var/lib/mysql"
+shared = false
+
+[datasets."black-box/ghost-mysql".creation]
+casesensitivity = "insensitive"
+
 [datasets."black-box/agents"]
 mountpoint = "/mnt/black-box/agents"
 shared = false

@@ -16,6 +16,29 @@ run = [
 
 [bootstrap.secrets]
 hark_webhook_url = "HARK_WEBHOOK_URL_POD042"
+cloudflare_api_token = "CLOUDFLARE_API_TOKEN"
+cloudflare_tunnel_token = "CLOUDFLARE_TOKEN"
+ddclient_github_pat = "DDCLIENT_GITHUB_PAT"
+ghost_db_password = "GHOST_DB_PASSWORD"
+ghost_mail_auth_pass = "GHOST_MAIL_AUTH_PASS"
+ghost_mysql_root_password = "GHOST_MYSQL_ROOT_PASSWORD"
+homepage_homeassistant_api_key = "HOMEPAGE_HOMEASSISTANT_API_KEY"
+homepage_overseerr_api_key = "HOMEPAGE_OVERSEERR_API_KEY"
+homepage_plex_api_key = "HOMEPAGE_PLEX_API_KEY"
+homepage_unifi_password = "UNIFI_PASSWORD"
+homepage_unifi_username = "UNIFI_USERNAME"
+nextdns_api_key = "NEXTDNS_API_KEY"
+nextdns_profile_id = "NEXTDNS_PROFILE_ID"
+pon_monitor_ping_url = "POD042_PON_MONITOR_PING_URL"
+prowlarr_api_key = "PROWLARR_API_KEY"
+qbittorrent_password = "QBITTORRENT_PASSWORD"
+qbittorrent_username = "QBITTORRENT_USERNAME"
+radarr_api_key = "RADARR_API_KEY"
+sonarr_api_key = "SONARR_API_KEY"
+torrent_mam_ping_url = "POD042_MAM_UPDATE_PING_URL"
+torrent_wireguard_address = "TORRENT_WIREGUARD_ADDRESS"
+torrent_wireguard_private_key = "TORRENT_WIREGUARD_PRIVATE_KEY"
+xgs_pon_password = "XGS_PON_PASSWORD"
 
 [bootstrap.groups.docker]
 
@@ -47,6 +70,71 @@ group = "docker"
 mode = "0750"
 
 [bootstrap.directories."/etc/ansiblonomicon/containers/platform"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/anypod"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/arr-apps"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/cli-proxy-api"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/ghost"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/homepage"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/homepage/config"]
+owner = "thurstonsand"
+group = "media"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/ingress"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/ingress/caddy"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/isponsorblocktv"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/plex"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/pon-monitor"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/scrypted"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/torrent"]
 owner = "root"
 group = "docker"
 mode = "0750"
@@ -114,6 +202,221 @@ owner = "root"
 group = "root"
 mode = "0600"
 
+[bootstrap.files."/etc/ansiblonomicon/containers/anypod/compose.yaml"]
+source = "containers/stacks/anypod/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/arr-apps/compose.yaml"]
+source = "containers/stacks/arr-apps/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/arr-apps/.env"]
+content = '''
+RADARR_API_KEY="{{ secret(name="radarr_api_key") }}"
+SONARR_API_KEY="{{ secret(name="sonarr_api_key") }}"
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/cli-proxy-api/compose.yaml"]
+source = "containers/stacks/cli-proxy-api/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ghost/compose.yaml"]
+source = "containers/stacks/ghost/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ghost/.env"]
+content = '''
+GHOST_DB_PASSWORD="{{ secret(name="ghost_db_password") }}"
+GHOST_MAIL_AUTH_PASS="{{ secret(name="ghost_mail_auth_pass") }}"
+GHOST_MYSQL_ROOT_PASSWORD="{{ secret(name="ghost_mysql_root_password") }}"
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/homepage/compose.yaml"]
+source = "containers/stacks/homepage/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/homepage/.env"]
+content = '''
+HOMEPAGE_HOMEASSISTANT_API_KEY="{{ secret(name="homepage_homeassistant_api_key") }}"
+HOMEPAGE_OVERSEERR_API_KEY="{{ secret(name="homepage_overseerr_api_key") }}"
+HOMEPAGE_PLEX_API_KEY="{{ secret(name="homepage_plex_api_key") }}"
+HOMEPAGE_UNIFI_PASSWORD="{{ secret(name="homepage_unifi_password") }}"
+HOMEPAGE_UNIFI_USERNAME="{{ secret(name="homepage_unifi_username") }}"
+NEXTDNS_API_KEY="{{ secret(name="nextdns_api_key") }}"
+NEXTDNS_PROFILE_ID="{{ secret(name="nextdns_profile_id") }}"
+PROWLARR_API_KEY="{{ secret(name="prowlarr_api_key") }}"
+QBITTORRENT_PASSWORD="{{ secret(name="qbittorrent_password") }}"
+QBITTORRENT_USERNAME="{{ secret(name="qbittorrent_username") }}"
+RADARR_API_KEY="{{ secret(name="radarr_api_key") }}"
+SONARR_API_KEY="{{ secret(name="sonarr_api_key") }}"
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/homepage/config/bookmarks.yaml"]
+source = "containers/stacks/homepage/config/bookmarks.yaml"
+owner = "thurstonsand"
+group = "media"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/homepage/config/docker.yaml"]
+source = "containers/stacks/homepage/config/docker.yaml"
+owner = "thurstonsand"
+group = "media"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/homepage/config/kubernetes.yaml"]
+source = "containers/stacks/homepage/config/kubernetes.yaml"
+owner = "thurstonsand"
+group = "media"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/homepage/config/services.yaml"]
+source = "containers/stacks/homepage/config/services.yaml"
+owner = "thurstonsand"
+group = "media"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/homepage/config/settings.yaml"]
+source = "containers/stacks/homepage/config/settings.yaml"
+owner = "thurstonsand"
+group = "media"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/homepage/config/widgets.yaml"]
+source = "containers/stacks/homepage/config/widgets.yaml"
+owner = "thurstonsand"
+group = "media"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ingress/compose.yaml"]
+source = "containers/stacks/ingress/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ingress/caddy/Caddyfile"]
+source = "containers/stacks/ingress/Caddyfile"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ingress/Caddyfile"]
+state = "absent"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ingress/.env"]
+content = '''
+CLOUDFLARE_API_TOKEN="{{ secret(name="cloudflare_api_token") }}"
+CLOUDFLARE_TOKEN="{{ secret(name="cloudflare_tunnel_token") }}"
+DDCLIENT_GITHUB_PAT="{{ secret(name="ddclient_github_pat") }}"
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/isponsorblocktv/compose.yaml"]
+source = "containers/stacks/isponsorblocktv/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/plex/compose.yaml"]
+source = "containers/stacks/plex/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/pon-monitor/compose.yaml"]
+source = "containers/stacks/pon-monitor/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/pon-monitor/Dockerfile"]
+source = "containers/stacks/pon-monitor/Dockerfile"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/pon-monitor/pon-monitor.sh"]
+source = "containers/stacks/pon-monitor/pon-monitor.sh"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/pon-monitor/.env"]
+content = '''
+HARK_WEBHOOK_URL_POD042="{{ secret(name="hark_webhook_url") }}"
+PON_MONITOR_PING_URL="{{ secret(name="pon_monitor_ping_url") }}"
+XGS_PON_PASSWORD="{{ secret(name="xgs_pon_password") }}"
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/scrypted/compose.yaml"]
+source = "containers/stacks/scrypted/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/torrent/compose.yaml"]
+source = "containers/stacks/torrent/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/torrent/Dockerfile.mam-updater"]
+source = "containers/stacks/torrent/Dockerfile.mam-updater"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/torrent/crontab"]
+source = "containers/stacks/torrent/crontab"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/torrent/mam-update-run"]
+source = "containers/stacks/torrent/mam-update-run"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/torrent/.env"]
+content = '''
+TORRENT_MAM_PING_URL="{{ secret(name="torrent_mam_ping_url") }}"
+TORRENT_WIREGUARD_ADDRESS="{{ secret(name="torrent_wireguard_address") }}"
+TORRENT_WIREGUARD_PRIVATE_KEY="{{ secret(name="torrent_wireguard_private_key") }}"
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
 [bootstrap.services.containerd]
 enabled = true
 
@@ -135,6 +438,146 @@ sudo = true
 pull = "always"
 wait = true
 wait_timeout = 120
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.ingress]
+project_dir = "/etc/ansiblonomicon/containers/ingress"
+files = ["compose.yaml"]
+env_files = [".env"]
+project_name = "ingress"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 180
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.anypod]
+project_dir = "/etc/ansiblonomicon/containers/anypod"
+files = ["compose.yaml"]
+project_name = "anypod"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 180
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.cli-proxy-api]
+project_dir = "/etc/ansiblonomicon/containers/cli-proxy-api"
+files = ["compose.yaml"]
+project_name = "cli-proxy-api"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 180
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.ghost]
+project_dir = "/etc/ansiblonomicon/containers/ghost"
+files = ["compose.yaml"]
+env_files = [".env"]
+project_name = "ghost"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 180
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.isponsorblocktv]
+project_dir = "/etc/ansiblonomicon/containers/isponsorblocktv"
+files = ["compose.yaml"]
+project_name = "isponsorblocktv"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 180
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.plex]
+project_dir = "/etc/ansiblonomicon/containers/plex"
+files = ["compose.yaml"]
+project_name = "plex"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 300
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.pon-monitor]
+project_dir = "/etc/ansiblonomicon/containers/pon-monitor"
+files = ["compose.yaml"]
+env_files = [".env"]
+project_name = "pon-monitor"
+state = "running"
+sudo = true
+pull = "missing"
+build = "always"
+wait = true
+wait_timeout = 180
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.scrypted]
+project_dir = "/etc/ansiblonomicon/containers/scrypted"
+files = ["compose.yaml"]
+project_name = "scrypted"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 300
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.torrent]
+project_dir = "/etc/ansiblonomicon/containers/torrent"
+files = ["compose.yaml"]
+env_files = [".env"]
+project_name = "torrent"
+state = "running"
+sudo = true
+pull = "always"
+build = "auto"
+wait = true
+wait_timeout = 300
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.arr-apps]
+project_dir = "/etc/ansiblonomicon/containers/arr-apps"
+files = ["compose.yaml"]
+env_files = [".env"]
+project_name = "arr-apps"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 300
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.homepage]
+project_dir = "/etc/ansiblonomicon/containers/homepage"
+files = ["compose.yaml"]
+env_files = [".env"]
+project_name = "homepage"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 180
 remove_orphans = true
 depends_on = ["service:docker"]
 
