@@ -85,9 +85,8 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work 
 - `mise run edge:plan` — Terraform plan (Cloudflare)
 - `mise run edge:apply` — Terraform apply (Cloudflare)
 - `mise run edge:deploy:tesla` — Deploy Cloudflare Pages (tesla)
-- `mise run edge:deploy` — Deploy all Workers (aig + hooks)
+- `mise run edge:deploy` — Deploy all Workers
 - `mise run edge:deploy:aig` — Deploy aig (AI Gateway proxy) Worker
-- `mise run edge:deploy:hooks` — Deploy hooks (webhook gateway) Worker
 - `mise run check` — Every non-mutating check across the repo; `mise run fix` for the mutating half
 - `mise run pi:check` — Lint and type-check pi extension packages (`pi:fix` formats and autofixes first)
 - `mise run amp:check` — Lint, type-check, and test Amp plugin sources

@@ -37,6 +37,5 @@ locals {
     "anypod.${local.zone_name}",
     "cli-proxy-api.${local.zone_name}",
     "aig.${local.zone_name}",
-    "hooks.${local.zone_name}",
   ]
 }

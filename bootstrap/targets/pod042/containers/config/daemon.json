@@ -1,4 +1,5 @@
 {
+  "bip": "172.17.0.1/16",
   "default-address-pools": [
     {"base": "10.42.0.0/16", "size": 24}
   ],

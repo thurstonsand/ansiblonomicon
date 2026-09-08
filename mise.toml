@@ -384,7 +384,7 @@ run = './scripts/fnox-host get "$usage_name" >/dev/null'
 
 [tasks."secrets:retire"]
 description = "Remove this checkout's obsolete secret cache files"
-run = "rm -f -- .env wrangler/aig/.dev.vars wrangler/hooks/.dev.vars"
+run = "rm -f -- .env wrangler/aig/.dev.vars"
 
 [tasks."deps:update"]
 description = "Update every tracked lockfile (python + typescript)"

@@ -19,12 +19,11 @@ Guidance for how to use the Cloudflare MCP for this project.
 - For actual live tails, use Wrangler from the worker directory:
   - `cd wrangler/aig && ../../scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN -- wrangler tail --format pretty`
   - `cd wrangler/llms && ../../scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN -- wrangler tail --format pretty`
-  - `cd wrangler/hooks && ../../scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN -- wrangler tail --format pretty`
 
 ## Important repo facts
 
 - `aig` forwards provider traffic through AI Gateway **`llms`**.
-- `aig`, `llms`, and `hooks` are the relevant worker names in this repo.
+- `aig` and `llms` are the relevant worker names in this repo.
 - `aig_events` is **not** a full log store; it only has lightweight custom datapoints.
 - `llms_usage` is usage analytics, not primary request logging.
 - Tailing workers is usually the wrong first move when you want historical logs.
