@@ -19,7 +19,7 @@ def verify_datasets() -> None:
         "org.ansiblonomicon:layout\tfresh-v1\tlocal",
         "org.ansiblonomicon:migration\tverified\tlocal",
     }
-    for dataset in ("black-box/docker", "black-box/agents"):
+    for dataset in ("black-box/docker", "black-box/agents", "black-box/incus"):
         result = subprocess.run(
             [
                 "/usr/sbin/zfs",

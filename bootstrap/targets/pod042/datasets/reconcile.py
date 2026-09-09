@@ -136,24 +136,15 @@ def reconcile(config: Path, mode: str) -> None:
             if any(name == dataset.name for dataset in datasets):
                 continue
             pool = name.split("/")[0]
-            if (
-                name != pool
-                and name != f"{pool}/legacy"
-                and not name.startswith(f"{pool}/legacy/")
-            ):
-                raise ValueError(f"Unclassified legacy dataset: {name}")
-            if kind == "filesystem":
-                if properties(name, ["mounted"])["mounted"].value != "no":
-                    raise ValueError(
-                        f"Unmount the legacy filesystem before quarantine: {name}"
-                    )
-                quarantine[name] = {
-                    "readonly": "on",
-                    "canmount": "off",
-                    "mountpoint": "none",
-                }
-            else:
-                quarantine[name] = {"readonly": "on", "volmode": "none"}
+            if name != pool or kind != "filesystem":
+                raise ValueError(f"Unclassified dataset: {name}")
+            if properties(name, ["mounted"])["mounted"].value != "no":
+                raise ValueError(f"Unmount the pool root before quarantine: {name}")
+            quarantine[name] = {
+                "readonly": "on",
+                "canmount": "off",
+                "mountpoint": "none",
+            }
     for dataset in datasets:
         values = {**desired, "mountpoint": dataset.mountpoint}
         if dataset.name not in existing:

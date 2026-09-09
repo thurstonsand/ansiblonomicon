@@ -1,11 +1,6 @@
 [bootstrap.packages]
 "apt:incus" = "latest"
 
-[bootstrap.directories."/mnt/black-box/agents/incus"]
-owner = "root"
-group = "root"
-mode = "0711"
-
 [bootstrap.directories."/etc/systemd/system/incus.service.d"]
 owner = "root"
 group = "root"
@@ -16,12 +11,6 @@ source = "incus/storage.conf"
 owner = "root"
 group = "root"
 mode = "0644"
-notify = ["incus"]
-
-[bootstrap.services.incus]
-state = "running"
-enabled = false
-on_change = "restart"
 
 [bootstrap.services."incus.socket"]
 state = "running"

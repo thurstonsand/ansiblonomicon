@@ -33,5 +33,4 @@ PARALLEL_API_KEY = { provider = "agent", value = "op://agent/ujvwlvzywxv4z654bro
 EIGHTCTL_EMAIL = { provider = "agent", value = "op://agent/fxseiurccsgzesskccvfvihsgm/username" }
 EIGHTCTL_PASSWORD = { provider = "agent", value = "op://agent/fxseiurccsgzesskccvfvihsgm/password" }
 HARK_WEBHOOK_URL_2B = { provider = "agent", value = "op://agent/u3wmydm5i7fe3cgdxx6c7juhxq/add more/2B webhook url" }
-HOMEPAGE_HOMEASSISTANT_API_KEY = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/apikey" }
-HA_MCP_OAUTH_CLIENT_SECRET = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/ha-mcp/oauth client secret" }
+HOMEPAGE_HOMEASSISTANT_API_KEY = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/long-lived token" }

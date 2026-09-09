@@ -53,13 +53,15 @@ class SanoidRunTest(unittest.TestCase):
             subprocess.CompletedProcess([], 0, stdout=sanoid_run.POOLS["black-box"]),
             subprocess.CompletedProcess([], 0, stdout=properties),
             subprocess.CompletedProcess([], 0, stdout=properties),
+            subprocess.CompletedProcess([], 0, stdout=properties),
         ]
         with patch.object(sanoid_run.subprocess, "run", side_effect=results) as run:
             sanoid_run.verify_datasets()
         self.assertEqual(run.call_args_list[0].args[0][-1], "black-box")
         self.assertEqual(run.call_args_list[1].args[0][-1], "black-box/docker")
         self.assertEqual(run.call_args_list[2].args[0][-1], "black-box/agents")
-        self.assertEqual(run.call_count, 3)
+        self.assertEqual(run.call_args_list[3].args[0][-1], "black-box/incus")
+        self.assertEqual(run.call_count, 4)
 
     def test_unverified_tree_never_runs_sanoid(self):
         properties = (
@@ -75,7 +77,7 @@ class SanoidRunTest(unittest.TestCase):
             properties + "org.ansiblonomicon:migration\t-\t-\n",
             properties.splitlines()[0] + "\n",
         ):
-            for failed_root in (0, 1):
+            for failed_root in (0, 1, 2):
                 with self.subTest(invalid=invalid, failed_root=failed_root):
                     results = [
                         subprocess.CompletedProcess(

@@ -1,0 +1,5 @@
+[bootstrap.hooks.final]
+run = "sudo -n /usr/bin/python3 incus/home_assistant.py apply"
+
+[tasks."home-assistant:check"]
+run = "sudo -n /usr/bin/python3 incus/home_assistant.py check"

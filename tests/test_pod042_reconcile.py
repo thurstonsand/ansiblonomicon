@@ -115,6 +115,17 @@ def test_incus_capability_closure() -> None:
     )
 
 
+def test_home_assistant_capability_closure() -> None:
+    assert pod042_reconcile.capabilities_for("home-assistant") == (
+        "network",
+        "repositories",
+        "storage",
+        "datasets",
+        "incus",
+        "home-assistant",
+    )
+
+
 def test_local_deploy_revision_requires_clean_checkout(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

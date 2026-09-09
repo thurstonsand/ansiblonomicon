@@ -58,6 +58,7 @@ CAPABILITIES = (
     "monitoring",
     "datasets",
     "incus",
+    "home-assistant",
     "sharing",
     "snapshots",
     "operator",
@@ -227,6 +228,15 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("repositories", "storage", "alerting", "maintenance", "datasets")
     if capability == "incus":
         return ("network", "repositories", "storage", "datasets", "incus")
+    if capability == "home-assistant":
+        return (
+            "network",
+            "repositories",
+            "storage",
+            "datasets",
+            "incus",
+            "home-assistant",
+        )
     if capability == "sharing":
         return ("repositories", "storage", "datasets", "sharing")
     if capability == "snapshots":
@@ -338,6 +348,16 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     "-n",
                     "/usr/bin/python3",
                     str(TARGET_ROOT / "incus/reconcile.py"),
+                    "check",
+                ]
+            )
+        if "home-assistant" in selected:
+            run_command(
+                [
+                    "sudo",
+                    "-n",
+                    "/usr/bin/python3",
+                    str(TARGET_ROOT / "incus/home_assistant.py"),
                     "check",
                 ]
             )

@@ -36,3 +36,7 @@ casesensitivity = "insensitive"
 [datasets."black-box/agents"]
 mountpoint = "/mnt/black-box/agents"
 shared = false
+
+[datasets."black-box/incus"]
+mountpoint = "/mnt/black-box/incus"
+shared = false

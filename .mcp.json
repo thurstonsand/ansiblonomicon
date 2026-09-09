@@ -7,12 +7,8 @@
     },
     "ha-mcp": {
       "type": "http",
-      "url": "https://fdsnaiutiizykhbtju3uhpmumkqhtmmi.ui.nabu.casa/api/webhook/mcp_f141049789c73e0737d49d93be07428b",
-      "auth": "oauth",
-      "oauth": {
-        "clientId": "hamcp-048465ed8f4940f50c891bfa3015792a",
-        "clientSecret": "!\"$HOME/.local/bin/fnox-host\" get HA_MCP_OAUTH_CLIENT_SECRET"
-      }
+      "url": "https://fdsnaiutiizykhbtju3uhpmumkqhtmmi.ui.nabu.casa/api/webhook/mcp_51f5eb2b59bda0c5d2dcf0f640901cef",
+      "auth": "oauth"
     }
   }
 }

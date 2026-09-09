@@ -22,20 +22,15 @@ ACTIVE = {
     "black-box/agents",
     "black-box/docker",
     "black-box/ghost-mysql",
-}
-ARCHIVES = {
-    "ark/legacy/consolidated-20260906-anypod",
-    "black-box/legacy/consolidated-20260906-anypod",
-    "black-box/legacy/consolidated-20260906-plex",
+    "black-box/incus",
 }
 
 
 def run_check(
     monkeypatch: pytest.MonkeyPatch,
     extra: Sequence[str] = (),
-    mounted_archive: bool = False,
 ) -> dict[str, dict[str, str]]:
-    existing = ACTIVE | ARCHIVES | {"ark", "black-box"} | set(extra)
+    existing = ACTIVE | {"ark", "black-box"} | set(extra)
 
     def output(*args: str) -> str:
         if args[0] == "/usr/sbin/zpool":
@@ -52,7 +47,7 @@ def run_check(
             ),
             "normalization": "none",
             "encryption": "off",
-            "mounted": "yes" if name in ACTIVE or mounted_archive else "no",
+            "mounted": "yes" if name in ACTIVE else "no",
         }
         return {key: policy.Property(values[key], "local") for key in keys}
 
@@ -77,14 +72,14 @@ def run_check(
     return changes
 
 
-def test_active_datasets_and_consolidated_archives(
+def test_active_datasets_and_readonly_pool_roots(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     changes = run_check(monkeypatch)
     assert {
         name for name, props in changes.items() if props["readonly"] == "off"
     } == ACTIVE
-    for name in ARCHIVES:
+    for name in ("ark", "black-box"):
         assert changes[name] == {
             "readonly": "on",
             "canmount": "off",
@@ -99,10 +94,12 @@ def test_active_datasets_and_consolidated_archives(
 def test_old_active_names_require_explicit_cutover(
     monkeypatch: pytest.MonkeyPatch, source: str
 ) -> None:
-    with pytest.raises(ValueError, match="Unclassified legacy dataset"):
+    with pytest.raises(ValueError, match="Unclassified dataset"):
         run_check(monkeypatch, [source])
 
 
-def test_mounted_archive_refused(monkeypatch: pytest.MonkeyPatch) -> None:
-    with pytest.raises(ValueError, match="Unmount the legacy filesystem"):
-        run_check(monkeypatch, mounted_archive=True)
+def test_retired_legacy_namespace_is_not_tolerated(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    with pytest.raises(ValueError, match="Unclassified dataset"):
+        run_check(monkeypatch, ["black-box/legacy/old-vm"])
