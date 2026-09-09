@@ -57,6 +57,7 @@ CAPABILITIES = (
     "maintenance",
     "monitoring",
     "datasets",
+    "incus",
     "sharing",
     "snapshots",
     "operator",
@@ -224,6 +225,8 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("repositories", "storage", "alerting", "maintenance", "monitoring")
     if capability == "datasets":
         return ("repositories", "storage", "alerting", "maintenance", "datasets")
+    if capability == "incus":
+        return ("network", "repositories", "storage", "datasets", "incus")
     if capability == "sharing":
         return ("repositories", "storage", "datasets", "sharing")
     if capability == "snapshots":
@@ -293,6 +296,15 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         ]
     if check_mode:
         run_command([*command, "bootstrap", "plan"])
+        if "base" in selected:
+            run_command(
+                [
+                    "sudo",
+                    "-n",
+                    "/usr/bin/python3",
+                    str(TARGET_ROOT / "base/check.py"),
+                ]
+            )
         if "datasets" in selected:
             run_command(
                 [
@@ -317,6 +329,16 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     "-n",
                     "/usr/bin/python3",
                     str(TARGET_ROOT / "network/check.py"),
+                ]
+            )
+        if "incus" in selected:
+            run_command(
+                [
+                    "sudo",
+                    "-n",
+                    "/usr/bin/python3",
+                    str(TARGET_ROOT / "incus/reconcile.py"),
+                    "check",
                 ]
             )
     else:

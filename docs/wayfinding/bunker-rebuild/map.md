@@ -8,6 +8,7 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 
 - Execution tickets are allowed (charted 2026-08-19; overrides wayfinder's plan-only default).
 - Timing: physical move ~2026-08-26. Extended downtime is acceptable; the smart home restarts fresh regardless.
+- Scope override (2026-09-09): the minimum Incus substrate and one blank fresh HAOS VM are included via [ticket 49](tickets/49-incus-home-assistant-substrate.md); broader smart-home rebuilding remains excluded.
 - Skills to consult: `operating-pod042` for the Debian NAS; `installing-software` for anything landing on managed machines; `/grill-me` for grilling tickets.
 - Native mise migration rule: Ansible is an inventory of prior choices, not the specification. The new Debian installation must never run the Ansible playbook. Every capability gets a human-approved desired-state ticket before a separate implementation ticket.
 - Reconciliation must work both locally on pod042 and remotely over SSH from a workstation, backed by the same declaration rather than parallel implementations.
@@ -46,6 +47,7 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 - [GL-RM1PE capabilities and safe bootstrap](tickets/28-gl-rm1pe-capabilities.md) — One ordinary 1 GbE PoE+ switch port supplies both power and data; HDMI plus USB provide KVM and virtual media, optional GL-ATXPC adds physical power/reset, Tailscale is the documented private remote path, and complete Cloudflare operation needs hardware testing.
 - [Bring up pod042-kvm](tickets/29-bring-up-pod042-kvm.md) — `pod042-kvm` is live at `10.10.10.34` on a declared Bunker PoE port; key-only SSH, authenticated API automation, HDMI video, reversible HID, Debian virtual media, reboot persistence, and independence from pod042 power passed live tests. Device settings remain manual, 2FA stays off because its automation secret would share the password's vault and add lockout risk without an independent factor, and remote access remains ticket 30's decision.
 - [Native mise operating contract](tickets/31-native-mise-operating-contract.md) — Native mise bootstrap resources own pod042 through one local/remote target; concrete capability roots replace tags, execution is serial and fail-fast, Git updates require an exact guarded fast-forward, and a destructive VM-proven landing zone rather than full service parity gates erasing TrueNAS. Implementation proceeds in [ticket 42](tickets/42-pod042-landing-zone.md).
+- [Base host desired state](tickets/32-base-host-desired-state.md) — Debian's base explicitly owns microcode, locale, synchronized time, hardened SSH, bounded persistent journals, and daily all-origin unattended upgrades; kernel/ZFS updates and reboots remain deliberate, with actionable Hark notifications through the shared alerting contract. [Ticket 48](tickets/48-implement-base-host.md) records the completed implementation and live acceptance.
 - [Implement the pod042 landing zone](tickets/42-pod042-landing-zone.md) — Debian 13 now runs on the identified Samsung boot SSD with key-only SSH, passwordless sudo, system mise, a clean guarded checkout, and equivalent clean local/remote reconciliation. The destructive amd64 VM repeat passed. During the authorized real cutover, both pre-verified pool GUIDs were read-only checked, renamed to `ark` and `black-box`, mounted under `/mnt`, and proved across reboot; [ticket 34](tickets/34-zfs-storage-desired-state.md) completes the broader storage policy.
 
 - [Secrets and host identity](tickets/33-secrets-and-host-identity.md): [Design 25](../../designs/25-fnox-secret-delivery.md) replaces the repository secret cache with fnox, one effective set per `macos`, work, pod042 or Orb environment, native chezmoi secret lookup, and attended pod042 identity bootstrap. `omarchy` is the next planned target. [Ticket 43](tickets/43-fnox-secret-delivery.md) owns the atomic consumer switch and independent Hark delivery before storage maintenance.
@@ -72,5 +74,5 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 
 ## Out of scope
 
-- Smart home rebuild (fresh HA, IaC-style automations, flaky-device metrics) — a new-house effort with its own future map, not part of rebuilding this host.
+- Smart home rebuild beyond ticket 49's blank fresh HAOS VM (configuration, automations, restored state, integrations, and flaky-device metrics) — a new-house effort with its own future map.
 - HBA or other passthrough hardware — mooted by dropping TrueNAS.

@@ -28,3 +28,29 @@ source = "alerting/storage-alert.py"
 owner = "root"
 group = "root"
 mode = "0755"
+
+[bootstrap.directories."/etc/systemd/system/apt-daily-upgrade.service.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/systemd/system/apt-daily-upgrade.service.d/alerting.conf"]
+source = "alerting/apt-daily-upgrade-alerting.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/systemd/system/pod042-apt-upgrade-failure@.service"]
+source = "alerting/pod042-apt-upgrade-failure@.service"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/usr/local/bin/pod042-apt-alert"]
+source = "alerting/apt-alert.py"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.hooks.final]
+run = "sudo -n systemctl daemon-reload"

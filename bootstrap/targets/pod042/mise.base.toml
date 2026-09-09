@@ -2,8 +2,12 @@
 "apt:ca-certificates" = "latest"
 "apt:curl" = "latest"
 "apt:git" = "latest"
+"apt:intel-microcode" = "latest"
+"apt:locales" = "latest"
 "apt:openssh-server" = "latest"
 "apt:sudo" = "latest"
+"apt:systemd-timesyncd" = "latest"
+"apt:unattended-upgrades" = "latest"
 "apt:zsh" = "latest"
 
 [bootstrap.groups.thurstonsand]
@@ -39,14 +43,63 @@ mode = "0440"
 
 [bootstrap.files."/etc/ssh/sshd_config.d/00-ansiblonomicon.conf"]
 content = '''
+ClientAliveCountMax 3
+ClientAliveInterval 30
 PasswordAuthentication no
 PermitRootLogin no
+PrintLastLog yes
 PubkeyAuthentication yes
 '''
 owner = "root"
 group = "root"
 mode = "0644"
 notify = ["ssh"]
+
+[bootstrap.directories."/etc/systemd/journald.conf.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/systemd/journald.conf.d/00-ansiblonomicon.conf"]
+source = "base/journald.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["systemd-journald"]
+
+[bootstrap.files."/etc/locale.conf"]
+content = '''
+LANG="en_US.UTF-8"
+'''
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/locale.gen"]
+content = '''
+en_US.UTF-8 UTF-8
+'''
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/apt/apt.conf.d/20auto-upgrades"]
+source = "base/20auto-upgrades"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/apt/apt.conf.d/50unattended-upgrades"]
+source = "base/50unattended-upgrades"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/usr/local/bin/pod042-base-check"]
+source = "base/check.py"
+owner = "root"
+group = "root"
+mode = "0755"
 
 [bootstrap.directories."/etc/mise"]
 owner = "root"
@@ -67,6 +120,19 @@ mode = "0644"
 state = "running"
 enabled = true
 on_change = "reload_or_restart"
+
+[bootstrap.services.systemd-timesyncd]
+state = "running"
+enabled = true
+
+[bootstrap.services.systemd-journald]
+state = "running"
+enabled = false
+on_change = "restart"
+
+[bootstrap.services."apt-daily-upgrade.timer"]
+state = "running"
+enabled = true
 
 [bootstrap.repos]
 "/home/thurstonsand/code/ansiblonomicon" = { url = "https://github.com/thurstonsand/ansiblonomicon.git" }
@@ -93,3 +159,19 @@ for tool in fnox op; do
 done
 ''',
 ]
+
+# APT has no native absent-package resource. A rare package retirement belongs here
+# as an explicit idempotent task, and is removed after it has run on the live host.
+
+[bootstrap.hooks.final]
+run = [
+  '''
+if [ "$(locale -a | grep -Ev '^(C|C.utf8|POSIX)$')" != "en_US.utf8" ]; then
+  sudo -n /usr/sbin/locale-gen >/dev/null
+fi
+''',
+  "sudo -n /usr/local/bin/pod042-base-check",
+]
+
+[tasks."base:check"]
+run = "sudo -n /usr/local/bin/pod042-base-check"

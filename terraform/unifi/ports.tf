@@ -38,6 +38,20 @@ resource "unifi_port_profile" "infrastructure_trunk" {
   tagged_vlan_mgmt      = "auto"
 }
 
+resource "unifi_port_profile" "pod042" {
+  name                  = "pod042"
+  forward               = "customize"
+  setting_preference    = "manual"
+  native_networkconf_id = unifi_network.bunker.id
+  tagged_vlan_mgmt      = "custom"
+  # Current UniFi represents a custom tag allowlist as every other VLAN excluded.
+  excluded_networkconf_ids = [
+    unifi_network.yorha.id,
+    unifi_network.lunar_tear.id,
+    unifi_network.the_village.id,
+  ]
+}
+
 resource "unifi_device" "udmp" {
   mac               = "e4:38:83:1a:a0:45"
   forget_on_destroy = false
@@ -148,7 +162,7 @@ resource "unifi_device" "pro_max_24_poe" {
     index           = 17
     name            = "pod042"
     poe_mode        = "auto"
-    port_profile_id = unifi_port_profile.bunker_access.id
+    port_profile_id = unifi_port_profile.pod042.id
   }
 
   port_override {

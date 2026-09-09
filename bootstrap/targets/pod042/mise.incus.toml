@@ -1,0 +1,41 @@
+[bootstrap.packages]
+"apt:incus" = "latest"
+
+[bootstrap.directories."/mnt/black-box/agents/incus"]
+owner = "root"
+group = "root"
+mode = "0711"
+
+[bootstrap.directories."/etc/systemd/system/incus.service.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/systemd/system/incus.service.d/storage.conf"]
+source = "incus/storage.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["incus"]
+
+[bootstrap.services.incus]
+state = "running"
+enabled = false
+on_change = "restart"
+
+[bootstrap.services."incus.socket"]
+state = "running"
+enabled = true
+
+[bootstrap.services."incus-startup.service"]
+state = "running"
+enabled = true
+
+[bootstrap.hooks.final]
+run = [
+  "sudo -n systemctl daemon-reload",
+  "sudo -n /usr/bin/python3 incus/reconcile.py apply",
+]
+
+[tasks."incus:check"]
+run = "sudo -n /usr/bin/python3 incus/reconcile.py check"

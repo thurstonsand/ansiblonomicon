@@ -50,7 +50,12 @@ def test_target_declares_serial_native_landing_zone() -> None:
         base["bootstrap"]["files"]["/etc/ssh/sshd_config.d/00-ansiblonomicon.conf"][
             "content"
         ]
-        == "PasswordAuthentication no\nPermitRootLogin no\nPubkeyAuthentication yes\n"
+        == "ClientAliveCountMax 3\n"
+        "ClientAliveInterval 30\n"
+        "PasswordAuthentication no\n"
+        "PermitRootLogin no\n"
+        "PrintLastLog yes\n"
+        "PubkeyAuthentication yes\n"
     )
     assert storage["bootstrap"]["packages"]["apt:zfsutils-linux"] == "latest"
     assert storage["bootstrap"]["services"]["zfs-import-cache"]["enabled"] is True
@@ -97,6 +102,16 @@ def test_capability_environments_are_explicit_and_disjoint() -> None:
     )
     assert tuple(inventory["bootstrap"]["remote"]["hosts"]["pod042"]["mise_env"]) == (
         pod042_reconcile.CAPABILITIES
+    )
+
+
+def test_incus_capability_closure() -> None:
+    assert pod042_reconcile.capabilities_for("incus") == (
+        "network",
+        "repositories",
+        "storage",
+        "datasets",
+        "incus",
     )
 
 
@@ -220,7 +235,13 @@ def test_check_uses_native_bootstrap_plan(monkeypatch: pytest.MonkeyPatch) -> No
             str(pod042_reconcile.TARGET_ROOT),
             "bootstrap",
             "plan",
-        ]
+        ],
+        [
+            "sudo",
+            "-n",
+            "/usr/bin/python3",
+            str(pod042_reconcile.TARGET_ROOT / "base/check.py"),
+        ],
     ]
 
 

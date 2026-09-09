@@ -1,0 +1,6 @@
+[Unit]
+Description=Notify Hark that %i failed
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pod042-apt-alert failure %i

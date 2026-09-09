@@ -31,3 +31,11 @@ resource "unifi_client" "pod042" {
   local_dns_record = "pod042"
   allow_existing   = true
 }
+
+resource "unifi_client" "home_assistant" {
+  mac              = "00:16:3e:48:41:42"
+  name             = "home-assistant"
+  fixed_ip         = "10.10.40.42"
+  local_dns_record = "home-assistant"
+  allow_existing   = true
+}
