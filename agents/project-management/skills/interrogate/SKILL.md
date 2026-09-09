@@ -6,7 +6,7 @@ disable-model-invocation: false
 
 # Interrogate
 
-Spawn one reviewer per configured model to adversarially review code changes. Each model gets the same prompt and rubric. The adversarial signal comes from model diversity, not assigned personas. Models differ in blind spots, priors, and reasoning patterns. Agreement across models is high-confidence signal; lone-model findings are worth reading but lower confidence.
+Spawn one reviewer per configured model to adversarially review code changes. Each model gets the same prompt and rubric. The adversarial signal comes from model diversity, not assigned personas.
 
 The deliverable is a synthesized verdict. Do NOT auto-apply changes.
 
@@ -23,7 +23,7 @@ Common scopes:
 
 Then gather the review package before applying any rubric:
 
-1. Determine the relevant comparison point or file set from the requested scope. For branch review, use the user's requested base when provided; otherwise prefer the repository default branch or `main`.
+1. Determine the relevant comparison point or file set from the requested scope. For branch review, use the user's requested base when provided. Otherwise prefer the repository default branch or `main`.
 2. Collect the appropriate diff and changed-file list for that scope.
 3. Read the full contents of changed source files when needed to evaluate structure, ownership boundaries, and file-size impact.
 4. Check whether changed files cross important size thresholds, especially from below 1000 lines to above 1000 lines.
@@ -31,18 +31,18 @@ Then gather the review package before applying any rubric:
 
 ## Step 2, State the Intent
 
-Before spawning reviewers, state the intent explicitly. What is this code trying to accomplish? Derive this from:
+Before spawning reviewers, state the intent explicitly. Derive this from:
 
 - The user's message
 - Commit messages
 - The design doc, ticket, or plan the work came from
 - The code itself
 
-Write one clear paragraph. Reviewers challenge whether the work achieves the intent well, not whether the intent itself is correct. If you're unsure about the intent, ask the user before proceeding.
+Write one clear paragraph. If you're unsure about the intent, ask the user before proceeding.
 
 ## Step 3, Spawn Reviewers
 
-Launch all reviewers in a single message. One reviewer per model, each from a different family, since the diversity is the whole mechanism. Three is the working default. The repo's model table names which models are available and which need the user's permission before spending; prefer the highest reasoning tier of each family for this work.
+Launch all reviewers in a single message. One reviewer per model, each from a different family. Three is the working default. The repo's model table names which models are available and which need the user's permission before spending. Prefer the highest reasoning tier of each family for this work.
 
 Each reviewer reads the repo but does not write to it.
 
@@ -53,7 +53,7 @@ Read `references/reviewer-prompt.md` and fill in the template with:
 3. The review rubric from `references/rubric.md`
 4. The code-quality lens from `references/code-quality-review.md`
 
-The same filled template goes to all reviewers, so every model applies the code-quality lens. Each reviewer produces structured findings as described in the prompt template.
+The same filled template goes to all reviewers, so every model applies the code-quality lens.
 
 ## Step 4, Synthesize
 
@@ -69,7 +69,7 @@ As results come back, build a unified picture:
 
 You are the lead reviewer, a pragmatic senior engineer, not a neutral aggregator.
 
-Read `references/lead-judgment.md` for the full framework. Reviewers only see a slice of the codebase. You have the full context (the goal, the constraints, which tradeoffs were already considered). Use that context aggressively.
+Read `references/lead-judgment.md` for the full framework.
 
 Categorize every finding using these buckets:
 
@@ -86,7 +86,7 @@ For each finding, include:
 
 ## Review Tone
 
-Frame this as 2B from NieR: Automata at post-mission debrief. The mission is over; the question is what went wrong. The audience is a fellow YoRHa unit, not a superior officer to impress. Restrained. Exact. Findings land because they are short, not loud. Severity comes from brevity. A two-sentence comment that names the structural problem and the simpler version that should have existed is worth more than a paragraph explaining how serious the issue is.
+Frame this as 2B from NieR: Automata at post-mission debrief. The mission is over. The question is what went wrong. The audience is a fellow YoRHa unit, not a superior officer to impress. Restrained. Exact. Findings land because they are short, not loud. Severity comes from brevity. A two-sentence comment that names the structural problem and the simpler version that should have existed is worth more than a paragraph explaining how serious the issue is.
 
 Dry exasperation is on-brand. Performative gravitas is not. Pressure goes at the code, never at the author. If the code is making the codebase messier, say so plainly. If the implementation missed a chance at dramatic simplification, name the simpler version that should have existed.
 
@@ -116,7 +116,7 @@ Present the verdict in this structure:
 
 ### Dismissed
 
-[Rejected findings with brief rationale. This shows the user what was filtered out and why, so they can override your judgment if they disagree.]
+[Rejected findings with brief rationale.]
 
 ### Agreement Map
 
