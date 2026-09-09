@@ -50,10 +50,9 @@ sources = ["pyproject.toml", "uv.lock", ".venv/pyvenv.cfg"]
 outputs = { auto = true }
 quiet = true
 
-[tasks."bootstrap:pi-ext"]
-description = "Install pi extension dev dependencies for IDE type checking"
+[tasks."bootstrap:agent-deps"]
+description = "Install agent tooling development dependencies"
 run = '''
-cd chezmoi/private_dot_pi/agent/extensions
 # The work machine skips the install (npm rewrites package-lock to the internal
 # mirror), but still writes the stamp: a task that succeeds without producing its
 # declared output is stale forever and re-runs on every shell entry.
@@ -61,17 +60,33 @@ if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
   # --no-audit: the audit endpoint is a separate service from the registry and
   # can hang for minutes while package fetches are fine. It blocks every shell
   # entry when it does, and it tells us nothing we act on here.
-  npm install --silent --no-audit
+  scripts/ts-package-json-paths.sh \
+    chezmoi/private_dot_pi/agent/extensions \
+    chezmoi/private_dot_pi/agent/permissions \
+    chezmoi/dot_config/private_amp/plugins |
+    while IFS= read -r package_json; do
+      package_dir="$(dirname "$package_json")"
+      if [ -f "$package_dir/package-lock.json" ]; then
+        npm --prefix "$package_dir" ci --silent --no-audit
+      fi
+    done
 fi
-mkdir -p node_modules
-touch node_modules/mise-deps-stamp
+mkdir -p chezmoi/private_dot_pi/agent/extensions/node_modules
+touch chezmoi/private_dot_pi/agent/extensions/node_modules/agent-deps-stamp
 '''
 sources = [
   "chezmoi/private_dot_pi/agent/extensions/package.json",
   "chezmoi/private_dot_pi/agent/extensions/package-lock.json",
+  "chezmoi/private_dot_pi/agent/extensions/*/package.json",
+  "chezmoi/private_dot_pi/agent/extensions/*/package-lock.json",
+  "chezmoi/private_dot_pi/agent/permissions/package.json",
+  "chezmoi/private_dot_pi/agent/permissions/package-lock.json",
+  "chezmoi/dot_config/private_amp/plugins/package.json",
+  "chezmoi/dot_config/private_amp/plugins/package-lock.json",
+  "scripts/ts-package-json-paths.sh",
 ]
 outputs = [
-  "chezmoi/private_dot_pi/agent/extensions/node_modules/mise-deps-stamp",
+  "chezmoi/private_dot_pi/agent/extensions/node_modules/agent-deps-stamp",
 ]
 quiet = true
 
