@@ -9,7 +9,7 @@ OpenClaw (VM, playbook, config, DNS) is fully sunset, and **pod042** — a lean,
 ## Notes
 
 - Execution tickets are allowed (charted 2026-07-24; overrides wayfinder's plan-only default).
-- Skills to consult: `truenas-docker-ops` for anything touching the NAS; `installing-software` for anything installed on managed machines; `/grill-me` for grilling tickets.
+- Skills to consult: `operating-pod042` for anything touching the NAS; `installing-software` for anything installed on managed machines; `/grill-me` for grilling tickets.
 - Salvage posture: fresh playbook, cherry-pick proven roles (sshd, shpool, sessions, agent_harness, chezmoi, `local.truenas.vm`). Do not fork the openclaw playbook wholesale — it accreted (sid pinning, legacy cleanup, inline op wrapper).
 - Standing decisions from charting:
   - Name: **pod042** (hostname, playbook, `poe pod042`, DNS).

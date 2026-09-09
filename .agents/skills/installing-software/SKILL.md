@@ -19,12 +19,13 @@ Manage host software through this repo's desired state. Use the host's existing 
 
 Use native mise at `bootstrap/targets/pod042/`. The remaining Ansible pod042 config and stack templates are migration references, not executable deployment authority. Never run retired Ansible playbooks on the fresh Debian host.
 
-- Declare packages and files in the capability that owns them. `mise.repositories.toml` owns APT sources and preferences; storage's native pre-package phase installs repository files before refreshing/installing packages.
+- Do not install packages directly except for temporary diagnosis. Declare packages and files in the capability that owns them. `mise.repositories.toml` owns APT sources, signing keys, and preferences; native pre-package hooks install repository files before refreshing or installing packages.
+- Containerized applications belong in a Compose project under `bootstrap/targets/pod042/containers/stacks/` and a matching native `[bootstrap.compose]` declaration. Let Compose own service dependencies, health, networks, and image references rather than installing an equivalent host package.
 - System fnox/op tools: the `/etc/mise/host-tools.toml` declaration in `mise.base.toml`. Use normal registry backends and `latest`, with backend-managed integrity rather than handwritten version/hash installers.
 - Register new capability order in `scripts/pod042_reconcile.py` and `bootstrap/mise.toml`, keeping resource ownership disjoint. Include real prerequisites in `capabilities_for`.
-- Deploy through guarded `mise pod042 [capability] [--check]`, locally or from the operator machine. It verifies the exact hostname and clean, pushed, matching Git revisions.
+- Deploy through `mise pod042 [capability] [--check]`. Remote operation verifies the exact hostname and clean, pushed, matching Git revisions; host-local operation uses the current checkout so an intentional working change can be tested before commit.
 - Read `bootstrap/targets/pod042/datasets/README.md` before changing storage layout or its migration state; full reconciliation refuses pending migrations.
-- Use native `state = "absent"` for retired managed paths. A deleted source file does not remove deployed state.
+- Use native `state = "absent"` for retired managed paths. After it converges away everywhere relevant, remove the temporary declaration and source. A source deletion alone does not remove deployed state.
 
 ## UDMP
 

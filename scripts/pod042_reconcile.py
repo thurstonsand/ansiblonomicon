@@ -57,6 +57,7 @@ CAPABILITIES = (
     "maintenance",
     "monitoring",
     "datasets",
+    "sharing",
     "snapshots",
     "operator",
     "agent-harness",
@@ -223,6 +224,8 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("repositories", "storage", "alerting", "maintenance", "monitoring")
     if capability == "datasets":
         return ("repositories", "storage", "alerting", "maintenance", "datasets")
+    if capability == "sharing":
+        return ("repositories", "storage", "datasets", "sharing")
     if capability == "snapshots":
         return (
             "repositories",
@@ -250,7 +253,8 @@ def isolated_mise_command(ceiling: Path, directory: Path) -> list[str]:
 
 def run_local(capability: str | None, check_mode: bool) -> None:
     assert_hostname(None)
-    environments = ",".join(capabilities_for(capability))
+    selected = capabilities_for(capability)
+    environments = ",".join(selected)
     command = [
         "env",
         f"MISE_CEILING_PATHS={TARGET_ROOT.parent}",
@@ -261,7 +265,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         "-C",
         str(TARGET_ROOT),
     ]
-    if capability == "containers" or "monitoring" in capabilities_for(capability):
+    if "containers" in selected or "monitoring" in selected:
         command = [
             sys.executable,
             "-B",
@@ -270,19 +274,14 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             "--",
             *command,
         ]
-    if "alerting" in capabilities_for(capability):
-        secrets = (
-            CONTAINER_SECRETS
-            if capability == "containers"
-            else (
-                "HARK_WEBHOOK_URL_POD042",
-                *(
-                    ("HEALTHCHECKS_API_KEY",)
-                    if "monitoring" in capabilities_for(capability)
-                    else ()
-                ),
-            )
-        )
+    if "alerting" in selected or "containers" in selected or "sharing" in selected:
+        secrets: list[str] = list(CONTAINER_SECRETS) if "containers" in selected else []
+        if "alerting" in selected and "HARK_WEBHOOK_URL_POD042" not in secrets:
+            secrets.append("HARK_WEBHOOK_URL_POD042")
+        if "monitoring" in selected:
+            secrets.append("HEALTHCHECKS_API_KEY")
+        if "sharing" in selected:
+            secrets.append("SAMBA_MEDIA_PASSWORD")
         command = [
             sys.executable,
             "-B",
@@ -294,7 +293,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         ]
     if check_mode:
         run_command([*command, "bootstrap", "plan"])
-        if "datasets" in capabilities_for(capability):
+        if "datasets" in selected:
             run_command(
                 [
                     "sudo",
@@ -304,14 +303,14 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     "check",
                 ]
             )
-        if "maintenance" in capabilities_for(capability):
+        if "maintenance" in selected:
             run_command(
                 [
                     "/usr/bin/python3",
                     str(TARGET_ROOT / "maintenance/zed/pool-policy.py"),
                 ]
             )
-        if "network" in capabilities_for(capability):
+        if "network" in selected:
             run_command(
                 [
                     "sudo",
@@ -321,7 +320,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                 ]
             )
     else:
-        if "base" in capabilities_for(capability):
+        if "base" in selected:
             # Mise applies accounts before packages; the login shell must exist first.
             run_command(
                 [

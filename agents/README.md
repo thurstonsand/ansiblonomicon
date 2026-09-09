@@ -13,7 +13,7 @@ Written here, no upstream lineage, nothing to sync.
 | project-management | `commit-msg`, `gc`, `update-docs`, `tui-screenshot`, `notify` |
 | claude             | `retitle`                                                     |
 | codex              | `embrace-vet-claims`                                          |
-| homelab            | `truenas-docker-ops`                                          |
+| homelab            | `operating-pod042`                                            |
 
 Repo-local skills at `.agents/skills/` (`cloudflare-ops`, `installing-software`) are ours too, symlinked into `.claude/skills/` rather than deployed.
 

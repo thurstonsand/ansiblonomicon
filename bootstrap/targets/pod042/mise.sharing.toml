@@ -1,0 +1,56 @@
+[bootstrap.packages]
+"apt:samba" = "latest"
+"apt:smbclient" = "latest"
+
+[bootstrap.secrets]
+samba_media_password = "SAMBA_MEDIA_PASSWORD"
+
+[bootstrap.directories."/etc/ansiblonomicon/samba"]
+owner = "root"
+group = "root"
+mode = "0700"
+
+[bootstrap.files."/etc/samba/smb.conf"]
+source = "sharing/smb.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["smbd"]
+
+[bootstrap.files."/etc/ansiblonomicon/samba/credentials"]
+content = '''
+username = thurstonsand
+password = {{ secret(name="samba_media_password") }}
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/usr/local/sbin/reconcile-samba-account"]
+source = "sharing/reconcile-account.sh"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.services.smbd]
+enabled = true
+on_change = "restart"
+
+[bootstrap.services.nmbd]
+state = "stopped"
+enabled = false
+
+[bootstrap.services.winbind]
+state = "stopped"
+enabled = false
+
+[bootstrap.services."samba-ad-dc"]
+state = "stopped"
+enabled = false
+
+[bootstrap.hooks.final]
+run = '''
+sudo -n /usr/bin/testparm -s /etc/samba/smb.conf >/dev/null
+sudo -n /usr/local/sbin/reconcile-samba-account
+'''

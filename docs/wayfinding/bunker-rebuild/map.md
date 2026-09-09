@@ -8,7 +8,7 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 
 - Execution tickets are allowed (charted 2026-08-19; overrides wayfinder's plan-only default).
 - Timing: physical move ~2026-08-26. Extended downtime is acceptable; the smart home restarts fresh regardless.
-- Skills to consult: `truenas-docker-ops` while the old host still runs; `installing-software` for anything landing on managed machines; `/grill-me` for grilling tickets.
+- Skills to consult: `operating-pod042` for the Debian NAS; `installing-software` for anything landing on managed machines; `/grill-me` for grilling tickets.
 - Native mise migration rule: Ansible is an inventory of prior choices, not the specification. The new Debian installation must never run the Ansible playbook. Every capability gets a human-approved desired-state ticket before a separate implementation ticket.
 - Reconciliation must work both locally on pod042 and remotely over SSH from a workstation, backed by the same declaration rather than parallel implementations.
 - `pod042-kvm` is the permanent out-of-band console. This repo owns its UniFi network identity only; device configuration may remain manual. Away-from-home access must not depend on GL.iNet cloud, and the route will be selected by testing Cloudflare against Tailscale.
@@ -56,6 +56,8 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 - [Container platform desired state](tickets/37-container-platform-desired-state.md): Native mise owns rootful Docker CE and project-scoped Compose reconciliation; runtime stays disposable on the boot SSD, durable state stays on ZFS, Watchtower updates every registry-backed container daily, and native Netdata provides the trusted observability and MCP surface before retained projects return.
 - [Implement the pod042 container platform](tickets/45-implement-container-platform.md): Docker CE, private Compose reconciliation, restricted-socket Watchtower, and native Netdata are live and converged; a monitored Alpine canary passed and retired cleanly, so retained service projects can now return independently.
 - [Service portfolio](tickets/38-service-portfolio.md): Eleven Compose projects return through private bridges and shared ingress; Caddy, cloudflared, and DDClient form the ingress project, while Scrypted remains the host-network UniFi Protect to Apple Home bridge rather than retiring with Frigate.
+- [SMB data access](tickets/35-smb-data-access.md): One authenticated SMB3 `media` share exposes `/mnt/ark/media` to YoRHa as `thurstonsand`; black-box, legacy state, guests, NetBIOS discovery, and Lunar Tear remain outside the file-serving boundary.
+- [Implement SMB data access](tickets/47-implement-smb-data-access.md): Native Samba now serves only `media` on TCP 445; authenticated create/read/delete, ownership, service hardening, and a clean second reconciliation passed live.
 
 ## Not yet specified
 

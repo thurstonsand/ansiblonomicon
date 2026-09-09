@@ -69,6 +69,13 @@ local linters = new Mapping<String, Step> {
   ["ruff-check"] = (Builtins.ruff) {}
   ["ruff-format"] = (Builtins.ruff_format) {}
 
+  ["markdownlint"] {
+    glob = "**/*.md"
+    exclude = "**/node_modules/**"
+    check = "markdownlint-cli2 --no-globs {{files}}"
+    fix = "markdownlint-cli2 --no-globs --fix {{files}}"
+  }
+
   // stylua resolves stylua.toml from its own cwd, and this repo's lives beside
   // the Neovim config rather than at the root.
   ["stylua"] {

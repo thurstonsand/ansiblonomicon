@@ -7,6 +7,7 @@ locals {
     "netdata.thurstons.house",
     "neutarr.thurstons.house",
     "plex.thurstons.house",
+    "pod042.thurstons.house",
     "prowlarr.thurstons.house",
     "radarr.thurstons.house",
     "scrypted.thurstons.house",

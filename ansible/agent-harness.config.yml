@@ -104,9 +104,9 @@ agent_harness_sources:
     excluded_on: [work] # no NAS reachable from the work machine
     plugins:
       - name: homelab
-        # amp is named so truenas-docker-ops stays a machine-local Amp skill
+        # amp is named so operating-pod042 stays a machine-local Amp skill
         # despite amp being explicit-only; in an orb it makes no sense, hence
         # the amp_publish exclusion.
         target_agents: [claude, amp, codex, opencode, pi]
         exclude_skills:
-          amp_publish: [truenas-docker-ops]
+          amp_publish: [operating-pod042]
