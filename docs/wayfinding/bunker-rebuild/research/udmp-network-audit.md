@@ -83,7 +83,7 @@ From `rest/user` (209 known clients) reconciled against `stat/sta` (62 active). 
 
 **Soft External — 192.168.5.0/24.** Docker macvlan only. `docker network inspect external` on the NAS, live:
 
-```
+```text
 cloudflared          192.168.5.225
 seerr                192.168.5.227
 anypod               192.168.5.231
@@ -104,7 +104,7 @@ cli-proxy-api        192.168.5.235
 
 The UDMP resolves service hostnames straight to container IPs. `static-dns` plus per-client `local_dns_record`, live:
 
-```
+```text
 thurstons.house           → 192.168.6.239  (caddy)
 dash.thurstons.house      → 192.168.6.225  (homepage)
 torrent.thurstons.house   → 192.168.6.226  (gluetun)
@@ -129,7 +129,7 @@ DNS itself: `nextdns` on the router listening `localhost:53`, three `dnsmasq` in
 
 All 23 custom policies, live. Hit counters are the controller's; `null` means the API reported no counter, which is weaker evidence than a zero but still consistent with "never matched."
 
-**Zone-wide grants**
+#### Zone-wide grants
 
 | Policy | Effect | Hits | What it protects |
 | --- | --- | --- | --- |

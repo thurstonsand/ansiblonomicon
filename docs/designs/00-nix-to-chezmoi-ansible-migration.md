@@ -87,7 +87,7 @@ These are in your home directory but not currently managed by Nix:
 
 ### 1. Repository Structure
 
-```
+```text
 ~/Develop/ansiblonomicon/
 ├── ansible/
 │   ├── inventory/
@@ -182,7 +182,7 @@ The main entry point is `ansible/main.yml`:
 
 Chezmoi templates use:
 
-```
+```text
 {{ if eq .chezmoi.os "darwin" }}
 # macOS specific
 {{ else if eq .chezmoi.os "linux" }}
@@ -532,7 +532,7 @@ _Init Scripts:_ WOL enable ✅
 
 **Repository structure (actual):**
 
-```
+```text
 ansible/
 ├── collections/ansible_collections/local/truenas/  # Custom TrueNAS collection
 │   └── plugins/

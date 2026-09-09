@@ -31,7 +31,7 @@ If the harness exposes its own tools for searching and reading sessions, prefer 
 One message, three subagents, one per lens. Each runs on a different model, since the point is the blind spots you cannot bring yourself. Reviewers need to read the repo and look up context; the prompt forbids file writes, and the parent applies edits.
 
 | Lens | Model | Prompt template |
-|---|---|---|
+| ---- | ----- | --------------- |
 | Judgment | the strongest judgment model | `references/judgment-reviewer.md` |
 | Tooling | the strongest instruction-following model | `references/tooling-reviewer.md` |
 | Divergent | a judgment model from a different family than the parent | `references/divergent-reviewer.md` |

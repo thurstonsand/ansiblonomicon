@@ -17,7 +17,7 @@ One finding is independent of the decision: **the Ansible `alerting` role silent
 Same VM, same minute, each tool starting from an identical reset state (`rig/reset.sh`: packages purged, files removed, mock registry wiped). Ansible scoped with `--tags alerting,sanoid,scrub,smartd,zed`; pyinfra running `deploy.py`. Both target localhost, so neither pays SSH.
 
 | | Ansible 12 | pyinfra 3.10 | ratio |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | full converge from bare host | 18.9 s | 5.3 s | 3.6x |
 | no-op re-run | 11.5 s | 0.87 s | 13x |
 | dry run with diffs | 9.8 s | 0.87 s | 11x |
@@ -30,7 +30,7 @@ The gap is not the work; it is the overhead. Ansible re-forks a Python interpret
 
 Both show real file diffs. Change the zed throttle from 900 to 1200 and each prints a unified diff of all four zedlets before touching anything:
 
-```
+```text
 # ansible --check --diff
 --- before: /etc/zfs/zed.d/statechange-storage-alert.sh
 +++ after: /home/thurston/.ansible/tmp/.../zedlet-storage-alert.sh.j2
@@ -47,7 +47,7 @@ Both show real file diffs. Change the zed throttle from 900 to 1200 and each pri
 
 They diverge on what they claim about systemd. Ansible reports `RUNNING HANDLER [Restart zed] changed`, stating flatly that the handler will fire. pyinfra prints a two-column table and puts the restart in the second column:
 
-```
+```text
 Operation                                                          Change       Conditional Change
 Install the statechange zedlet                                     1 (@local)   -
 Restart zed                                                        -            1 (@local)
@@ -61,7 +61,7 @@ Both share the same structural limit: an operation whose input does not exist ye
 
 An undefined template variable, `alerting_bin_dirr`, introduced into `zfs-scrub-pool@.service.j2`:
 
-```
+```text
 # ansible
 [ERROR]: Task failed: 'alerting_bin_dirr' is undefined
 Origin: .../roles/zfs_maintenance/tasks/scrub.yml:23:3
@@ -83,7 +83,7 @@ pyinfra gives the line number and the offending line; Ansible names the template
 
 A task-level failure (`sanoid` → `sanoid-typo`) inverts the result:
 
-```
+```text
 # ansible
 [ERROR]: Task failed: Module failed: No package matching 'sanoid-typo' is available
 Origin: .../roles/zfs_maintenance/tasks/sanoid.yml:2:3
@@ -98,7 +98,7 @@ pyinfra shows the tool's own output and the operation's label, but no source loc
 
 The nicest failure in the trial is pyinfra's `DeployError` — the `assert` analog guarding the alerting credentials — because it is a plain Python exception raised in deploy code:
 
-```
+```text
 --> pyinfra error in .../bunker/alerting.py line 64: alerting_hark_webhook_url and
     alerting_healthchecks_api_key must be resolved before configuring alerting.
     Run `uv run poe init-secrets`.
@@ -112,7 +112,7 @@ Both tools reach steady state and both report exactly **one** residual change, a
 
 Functional equivalence is not an argument, it is a diff. `rig/fingerprint.sh` records mode, owner, and SHA-256 for 21 managed files, the mode/owner of 4 directories, enabled/active state for 6 units, 5 package states, both pools' `autoreplace`, and the mock's registered checks. Ansible converges, fingerprint taken; reset; pyinfra converges, fingerprint taken:
 
-```
+```text
 == fingerprint diff (ansible vs pyinfra)
 IDENTICAL
 ```
@@ -241,7 +241,7 @@ and the operation diffs desired against actual, emitting a POST only when the ch
 
 Ansible's `alerting/tasks/check.yml` POSTs on every run and keys changed-state off `status == 201`. The Healthchecks docs are explicit that a `unique` POST matching an existing check **updates it** and returns 200. So editing a check's schedule or grace in `defaults/main.yml` applies the change and reports `ok`. Demonstrated in the rig:
 
-```
+```text
 --- ansible, -e alerting_heartbeat_grace=4321
 PLAY RECAP: ok=18  changed=0
 mock state after: "grace": 4321        # changed, reported as unchanged
@@ -249,7 +249,7 @@ mock state after: "grace": 4321        # changed, reported as unchanged
 
 The fact-gated pyinfra operation gets this right, because it compares before it writes:
 
-```
+```text
 grace before: 900
 --- apply with grace=4321
 Register Healthchecks check pod042-heartbeat   1 host   1 success
@@ -271,7 +271,7 @@ Four, all cheap once known, all discovered the hard way:
 
 The `no_log` analog is `HiddenValue`, and it is partial. Operation commands mask correctly:
 
-```
+```text
 sh -c 'umask 077; curl -fsS --max-time 10 -X POST -H '"'"'*MASKED*'"'"' ...
 ```
 

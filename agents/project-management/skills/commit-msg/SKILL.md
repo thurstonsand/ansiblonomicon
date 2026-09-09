@@ -26,7 +26,7 @@ Read the diff carefully. Understand *why* the change was made, not just what cha
 
 ## Commit Message Format
 
-```
+```text
 <type>(<scope>): <summary>
 
 Why: <problem solved or request fulfilled>

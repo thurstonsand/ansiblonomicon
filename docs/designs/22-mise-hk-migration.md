@@ -52,7 +52,7 @@ One scenario motivates the scoping design specifically. Today, staging a role ta
 
 Canonical names carry a namespace; aliases restore terseness. `mise run` is optional, so `mise truenas -t chezmoi` is the everyday form, six characters shorter than today's `uv run poe truenas -t chezmoi`. `mise tasks` lists canonical names only, so discovery stays clean. It also lists the root hierarchy only — the two Go config roots need `mise tasks --all`.
 
-```
+```text
 RECONCILE                                    alias
   reconcile                 this machine, by hostname
   reconcile:laptop          poe laptop       laptop

@@ -9,7 +9,7 @@ blocked-by: []
 
 ## Question
 
-What should carry the Bunker's alerts — backup failures/staleness, ZFS scrub and SMART results, service health, agent-platform reports? Thurston has seen interesting patterns worth evaluating: https://hark.ryan.ceo, ntfy, and the broader open-source alerting space.
+What should carry the Bunker's alerts — backup failures/staleness, ZFS scrub and SMART results, service health, agent-platform reports? Thurston has seen interesting patterns worth evaluating: <https://hark.ryan.ceo>, ntfy, and the broader open-source alerting space.
 
 Survey against primary sources (project docs/repos, pricing pages):
 

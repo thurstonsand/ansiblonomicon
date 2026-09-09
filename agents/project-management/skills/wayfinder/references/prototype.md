@@ -94,7 +94,7 @@ Generate **several radically different UI variations** on a single route, switch
 
 If the question is about logic/state rather than what something looks like, this is the wrong branch. Use [Logic Prototype](#logic-prototype).
 
-### When this is the right shape
+### When a UI prototype is the right shape
 
 - "What should this page look like?"
 - "I want to see a few options for this dashboard before committing."
@@ -121,7 +121,7 @@ Before committing to sub-shape B, sanity-check: is there really no existing page
 
 In both sub-shapes the floating bottom bar is identical.
 
-### Process
+### UI prototype process
 
 #### 1. State the question and pick N
 
@@ -194,7 +194,7 @@ Once a variant has won, capture the answer (which variant and why), then capture
 
 The full set of variants is the primary source, so it lands on the prototype branch, not the bin, since variant components and the switcher left in the main branch rot fast and confuse the next reader.
 
-### Anti-patterns
+### UI prototype anti-patterns
 
 - **Variants that differ only in colour or copy.** That's a tweak, not a prototype. Real variants disagree about structure.
 - **Sharing too much code between variants.** A shared `<Header>` is fine; a shared `<Layout>` defeats the point. Each variant should be free to throw out the layout.

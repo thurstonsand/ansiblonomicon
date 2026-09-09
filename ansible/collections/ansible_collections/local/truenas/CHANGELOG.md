@@ -10,7 +10,7 @@ All notable changes to this collection will be documented in this file.
 
 ## [0.2.0] - 2025-12-27
 
-### Added
+### New modules
 
 - `pool_scrub` module for pool scrub tasks
 - `pool_snapshottask` module for periodic snapshot tasks
@@ -27,7 +27,6 @@ All notable changes to this collection will be documented in this file.
 
 ## [0.1.0] - 2024-12-26
 
-### Added
+### Initial release
 
-- Initial release
 - `initshutdownscript` module for managing TrueNAS init/shutdown scripts

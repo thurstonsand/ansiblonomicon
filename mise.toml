@@ -281,6 +281,7 @@ run = '"{{config_root}}/scripts/fnox-host" exec --secret CLOUDFLARE_API_TOKEN --
 description = "Run every non-mutating check across the repo"
 depends = [
   "ansible:lint",
+  "docs:lint",
   "python:fmt:check",
   "python:lint",
   "python:typecheck",
@@ -295,6 +296,7 @@ depends = [
 [tasks.fix]
 description = "Run every mutating formatter and autofixer across the repo"
 depends = [
+  "docs:lint:fix",
   "python:fmt",
   "python:lint:fix",
   "nvim:fmt",
@@ -303,6 +305,14 @@ depends = [
   "session-recovery:fix",
   "//ansible/...:fmt",
 ]
+
+[tasks."docs:lint"]
+description = "Lint Markdown"
+run = "markdownlint-cli2"
+
+[tasks."docs:lint:fix"]
+description = "Autofix Markdown lint findings"
+run = "markdownlint-cli2 --fix"
 
 [tasks."ansible:lint"]
 description = "Lint the Ansible tree (online: refreshes galaxy collections)"

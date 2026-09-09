@@ -194,14 +194,14 @@ Changes from current: `$ZELLIJ` check becomes `$TMUX` check.
 
 #### What Changes
 
-| Component                      | Before (Zellij)           | After (tmux)                                                                                 |
-| ------------------------------ | ------------------------- | -------------------------------------------------------------------------------------------- |
-| `_detect_terminal_bg()`        | No change                 | **Removed from zsh startup** — Ansible now seeds `~/.terminal-bg`, shells just read it      |
-| `_maybe_refresh_terminal_bg()` | Runs in precmd every 300s | **Removed** — OSC 11 can't round-trip inside tmux                                            |
+| Component                      | Before (Zellij)           | After (tmux)                                                                                             |
+| ------------------------------ | ------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `_detect_terminal_bg()`        | No change                 | **Removed from zsh startup** — Ansible now seeds `~/.terminal-bg`, shells just read it                   |
+| `_maybe_refresh_terminal_bg()` | Runs in precmd every 300s | **Removed** — OSC 11 can’t round-trip inside tmux                                                        |
 | Theme helper                   | None                      | `terminal-theme-switch.py` updates `~/.terminal-bg`, Claude theme state, Codex TUI theme, and Hunk theme |
-| Source of truth                | `~/.terminal-bg` file     | `dark-notify` LaunchAgent → `terminal-theme-switch.py` → `~/.terminal-bg` and tool configs  |
-| nvim file watcher              | Watches `~/.terminal-bg`  | **Kept unchanged** — reacts to helper-driven writes                                          |
-| nvim FocusGained               | Not used                  | Not needed — file watcher is more responsive                                                 |
+| Source of truth                | `~/.terminal-bg` file     | `dark-notify` LaunchAgent → `terminal-theme-switch.py` → `~/.terminal-bg` and tool configs               |
+| nvim file watcher              | Watches `~/.terminal-bg`  | **Kept unchanged** — reacts to helper-driven writes                                                      |
+| nvim FocusGained               | Not used                  | Not needed — file watcher is more responsive                                                             |
 
 #### `bglight` / `bgdark` Functions
 
@@ -224,7 +224,7 @@ bgdark() { _set_theme dark; }
 
 #### Detection Flow
 
-```
+```text
 macOS theme changes → dark-notify LaunchAgent fires →
   ~/.local/bin/terminal-theme-watch reads light|dark →
   ~/.local/bin/terminal-theme-switch.py updates ~/.terminal-bg, ~/.claude.json, ~/.codex/config.toml, and ~/.config/hunk/config.toml →
@@ -245,23 +245,23 @@ User runs `bglight` or `bgdark` →
 
 ### File Changes Summary
 
-| File                                                 | Action           | Notes                                                                                                               |
-| ---------------------------------------------------- | ---------------- | ------------------------------------------------------------------------------------------------------------------- |
-| `chezmoi/dot_config/tmux/tmux.conf.tmpl`             | **Create**       | New tmux config                                                                                                     |
-| `chezmoi/dot_zshrc.tmpl`                             | **Modify**       | Replace ideoc/ide (zellij→tmux), drop `_maybe_refresh_terminal_bg`, and read `TERMINAL_BG` from `~/.terminal-bg`   |
-| `ansible/roles/terminal_theme/files/tmux-theme.zsh`  | **Create**       | Shared `bglight`/`bgdark` helper that updates tmux state via one function                                           |
-| `ansible/roles/terminal_theme/files/terminal-theme-switch.py` | **Create** | Centralizes theme side effects for tmux hooks and the LaunchAgent watcher                                            |
-| `ansible/roles/terminal_theme/files/terminal-theme-watch` | **Create**   | `dark-notify` wrapper that forwards appearance changes into the shared helper                                        |
-| `ansible/roles/terminal_theme/templates/house.thurstons.terminal-theme-watch.plist.j2` | **Create** | LaunchAgent that keeps the watcher running on macOS                                                                  |
-| `ansible/roles/terminal_theme/tasks/main.yml`        | **Create**       | Installs scripts, seeds `~/.terminal-bg`, and reloads the LaunchAgent when inputs change                            |
-| `chezmoi/dot_config/zellij/`                         | **Keep for now** | Don't remove until tmux is validated; ignore via `.chezmoiignore` if needed                                         |
-| `chezmoi/dot_config/nvim/lua/config/autocmds.lua`    | **No change**    | File watcher on `~/.terminal-bg` stays as-is                                                                        |
-| `chezmoi/dot_config/nvim/lua/config/options.lua`     | **Modify**       | `TERMINAL_BG` env var read at startup stays; window title now reflects cwd                                           |
-| `chezmoi/dot_config/nvim/lua/plugins/ghostty-navigator.lua` | **Add**    | Local macOS navigation now goes through `ghostty-nav`; `vim-tmux-navigator` is disabled there                       |
-| `chezmoi/dot_config/git/config.tmpl`                 | **Updated**      | Git now calls the `~/.local/bin/delta` wrapper directly; the wrapper reads `~/.terminal-bg`                         |
-| `chezmoi/.chezmoi.toml.tmpl`                         | **No change**    | Delta pager config remains `pager = "delta"`                                                                       |
-| `chezmoi/.chezmoiignore`                             | **Maybe modify** | Add zellij config to ignore if removing from deployment                                                             |
-| `chezmoi/dot_config/zellij/layouts/openclaw-ide.kdl` | **Keep**         | Don't delete until tmux is fully validated                                                                          |
+| File                                                                                   | Action           | Notes                                                                                                            |
+| -------------------------------------------------------------------------------------- | ---------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `chezmoi/dot_config/tmux/tmux.conf.tmpl`                                               | **Create**       | New tmux config                                                                                                  |
+| `chezmoi/dot_zshrc.tmpl`                                                               | **Modify**       | Replace ideoc/ide (zellij→tmux), drop `_maybe_refresh_terminal_bg`, and read `TERMINAL_BG` from `~/.terminal-bg` |
+| `ansible/roles/terminal_theme/files/tmux-theme.zsh`                                    | **Create**       | Shared `bglight`/`bgdark` helper that updates tmux state via one function                                        |
+| `ansible/roles/terminal_theme/files/terminal-theme-switch.py`                          | **Create**       | Centralizes theme side effects for tmux hooks and the LaunchAgent watcher                                        |
+| `ansible/roles/terminal_theme/files/terminal-theme-watch`                              | **Create**       | `dark-notify` wrapper that forwards appearance changes into the shared helper                                    |
+| `ansible/roles/terminal_theme/templates/house.thurstons.terminal-theme-watch.plist.j2` | **Create**       | LaunchAgent that keeps the watcher running on macOS                                                              |
+| `ansible/roles/terminal_theme/tasks/main.yml`                                          | **Create**       | Installs scripts, seeds `~/.terminal-bg`, and reloads the LaunchAgent when inputs change                         |
+| `chezmoi/dot_config/zellij/`                                                           | **Keep for now** | Don't remove until tmux is validated; ignore via `.chezmoiignore` if needed                                      |
+| `chezmoi/dot_config/nvim/lua/config/autocmds.lua`                                      | **No change**    | File watcher on `~/.terminal-bg` stays as-is                                                                     |
+| `chezmoi/dot_config/nvim/lua/config/options.lua`                                       | **Modify**       | `TERMINAL_BG` env var read at startup stays; window title now reflects cwd                                       |
+| `chezmoi/dot_config/nvim/lua/plugins/ghostty-navigator.lua`                            | **Add**          | Local macOS navigation now goes through `ghostty-nav`; `vim-tmux-navigator` is disabled there                    |
+| `chezmoi/dot_config/git/config.tmpl`                                                   | **Updated**      | Git now calls the `~/.local/bin/delta` wrapper directly; the wrapper reads `~/.terminal-bg`                      |
+| `chezmoi/.chezmoi.toml.tmpl`                                                           | **No change**    | Delta pager config remains `pager = "delta"`                                                                     |
+| `chezmoi/.chezmoiignore`                                                               | **Maybe modify** | Add zellij config to ignore if removing from deployment                                                          |
+| `chezmoi/dot_config/zellij/layouts/openclaw-ide.kdl`                                   | **Keep**         | Don't delete until tmux is fully validated                                                                       |
 
 ### nvim Plugin Addition
 

@@ -1,10 +1,10 @@
 # Plugins reference
 
 > Complete technical reference for Claude Code plugin system, including schemas, CLI commands, and component specifications.
-
-<Tip>
-  Looking to install plugins? See [Discover and install plugins](/en/discover-plugins). For creating plugins, see [Plugins](/en/plugins). For distributing plugins, see [Plugin marketplaces](/en/plugin-marketplaces).
-</Tip>
+>
+> **Tip**
+>
+> Looking to install plugins? See [Discover and install plugins](/en/discover-plugins). For creating plugins, see [Plugins](/en/plugins). For distributing plugins, see [Plugin marketplaces](/en/plugin-marketplaces).
 
 This reference provides complete technical specifications for the Claude Code plugin system, including component schemas, CLI commands, and development tools.
 
@@ -70,7 +70,7 @@ Plugins can provide Agent Skills that extend Claude's capabilities. Skills are m
 
 **Skill structure**:
 
-```
+```text
 skills/
 ├── pdf-processor/
 │   ├── SKILL.md
@@ -178,9 +178,9 @@ Plugins can bundle Model Context Protocol (MCP) servers to connect Claude Code w
 
 ### LSP servers
 
-<Tip>
-  Looking to use LSP plugins? Install them from the official marketplace—search for "lsp" in the `/plugin` Discover tab. This section documents how to create LSP plugins for languages not covered by the official marketplace.
-</Tip>
+> **Tip**
+>
+> Looking to use LSP plugins? Install them from the official marketplace—search for "lsp" in the `/plugin` Discover tab. This section documents how to create LSP plugins for languages not covered by the official marketplace.
 
 Plugins can provide [Language Server Protocol](https://microsoft.github.io/language-server-protocol/) (LSP) servers to give Claude real-time code intelligence while working on your codebase.
 
@@ -268,9 +268,9 @@ The `loggingConfig` field enables verbose LSP logging when users pass `--enable-
 
 The `${CLAUDE_PLUGIN_LSP_LOG_FILE}` variable expands to the log file path. Logs are written to `~/.claude/debug/`.
 
-<Warning>
-  **You must install the language server binary separately.** LSP plugins configure how Claude Code connects to a language server, but they don't include the server itself. If you see `Executable not found in $PATH` in the `/plugin` Errors tab, install the required binary for your language.
-</Warning>
+> **Warning**
+>
+> **You must install the language server binary separately.** LSP plugins configure how Claude Code connects to a language server, but they don't include the server itself. If you see `Executable not found in $PATH` in the `/plugin` Errors tab, install the required binary for your language.
 
 **Available LSP plugins:**
 
@@ -419,7 +419,7 @@ Plugins cannot reference files outside their copied directory structure. Paths t
 
 If your plugin needs to access files outside its directory, you have two options:
 
-**Option 1: Use symlinks**
+#### Option 1: Use symlinks
 
 Create symbolic links to external files within your plugin directory. Symlinks are honored during the copy process:
 
@@ -430,7 +430,7 @@ ln -s /path/to/shared-utils ./shared-utils
 
 The symlinked content will be copied into the plugin cache.
 
-**Option 2: Restructure your marketplace**
+#### Option 2: Restructure your marketplace
 
 Set the plugin path to a parent directory that contains all required files, then provide the rest of the plugin manifest directly in the marketplace entry:
 
@@ -447,9 +447,9 @@ Set the plugin path to a parent directory that contains all required files, then
 
 This approach copies the entire marketplace root, giving your plugin access to sibling directories.
 
-<Note>
-  Symlinks that point to locations outside the plugin's logical root are followed during copying. This provides flexibility while maintaining the security benefits of the caching system.
-</Note>
+> **Note**
+>
+> Symlinks that point to locations outside the plugin's logical root are followed during copying. This provides flexibility while maintaining the security benefits of the caching system.
 
 ---
 
@@ -459,7 +459,7 @@ This approach copies the entire marketplace root, giving your plugin access to s
 
 A complete plugin follows this structure:
 
-```
+```text
 enterprise-plugin/
 ├── .claude-plugin/           # Metadata directory
 │   └── plugin.json          # Required: plugin manifest
@@ -489,9 +489,9 @@ enterprise-plugin/
 └── CHANGELOG.md             # Version history
 ```
 
-<Warning>
-  The `.claude-plugin/` directory contains the `plugin.json` file. All other directories (commands/, agents/, skills/, hooks/) must be at the plugin root, not inside `.claude-plugin/`.
-</Warning>
+> **Warning**
+>
+> The `.claude-plugin/` directory contains the `plugin.json` file. All other directories (commands/, agents/, skills/, hooks/) must be at the plugin root, not inside `.claude-plugin/`.
 
 ### File locations reference
 
@@ -701,7 +701,7 @@ This shows:
 
 **Correct structure**: Components must be at the plugin root, not inside `.claude-plugin/`. Only `plugin.json` belongs in `.claude-plugin/`.
 
-```
+```text
 my-plugin/
 ├── .claude-plugin/
 │   └── plugin.json      ← Only manifest here
@@ -761,4 +761,4 @@ Follow semantic versioning for plugin releases:
 
 ---
 
-> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://code.claude.com/docs/llms.txt
+> To find navigation and other pages in this documentation, fetch the llms.txt file at: <https://code.claude.com/docs/llms.txt>

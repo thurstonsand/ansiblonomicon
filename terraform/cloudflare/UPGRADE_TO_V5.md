@@ -18,7 +18,7 @@ A custom WARP device profile was created manually in the Cloudflare dashboard be
 **Configuration:**
 
 - **Name:** Thurstons House Only
-- **Expression:** User email in "thurstonsand@gmail.com"
+- **Expression:** User email in "<thurstonsand@gmail.com>"
 - **Service Mode:** Gateway with WARP
 - **Split Tunnels:** Include IPs and domains
   - `cli-proxy-api.thurstons.house`

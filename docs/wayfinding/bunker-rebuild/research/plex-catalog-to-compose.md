@@ -28,7 +28,7 @@ Two things do have to change: the `PreferredNetworkInterface="br0"` preference (
 
 Binds:
 
-```
+```text
 /mnt/performance/apps/plex/config  → /config
 /mnt/performance/apps/plex/logs    → /config/Library/Application Support/Plex Media Server/Logs
 /mnt/capacity/watch/media          → /data
@@ -47,7 +47,7 @@ So the "ix-apps internals" question resolves to: `/mnt/.ix-apps` holds the docke
 
 Live server, for post-cutover comparison:
 
-```
+```text
 machineIdentifier  8d8336b217cd7836987429589cced6f7dd668608
 friendlyName       truenas
 myPlexSubscription 1   (Plex Pass)
@@ -131,6 +131,7 @@ Assumes the pools import intact, so paths are unchanged. If they are, **no file 
 
 - Force a video transcode from a client (e.g. set quality to 4 Mbps on a 1080p H.264 file) and confirm Plex Dashboard shows `Transcode (hw)` on the video stream. Screenshot it.
 - Record `machineIdentifier`, `friendlyName`, section ids/paths, and a couple of known watch positions:
+
   ```bash
   curl -s "http://127.0.0.1:32400/?X-Plex-Token=$TOKEN" | head -c 400
   curl -s "http://127.0.0.1:32400/library/sections?X-Plex-Token=$TOKEN" | grep -o '<Location[^>]*>'
@@ -140,7 +141,7 @@ Assumes the pools import intact, so paths are unchanged. If they are, **no file 
 
 **3. Safety copy of the small, irreplaceable subset** — off-box, since the whole point is that the pool is about to be re-imported by a new OS:
 
-```
+```text
 Library/Application Support/Plex Media Server/Preferences.xml
 Library/Application Support/Plex Media Server/Plug-in Support/Databases/   (~700 MB with the nightly backups)
 ```

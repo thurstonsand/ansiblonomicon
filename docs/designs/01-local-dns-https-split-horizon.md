@@ -53,7 +53,7 @@ The repos are **fully diverged** — ubiquiti-community does not merge from paul
 
 **Architecture:**
 
-```
+```diagram
 LAN Client → DNS (UDM) → Caddy IP → Caddy → Backend Service
                 ↓
          arcane.thurstons.house = <caddy-ip> (A record)
@@ -151,21 +151,21 @@ We'll use Terraform for the declarative layer, which calls the same underlying A
 
 ### Terraform Provider
 
-- **Registry:** https://registry.terraform.io/providers/ubiquiti-community/unifi/latest
-- **GitHub:** https://github.com/ubiquiti-community/terraform-provider-unifi
-- **DNS Record Docs:** https://registry.terraform.io/providers/ubiquiti-community/unifi/latest/docs/resources/dns_record
+- **Registry:** <https://registry.terraform.io/providers/ubiquiti-community/unifi/latest>
+- **GitHub:** <https://github.com/ubiquiti-community/terraform-provider-unifi>
+- **DNS Record Docs:** <https://registry.terraform.io/providers/ubiquiti-community/unifi/latest/docs/resources/dns_record>
 
 ### Caddy
 
-- **Official Docs:** https://caddyserver.com/docs/
-- **Cloudflare DNS Plugin:** https://github.com/caddy-dns/cloudflare
+- **Official Docs:** <https://caddyserver.com/docs/>
+- **Cloudflare DNS Plugin:** <https://github.com/caddy-dns/cloudflare>
 - **Docker Image:** `caddy:2-alpine` (or custom build with DNS plugin)
 
 ### UniFi API Background
 
-- **Official Site Manager API:** https://developer.ui.com/site-manager-api/ (read-only, cloud)
+- **Official Site Manager API:** <https://developer.ui.com/site-manager-api/> (read-only, cloud)
 - **Local API Docs:** UniFi Network → Settings → Control Plane → Integrations
-- **go-unifi SDK:** https://github.com/paultyng/go-unifi (upstream) / https://github.com/ubiquiti-community/go-unifi (fork)
+- **go-unifi SDK:** <https://github.com/paultyng/go-unifi> (upstream) / <https://github.com/ubiquiti-community/go-unifi> (fork)
 
 ## Example Terraform Config
 

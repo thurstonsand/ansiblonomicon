@@ -38,7 +38,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work 
 
 ## Structure
 
-```
+```text
 ├── .ansibleremove             # Retired paths removed from user-managed hosts
 ├── ansible/
 │   ├── ansible.cfg          # Ansible configuration

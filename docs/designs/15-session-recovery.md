@@ -16,7 +16,7 @@ tree. A session only ever touches its own file; there is no shared index and no
 cross-session scanning, so the two tools — and concurrent sessions within a tool
 — never contend for the same file.
 
-```
+```text
 ${XDG_STATE_HOME:-~/.local/state}/session-recovery/
   claude/<sessionId>.json     # owned by Claude Code
   pi/<sessionId>.json         # owned by Pi
@@ -68,7 +68,7 @@ boot epoch would *not* be comparable with Claude's UUID and must not be used.
 ### Lifecycle
 
 | Event (Claude hook) | Action |
-|---|---|
+| --- | --- |
 | `SessionStart` (startup/resume/clear/compact) | Write/refresh own file. |
 | `Stop` | Refresh own file (keeps `cwd` + `updatedAt` current). |
 | `SessionEnd` (deliberate quit) | Soft-delete own file. |
@@ -107,7 +107,7 @@ takes more work than on Claude, because Pi cannot tell the two apart through the
 event alone.
 
 | Event (Pi extension) | Action |
-|---|---|
+| --- | --- |
 | `session_start` reason `startup`/`new` | Install signal hooks once. Do **not** write a record yet — the session has no transcript on disk until its first assistant message persists; defer to `agent_start`. |
 | `session_start` reason `resume`/`fork` | Install signal hooks once, then write/refresh the record: these carry prior history, so a transcript already exists. |
 | `session_start` reason `reload` | Install signal hooks once. The existing record stays in place (same `getSessionId()`), so no rewrite is needed. |

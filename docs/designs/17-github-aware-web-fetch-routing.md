@@ -53,7 +53,7 @@ The routing layer must also be ready for more source fetchers — GitLab is the 
 
 The tool result is plain text: one digest per document, no content. Example for `fetch_web(urls: ["https://github.com/octokit/rest.js/pull/607", "https://github.com/octokit/rest.js/issues/1"])`:
 
-```
+```text
 1. octokit/rest.js#607: build(deps): Bump http-proxy-middleware…
    closed merged · by dependabot[bot] · +327 -497 · 1 file · 0 issue comments · 1 review
    https://github.com/octokit/rest.js/pull/607
@@ -81,7 +81,7 @@ Rules the agent can rely on:
 
 Every document is materialized, unconditionally: one directory per requested URL (slugified — unique within a call by construction), bodies under their own names.
 
-```
+```text
 /tmp/pi-fetch/{ISO-timestamp}/
   github-com-octokit-rest-js-pull-607/
     conversation.md
@@ -244,7 +244,7 @@ Source-native fetchers ignore `objective` — silently, with no warning noise. O
 
 ### 8. Module layout
 
-```
+```text
 parallel-web-tools/
   index.ts        — extension entry; composes auth + fetcher array, registers tools
   contract.ts     — the cross-module type surface (documents, fetchers, outcomes)

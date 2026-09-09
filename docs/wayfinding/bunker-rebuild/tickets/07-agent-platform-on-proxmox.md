@@ -28,6 +28,7 @@ Substrate is now decided ([ticket 05](05-service-runtime-topology.md)): plain De
 **Transfers nearly unchanged**: the playbook + role set (sshd, shpool, sessions, agent_harness, chezmoi, op launcher), the self-management loop shape, the comms design, `pod042.thurstons.house` → whatever the successor answers to.
 
 **Superseded by the new substrate**:
+
 - Provisioning: `local.truenas.vm` → an incus profile + instance, declared from ansible. Debian images from images.linuxcontainers.org; `incus launch` makes template+clone ephemerals cheap (the orb-like path charting wanted).
 - Resources: the 4c/16G reservation → caps (`limits.cpu`, `limits.memory` are ceilings on a shared host — the whole point of the move).
 - Docker access: the daemon is now on the same machine. Three shapes to grill: bind the host docker socket into the instance (simplest, most "unfettered"), talk to it over the incus bridge, or `security.nesting=true` for a private docker inside the instance.
@@ -55,4 +56,3 @@ Grilled 2026-08-19, two rounds plus a naming coda. Signed off.
 **Follow-up ticket seeded — external auto-expose**: wildcard cloudflared ingress (`*.<instance>.thurstons.house` → caddy) + wildcard Cloudflare Access app in `terraform/cloudflare` puts every agent port behind Access externally with zero per-server config; `cloudflared access tcp` covers raw TCP from outside.
 
 **pod042 (the VM) dies; its map closes.** The existing VM tears down at cutover with the rest of TrueNAS. The pod042 map closes as superseded-by-bunker-rebuild: tickets 08 (sunset openclaw) and 09 (build) overtaken by events; 11 (runner tool) and 13 (detached session host) closed as unresolved ideas, re-charterable against the new platform if the need resurfaces. Salvaged as designs: the self-management loop, the `op` launcher role, the comms design. Execution item added to the map: purge openclaw and stale-pod042 references repo-wide.
-

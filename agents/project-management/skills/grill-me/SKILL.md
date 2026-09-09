@@ -92,7 +92,7 @@ Create context files lazily, only when you have something to write. If no `CONTE
 
 Format a round like so:
 
-```
+```text
 ❓ **Q1** - **<question title>**: <question body, might be multiple paragraphs, including multiple choices>
 
 ➡️ <your recommended answer>

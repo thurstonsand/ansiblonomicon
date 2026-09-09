@@ -6,7 +6,7 @@ This is a self-contained uv project. It is deliberately not part of the repo's r
 
 ## Layout
 
-```
+```text
 inventory.py                 # pod042 = ["@local"]      (inventory/targets/pod042.yml)
 group_data/pod042.py         # host facts, _sudo = True (group_vars/pod042.yml)
 bunker/alerting.py           # @deploy alerting         (roles/alerting)

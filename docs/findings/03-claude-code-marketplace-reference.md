@@ -21,91 +21,84 @@ Once your marketplace is live, you can update it by pushing changes to your repo
 
 This example creates a marketplace with one plugin: a `/review` command for code reviews. You'll create the directory structure, add a slash command, create the plugin manifest and marketplace catalog, then install and test it.
 
-<Steps>
-  <Step title="Create the directory structure">
-    ```bash  theme={null}
-    mkdir -p my-marketplace/.claude-plugin
-    mkdir -p my-marketplace/plugins/review-plugin/.claude-plugin
-    mkdir -p my-marketplace/plugins/review-plugin/commands
-    ```
-  </Step>
+### Create the directory structure
 
-  <Step title="Create the plugin command">
-    Create a Markdown file that defines what the `/review` command does.
+```bash  theme={null}
+mkdir -p my-marketplace/.claude-plugin
+mkdir -p my-marketplace/plugins/review-plugin/.claude-plugin
+mkdir -p my-marketplace/plugins/review-plugin/commands
+```
 
-    ```markdown my-marketplace/plugins/review-plugin/commands/review.md theme={null}
-    Review the code I've selected or the recent changes for:
-    - Potential bugs or edge cases
-    - Security concerns
-    - Performance issues
-    - Readability improvements
+### Create the plugin command
 
-    Be concise and actionable.
-    ```
+Create a Markdown file that defines what the `/review` command does.
 
-  </Step>
+```markdown my-marketplace/plugins/review-plugin/commands/review.md theme={null}
+Review the code I've selected or the recent changes for:
+- Potential bugs or edge cases
+- Security concerns
+- Performance issues
+- Readability improvements
 
-  <Step title="Create the plugin manifest">
-    Create a `plugin.json` file that describes the plugin. The manifest goes in the `.claude-plugin/` directory.
+Be concise and actionable.
+```
 
-    ```json my-marketplace/plugins/review-plugin/.claude-plugin/plugin.json theme={null}
+### Create the plugin manifest
+
+Create a `plugin.json` file that describes the plugin. The manifest goes in the `.claude-plugin/` directory.
+
+```json my-marketplace/plugins/review-plugin/.claude-plugin/plugin.json theme={null}
+{
+  "name": "review-plugin",
+  "description": "Adds a /review command for quick code reviews",
+  "version": "1.0.0"
+}
+```
+
+### Create the marketplace catalog
+
+Create the marketplace catalog that lists your plugin.
+
+```json my-marketplace/.claude-plugin/marketplace.json theme={null}
+{
+  "name": "my-plugins",
+  "owner": {
+    "name": "Your Name"
+  },
+  "plugins": [
     {
       "name": "review-plugin",
-      "description": "Adds a /review command for quick code reviews",
-      "version": "1.0.0"
+      "source": "./plugins/review-plugin",
+      "description": "Adds a /review command for quick code reviews"
     }
-    ```
+  ]
+}
+```
 
-  </Step>
+### Add and install
 
-  <Step title="Create the marketplace file">
-    Create the marketplace catalog that lists your plugin.
+Add the marketplace and install the plugin.
 
-    ```json my-marketplace/.claude-plugin/marketplace.json theme={null}
-    {
-      "name": "my-plugins",
-      "owner": {
-        "name": "Your Name"
-      },
-      "plugins": [
-        {
-          "name": "review-plugin",
-          "source": "./plugins/review-plugin",
-          "description": "Adds a /review command for quick code reviews"
-        }
-      ]
-    }
-    ```
+```shell  theme={null}
+/plugin marketplace add ./my-marketplace
+/plugin install review-plugin@my-plugins
+```
 
-  </Step>
+### Try it out
 
-  <Step title="Add and install">
-    Add the marketplace and install the plugin.
+Select some code in your editor and run your new command.
 
-    ```shell  theme={null}
-    /plugin marketplace add ./my-marketplace
-    /plugin install review-plugin@my-plugins
-    ```
-
-  </Step>
-
-  <Step title="Try it out">
-    Select some code in your editor and run your new command.
-
-    ```shell  theme={null}
-    /review
-    ```
-
-  </Step>
-</Steps>
+```shell  theme={null}
+/review
+```
 
 To learn more about what plugins can do, including hooks, agents, MCP servers, and LSP servers, see [Plugins](/en/plugins).
 
-<Note>
-  **How plugins are installed**: When users install a plugin, Claude Code copies the plugin directory to a cache location. This means plugins can't reference files outside their directory using paths like `../shared-utils`, because those files won't be copied.
-
-If you need to share files across plugins, use symlinks (which are followed during copying) or restructure your marketplace so the shared directory is inside the plugin source path. See [Plugin caching and file resolution](/en/plugins-reference#plugin-caching-and-file-resolution) for details.
-</Note>
+> **Note**
+>
+> **How plugins are installed**: When users install a plugin, Claude Code copies the plugin directory to a cache location. This means plugins can't reference files outside their directory using paths like `../shared-utils`, because those files won't be copied.
+>
+> If you need to share files across plugins, use symlinks (which are followed during copying) or restructure your marketplace so the shared directory is inside the plugin source path. See [Plugin caching and file resolution](/en/plugins-reference#plugin-caching-and-file-resolution) for details.
 
 ## Create the marketplace file
 
@@ -152,9 +145,9 @@ Each plugin entry needs at minimum a `name` and `source` (where to fetch it from
 | `owner`   | object | Marketplace maintainer information ([see fields below](#owner-fields))                                                                                                 |                |
 | `plugins` | array  | List of available plugins                                                                                                                                              | See below      |
 
-<Note>
-  **Reserved names**: The following marketplace names are reserved for official Anthropic use and cannot be used by third-party marketplaces: `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `anthropic-marketplace`, `anthropic-plugins`, `agent-skills`, `life-sciences`. Names that impersonate official marketplaces (like `official-claude-plugins` or `anthropic-tools-v2`) are also blocked.
-</Note>
+> **Note**
+>
+> **Reserved names**: The following marketplace names are reserved for official Anthropic use and cannot be used by third-party marketplaces: `claude-code-marketplace`, `claude-code-plugins`, `claude-plugins-official`, `anthropic-marketplace`, `anthropic-plugins`, `agent-skills`, `life-sciences`. Names that impersonate official marketplaces (like `official-claude-plugins` or `anthropic-tools-v2`) are also blocked.
 
 ### Owner fields
 
@@ -175,7 +168,7 @@ Each plugin entry needs at minimum a `name` and `source` (where to fetch it from
 
 Each plugin entry in the `plugins` array describes a plugin and where to find it. You can include any field from the [plugin manifest schema](/en/plugins-reference#plugin-manifest-schema) (like `description`, `version`, `author`, `commands`, `hooks`, etc.), plus these marketplace-specific fields: `source`, `category`, `tags`, and `strict`.
 
-### Required fields
+### Required plugin entry fields
 
 | Field    | Type           | Description                                                                                                                                            |
 | :------- | :------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -512,4 +505,4 @@ For additional debugging tools and common issues, see [Debugging and development
 
 ---
 
-> To find navigation and other pages in this documentation, fetch the llms.txt file at: https://code.claude.com/docs/llms.txt
+> To find navigation and other pages in this documentation, fetch the llms.txt file at: <https://code.claude.com/docs/llms.txt>

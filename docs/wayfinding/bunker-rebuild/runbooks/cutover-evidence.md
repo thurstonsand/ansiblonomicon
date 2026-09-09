@@ -36,7 +36,7 @@ Rig: Lima VM `pod042test` (arm64 Debian 13, real kernel, ZFS via zfs-dkms, file-
 ## Not provable before move day (and how each is covered)
 
 | Surface | Why untestable | Coverage |
-|---|---|---|
+| --- | --- | --- |
 | Real pool import/rename | Pools exist once | Confirm-gated wizard stage with `zpool import` preview; `premove-final` snapshots; metadata-only operation |
 | QuickSync `/dev/dri` | No iGPU in rig | bringup battery check + acceptance-lap transcode test |
 | smartd | `ConditionVirtualization=no` | Live check added to bringup battery |

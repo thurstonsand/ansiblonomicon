@@ -86,7 +86,7 @@ The `lan` structure keeps IPs, ports, and domains together per container. This e
 
 ### Directory Structure (Local)
 
-```
+```text
 ansible/stacks/<stack_name>/
 ├── compose.yaml.j2           # Required: Jinja2 compose template
 └── <container_name>/         # Optional: per-container config directories
@@ -97,9 +97,9 @@ ansible/stacks/<stack_name>/
 
 Container directories are named to match the container they configure. The directory structure within each container folder is preserved exactly on the remote.
 
-**Example: homepage stack**
+#### Example: homepage stack
 
-```
+```text
 ansible/stacks/homepage/
 ├── compose.yaml.j2
 └── homepage/                 # Config for 'homepage' container
@@ -109,9 +109,9 @@ ansible/stacks/homepage/
         └── settings.yaml.j2
 ```
 
-**Example: ddclient stack**
+#### Example: ddclient stack
 
-```
+```text
 ansible/stacks/ddclient/
 ├── compose.yaml.j2
 └── ddclient/                 # Config for 'ddclient' container
@@ -122,7 +122,7 @@ ansible/stacks/ddclient/
 
 ### Directory Structure (Remote)
 
-```
+```text
 /mnt/performance/docker/
 ├── stacks/<stack_name>/      # Compose files
 │   └── compose.yaml

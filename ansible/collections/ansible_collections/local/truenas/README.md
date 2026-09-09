@@ -103,7 +103,7 @@ Each module follows the same pattern:
 
 ## Architecture
 
-```
+```text
 plugins/
 ├── action/                # Run on controller (Python 3.12+)
 │   ├── initshutdownscript.py

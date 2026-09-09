@@ -6,7 +6,7 @@ Nothing outside this directory depends on it, and `.miserc.toml` stops config di
 
 ## Layout
 
-```
+```text
 mise.toml                          # monorepo root: host facts, entrypoints  (playbooks/pod042.yml)
 .miserc.toml                       # ceiling_paths, so this really is the root
 .miseremove                        # retired paths                            (.ansibleremove)

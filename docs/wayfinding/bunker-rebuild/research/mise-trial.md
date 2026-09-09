@@ -17,7 +17,7 @@ Two findings are worth reading even if the trial goes nowhere. mise runs the dep
 Same VM, same minute, each tool starting from an identical reset (`rig/reset.sh`). Ansible scoped with `--tags alerting,sanoid,scrub,smartd,zed`; pyinfra running `deploy.py`; mise running `mise run converge`. All three target localhost.
 
 | | Ansible 12 | pyinfra 3.10 | mise 2026.8.14 |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | full converge from bare host | 19.0 s | 5.3 s | **4.5 s** |
 | no-op re-run | 12.1 s | 0.85 s | **0.74 s** |
 | check/dry run with file diffs | 10.2 s | 0.86 s | **0.45 s** |
@@ -31,7 +31,7 @@ mise beats pyinfra because it does less: no Python interpreter start, no fact ga
 
 The 0.03 s row is `mise run --dry-run`, and it is not a plan. It prints the tasks in the order they would run and the command line of each, and evaluates nothing:
 
-```
+```text
 $ mise run --dry-run converge
 [//:ledger-begin] $ sudo install -m 0644 -o "$(id -un)" /dev/null "$RECONCILE_L…
 [//units/base:retire] $ ~/…/units/base/mise-tasks/retire
@@ -67,7 +67,7 @@ Bounded from the docs and verified against 2026.8.12/2026.8.14 in the rig.
 
 ### The prototype
 
-```
+```text
 prototypes/mise/
 ├── mise.toml                          63 lines — host facts, entrypoints   (playbooks/pod042.yml)
 ├── .miserc.toml                        5 lines — ceiling_paths
@@ -99,7 +99,7 @@ prototypes/mise/
 
 `mise tasks deps` draws the whole thing, which no other tool in this bakeoff does:
 
-```
+```text
 //:converge
 ├── //units/zfs-maintenance:converge
 │   ├── //units/zfs-maintenance:zed
@@ -234,7 +234,7 @@ Notifications collapse by name, so four changed zedlets restart zed once — the
 
 Check mode produces real unified diffs, at half the cost of pyinfra's dry run:
 
-```
+```text
 $ ZFS_ZED_THROTTLE_SECONDS=1200 RECONCILE_CHECK=1 mise run //units/zfs-maintenance:zed
   would change: /etc/zfs/zed.d/statechange-storage-alert.sh (content)
     @@ -34,7 +34,7 @@
@@ -247,7 +247,7 @@ $ ZFS_ZED_THROTTLE_SECONDS=1200 RECONCILE_CHECK=1 mise run //units/zfs-maintenan
 
 Change reporting is a shared ledger file plus a `depends_post` task, which is the one mise feature that fits reconciliation exactly: it runs after the parent *and its whole dependency subtree*, which is where a recap belongs.
 
-```
+```text
 UNIT                     ok  changed   failed
 alerting                 11        0        0
 base                      2        0        0
@@ -262,7 +262,7 @@ The one residual change is the same one both other tools report: Debian's `smart
 
 Drift on an API-backed resource works, and reports better than either alternative because the ledger carries the reason:
 
-```
+```text
 -- grace before: 900
   changed: check pod042-heartbeat (grace 900 -> 4321)
 -- grace after: 4321
@@ -273,7 +273,7 @@ Drift on an API-backed resource works, and reports better than either alternativ
 
 **`sources`/`outputs` freshness is not merely unhelpful here, it is wrong.** It compares repository inputs against declared outputs and skips the task when the outputs are newer. Point `outputs` at a deployed file and hand-editing that file makes it *more* fresh, so the drift is preserved rather than corrected:
 
-```
+```text
 $ echo "corrupted by hand" > out.txt
 $ mise run //units/zfs:b
 [//units/zfs:b] sources up-to-date, skipping
@@ -298,7 +298,7 @@ Any reconciliation built on `sources` would be a system that stops fixing things
 ### Authoring cost, honestly
 
 | | Ansible | pyinfra | mise |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | role/unit definitions | 468 lines YAML | 513 lines Python | 260 lines (unit configs + tasks) |
 | reusable machinery you maintain | 0 | 184 lines (facts + operations) | 343 lines (runtime + check lib) |
 | templates | 13 files | 13 files, 3 renamed | 13 files, renamed variables |
@@ -310,7 +310,7 @@ Per reconciled resource, mise is the tersest of the three at the call site and t
 
 `.miseremove`, consumed by `//units/base:retire`, wired into the standard graph as a dependency of `//:converge`. Same manifest format as `.ansibleremove` — comments, blank lines, `~/`-relative, home-relative and absolute paths, the same four rejected forms (`/`, `.`, `~`, anything containing `..`).
 
-```
+```text
 ### 1. check mode: reports, changes nothing
   would change: remove /usr/local/bin/retired-storage-probe
   would change: remove /home/thurston/.cache/retired-alerting-scratch
@@ -332,7 +332,7 @@ Worse: Ansible's runs on every host that includes the play, automatically, becau
 
 `rig/fingerprint.sh` records mode, owner and SHA-256 for 21 managed files, mode/owner for 4 directories, enabled/active for 6 units, 5 package states, both pools' `autoreplace`, and the mock's registered checks. Reset, Ansible converge, fingerprint; reset, pyinfra converge, fingerprint; reset, mise converge, fingerprint:
 
-```
+```text
 == fingerprint diff (ansible vs pyinfra)
 IDENTICAL
 == fingerprint diff (ansible vs mise)
@@ -357,7 +357,7 @@ Three failure modes, three different qualities.
 
 **A template variable that does not exist.** `alerting_bin_dirr` in `zfs-scrub-pool@.service.j2`, the same break as the last two trials:
 
-```
+```text
 error: undefined value (in …/units/zfs-maintenance/../templates/zfs-scrub-pool@.service.j2:9)
 
 ------------------------- zfs-scrub-pool@.service.j2 --------------------------
@@ -374,7 +374,7 @@ Then it prints "Referenced variables" — **the entire process environment**, ev
 
 **A variable mise itself cannot resolve**, in a unit's `mise.toml`:
 
-```
+```text
 [//units/zfs-maintenance:smartd] ERROR failed to parse template: '{{ env.ZFS_BIN_DIRR }}'
 [//units/zfs-maintenance:smartd] ERROR error: Field `ZFS_BIN_DIRR` is not defined.
   Available fields: ALERTING_BIN_DIR, ALERTING_CHECK_LIB, ALERTING_HARK_WEBHOOK_URL, …
@@ -384,7 +384,7 @@ Names the field and lists what was available, which is genuinely useful, and nam
 
 **A tool failure**, `sanoid` → `sanoid-typo`:
 
-```
+```text
 E: Unable to locate package sanoid-typo
   FAILED: apt install sanoid-typo
 [//units/zfs-maintenance:sanoid] ERROR task failed
