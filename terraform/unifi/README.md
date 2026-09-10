@@ -17,6 +17,7 @@ OpenTofu owns:
 - stable device port assignments after physical adoption
 - the disabled Internet 1 backup and primary WAS-110 DHCP WAN, including priority, failover mode, and the sensitive cloned MAC
 - the `192.168.11.0/24` WAS-110 LCT interface route
+- the Plex TCP `32400` WAN port forward to pod042
 - Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, and Scanners, restricted to Apple AirPlay, HomeKit, and the `_hue._tcp.local` custom service
 - Network-device automatic update policy
 
