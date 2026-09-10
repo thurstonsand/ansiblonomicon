@@ -10,8 +10,8 @@ The new house is livable the way I want it and the old house is sold: every item
 - Charted 2026-09-01 from a raw list, one week after the move. Not grilled: the items are captured in Thurston's words, questions sharpened as tickets get picked up.
 - Cross-map links: network is in [New-house Internet cutover](../new-house-internet-cutover/map.md) (done) and Bunker Rebuild's [WiFi coverage survey](../bunker-rebuild/tickets/21-wifi-coverage-and-tuning.md); the eGPU decision is Bunker Rebuild's [eGPU enclosure qualification](../bunker-rebuild/tickets/22-egpu-enclosure-qualification.md); the smart-home rebuild (HAOS under incus) belongs to Bunker Rebuild's Phase 4.
 - Standing preferences: prefer local-first smart devices that keep working without HA (Matter over Thread bindings); ubiquiti-native where a ubiquiti option exists; get professional help for lighting rather than repeating the can-light mistake.
-- Trades to coordinate: electrician (one consolidated scope), hood/duct contractor, gas plumber, TV mounters (The TV Mount Men), Wellbourne (old house door), cleaners, painters.
-- Hard dates: moving boxes review **2026-12-01**; laundry blocked until the gas line lands.
+- Trades to coordinate: contractor (low-voltage wiring, electrical outlets, cameras, and possibly door alignment through a handyman), hood/duct contractor, TV mounters (The TV Mount Men), Wellbourne (old house door), cleaners, painters.
+- Hard date: moving boxes review **2026-12-10**.
 
 ## Decisions so far
 
@@ -24,11 +24,13 @@ The new house is livable the way I want it and the old house is sold: every item
 - [Basement dehumidifier sizing and maintenance](tickets/24-dehumidifier-sizing.md): start with a current DOE-rated 50-pint ENERGY STAR portable on gravity drain for an open basement under ~2,000 sq ft; escalate to ducted/professional only for severe load, divided rooms, or noise isolation (~$1,200–1,800 premium). Continuous drain removes bucket-carrying and nothing else: filters, coils, drain-hose biofilm, flow checks, and RH verification stay recurring. Fill-in sizing worksheet and maintenance calendar in [the research](research/dehumidifier-sizing.md).
 - [Sit-stand desk](tickets/25-sit-stand-desk.md): Deskhaus Apex Pro frame + 60×30 hardwood top for maximum standing-height stability and load margin; UPLIFT V2 Commercial (now V3 on their site) is the safer turnkey pick — its crossbar has *measured* lateral-stability benefit (BTOD WobbleMeter) and free 30-day returns. Secretlab wins cable management; Ergonofis, Branch, and Herman Miller's Jarvis lose on price, stability evidence, or warranty. Pre-order measurement checklist in [the research](research/sit-stand-desk.md).
 - [Loch Highland Atlas](tickets/26-atlas.md): annotated plans app, built in its own repo `thurstonsand/loch-highland-atlas` on Lakebed; feeds the electrician scope, lighting wiring audit, and sprinkler tickets
+- [Gas line to the dryer](tickets/16-gas-and-laundry.md): installed; laundry is no longer blocked.
+- [Dell laptop: eGPU and Windows/Omarchy dual boot](tickets/20-dell-laptop-egpu-dual-boot.md): laptop acquired and dual boot configured; repo onboarding of Omarchy moves to its own effort after the dotfiles migrate from chezmoi to mise.
 
 ## Not yet specified
 
 - Whole-house smart-home rebuild design (automations as code, device inventory keep/drop from the pre-move HA worksheet) — belongs to Bunker Rebuild Phase 4 but the device-side choices here (switches, blinds, sensors, sprinklers, locks, cameras) feed it.
-- Omarchy dual-boot laptop setup as a repo-declared host — own effort once the eGPU is qualified.
+- Omarchy laptop onboarding as a repo-declared host — own effort after the dotfiles migrate fully from chezmoi to mise; dual boot itself is done.
 - Old-house sale timeline: listing date and what "ready to sell" requires beyond the prep list.
 
 ## Out of scope
