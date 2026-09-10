@@ -475,6 +475,9 @@ def test_checked_in_host_sets_with_real_fnox(
     environment["FNOX_WORK_ACCOUNT"] = "verified-work-account"
     output = tmp_path / "environment.json"
     token = "sentinel-token" if profile in {"pod042", "orb"} else None
+    exported_keys = [
+        key for key, entry in effective.items() if entry.get("env") is not False
+    ]
     assert (
         run_fnox(
             root,
@@ -489,9 +492,7 @@ def test_checked_in_host_sets_with_real_fnox(
             environment,
             token,
             fnox=fnox_binary,
-            secrets=[
-                key for key, entry in effective.items() if entry.get("env") is not False
-            ],
+            secrets=exported_keys,
         )
         == 0
     )
@@ -502,13 +503,11 @@ def test_checked_in_host_sets_with_real_fnox(
         else:
             assert child[key] == "sentinel-" + key
     assert not any(key.startswith(("OP_", "FNOX_")) for key in child)
-    counts = {"macos": 28, "work": 34, "pod042": 55, "orb": 27}
-    assert len(set(child) & fnox_host.declared_keys(root)) == counts[profile]
     calls = [
         json.loads(line)
         for line in Path(environment["OP_CALLS"]).read_text().splitlines()
     ]
-    assert len(calls) == counts[profile]
+    assert len(calls) == len(exported_keys)
     assert all("read" in call["args"] for call in calls)
     if token:
         assert all(

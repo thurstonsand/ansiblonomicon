@@ -1,3 +1,5 @@
 import = ["fnox.toml"]
 
 [secrets]
+TAILSCALE_OAUTH_CLIENT_ID = { provider = "agent", value = "op://agent/gdjhp7xtcgclqwlr4b3vd4guo4/amp orb oauth/client id", env = false }
+TAILSCALE_OAUTH_CLIENT_SECRET = { provider = "agent", value = "op://agent/gdjhp7xtcgclqwlr4b3vd4guo4/amp orb oauth/client secret", env = false }
