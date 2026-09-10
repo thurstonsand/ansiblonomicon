@@ -138,12 +138,19 @@ flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 '''
 run = '''
 case "$(hostname -s)" in
-  ML-DFC6YK6VJQ) set -- -i inventory/control/macos.ini playbooks/work.yml ;;
-  Thurstons-MacBook-Pro) set -- -i inventory/control/macos.ini playbooks/macos.yml ;;
+  ML-DFC6YK6VJQ)
+    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS_WORK
+    set -- -i inventory/control/macos.ini playbooks/work.yml
+    ;;
+  Thurstons-MacBook-Pro)
+    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS
+    set -- -i inventory/control/macos.ini playbooks/macos.yml
+    ;;
   pod042) exec python3 ../scripts/pod042_reconcile.py ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
   *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
 esac
-ansible-playbook "$@" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+ANSIBLE_CACHE_PLUGIN=memory exec ../scripts/fnox-host exec --secret "$sudo_secret" -- \
+  ansible-playbook "$@" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
 '''
 
 [tasks."reconcile:laptop"]
@@ -156,11 +163,18 @@ flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 '''
 run = '''
 case "$(hostname -s)" in
-  ML-DFC6YK6VJQ) playbook=work.yml ;;
-  Thurstons-MacBook-Pro) playbook=macos.yml ;;
+  ML-DFC6YK6VJQ)
+    playbook=work.yml
+    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS_WORK
+    ;;
+  Thurstons-MacBook-Pro)
+    playbook=macos.yml
+    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS
+    ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+ANSIBLE_CACHE_PLUGIN=memory exec ../scripts/fnox-host exec --secret "$sudo_secret" -- \
+  ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
 '''
 
 [tasks."reconcile:udmp"]

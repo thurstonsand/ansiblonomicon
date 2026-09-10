@@ -18,7 +18,7 @@ Nested launches carry `ANSIBLONOMICON_EXEC_PROFILE` and `ANSIBLONOMICON_EXEC_KEY
 
 ## Consumers
 
-Normal Ansible and agent launches do not use an exec wrapper. `SUDO_ASKPASS` resolves the Private-vault password only when sudo requests it. Task wrappers explicitly select their own keys; connection-time MCP reads and on-demand Parallel reads remain lazy.
+Laptop reconciliation selects only its host's sudo password before launching Ansible. Its fact cache stays in memory so environment facts cannot persist the scoped password, and repeated `SUDO_ASKPASS` calls reuse the selected value without another provider read. Agent launches remain unwrapped. Other task wrappers explicitly select their own keys; connection-time MCP reads and on-demand Parallel reads remain lazy.
 
 Pod042 first-access Agent-vault item operations use a broker that supplies the shared service-account token only to its `op` subprocess. Enrollment of that identity remains attended. This decision does not establish that the live service account has item-write permission.
 

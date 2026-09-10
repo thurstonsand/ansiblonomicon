@@ -23,7 +23,7 @@ brew "pngpaste"
 brew "prettyping"
 brew "ripgrep"
 brew "rsync"
-brew "cirruslabs/cli/softnet", trusted: true
+brew "openai/tools/softnet", trusted: true
 brew "shellcheck"
 brew "shfmt"
 brew "sqlite-utils"
@@ -74,7 +74,7 @@ brew "rclone"
 brew "restic"
 brew "sshpass"
 brew "spice-gtk"
-brew "cirruslabs/cli/tart", trusted: true
+brew "openai/tools/tart", trusted: true
 
 cask "cloudflare-warp"
 cask "gcloud-cli"

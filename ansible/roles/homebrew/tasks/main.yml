@@ -8,6 +8,8 @@
 - name: Check brew bundle (dry run)
   when: ansible_check_mode
   check_mode: false
+  environment:
+    HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS: "1"
   ansible.builtin.command:
     argv:
       - brew
@@ -22,6 +24,8 @@
 - name: Check outdated packages (dry run)
   when: ansible_check_mode
   check_mode: false
+  environment:
+    HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS: "1"
   ansible.builtin.command:
     argv:
       - brew

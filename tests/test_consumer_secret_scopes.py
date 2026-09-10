@@ -33,18 +33,30 @@ def task_secrets(command: str) -> set[str]:
 def test_current_scoped_tasks_only_request_agent_credentials():
     tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
     secrets = tomllib.loads((ROOT / "fnox.toml").read_text())["secrets"]
-    for task in tasks.values():
+    laptop_tasks = {"reconcile", "reconcile:laptop"}
+    for task_name, task in tasks.items():
         commands = task.get("run", [])
         if isinstance(commands, str):
             commands = [commands]
         for command in commands:
             if "fnox-host" not in command or " exec " not in command:
                 continue
+            if task_name in laptop_tasks:
+                continue
             selected = task_secrets(command)
             assert selected
             assert all(secrets[name]["provider"] == "agent" for name in selected)
-    assert "fnox-host" not in tasks["reconcile"]["run"]
-    assert "fnox-host" not in tasks["reconcile:laptop"]["run"]
+
+
+def test_laptop_reconcile_scopes_one_password_and_keeps_facts_in_memory():
+    tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
+
+    for task_name in ("reconcile", "reconcile:laptop"):
+        command = tasks[task_name]["run"]
+        assert "HOMEBREW_SUDO_ASKPASS_PASS_WORK" in command
+        assert "HOMEBREW_SUDO_ASKPASS_PASS" in command
+        assert '--secret "$sudo_secret"' in command
+        assert "ANSIBLE_CACHE_PLUGIN=memory" in command
 
 
 @pytest.mark.parametrize("stack,provider", [("edge", CLOUDFLARE), ("unifi", UNIFI)])

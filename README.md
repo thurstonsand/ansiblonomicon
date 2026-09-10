@@ -16,7 +16,7 @@ mise laptop
 
 ### Sudo Access
 
-Run `mise laptop` normally, without a credential exec wrapper. Only an actual sudo password request makes `SUDO_ASKPASS` read the Private-vault password from 1Password; that read can require desktop authorization.
+Run `mise laptop` normally. The laptop reconciliation resolves only that host's sudo password before launching Ansible and keeps its fact cache in memory so the scoped value is never persisted. That read can require one desktop authorization; subsequent `SUDO_ASKPASS` calls reuse the scoped value without returning to 1Password.
 
 Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 

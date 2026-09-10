@@ -63,6 +63,7 @@ def test_ansible_does_not_propagate_sudo_password_environment() -> None:
         assert "HOMEBREW_SUDO_ASKPASS_PASS" not in path.read_text(), path
     homebrew = (ROOT / "ansible/roles/homebrew/tasks/main.yml").read_text()
     assert homebrew.count('SUDO_ASKPASS: "{{') == 3
+    assert homebrew.count('HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS: "1"') == 4
 
 
 def test_bootstrap_does_not_preauthenticate_desktop_account() -> None:
