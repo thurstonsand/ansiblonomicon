@@ -15,3 +15,5 @@ The agent-platform design is already accepted; reopen only assumptions that conf
 ## Shared substrate slice (2026-09-09)
 
 The user explicitly pulled the minimum Incus substrate and a blank, fresh Home Assistant OS VM into the Bunker rebuild despite the map's prior smart-home exclusion. [Ticket 49](49-incus-home-assistant-substrate.md) records that bounded implementation. It does not decide or implement pascal, worker profiles, projects, trust grants, secrets, or agent lifecycle. This ticket remains open for that broader agent-platform work.
+
+Broader agent-platform work was explicitly deferred on 2026-09-10. Amp on pod042 is sufficient for the current operating model; revisit pascal and disposable workers only when a concrete limitation justifies them.

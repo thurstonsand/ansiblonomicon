@@ -7,6 +7,7 @@ Include ~/.ssh/config.d/*.conf
 Host pod042-kvm
   HostName 10.10.10.34
   User root
+  HostKeyAlias pod042-kvm
   IdentityFile ~/.ssh/id_ecdsa_glkvm
 
 Host haos
@@ -32,6 +33,32 @@ Host pod042
   IdentityFile ~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub
   IdentitiesOnly yes
   RequestTTY yes
+
+Host pod042-remote
+  HostName pod042-ssh.thurstons.house
+  User thurstonsand
+  ForwardAgent yes
+  HostKeyAlias pod042
+  IdentityFile ~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub
+  IdentitiesOnly yes
+  ProxyCommand cloudflared access ssh --hostname %h
+  RequestTTY yes
+
+Host pod042-ts
+  HostName 100.64.249.18
+  User thurstonsand
+  ForwardAgent yes
+  HostKeyAlias pod042
+  IdentityFile ~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub
+  IdentitiesOnly yes
+  RequestTTY yes
+
+Host pod042-kvm-ts
+  HostName 100.112.38.64
+  User root
+  HostKeyAlias pod042-kvm
+  IdentityFile ~/.ssh/id_ecdsa_glkvm
+  IdentitiesOnly yes
 
 {{- end }}
 

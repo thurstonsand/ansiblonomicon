@@ -56,10 +56,59 @@ def test_op_environment_uses_pod042_service_identity(
     }
 
 
-def test_op_environment_preserves_desktop_authority() -> None:
+def test_op_environment_preserves_desktop_authority(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
     inherited = {"PATH": "/usr/bin", "OP_CONNECT_TOKEN": "desktop-token"}
+    monkeypatch.setattr(pod042_kvm.Path, "home", lambda: tmp_path)
 
     assert pod042_kvm.op_environment("Thurstons-MacBook-Pro", inherited) is inherited
+
+
+def test_op_environment_uses_enrolled_automation_identity(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    identity = tmp_path / ".config/fnox/config.toml"
+    identity.parent.mkdir(parents=True)
+    identity.write_text("identity")
+    monkeypatch.setattr(pod042_kvm.Path, "home", lambda: tmp_path)
+    monkeypatch.setattr(pod042_kvm.os, "getuid", lambda: 1000)
+
+    def read_identity(_path: Path, _owner: int) -> str:
+        return "agent-token"
+
+    monkeypatch.setattr(pod042_kvm, "read_identity", read_identity)
+
+    assert pod042_kvm.op_environment(
+        "orb-123", {"PATH": "/usr/bin", "OP_CONNECT_TOKEN": "stale"}
+    ) == {
+        "PATH": "/usr/bin",
+        "OP_SERVICE_ACCOUNT_TOKEN": "agent-token",
+    }
+
+
+def test_access_headers_require_complete_credentials() -> None:
+    assert pod042_kvm.access_headers({}) == {}
+    assert pod042_kvm.access_headers(
+        {"CF_ACCESS_CLIENT_ID": "id", "CF_ACCESS_CLIENT_SECRET": "secret"}
+    ) == {
+        "CF-Access-Client-Id": "id",
+        "CF-Access-Client-Secret": "secret",
+    }
+    with pytest.raises(pod042_kvm.KvmError, match="provided together"):
+        pod042_kvm.access_headers({"CF_ACCESS_CLIENT_ID": "id"})
+
+
+def test_client_ignores_access_credentials_without_verified_tls(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("CF_ACCESS_CLIENT_ID", "id")
+    monkeypatch.setenv("CF_ACCESS_CLIENT_SECRET", "secret")
+
+    client = pod042_kvm.KvmClient("https://10.10.10.34")
+
+    assert client.access_headers == {}
+    client.http.close()
 
 
 def test_response_result_conforms_success() -> None:
@@ -186,8 +235,8 @@ def test_run_screenshot_writes_returned_frame(
     frame = b"jpeg frame"
 
     class FakeClient:
-        def __init__(self, _: str) -> None:
-            pass
+        def __init__(self, _: str, verify_tls: bool = False) -> None:
+            assert not verify_tls
 
         def __enter__(self) -> FakeClient:
             return self
@@ -211,8 +260,8 @@ def test_run_key_sends_each_chord(
     connection = RecordingConnection()
 
     class FakeClient:
-        def __init__(self, _: str) -> None:
-            pass
+        def __init__(self, _: str, verify_tls: bool = False) -> None:
+            assert not verify_tls
 
         def __enter__(self) -> FakeClient:
             return self
@@ -299,6 +348,26 @@ def test_media_mount_selects_image_before_connecting() -> None:
     client.http.close()
 
 
+def test_wake_sends_mac_to_native_wol_endpoint() -> None:
+    requests: list[httpx.Request] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        requests.append(request)
+        return httpx.Response(200, json={"ok": True, "result": {}})
+
+    client = pod042_kvm.KvmClient("https://kvm")
+    client.http.close()
+    client.http = httpx.Client(
+        base_url="https://kvm", transport=httpx.MockTransport(handler)
+    )
+
+    client.wake("a0:36:bc:28:37:41")
+
+    assert requests[0].url.path == "/api/wol/wake"
+    assert dict(requests[0].url.params) == {"mac": "a0:36:bc:28:37:41"}
+    client.http.close()
+
+
 @pytest.mark.parametrize("enabled", [True, False])
 def test_media_enable_configures_both_usb_storage_functions(enabled: bool) -> None:
     requests: list[httpx.Request] = []
@@ -326,8 +395,8 @@ def test_media_enable_configures_both_usb_storage_functions(enabled: bool) -> No
 
 def test_run_rejects_writable_cdrom(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeClient:
-        def __init__(self, _: str) -> None:
-            pass
+        def __init__(self, _: str, verify_tls: bool = False) -> None:
+            assert not verify_tls
 
         def __enter__(self) -> FakeClient:
             return self

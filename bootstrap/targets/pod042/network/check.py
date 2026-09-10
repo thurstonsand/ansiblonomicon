@@ -10,6 +10,8 @@ INTERFACE = "enp5s0"
 MAC = "a0:36:bc:28:37:41"
 ADDRESS = "10.10.10.42"
 GATEWAY = "10.10.10.1"
+TAILSCALE_ADDRESS = "100.64.249.18"
+TAILSCALE_DNS_NAME = "pod042.tail5f024.ts.net."
 
 
 def output(*command: str) -> str:
@@ -96,6 +98,29 @@ def verify(
     return errors
 
 
+def verify_tailscale(status: dict[str, Any], preferences: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    self = cast(dict[str, Any], status.get("Self", {}))
+    if status.get("BackendState") != "Running" or self.get("Online") is not True:
+        errors.append("Tailscale is not online")
+    if self.get("DNSName") != TAILSCALE_DNS_NAME:
+        errors.append("Tailscale node name is not pod042")
+    addresses = cast(list[object], self.get("TailscaleIPs", []))
+    if TAILSCALE_ADDRESS not in addresses:
+        errors.append(f"Tailscale IPv4 address is not {TAILSCALE_ADDRESS}")
+    if preferences.get("CorpDNS") is not False:
+        errors.append("Tailscale DNS acceptance must remain disabled")
+    if preferences.get("RouteAll") is not False:
+        errors.append("Tailscale route acceptance must remain disabled")
+    if preferences.get("AdvertiseRoutes"):
+        errors.append("Tailscale must not advertise routes")
+    if preferences.get("AdvertiseTags"):
+        errors.append("Tailscale must not advertise tags")
+    if preferences.get("ExitNodeID") or preferences.get("ExitNodeIP"):
+        errors.append("Tailscale must not use an exit node")
+    return errors
+
+
 def main() -> int:
     errors = verify(
         json.loads(output("/usr/sbin/ip", "-json", "link", "show")),
@@ -107,13 +132,19 @@ def main() -> int:
         output("/usr/sbin/ethtool", INTERFACE),
         output("/usr/sbin/ethtool", "-g", INTERFACE),
     )
+    errors.extend(
+        verify_tailscale(
+            json.loads(output("/usr/bin/tailscale", "status", "--json")),
+            json.loads(output("/usr/bin/tailscale", "debug", "prefs")),
+        )
+    )
     if errors:
         for error in errors:
             print(f"FAIL  {error}")
         return 1
     print(
         f"PASS  {INTERFACE} {ADDRESS} via {GATEWAY}, "
-        "2.5 Gb/s, MTU 1500, RX ring 4096, WOL enabled"
+        "2.5 Gb/s, MTU 1500, RX ring 4096, WOL and Tailscale enabled"
     )
     return 0
 

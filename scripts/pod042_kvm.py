@@ -16,7 +16,12 @@ import time
 from typing import Protocol, cast
 from urllib.parse import urlsplit, urlunsplit
 
-from automation_identity import clean_environment
+from automation_identity import (
+    IdentityError,
+    clean_environment,
+    identity_path,
+    read_identity,
+)
 from fnox_host import TOKEN_PATH, ConfigurationError, read_token
 import httpx
 from websockets.sync.client import ClientConnection, connect
@@ -64,15 +69,32 @@ class BinarySender(Protocol):
 
 
 def op_environment(hostname: str, inherited: dict[str, str]) -> dict[str, str]:
-    if hostname.split(".", 1)[0] != "pod042":
-        return inherited
     try:
-        token = read_token(TOKEN_PATH, os.getuid())
-    except (ConfigurationError, OSError) as error:
-        raise KvmError("pod042 service-account identity is unavailable") from error
+        if hostname.split(".", 1)[0] == "pod042":
+            token = read_token(TOKEN_PATH, os.getuid())
+        else:
+            path = identity_path(Path.home())
+            if not (path.exists() or path.is_symlink()):
+                return inherited
+            token = read_identity(path, os.getuid())
+    except (ConfigurationError, IdentityError, OSError) as error:
+        raise KvmError("automation identity is unavailable") from error
     environment = clean_environment(inherited, set())
     environment["OP_SERVICE_ACCOUNT_TOKEN"] = token
     return environment
+
+
+def access_headers(environment: dict[str, str]) -> dict[str, str]:
+    client_id = environment.get("CF_ACCESS_CLIENT_ID")
+    client_secret = environment.get("CF_ACCESS_CLIENT_SECRET")
+    if bool(client_id) != bool(client_secret):
+        raise KvmError("Cloudflare Access credentials must be provided together")
+    if not client_id or not client_secret:
+        return {}
+    return {
+        "CF-Access-Client-Id": client_id,
+        "CF-Access-Client-Secret": client_secret,
+    }
 
 
 def op_field(field: str) -> str:
@@ -117,9 +139,16 @@ def response_result(response: httpx.Response, operation: str) -> dict[str, objec
 
 
 class KvmClient:
-    def __init__(self, base_url: str) -> None:
+    def __init__(self, base_url: str, verify_tls: bool = False) -> None:
         self.base_url = base_url.rstrip("/")
-        self.http = httpx.Client(base_url=self.base_url, verify=False, timeout=30)
+        self.verify_tls = verify_tls
+        self.access_headers = access_headers(dict(os.environ)) if verify_tls else {}
+        self.http = httpx.Client(
+            base_url=self.base_url,
+            headers=self.access_headers,
+            verify=verify_tls,
+            timeout=30,
+        )
         self.token = ""
 
     def __enter__(self) -> KvmClient:
@@ -194,6 +223,12 @@ class KvmClient:
     def reboot(self) -> None:
         response_result(self.http.get("/api/upgrade/reboot"), "KVM reboot")
 
+    def wake(self, mac: str) -> None:
+        response_result(
+            self.http.post("/api/wol/wake", params={"mac": mac}),
+            "Wake-on-LAN",
+        )
+
     def media_status(self) -> dict[str, object]:
         return response_result(self.http.get("/api/msd"), "virtual media status")
 
@@ -257,13 +292,14 @@ class KvmClient:
         context = None
         if scheme == "wss":
             context = ssl.create_default_context()
-            context.check_hostname = False
-            context.verify_mode = ssl.CERT_NONE
+            if not self.verify_tls:
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
         try:
             return connect(
                 url,
                 ssl=context,
-                additional_headers={"token": self.token},
+                additional_headers={"token": self.token, **self.access_headers},
                 open_timeout=10,
             )
         except Exception:
@@ -321,6 +357,9 @@ def default_screenshot_path() -> Path:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default=DEFAULT_URL)
+    parser.add_argument(
+        "--verify-tls", action="store_true", help="Verify the KVM endpoint certificate"
+    )
     commands = parser.add_subparsers(dest="command", required=True)
 
     screenshot = commands.add_parser("screenshot", help="Save the current frame")
@@ -354,13 +393,15 @@ def build_parser() -> argparse.ArgumentParser:
     commands.add_parser(
         "reboot", help="Reboot the KVM appliance, not the controlled host"
     )
+    wake = commands.add_parser("wake", help="Send a Wake-on-LAN packet")
+    wake.add_argument("mac")
     commands.add_parser("status", help="Show appliance and video status")
     return parser
 
 
 def run(argv: Sequence[str]) -> int:
     args = build_parser().parse_args(argv)
-    with KvmClient(args.url) as client:
+    with KvmClient(args.url, verify_tls=args.verify_tls) as client:
         if args.command == "screenshot":
             path = args.path or default_screenshot_path()
             path.write_bytes(client.screenshot())
@@ -398,6 +439,8 @@ def run(argv: Sequence[str]) -> int:
                 client.media_remove(args.image)
         elif args.command == "reboot":
             client.reboot()
+        elif args.command == "wake":
+            client.wake(args.mac)
         elif args.command == "status":
             print(json.dumps(client.status(), indent=2))
     return 0

@@ -110,6 +110,57 @@ def test_live_network_contract_accepts_expected_state() -> None:
     assert network_check.verify(*good_state()) == []
 
 
+def test_tailscale_contract_accepts_direct_route_free_node() -> None:
+    status = {
+        "BackendState": "Running",
+        "Self": {
+            "DNSName": "pod042.tail5f024.ts.net.",
+            "Online": True,
+            "TailscaleIPs": ["100.64.249.18", "fd7a:115c:a1e0::f82f:f913"],
+        },
+    }
+    preferences = {
+        "CorpDNS": False,
+        "RouteAll": False,
+        "AdvertiseRoutes": None,
+        "AdvertiseTags": None,
+        "ExitNodeID": "",
+        "ExitNodeIP": "",
+    }
+
+    assert network_check.verify_tailscale(status, preferences) == []
+
+
+def test_tailscale_contract_reports_authority_drift() -> None:
+    status = {
+        "BackendState": "Stopped",
+        "Self": {
+            "DNSName": "wrong.tail5f024.ts.net.",
+            "Online": False,
+            "TailscaleIPs": ["100.100.100.100"],
+        },
+    }
+    preferences = {
+        "CorpDNS": True,
+        "RouteAll": True,
+        "AdvertiseRoutes": ["0.0.0.0/0"],
+        "AdvertiseTags": ["tag:server"],
+        "ExitNodeID": "node-id",
+        "ExitNodeIP": "100.100.100.101",
+    }
+
+    assert network_check.verify_tailscale(status, preferences) == [
+        "Tailscale is not online",
+        "Tailscale node name is not pod042",
+        "Tailscale IPv4 address is not 100.64.249.18",
+        "Tailscale DNS acceptance must remain disabled",
+        "Tailscale route acceptance must remain disabled",
+        "Tailscale must not advertise routes",
+        "Tailscale must not advertise tags",
+        "Tailscale must not use an exit node",
+    ]
+
+
 def test_live_network_contract_reports_boundary_drift() -> None:
     links, addresses, routes, resolver, _, _, ethernet, rings = good_state()
     links[0]["master"] = "br0"

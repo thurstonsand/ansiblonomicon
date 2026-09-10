@@ -39,3 +39,15 @@ source = "repositories/files/netdata.sources"
 owner = "root"
 group = "root"
 mode = "0644"
+
+[bootstrap.files."/etc/apt/keyrings/tailscale.asc"]
+source = "repositories/files/tailscale.asc"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/apt/sources.list.d/tailscale.sources"]
+source = "repositories/files/tailscale.sources"
+owner = "root"
+group = "root"
+mode = "0644"

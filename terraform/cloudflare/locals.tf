@@ -17,12 +17,19 @@ locals {
     { host = "cli-proxy-api", service = "http://caddy:80" },
   ]
 
-  internal_tunnel_apps = []
+  internal_tunnel_apps = [
+    { host = "pod042-kvm", service = "https://10.10.10.34", no_tls_verify = true },
+  ]
 
-  # SSH endpoints exposed via Cloudflare Tunnel (WARP-only access)
+  # SSH endpoints exposed through Cloudflare Access.
   ssh_tunnel_apps = [
     { host = "haos-ssh", ip = "192.168.1.89", port = 22222 },
     { host = "udmp-ssh", ip = "192.168.1.1", port = 22 },
+  ]
+
+  recovery_ssh_tunnel_apps = [
+    { host = "pod042-ssh", ip = "10.10.10.42", port = 22 },
+    { host = "pod042-kvm-ssh", ip = "10.10.10.34", port = 22 },
   ]
 
   # Public HTTPS hosts that should advertise host-scoped HSTS.

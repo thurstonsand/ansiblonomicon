@@ -115,6 +115,13 @@ def test_incus_capability_closure() -> None:
     )
 
 
+def test_network_capability_includes_package_repositories() -> None:
+    assert pod042_reconcile.capabilities_for("network") == (
+        "repositories",
+        "network",
+    )
+
+
 def test_home_assistant_capability_closure() -> None:
     assert pod042_reconcile.capabilities_for("home-assistant") == (
         "network",

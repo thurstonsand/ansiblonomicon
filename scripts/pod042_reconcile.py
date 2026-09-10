@@ -209,7 +209,7 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
     if capability is None:
         return CAPABILITIES
     if capability == "network":
-        return ("network",)
+        return ("repositories", "network")
     if capability == "operator":
         return ("base", "operator")
     if capability == "agent-harness":

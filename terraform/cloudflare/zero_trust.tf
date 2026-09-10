@@ -107,7 +107,33 @@ resource "cloudflare_zero_trust_access_application" "ssh_access" {
   auto_redirect_to_identity = true
   allowed_idps              = [cloudflare_zero_trust_access_identity_provider.google.id]
   self_hosted_domains       = [for app in local.ssh_tunnel_apps : "${app.host}.${local.zone_name}"]
+  policies                  = [cloudflare_zero_trust_access_policy.admin_access.id]
+}
+
+resource "cloudflare_zero_trust_access_application" "recovery_ssh_access" {
+  account_id                = local.account_id
+  name                      = "Recovery SSH Access"
+  type                      = "self_hosted"
+  session_duration          = "24h"
+  auto_redirect_to_identity = true
+  allowed_idps              = [cloudflare_zero_trust_access_identity_provider.google.id]
+  self_hosted_domains       = [for app in local.recovery_ssh_tunnel_apps : "${app.host}.${local.zone_name}"]
   policies = [
+    cloudflare_zero_trust_access_policy.service_auth.id,
+    cloudflare_zero_trust_access_policy.admin_access.id,
+  ]
+}
+
+resource "cloudflare_zero_trust_access_application" "internal_access" {
+  account_id                = local.account_id
+  name                      = "Internal Access"
+  type                      = "self_hosted"
+  session_duration          = "24h"
+  auto_redirect_to_identity = true
+  allowed_idps              = [cloudflare_zero_trust_access_identity_provider.google.id]
+  self_hosted_domains       = [for app in local.internal_tunnel_apps : "${app.host}.${local.zone_name}"]
+  policies = [
+    cloudflare_zero_trust_access_policy.service_auth.id,
     cloudflare_zero_trust_access_policy.admin_access.id,
   ]
 }

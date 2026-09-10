@@ -37,11 +37,15 @@ resource "cloudflare_tunnel_config" "home" {
       content {
         hostname = "${ingress_rule.value.host}.${local.zone_name}"
         service  = ingress_rule.value.service
+
+        origin_request {
+          no_tls_verify = ingress_rule.value.no_tls_verify
+        }
       }
     }
 
     dynamic "ingress_rule" {
-      for_each = local.ssh_tunnel_apps
+      for_each = concat(local.ssh_tunnel_apps, local.recovery_ssh_tunnel_apps)
       content {
         hostname = "${ingress_rule.value.host}.${local.zone_name}"
         service  = "ssh://${ingress_rule.value.ip}:${ingress_rule.value.port}"
@@ -66,9 +70,23 @@ resource "cloudflare_record" "tunnel_app" {
   ttl     = 1
 }
 
+resource "cloudflare_record" "internal_tunnel_app" {
+  for_each = { for app in local.internal_tunnel_apps : app.host => app }
+
+  zone_id = local.zone_id
+  name    = each.key
+  type    = "CNAME"
+  content = local.tunnel_cname_target
+  proxied = true
+  ttl     = 1
+}
+
 # DNS records for SSH tunnel apps
 resource "cloudflare_record" "tunnel_ssh_app" {
-  for_each = { for app in local.ssh_tunnel_apps : app.host => app }
+  for_each = {
+    for app in concat(local.ssh_tunnel_apps, local.recovery_ssh_tunnel_apps) :
+    app.host => app
+  }
 
   zone_id = local.zone_id
   name    = each.key

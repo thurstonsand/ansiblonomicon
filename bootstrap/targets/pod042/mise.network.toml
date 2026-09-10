@@ -1,7 +1,14 @@
+[bootstrap.hooks.pre-packages]
+run = [
+  "env MISE_ENV=repositories mise bootstrap files apply --yes",
+  "mise bootstrap packages apply --update --yes",
+]
+
 [bootstrap.packages]
 "apt:ethtool" = "latest"
 "apt:ifupdown" = "latest"
 "apt:iproute2" = "latest"
+"apt:tailscale" = "latest"
 
 [bootstrap.files."/etc/network/interfaces"]
 content = '''
@@ -61,9 +68,18 @@ state = "absent"
 [bootstrap.files."/etc/systemd/network/24-br0.4.network"]
 state = "absent"
 
+[bootstrap.services.tailscaled]
+state = "running"
+enabled = true
+
 [bootstrap.hooks.final]
 run = [
   "sudo -n /usr/sbin/sysctl --system >/dev/null",
+  '''
+if [ "$(sudo -n /usr/bin/tailscale status --json | python3 -c 'import json, sys; print(json.load(sys.stdin)["BackendState"])')" = "Running" ]; then
+  sudo -n /usr/bin/tailscale set --hostname=pod042 --accept-dns=false --accept-routes=false --advertise-routes= --advertise-exit-node=false
+fi
+''',
   "sudo -n /usr/bin/python3 network/check.py",
 ]
 
