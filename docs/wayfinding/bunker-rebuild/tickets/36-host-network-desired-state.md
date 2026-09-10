@@ -28,3 +28,7 @@ Home Assistant is deferred to the out-of-scope smart-home rebuild. Its web UI co
 Power recovery is designed but its disruptive proof waits for a laptop-controlled handoff. Enable ASUS `Power On By PCI-E`, set `Restore AC Power Loss` to `Power On`, persist magic-packet WOL, and prove shutdown-to-WOL through `pod042-kvm`. Without GL-ATXPC or a controlled PDU, KVM cannot press power/reset or recover a hard freeze; that manual-recovery gap is accepted for now.
 
 Acceptance requires a clean refreshed OpenTofu plan after apply; fixed address and exact local DNS from permitted clients; 2.5 Gb/s, MTU 1500, default route and resolver state after cold boot; YoRHa administration, Lunar Tear web/Plex access, blocked unapproved initiation, and no unexpected host listeners; private bridge egress without LAN identity; local Caddy TLS and tunnel-to-Caddy HTTP reaching one representative application; Plex's direct path; and laptop-controlled lease, reboot, WOL, and rollback checks. [Implement the pod042 host network](44-implement-host-network.md) owns execution.
+
+## Acceptance amendment
+
+On 2026-09-10 the user permanently removed further link-loss, cold-boot, firmware-power, and powered-off WOL drills from this home-lab acceptance boundary. Persistent interface WOL and delivery through the KVM's native WOL endpoint are proven. The ASUS power-recovery settings were not applied and are no longer a requirement; real failures will drive any later firmware change.

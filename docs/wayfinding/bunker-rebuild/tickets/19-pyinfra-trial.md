@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 type: research
 blocked-by: []
 ---
@@ -16,4 +16,4 @@ Output: `research/pyinfra-trial.md` — working prototype, measured comparison, 
 
 ## Resolution
 
-Trial executed 2026-08-25 ([pyinfra trial](../research/pyinfra-trial.md), prototype in `prototypes/pyinfra/`). pyinfra reproduced the segment to a byte-identical fingerprint (21 files, 6 units, 5 packages, 4 checks) and passed the same hammer battery. Loop: 5.3s full / 0.87s no-op / 0.87s dry vs ansible's 18.9 / 11.5 / 9.8. Abstraction: `@deploy(data_defaults=...)` is a real role analog — composition is a function call, the meta-dependency collapses to importing the dependee's defaults; handlers become `_if=did_change` lambdas; **tags have no analog** (partial runs = one entrypoint per part). Custom fact + two custom ops (healthchecks_check, zpool_property) bound authoring cost as low. Unresolved migration surfaces: docker_stack change detection over non-idempotent compose, and no osx_defaults/mas equivalent for the laptops. Side find: the ansible check.yml drift-underreporting bug (unique-POST 200), fixed in-role. Adopt-vs-stay decision remains with the user; recommended shape if adopted: pyinfra for Phase 4 greenfield (workstream F), ansible retained where its module depth pays.
+Trial executed 2026-08-25 ([pyinfra trial](../research/pyinfra-trial.md), prototype in `prototypes/pyinfra/`). pyinfra reproduced the segment to a byte-identical fingerprint (21 files, 6 units, 5 packages, 4 checks) and passed the same hammer battery. Loop: 5.3s full / 0.87s no-op / 0.87s dry vs ansible's 18.9 / 11.5 / 9.8. Abstraction: `@deploy(data_defaults=...)` is a real role analog — composition is a function call, the meta-dependency collapses to importing the dependee's defaults; handlers become `_if=did_change` lambdas; **tags have no analog** (partial runs = one entrypoint per part). Custom fact + two custom ops (healthchecks_check, zpool_property) bound authoring cost as low. Unresolved migration surfaces: docker_stack change detection over non-idempotent compose, and no osx_defaults/mas equivalent for the laptops. Side find: the ansible check.yml drift-underreporting bug (unique-POST 200), fixed in-role. The user subsequently chose [native mise](31-native-mise-operating-contract.md) to own pod042, so pyinfra is not adopted.

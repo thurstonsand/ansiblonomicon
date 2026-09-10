@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 type: task
 claimed: 2b-session
 blocked-by: []
@@ -24,4 +24,7 @@ Resolution records what was done, dates, and any held-back escrow outcome.
 - 2026-08-19: Confirmed the node/account distinction. Account side: two nightly restic tasks (TrueNAS Cloud Backup) push `capacity/backup/timemachine` and all of `performance` to `sj://windows-backup` — untouched by node exit; account stays until [Cloud backup replacement](04-backup-replacement.md) lands.
 - 2026-08-19: Node facts: joined 2024-01-02, earns ~$5–10/mo, outstanding held ≈ $11.49 (units verified against paystubs, 1e-6 USD scale). GE mechanics verified: 30 days online, score ≥ 0.8, irreversible, no piece transfer.
 - 2026-08-19: **Graceful exit initiated on all four satellites** (`storagenode exit-satellite` in `ix-storj-node-storj-1`). Only us1 holds data (5.01 TB). Expected completion ~2026-09-18; held pays out next cycle after success. Constraint accepted: node container + `storj.thurstons.house` + port 28967 forward must come back early at the new house; online-score budget tolerates ~6 days total downtime.
-- Remaining: monitor `exit-status`, capture completion receipts, retire the `storj_node` catalog app declaration, reclaim `capacity/storj-node` (~5.2T).
+
+## Resolution
+
+The graceful exit was deliberately abandoned during the 2026-09-09 storage cleanup. The rebuilt service portfolio had already retired the Storj node, and the user chose to delete every quarantined legacy dataset rather than restore the node solely to complete its remaining exit window. The old node data was removed with the legacy storage trees, so the remaining us1 exit cannot complete and the approximately $11.49 recorded held balance is treated as forfeited. Ticket 43 retired the Storj rclone and Uplink credentials and consumers. The Storj account's closure was not verified; no repository consumer remains.

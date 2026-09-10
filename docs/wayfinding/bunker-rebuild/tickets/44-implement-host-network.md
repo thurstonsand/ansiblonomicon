@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 type: implementation
 blocked-by: [36]
 claimed: T-01a0790a-aa41-7258-b0fd-c559a15e473a
@@ -23,8 +23,8 @@ The current Amp thread runs on pod042 at its DHCP address. Code, tests, plans, a
 - [x] OpenTofu owns pod042's MAC, fixed address, local name, existing Bunker access port, and the accepted Lunar Tear destination-and-port policy; a refreshed plan is reviewed before apply and clean afterward.
 - [x] Repository checks pass without secret leakage or an unintended network mutation.
 - [x] From the laptop, change the lease to `10.10.10.42` with a tested rollback path and prove local/remote reconciliation reconnects.
-- [ ] Prove permitted and denied inter-zone flows, link loss/recovery, a cold boot, firmware power recovery, and shutdown-to-WOL through `pod042-kvm`.
-- [ ] Later representative Docker and Incus acceptance proves private-bridge egress and the local-Caddy/tunnel-Caddy routes without adding a host bridge.
+- [x] Prove permitted and denied inter-zone flows.
+- [x] Representative Docker and Incus acceptance proves private-bridge egress and the local-Caddy/tunnel-Caddy routes without adding a host bridge.
 
 ## Implementation state
 
@@ -32,8 +32,12 @@ Laptop-controlled network cutover completed 2026-09-07. Native mise installed `e
 
 OpenTofu applied pod042's client reservation/local name and the Lunar Tear TCP policy as exactly two creates, then returned a clean plan. Controller attachment data corrected the original port assumption: the Pro Max 24 PoE's 2.5 GbE block is ports 17–24, and pod042 is physically connected to port 17 rather than port 24. OpenTofu now assigns the `pod042` name and Bunker access profile to port 17. Because the provider retained the removed port-24 override as unmanaged controller state, one authenticated controller PUT removed only that stale entry. Readback shows port 17 up at 2.5 Gb/s with MAC `a0:36:bc:28:37:41`, address `.42`, and the Bunker profile; port 24 is unassigned/default and down; the refreshed plan remains clean.
 
-Policy acceptance used temporary listeners on ports 80, 443, and 32400 and removed them afterward. YoRHa reached SSH and all three service ports. The laptop then joined Lunar Tear at `10.10.30.182`; local DNS returned `.42`, all three declared service ports connected, and SSH port 22 timed out. The laptop returned to YoRHa at `10.10.20.110`; readback showed no temporary units and no new public listener. `pod042-kvm` independently reaches `.42` and provides `ether-wake`, but authenticated KVM API/video access timed out awaiting 1Password authorization. Link loss/recovery, reboot/cold boot, firmware settings, and shutdown-to-WOL therefore remain open and unattempted.
+Policy acceptance used temporary listeners on ports 80, 443, and 32400 and removed them afterward. YoRHa reached SSH and all three service ports. The laptop then joined Lunar Tear at `10.10.30.182`; local DNS returned `.42`, all three declared service ports connected, and SSH port 22 timed out. The laptop returned to YoRHa at `10.10.20.110`; readback showed no temporary units and no new public listener. `pod042-kvm` independently reaches `.42` and provides `ether-wake`. Later orb tests authenticated to its API over Tailscale, captured the console, transferred temporary virtual media, and delivered a native WOL request. Link loss, cold boot, firmware power recovery, and powered-off WOL remain deliberately unattempted.
 
 Docker acceptance now proves bridge egress through the host, VPN egress through Gluetun, and local Caddy routing into shared private service aliases without adding a host bridge. The 2026-09-09 scope override adds a dedicated pod042 switch profile: Bunker remains native and Scanners VLAN 40 is the sole allowed tag on port 17. Incus declares a managed macvlan on that tag, intentionally isolating host and guest; a temporary Scanners-side macvlan reached Home Assistant's blank onboarding API at `10.10.40.42` and was removed afterward.
 
-Focused Python lint, formatting, type checking, 79 tests, OpenTofu formatting and validation, and repository whitespace checks pass. The full repository check reaches the unrelated existing Amp/Pi TypeScript environment failures: Amp resolves the placeholder `tsc` package because TypeScript is unavailable, while Pi's installed TUI package lacks the `TuiMouseEvent` exports expected by `codexctl`.
+Focused Python lint, formatting, type checking, 79 tests, OpenTofu formatting and validation, and repository whitespace checks pass. The Amp/Pi TypeScript environment failures found by the original full check were subsequently repaired, and the full repository check passes.
+
+## Resolution
+
+Pod042's physical network, reserved identity, UniFi switch profile, inter-zone policy, Docker and Incus egress, and local and tunneled ingress are live and declaratively converged. The KVM remains independently reachable over LAN and Tailscale; Cloudflare is a convenience path while pod042 is healthy. Its API successfully accepted a WOL request over Tailscale while pod042 was running. The [accepted network contract](36-host-network-desired-state.md#acceptance-amendment) records the permanently omitted disruption drills.
