@@ -27,6 +27,8 @@ import httpx
 from websockets.sync.client import ClientConnection, connect
 
 DEFAULT_URL = "https://10.10.10.34"
+# Must match internal_tunnel_apps in terraform/cloudflare/locals.tf.
+CLOUDFLARE_HOST = "pod042-kvm.thurstons.house"
 OP_ITEM = "egtxppxa5funfi2o4biznocznm"
 OP_VAULT = "agent"
 SCREENSHOT_ATTEMPTS = 60
@@ -97,6 +99,23 @@ def access_headers(environment: dict[str, str]) -> dict[str, str]:
     }
 
 
+def endpoint_headers(
+    base_url: str, verify_tls: bool, environment: dict[str, str]
+) -> dict[str, str]:
+    endpoint = urlsplit(base_url)
+    if endpoint.scheme != "https":
+        raise KvmError("KVM access requires HTTPS")
+    if endpoint.hostname == CLOUDFLARE_HOST:
+        if not verify_tls:
+            raise KvmError("Cloudflare access requires verified HTTPS")
+        return access_headers(environment)
+    if verify_tls:
+        raise KvmError(
+            "direct KVM access requires --insecure for its self-signed certificate"
+        )
+    return {}
+
+
 def op_field(field: str) -> str:
     result = subprocess.run(
         [
@@ -139,10 +158,15 @@ def response_result(response: httpx.Response, operation: str) -> dict[str, objec
 
 
 class KvmClient:
-    def __init__(self, base_url: str, verify_tls: bool = False) -> None:
+    def __init__(
+        self,
+        base_url: str,
+        verify_tls: bool = True,
+        headers: dict[str, str] | None = None,
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.verify_tls = verify_tls
-        self.access_headers = access_headers(dict(os.environ)) if verify_tls else {}
+        self.access_headers = headers or {}
         self.http = httpx.Client(
             base_url=self.base_url,
             headers=self.access_headers,
@@ -358,7 +382,10 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--url", default=DEFAULT_URL)
     parser.add_argument(
-        "--verify-tls", action="store_true", help="Verify the KVM endpoint certificate"
+        "--insecure",
+        action="store_false",
+        dest="verify_tls",
+        help="Disable certificate verification for the self-signed appliance endpoint",
     )
     commands = parser.add_subparsers(dest="command", required=True)
 
@@ -401,7 +428,8 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run(argv: Sequence[str]) -> int:
     args = build_parser().parse_args(argv)
-    with KvmClient(args.url, verify_tls=args.verify_tls) as client:
+    headers = endpoint_headers(args.url, args.verify_tls, dict(os.environ))
+    with KvmClient(args.url, verify_tls=args.verify_tls, headers=headers) as client:
         if args.command == "screenshot":
             path = args.path or default_screenshot_path()
             path.write_bytes(client.screenshot())

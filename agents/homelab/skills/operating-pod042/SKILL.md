@@ -21,7 +21,7 @@ Capabilities are registered in `scripts/pod042_reconcile.py` and `bootstrap/mise
 
 The network capability installs Tailscale but cannot enroll a new machine unattended. Its first reconcile intentionally fails the final network check until an operator runs `sudo tailscale up --hostname=pod042 --accept-dns=false --accept-routes=false`, authorizes the printed URL, and reruns reconciliation. The declaration then enforces the route-free, DNS-free node posture. A fresh installation receives a new stable Tailscale address; update the network check and shared SSH template together.
 
-When operating the KVM through `https://pod042-kvm.thurstons.house`, pass `--verify-tls`; the client loads Cloudflare Access credentials only for verified connections. Tailscale is the primary recovery path because it terminates on the independently powered KVM. Cloudflare is a convenience path whose connector stops with pod042.
+KVM API certificate verification is enabled by default. The appliance presents a self-signed certificate on its LAN and Tailscale addresses, so those paths require the explicit `--insecure` exception. For the convenience path, pass `--url https://pod042-kvm.thurstons.house` without that exception; the client requires verified HTTPS before loading Cloudflare Access credentials. Tailscale is the primary recovery path because it terminates on the independently powered KVM. Cloudflare's connector stops with pod042.
 
 ## Containers
 

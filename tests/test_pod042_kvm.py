@@ -99,16 +99,41 @@ def test_access_headers_require_complete_credentials() -> None:
         pod042_kvm.access_headers({"CF_ACCESS_CLIENT_ID": "id"})
 
 
-def test_client_ignores_access_credentials_without_verified_tls(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setenv("CF_ACCESS_CLIENT_ID", "id")
-    monkeypatch.setenv("CF_ACCESS_CLIENT_SECRET", "secret")
+def test_cloudflare_endpoint_requires_verified_https() -> None:
+    environment = {
+        "CF_ACCESS_CLIENT_ID": "id",
+        "CF_ACCESS_CLIENT_SECRET": "secret",
+    }
 
-    client = pod042_kvm.KvmClient("https://10.10.10.34")
+    assert pod042_kvm.endpoint_headers(
+        "https://pod042-kvm.thurstons.house", True, environment
+    ) == {
+        "CF-Access-Client-Id": "id",
+        "CF-Access-Client-Secret": "secret",
+    }
+    with pytest.raises(pod042_kvm.KvmError, match="requires HTTPS"):
+        pod042_kvm.endpoint_headers(
+            "http://pod042-kvm.thurstons.house", True, environment
+        )
+    with pytest.raises(pod042_kvm.KvmError, match="requires verified HTTPS"):
+        pod042_kvm.endpoint_headers(
+            "https://pod042-kvm.thurstons.house", False, environment
+        )
 
-    assert client.access_headers == {}
-    client.http.close()
+
+def test_direct_endpoint_requires_explicit_insecure_mode() -> None:
+    with pytest.raises(pod042_kvm.KvmError, match="requires --insecure"):
+        pod042_kvm.endpoint_headers("https://10.10.10.34", True, {})
+    assert pod042_kvm.endpoint_headers("https://10.10.10.34", False, {}) == {}
+    with pytest.raises(pod042_kvm.KvmError, match="requires HTTPS"):
+        pod042_kvm.endpoint_headers("http://10.10.10.34", False, {})
+
+
+def test_tls_verification_is_default_and_insecure_is_explicit() -> None:
+    parser = pod042_kvm.build_parser()
+
+    assert parser.parse_args(["status"]).verify_tls is True
+    assert parser.parse_args(["--insecure", "status"]).verify_tls is False
 
 
 def test_response_result_conforms_success() -> None:
@@ -235,8 +260,14 @@ def test_run_screenshot_writes_returned_frame(
     frame = b"jpeg frame"
 
     class FakeClient:
-        def __init__(self, _: str, verify_tls: bool = False) -> None:
+        def __init__(
+            self,
+            _: str,
+            verify_tls: bool = True,
+            headers: dict[str, str] | None = None,
+        ) -> None:
             assert not verify_tls
+            assert headers == {}
 
         def __enter__(self) -> FakeClient:
             return self
@@ -250,7 +281,7 @@ def test_run_screenshot_writes_returned_frame(
     monkeypatch.setattr(pod042_kvm, "KvmClient", FakeClient)
     path = tmp_path / "frame.jpg"
 
-    assert pod042_kvm.run(["screenshot", str(path)]) == 0
+    assert pod042_kvm.run(["--insecure", "screenshot", str(path)]) == 0
     assert path.read_bytes() == frame
 
 
@@ -260,8 +291,14 @@ def test_run_key_sends_each_chord(
     connection = RecordingConnection()
 
     class FakeClient:
-        def __init__(self, _: str, verify_tls: bool = False) -> None:
+        def __init__(
+            self,
+            _: str,
+            verify_tls: bool = True,
+            headers: dict[str, str] | None = None,
+        ) -> None:
             assert not verify_tls
+            assert headers == {}
 
         def __enter__(self) -> FakeClient:
             return self
@@ -275,7 +312,7 @@ def test_run_key_sends_each_chord(
 
     monkeypatch.setattr(pod042_kvm, "KvmClient", FakeClient)
 
-    assert pod042_kvm.run(["key", "ctrl+c", "enter", "--delay", "0"]) == 0
+    assert pod042_kvm.run(["--insecure", "key", "ctrl+c", "enter", "--delay", "0"]) == 0
     assert connection.messages == [
         b"\x01\x01ControlLeft",
         b"\x01\x01KeyC",
@@ -395,8 +432,14 @@ def test_media_enable_configures_both_usb_storage_functions(enabled: bool) -> No
 
 def test_run_rejects_writable_cdrom(monkeypatch: pytest.MonkeyPatch) -> None:
     class FakeClient:
-        def __init__(self, _: str, verify_tls: bool = False) -> None:
+        def __init__(
+            self,
+            _: str,
+            verify_tls: bool = True,
+            headers: dict[str, str] | None = None,
+        ) -> None:
             assert not verify_tls
+            assert headers == {}
 
         def __enter__(self) -> FakeClient:
             return self
@@ -407,4 +450,4 @@ def test_run_rejects_writable_cdrom(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(pod042_kvm, "KvmClient", FakeClient)
 
     with pytest.raises(pod042_kvm.KvmError, match="requires --disk"):
-        pod042_kvm.run(["media", "mount", "test.iso", "--writable"])
+        pod042_kvm.run(["--insecure", "media", "mount", "test.iso", "--writable"])
