@@ -1,0 +1,159 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+usage: with-pod042-access ssh -- command [args...]
+       with-pod042-access lan -- command [args...]
+       with-pod042-access -- command [args...]
+
+The ssh form runs a command on pod042. The generic form runs a local command with
+TAILSCALE_BIN, TAILSCALE_SOCKET, POD042_TS_IP, and POD042_KVM_TS_IP available.
+The lan form additionally accepts the KVM's emergency subnet routes and supplies
+ALL_PROXY, HTTP_PROXY, and HTTPS_PROXY through its private SOCKS5 proxy. Use IP
+addresses and proxy-aware clients; OpenSSH requires an explicit ProxyCommand.
+
+examples:
+  with-pod042-access ssh -- hostname
+  with-pod042-access lan -- curl -k https://10.10.40.1
+  with-pod042-access -- sh -c '"$TAILSCALE_BIN" --socket="$TAILSCALE_SOCKET" ping --until-direct=false --c=1 "$POD042_TS_IP"'
+EOF
+}
+
+if [[ ${1:-} == --help ]]; then
+  usage
+  exit 0
+fi
+
+mode=local
+if [[ ${1:-} == ssh || ${1:-} == lan ]]; then
+  mode="$1"
+  shift
+fi
+if [[ ${1:-} != -- || $# -lt 2 ]]; then
+  usage >&2
+  exit 64
+fi
+shift
+
+repo_root="$(git rev-parse --show-toplevel)"
+fnox_host="$repo_root/scripts/fnox-host"
+[[ -x $fnox_host ]] || { echo "with-pod042-access: $fnox_host is not executable" >&2; exit 1; }
+command -v fnox >/dev/null || { echo "with-pod042-access: fnox is required" >&2; exit 1; }
+
+runtime="$(mktemp -d "${TMPDIR:-/tmp}/amp-pod042-access.XXXXXX")"
+chmod 700 "$runtime"
+socket="$runtime/tailscaled.sock"
+daemon_pid=""
+tailscale_bin=""
+tailscaled_bin=""
+
+cleanup() {
+  local status=$?
+  trap - EXIT INT TERM
+  if [[ -n $tailscale_bin && -S $socket ]]; then
+    HOME="$runtime/home" XDG_DATA_HOME="$runtime/data" \
+      "$tailscale_bin" --socket="$socket" logout >/dev/null 2>&1 || true
+  fi
+  if [[ -n $daemon_pid ]] && kill -0 "$daemon_pid" 2>/dev/null; then
+    kill "$daemon_pid"
+    wait "$daemon_pid" 2>/dev/null || true
+  fi
+  rm -rf "$runtime"
+  exit "$status"
+}
+trap cleanup EXIT INT TERM
+
+socks_port="$(python3 - <<'PY'
+import socket
+
+with socket.socket() as listener:
+    listener.bind(("127.0.0.1", 0))
+    print(listener.getsockname()[1])
+PY
+)"
+socks_proxy="socks5h://127.0.0.1:$socks_port"
+
+if command -v tailscale >/dev/null && command -v tailscaled >/dev/null; then
+  tailscale_bin="$(command -v tailscale)"
+  tailscaled_bin="$(command -v tailscaled)"
+else
+  case "$(uname -m)" in
+    x86_64) architecture=amd64 ;;
+    aarch64 | arm64) architecture=arm64 ;;
+    *) echo "with-pod042-access: unsupported architecture $(uname -m)" >&2; exit 1 ;;
+  esac
+
+  base_url="https://pkgs.tailscale.com/stable"
+  archive="$(curl -fsS "$base_url/?mode=json" |
+    python3 -c 'import json, sys; print(json.load(sys.stdin)["Tarballs"][sys.argv[1]])' "$architecture")"
+  curl -fsS "$base_url/$archive" -o "$runtime/$archive"
+  curl -fsS "$base_url/$archive.sha256" -o "$runtime/$archive.sha256"
+  expected_checksum="$(cat "$runtime/$archive.sha256")"
+  actual_checksum="$(sha256sum "$runtime/$archive" | cut -d ' ' -f 1)"
+  [[ $actual_checksum == "$expected_checksum" ]] || { echo "with-pod042-access: checksum mismatch" >&2; exit 1; }
+  tar -xzf "$runtime/$archive" -C "$runtime"
+  tailscale_bin="$runtime/${archive%.tgz}/tailscale"
+  tailscaled_bin="$runtime/${archive%.tgz}/tailscaled"
+  [[ -x $tailscale_bin && -x $tailscaled_bin ]] || { echo "with-pod042-access: downloaded archive lacks Tailscale binaries" >&2; exit 1; }
+fi
+
+mkdir -p "$runtime/home" "$runtime/data"
+HOME="$runtime/home" XDG_DATA_HOME="$runtime/data" TS_ASSUME_NETWORK_UP_FOR_TEST=1 \
+  "$tailscaled_bin" \
+  --tun=userspace-networking \
+  --state=mem: \
+  --socket="$socket" \
+  --socks5-server="127.0.0.1:$socks_port" \
+  >"$runtime/tailscaled.log" 2>&1 &
+daemon_pid=$!
+
+for _ in {1..100}; do
+  [[ -S $socket ]] && break
+  kill -0 "$daemon_pid" 2>/dev/null || { cat "$runtime/tailscaled.log" >&2; exit 1; }
+  sleep 0.1
+done
+[[ -S $socket ]] || { echo "with-pod042-access: tailscaled socket did not appear" >&2; exit 1; }
+
+auth_key="$runtime/oauth-authkey"
+install -m 600 /dev/null "$auth_key"
+"$fnox_host" --orb get TAILSCALE_OAUTH_CLIENT_SECRET | tr -d '\r\n' >"$auth_key"
+printf '%s' '?ephemeral=true&preauthorized=true' >>"$auth_key"
+
+hostname="amp-orb-$(date -u +%Y%m%d%H%M%S)-$$"
+accept_routes=false
+if [[ $mode == lan ]]; then
+  accept_routes=true
+fi
+HOME="$runtime/home" XDG_DATA_HOME="$runtime/data" \
+  "$tailscale_bin" --socket="$socket" up \
+  --auth-key="file:$auth_key" \
+  --hostname="$hostname" \
+  --advertise-tags=tag:amp-orb \
+  --accept-dns=false \
+  --accept-routes="$accept_routes" \
+  --advertise-exit-node=false \
+  --advertise-routes= \
+  --exit-node= \
+  --netfilter-mode=off \
+  --report-posture=false \
+  --ssh=false \
+  --timeout=30s
+rm -f "$auth_key"
+
+export TAILSCALE_BIN="$tailscale_bin"
+export TAILSCALE_SOCKET="$socket"
+export POD042_TS_IP=100.64.249.18
+export POD042_KVM_TS_IP=100.112.38.64
+
+if [[ $mode == ssh ]]; then
+  HOME="$runtime/home" XDG_DATA_HOME="$runtime/data" \
+    "$tailscale_bin" --socket="$socket" ssh thurstonsand@"$POD042_TS_IP" "$@"
+elif [[ $mode == lan ]]; then
+  ALL_PROXY="$socks_proxy" HTTP_PROXY="$socks_proxy" HTTPS_PROXY="$socks_proxy" \
+    all_proxy="$socks_proxy" http_proxy="$socks_proxy" https_proxy="$socks_proxy" \
+    NO_PROXY= no_proxy= \
+    "$@"
+else
+  "$@"
+fi

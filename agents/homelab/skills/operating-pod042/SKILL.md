@@ -19,7 +19,11 @@ Treat this repository as pod042's desired state. Diagnose live state freely; mak
 
 Capabilities are registered in `scripts/pod042_reconcile.py` and `bootstrap/mise.toml`. Keep resource ownership disjoint. Read the capability's README and nearby ticket before changing storage, network, backup, or identity.
 
-The network capability installs Tailscale but cannot enroll a new machine unattended. Its first reconcile intentionally fails the final network check until an operator runs `sudo tailscale up --hostname=pod042 --accept-dns=false --accept-routes=false`, authorizes the printed URL, and reruns reconciliation. The declaration then enforces the route-free, DNS-free node posture. A fresh installation receives a new stable Tailscale address; update the network check and shared SSH template together.
+The network capability installs Tailscale but cannot enroll a new machine unattended. Its first reconcile intentionally fails the final network check until an operator runs `sudo tailscale up --hostname=pod042 --accept-dns=false --accept-routes=false --advertise-tags=tag:pod042 --ssh=true`, authorizes the printed URL, and reruns reconciliation. The declaration then enforces the direct, tagged Tailscale SSH posture without DNS, route acceptance, advertised routes, or an exit node. A fresh installation receives a new stable Tailscale address; update the network check and shared SSH template together.
+
+### Orb access
+
+In an Amp orb, run `scripts/with-pod042-access ssh -- <command>` to execute on pod042. Use `scripts/with-pod042-access lan -- <command>` for access to Bunker, Lunar Tear, Scanners, or The Village through the KVM's subnet routes. The generic form exposes the temporary Tailscale client without accepting those routes.
 
 KVM API certificate verification is enabled by default. The appliance presents a self-signed certificate on its LAN and Tailscale addresses, so those paths require the explicit `--insecure` exception. For the convenience path, pass `--url https://pod042-kvm.thurstons.house` without that exception; the client requires verified HTTPS before loading Cloudflare Access credentials. Tailscale is the primary recovery path because it terminates on the independently powered KVM. Cloudflare's connector stops with pod042.
 

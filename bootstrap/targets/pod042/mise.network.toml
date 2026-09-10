@@ -77,7 +77,8 @@ run = [
   "sudo -n /usr/sbin/sysctl --system >/dev/null",
   '''
 if [ "$(sudo -n /usr/bin/tailscale status --json | python3 -c 'import json, sys; print(json.load(sys.stdin)["BackendState"])')" = "Running" ]; then
-  sudo -n /usr/bin/tailscale set --hostname=pod042 --accept-dns=false --accept-routes=false --advertise-routes= --advertise-exit-node=false
+  sudo -n /usr/bin/tailscale up --reset --hostname=pod042 --accept-dns=false --accept-routes=false --advertise-tags=tag:pod042 --advertise-routes= --advertise-exit-node=false --exit-node= --exit-node-allow-lan-access=false --report-posture=false --ssh=true
+  sudo -n /usr/bin/tailscale wait --timeout=15s
 fi
 ''',
   "sudo -n /usr/bin/python3 network/check.py",

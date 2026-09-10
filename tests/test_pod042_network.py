@@ -123,9 +123,10 @@ def test_tailscale_contract_accepts_direct_route_free_node() -> None:
         "CorpDNS": False,
         "RouteAll": False,
         "AdvertiseRoutes": None,
-        "AdvertiseTags": None,
+        "AdvertiseTags": ["tag:pod042"],
         "ExitNodeID": "",
         "ExitNodeIP": "",
+        "RunSSH": True,
     }
 
     assert network_check.verify_tailscale(status, preferences) == []
@@ -147,6 +148,7 @@ def test_tailscale_contract_reports_authority_drift() -> None:
         "AdvertiseTags": ["tag:server"],
         "ExitNodeID": "node-id",
         "ExitNodeIP": "100.100.100.101",
+        "RunSSH": False,
     }
 
     assert network_check.verify_tailscale(status, preferences) == [
@@ -156,8 +158,9 @@ def test_tailscale_contract_reports_authority_drift() -> None:
         "Tailscale DNS acceptance must remain disabled",
         "Tailscale route acceptance must remain disabled",
         "Tailscale must not advertise routes",
-        "Tailscale must not advertise tags",
+        "Tailscale must advertise only tag:pod042",
         "Tailscale must not use an exit node",
+        "Tailscale SSH must be enabled",
     ]
 
 

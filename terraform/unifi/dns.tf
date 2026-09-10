@@ -28,3 +28,11 @@ resource "unifi_dns_record" "pod042_service" {
   enabled     = true
   ttl         = "5m"
 }
+
+resource "unifi_dns_record" "kvm" {
+  name        = "kvm.thurstons.house"
+  record_type = "A"
+  value       = unifi_client.pod042_kvm.fixed_ip
+  enabled     = true
+  ttl         = "5m"
+}

@@ -12,6 +12,7 @@ ADDRESS = "10.10.10.42"
 GATEWAY = "10.10.10.1"
 TAILSCALE_ADDRESS = "100.64.249.18"
 TAILSCALE_DNS_NAME = "pod042.tail5f024.ts.net."
+TAILSCALE_TAGS = ["tag:pod042"]
 
 
 def output(*command: str) -> str:
@@ -114,10 +115,12 @@ def verify_tailscale(status: dict[str, Any], preferences: dict[str, Any]) -> lis
         errors.append("Tailscale route acceptance must remain disabled")
     if preferences.get("AdvertiseRoutes"):
         errors.append("Tailscale must not advertise routes")
-    if preferences.get("AdvertiseTags"):
-        errors.append("Tailscale must not advertise tags")
+    if preferences.get("AdvertiseTags") != TAILSCALE_TAGS:
+        errors.append(f"Tailscale must advertise only {', '.join(TAILSCALE_TAGS)}")
     if preferences.get("ExitNodeID") or preferences.get("ExitNodeIP"):
         errors.append("Tailscale must not use an exit node")
+    if preferences.get("RunSSH") is not True:
+        errors.append("Tailscale SSH must be enabled")
     return errors
 
 
