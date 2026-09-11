@@ -22,6 +22,7 @@
 - **Work machine**: The corporate laptop. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions, and cannot easily be extended.
 - **pod042**: The NAS successor — plain Debian 13 on the old TrueNAS hardware.
 - **OpenClaw**: pod042's predecessor. Sunsetting; treat any remaining reference as legacy and removeable.
+- **Home Assistant**: An appliance managed outside the scope of this repo, aside from management of the VM itself via Incus. All other management is done through the `home-assistant` mcp.
 
 ## Unifi Networks
 

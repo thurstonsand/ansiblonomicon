@@ -40,6 +40,7 @@ npm_global_packages_base:
   - agent-browser
   - hunkdiff
   - sideshow
+  - tuistory
 
 # npm blocks lifecycle scripts by default. Packages listed here are trusted to
 # run theirs; without it they install but ship no working binary.

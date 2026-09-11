@@ -26,12 +26,12 @@ Host github.com
 {{- if ne .chezmoi.hostname "pod042" }}
 
 Host pod042
-  HostName 10.10.10.42
   User thurstonsand
   ForwardAgent yes
   HostKeyAlias pod042
   IdentityFile ~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub
   IdentitiesOnly yes
+  ProxyCommand ~/.local/libexec/ssh-smart-proxy pod042 10.10.10.42 22 pod042-ssh.thurstons.house
   RequestTTY yes
 
 Host pod042-remote

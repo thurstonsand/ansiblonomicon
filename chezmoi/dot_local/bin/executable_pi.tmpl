@@ -28,8 +28,4 @@ if [[ ! -e "$pi_bin" ]]; then
   exit 127
 fi
 
-if [[ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]]; then
-  export CLAUDE_CODE_OAUTH_TOKEN="$("$HOME/.local/bin/fnox-host" get CLAUDE_CODE_OAUTH_TOKEN)"
-fi
-
 exec "${pi_command[@]}" "$@"

@@ -12,7 +12,10 @@ resource "unifi_wlan" "yorha" {
   wpa3_support    = true
   wpa3_transition = false
   pmf_mode        = "required"
-  wlan_bands      = ["2g", "5g", "6g"]
+  # AWDL, which carries Continuity, only runs on 2.4 and 5 GHz. A Mac parked on
+  # 6 GHz cannot discover an iPhone associated to the same SSID on 5 GHz, and
+  # macOS reports it as "not on the same network".
+  wlan_bands      = ["2g", "5g"]
   mlo_enabled     = true
 
   lifecycle {

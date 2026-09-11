@@ -101,11 +101,11 @@ See [nixonomicon/docs/designs/nix-to-chezmoi-ansible-migration.md](https://githu
 
 ## Hosts
 
-SSH aliases are configured via chezmoi (`~/.ssh/config`). Existing infrastructure aliases use `ssh-smart-proxy` for LAN access with Cloudflare Access fallback; pod042 is LAN-only until its Amp remote terminal is configured.
+SSH aliases are configured via chezmoi (`~/.ssh/config`). Infrastructure aliases use `ssh-smart-proxy` for LAN access with Cloudflare Access fallback. pod042 also answers on Tailscale as `pod042-ts`, and `pod042-remote` forces the Cloudflare path when the LAN probe needs bypassing.
 
 | Target                                            | Alias        | Description             |
 | ------------------------------------------------- | ------------ | ----------------------- |
-| `10.10.10.187:22`                                 | `ssh pod042` | Debian 13 NAS           |
+| `10.10.10.42:22` / `pod042-ssh.thurstons.house`   | `ssh pod042` | Debian 13 NAS           |
 | `192.168.1.89:22222` / `haos-ssh.thurstons.house` | `ssh haos`   | Home Assistant OS       |
 | `192.168.1.1:22` / `udmp-ssh.thurstons.house`     | `ssh udmp`   | UniFi Dream Machine Pro |
 

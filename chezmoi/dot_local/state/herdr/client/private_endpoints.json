@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "ssh": [
+    {
+      "id": "0e8d082430e808a2354b04f6777e1691",
+      "label": "pod042",
+      "target": "pod042",
+      "session": "default",
+      "enabled": true
+    }
+  ]
+}

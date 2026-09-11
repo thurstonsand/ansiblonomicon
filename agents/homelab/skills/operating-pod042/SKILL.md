@@ -9,8 +9,8 @@ Treat this repository as pod042's desired state. Diagnose live state freely; mak
 
 ## Entry points
 
-- SSH host: `pod042` (`10.10.10.42`).
-- Direct remote SSH: `pod042-ts`; Cloudflare fallback: `pod042-remote`.
+- SSH host: `pod042` (`10.10.10.42` on the LAN, falling back to Cloudflare Access through `ssh-smart-proxy`).
+- Tailscale: `pod042-ts`; forced Cloudflare path: `pod042-remote`.
 - Recovery console: `pod042-kvm` locally or `pod042-kvm-ts` remotely, operated through `scripts/pod042_kvm.py` when host SSH is unavailable.
 - Desired state: `bootstrap/targets/pod042/`.
 - Guarded reconciliation: `mise pod042 [capability] [--check]` from another host; local execution on pod042 uses the same declaration and may intentionally apply the current working tree.

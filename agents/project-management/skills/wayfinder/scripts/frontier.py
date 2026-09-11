@@ -15,7 +15,7 @@ def ticket_number(raw: object) -> int | None:
     return int(match.group()) if match else None
 
 
-def load_ticket(path: Path) -> tuple[dict[str, object], str]:
+def load_ticket(path: Path) -> tuple[dict[str, str | list[str]], str]:
     lines = path.read_text().splitlines()
     if not lines or lines[0] != "---":
         sys.exit(f"missing frontmatter in {path}")
@@ -25,7 +25,7 @@ def load_ticket(path: Path) -> tuple[dict[str, object], str]:
     except ValueError:
         sys.exit(f"unterminated frontmatter in {path}")
 
-    metadata: dict[str, object] = {}
+    metadata: dict[str, str | list[str]] = {}
     blocked_by: list[str] = []
     reading_blocked_by = False
     for line in lines[1:frontmatter_end]:
@@ -60,7 +60,7 @@ def main() -> None:
     if not tickets_dir.is_dir():
         sys.exit(f"no tickets directory at {tickets_dir}")
 
-    tickets: dict[int, tuple[Path, dict[str, object], str]] = {}
+    tickets: dict[int, tuple[Path, dict[str, str | list[str]], str]] = {}
     for path in sorted(tickets_dir.glob("*.md")):
         number = ticket_number(path.name)
         if number is not None:
@@ -72,9 +72,8 @@ def main() -> None:
             continue
 
         blocked = False
-        dependencies = ticket.get("blocked-by")
-        if not isinstance(dependencies, list):
-            dependencies = []
+        blocked_by = ticket.get("blocked-by")
+        dependencies = blocked_by if isinstance(blocked_by, list) else []
         for dep in dependencies:
             dep_number = ticket_number(dep)
             entry = tickets.get(dep_number) if dep_number is not None else None

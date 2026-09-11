@@ -34,6 +34,8 @@ Library/
 .config/zed/
 .config/eightctl/
 .local/bin/ide
+# The herdr machine catalogue belongs to clients; pod042 is the server side of it.
+.local/state/herdr/
 {{ end }}
 
 # ideo is personal to this Mac.
@@ -56,6 +58,7 @@ Library/
 .local/libexec/ssh-smart-proxy
 
 # Tools not installed on work Mac
+.local/state/herdr/
 .config/opencode/
 .config/eightctl/
 .config/amp/
