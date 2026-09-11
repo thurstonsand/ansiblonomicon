@@ -2,7 +2,6 @@ import { execFileSync } from "node:child_process";
 import {
   block,
   gitValueFlags,
-  type HighlightSpan,
   isCustomToolInput,
   matchCommand,
   matchTool,
@@ -77,28 +76,6 @@ export default function permissions(api: PermissionsAPI): void {
             });
           },
         }),
-      }),
-  });
-
-  api.onToolUse({
-    name: "File disposal",
-    description: "files targeted for elimination",
-    handler: ({ tool }) =>
-      matchTool(tool, {
-        bash: ({ command }) => {
-          if (!isRecursiveForcedRemovalCommand(command) && !isFindDeleteCommand(command)) {
-            return undefined;
-          }
-          if (isSubagent()) {
-            return undefined;
-          }
-          return request({
-            highlight: fileDisposalSpans,
-            approveLabel: "Dispose",
-            editLabel: "Retarget",
-            rejectLabel: "Prevent",
-          });
-        },
       }),
   });
 
@@ -242,62 +219,6 @@ function isSubagent(): boolean {
   return subagentDetected;
 }
 
-function isFindDeleteCommand(command: string): boolean {
-  return /find\s+.*-delete/i.test(command);
-}
-
-function fileDisposalSpans(command: string): HighlightSpan[] {
-  return [...recursiveForcedRemovalSpans(command), ...findDeleteSpans(command)];
-}
-
-function recursiveForcedRemovalSpans(command: string): HighlightSpan[] {
-  const spans: HighlightSpan[] = [];
-
-  for (const segment of shellSegments(command)) {
-    const tokens = tokenizeShellWordsWithSpans(segment.text, segment.start);
-
-    for (let index = 0; index < tokens.length; index++) {
-      if (tokens[index]?.text !== "rm") continue;
-
-      let hasRecursive = false;
-      let hasForce = false;
-      let end = tokens[index]?.end ?? segment.start;
-
-      for (let optionIndex = index + 1; optionIndex < tokens.length; optionIndex++) {
-        const token = tokens[optionIndex];
-        if (!token) continue;
-
-        if (token.text === "--") break;
-        if (!token.text.startsWith("-") || token.text === "-") break;
-
-        if (token.text.startsWith("--")) {
-          hasRecursive ||= token.text === "--recursive";
-          hasForce ||= token.text === "--force";
-        } else {
-          const flags = token.text.slice(1);
-          hasRecursive ||= flags.includes("r");
-          hasForce ||= flags.includes("f");
-        }
-
-        end = token.end;
-      }
-
-      if (hasRecursive && hasForce && tokens[index]) {
-        spans.push({ start: tokens[index].start, end });
-      }
-    }
-  }
-
-  return spans;
-}
-
-function findDeleteSpans(command: string): HighlightSpan[] {
-  return [...command.matchAll(/find\s+.*?-delete\b/gi)].map((match) => ({
-    start: match.index ?? 0,
-    end: (match.index ?? 0) + match[0].length,
-  }));
-}
-
 function stripOuterQuotes(token: string): string {
   if (token.length < 2) return token;
 
@@ -307,77 +228,10 @@ function stripOuterQuotes(token: string): string {
   return first === last && (first === '"' || first === "'") ? token.slice(1, -1) : token;
 }
 
-interface ShellToken {
-  text: string;
-  start: number;
-  end: number;
-}
-
-interface ShellSegment {
-  text: string;
-  start: number;
-}
-
 function tokenizeShellWords(command: string): string[] {
-  return tokenizeShellWordsWithSpans(command).map((token) => token.text);
-}
-
-function tokenizeShellWordsWithSpans(command: string, offset = 0): ShellToken[] {
-  return [...command.matchAll(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\S+/g)].map((match) => ({
-    text: stripOuterQuotes(match[0]),
-    start: offset + (match.index ?? 0),
-    end: offset + (match.index ?? 0) + match[0].length,
-  }));
-}
-
-function shellSegments(command: string): ShellSegment[] {
-  const segments: ShellSegment[] = [];
-  let start = 0;
-
-  for (const match of command.matchAll(/&&|\|\||;|\n/g)) {
-    const end = match.index ?? 0;
-    segments.push({ text: command.slice(start, end), start });
-    start = end + match[0].length;
-  }
-
-  segments.push({ text: command.slice(start), start });
-  return segments;
-}
-
-function isRecursiveForcedRemovalCommand(command: string): boolean {
-  const segments = command.split(/&&|\|\||;|\n/);
-
-  for (const segment of segments) {
-    const tokens = tokenizeShellWords(segment).map(stripOuterQuotes);
-
-    for (let index = 0; index < tokens.length; index++) {
-      if (tokens[index] !== "rm") continue;
-
-      let hasRecursive = false;
-      let hasForce = false;
-
-      for (let optionIndex = index + 1; optionIndex < tokens.length; optionIndex++) {
-        const token = tokens[optionIndex];
-
-        if (token === "--") break;
-        if (!token.startsWith("-") || token === "-") break;
-
-        if (token.startsWith("--")) {
-          hasRecursive ||= token === "--recursive";
-          hasForce ||= token === "--force";
-          continue;
-        }
-
-        const flags = token.slice(1);
-        hasRecursive ||= flags.includes("r");
-        hasForce ||= flags.includes("f");
-      }
-
-      if (hasRecursive && hasForce) return true;
-    }
-  }
-
-  return false;
+  return [...command.matchAll(/"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|\S+/g)].map((match) =>
+    stripOuterQuotes(match[0]),
+  );
 }
 
 function isPostgresMutation(command: string): boolean {
