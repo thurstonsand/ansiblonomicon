@@ -6,7 +6,12 @@ LOCAL_IP="$2"
 LOCAL_PORT="$3"
 TUNNEL_HOST="$4"
 
-if nc -z {{- if eq .chezmoi.os "darwin" }} -G 1 {{- else }} -w 1 {{- end }} "$LOCAL_IP" "$LOCAL_PORT" 2>/dev/null; then
+# ICMP first: a TCP probe that opens and drops a connection without authenticating is
+# exactly what OpenSSH's PerSourcePenalties punishes (noauth:1, min:15), and a burst of
+# them gets the whole source address dropped for 15 seconds. Hosts that stay silent on
+# ICMP still fall through to the TCP probe.
+if ping -c 1 -W {{ if eq .chezmoi.os "darwin" }}1000{{ else }}1{{ end }} "$LOCAL_IP" >/dev/null 2>&1 ||
+  nc -z {{- if eq .chezmoi.os "darwin" }} -G 1 {{- else }} -w 1 {{- end }} "$LOCAL_IP" "$LOCAL_PORT" 2>/dev/null; then
   exec nc "$LOCAL_IP" "$LOCAL_PORT"
 else
   exec cloudflared access ssh --hostname "$TUNNEL_HOST"
