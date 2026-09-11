@@ -42,6 +42,11 @@ node_bin_dir="$(dirname "$(mise --no-env which node)")"
 uv_bin="$(mise --no-env which uv)"
 export PATH="$node_bin_dir:$PATH"
 
+if ! command -v pi >/dev/null 2>&1; then
+  "$node_bin_dir/npm" install --global --prefix "$HOME/.local" --no-audit --no-fund \
+    @earendil-works/pi-coding-agent
+fi
+
 if ! command -v wrangler >/dev/null 2>&1 || [[ "$(wrangler --version)" != 4.* ]]; then
   "$node_bin_dir/npm" install --global --prefix "$HOME/.local" --no-audit --no-fund wrangler@4
 fi
