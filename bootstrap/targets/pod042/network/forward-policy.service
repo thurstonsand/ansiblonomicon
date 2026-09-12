@@ -1,0 +1,17 @@
+[Unit]
+Description=Default-deny routing between pod042's networks
+# IPv4 forwarding is on for Docker and Incus NAT, but Docker only installs a DROP
+# forward policy when Docker itself enables forwarding. The sysctl file gets there
+# first, so without this the host will route between any two networks it can see.
+# Docker's own chains still accept its bridge traffic, so containers are unaffected.
+After=docker.service
+Wants=network-pre.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/sbin/iptables --policy FORWARD DROP
+ExecStart=/usr/sbin/ip6tables --policy FORWARD DROP
+
+[Install]
+WantedBy=multi-user.target

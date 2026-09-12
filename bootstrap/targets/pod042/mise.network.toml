@@ -68,6 +68,16 @@ state = "absent"
 [bootstrap.files."/etc/systemd/network/24-br0.4.network"]
 state = "absent"
 
+[bootstrap.files."/etc/systemd/system/forward-policy.service"]
+source = "network/forward-policy.service"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.services.forward-policy]
+state = "running"
+enabled = true
+
 [bootstrap.services.tailscaled]
 state = "running"
 enabled = true

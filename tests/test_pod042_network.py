@@ -24,6 +24,7 @@ def good_state() -> tuple[
     str,
     str,
     str,
+    dict[str, str],
 ]:
     links: list[dict[str, Any]] = [
         {
@@ -69,6 +70,7 @@ def good_state() -> tuple[
         "0\n",
         ethernet,
         rings,
+        {"IPv4": "DROP", "IPv6": "DROP"},
     )
 
 
@@ -86,6 +88,14 @@ def test_network_declaration_owns_physical_contract_and_retirement() -> None:
     sysctl = bootstrap["files"]["/etc/sysctl.d/90-pod042-network.conf"]["content"]
     assert "net.ipv4.ip_forward = 1" in sysctl
     assert "net.ipv6.conf.all.forwarding = 0" in sysctl
+    # Forwarding is on for container NAT, so routing must be denied by policy.
+    assert bootstrap["services"]["forward-policy"] == {
+        "state": "running",
+        "enabled": True,
+    }
+    unit = (TARGET / "network/forward-policy.service").read_text()
+    assert "--policy FORWARD DROP" in unit
+    assert "ip6tables --policy FORWARD DROP" in unit
     retired = {
         path
         for path, declaration in bootstrap["files"].items()
@@ -165,7 +175,7 @@ def test_tailscale_contract_reports_authority_drift() -> None:
 
 
 def test_live_network_contract_reports_boundary_drift() -> None:
-    links, addresses, routes, resolver, _, _, ethernet, rings = good_state()
+    links, addresses, routes, resolver, _, _, ethernet, rings, _ = good_state()
     links[0]["master"] = "br0"
     links.append({"ifname": "br0", "mtu": 1500, "operstate": "UP"})
     addresses[0]["addr_info"][0]["local"] = "10.10.10.187"
@@ -182,6 +192,7 @@ def test_live_network_contract_reports_boundary_drift() -> None:
         "1\n",
         ethernet.replace("Wake-on: g", "Wake-on: d"),
         rings.replace("RX:\t\t\t4096", "RX:\t\t\t256"),
+        {"IPv4": "ACCEPT", "IPv6": "DROP"},
     )
     assert errors == [
         "enp5s0 must not be enslaved to a host bridge",
@@ -191,6 +202,7 @@ def test_live_network_contract_reports_boundary_drift() -> None:
         "default route must use 10.10.10.1 through enp5s0",
         "IPv4 forwarding is not enabled",
         "IPv6 forwarding must remain disabled",
+        "IPv4 FORWARD policy is ACCEPT, not DROP",
         "enp5s0 magic-packet wake is not enabled",
         "enp5s0 RX ring is not 4096 entries",
     ]

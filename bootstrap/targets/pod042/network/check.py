@@ -28,6 +28,7 @@ def verify(
     ipv6_forwarding: str,
     ethernet: str,
     rings: str,
+    forward_policies: dict[str, str],
 ) -> list[str]:
     errors: list[str] = []
     links_by_name = {str(link["ifname"]): link for link in links}
@@ -84,6 +85,9 @@ def verify(
         errors.append("IPv4 forwarding is not enabled")
     if ipv6_forwarding.strip() != "0":
         errors.append("IPv6 forwarding must remain disabled")
+    for family, policy in sorted(forward_policies.items()):
+        if policy != "DROP":
+            errors.append(f"{family} FORWARD policy is {policy}, not DROP")
     if "Speed: 2500Mb/s" not in ethernet:
         errors.append(f"{INTERFACE} did not negotiate 2.5 Gb/s")
     if "Link detected: yes" not in ethernet:
@@ -97,6 +101,13 @@ def verify(
     ):
         errors.append(f"{INTERFACE} RX ring is not 4096 entries")
     return errors
+
+
+def forward_policy(binary: str) -> str:
+    for line in output(binary, "--list-rules").splitlines():
+        if line.startswith("-P FORWARD "):
+            return line.split()[-1]
+    return "unset"
 
 
 def verify_tailscale(status: dict[str, Any], preferences: dict[str, Any]) -> list[str]:
@@ -134,6 +145,10 @@ def main() -> int:
         output("/usr/sbin/sysctl", "-n", "net.ipv6.conf.all.forwarding"),
         output("/usr/sbin/ethtool", INTERFACE),
         output("/usr/sbin/ethtool", "-g", INTERFACE),
+        {
+            "IPv4": forward_policy("/usr/sbin/iptables"),
+            "IPv6": forward_policy("/usr/sbin/ip6tables"),
+        },
     )
     errors.extend(
         verify_tailscale(
@@ -147,7 +162,8 @@ def main() -> int:
         return 1
     print(
         f"PASS  {INTERFACE} {ADDRESS} via {GATEWAY}, "
-        "2.5 Gb/s, MTU 1500, RX ring 4096, WOL and Tailscale enabled"
+        "2.5 Gb/s, MTU 1500, RX ring 4096, WOL and Tailscale enabled, "
+        "routing default-denied"
     )
     return 0
 
