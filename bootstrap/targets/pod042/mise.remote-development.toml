@@ -28,6 +28,12 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0644"
 
+[bootstrap.files."/home/thurstonsand/.config/systemd/user/herdr.service"]
+source = "remote-development/herdr.service"
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0644"
+
 [bootstrap.files."/home/thurstonsand/.config/systemd/user/t3code.service.d/operator.conf"]
 source = "remote-development/t3-operator.conf"
 owner = "thurstonsand"

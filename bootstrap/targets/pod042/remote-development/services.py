@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
@@ -10,7 +11,8 @@ import tomllib
 
 HOME = Path("/home/thurstonsand")
 SHIMS = HOME / ".local/share/mise/shims"
-UNITS = ("t3code.service", "amp-remote.service")
+HERDR = SHIMS / "herdr"
+UNITS = ("t3code.service", "amp-remote.service", "herdr.service")
 
 # operator:tools installs T3's CLI into its own prefix and records there why it can be
 # neither a global install nor an npx invocation. Read that inventory rather than repeating
@@ -46,6 +48,33 @@ def require_amp() -> None:
         )
 
 
+def require_herdr() -> None:
+    if not os.access(HERDR, os.X_OK):
+        raise SystemExit(
+            "Herdr shim missing. Reconcile the operator config before this one."
+        )
+
+
+@dataclass(frozen=True)
+class HerdrServer:
+    running: bool
+    binary_stale: bool
+
+
+def herdr_server() -> HerdrServer:
+    status = json.loads(output(str(HERDR), "status", "server", "--json"))
+    return HerdrServer(
+        running=status["running"], binary_stale=status["server_binary_stale"]
+    )
+
+
+def unit_active(unit: str) -> bool:
+    return (
+        subprocess.run(("systemctl", "--user", "is-active", "--quiet", unit)).returncode
+        == 0
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("action", choices=("apply", "plan", "status"))
@@ -69,6 +98,7 @@ def main() -> None:
     os.chdir(HOME)
     require_t3()
     require_amp()
+    require_herdr()
     if action == "plan":
         run(str(T3), "service", "status")
         for unit in UNITS:
@@ -79,8 +109,13 @@ def main() -> None:
                 unit,
                 "--property=LoadState,ActiveState,UnitFileState,NeedDaemonReload",
             )
+        # Subprocess output is unbuffered where print is not, so an unflushed line here
+        # would surface after everything the loop above wrote.
+        print(json.dumps(herdr_server()), flush=True)
         print(
-            "Apply: enable operator linger if absent; vendor-idempotent t3 service install; start both services, restarting only on unit changes."
+            "Apply: enable operator linger if absent; vendor-idempotent t3 service install; "
+            "stop any Herdr server systemd does not own, losing its panes; start all three "
+            "services, restarting on unit changes and on a stale Herdr binary."
         )
         return
     if action == "apply":
@@ -121,6 +156,21 @@ def main() -> None:
             "--user",
             "restart" if changed["amp-remote.service"] else "start",
             "amp-remote.service",
+        )
+        # A Herdr client that finds no socket spawns its own server, which then owns the
+        # socket and holds the login session's kernel keyring. Logging out revokes that
+        # keyring and every agent credential store reading through it. Handing the socket
+        # to systemd means stopping that server, and its panes go with it.
+        herdr = herdr_server()
+        if herdr.running and not unit_active("herdr.service"):
+            print("Stopping a Herdr server systemd does not own; its panes end here.")
+            run(str(HERDR), "server", "stop")
+        run("systemctl", "--user", "enable", "herdr.service")
+        run(
+            "systemctl",
+            "--user",
+            "restart" if changed["herdr.service"] or herdr.binary_stale else "start",
+            "herdr.service",
         )
     run(str(T3), "service", "status")
     if (

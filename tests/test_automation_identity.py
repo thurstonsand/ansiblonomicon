@@ -93,7 +93,9 @@ else:
     home = tmp_path / "home"
     home.mkdir()
     config = identity.identity_path(home)
-    config.parent.mkdir(parents=True)
+    # install_identity rejects a group- or world-writable directory, so create it at
+    # the mode it demands rather than at whatever the ambient umask happens to give.
+    config.parent.mkdir(parents=True, mode=0o700)
     config.write_text(
         '[secrets.FNOX_HOST_OP_TOKEN]\ndefault = "old-token"\nenv = false\n'
     )

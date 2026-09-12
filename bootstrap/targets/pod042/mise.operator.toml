@@ -9,6 +9,10 @@
 "apt:gh" = "latest"
 "apt:jq" = "latest"
 "apt:htop" = "latest"
+# With no Secret Service on a headless box, pi's MCP OAuth store falls back to the
+# kernel keyring, and a login session ending revokes it under any agent still
+# running. pi's recovery path shells out to keyctl to reach the keys again.
+"apt:keyutils" = "latest"
 "apt:netcat-openbsd" = "latest"
 "apt:openssh-client" = "latest"
 "apt:python3-venv" = "latest"
