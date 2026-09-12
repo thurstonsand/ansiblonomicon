@@ -4,7 +4,7 @@ These are normal-user services for `thurstonsand`. T3 serves multiple projects f
 
 ## Integration contract
 
-Mise supplies Node LTS. T3 installs through that Node's npm; its CLI and Node resolve through `/home/thurstonsand/.local/share/mise/shims/{node,t3}`. Amp uses its official installer and `/home/thurstonsand/.amp/bin/amp`. Codex and Claude use their official installers under `~/.local/bin`; OpenCode uses `~/.opencode/bin`. Native agent directories precede mise shims so old version-manager installations cannot shadow them. T3 pins its own service runtime and Node executable.
+Mise supplies Node LTS. T3 installs through that Node's npm into `~/.local/share/t3code/cli`, and `services.py` calls `cli/node_modules/.bin/t3` by path rather than through a shim. Amp uses its official installer and `/home/thurstonsand/.amp/bin/amp`. Codex and Claude use their official installers under `~/.local/bin`; OpenCode uses `~/.opencode/bin`. Native agent directories precede mise shims so old version-manager installations cannot shadow them. T3 pins its own service runtime and Node executable.
 
 Native files own the Amp unit and one T3 drop-in, not the vendor's `t3code.service` or launcher. Register this config environment after operator tooling. Its final hook runs `python3 remote-development/services.py apply` after operator installation without replacing the base bootstrap task. Native dry runs report the files; use the separate `plan` action to inspect vendor-managed service state. Named `remote-development:{reconcile,status,plan}` tasks are also provided. Paths in these tasks are relative to the target config root.
 
@@ -14,7 +14,7 @@ Enrollment must happen before enabling automatic reconciliation: missing T3 enro
 
 Debian `polkitd` supplies the stock authorization policy for a user's own linger request, which T3's installer makes even when linger is already enabled. No custom privilege rule or root T3 process is needed.
 
-T3 alone selects `~/.config/t3code/npmrc` through `NPM_CONFIG_USERCONFIG`. Its `allow-scripts=node-pty` permission lets npm 12 build the native terminal module in vendor-managed runtime installs and updates. Project-scoped npm installs reject the equivalent CLI/environment allowlist; other npm consumers keep their own policy. A runtime installed before this permission needs a one-time `npm --prefix <runtime> rebuild node-pty` with this config selected, followed by a real PTY test. The global CLI's working module does not validate the vendor runtime's separate copy.
+T3 alone selects `~/.config/t3code/npmrc` through `NPM_CONFIG_USERCONFIG`. Its `allow-scripts=node-pty` permission lets npm 12 build the native terminal module in vendor-managed runtime installs and updates. Project-scoped npm installs reject the equivalent CLI/environment allowlist; other npm consumers keep their own policy. A runtime installed before this permission needs a one-time `npm --prefix <runtime> rebuild node-pty` with this config selected, followed by a real PTY test. The CLI prefix carries its own built copy, which does not validate the vendor runtime's separate one.
 
 ## Initial human enrollment
 

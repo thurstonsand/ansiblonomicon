@@ -6,10 +6,21 @@ from pathlib import Path
 import pwd
 import socket
 import subprocess
+import tomllib
 
 HOME = Path("/home/thurstonsand")
 SHIMS = HOME / ".local/share/mise/shims"
 UNITS = ("t3code.service", "amp-remote.service")
+
+# operator:tools installs T3's CLI into its own prefix and records there why it can be
+# neither a global install nor an npx invocation. Read that inventory rather than repeating
+# its paths: the service's own copy of them lives in the t3-operator.conf drop-in, which
+# systemd requires as literals, and two homes for a path are already one too many.
+T3_INVENTORY = tomllib.loads(
+    (Path(__file__).parents[1] / "operator/node-packages.toml").read_text()
+)["prefixed"]["t3"]
+T3 = Path(T3_INVENTORY["prefix"]) / "node_modules/.bin/t3"
+T3_NPMRC = T3_INVENTORY["npmrc"]
 
 
 def run(*command: str) -> None:
@@ -21,7 +32,7 @@ def output(*command: str) -> str:
 
 
 def require_t3() -> None:
-    status = json.loads(output(str(SHIMS / "t3"), "connect", "status", "--json"))
+    status = json.loads(output(str(T3), "connect", "status", "--json"))
     if not all(status[key] is True for key in ("desired", "authenticated")):
         raise SystemExit(
             "T3 enrollment missing. Run t3 connect --headless with the documented T3CODE_HOME."
@@ -49,7 +60,7 @@ def main() -> None:
         )
     os.environ["HOME"] = str(HOME)
     os.environ["T3CODE_HOME"] = str(HOME / ".local/share/t3code")
-    os.environ["NPM_CONFIG_USERCONFIG"] = str(HOME / ".config/t3code/npmrc")
+    os.environ["NPM_CONFIG_USERCONFIG"] = T3_NPMRC
     os.environ["PATH"] = (
         f"{HOME}/.local/bin:{HOME}/.amp/bin:{HOME}/.opencode/bin:"
         f"{SHIMS}:/usr/local/bin:/usr/bin:/bin"
@@ -60,7 +71,7 @@ def main() -> None:
     require_t3()
     require_amp()
     if action == "plan":
-        run(str(SHIMS / "t3"), "service", "status")
+        run(str(T3), "service", "status")
         for unit in UNITS:
             run(
                 "systemctl",
@@ -98,7 +109,7 @@ def main() -> None:
             for unit in UNITS
         }
         run("systemctl", "--user", "daemon-reload")
-        run(str(SHIMS / "t3"), "service", "install")
+        run(str(T3), "service", "install")
         run(
             "systemctl",
             "--user",
@@ -112,7 +123,7 @@ def main() -> None:
             "restart" if changed["amp-remote.service"] else "start",
             "amp-remote.service",
         )
-    run(str(SHIMS / "t3"), "service", "status")
+    run(str(T3), "service", "status")
     if (
         output(
             "loginctl",

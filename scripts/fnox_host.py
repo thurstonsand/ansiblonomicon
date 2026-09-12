@@ -7,6 +7,7 @@ import os
 from pathlib import Path
 import pwd
 import shlex
+import shutil
 import socket
 import stat
 import subprocess
@@ -122,6 +123,35 @@ def read_token(path: Path, owner: int) -> str:
     return token
 
 
+def shim_directory(inherited: dict[str, str], home: Path) -> Path:
+    if data_directory := inherited.get("MISE_DATA_DIR"):
+        return Path(data_directory) / "shims"
+    share = inherited.get("XDG_DATA_HOME") or str(home / ".local/share")
+    return Path(share) / "mise/shims"
+
+
+def resolver_path(inherited: dict[str, str], home: Path) -> str:
+    """Locate `op` and the rest of the resolver's tools without mise shims.
+
+    Fnox shells out to `op`, and a shim answers by resolving the environment of
+    whatever directory it was called from, which can lead back into this
+    launcher. Drop the shim directory, and where it was the only source of `op`,
+    substitute the install it stood for.
+    """
+    shims = shim_directory(inherited, home)
+    path = os.pathsep.join(
+        entry
+        for entry in inherited.get("PATH", "").split(os.pathsep)
+        if entry and Path(entry) != shims
+    )
+    if shutil.which("op", path=path):
+        return path
+    installed = subprocess.check_output(
+        ["mise", "--no-env", "which", "op"], text=True
+    ).strip()
+    return os.pathsep.join([str(Path(installed).parent), path])
+
+
 def authentication_environment(
     profile: str,
     inherited: dict[str, str],
@@ -227,6 +257,7 @@ def prepare_invocation(
         profile, inherited, keys, token, native_identity=native
     )
     environment["FNOX_CONFIG_DIR"] = str(identity.parent)
+    environment["PATH"] = resolver_path(inherited, home)
     command = [
         fnox,
         "--config",

@@ -73,7 +73,7 @@ run = [
   "mise upgrade --yes",
   '''
 node_bin=$(dirname "$(mise which node)")
-"$node_bin/npm" install -g --allow-scripts=agent-browser @earendil-works/pi-coding-agent agent-browser hunkdiff sideshow t3 tuistory
+python3 /home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042/operator/node_packages.py "$node_bin/npm"
 mise reshim
 ''',
   "uv tool install --upgrade nurb",

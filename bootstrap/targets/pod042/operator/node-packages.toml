@@ -1,0 +1,29 @@
+# The operator's npm inventory, installed beside the mise-managed Node by node_packages.py.
+
+[global]
+packages = [
+  "@earendil-works/pi-coding-agent",
+  "agent-browser",
+  "hunkdiff",
+  "sideshow",
+  "tuistory",
+]
+# npm 12 blocks lifecycle scripts. These are trusted to run theirs; without it they
+# install but ship no working binary.
+allow_scripts = ["agent-browser"]
+
+# Packages the global prefix cannot hold. Each one states what forced it out.
+[prefixed.t3]
+spec = "t3@latest"
+prefix = "/home/thurstonsand/.local/share/t3code/cli"
+link = "/home/thurstonsand/.local/bin/t3"
+# allow-scripts=node-pty: the terminal module must build, and skipping it crash-loops the
+# background service (pingdotgg/t3code#7475).
+npmrc = "/home/thurstonsand/.config/t3code/npmrc"
+reason = """
+A global install runs npm's implicit node-gyp rebuild for msgpackr-extract's binding.gyp,
+which no allow-scripts policy gates and this host, without node-gyp, cannot satisfy. A
+prefix install blocks that script and uses the package's prebuilt linux-x64 binary instead.
+npx is T3's documented route but exports npm_config_allow_scripts into the pinned-runtime
+install, which then rejects it (pingdotgg/t3code#9398).
+"""

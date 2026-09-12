@@ -928,6 +928,34 @@ def test_nested_exec_reuses_selected_values_and_drops_unselected_values(
     assert not Path(environment["OP_CALLS"]).exists()
 
 
+def test_resolver_never_reaches_op_through_a_mise_shim(
+    configuration: Path,
+    environment: dict[str, str],
+    fnox_binary: str,
+    tmp_path: Path,
+) -> None:
+    shims = tmp_path / ".local/share/mise/shims"
+    shims.mkdir(parents=True)
+    shim = shims / "op"
+    shim.write_text("#!/bin/sh\nexit 97\n")
+    shim.chmod(0o755)
+    environment["PATH"] = f"{shims}{os.pathsep}{environment['PATH']}"
+    invocation = fnox_host.prepare_invocation(
+        configuration,
+        "macos",
+        "get",
+        ["SHARED"],
+        environment,
+        None,
+        fnox=fnox_binary,
+    )
+    assert str(shims) not in invocation.environment["PATH"].split(os.pathsep)
+    assert shutil.which("op", path=invocation.environment["PATH"]) == str(
+        tmp_path / "bin/op"
+    )
+    assert fnox_host.resolved_output(invocation).strip() == "sentinel-shared"
+
+
 def test_nested_late_private_read_uses_only_personal_provider(
     configuration: Path,
     environment: dict[str, str],

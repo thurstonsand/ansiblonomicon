@@ -1,5 +1,5 @@
 [tools]
-node = { version = "lts", postinstall = '"$MISE_TOOL_INSTALL_PATH/bin/npm" install -g --allow-scripts=agent-browser @earendil-works/pi-coding-agent agent-browser hunkdiff sideshow t3 tuistory' }
+node = { version = "lts", postinstall = 'python3 /home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042/operator/node_packages.py "$MISE_TOOL_INSTALL_PATH/bin/npm"' }
 npm = "latest"
 python = "3.14"
 uv = "latest"
