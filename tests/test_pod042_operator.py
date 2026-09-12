@@ -51,7 +51,8 @@ def test_node_inventory_keeps_t3_out_of_the_global_prefix():
     # A global t3 runs npm's implicit node-gyp rebuild for msgpackr-extract's binding.gyp,
     # which no allow-scripts policy gates and this host cannot satisfy.
     t3 = inventory["prefixed"]["t3"]
-    assert t3["prefix"] == "/home/thurstonsand/.local/share/t3code/cli"
+    # Inside T3's own default home, so no T3CODE_HOME has to be carried anywhere.
+    assert t3["prefix"] == "/home/thurstonsand/.t3/cli"
     assert t3["npmrc"] == "/home/thurstonsand/.config/t3code/npmrc"
     assert t3["reason"].strip()
     # services.py reads this inventory for the CLI and its npmrc instead of repeating them,

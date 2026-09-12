@@ -35,7 +35,7 @@ def require_t3() -> None:
     status = json.loads(output(str(T3), "connect", "status", "--json"))
     if not all(status[key] is True for key in ("desired", "authenticated")):
         raise SystemExit(
-            "T3 enrollment missing. Run t3 connect --headless with the documented T3CODE_HOME."
+            "T3 enrollment missing. Run t3 connect --headless as thurstonsand first."
         )
 
 
@@ -59,7 +59,6 @@ def main() -> None:
             "Remote development requires pod042's normal thurstonsand user, never root."
         )
     os.environ["HOME"] = str(HOME)
-    os.environ["T3CODE_HOME"] = str(HOME / ".local/share/t3code")
     os.environ["NPM_CONFIG_USERCONFIG"] = T3_NPMRC
     os.environ["PATH"] = (
         f"{HOME}/.local/bin:{HOME}/.amp/bin:{HOME}/.opencode/bin:"

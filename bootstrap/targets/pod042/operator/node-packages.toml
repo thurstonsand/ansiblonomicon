@@ -15,7 +15,7 @@ allow_scripts = ["agent-browser"]
 # Packages the global prefix cannot hold. Each one states what forced it out.
 [prefixed.t3]
 spec = "t3@latest"
-prefix = "/home/thurstonsand/.local/share/t3code/cli"
+prefix = "/home/thurstonsand/.t3/cli"
 link = "/home/thurstonsand/.local/bin/t3"
 # allow-scripts=node-pty: the terminal module must build, and skipping it crash-loops the
 # background service (pingdotgg/t3code#7475).

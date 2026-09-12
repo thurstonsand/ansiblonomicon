@@ -4,7 +4,7 @@ These are normal-user services for `thurstonsand`. T3 serves multiple projects f
 
 ## Integration contract
 
-Mise supplies Node LTS. T3 installs through that Node's npm into `~/.local/share/t3code/cli`, and `services.py` calls `cli/node_modules/.bin/t3` by path rather than through a shim. Amp uses its official installer and `/home/thurstonsand/.amp/bin/amp`. Codex and Claude use their official installers under `~/.local/bin`; OpenCode uses `~/.opencode/bin`. Native agent directories precede mise shims so old version-manager installations cannot shadow them. T3 pins its own service runtime and Node executable.
+Mise supplies Node LTS. T3 installs through that Node's npm into `~/.t3/cli`, inside the vendor's default home, and `services.py` calls `cli/node_modules/.bin/t3` by path rather than through a shim. Amp uses its official installer and `/home/thurstonsand/.amp/bin/amp`. Codex and Claude use their official installers under `~/.local/bin`; OpenCode uses `~/.opencode/bin`. Native agent directories precede mise shims so old version-manager installations cannot shadow them. T3 pins its own service runtime and Node executable.
 
 Native files own the Amp unit and one T3 drop-in, not the vendor's `t3code.service` or launcher. Register this config environment after operator tooling. Its final hook runs `python3 remote-development/services.py apply` after operator installation without replacing the base bootstrap task. Native dry runs report the files; use the separate `plan` action to inspect vendor-managed service state. Named `remote-development:{reconcile,status,plan}` tasks are also provided. Paths in these tasks are relative to the target config root.
 
@@ -22,7 +22,6 @@ In an interactive SSH login as `thurstonsand` on pod042:
 
 ```sh
 export PATH="$HOME/.local/bin:$HOME/.amp/bin:$HOME/.opencode/bin:$HOME/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin"
-export T3CODE_HOME="$HOME/.local/share/t3code"
 cd /home/thurstonsand/code/ansiblonomicon
 amp login
 ```
@@ -33,7 +32,7 @@ Complete Amp sign-in through its printed browser instructions. No credential cop
 t3 connect --headless
 ```
 
-Complete T3's printed out-of-band login instructions. If it offers background installation, it is safe to defer it to reconciliation. `t3 connect --headless` enrolls the environment; it is not a server command. Use the same `T3CODE_HOME` for every enrollment and service-management command.
+Complete T3's printed out-of-band login instructions. If it offers background installation, it is safe to defer it to reconciliation. `t3 connect --headless` enrolls the environment; it is not a server command. T3's home is its own default, `~/.t3`, so no environment variable has to be carried into enrollment, service management, or a human's shell.
 
 Once the native files have deployed:
 
