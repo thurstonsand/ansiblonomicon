@@ -17,15 +17,22 @@ import signal
 import socket
 import subprocess
 import sys
-from typing import Protocol, cast
+from typing import cast
 from urllib.parse import urlparse
 
 import httpx
-
-DEFAULT_API_URL = "https://10.10.20.1"
-NETWORK_API_PREFIX = "/proxy/network/api/s/default"
-HTTP_TIMEOUT = 15.0
-HTTP_OK = 200
+from unifi_api import (
+    DEFAULT_API_URL,
+    HTTP_OK,
+    HTTP_TIMEOUT,
+    ControllerError,
+    JsonSource,
+    NetworkApi,
+    controller_base_url,
+    decode_json,
+    login,
+    required_env,
+)
 
 PRIMARY_WAN_NAME = "WAS-110"
 PRIMARY_WAN_GROUP = "WAN2"
@@ -43,21 +50,29 @@ NEXTDNS_TEST_URL = "https://test.nextdns.io"
 CGNAT_NETWORK = ipaddress.ip_network("100.64.0.0/10")
 
 DISCOVERY_COMMAND = ("dns-sd", "-B")
-DISCOVERY_SERVICES = ("_airplay._tcp", "_raop._tcp", "_hap._tcp")
 DISCOVERY_TIMEOUT = 6.0
 DISCOVERY_SOURCE_NETWORK = ipaddress.ip_network("10.10.20.0/24")
-# AirPlay and RAOP carry the assigned room name. HAP uses Apple's sensor name.
-# Checking each service's actual shape avoids accepting an unrelated HomePod on
-# the two protocols that can identify the room.
-HOMEPOD_MARKERS = {
-    "_airplay._tcp": "kitchen",
-    "_raop._tcp": "kitchen",
-    "_hap._tcp": "homepodsensor",
+# One entry per device the mDNS scope is meant to reflect out of Scanners, mapping
+# each service to a substring its instance name must contain. AirPlay and RAOP carry
+# the HomePod's assigned room while HAP uses Apple's sensor name, so checking each
+# service's actual shape avoids accepting an unrelated HomePod on the two protocols
+# that can identify the room. The printer advertises its model on both AirPrint and
+# eSCL, which is what separates it from any other vendor's device.
+DISCOVERY_EXPECTATIONS = {
+    "Kitchen HomePod": {
+        "_airplay._tcp": "kitchen",
+        "_raop._tcp": "kitchen",
+        "_hap._tcp": "homepodsensor",
+    },
+    "Canon MF654Cdw": {
+        "_ipp._tcp": "canon mf650c series",
+        "_uscan._tcp": "canon mf650c series",
+    },
 }
 DNS_SD_RECORD = re.compile(r"^\S+\s+(Add|Rmv)\s+\d+\s+\d+\s+\S+\s+\S+\s+(.+)$")
 
 
-class SmokeFailure(Exception):
+class SmokeFailure(ControllerError):
     """A check failed. The message is safe to print."""
 
 
@@ -116,48 +131,6 @@ def exactly_one(records: list[dict[str, object]], what: str) -> dict[str, object
 def expect(actual: object, wanted: object, what: str) -> None:
     if actual != wanted:
         raise SmokeFailure(f"{what}: expected {wanted!r}, observed {actual!r}")
-
-
-# --------------------------------------------------------------------------
-# Controller access
-# --------------------------------------------------------------------------
-
-
-class JsonSource(Protocol):
-    def get_json(self, path: str) -> object: ...
-
-
-def decode_json(response: httpx.Response, what: str) -> object:
-    try:
-        return response.json()
-    except ValueError:
-        raise SmokeFailure(f"{what}: response body was not JSON") from None
-
-
-@dataclass(frozen=True)
-class NetworkApi:
-    """Reads the legacy Network API through the UniFi OS proxy."""
-
-    client: httpx.Client
-    base_url: str
-
-    def get_json(self, path: str) -> object:
-        response = self.client.get(f"{self.base_url}{NETWORK_API_PREFIX}{path}")
-        if response.status_code != HTTP_OK:
-            raise SmokeFailure(f"GET {path}: HTTP {response.status_code}")
-        return decode_json(response, f"GET {path}")
-
-
-def login(client: httpx.Client, base_url: str, username: str, password: str) -> str:
-    response = client.post(
-        f"{base_url}/api/auth/login",
-        json={"username": username, "password": password, "rememberMe": False},
-    )
-    if response.status_code != HTTP_OK:
-        raise SmokeFailure(f"login rejected with HTTP {response.status_code}")
-    if not client.cookies.jar:
-        raise SmokeFailure("login returned no session cookie")
-    return "authenticated to controller"
 
 
 @dataclass
@@ -459,20 +432,26 @@ def check_discovery(
         if source not in DISCOVERY_SOURCE_NETWORK:
             raise SmokeFailure("mDNS discovery must run from the YoRHa network")
 
+    seen: dict[str, set[str]] = {}
     missing: list[str] = []
-    for service in DISCOVERY_SERVICES:
-        try:
-            output = browse(service)
-        except OSError as exc:
-            raise SmokeFailure(
-                f"dns-sd failed for {service} ({type(exc).__name__})"
-            ) from None
-        instances = current_discovery_instances(output)
-        if not any(HOMEPOD_MARKERS[service] in instance for instance in instances):
-            missing.append(service)
+    found: list[str] = []
+    for device, markers in DISCOVERY_EXPECTATIONS.items():
+        for service, marker in markers.items():
+            if service not in seen:
+                try:
+                    output = browse(service)
+                except OSError as exc:
+                    raise SmokeFailure(
+                        f"dns-sd failed for {service} ({type(exc).__name__})"
+                    ) from None
+                seen[service] = current_discovery_instances(output)
+            if any(marker in instance for instance in seen[service]):
+                found.append(f"{device} on {service}")
+            else:
+                missing.append(f"{device} on {service}")
     if missing:
-        raise SmokeFailure("Kitchen HomePod not advertised on " + ", ".join(missing))
-    return "Kitchen HomePod visible on " + ", ".join(DISCOVERY_SERVICES)
+        raise SmokeFailure("not advertised: " + ", ".join(missing))
+    return "advertised: " + ", ".join(found)
 
 
 # --------------------------------------------------------------------------
@@ -490,7 +469,7 @@ class CheckResult:
 def run_check(name: str, check: Callable[[], str]) -> CheckResult:
     try:
         return CheckResult(name, True, check())
-    except SmokeFailure as exc:
+    except ControllerError as exc:
         return CheckResult(name, False, str(exc))
     except httpx.HTTPError as exc:
         return CheckResult(name, False, f"request failed ({type(exc).__name__})")
@@ -499,31 +478,6 @@ def run_check(name: str, check: Callable[[], str]) -> CheckResult:
 def report(result: CheckResult) -> None:
     status = "PASS" if result.passed else "FAIL"
     print(f"{status}  {result.name}: {result.detail}")
-
-
-def required_env(name: str) -> str:
-    value = os.environ.get(name)
-    if not value:
-        raise SmokeFailure(f"{name} is not set")
-    return value
-
-
-def controller_base_url(value: str) -> str:
-    parsed = urlparse(value)
-    if (
-        parsed.scheme != "https"
-        or parsed.hostname is None
-        or parsed.username is not None
-        or parsed.password is not None
-        or parsed.query
-        or parsed.fragment
-        or parsed.path not in {"", "/"}
-    ):
-        raise SmokeFailure(
-            "TF_VAR_unifi_api_url must be an HTTPS origin without credentials, "
-            "a path, a query, or a fragment"
-        )
-    return value.rstrip("/")
 
 
 def main() -> int:
@@ -535,7 +489,7 @@ def main() -> int:
         base_url = controller_base_url(
             os.environ.get("TF_VAR_unifi_api_url", DEFAULT_API_URL)  # noqa: SIM112
         )
-    except SmokeFailure as exc:
+    except ControllerError as exc:
         print(f"FAIL  environment: {exc}", file=sys.stderr)
         return 1
 
@@ -572,7 +526,7 @@ def main() -> int:
         report(dns)
 
     discovery = run_check(
-        "mdns homepod discovery",
+        "mdns scanners discovery",
         lambda: check_discovery(dns_sd_browse, lambda: local_ipv4_for(base_url)),
     )
     results.append(discovery)

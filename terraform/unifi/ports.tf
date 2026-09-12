@@ -54,6 +54,7 @@ resource "unifi_port_profile" "pod042" {
 
 resource "unifi_device" "udmp" {
   mac               = "e4:38:83:1a:a0:45"
+  name              = "UDM Pro"
   forget_on_destroy = false
 
   ethernet_override {
@@ -94,6 +95,7 @@ resource "unifi_device" "udmp" {
 # the UDM Pro, so their state is asserted rather than declared.
 resource "unifi_device" "power_distribution_pro" {
   mac               = "d8:b3:70:2c:b7:45"
+  name              = "USP PDU Pro"
   allow_adoption    = true
   forget_on_destroy = false
 
@@ -124,6 +126,7 @@ check "pdu_outlet_names" {
 
 resource "unifi_device" "u7_pro_max" {
   mac               = "94:2a:6f:2c:f0:d2"
+  name              = "U7 Pro Max"
   allow_adoption    = true
   forget_on_destroy = false
 
@@ -134,6 +137,7 @@ resource "unifi_device" "u7_pro_max" {
 
 resource "unifi_device" "pro_max_24_poe" {
   mac               = "f4:e2:c6:ab:91:02"
+  name              = "USW Pro Max 24 PoE"
   allow_adoption    = true
   forget_on_destroy = false
 

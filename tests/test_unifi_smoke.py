@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 import time
 from typing import Any
+from unittest.mock import patch
 
 import httpx
 import pytest
@@ -15,9 +16,14 @@ assert SPEC is not None
 assert SPEC.loader is not None
 MODULE = module_from_spec(SPEC)
 sys.modules[SPEC.name] = MODULE
-SPEC.loader.exec_module(MODULE)
+# unifi_smoke imports its sibling unifi_api, which is only importable from scripts/.
+with patch.object(sys, "path", [str(MODULE_PATH.parent), *sys.path]):
+    SPEC.loader.exec_module(MODULE)
 
 SmokeFailure: type[Exception] = MODULE.SmokeFailure
+# Login and URL conformance live in unifi_api and raise its base error, not the
+# check-level subclass.
+ControllerError: type[Exception] = MODULE.ControllerError
 
 # Values that must never reach stdout, stderr, or an exception message.
 PUBLIC_IP = "99.93.14.108"
@@ -170,7 +176,7 @@ def test_login_succeeds_and_keeps_the_session_cookie() -> None:
 
 def test_login_rejection_does_not_echo_the_password() -> None:
     handler = constant_handler(httpx.Response(401, json={"password": PASSWORD}))
-    with transport(handler) as client, pytest.raises(SmokeFailure) as failure:
+    with transport(handler) as client, pytest.raises(ControllerError) as failure:
         _ = MODULE.login(client, "https://10.10.20.1", "admin", PASSWORD)
     assert "401" in str(failure.value)
     assert PASSWORD not in str(failure.value)
@@ -180,7 +186,7 @@ def test_login_without_a_cookie_fails() -> None:
     handler = constant_handler(httpx.Response(200, json={"meta": {"rc": "ok"}}))
     with (
         transport(handler) as client,
-        pytest.raises(SmokeFailure, match="no session cookie"),
+        pytest.raises(ControllerError, match="no session cookie"),
     ):
         _ = MODULE.login(client, "https://10.10.20.1", "admin", PASSWORD)
 
@@ -473,18 +479,38 @@ Timestamp     A/R    Flags  if Domain               Service Type         Instanc
 HAP_OUTPUT = """Browsing for _hap._tcp.local.
 21:59:33.353  Add        2  14 local.               _hap._tcp.           HomePodSensor 500623
 """
+IPP_OUTPUT = """Browsing for _ipp._tcp.local.
+21:59:41.100  Add        3  14 local.               _ipp._tcp.           Canon MF650C Series
+"""
+USCAN_OUTPUT = """Browsing for _uscan._tcp.local.
+21:59:41.880  Add        2  14 local.               _uscan._tcp.         Canon MF650C Series
+"""
+PRINTER_OUTPUT = {"_ipp._tcp": IPP_OUTPUT, "_uscan._tcp": USCAN_OUTPUT}
 
 
-def test_discovery_passes_when_every_service_shows_the_homepod() -> None:
+def browse_everything(service: str) -> str:
+    if service in PRINTER_OUTPUT:
+        return PRINTER_OUTPUT[service]
+    return HAP_OUTPUT if service == "_hap._tcp" else AIRPLAY_OUTPUT
+
+
+def test_discovery_passes_when_every_service_shows_its_device() -> None:
     browsed: list[str] = []
 
     def browse(service: str) -> str:
         browsed.append(service)
-        return HAP_OUTPUT if service == "_hap._tcp" else AIRPLAY_OUTPUT
+        return browse_everything(service)
 
     detail = MODULE.check_discovery(browse)
-    assert browsed == ["_airplay._tcp", "_raop._tcp", "_hap._tcp"]
-    assert detail.startswith("Kitchen HomePod visible on")
+    assert browsed == [
+        "_airplay._tcp",
+        "_raop._tcp",
+        "_hap._tcp",
+        "_ipp._tcp",
+        "_uscan._tcp",
+    ]
+    assert "Kitchen HomePod on _airplay._tcp" in detail
+    assert "Canon MF654Cdw on _uscan._tcp" in detail
 
 
 def test_discovery_rejects_the_wrong_source_network() -> None:
@@ -507,31 +533,50 @@ def test_discovery_ignores_removed_instances() -> None:
     )
 
     def browse(service: str) -> str:
-        return HAP_OUTPUT if service == "_hap._tcp" else removed
+        return removed if service == "_airplay._tcp" else browse_everything(service)
 
-    with pytest.raises(SmokeFailure, match=r"_airplay\._tcp"):
+    with pytest.raises(SmokeFailure, match=r"Kitchen HomePod on _airplay\._tcp"):
         _ = MODULE.check_discovery(browse)
 
 
 def test_discovery_names_the_services_that_are_silent() -> None:
     def browse(service: str) -> str:
-        if service == "_hap._tcp":
-            return HAP_OUTPUT
-        return "" if service == "_raop._tcp" else AIRPLAY_OUTPUT
+        return "" if service == "_raop._tcp" else browse_everything(service)
 
-    with pytest.raises(SmokeFailure, match=r"not advertised on _raop._tcp"):
+    with pytest.raises(SmokeFailure, match=r"not advertised: Kitchen HomePod on _raop"):
+        _ = MODULE.check_discovery(browse)
+
+
+def test_discovery_names_a_silent_printer() -> None:
+    def browse(service: str) -> str:
+        return "" if service == "_uscan._tcp" else browse_everything(service)
+
+    with pytest.raises(SmokeFailure, match=r"not advertised: Canon MF654Cdw on _uscan"):
         _ = MODULE.check_discovery(browse)
 
 
 def test_discovery_rejects_an_unrelated_homepod() -> None:
     def browse(service: str) -> str:
-        if service == "_hap._tcp":
-            return HAP_OUTPUT
-        return AIRPLAY_OUTPUT.replace("Kitchen", "Study HomePod")
+        if service in ("_airplay._tcp", "_raop._tcp"):
+            return AIRPLAY_OUTPUT.replace("Kitchen", "Study HomePod")
+        return browse_everything(service)
 
     with pytest.raises(
         SmokeFailure,
-        match=r"not advertised on _airplay._tcp, _raop._tcp",
+        match=r"Kitchen HomePod on _airplay\._tcp, Kitchen HomePod on _raop\._tcp",
+    ):
+        _ = MODULE.check_discovery(browse)
+
+
+def test_discovery_rejects_another_vendors_printer() -> None:
+    def browse(service: str) -> str:
+        if service in PRINTER_OUTPUT:
+            return PRINTER_OUTPUT[service].replace("Canon MF650C Series", "Brother MFC")
+        return browse_everything(service)
+
+    with pytest.raises(
+        SmokeFailure,
+        match=r"Canon MF654Cdw on _ipp\._tcp, Canon MF654Cdw on _uscan\._tcp",
     ):
         _ = MODULE.check_discovery(browse)
 
@@ -623,7 +668,7 @@ def test_controller_url_rejects_secret_bearing_components() -> None:
         "https://controller.local/api/secret-sentinel",
     )
     for value in sentinels:
-        with pytest.raises(SmokeFailure) as failure:
+        with pytest.raises(ControllerError) as failure:
             _ = MODULE.controller_base_url(value)
         assert not any(sentinel in str(failure.value) for sentinel in SECRETS)
         assert value not in str(failure.value)

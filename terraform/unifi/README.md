@@ -12,13 +12,13 @@ OpenTofu owns:
 - the YoRHa WPA3 Personal SSID, including PMF, 2.4 and 5 GHz, and MLO
 - the Lunar Tear and Scanners WPA2/WPA3 transition SSIDs on 2.4 and 5 GHz
 - The Village WPA2 Personal SSID on 2.4 GHz
-- name-only stable client records for explicitly retained devices
+- name-only stable client records for every device of Thurston's on any network; other people's Lunar Tear devices are deliberately unnamed
 - reusable Bunker, YoRHa, Scanners, and The Village access profiles plus the infrastructure trunk profile
 - stable device port assignments after physical adoption
 - the disabled Internet 1 backup and primary WAS-110 DHCP WAN, including priority, failover mode, and the sensitive cloned MAC
 - the `192.168.11.0/24` WAS-110 LCT interface route
 - the Plex TCP `32400` WAN port forward to pod042
-- Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, and Scanners, restricted to Apple AirPlay, HomeKit, and the `_hue._tcp.local` custom service
+- Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, and Scanners, restricted to Apple AirPlay, HomeKit, and the `_ipp._tcp.local`, `_ipps._tcp.local`, `_uscan._tcp.local`, `_uscans._tcp.local`, and `_hue._tcp.local` custom services
 - Network-device automatic update policy
 
 Manual state remains manual because the provider cannot represent or safely round-trip it:
@@ -48,7 +48,7 @@ The controller was factory-reset and bootstrapped behind the BGW620 on UDM port 
 - YoRHa may initiate toward Bunker, Lunar Tear, Scanners, and The Village, with automatic return traffic
 - Lunar Tear may initiate toward Scanners, with automatic return traffic
 - Bunker initiation toward YoRHa has an explicit logged block; the zone matrix denies other unapproved inter-zone initiation
-- Gateway mDNS Proxy uses Custom mode for YoRHa, Lunar Tear, and Scanners only; Bunker and The Village remain excluded. Service scope contains only the predefined Apple AirPlay and HomeKit groups.
+- Gateway mDNS Proxy uses Custom mode for YoRHa, Lunar Tear, and Scanners only; Bunker and The Village remain excluded. Service scope contains the predefined Apple AirPlay and HomeKit groups plus the AirPrint, AirScan, and Philips Hue custom services.
 
 The full physical cutover and rollback gates live in [`docs/wayfinding/new-house-internet-cutover/tickets/03-cutover-safety-gates.md`](../../docs/wayfinding/new-house-internet-cutover/tickets/03-cutover-safety-gates.md).
 

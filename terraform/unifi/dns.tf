@@ -29,6 +29,14 @@ resource "unifi_dns_record" "pod042_service" {
   ttl         = "5m"
 }
 
+resource "unifi_dns_record" "printer" {
+  name        = "printer.thurstons.house"
+  record_type = "A"
+  value       = unifi_client.canon_printer.fixed_ip
+  enabled     = true
+  ttl         = "5m"
+}
+
 resource "unifi_dns_record" "kvm" {
   name        = "kvm.thurstons.house"
   record_type = "A"
