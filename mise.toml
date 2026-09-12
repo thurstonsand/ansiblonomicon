@@ -276,6 +276,10 @@ flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
 '''
 run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret UNIFI_USERNAME --secret UNIFI_PASSWORD --secret UNIFI_WAN_MAC_OVERRIDE --secret YORHA_PASSPHRASE --secret LUNAR_TEAR_PASSPHRASE --secret THE_VILLAGE_PASSPHRASE --secret SCANNERS_PASSPHRASE -- python3 "{{config_root}}/scripts/tofu.py" unifi apply ${usage_yes:+-auto-approve}'
 
+[tasks."network:survey"]
+description = "Read-only view of what is on the network and what it resolves"
+run = '"{{config_root}}/scripts/fnox-host" exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD --secret NEXTDNS_API_KEY --secret NEXTDNS_PROFILE_ID -- uv run scripts/network_survey.py'
+
 [tasks."unifi:smoke"]
 description = "Read-only smoke checks for the WAS-110 WAN path"
 run = "./scripts/fnox-host exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD -- uv run scripts/unifi_smoke.py"

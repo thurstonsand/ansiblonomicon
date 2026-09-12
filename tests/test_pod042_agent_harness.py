@@ -63,7 +63,11 @@ def test_local_resources_all_platforms(
         for path in paths
         if path.startswith(".config/amp/skills/") and path.endswith("/SKILL.md")
     }
-    assert amp == {".config/amp/skills/operating-pod042/SKILL.md"}
+    # Amp is explicit-only, so the homelab skills are the whole Amp set on pod042.
+    assert amp == {
+        ".config/amp/skills/operating-pod042/SKILL.md",
+        ".config/amp/skills/surveying-the-network/SKILL.md",
+    }
     handoff = files[home / ".claude/skills/handoff/SKILL.md"][0].decode()
     assert "{{" not in handoff
     assert "{%" not in handoff
