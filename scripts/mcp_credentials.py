@@ -8,11 +8,15 @@ from pathlib import Path
 import subprocess
 
 ROOT = Path(__file__).resolve().parent.parent
+HEADER_SECRETS = {
+    "cloudflare-headers": "CLOUDFLARE_API_TOKEN",
+    "home-assistant-headers": "HOMEASSISTANT_MCP_TOKEN",
+}
 
 
-def cloudflare_token() -> str:
+def secret(name: str) -> str:
     result = subprocess.run(
-        [str(ROOT / "scripts/fnox-host"), "get", "CLOUDFLARE_API_TOKEN"],
+        [str(ROOT / "scripts/fnox-host"), "get", name],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
@@ -21,16 +25,16 @@ def cloudflare_token() -> str:
         check=True,
     ).stdout.strip()
     if not result:
-        raise ValueError("Cloudflare credential is empty")
+        raise ValueError(f"{name} is empty")
     return result
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=["cloudflare-api", "cloudflare-headers"])
+    parser.add_argument("mode", choices=["cloudflare-api", *HEADER_SECRETS])
     args = parser.parse_args()
-    token = cloudflare_token()
-    if args.mode == "cloudflare-headers":
+    if args.mode in HEADER_SECRETS:
+        token = secret(HEADER_SECRETS[args.mode])
         print(json.dumps({"Authorization": f"Bearer {token}"}))
         return
     environment = {
@@ -46,7 +50,7 @@ def main() -> None:
             "SSL_CERT_FILE",
         }
     }
-    environment["CLOUDFLARE_API_TOKEN"] = token
+    environment["CLOUDFLARE_API_TOKEN"] = secret("CLOUDFLARE_API_TOKEN")
     command = [
         "mise",
         "-C",
