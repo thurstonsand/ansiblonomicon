@@ -30,6 +30,12 @@ VM_CONFIG = {
     "boot.autostart": "true",
 }
 MAC = "00:16:3e:48:41:42"
+ZBT_2 = {
+    "type": "usb",
+    "vendorid": "303a",
+    "productid": "831a",
+    "serial": "1CDBD45E7B24",
+}
 
 
 def seed_vm() -> None:
@@ -124,7 +130,10 @@ def ensure_vm(apply: bool) -> None:
     nic_drift = nic is None or any(
         nic.get(key) != value for key, value in desired_nic.items()
     )
-    if not apply and (config_drift or root_drift or nic_drift or not running):
+    zbt_2_drift = devices.get("zbt-2") != ZBT_2
+    if not apply and (
+        config_drift or root_drift or nic_drift or zbt_2_drift or not running
+    ):
         raise ValueError("home-assistant instance differs from its declaration")
     if apply and running and (config_drift or root_drift or nic_drift):
         print("Stop home-assistant for configuration")
@@ -177,6 +186,29 @@ def ensure_vm(apply: bool) -> None:
                         "eth0",
                         f"{key}={desired_nic[key]}",
                     )
+    if zbt_2_drift:
+        print("home-assistant: device zbt-2")
+        if "zbt-2" in devices:
+            incus.run(
+                "/usr/bin/incus",
+                "config",
+                "device",
+                "remove",
+                "home-assistant",
+                "zbt-2",
+            )
+        incus.run(
+            "/usr/bin/incus",
+            "config",
+            "device",
+            "add",
+            "home-assistant",
+            "zbt-2",
+            "usb",
+            f"vendorid={ZBT_2['vendorid']}",
+            f"productid={ZBT_2['productid']}",
+            f"serial={ZBT_2['serial']}",
+        )
     if not running:
         print("Start home-assistant")
         incus.run("/usr/bin/incus", "start", "home-assistant")

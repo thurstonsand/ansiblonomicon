@@ -31,6 +31,35 @@ def test_exact_haos_vm_contract() -> None:
         "boot.autostart": "true",
     }
     assert home_assistant.MAC == "00:16:3e:48:41:42"
+    assert home_assistant.ZBT_2 == {
+        "type": "usb",
+        "vendorid": "303a",
+        "productid": "831a",
+        "serial": "1CDBD45E7B24",
+    }
+
+
+def declared_instance(config: dict[str, str]) -> dict[str, Any]:
+    return {
+        "type": "virtual-machine",
+        "architecture": "x86_64",
+        "config": config,
+        "devices": {
+            "root": {
+                "pool": home_assistant.incus.POOL_NAME,
+                "type": "disk",
+                "path": "/",
+                "size": "64GiB",
+            },
+            "eth0": {
+                "type": "nic",
+                "network": "scanners",
+                "hwaddr": home_assistant.MAC,
+                "name": "eth0",
+            },
+            "zbt-2": home_assistant.ZBT_2,
+        },
+    }
 
 
 def test_check_missing_vm_never_downloads_or_mutates(
@@ -68,25 +97,7 @@ def test_check_fails_for_stopped_or_misconfigured_vm(
         **home_assistant.VM_CONFIG,
         "limits.memory": memory,
     }
-    instance = {
-        "type": "virtual-machine",
-        "architecture": "x86_64",
-        "config": config,
-        "devices": {
-            "root": {
-                "pool": home_assistant.incus.POOL_NAME,
-                "type": "disk",
-                "path": "/",
-                "size": "64GiB",
-            },
-            "eth0": {
-                "type": "nic",
-                "network": "scanners",
-                "hwaddr": home_assistant.MAC,
-                "name": "eth0",
-            },
-        },
-    }
+    instance = declared_instance(config)
 
     def read_instance(kind: str, _name: str) -> dict[str, Any]:
         return {"status": status} if kind == "info" else instance
@@ -118,3 +129,38 @@ def test_unifi_home_assistant_contract() -> None:
     assert 'mac              = "00:16:3e:48:41:42"' in clients
     assert 'fixed_ip         = "10.10.40.42"' in clients
     assert 'local_dns_record = "home-assistant"' in clients
+
+
+def test_apply_hotplugs_zbt_2_into_running_vm(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance = declared_instance(home_assistant.VM_CONFIG)
+    del instance["devices"]["zbt-2"]
+    calls: list[tuple[str, ...]] = []
+
+    def read_instance(kind: str, _name: str) -> dict[str, Any]:
+        return {"status": "Running"} if kind == "info" else instance
+
+    def record_run(*args: str, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(home_assistant.incus, "incus_json", read_instance)
+    monkeypatch.setattr(home_assistant.incus, "run", record_run)
+
+    home_assistant.ensure_vm(True)
+
+    assert calls == [
+        (
+            "/usr/bin/incus",
+            "config",
+            "device",
+            "add",
+            "home-assistant",
+            "zbt-2",
+            "usb",
+            "vendorid=303a",
+            "productid=831a",
+            "serial=1CDBD45E7B24",
+        )
+    ]
