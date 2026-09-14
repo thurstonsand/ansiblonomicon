@@ -48,20 +48,15 @@ resource "unifi_client" "thurston_work_mbp" {
   allow_existing = true
 }
 
-# Two Espressif boards nobody can identify. Their only traffic is NTP and one AWS IoT
-# account that matches no other device here. Blocked to find out what stops working;
-# flip these back to false the moment something does.
-resource "unifi_client" "unidentified_espressif_d07c" {
-  mac            = "3c:61:05:6a:d0:7c"
-  name           = "Unidentified Espressif d0:7c"
-  blocked        = true
+resource "unifi_client" "whisker_litter_robot" {
+  mac            = "c8:c9:a3:c2:36:90"
+  name           = "Whisker Litter-Robot"
   allow_existing = true
 }
 
-resource "unifi_client" "unidentified_espressif_3690" {
-  mac            = "c8:c9:a3:c2:36:90"
-  name           = "Unidentified Espressif 36:90"
-  blocked        = true
+resource "unifi_client" "whisker_feeder_robot" {
+  mac            = "3c:61:05:6a:d0:7c"
+  name           = "Whisker Feeder-Robot"
   allow_existing = true
 }
 
