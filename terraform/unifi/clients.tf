@@ -67,6 +67,13 @@ resource "unifi_client" "canon_printer" {
   allow_existing = true
 }
 
+resource "unifi_client" "pod042_mdns_beacon" {
+  mac            = "02:00:0a:0a:28:fa"
+  name           = "pod042 mDNS Beacon"
+  fixed_ip       = "10.10.40.250"
+  allow_existing = true
+}
+
 resource "unifi_client" "hue_bridge" {
   mac            = "c4:29:96:bb:7a:cd"
   name           = "Hue Bridge Pro"

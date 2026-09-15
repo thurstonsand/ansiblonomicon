@@ -46,7 +46,7 @@ Three `unifi_client` records with fixed addresses name the probe identities, so 
 - Add `nmap`, `tcpdump`, `arp-scan`, and `mdns-scan` to `bootstrap.packages`. Not `avahi-utils`: `avahi-browse` needs a daemon and D-Bus the namespace does not have.
 - Extend `check.py`: parents addressless with IPv6 off, the namespace holding exactly three addresses and no default route, no client-VLAN address in root, `FORWARD` policy `DROP`.
 - Write the exception next to the invariant in [VLAN security redesign](13-vlan-security-redesign.md): Bunker never initiates toward client tiers; pod042 carries a separate probe identity on each client VLAN that is not on Bunker and hosts no service.
-- Write down the rule that keeps this from growing: no veth into `probe`, and no service ever gets a VLAN interface. Otherwise the exception becomes the zone-level allow ticket 13 rejected.
+- Write down the rule that keeps this from growing: no veth into `probe`, and no host service ever gets a VLAN interface. A container that is its own named client, like the Scanners mDNS beacon, is not a host interface. Otherwise the exception becomes the zone-level allow ticket 13 rejected.
 
 ## Open decisions
 

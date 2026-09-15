@@ -130,6 +130,11 @@ owner = "root"
 group = "docker"
 mode = "0750"
 
+[bootstrap.directories."/etc/ansiblonomicon/containers/mdns-beacon"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
 [bootstrap.directories."/etc/ansiblonomicon/containers/plex"]
 owner = "root"
 group = "docker"
@@ -399,6 +404,18 @@ owner = "root"
 group = "root"
 mode = "0600"
 
+[bootstrap.files."/etc/ansiblonomicon/containers/mdns-beacon/compose.yaml"]
+source = "containers/stacks/mdns-beacon/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/mdns-beacon/beacon.py"]
+source = "containers/stacks/mdns-beacon/beacon.py"
+owner = "root"
+group = "root"
+mode = "0644"
+
 [bootstrap.files."/etc/ansiblonomicon/containers/plex/compose.yaml"]
 source = "containers/stacks/plex/compose.yaml"
 owner = "root"
@@ -576,6 +593,18 @@ sudo = true
 pull = "always"
 wait = true
 wait_timeout = 180
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.mdns-beacon]
+project_dir = "/etc/ansiblonomicon/containers/mdns-beacon"
+files = ["compose.yaml"]
+project_name = "mdns-beacon"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 120
 remove_orphans = true
 depends_on = ["service:docker"]
 

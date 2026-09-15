@@ -1,0 +1,33 @@
+services:
+  mdns-beacon:
+    image: python:3-alpine
+    restart: unless-stopped
+    user: "65534:65534"
+    read_only: true
+    cap_drop:
+      - ALL
+    command:
+      - python
+      - /beacon.py
+      - _ipp._tcp.local
+      - _ipps._tcp.local
+      - _universal._sub._ipp._tcp.local
+      - _uscan._tcp.local
+      - _uscans._tcp.local
+    volumes:
+      - ./beacon.py:/beacon.py:ro
+    networks:
+      scanners:
+        ipv4_address: 10.10.40.250
+        mac_address: 02:00:0a:0a:28:fa
+
+networks:
+  scanners:
+    driver: macvlan
+    driver_opts:
+      parent: enp5s0.40
+    ipam:
+      config:
+        - subnet: 10.10.40.0/24
+          gateway: 10.10.40.1
+          ip_range: 10.10.40.250/32
