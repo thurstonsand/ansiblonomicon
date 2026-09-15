@@ -23,7 +23,7 @@ mise run network:survey -- resolvers                # devices NextDNS has seen, 
 
 Work in this order. Each step is cheaper than the next and usually enough.
 
-1. `clients --unnamed` to get its address, VLAN, vendor OUI, and signal. The OUI alone often settles it; an Espressif OUI means an ESP32 microcontroller, so no Apple product and no full computer.
+1. `clients --unnamed` to get its address, MAC, VLAN, vendor OUI, and signal. The OUI alone often settles it; an Espressif OUI means an ESP32 microcontroller, so no Apple product and no full computer.
 2. `traffic <address> --window -30d`. A vendor's own domain names the device outright. A bare AWS IoT Core or Alibaba IoT endpoint means small-vendor firmware and identifies only the manufacturer's cloud account.
 3. Compare `first_seen` against the other clients. Devices that arrived together were installed together.
 4. Only then reach for the segment. Bunker cannot initiate toward the client VLANs, so an L2 probe needs the work in [ticket 50](../../../../docs/wayfinding/bunker-rebuild/tickets/50-pod042-network-observability.md). Do not create ad-hoc VLAN interfaces on pod042 to get around this; an address on a client VLAN exposes every wildcard listener the host has.

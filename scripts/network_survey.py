@@ -182,7 +182,8 @@ def show_clients(controller: Controller, *, history: bool, unnamed_only: bool) -
     if unnamed_only:
         clients = [client for client in clients if client.name == "-"]
     print(
-        f"{'network':12s} {'address':15s} {'name':34s} {'how':6s} {'seen':12s} vendor"
+        f"{'network':12s} {'address':15s} {'mac':17s} {'name':34s} {'how':6s} "
+        f"{'seen':12s} vendor"
     )
     for client in clients:
         how = (
@@ -195,7 +196,7 @@ def show_clients(controller: Controller, *, history: bool, unnamed_only: bool) -
         seen = "online" if client.online else client.last_seen
         flag = " [randomized]" if is_randomized(client.mac) else ""
         print(
-            f"{client.network:12s} {client.address:15s} {client.label:34s} "
+            f"{client.network:12s} {client.address:15s} {client.mac:17s} {client.label:34s} "
             f"{how:6s} {seen:12s} {client.vendor}{flag}"
         )
     print(f"\n{len(clients)} clients")
