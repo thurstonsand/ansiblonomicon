@@ -66,6 +66,7 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 - [SMB data access](tickets/35-smb-data-access.md): One authenticated SMB3 `media` share exposes `/mnt/ark/media` to YoRHa as `thurstonsand`; black-box, legacy state, guests, NetBIOS discovery, and Lunar Tear remain outside the file-serving boundary.
 - [Implement SMB data access](tickets/47-implement-smb-data-access.md): Native Samba now serves only `media` on TCP 445; authenticated create/read/delete, ownership, service hardening, and a clean second reconciliation passed live.
 - [Minimum Incus and fresh Home Assistant substrate](tickets/49-incus-home-assistant-substrate.md): Incus owns its dedicated ZFS storage and tagged Scanners network independently from the fresh HAOS VM workload; both are live, converged, and natively manageable without a parallel repository-owned Home Assistant YAML tree.
+- [Make `unifi_client.blocked` reach the access points](tickets/51-unifi-client-blocked-never-reaches-aps.md): Provider release `v0.56.0-ansiblonomicon.6` sends station-manager block and unblock commands alongside the persistent client update; both AP ACL directions passed live and the follow-up plan converged cleanly.
 
 ## Not yet specified
 

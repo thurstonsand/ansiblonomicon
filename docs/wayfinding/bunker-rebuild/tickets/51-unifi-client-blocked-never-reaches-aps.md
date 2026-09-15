@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 type: task
 blocked-by: []
 ---
@@ -25,9 +25,9 @@ In the fork, `unifi/client_resource.go` carries `blocked` like any other field: 
 
 The UI does not block that way. It issues station-manager commands, which update the AP ACL immediately. The go-unifi fork already wraps them in `unifi/client.go`: `BlockClientByMAC` (`block-sta`) and `UnblockClientByMAC` (`unblock-sta`). The provider never calls either.
 
-## Candidate verification
+## Verification
 
-The unreleased provider and SDK patches passed their focused unit suites, the full SDK suite, provider compilation, and provider vet. The SDK now rejects a non-`ok` station-manager `rc` even when the response contains one client record.
+The provider and SDK patches passed their focused unit suites, the full SDK suite, provider compilation, and provider vet. The SDK now rejects a non-`ok` station-manager `rc` even when the response contains one client record.
 
 Both directions then passed live on the Whisker Feeder-Robot using a development provider built from those exact patches. Applying `blocked = true` changed both controller APIs to `blocked=true`, removed the client from `/stat/sta`, and made the U7 Pro Max immediately log repeated `auth: disallowed by ACL` and reason 37. Applying `blocked = false` changed the controller back and, within seconds, the AP logged authentication, association, a complete four-way handshake, `AP-STA-CONNECTED`, and DHCP address `10.10.50.112`. A full refreshed follow-up plan returned **No changes**. The client was left online and unblocked.
 
@@ -42,3 +42,7 @@ Both directions then passed live on the Whisker Feeder-Robot using a development
 ## Completion
 
 Changing `blocked` in HCL and applying changes what the AP enforces within one apply, in both directions, proven from the AP's own log, with a clean follow-up plan.
+
+## Resolution
+
+The SDK rejects failed station-manager responses, and the provider persists the controller record, issues the matching runtime ACL command whenever declared blocked state changes, then reads the controller record back. Both release branches carry the fix in provider release `v0.56.0-ansiblonomicon.6`; ansiblonomicon pins its verified Darwin ARM64, Linux AMD64, and Linux ARM64 artifacts. The live Feeder-Robot block/unblock cycle proved both AP enforcement directions, and the released provider produced a clean full plan.

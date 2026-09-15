@@ -54,7 +54,7 @@ The full physical cutover and rollback gates live in [`docs/wayfinding/new-house
 
 ## Provider constraints
 
-The provider is pinned exactly to `github.com/thurstonsand/unifi` 0.56.0-ansiblonomicon.5, built from the `release` branch of the permanent [`terraform-provider-unifi`](https://github.com/thurstonsand/terraform-provider-unifi) fork. `provider.toml` records the checksums for macOS ARM64, Linux AMD64, and Linux ARM64. `mise run unifi:provider:install` verifies the matching GitHub Release archive and installs only its binary into OpenTofu's implied filesystem mirror; extra archive files change OpenTofu's directory hash. The fork is not published to a provider registry.
+The provider is pinned exactly to `github.com/thurstonsand/unifi` 0.56.0-ansiblonomicon.6, built from the `release` branch of the permanent [`terraform-provider-unifi`](https://github.com/thurstonsand/terraform-provider-unifi) fork. `provider.toml` records the checksums for macOS ARM64, Linux AMD64, and Linux ARM64. `mise run unifi:provider:install` verifies the matching GitHub Release archive and installs only its binary into OpenTofu's implied filesystem mirror; extra archive files change OpenTofu's directory hash. The fork is not published to a provider registry.
 
 Shared R2 state moved from `registry.opentofu.org/ubiquiti-community/unifi` to the fork source once with `tofu state replace-provider`. Do not repeat that migration. The backend uses OpenTofu's native S3 lockfile; R2 rejects a competing conditional lock write. The encrypted pre-migration snapshot lives outside Git under `~/Documents/Network Backups/`.
 
