@@ -73,6 +73,12 @@ resource "unifi_client" "hue_bridge" {
   allow_existing = true
 }
 
+resource "unifi_client" "matic_vacuum_main_floor" {
+  mac            = "bc:d2:2c:88:c0:16"
+  name           = "Matic Robot Vacuum - Main Floor"
+  allow_existing = true
+}
+
 resource "unifi_client" "pod042_kvm" {
   mac              = "94:83:c4:c0:d7:7b"
   name             = "pod042-kvm"
