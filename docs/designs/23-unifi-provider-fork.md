@@ -99,6 +99,8 @@ A provider-source migration is a one-time state operation. The committed source 
 
 The fork extends the existing provider instead of introducing another mutation engine. This retains saved plans, remote locking, import, lifecycle, sensitive attributes, and removal semantics.
 
+`unifi_client.blocked` persists the controller record through the ordinary client update and separately issues the matching station-manager block or unblock command so access-point runtime ACLs converge during the same apply. A failed station command fails the apply, and the provider reads the client back rather than copying the planned flag into state.
+
 ### 2. The fork is permanent but minimized
 
 The fork is not an upstream waiting branch. Its single `release` branch stays rebased directly on `upstream/main`, and its rebase skill first removes changes made redundant upstream. Release notes record the exact upstream base commit.

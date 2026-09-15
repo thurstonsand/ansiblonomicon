@@ -25,9 +25,11 @@ In the fork, `unifi/client_resource.go` carries `blocked` like any other field: 
 
 The UI does not block that way. It issues station-manager commands, which update the AP ACL immediately. The go-unifi fork already wraps them in `unifi/client.go`: `BlockClientByMAC` (`block-sta`) and `UnblockClientByMAC` (`unblock-sta`). The provider never calls either.
 
-## Unverified
+## Candidate verification
 
-The block direction. Every block observed so far came from the UI, so whether `blocked = true` through the provider also leaves the AP open is untested. Assume it does, since it goes through the same `PUT`. A declared block that does not block is the worse failure of the two: nothing looks wrong.
+The unreleased provider and SDK patches passed their focused unit suites, the full SDK suite, provider compilation, and provider vet. The SDK now rejects a non-`ok` station-manager `rc` even when the response contains one client record.
+
+Both directions then passed live on the Whisker Feeder-Robot using a development provider built from those exact patches. Applying `blocked = true` changed both controller APIs to `blocked=true`, removed the client from `/stat/sta`, and made the U7 Pro Max immediately log repeated `auth: disallowed by ACL` and reason 37. Applying `blocked = false` changed the controller back and, within seconds, the AP logged authentication, association, a complete four-way handshake, `AP-STA-CONNECTED`, and DHCP address `10.10.50.112`. A full refreshed follow-up plan returned **No changes**. The client was left online and unblocked.
 
 ## Work
 
