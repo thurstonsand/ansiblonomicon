@@ -1,0 +1,612 @@
+{
+  "title": "House",
+  "views": [
+    {
+      "title": "House",
+      "path": "home",
+      "type": "panel",
+      "cards": [
+        {
+          "type": "custom:house-atlas-card",
+          "floors": [
+            {
+              "id": "basement",
+              "name": "Basement",
+              "width": 400,
+              "height": 500,
+              "stairs": "<g class=\"stairs\" aria-hidden=\"true\"><path d=\"M10 350h40\"/><path d=\"M10 358h40\"/><path d=\"M10 366h40\"/><path d=\"M10 374h40\"/><path d=\"M10 382h40\"/><path d=\"M10 390h40\"/><path d=\"M10 398h40\"/><path d=\"M10 406h40\"/><path d=\"M10 414h40\"/><path d=\"M30.0 410V354m-3 4l3 -4l3 4\"/></g>",
+              "rooms": [
+                {
+                  "id": "covered_deck",
+                  "name": "Covered Deck",
+                  "path": "M10 10H230L325 95H10Z",
+                  "label": [
+                    120,
+                    55
+                  ],
+                  "lines": [
+                    "Covered Deck"
+                  ],
+                  "outdoor": true
+                },
+                {
+                  "id": "under_primary",
+                  "name": "Under Primary",
+                  "path": "M10 95h170v205h-170Z",
+                  "label": [
+                    95.0,
+                    189.5
+                  ],
+                  "lines": [
+                    "Under",
+                    "Primary"
+                  ]
+                },
+                {
+                  "id": "under_living_room",
+                  "name": "Under Living Room",
+                  "path": "M180 95h210v165h-210Z",
+                  "label": [
+                    285.0,
+                    171.5
+                  ],
+                  "lines": [
+                    "Under Living Room"
+                  ],
+                  "entity": "lock.under_living_room_basement_door",
+                  "mapNote": "Basement Door"
+                },
+                {
+                  "id": "stair_hall",
+                  "name": "Entryway",
+                  "path": "M180 260H260V300H220V390H180V470H10V300H180Z",
+                  "label": [
+                    114,
+                    386
+                  ],
+                  "lines": [
+                    "Entryway"
+                  ]
+                },
+                {
+                  "id": "little_room",
+                  "name": "Little Room",
+                  "path": "M220 300H260V390H220Z",
+                  "label": [
+                    240,
+                    337
+                  ],
+                  "lines": [
+                    "Little",
+                    "Room"
+                  ]
+                },
+                {
+                  "id": "under_kitchen",
+                  "name": "Under Kitchen",
+                  "lines": [
+                    "Under Kitchen"
+                  ],
+                  "label": [
+                    325,
+                    377
+                  ],
+                  "path": "M260 260H390V470H180V390H260Z"
+                }
+              ],
+              "openings": [
+                {
+                  "between": [
+                    "under_primary",
+                    "stair_hall"
+                  ],
+                  "path": "M180 270V292"
+                },
+                {
+                  "between": [
+                    "under_living_room",
+                    "stair_hall"
+                  ],
+                  "path": "M198 260H236"
+                },
+                {
+                  "between": [
+                    "little_room",
+                    "stair_hall"
+                  ],
+                  "path": "M220 356V379"
+                },
+                {
+                  "between": [
+                    "under_kitchen",
+                    "stair_hall"
+                  ],
+                  "path": "M180 421V447"
+                },
+                {
+                  "between": [
+                    "under_living_room",
+                    "outside"
+                  ],
+                  "path": "M325 95H354"
+                }
+              ]
+            },
+            {
+              "id": "main",
+              "name": "Main",
+              "width": 400,
+              "height": 510,
+              "stairs": "<g class=\"stairs\" aria-hidden=\"true\"><path d=\"M194 240h40\"/><path d=\"M194 248h40\"/><path d=\"M194 256h40\"/><path d=\"M194 264h40\"/><path d=\"M194 272h40\"/><path d=\"M194 280h40\"/><path d=\"M194 288h40\"/><path d=\"M194 296h40\"/><path d=\"M194 304h40\"/><path d=\"M214.0 300V244m-3 4l3 -4l3 4\"/></g>",
+              "rooms": [
+                {
+                  "id": "screened_porch",
+                  "name": "Screened Porch",
+                  "path": "M10 10h220v70h-220Z",
+                  "label": [
+                    120.0,
+                    45.0
+                  ],
+                  "lines": [
+                    "Screened Porch"
+                  ],
+                  "outdoor": true
+                },
+                {
+                  "id": "wood_deck",
+                  "name": "Wood Deck",
+                  "lines": [
+                    "Wood Deck"
+                  ],
+                  "label": [
+                    310,
+                    49
+                  ],
+                  "outdoor": true,
+                  "path": "M230 10H390V220H350V80H230Z"
+                },
+                {
+                  "id": "bedroom",
+                  "name": "Main Bedroom",
+                  "path": "M10 80H180V260H150V220H10Z",
+                  "label": [
+                    95.0,
+                    144.0
+                  ],
+                  "lines": [
+                    "Main Bedroom"
+                  ],
+                  "lights": [
+                    "light.main_bedroom_cloud_painting",
+                    "light.main_bedroom_yanie_fluff_lamp"
+                  ],
+                  "group": "light.main_bedroom",
+                  "hueScenes": true
+                },
+                {
+                  "id": "living_room",
+                  "name": "Living Room",
+                  "path": "M180 80h170v140h-170Z",
+                  "label": [
+                    265.0,
+                    144.0
+                  ],
+                  "lines": [
+                    "Living Room"
+                  ],
+                  "lights": [
+                    "light.living_room_signe_floor_light_left",
+                    "light.living_room_floor_right",
+                    "light.living_room_wall_wash_right"
+                  ],
+                  "controls": [
+                    {
+                      "entity": "light.living_room_ambient_light",
+                      "name": "Ambient light"
+                    }
+                  ],
+                  "hueScenes": true
+                },
+                {
+                  "id": "primary_bath",
+                  "name": "Main Bath",
+                  "path": "M10 220h85v100h-85Z",
+                  "label": [
+                    52.5,
+                    262.0
+                  ],
+                  "lines": [
+                    "Main",
+                    "Bath"
+                  ]
+                },
+                {
+                  "id": "w_i_c",
+                  "name": "Main Floor W.I.C.",
+                  "path": "M95 220H150V260H180V320H95Z",
+                  "label": [
+                    137.5,
+                    270.0
+                  ],
+                  "lines": [
+                    "W.I.C."
+                  ]
+                },
+                {
+                  "id": "foyer",
+                  "name": "Foyer",
+                  "path": "M180 220H250V300H315V320H250V500H180Z",
+                  "label": [
+                    215.0,
+                    354.0
+                  ],
+                  "lines": [
+                    "Foyer"
+                  ],
+                  "entity": "lock.foyer_front_door",
+                  "mapNote": "Front Door"
+                },
+                {
+                  "id": "laundry",
+                  "name": "Laundry",
+                  "path": "M250 220H315V280H250Z",
+                  "label": [
+                    282.5,
+                    252
+                  ],
+                  "lines": [
+                    "Laundry"
+                  ]
+                },
+                {
+                  "id": "garage",
+                  "name": "Garage",
+                  "path": "M10 320h170v180h-170Z",
+                  "label": [
+                    95.0,
+                    410.0
+                  ],
+                  "lines": [
+                    "Garage"
+                  ]
+                },
+                {
+                  "id": "hall_bath",
+                  "name": "Main Floor Hall Bath",
+                  "path": "M250 320h65v90h-65Z",
+                  "label": [
+                    282.5,
+                    357.0
+                  ],
+                  "lines": [
+                    "Hall",
+                    "Bath"
+                  ]
+                },
+                {
+                  "id": "kitchen",
+                  "name": "Kitchen",
+                  "path": "M315 220H390V410H315V300H250V280H315Z",
+                  "label": [
+                    352.5,
+                    309.0
+                  ],
+                  "lines": [
+                    "Kitchen"
+                  ],
+                  "entity": "media_player.kitchen_kitchen_homepod",
+                  "mapNote": "HomePod"
+                },
+                {
+                  "id": "breakfast_nook",
+                  "name": "Breakfast Nook",
+                  "path": "M250 410h140v90h-140Z",
+                  "label": [
+                    320.0,
+                    455.0
+                  ],
+                  "lines": [
+                    "Breakfast Nook"
+                  ]
+                }
+              ],
+              "openings": [
+                {
+                  "between": [
+                    "bedroom",
+                    "primary_bath"
+                  ],
+                  "path": "M44 220H66"
+                },
+                {
+                  "between": [
+                    "primary_bath",
+                    "w_i_c"
+                  ],
+                  "path": "M95 280V302"
+                },
+                {
+                  "between": [
+                    "bedroom",
+                    "foyer"
+                  ],
+                  "path": "M180 228V252"
+                },
+                {
+                  "between": [
+                    "living_room",
+                    "foyer"
+                  ],
+                  "path": "M194 220H230"
+                },
+                {
+                  "between": [
+                    "living_room",
+                    "kitchen"
+                  ],
+                  "path": "M322 220H344"
+                },
+                {
+                  "between": [
+                    "wood_deck",
+                    "kitchen"
+                  ],
+                  "path": "M357 220H381"
+                },
+                {
+                  "between": [
+                    "laundry",
+                    "kitchen"
+                  ],
+                  "path": "M280 280H304"
+                },
+                {
+                  "between": [
+                    "foyer",
+                    "kitchen"
+                  ],
+                  "path": "M275 300H301"
+                },
+                {
+                  "between": [
+                    "foyer",
+                    "hall_bath"
+                  ],
+                  "path": "M250 366V389"
+                },
+                {
+                  "between": [
+                    "kitchen",
+                    "breakfast_nook"
+                  ],
+                  "path": "M324 410H347"
+                },
+                {
+                  "between": [
+                    "foyer",
+                    "breakfast_nook"
+                  ],
+                  "path": "M250 430V460"
+                },
+                {
+                  "between": [
+                    "garage",
+                    "foyer"
+                  ],
+                  "path": "M180 444V466"
+                },
+                {
+                  "between": [
+                    "bedroom",
+                    "screened_porch"
+                  ],
+                  "path": "M112 80H135"
+                },
+                {
+                  "between": [
+                    "living_room",
+                    "screened_porch"
+                  ],
+                  "path": "M197 80H220"
+                },
+                {
+                  "between": [
+                    "screened_porch",
+                    "wood_deck"
+                  ],
+                  "path": "M230 48V70"
+                },
+                {
+                  "between": [
+                    "foyer",
+                    "outside"
+                  ],
+                  "path": "M200 500H229"
+                }
+              ]
+            },
+            {
+              "id": "second",
+              "name": "Second",
+              "width": 400,
+              "height": 400,
+              "context": "<path class=\"context\" d=\"M160 10H390V110H160Z\"/><text class=\"context-label\" x=\"275\" y=\"62\">Open to below</text><path class=\"context\" d=\"M105 295H230V390H105Z\"/><text class=\"context-label\" x=\"163\" y=\"350\">Open to below</text>",
+              "stairs": "<g class=\"stairs\" aria-hidden=\"true\"><path d=\"M183 230h34\"/><path d=\"M183 238h34\"/><path d=\"M183 246h34\"/><path d=\"M183 254h34\"/><path d=\"M183 262h34\"/><path d=\"M183 270h34\"/><path d=\"M183 278h34\"/><path d=\"M183 286h34\"/><path d=\"M183 294h34\"/><path d=\"M200.0 290V234m-3 4l3 -4l3 4\"/></g>",
+              "rooms": [
+                {
+                  "id": "marianne_office",
+                  "name": "Yanie Office",
+                  "path": "M10 45h150v135h-150Z",
+                  "label": [
+                    85.0,
+                    104.5
+                  ],
+                  "lines": [
+                    "Yanie",
+                    "Office"
+                  ]
+                },
+                {
+                  "id": "thurston_office",
+                  "name": "Thurston Office",
+                  "path": "M10 180h95v210h-95Z",
+                  "label": [
+                    57.5,
+                    271.0
+                  ],
+                  "lines": [
+                    "Thurston",
+                    "Office"
+                  ],
+                  "lights": [
+                    "light.thurston_office_desk_lamp_left",
+                    "light.thurston_office_desk_lamp_right",
+                    "light.thurston_office_wall_wash_left",
+                    "light.thurston_office_wall_wash_right"
+                  ],
+                  "controls": [
+                    {
+                      "entity": "light.thurston_office_desk_lights",
+                      "name": "Desk lights"
+                    },
+                    {
+                      "entity": "light.thurston_office_ambient_light",
+                      "name": "Ambient light"
+                    }
+                  ],
+                  "hueScenes": true
+                },
+                {
+                  "id": "linen_closet",
+                  "name": "Linen Closet",
+                  "path": "M160 110H200V180H160Z",
+                  "label": [
+                    180,
+                    147
+                  ],
+                  "lines": [
+                    "Linen"
+                  ]
+                },
+                {
+                  "id": "second_floor_w_i_c",
+                  "name": "Second Floor W.I.C.",
+                  "path": "M230 110h80v70h-80Z",
+                  "label": [
+                    270.0,
+                    145.0
+                  ],
+                  "lines": [
+                    "W.I.C."
+                  ]
+                },
+                {
+                  "id": "guest_bath",
+                  "name": "Guest Bath",
+                  "path": "M310 110h80v70h-80Z",
+                  "label": [
+                    350.0,
+                    137.0
+                  ],
+                  "lines": [
+                    "Guest",
+                    "Bath"
+                  ]
+                },
+                {
+                  "id": "landing",
+                  "name": "Landing",
+                  "lines": [
+                    "Landing"
+                  ],
+                  "label": [
+                    166,
+                    202
+                  ],
+                  "path": "M200 110H230V295H175V220H105V180H200Z"
+                },
+                {
+                  "id": "second_floor_hall_bath",
+                  "name": "Second Floor Hall Bath",
+                  "path": "M105 220h70v75h-70Z",
+                  "label": [
+                    140.0,
+                    249.5
+                  ],
+                  "lines": [
+                    "Hall",
+                    "Bath"
+                  ]
+                },
+                {
+                  "id": "guest_bedroom",
+                  "name": "Guest Bedroom",
+                  "path": "M230 180h160v210h-160Z",
+                  "label": [
+                    310.0,
+                    277.0
+                  ],
+                  "lines": [
+                    "Guest",
+                    "Bedroom"
+                  ]
+                }
+              ],
+              "openings": [
+                {
+                  "between": [
+                    "marianne_office",
+                    "landing"
+                  ],
+                  "path": "M120 180H145"
+                },
+                {
+                  "between": [
+                    "thurston_office",
+                    "landing"
+                  ],
+                  "path": "M105 190V212"
+                },
+                {
+                  "between": [
+                    "second_floor_hall_bath",
+                    "landing"
+                  ],
+                  "path": "M120 220H145"
+                },
+                {
+                  "between": [
+                    "linen_closet",
+                    "landing"
+                  ],
+                  "path": "M200 135V159"
+                },
+                {
+                  "between": [
+                    "guest_bedroom",
+                    "landing"
+                  ],
+                  "path": "M230 197V224"
+                },
+                {
+                  "between": [
+                    "guest_bedroom",
+                    "second_floor_w_i_c"
+                  ],
+                  "path": "M255 180H280"
+                },
+                {
+                  "between": [
+                    "guest_bedroom",
+                    "guest_bath"
+                  ],
+                  "path": "M339 180H364"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
