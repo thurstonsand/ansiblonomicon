@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 import argparse
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 import json
 import os
 from pathlib import Path
@@ -111,7 +111,7 @@ def main() -> None:
             )
         # Subprocess output is unbuffered where print is not, so an unflushed line here
         # would surface after everything the loop above wrote.
-        print(json.dumps(herdr_server()), flush=True)
+        print(json.dumps(asdict(herdr_server())), flush=True)
         print(
             "Apply: enable operator linger if absent; vendor-idempotent t3 service install; "
             "stop any Herdr server systemd does not own, losing its panes; start all three "
