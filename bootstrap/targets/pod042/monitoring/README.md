@@ -9,5 +9,3 @@ Scrubs retain Debian's `zfs-scrub@.service` command, monthly calendar, persisten
 A new scrub check remains unarmed until the first actual scrub sends a ping. Initial scrubs are explicit commissioning operations, not an every-reconciliation hook. Never fake a successful scrub to arm a check.
 
 SMART self-tests run through smartd 7.5, not custom timers. Daily shorts and monthly longs are staggered across the eight explicit devices; the long test supersedes that day's short. Smartd reports failures through Hark, and the host heartbeat detects a stopped smartd. Self-test schedules use the host's timezone. No device scan or removable KVM storage enters the schedule.
-
-`POD042_SSH_CONTROL_PATH` lets the deployment driver reuse a previously authenticated OpenSSH control connection. Set `POD042_SSH_IDENTITY_AGENT=none` for unattended runs that must not prompt 1Password. Socket paths are session state, not repository configuration.

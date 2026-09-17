@@ -190,18 +190,6 @@ flag "--update-mise" help="Install this machine's mise version on the UDM Pro"
 '''
 run = "./scripts/fnox-host exec --secret NEXTDNS_PROFILE_ID -- mise -C bootstrap bootstrap remote udmp --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/usr/local/bin/mise}"
 
-[tasks."pod042:first-access"]
-description = "Turn a fresh password-accessible Debian install into the pod042 landing zone"
-usage = '''
-arg "<host>" help="Fresh Debian address or resolvable name"
-flag "--replace-host-key" help="Forget the prior SSH host key before connecting"
-'''
-run = '''
-python3 scripts/pod042_first_access.py \
-  "${usage_host}" \
-  ${usage_replace_host_key:+--replace-host-key}
-'''
-
 [tasks."pod042:install-service-token"]
 description = "Install or rotate pod042's 1Password service-account token"
 usage = '''
@@ -215,13 +203,11 @@ alias = "pod042"
 usage = '''
 arg "[capability]" help="Only reconcile one capability, such as base or storage"
 flag "-c --check" help="Show changes without applying them"
-flag "--update-mise" help="Update the system-wide mise binary before reconciling"
 '''
 run = '''
 python3 scripts/pod042_reconcile.py \
   ${usage_capability:+"${usage_capability}"} \
-  ${usage_check:+--check} \
-  ${usage_update_mise:+--update-mise}
+  ${usage_check:+--check}
 '''
 
 [tasks."reconcile:tags"]

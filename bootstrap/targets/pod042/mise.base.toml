@@ -128,9 +128,6 @@ on_change = "restart"
 state = "running"
 enabled = true
 
-[bootstrap.repos]
-"/home/thurstonsand/code/ansiblonomicon" = { url = "https://github.com/thurstonsand/ansiblonomicon.git" }
-
 # The locales package rewrites /etc/locale.gen from debconf on every configure, so
 # declaring that file loses to each glibc upgrade. Declare the debconf answers the
 # package actually reads and let it own the file.

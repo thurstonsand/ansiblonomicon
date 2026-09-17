@@ -13,8 +13,7 @@ Treat this repository as pod042's desired state. Diagnose live state freely; mak
 - Tailscale: `pod042-ts`; forced Cloudflare path: `pod042-remote`.
 - Recovery console: `pod042-kvm` locally or `pod042-kvm-ts` remotely, operated through `scripts/pod042_kvm.py` when host SSH is unavailable.
 - Desired state: `bootstrap/targets/pod042/`.
-- Guarded reconciliation: `mise pod042 [capability] [--check]` from another host; local execution on pod042 uses the same declaration and may intentionally apply the current working tree.
-- The remote path requires clean, pushed, matching revisions. Do not bypass that guard.
+- Reconciliation: `mise pod042 [capability] [--check]`, run on pod042 itself. It applies the current working tree, dirty or not.
 - The remaining `ansible/stacks/`, pod042 inventory, and Ansible roles are migration evidence, not deployment authority.
 
 Capabilities are registered in `scripts/pod042_reconcile.py` and `bootstrap/mise.toml`. Keep resource ownership disjoint. Read the capability's README and nearby ticket before changing storage, network, backup, or identity.

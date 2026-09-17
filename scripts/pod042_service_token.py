@@ -8,6 +8,7 @@ import os
 from pathlib import Path
 import pwd
 import secrets
+import shlex
 import socket
 import stat
 import subprocess
@@ -18,12 +19,91 @@ import pod042_reconcile as reconcile
 
 USER = "thurstonsand"
 PROBE_KEY = "HARK_WEBHOOK_URL_POD042"
-REMOTE_SCRIPT = f"{reconcile.REMOTE_CHECKOUT}/scripts/pod042_service_token.py"
+REMOTE_CHECKOUT = "/home/thurstonsand/code/ansiblonomicon"
+REMOTE_SCRIPT = f"{REMOTE_CHECKOUT}/scripts/pod042_service_token.py"
+DEFAULT_REMOTE = "pod042"
+OPERATOR_PUBLIC_KEY = reconcile.TARGET_ROOT / "base" / "files" / "operator.pub"
+IDENTITY_AGENT_ENV = "POD042_SSH_IDENTITY_AGENT"
+CONTROL_PATH_ENV = "POD042_SSH_CONTROL_PATH"
 MAX_TOKEN_BYTES = 65536
 
 
 class ServiceTokenError(Exception):
     pass
+
+
+# Delivering this token is the one operation left that reaches pod042 from the
+# workstation, so the SSH and checkout-matching helpers live here rather than in
+# the reconcile module, which now only ever runs on the machine itself.
+def ssh_options() -> list[str]:
+    options = ["-i", str(OPERATOR_PUBLIC_KEY), "-o", "IdentitiesOnly=yes"]
+    if identity_agent := os.environ.get(IDENTITY_AGENT_ENV):
+        options.extend(["-o", f"IdentityAgent={identity_agent}"])
+    if control_path := os.environ.get(CONTROL_PATH_ENV):
+        options.extend(["-o", f"ControlPath={control_path}"])
+    return options
+
+
+def assert_remote_hostname(host: str) -> None:
+    actual = reconcile.command_output(ssh_command(host, ["hostname", "-s"]))
+    if actual != reconcile.EXPECTED_HOSTNAME:
+        raise ServiceTokenError(
+            f"pod042 target requires hostname {reconcile.EXPECTED_HOSTNAME!r}, "
+            f"got {actual!r}"
+        )
+
+
+def git_output(repo: Path, *args: str) -> str:
+    return reconcile.command_output(["git", "-C", str(repo), *args])
+
+
+def local_deploy_revision(repo: Path) -> tuple[str, str]:
+    if git_output(repo, "status", "--porcelain"):
+        raise ServiceTokenError("workstation checkout has local changes")
+    branch = git_output(repo, "symbolic-ref", "--quiet", "--short", "HEAD")
+    if not branch:
+        raise ServiceTokenError("workstation checkout has a detached HEAD")
+    try:
+        upstream = git_output(
+            repo, "rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{upstream}"
+        )
+    except subprocess.CalledProcessError as error:
+        raise ServiceTokenError(
+            f"workstation branch {branch!r} has no upstream"
+        ) from error
+    revision = git_output(repo, "rev-parse", "HEAD")
+    if revision != git_output(repo, "rev-parse", upstream):
+        raise ServiceTokenError(
+            f"workstation branch {branch!r} is not exactly at {upstream}"
+        )
+    return branch, revision
+
+
+def remote_git(host: str, *args: str) -> str:
+    return reconcile.command_output(
+        ssh_command(host, ["git", "-C", REMOTE_CHECKOUT, *args])
+    )
+
+
+def remote_checkout_exists(host: str) -> bool:
+    result = subprocess.run(
+        ssh_command(host, ["test", "-d", f"{REMOTE_CHECKOUT}/.git"]),
+        check=False,
+        capture_output=True,
+    )
+    return result.returncode == 0
+
+
+def validate_remote_checkout(host: str, branch: str) -> str:
+    if remote_git(host, "status", "--porcelain"):
+        raise ServiceTokenError("pod042 checkout has local changes")
+    remote_branch = remote_git(host, "symbolic-ref", "--quiet", "--short", "HEAD")
+    if remote_branch != branch:
+        raise ServiceTokenError(
+            f"pod042 checkout branch {remote_branch!r} does not match "
+            f"workstation branch {branch!r}"
+        )
+    return remote_git(host, "rev-parse", "HEAD")
 
 
 def token_record(value: str) -> str:
@@ -43,8 +123,15 @@ def read_token_input() -> str:
 
 
 def ssh_command(host: str, arguments: Sequence[str]) -> list[str]:
-    command = reconcile.ssh_command(host, arguments)
-    return [command[0], "-T", "-o", "BatchMode=yes", *command[1:]]
+    return [
+        "ssh",
+        "-T",
+        "-o",
+        "BatchMode=yes",
+        *ssh_options(),
+        host,
+        shlex.join(arguments),
+    ]
 
 
 def secret_command(arguments: Sequence[str], *, token: str, label: str) -> None:
@@ -179,7 +266,7 @@ def converge_token(home: Path, token: str, uid: int, gid: int) -> bool:
 
 
 def receive_token(token: str) -> None:
-    reconcile.assert_hostname(None)
+    reconcile.assert_hostname()
     if os.geteuid() != 0:
         raise ServiceTokenError("service-token installation requires root")
     operator = pwd.getpwnam(USER)
@@ -228,11 +315,13 @@ def install_remote_token(host: str) -> None:
         raise ServiceTokenError(
             "service-token installation requires the macos workstation"
         )
-    branch, revision = reconcile.local_deploy_revision(reconcile.ROOT)
-    reconcile.assert_hostname(host)
-    if not reconcile.remote_checkout_exists(host):
-        raise ServiceTokenError("pod042 checkout is missing; run first access first")
-    if reconcile.validate_remote_checkout(host, branch) != revision:
+    branch, revision = local_deploy_revision(reconcile.ROOT)
+    assert_remote_hostname(host)
+    if not remote_checkout_exists(host):
+        raise ServiceTokenError(
+            "pod042 checkout is missing; clone it on the machine first"
+        )
+    if validate_remote_checkout(host, branch) != revision:
         raise ServiceTokenError(
             "pod042 must match the workstation revision; reconcile it first"
         )
@@ -271,7 +360,7 @@ def install_remote_token(host: str) -> None:
 
 def main(argv: Sequence[str]) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--host", default=reconcile.DEFAULT_REMOTE)
+    parser.add_argument("--host", default=DEFAULT_REMOTE)
     mode = parser.add_mutually_exclusive_group()
     mode.add_argument("--receive", action="store_true", help=argparse.SUPPRESS)
     mode.add_argument("--probe", action="store_true", help=argparse.SUPPRESS)
@@ -280,7 +369,7 @@ def main(argv: Sequence[str]) -> int:
     if arguments.receive:
         receive_token(read_token_input())
     elif arguments.probe_installed:
-        reconcile.assert_hostname(None)
+        reconcile.assert_hostname()
         expected = read_token_input()
         token = fnox_host.read_token(fnox_host.TOKEN_PATH, pwd.getpwnam(USER).pw_uid)
         if token != expected:
@@ -289,7 +378,7 @@ def main(argv: Sequence[str]) -> int:
             )
         probe_token(token)
     elif arguments.probe:
-        reconcile.assert_hostname(None)
+        reconcile.assert_hostname()
         probe_token(read_token_input())
     else:
         install_remote_token(arguments.host)
