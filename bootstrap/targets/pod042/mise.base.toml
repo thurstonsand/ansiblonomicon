@@ -68,16 +68,10 @@ mode = "0644"
 notify = ["systemd-journald"]
 
 [bootstrap.files."/etc/locale.conf"]
+# Unquoted to match what the locales package's update-locale writes, so a
+# dpkg-reconfigure fallback leaves this converged.
 content = '''
-LANG="en_US.UTF-8"
-'''
-owner = "root"
-group = "root"
-mode = "0644"
-
-[bootstrap.files."/etc/locale.gen"]
-content = '''
-en_US.UTF-8 UTF-8
+LANG=en_US.UTF-8
 '''
 owner = "root"
 group = "root"
@@ -137,6 +131,17 @@ enabled = true
 [bootstrap.repos]
 "/home/thurstonsand/code/ansiblonomicon" = { url = "https://github.com/thurstonsand/ansiblonomicon.git" }
 
+# The locales package rewrites /etc/locale.gen from debconf on every configure, so
+# declaring that file loses to each glibc upgrade. Declare the debconf answers the
+# package actually reads and let it own the file.
+[bootstrap.hooks.pre-packages]
+run = '''
+printf '%s\n' \
+  'locales locales/locales_to_be_generated multiselect en_US.UTF-8 UTF-8' \
+  'locales locales/default_environment_locale select en_US.UTF-8' \
+  | sudo -n /usr/bin/debconf-set-selections
+'''
+
 [tasks.bootstrap]
 run = [
   "base/scripts/install-system-mise",
@@ -167,7 +172,7 @@ done
 run = [
   '''
 if [ "$(locale -a | grep -Ev '^(C|C.utf8|POSIX)$')" != "en_US.utf8" ]; then
-  sudo -n /usr/sbin/locale-gen >/dev/null
+  sudo -n /usr/sbin/dpkg-reconfigure -f noninteractive locales >/dev/null
 fi
 ''',
   "sudo -n /usr/local/bin/pod042-base-check",
