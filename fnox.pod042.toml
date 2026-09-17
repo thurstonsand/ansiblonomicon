@@ -5,6 +5,7 @@ CLOUDFLARE_TOKEN = { provider = "agent", value = "op://agent/5cimwvc3mbcr6cikiv3
 CLI_PROXY_API_ADMIN_KEY = { provider = "agent", value = "op://agent/vf3jsatixwtzauzoebt66xkiqe/admin apikey" }
 GEMINI_API_KEY = { provider = "agent", value = "op://agent/czcysdu5pyr5d7x2ztguqpftv4/credential" }
 XGS_PON_PASSWORD = { provider = "agent", value = "op://agent/fybwsg6a6cfbq5bvkg7y2ehbgy/password" }
+CANON_REMOTE_UI_PASSWORD = { provider = "agent", value = "op://fw3ej2f2ex5b7zr7lw4cd6atkq/44rsw6f7nlfjwdjctpsevtxd2i/password" }
 DDCLIENT_GITHUB_PAT = { provider = "agent", value = "op://agent/zid4qeby3vbv6wgcqkon2zxyxm/credential" }
 GHOST_DB_PASSWORD = { provider = "agent", value = "op://agent/r3krzpluypr6dtsuoza5p7xafm/ghostuser password" }
 GHOST_MYSQL_ROOT_PASSWORD = { provider = "agent", value = "op://agent/r3krzpluypr6dtsuoza5p7xafm/root password" }

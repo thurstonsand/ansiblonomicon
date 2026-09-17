@@ -66,6 +66,7 @@ def test_local_resources_all_platforms(
     # Amp is explicit-only, so the homelab skills are the whole Amp set on pod042.
     assert amp == {
         ".config/amp/skills/operating-pod042/SKILL.md",
+        ".config/amp/skills/operating-the-printer/SKILL.md",
         ".config/amp/skills/surveying-the-network/SKILL.md",
     }
     handoff = files[home / ".claude/skills/handoff/SKILL.md"][0].decode()

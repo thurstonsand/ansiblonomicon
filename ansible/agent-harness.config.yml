@@ -109,4 +109,4 @@ agent_harness_sources:
         # orb, hence the amp_publish exclusion.
         target_agents: [claude, amp, codex, opencode, pi]
         exclude_skills:
-          amp_publish: [operating-pod042, surveying-the-network]
+          amp_publish: [operating-pod042, surveying-the-network, operating-the-printer]
