@@ -10,7 +10,7 @@ import subprocess
 ROOT = Path(__file__).resolve().parent.parent
 HEADER_SECRETS = {
     "cloudflare-headers": "CLOUDFLARE_API_TOKEN",
-    "home-assistant-headers": "HOMEASSISTANT_MCP_TOKEN",
+    "home-assistant-headers": "HOMEASSISTANT_API_KEY",
 }
 
 

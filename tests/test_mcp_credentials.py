@@ -72,7 +72,7 @@ def test_exec_remote_limits_environment_and_defers_header_expansion(
     ("mode", "credential_name"),
     [
         ("cloudflare-headers", "CLOUDFLARE_API_TOKEN"),
-        ("home-assistant-headers", "HOMEASSISTANT_MCP_TOKEN"),
+        ("home-assistant-headers", "HOMEASSISTANT_API_KEY"),
     ],
 )
 def test_headers_print_json(

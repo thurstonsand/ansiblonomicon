@@ -22,7 +22,7 @@ ddclient_github_pat = "DDCLIENT_GITHUB_PAT"
 ghost_db_password = "GHOST_DB_PASSWORD"
 ghost_mail_auth_pass = "GHOST_MAIL_AUTH_PASS"
 ghost_mysql_root_password = "GHOST_MYSQL_ROOT_PASSWORD"
-homepage_homeassistant_api_key = "HOMEPAGE_HOMEASSISTANT_API_KEY"
+homeassistant_api_key = "HOMEASSISTANT_API_KEY"
 homepage_overseerr_api_key = "HOMEPAGE_OVERSEERR_API_KEY"
 homepage_plex_api_key = "HOMEPAGE_PLEX_API_KEY"
 homepage_unifi_password = "UNIFI_PASSWORD"
@@ -293,7 +293,7 @@ mode = "0600"
 
 [bootstrap.files."/etc/ansiblonomicon/containers/homepage/.env"]
 content = '''
-HOMEPAGE_HOMEASSISTANT_API_KEY="{{ secret(name="homepage_homeassistant_api_key") }}"
+HOMEASSISTANT_API_KEY="{{ secret(name="homeassistant_api_key") }}"
 HOMEPAGE_OVERSEERR_API_KEY="{{ secret(name="homepage_overseerr_api_key") }}"
 HOMEPAGE_PLEX_API_KEY="{{ secret(name="homepage_plex_api_key") }}"
 HOMEPAGE_UNIFI_PASSWORD="{{ secret(name="homepage_unifi_password") }}"
