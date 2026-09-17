@@ -1,0 +1,17 @@
+#!/bin/sh
+# Run a command inside pod042's client-VLAN observation namespace.
+#
+#   sudo -n net-probe ip -br address          # what the probe can see from
+#   sudo -n net-probe ping -c2 10.10.40.187   # reach a client on its own segment
+#   sudo -n net-probe tcpdump -ni scanners udp port 5353
+#
+# Interfaces are named for their networks: yorha, lunar-tear, scanners, village.
+# There is no default route here on purpose; only the four segments are reachable.
+set -eu
+
+if [ "$#" -eq 0 ]; then
+  echo "usage: net-probe <command> [args...]" >&2
+  exit 64
+fi
+
+exec /usr/sbin/ip netns exec probe "$@"

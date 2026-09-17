@@ -6,6 +6,8 @@ from pathlib import Path
 import subprocess
 from typing import Any, cast
 
+import probe
+
 INTERFACE = "enp5s0"
 MAC = "a0:36:bc:28:37:41"
 ADDRESS = "10.10.10.42"
@@ -103,6 +105,48 @@ def verify(
     return errors
 
 
+def verify_probe(
+    legs: list[dict[str, Any]],
+    routes: list[dict[str, Any]],
+    forwarding: str,
+    root_addresses: list[dict[str, Any]],
+) -> list[str]:
+    """The client VLANs must terminate in the namespace and nowhere else."""
+    errors: list[str] = []
+    addresses_by_name = {str(leg["ifname"]): leg for leg in legs}
+    for leg in probe.LEGS:
+        configured = addresses_by_name.get(leg.name)
+        if configured is None:
+            errors.append(f"probe namespace is missing the {leg.name} leg")
+            continue
+        held = [
+            f"{entry.get('local')}/{entry.get('prefixlen')}"
+            for entry in cast(list[dict[str, Any]], configured.get("addr_info", []))
+            if entry.get("family") == "inet"
+        ]
+        if held != [leg.address]:
+            errors.append(f"probe leg {leg.name} does not hold {leg.address}")
+
+    if any(route.get("dst") == "default" for route in routes):
+        errors.append("probe namespace must not have a default route")
+    if forwarding.strip() != "0":
+        errors.append("probe namespace must not forward")
+
+    parents = {leg.parent for leg in probe.LEGS}
+    for interface in root_addresses:
+        name = str(interface.get("ifname"))
+        addresses = cast(list[dict[str, Any]], interface.get("addr_info", []))
+        if name in parents and addresses:
+            errors.append(f"{name} must stay addressless in the root namespace")
+        if name in parents:
+            continue
+        for entry in addresses:
+            local = str(entry.get("local", ""))
+            if any(local.startswith(f"10.10.{vlan}.") for vlan in (20, 30, 40, 50)):
+                errors.append(f"{name} holds client VLAN address {local} in root")
+    return errors
+
+
 def forward_policy(binary: str) -> str:
     for line in output(binary, "--list-rules").splitlines():
         if line.startswith("-P FORWARD "):
@@ -151,6 +195,28 @@ def main() -> int:
         },
     )
     errors.extend(
+        verify_probe(
+            json.loads(
+                output(
+                    "/usr/sbin/ip", "-n", probe.NAMESPACE, "-json", "address", "show"
+                )
+            ),
+            json.loads(
+                output("/usr/sbin/ip", "-n", probe.NAMESPACE, "-json", "route", "show")
+            ),
+            output(
+                "/usr/sbin/ip",
+                "netns",
+                "exec",
+                probe.NAMESPACE,
+                "/usr/sbin/sysctl",
+                "-n",
+                "net.ipv4.ip_forward",
+            ),
+            json.loads(output("/usr/sbin/ip", "-json", "address", "show")),
+        )
+    )
+    errors.extend(
         verify_tailscale(
             json.loads(output("/usr/bin/tailscale", "status", "--json")),
             json.loads(output("/usr/bin/tailscale", "debug", "prefs")),
@@ -163,7 +229,8 @@ def main() -> int:
     print(
         f"PASS  {INTERFACE} {ADDRESS} via {GATEWAY}, "
         "2.5 Gb/s, MTU 1500, RX ring 4096, WOL and Tailscale enabled, "
-        "routing default-denied"
+        "routing default-denied, "
+        f"{len(probe.LEGS)} client VLANs observed from the probe namespace"
     )
     return 0
 

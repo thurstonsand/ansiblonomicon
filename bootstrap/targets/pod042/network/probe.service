@@ -1,0 +1,15 @@
+[Unit]
+Description=Client VLAN observation namespace
+# enp5s0.40 is also Incus's macvlan parent for the Home Assistant VM. This only
+# creates the link when it is missing, so ordering after Incus avoids both racing
+# to create it, and neither owns an address on it.
+After=network-online.target incus.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/usr/bin/python3 /etc/ansiblonomicon/network/probe.py
+
+[Install]
+WantedBy=multi-user.target

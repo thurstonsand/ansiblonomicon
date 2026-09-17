@@ -121,9 +121,10 @@ def test_unifi_home_assistant_contract() -> None:
     assert "native_networkconf_id" in profile and "unifi_network.bunker.id" in profile
     assert "tagged_networkconf_ids" not in profile
     assert "unifi_network.scanners.id" not in profile
-    for network in ("yorha", "lunar_tear", "the_village"):
-        assert f"unifi_network.{network}.id" in profile
-    assert "tagged_vlan_mgmt" in profile and '"custom"' in profile
+    # Every client VLAN is tagged on this port for the probe namespace, so Scanners
+    # reaches the VM without being named and nothing is excluded.
+    assert "excluded_networkconf_ids" not in profile
+    assert '"all"' in profile and '"auto"' in profile
     port = ports.split("index           = 17", 1)[1].split("}", 1)[0]
     assert "unifi_port_profile.pod042.id" in port
     assert 'mac              = "00:16:3e:48:41:42"' in clients

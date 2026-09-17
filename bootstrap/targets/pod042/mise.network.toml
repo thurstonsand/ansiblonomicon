@@ -9,6 +9,11 @@ run = [
 "apt:ifupdown" = "latest"
 "apt:iproute2" = "latest"
 "apt:tailscale" = "latest"
+# Diagnosis tools for the probe namespace. avahi-utils is deliberately absent: its
+# browser needs a daemon and D-Bus that the namespace does not have.
+"apt:arp-scan" = "latest"
+"apt:nmap" = "latest"
+"apt:tcpdump" = "latest"
 
 [bootstrap.files."/etc/network/interfaces"]
 content = '''
@@ -68,6 +73,31 @@ state = "absent"
 [bootstrap.files."/etc/systemd/network/24-br0.4.network"]
 state = "absent"
 
+[bootstrap.directories."/etc/ansiblonomicon/network"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/ansiblonomicon/network/probe.py"]
+source = "network/probe.py"
+owner = "root"
+group = "root"
+mode = "0755"
+notify = ["probe"]
+
+[bootstrap.files."/etc/systemd/system/probe.service"]
+source = "network/probe.service"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["probe"]
+
+[bootstrap.files."/usr/local/bin/net-probe"]
+source = "network/net-probe"
+owner = "root"
+group = "root"
+mode = "0755"
+
 [bootstrap.files."/etc/systemd/system/forward-policy.service"]
 source = "network/forward-policy.service"
 owner = "root"
@@ -77,6 +107,11 @@ mode = "0644"
 [bootstrap.services.forward-policy]
 state = "running"
 enabled = true
+
+[bootstrap.services.probe]
+state = "running"
+enabled = true
+on_change = "restart"
 
 [bootstrap.services.tailscaled]
 state = "running"

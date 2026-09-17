@@ -1,5 +1,5 @@
 ---
-status: open
+status: done
 type: task
 blocked-by: []
 ---
@@ -53,6 +53,20 @@ Three `unifi_client` records with fixed addresses name the probe identities, so 
 1. Namespace, or plain interfaces plus a declared nftables file, or an Incus container. The nftables route is cheaper and closes the same findings, but it is a deny-list over a default that is open, and the two hours of undeclared `10.10.40.251` are the evidence that nobody notices when the default opens.
 2. Whether the probe answers ICMP and ARP from client VLANs. Allowing it is reasonable; it is a named client.
 3. Whether Plex should ever advertise into Lunar Tear for household discovery. That is a real feature request and deserves its own ticket, not a side effect of this one.
+
+## Built, 2026-09-17
+
+Thurston chose capability over the strict invariant: pod042 carries a leg on every client VLAN including YoRHa. The night that produced this decision is the argument for it. Three stacked faults broke discovery, and the last one, MLO splitting the YoRHa SSID so its legacy BSS received no group-addressed traffic, was invisible from every vantage pod042 had. It took an hour of relaying `tcpdump` commands to a human at a laptop to see what one command from a probe leg now shows directly.
+
+- `unifi_port_profile.pod042` carries `forward = "all"` with `tagged_vlan_mgmt = "auto"`. The controller rewrites `customize` to `all` once nothing is excluded, so the declaration says it directly; an empty exclusion list fails the apply with an inconsistent-result error.
+- `network/probe.py` owns the namespace, the addressless VLAN parents with IPv6 disabled, and one bridge-mode macvlan leg per VLAN named `yorha`, `lunar-tear`, `scanners`, `village` on `.251` of each subnet. It is idempotent and runs from `probe.service`, ordered after Incus so the two never race to create `enp5s0.40`.
+- Bridge mode was load-bearing, as predicted: the legs reach the Home Assistant VM, which the parent interface never could.
+- `net-probe` is the entry point, wrapping `ip netns exec probe`. `thurstonsand` already holds passwordless sudo, so no new rule was needed.
+- `check.py` fails if a leg is missing or misaddressed, if the namespace gains a default route or forwarding, if a parent takes an address, or if any client VLAN address appears in the root namespace.
+- `tcpdump`, `nmap` and `arp-scan` are declared; `avahi-utils` deliberately is not.
+- The two homelab skills now document this as the only route onto a client segment, replacing the container-namespace trick that preceded it.
+
+Still open: the mDNS beacon remains a Docker container on Scanners. If [ticket 26](26-migrate-clients-and-discovery.md)'s Ethernet retest shows it is still needed, it moves into this namespace as a systemd unit bound to the `scanners` leg with `SO_BINDTODEVICE`. Binding it to all legs would answer enumeration on YoRHa and The Village too, which would collapse those networks' browse sets the way it once collapsed Scanners'.
 
 ## Non-goal
 

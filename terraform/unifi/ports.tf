@@ -40,16 +40,14 @@ resource "unifi_port_profile" "infrastructure_trunk" {
 
 resource "unifi_port_profile" "pod042" {
   name                  = "pod042"
-  forward               = "customize"
+  # Every client VLAN is tagged here so pod042 can observe each segment from the
+  # probe namespace, which is the only place those tags terminate. The host itself
+  # holds no address on them. The controller expresses "every VLAN tagged" as
+  # forward "all", and rewrites "customize" to it, so say it directly.
+  forward               = "all"
   setting_preference    = "manual"
   native_networkconf_id = unifi_network.bunker.id
-  tagged_vlan_mgmt      = "custom"
-  # Current UniFi represents a custom tag allowlist as every other VLAN excluded.
-  excluded_networkconf_ids = [
-    unifi_network.yorha.id,
-    unifi_network.lunar_tear.id,
-    unifi_network.the_village.id,
-  ]
+  tagged_vlan_mgmt      = "auto"
 }
 
 resource "unifi_device" "udmp" {

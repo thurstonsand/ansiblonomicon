@@ -67,6 +67,38 @@ resource "unifi_client" "canon_printer" {
   allow_existing = true
 }
 
+# pod042's observation identities, one per client VLAN. They live in a network
+# namespace that holds no service and no route off its segment, so these answer
+# ARP and ICMP and nothing else. Naming them keeps the controller honest: one host
+# with four identities rather than a MAC that appears to hop between networks.
+resource "unifi_client" "pod042_probe_yorha" {
+  mac            = "02:00:0a:0a:14:fb"
+  name           = "pod042 probe - YoRHa"
+  fixed_ip       = "10.10.20.251"
+  allow_existing = true
+}
+
+resource "unifi_client" "pod042_probe_lunar_tear" {
+  mac            = "02:00:0a:0a:1e:fb"
+  name           = "pod042 probe - Lunar Tear"
+  fixed_ip       = "10.10.30.251"
+  allow_existing = true
+}
+
+resource "unifi_client" "pod042_probe_scanners" {
+  mac            = "02:00:0a:0a:28:fb"
+  name           = "pod042 probe - Scanners"
+  fixed_ip       = "10.10.40.251"
+  allow_existing = true
+}
+
+resource "unifi_client" "pod042_probe_the_village" {
+  mac            = "02:00:0a:0a:32:fb"
+  name           = "pod042 probe - The Village"
+  fixed_ip       = "10.10.50.251"
+  allow_existing = true
+}
+
 resource "unifi_client" "pod042_mdns_beacon" {
   mac            = "02:00:0a:0a:28:fa"
   name           = "pod042 mDNS Beacon"

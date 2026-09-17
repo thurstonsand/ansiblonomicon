@@ -3,6 +3,7 @@ from pathlib import Path
 import sys
 import tomllib
 from typing import Any
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "bootstrap/targets/pod042"
@@ -12,7 +13,10 @@ assert SPEC is not None
 assert SPEC.loader is not None
 network_check: Any = module_from_spec(SPEC)
 sys.modules[SPEC.name] = network_check
-SPEC.loader.exec_module(network_check)
+# check.py reads the leg definitions from probe.py, its neighbour on the target.
+with patch.object(sys, "path", [str(TARGET / "network"), *sys.path]):
+    SPEC.loader.exec_module(network_check)
+probe: Any = sys.modules["probe"]
 
 
 def good_state() -> tuple[
@@ -206,3 +210,87 @@ def test_live_network_contract_reports_boundary_drift() -> None:
         "enp5s0 magic-packet wake is not enabled",
         "enp5s0 RX ring is not 4096 entries",
     ]
+
+
+def probe_state() -> tuple[
+    list[dict[str, Any]], list[dict[str, Any]], str, list[dict[str, Any]]
+]:
+    legs: list[dict[str, Any]] = [
+        {
+            "ifname": leg.name,
+            "addr_info": [
+                {
+                    "family": "inet",
+                    "local": leg.address.split("/")[0],
+                    "prefixlen": int(leg.address.split("/")[1]),
+                }
+            ],
+        }
+        for leg in probe.LEGS
+    ]
+    routes: list[dict[str, Any]] = [
+        {"dst": "10.10.20.0/24", "dev": "yorha"},
+        {"dst": "10.10.40.0/24", "dev": "scanners"},
+    ]
+    root: list[dict[str, Any]] = [
+        {"ifname": "enp5s0", "addr_info": [{"family": "inet", "local": "10.10.10.42"}]},
+        *({"ifname": leg.parent, "addr_info": []} for leg in probe.LEGS),
+    ]
+    return legs, routes, "0\n", root
+
+
+def test_probe_namespace_terminates_every_client_vlan() -> None:
+    assert probe.NAMESPACE == "probe"
+    assert [leg.vlan for leg in probe.LEGS] == [20, 30, 40, 50]
+    assert network_check.verify_probe(*probe_state()) == []
+
+
+def test_probe_namespace_contract_reports_drift() -> None:
+    legs, routes, forwarding, root = probe_state()
+    assert network_check.verify_probe(legs[1:], routes, forwarding, root) == [
+        "probe namespace is missing the yorha leg"
+    ]
+
+    wrong = [dict(leg) for leg in legs]
+    wrong[0]["addr_info"] = [
+        {"family": "inet", "local": "10.10.20.99", "prefixlen": 24}
+    ]
+    assert network_check.verify_probe(wrong, routes, forwarding, root) == [
+        f"probe leg yorha does not hold {probe.LEGS[0].address}"
+    ]
+
+    routed = [*routes, {"dst": "default", "gateway": "10.10.20.1", "dev": "yorha"}]
+    assert network_check.verify_probe(legs, routed, forwarding, root) == [
+        "probe namespace must not have a default route"
+    ]
+    assert network_check.verify_probe(legs, routes, "1\n", root) == [
+        "probe namespace must not forward"
+    ]
+
+    leaked = [dict(interface) for interface in root]
+    leaked[1]["addr_info"] = [{"family": "inet", "local": "10.10.20.251"}]
+    assert network_check.verify_probe(legs, routes, forwarding, leaked) == [
+        f"{probe.LEGS[0].parent} must stay addressless in the root namespace"
+    ]
+
+    host_address: list[dict[str, Any]] = [dict(interface) for interface in root]
+    host_address[0]["addr_info"] = [{"family": "inet", "local": "10.10.40.251"}]
+    assert network_check.verify_probe(legs, routes, forwarding, host_address) == [
+        "enp5s0 holds client VLAN address 10.10.40.251 in root"
+    ]
+
+
+def test_network_declaration_owns_the_probe_namespace() -> None:
+    bootstrap = tomllib.loads((TARGET / "mise.network.toml").read_text())["bootstrap"]
+    files = bootstrap["files"]
+    assert files["/etc/ansiblonomicon/network/probe.py"]["source"] == "network/probe.py"
+    assert files["/etc/ansiblonomicon/network/probe.py"]["notify"] == ["probe"]
+    assert files["/usr/local/bin/net-probe"]["mode"] == "0755"
+    assert bootstrap["services"]["probe"] == {
+        "state": "running",
+        "enabled": True,
+        "on_change": "restart",
+    }
+    assert {"apt:tcpdump", "apt:nmap", "apt:arp-scan"} <= set(bootstrap["packages"])
+    # avahi-utils needs a daemon and D-Bus the namespace does not have.
+    assert "apt:avahi-utils" not in bootstrap["packages"]
