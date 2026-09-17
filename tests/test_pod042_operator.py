@@ -135,4 +135,6 @@ def test_t3_keeps_vendor_working_directory_and_runtime():
     assert "ExecStart" not in dropin
     assert "ansiblonomicon" not in dropin
     amp = (TARGET / "remote-development/amp-remote.service").read_text()
-    assert "WorkingDirectory=/home/thurstonsand/code/ansiblonomicon" in amp
+    assert "WorkingDirectory=/home/thurstonsand/code" in amp
+    assert "--discover-dirs" in amp
+    assert "--runner-id pod042" in amp

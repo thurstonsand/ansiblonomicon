@@ -1,6 +1,6 @@
 # pod042 remote development
 
-These are normal-user services for `thurstonsand`. T3 serves multiple projects from the operator's home and has no runtime dependency on this checkout. Only Amp is rooted at `/home/thurstonsand/code/ansiblonomicon`. Herdr runs from the operator's home and is reached by attaching a client over SSH. None of the three needs an inbound firewall rule or router port forward. T3 Connect uses its managed relay; Amp connects outbound; Herdr listens only on a unix socket in `~/.config/herdr/`.
+These are normal-user services for `thurstonsand`. T3 serves multiple projects from the operator's home and has no runtime dependency on this checkout. Amp is rooted at `/home/thurstonsand/code` and discovers every Git checkout up to two levels beneath it, so a new clone becomes a servable directory without touching the unit. Herdr runs from the operator's home and is reached by attaching a client over SSH. None of the three needs an inbound firewall rule or router port forward. T3 Connect uses its managed relay; Amp connects outbound; Herdr listens only on a unix socket in `~/.config/herdr/`.
 
 ## Integration contract
 
@@ -26,7 +26,7 @@ In an interactive SSH login as `thurstonsand` on pod042:
 
 ```sh
 export PATH="$HOME/.local/bin:$HOME/.amp/bin:$HOME/.opencode/bin:$HOME/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin"
-cd /home/thurstonsand/code/ansiblonomicon
+cd /home/thurstonsand/code
 amp login
 ```
 
@@ -46,7 +46,7 @@ python3 remote-development/services.py apply
 python3 remote-development/services.py status
 ```
 
-Verify T3 appears online in the T3 client, then open an Amp remote terminal on runner `pod042-ansiblonomicon`. Test again after closing SSH and after a reboot. A systemd active state does not prove either authenticated relay is usable. Inspect failures with `journalctl --user -u amp-remote.service -u t3code.service`; T3's vendor status also prints its application log path.
+Verify T3 appears online in the T3 client, then open an Amp remote terminal on runner `pod042` and confirm `amp runner dirs list` names every checkout under `~/code`. Test again after closing SSH and after a reboot. A systemd active state does not prove either authenticated relay is usable. Inspect failures with `journalctl --user -u amp-remote.service -u t3code.service`; T3's vendor status also prints its application log path.
 
 ## Vendor lifecycle evidence
 
@@ -56,7 +56,9 @@ Upstream source inspected 2026-09-06:
 - [CLI service implementation](https://github.com/pingdotgg/t3code/blob/main/apps/server/src/cli/service.ts): install and update call the same reconciliation function. It returns unchanged when `installed && current`, so repeated install is idempotent. It refuses downgrades and checks pending updates. Status is human-readable and does **not** exit nonzero just because a service is absent; the helper separately checks systemd.
 - [Boot service implementation](https://github.com/pingdotgg/t3code/blob/main/apps/server/src/cloud/bootService.ts): vendor writes `~/.config/systemd/user/t3code.service`, uses a pinned foreground launcher under `$T3CODE_HOME/runtime`, and tracks runtime/unit drift. It retains ownership of that lifecycle. Deliberate updates use `t3 service update` after upgrading the CLI through npm; finish active work first.
 - [Connect implementation](https://github.com/pingdotgg/t3code/blob/main/apps/server/src/cli/connect.ts): `t3 connect status --json` exposes `desired`, `authenticated`, and `linked` booleans. The helper requires `desired` and `authenticated` before starting the service. A newly enrolled host can still have `linked = false` until its server starts, so requiring it before startup would prevent the first connection. Check linking and live reachability after startup. The vendor service owns ongoing connection management after enrollment.
-- [Amp CLI docs](https://ampcode.com/docs/cli): launch `amp` interactively for initial use. The requested service command is exactly `amp --no-tui --remote-control-terminal --runner-id pod042-ansiblonomicon`.
+- [Amp CLI docs](https://ampcode.com/docs/cli): launch `amp` interactively for initial use. The service command is `amp --no-tui --remote-control-terminal --discover-dirs --runner-id pod042`.
+- [One runner is now enough — 2026-09-17](https://ampcode.com/news/one-runner-is-now-enough): one runner serves many directories. `--discover-dirs` serves every Git checkout up to two levels beneath the working directory and picks up new clones; `amp runner dirs add|remove|list` changes the set on a live runner, and additions survive a restart from the same location. Verified on 0.0.1789646488-g024bbd: neither flag appears in `amp --help`, but unknown flags are rejected and these are not, and a probe run from `~/code` listed the three checkouts there.
+- The same release makes `amp --no-tui` self-updating (`amp.runner.autoUpdate.enabled`, default on): it installs a new CLI hourly and restarts into it once no thread is running, at most once every 12 hours. `operator:agents` installs Amp only when absent, so this is now the mechanism that keeps the binary current, and it upgrades the interactive CLI along with the runner because both are the same file.
 
 Herdr 0.9.0 inspected 2026-09-11. It documents no unit file and ships no `sd_notify`, so the unit rests on observed behavior instead: `herdr server` runs the server in the foreground and refuses a second one while the socket is live, `SIGTERM` exits 0 in well under a second and removes the socket, and `herdr status server --json` exits 0 either way with `running`, `restart_needed`, and `server_binary_stale`. The binary advertises `detached_server_daemon` and spawns exactly that from `src/server/autodetect.rs` when a client finds no server, which is the behavior the unit is racing.
 

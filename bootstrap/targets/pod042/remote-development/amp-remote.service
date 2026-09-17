@@ -6,10 +6,10 @@ StartLimitBurst=5
 
 [Service]
 Type=simple
-WorkingDirectory=/home/thurstonsand/code/ansiblonomicon
+WorkingDirectory=/home/thurstonsand/code
 Environment=HOME=/home/thurstonsand
 Environment=PATH=/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.opencode/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin
-ExecStart=/home/thurstonsand/.amp/bin/amp --no-tui --remote-control-terminal --runner-id pod042-ansiblonomicon
+ExecStart=/home/thurstonsand/.amp/bin/amp --no-tui --remote-control-terminal --discover-dirs --runner-id pod042
 Restart=always
 RestartSec=10
 StandardInput=null
