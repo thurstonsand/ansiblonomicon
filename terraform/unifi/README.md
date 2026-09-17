@@ -18,7 +18,7 @@ OpenTofu owns:
 - the disabled Internet 1 backup and primary WAS-110 DHCP WAN, including priority, failover mode, and the sensitive cloned MAC
 - the `192.168.11.0/24` WAS-110 LCT interface route
 - the Plex TCP `32400` WAN port forward to pod042
-- Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, and Scanners, restricted to Apple AirPlay, HomeKit, and the `_ipp._tcp.local`, `_ipps._tcp.local`, `_uscan._tcp.local`, `_uscans._tcp.local`, and `_hue._tcp.local` custom services
+- Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, and Scanners, restricted to Apple AirPlay, HomeKit, and the `_ipp._tcp.local`, `_ipps._tcp.local`, `_uscan._tcp.local`, `_uscans._tcp.local`, `_hue._tcp.local`, and `_hap._tcp.local` custom services
 - Network-device automatic update policy
 
 Manual state remains manual because the provider cannot represent or safely round-trip it:
@@ -48,7 +48,7 @@ The controller was factory-reset and bootstrapped behind the BGW620 on UDM port 
 - YoRHa may initiate toward Bunker, Lunar Tear, Scanners, and The Village, with automatic return traffic
 - Lunar Tear may initiate toward Scanners, with automatic return traffic
 - Bunker initiation toward YoRHa has an explicit logged block; the zone matrix denies other unapproved inter-zone initiation
-- Gateway mDNS Proxy uses Custom mode for YoRHa, Lunar Tear, and Scanners only; Bunker and The Village remain excluded. Service scope contains the predefined Apple AirPlay and HomeKit groups plus the AirPrint, AirScan, and Philips Hue custom services. The gateway browses only service types a network lists when asked, and the Canon printer never answers, so `pod042 mDNS Beacon` on Scanners answers on its behalf.
+- Gateway mDNS Proxy uses Custom mode for YoRHa, Lunar Tear, and Scanners only; Bunker and The Village remain excluded. Service scope contains the predefined Apple AirPlay and HomeKit groups plus the AirPrint, AirScan, Philips Hue, and explicit `_hap._tcp.local` HomeKit Accessory custom services. The gateway browses only service types a network lists when asked, and the Canon printer never answers, so `pod042 mDNS Beacon` on Scanners answers on its behalf.
 
 The full physical cutover and rollback gates live in [`docs/wayfinding/new-house-internet-cutover/tickets/03-cutover-safety-gates.md`](../../docs/wayfinding/new-house-internet-cutover/tickets/03-cutover-safety-gates.md).
 

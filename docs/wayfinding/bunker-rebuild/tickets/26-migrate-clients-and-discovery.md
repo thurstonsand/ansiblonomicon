@@ -50,6 +50,34 @@ Import the approved old-house client records, broadcast the required Scanners an
 - `printer.thurstons.house` resolves to `10.10.40.187` from both the Bunker and Scanners resolvers. That required pinning the lease, so the client carries `fixed_ip` inside the DHCP pool rather than a low static like `home-assistant`'s `10.10.40.42`; the printer already held the address and renumbering it during an outage was not worth the consistency.
 - The cold test failed, and so did adding the predefined `printers` and `scanners` groups, which settles the enumeration gap as the cause rather than the cache. The fix is a permanent type beacon at `bootstrap/targets/pod042/containers/stacks/mdns-beacon/`: a stdlib-only container holding its own macvlan identity, `10.10.40.250`, named `pod042 mDNS Beacon` in the controller. It answers `_services._dns-sd._udp.local` with the five printer types and publishes no instances, so it cannot invent a printer. From its first minute the gateway's own cycle browsed all five on Scanners. The container is the only thing on VLAN 40 besides Home Assistant; macvlan isolates it from pod042 itself and it publishes no ports, so it adds a named client rather than a host interface.
 
+## 2026-09-17: what discovery was actually failing on, and what is left
+
+Three faults were stacked here, which is why each fix uncovered another. Two are closed.
+
+- The printer's connection method was set to wired with no cable attached, so it was off the network entirely from 09-12 to 09-16. Nothing below could be diagnosed through that.
+- Scanners ran WPA3 transition, and the Canon took a group key it could not use. It answered unicast perfectly, so IPP, the Remote UI and the Canon app all worked, while it ignored every broadcast and multicast frame and was therefore invisible to every discovery browse. It began answering within seconds of the WLAN becoming plain WPA2, which is why `wlan.tf` now pins that.
+- YoRHa had MLO enabled, which split the SSID into an MLO BSS and a legacy one. Every client on the legacy side, which is every device in the house except the iPhone, received no group-addressed traffic at all: no reflected mDNS, and nothing from each other. A `tcpdump` on the MacBook showed only its own transmissions. Disabling MLO restored reflection immediately and the HomePod smoke check passed for the first time. Worth retesting only once more than one device here speaks Wi-Fi 7.
+
+Correction to the beacon bullet above: the enumeration gap was not what defeated the cold test. That test ran while the printer was deaf, so it could not have answered a relayed query either way, and the conclusion drawn from it is void. Enumeration only governs the gateway's own per-minute browse; client browses are relayed onto the segment unfiltered and need no beacon. With the beacon stopped, the HomePod, Hue and Home Assistant all answer enumeration themselves and stay in the gateway's browse set, so only the printer's types drop out.
+
+What the beacon is actually worth is a warm cache. The Canon answers roughly one multicast query in six, in about a second when it does answer. `dns-sd -B _ipp._tcp local.` from YoRHa took 51 seconds to list it with the beacon down; an iOS print sheet gives up in about two. A once-a-minute browse eventually wins that lottery and leaves the record cached for 75 minutes, so clients read the cache instead of waiting on the printer.
+
+The miss rate is most likely the radio, not the software: -60 dBm two floors from the only AP, on a congested 2.4 GHz channel, with a 17% transmit retry rate against 1.7% for the HomePod on the same BSS. Multicast is never acknowledged or retried, so a marginal link loses discovery traffic specifically while retried unicast keeps looking healthy.
+
+**Leave this ticket open until the printer is on Ethernet** (see [wifi coverage and tuning](21-wifi-coverage-and-tuning.md)), then retest without the beacon. Wired removes the loss, the group key and the retries, leaving only the fact that the Canon never answers enumeration, which costs a warm cache and nothing else.
+
+Retest procedure:
+
+1. Confirm the port the printer lands on carries VLAN 40. On the wrong profile it comes up on Bunker and is unreachable from every client zone.
+2. Stop the beacon and let the gateway's cache age out for 75 minutes.
+3. On the MacBook: `sudo killall -HUP mDNSResponder`, then time `dns-sd -B _ipp._tcp local.`. Under a couple of seconds means the relay path suffices.
+4. On the iPhone: cycle Wi-Fi, then open the print sheet with no Canon app running. Twice, cold, per the rule above.
+5. Watch the segment while testing, so a failure is attributed to the printer rather than to the missing beacon: the relayed `_ipp` query from `10.10.40.1` should arrive, and the printer should answer within a second.
+
+If it passes, retire the beacon with `state = "absent"` rather than deleting it: the compose stack at `bootstrap/targets/pod042/containers/stacks/mdns-beacon/`, its directory, file and compose entries in `mise.containers.toml`, `tests/test_pod042_mdns_beacon.py`, and `unifi_client.pod042_mdns_beacon`. Note that the beacon's namespace is currently the only way onto Scanners from pod042, and both [ticket 50](50-pod042-network-observability.md) and the `operating-the-printer` skill rely on it, so a service-less probe identity has to replace it before it goes.
+
+Also open, unrelated to discovery: the printer has Auto IP enabled, so a DHCP failure would park it on a 169.254 address with no symptom beyond disappearing. The Remote UI cannot change it; it is at Menu > Preferences > Network > TCP/IP Settings > IPv4 Settings on the panel.
+
 ## Completion
 
 All approved clients occupy their selected trust domains, rejected records remain absent, scoped discovery works from YoRHa and Lunar Tear without exposing The Village or Bunker, VPN access is restored or explicitly deferred, and OpenTofu finishes at **No changes** after representative end-to-end tests.

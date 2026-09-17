@@ -6,9 +6,17 @@ services:
     read_only: true
     cap_drop:
       - ALL
+    # The gateway browses the types enumeration returns, and its set collapsed to
+    # this list once the beacon started answering, taking AirPlay and HomeKit on
+    # Scanners with it. So the list names everything the segment publishes across
+    # VLANs, not only the printer types the Canon refuses to enumerate.
     command:
       - python
       - /beacon.py
+      - _airplay._tcp.local
+      - _raop._tcp.local
+      - _hap._tcp.local
+      - _hue._tcp.local
       - _ipp._tcp.local
       - _ipps._tcp.local
       - _universal._sub._ipp._tcp.local

@@ -16,7 +16,13 @@ resource "unifi_wlan" "yorha" {
   # 6 GHz cannot discover an iPhone associated to the same SSID on 5 GHz, and
   # macOS reports it as "not on the same network".
   wlan_bands      = ["2g", "5g"]
-  mlo_enabled     = true
+  # MLO splits the SSID into an MLD BSS and a legacy one. Clients on the legacy
+  # side, which here is every device except the iPhone, then receive no
+  # group-addressed traffic at all: no reflected mDNS, and nothing from each
+  # other. Discovery across VLANs cannot work while that is true. Worth retesting
+  # once more than one device here speaks Wi-Fi 7, with a 30-second capture of
+  # udp/5353 on a legacy-side client as the verdict.
+  mlo_enabled     = false
 
   lifecycle {
     ignore_changes = [ap_group_ids]
@@ -41,14 +47,19 @@ resource "unifi_wlan" "lunar_tear" {
 }
 
 resource "unifi_wlan" "scanners" {
-  name            = "Scanners"
-  security        = "wpapsk"
-  passphrase      = var.scanners_passphrase
-  network_id      = unifi_network.scanners.id
-  ap_group_mode   = "all"
-  user_group_id   = data.unifi_client_qos_rate.default.id
-  wpa3_support    = true
-  wpa3_transition = true
+  name          = "Scanners"
+  security      = "wpapsk"
+  passphrase    = var.scanners_passphrase
+  network_id    = unifi_network.scanners.id
+  ap_group_mode = "all"
+  user_group_id = data.unifi_client_qos_rate.default.id
+  # On WPA3 transition the Canon answered unicast normally and ignored every
+  # broadcast and multicast frame, so it served IPP and the Canon app while being
+  # invisible to any discovery browse. It started answering seconds after this
+  # became plain WPA2. Its reception still lapses at times, which is unexplained,
+  # but it announces itself unprompted often enough for the gateway to cache it.
+  wpa3_support    = false
+  wpa3_transition = false
   pmf_mode        = "optional"
   wlan_bands      = ["2g", "5g"]
 
