@@ -166,14 +166,18 @@ case "$(hostname -s)" in
   ML-DFC6YK6VJQ)
     playbook=work.yml
     sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS_WORK
+    consumer_secret=ANTHROPIC_AUTH_TOKEN
     ;;
   Thurstons-MacBook-Pro)
     playbook=macos.yml
     sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS
+    consumer_secret=
     ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-ANSIBLE_CACHE_PLUGIN=memory exec ../scripts/fnox-host exec --secret "$sudo_secret" -- \
+set -- --secret "$sudo_secret"
+[ -z "$consumer_secret" ] || set -- "$@" --secret "$consumer_secret"
+ANSIBLE_CACHE_PLUGIN=memory exec ../scripts/fnox-host exec "$@" -- \
   ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
 '''
 
@@ -428,7 +432,7 @@ run = './scripts/fnox-host get "$usage_name" >/dev/null'
 
 [tasks."secrets:retire"]
 description = "Remove this checkout's obsolete secret cache files"
-run = "rm -f -- .env wrangler/aig/.dev.vars"
+run = "rm -f -- .env wrangler/aig/.dev.vars wrangler/hooks/.dev.vars"
 
 [tasks."deps:update"]
 description = "Update every tracked lockfile (python + typescript)"

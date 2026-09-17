@@ -14,7 +14,7 @@ HEADER_SECRETS = {
 }
 
 
-def secret(name: str) -> str:
+def credential(name: str) -> str:
     result = subprocess.run(
         [str(ROOT / "scripts/fnox-host"), "get", name],
         stdin=subprocess.DEVNULL,
@@ -29,14 +29,7 @@ def secret(name: str) -> str:
     return result
 
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("mode", choices=["cloudflare-api", *HEADER_SECRETS])
-    args = parser.parse_args()
-    if args.mode in HEADER_SECRETS:
-        token = secret(HEADER_SECRETS[args.mode])
-        print(json.dumps({"Authorization": f"Bearer {token}"}))
-        return
+def remote_environment(name: str, value: str) -> dict[str, str]:
     environment = {
         key: value
         for key, value in os.environ.items()
@@ -50,19 +43,45 @@ def main() -> None:
             "SSL_CERT_FILE",
         }
     }
-    environment["CLOUDFLARE_API_TOKEN"] = secret("CLOUDFLARE_API_TOKEN")
+    environment[name] = value
+    return environment
+
+
+def exec_remote(endpoint: str, credential_name: str) -> None:
     command = [
-        "mise",
-        "-C",
-        str(ROOT),
-        "exec",
-        "--",
         "mcp-remote",
-        "https://mcp.cloudflare.com/mcp",
+        endpoint,
         "--header",
-        "Authorization:Bearer ${CLOUDFLARE_API_TOKEN}",
+        f"Authorization:Bearer ${{{credential_name}}}",
     ]
-    os.execvpe(command[0], command, environment)
+    os.execvpe(
+        command[0],
+        command,
+        remote_environment(credential_name, credential(credential_name)),
+    )
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument(
+        "mode", choices=["cloudflare-api", *HEADER_SECRETS, "work-web-search"]
+    )
+    parser.add_argument("endpoint", nargs="?")
+    args = parser.parse_args()
+    if args.mode in HEADER_SECRETS:
+        if args.endpoint:
+            parser.error(f"{args.mode} does not accept an endpoint")
+        token = credential(HEADER_SECRETS[args.mode])
+        print(json.dumps({"Authorization": f"Bearer {token}"}))
+        return
+    if args.mode == "cloudflare-api":
+        if args.endpoint:
+            parser.error("cloudflare-api does not accept an endpoint")
+        exec_remote("https://mcp.cloudflare.com/mcp", "CLOUDFLARE_API_TOKEN")
+        return
+    if not args.endpoint:
+        parser.error("work-web-search requires an endpoint")
+    exec_remote(args.endpoint, "ANTHROPIC_AUTH_TOKEN")
 
 
 if __name__ == "__main__":

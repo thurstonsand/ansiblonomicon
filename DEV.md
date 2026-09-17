@@ -3,7 +3,7 @@
 ## Setup
 
 ```sh
-./scripts/bootstrap.sh                  # new machine: Xcode CLI, Homebrew, Ansible, chezmoi, mise, uv, 1Password CLI
+./scripts/bootstrap.sh                  # new machine: Xcode CLI, Homebrew, Ansible, chezmoi, mise, fnox, uv, 1Password CLI
 ./scripts/bootstrap.sh --ignore-certs   # behind a TLS-intercepting proxy
 ```
 

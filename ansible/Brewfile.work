@@ -30,6 +30,9 @@ brew "zsh-syntax-highlighting"
 # =============================================================================
 # Software Engineering
 # =============================================================================
+# Agent tools
+brew "asheshgoplani/tap/agent-deck"
+
 # Git
 brew "gh"
 brew "git"
@@ -62,6 +65,7 @@ brew "yaml-language-server"
 # Linters
 brew "hadolint"
 brew "markdownlint-cli2"
+brew "mcp-remote"
 brew "pyright"
 brew "ruff"
 brew "stylua"
@@ -130,5 +134,3 @@ cask "google-drive"
 # Voice
 # =============================================================================
 cask "thurstonsand/tap/mini-whisper-nightly"
-brew "whisper-cpp"
-cask "whispering"

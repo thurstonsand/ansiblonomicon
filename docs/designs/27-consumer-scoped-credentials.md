@@ -6,6 +6,8 @@ Status: Accepted
 
 Every consumer requests only the credentials it needs. Agent-vault access uses the shared automation identity without desktop authorization. Private and corporate credentials retain desktop authentication, invoked only when a consumer actually needs them. Bootstrap enrollment and rotation of the shared automation token deliberately remain attended exceptions.
 
+Sourcegraph is the work-host exception. Its plugin accepts only an inherited `SOURCEGRAPH_TOKEN`, and Pi must remain usable from non-interactive scripts, so chezmoi resolves the token during attended reconciliation and renders it into the work host's zsh environment.
+
 This supersedes design 26's whole-host execution rule. Its shared identity, provider isolation, six project exports and native mise cache remain unchanged.
 
 ## Execution
@@ -18,7 +20,7 @@ Nested launches carry `ANSIBLONOMICON_EXEC_PROFILE` and `ANSIBLONOMICON_EXEC_KEY
 
 ## Consumers
 
-Laptop reconciliation selects only its host's sudo password before launching Ansible. Its fact cache stays in memory so environment facts cannot persist the scoped password, and repeated `SUDO_ASKPASS` calls reuse the selected value without another provider read. Agent launches remain unwrapped. Other task wrappers explicitly select their own keys; connection-time MCP reads and on-demand Parallel reads remain lazy.
+Laptop reconciliation selects its host's sudo password before launching Ansible. Work reconciliation also selects `ANTHROPIC_AUTH_TOKEN` so chezmoi can render the gateway credential into Claude's settings. Its fact cache stays in memory so environment facts cannot persist the scoped credentials, and repeated `SUDO_ASKPASS` calls reuse the selected password without another provider read. Agent launches remain unwrapped. Other task wrappers explicitly select their own keys; connection-time MCP reads and on-demand Parallel reads remain lazy.
 
 Pod042 first-access Agent-vault item operations use a broker that supplies the shared service-account token only to its `op` subprocess. Enrollment of that identity remains attended. This decision does not establish that the live service account has item-write permission.
 

@@ -3,7 +3,8 @@
   "cleanupPeriodDays": 99999,
   "env": {
     "CLAUDE_CODE_NO_FLICKER": "1",
-    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"
+    "CLAUDE_CODE_DISABLE_TERMINAL_TITLE": "1"{{ if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }},
+    "ANTHROPIC_AUTH_TOKEN": "{{ secret "ANTHROPIC_AUTH_TOKEN" }}"{{ end }}
   },
   "attribution": {
     "commit": "",

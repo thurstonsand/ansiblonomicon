@@ -76,6 +76,16 @@
     label: "{{ item.item.key }}"
   changed_when: true
 
+- name: Trust managed mise config
+  when: language_tools_mise_tool_config | length > 0
+  ansible.builtin.command:
+    argv:
+      - mise
+      - trust
+      - --yes
+      - "{{ language_tools_mise_global_config }}"
+  changed_when: false
+
 - name: Check language tools update stamp
   when: not ansible_check_mode
   ansible.builtin.stat:

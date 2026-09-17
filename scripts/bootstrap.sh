@@ -99,6 +99,9 @@ else
     echo "==> mise already installed"
 fi
 
+# Project environment resolution uses fnox before mise can run its enter hook.
+mise --no-env -C "$REPO_DIR" install fnox
+
 # Install uv (host tool: mise's bootstrap task syncs .venv with it)
 if ! command -v uv &>/dev/null; then
     echo "==> Installing uv..."
