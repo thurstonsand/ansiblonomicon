@@ -82,6 +82,7 @@ class HouseAtlas extends HTMLElement {
   }
 
   set hass(hass) {
+    const previous = this._hass;
     this._hass = hass;
     if (!this.config) return;
     if (!this.helpers) {
@@ -96,6 +97,17 @@ class HouseAtlas extends HTMLElement {
           .catch((error) => this.showError(error));
       }
       return;
+    }
+    // Floorplan binds rules only for entities present when the map is created.
+    if (
+      this.floor.rooms.some(
+        (room) =>
+          room.pickup &&
+          !previous?.states[room.pickup.entity] &&
+          hass.states[room.pickup.entity],
+      )
+    ) {
+      this.renderMap();
     }
     if (this.map) this.map.hass = hass;
     for (const card of this.cards) card.hass = hass;
@@ -169,24 +181,17 @@ class HouseAtlas extends HTMLElement {
         .floors button { flex: 1; background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 8px; }
         .floors button[aria-current=true] { border-color: var(--atlas-accent); color: var(--atlas-accent); font-weight: 600; }
         .layout { display: grid; grid-template-columns: minmax(0,1fr) 360px; gap: 32px; align-items: start; }
+        .detail-host:empty { display: none; }
         .map-panel { min-width: 0; }
         .map-wrap { width: min(100%,calc((100dvh - 360px) * var(--floor-ratio))); min-width: min(100%,320px); margin: auto; }
-        .floor-note { font-size: 11px; color: var(--atlas-muted); letter-spacing: .03em; }
-        .floor-meta { display: flex; align-items: center; justify-content: space-between; padding: 0 8px 12px; }
-        .floor-meta strong { font: 400 22px Georgia,serif; }
         .detail-host { position: sticky; top: 76px; }
         aside.details { border: 1px solid var(--atlas-border); background: var(--atlas-bg); border-radius: 10px; max-height: calc(100dvh - 275px); overflow: auto; overscroll-behavior: contain; }
         ha-bottom-sheet { --ha-bottom-sheet-max-height: 75dvh; --ha-bottom-sheet-max-width: 720px; --ha-bottom-sheet-surface-background: var(--atlas-bg); --ha-bottom-sheet-scrim-color: #28282866; --ha-bottom-sheet-border-radius: 18px; }
         .detail-heading { position: sticky; top: 0; background: var(--atlas-bg); z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 20px 16px; border-bottom: 1px solid var(--atlas-border); }
         .detail-heading h2 { font: 400 27px/1.15 Georgia,serif; margin: 0; }
-        .crumb { font-size: 10px; text-transform: uppercase; letter-spacing: .16em; color: var(--atlas-muted); margin-bottom: 8px; }
         .close { flex: 0 0 48px; width: 48px; background: none; border: 0; font-size: 28px; font-weight: 300; }
         .detail-body { padding: 16px; display: grid; gap: 12px; }
         .status { font-size: 12px; margin: 8px 0 0; color: var(--atlas-muted); }
-        .empty { padding: 36px 24px; min-height: 220px; }
-        .empty h2 { font: 400 28px Georgia,serif; margin: 0 0 12px; }
-        .empty p { color: var(--atlas-muted); font-size: 14px; line-height: 1.65; }
-        .empty .number { font: italic 64px Georgia,serif; color: var(--atlas-muted); }
         .scenes { display: flex; flex-wrap: wrap; gap: 8px; }
         .scene { background: var(--atlas-selected); border: 1px solid var(--atlas-border); border-radius: 6px; padding: 0 14px; font-size: 13px; }
         .section-label { margin: 10px 0 0; font-size: 10px; text-transform: uppercase; letter-spacing: .16em; color: var(--atlas-muted); }
@@ -213,8 +218,6 @@ class HouseAtlas extends HTMLElement {
           .detail-heading { padding: 24px 18px 12px; }
           .detail-heading h2 { font-size: 26px; }
           .detail-body { padding: 14px 16px 20px; }
-          .floor-meta { padding-bottom: 8px; }
-          .floor-meta strong { font-size: 19px; }
         }
         @media(max-height:500px) {
           .atlas { padding-top: 8px; }
@@ -226,7 +229,7 @@ class HouseAtlas extends HTMLElement {
       <main class="atlas">
         <header class="top"><div><div class="eyebrow">Loch Highland</div><h1>House</h1></div><div class="tools"><button class="mode" aria-pressed="false">Room list</button></div></header>
         <nav class="floors" aria-label="Floors">${this.config.floors.map((floor) => `<button data-floor="${escapeXml(floor.id)}" aria-current="${floor.id === this.floorId}">${escapeXml(floor.name)}</button>`).join("")}</nav>
-        <div class="layout"><section class="map-panel" aria-label="Floor map"><div class="floor-meta"><strong></strong></div><div class="map-wrap"></div><div class="room-list" hidden></div></section><div class="detail-host"></div></div>
+        <div class="layout"><section class="map-panel" aria-label="Floor map"><div class="map-wrap"></div><div class="room-list" hidden></div></section><div class="detail-host"></div></div>
         <p class="error" role="alert"></p>
       </main>`;
     this.shadowRoot.querySelectorAll("[data-floor]").forEach((button) =>
@@ -306,8 +309,6 @@ class HouseAtlas extends HTMLElement {
   renderMap() {
     if (!this.helpers || !this._hass) return;
     const floor = this.floor;
-    this.shadowRoot.querySelector(".floor-meta strong").textContent =
-      `${floor.name} floor`;
     const styles = `
       svg{font-family:Arial,sans-serif;color:var(--atlas-fg);background:var(--atlas-bg)}
       .room{cursor:pointer;outline:none}
@@ -327,6 +328,16 @@ class HouseAtlas extends HTMLElement {
       .context{fill:url(#hatch);stroke:var(--atlas-border);stroke-width:1}
       .context-label{fill:var(--atlas-muted);font-size:11px;text-anchor:middle}
       .stairs{stroke:var(--atlas-wall);stroke-width:1;fill:none;pointer-events:none}
+      .pickup{display:none;pointer-events:none;text-anchor:middle}
+      .pickup.visible{display:inline}
+      .pickup-bin{display:none}
+      .pickup.garbage .garbage-bin,.pickup.recycling .recycling-bin{display:inline}
+      .garbage-bin{color:var(--house-atlas-secure,#79740e)}
+      .recycling-bin{color:#458588}
+      .pickup.garbage.recycling .recycling-bin{transform:translateX(32px)}
+      .pickup-body{fill:currentColor}
+      .pickup-lid{fill:currentColor;stroke:var(--atlas-bg);stroke-width:.5}
+      .pickup-window{fill:var(--atlas-bg);opacity:.85}
     `;
     const rooms = floor.rooms
       .map((room) => {
@@ -342,14 +353,51 @@ class HouseAtlas extends HTMLElement {
           `<path class="opening" aria-hidden="true" d="${escapeXml(path)}"/>`,
       )
       .join("");
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${floor.width} ${floor.height}" role="group" aria-label="${escapeXml(floor.name)} floor rooms"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6"><path d="M0 6L6 0" stroke="var(--atlas-border)" stroke-width=".6"/></pattern><pattern id="deck" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="12" fill="var(--atlas-surface)"/><path d="M0 11H12" stroke="var(--atlas-border)" stroke-width=".7"/></pattern></defs>${floor.context || ""}${rooms}${floor.stairs || ""}${openings}</svg>`;
+    const pickups = floor.rooms
+      .filter((room) => room.pickup)
+      .map((room) => {
+        const [x, y] = room.pickup.position;
+        const bins = ["garbage", "recycling"]
+          .map(
+            (type) =>
+              `<g class="pickup-bin ${type}-bin"><path class="pickup-body" d="M-10 6H10L8 31H-8Z"/><path class="pickup-lid" d="M-12 3H12V7H-12ZM-8 0H8L10 3H-10Z"/><path class="pickup-window" d="M0 13L5 16V22L0 25L-5 22V16Z"/></g>`,
+          )
+          .join("");
+        return `<g id="pickup-${room.id}" class="pickup" transform="translate(${x} ${y})" role="img" aria-labelledby="pickup-title-${room.id}"><title id="pickup-title-${room.id}"></title>${bins}</g>`;
+      })
+      .join("");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${floor.width} ${floor.height}" role="group" aria-label="${escapeXml(floor.name)} floor rooms"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6"><path d="M0 6L6 0" stroke="var(--atlas-border)" stroke-width=".6"/></pattern><pattern id="deck" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="12" fill="var(--atlas-surface)"/><path d="M0 11H12" stroke="var(--atlas-border)" stroke-width=".7"/></pattern></defs>${floor.context || ""}${rooms}${floor.stairs || ""}${openings}${pickups}</svg>`;
     const rules = floor.rooms.map((room) => ({
       element: `room-${room.id}`,
       tap_action: { action: "fire-dom-event", atlas_room: room.id },
       hold_action: { action: "none" },
-      double_tap_action: { action: "none" },
+      double_tap_action: false,
     }));
     for (const room of floor.rooms) {
+      if (room.pickup) {
+        rules.push({
+          entity: room.pickup.entity,
+          element: `pickup-${room.id}`,
+          state_action: {
+            action: "call-service",
+            service: "floorplan.class_set",
+            service_data: {
+              class: `> const types = entity.attributes.pickup_types || []; if (!['tomorrow', 'today'].includes(entity.state) || !types.some(type => ['Garbage', 'Recycling'].includes(type))) return 'pickup'; return 'pickup visible' + (types.includes('Garbage') ? ' garbage' : '') + (types.includes('Recycling') ? ' recycling' : '');`,
+            },
+          },
+        });
+        rules.push({
+          entity: room.pickup.entity,
+          element: `pickup-title-${room.id}`,
+          state_action: {
+            action: "call-service",
+            service: "floorplan.text_set",
+            service_data: {
+              text: `> return (entity.attributes.pickup_types || []).join(' and ') + ' pickup ' + entity.state;`,
+            },
+          },
+        });
+      }
       if (room.lights) {
         const ids = JSON.stringify(room.lights);
         rules.push({
@@ -442,18 +490,14 @@ class HouseAtlas extends HTMLElement {
     const room = this.room;
     this.cards = [];
     host.replaceChildren();
-    if (this.mobile && !room) return;
+    if (!room) return;
     const details = document.createElement(
       this.mobile ? "ha-bottom-sheet" : "aside",
     );
     details.className = "details";
     details.setAttribute("aria-label", "Room controls");
     host.append(details);
-    if (!room) {
-      details.innerHTML = `<div class="empty"><div class="number">${this.floor.rooms.length.toString().padStart(2, "0")}</div><h2>Make yourself at home.</h2><p>Select a room to see its lights, scenes, and controls.<br>The map stays yours. Other screens have their own selection.</p><p class="floor-note">${escapeXml(this.floor.name.toUpperCase())} FLOOR · LOCH HIGHLAND</p></div>`;
-      return;
-    }
-    details.innerHTML = `<header class="detail-heading"><div><div class="crumb">${escapeXml(this.floor.name)} floor</div><h2>${escapeXml(room.name)}</h2><p class="status"></p></div><button class="close" aria-label="Close room controls">×</button></header><div class="detail-body"></div>`;
+    details.innerHTML = `<header class="detail-heading"><div><h2>${escapeXml(room.name)}</h2><p class="status"></p></div><button class="close" aria-label="Close room controls">×</button></header><div class="detail-body"></div>`;
     if (this.mobile) {
       details.querySelector("header").slot = "header";
       details.flexContent = true;

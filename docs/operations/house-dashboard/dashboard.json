@@ -177,10 +177,8 @@
                     "Main Bedroom"
                   ],
                   "lights": [
-                    "light.main_bedroom_cloud_painting",
                     "light.main_bedroom_yanie_fluff_lamp"
                   ],
-                  "group": "light.main_bedroom",
                   "hueScenes": true
                 },
                 {
@@ -268,7 +266,11 @@
                   ],
                   "lines": [
                     "Garage"
-                  ]
+                  ],
+                  "pickup": {
+                    "entity": "sensor.trash_pickup_reminder",
+                    "position": [34, 332]
+                  }
                 },
                 {
                   "id": "hall_bath",

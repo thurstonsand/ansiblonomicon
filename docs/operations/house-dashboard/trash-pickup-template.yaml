@@ -1,0 +1,26 @@
+- sensor:
+    - name: Trash Pickup Reminder
+      unique_id: trash_pickup_reminder
+      icon: mdi:trash-can-outline
+      availability: >-
+        {{ has_value('sensor.trash_pickup_current_pickup') and
+           has_value('sensor.trash_pickup_next_pickup') }}
+      state: >-
+        {% set dates = [states('sensor.trash_pickup_current_pickup'),
+                        states('sensor.trash_pickup_next_pickup')] %}
+        {% if now().date().isoformat() in dates %}
+          today
+        {% elif (now().date() + timedelta(days=1)).isoformat() in dates %}
+          tomorrow
+        {% else %}
+          hidden
+        {% endif %}
+      attributes: >-
+        {% set dates = [now().date().isoformat(),
+                        (now().date() + timedelta(days=1)).isoformat()] %}
+        {% set pickups = expand('sensor.trash_pickup_current_pickup',
+                                'sensor.trash_pickup_next_pickup')
+                         | selectattr('state', 'in', dates)
+                         | sort(attribute='state') | list %}
+        {{ {'pickup_date': pickups[0].state if pickups else none,
+            'pickup_types': pickups[0].attributes.pickup_types if pickups else []} }}

@@ -15,6 +15,7 @@ node_modules
 
 # ai
 /.claude/settings.local.json
+/.amp/artifacts/
 AGENTS.local.md
 CLAUDE.local.md
 
