@@ -29,21 +29,23 @@ KVM API certificate verification is enabled by default. The appliance presents a
 ## Containers
 
 - Compose sources: `bootstrap/targets/pod042/containers/stacks/<project>/`.
-- Installed project definitions: `/etc/ansiblonomicon/containers/<project>/`.
+- Installed project definitions: `/etc/ansiblonomicon/containers/<project>/`, readable only by root because some are rendered with secrets.
 - Durable application state: `/mnt/black-box/docker/<project>/`.
 - Media and other large replaceable data: `/mnt/ark/media/`.
 - Docker runtime, images, and layers stay on the boot SSD under Docker's defaults.
 - Native `[bootstrap.compose]` resources own pull, build, recreation, health, orphan, and lifecycle policy. Compose owns dependencies and project-internal networks.
 
-Use direct Docker commands for inspection and reversible diagnosis. Prefix them with `ssh pod042` when operating remotely:
+Read a project's definition from its compose source in the repo, never the installed copy. Reserve `sudo` for the case where you suspect the host has drifted from the declaration.
 
 | Task | Command |
 | --- | --- |
-| Project status | `docker compose -p <project> -f /etc/ansiblonomicon/containers/<project>/compose.yaml ps` |
+| All projects | `docker compose ls` |
+| Project status | `docker ps --filter label=com.docker.compose.project=<project> --format 'table {{.Names}}\t{{.Status}}'` |
 | All containers | `docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'` |
-| Project logs | `docker compose -p <project> -f /etc/ansiblonomicon/containers/<project>/compose.yaml logs --since 30m` |
+| Logs | `docker logs --since 30m <container>` |
 | Inspect | `docker inspect <container>` |
 | Execute | `docker exec -i <container> <command>` |
+| Restart | `docker restart <container>` |
 
 Do not edit installed definitions or `.env` files. Change the source declaration, run a focused check, then reconcile the `containers` capability. A manual container restart is diagnostic or immediate recovery only; reflect any enduring fix in Compose.
 
