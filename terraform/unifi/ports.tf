@@ -154,6 +154,13 @@ resource "unifi_device" "pro_max_24_poe" {
   }
 
   port_override {
+    index           = 3
+    name            = "SuperLink Gateway"
+    poe_mode        = "auto"
+    port_profile_id = unifi_port_profile.bunker_access.id
+  }
+
+  port_override {
     index           = 23
     name            = "U7 Pro Max bootstrap"
     poe_mode        = "auto"

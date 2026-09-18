@@ -72,6 +72,50 @@ resource "unifi_firewall_policy" "yorha_to_scanners" {
   }
 }
 
+resource "unifi_firewall_policy" "home_assistant_to_protect" {
+  name                 = "Home Assistant to Protect"
+  action               = "ALLOW"
+  protocol             = "tcp"
+  ip_version           = "IPV4"
+  create_allow_respond = true
+
+  source = {
+    zone_id         = unifi_firewall_zone.scanners.id
+    matching_target = "IP"
+    ips             = ["10.10.40.42"]
+  }
+
+  destination = {
+    zone_id            = unifi_firewall_zone.yorha.id
+    matching_target    = "IP"
+    ips                = ["10.10.20.1"]
+    port               = "443"
+    port_matching_type = "SPECIFIC"
+  }
+}
+
+resource "unifi_firewall_policy" "home_assistant_to_matic" {
+  name                 = "Home Assistant to Matic"
+  action               = "ALLOW"
+  protocol             = "tcp"
+  ip_version           = "IPV4"
+  create_allow_respond = true
+
+  source = {
+    zone_id         = unifi_firewall_zone.scanners.id
+    matching_target = "IP"
+    ips             = ["10.10.40.42"]
+  }
+
+  destination = {
+    zone_id            = unifi_firewall_zone.the_village.id
+    matching_target    = "IP"
+    ips                = ["10.10.50.104"]
+    port               = "16320"
+    port_matching_type = "SPECIFIC"
+  }
+}
+
 resource "unifi_firewall_policy" "yorha_to_the_village" {
   name                 = "YoRHa to The Village"
   action               = "ALLOW"

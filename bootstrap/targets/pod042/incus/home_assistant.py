@@ -36,6 +36,11 @@ ZBT_2 = {
     "productid": "831a",
     "serial": "1CDBD45E7B24",
 }
+BLUETOOTH = {
+    "type": "usb",
+    "vendorid": "0a12",
+    "productid": "0001",
+}
 
 
 def seed_vm() -> None:
@@ -131,8 +136,14 @@ def ensure_vm(apply: bool) -> None:
         nic.get(key) != value for key, value in desired_nic.items()
     )
     zbt_2_drift = devices.get("zbt-2") != ZBT_2
+    bluetooth_drift = devices.get("bluetooth") != BLUETOOTH
     if not apply and (
-        config_drift or root_drift or nic_drift or zbt_2_drift or not running
+        config_drift
+        or root_drift
+        or nic_drift
+        or zbt_2_drift
+        or bluetooth_drift
+        or not running
     ):
         raise ValueError("home-assistant instance differs from its declaration")
     if apply and running and (config_drift or root_drift or nic_drift):
@@ -208,6 +219,28 @@ def ensure_vm(apply: bool) -> None:
             f"vendorid={ZBT_2['vendorid']}",
             f"productid={ZBT_2['productid']}",
             f"serial={ZBT_2['serial']}",
+        )
+    if bluetooth_drift:
+        print("home-assistant: device bluetooth")
+        if "bluetooth" in devices:
+            incus.run(
+                "/usr/bin/incus",
+                "config",
+                "device",
+                "remove",
+                "home-assistant",
+                "bluetooth",
+            )
+        incus.run(
+            "/usr/bin/incus",
+            "config",
+            "device",
+            "add",
+            "home-assistant",
+            "bluetooth",
+            "usb",
+            f"vendorid={BLUETOOTH['vendorid']}",
+            f"productid={BLUETOOTH['productid']}",
         )
     if not running:
         print("Start home-assistant")

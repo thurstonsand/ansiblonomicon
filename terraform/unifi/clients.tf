@@ -112,9 +112,22 @@ resource "unifi_client" "hue_bridge" {
   allow_existing = true
 }
 
+resource "unifi_client" "superlink_gateway" {
+  mac            = "a4:f8:ff:de:d6:be"
+  name           = "SuperLink Gateway"
+  allow_existing = true
+}
+
 resource "unifi_client" "matic_vacuum_main_floor" {
   mac            = "bc:d2:2c:88:c0:16"
   name           = "Matic Robot Vacuum - Main Floor"
+  fixed_ip       = "10.10.50.104"
+  allow_existing = true
+}
+
+resource "unifi_client" "breville_oracle_dual_boiler" {
+  mac            = "98:a1:4a:3c:22:d8"
+  name           = "Breville Oracle Dual Boiler"
   allow_existing = true
 }
 

@@ -37,6 +37,11 @@ def test_exact_haos_vm_contract() -> None:
         "productid": "831a",
         "serial": "1CDBD45E7B24",
     }
+    assert home_assistant.BLUETOOTH == {
+        "type": "usb",
+        "vendorid": "0a12",
+        "productid": "0001",
+    }
 
 
 def declared_instance(config: dict[str, str]) -> dict[str, Any]:
@@ -58,6 +63,7 @@ def declared_instance(config: dict[str, str]) -> dict[str, Any]:
                 "name": "eth0",
             },
             "zbt-2": home_assistant.ZBT_2,
+            "bluetooth": home_assistant.BLUETOOTH,
         },
     }
 
@@ -163,5 +169,39 @@ def test_apply_hotplugs_zbt_2_into_running_vm(
             "vendorid=303a",
             "productid=831a",
             "serial=1CDBD45E7B24",
+        )
+    ]
+
+
+def test_apply_hotplugs_bluetooth_into_running_vm(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    instance = declared_instance(home_assistant.VM_CONFIG)
+    del instance["devices"]["bluetooth"]
+    calls: list[tuple[str, ...]] = []
+
+    def read_instance(kind: str, _name: str) -> dict[str, Any]:
+        return {"status": "Running"} if kind == "info" else instance
+
+    def record_run(*args: str, **_kwargs: object) -> subprocess.CompletedProcess[str]:
+        calls.append(args)
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(home_assistant.incus, "incus_json", read_instance)
+    monkeypatch.setattr(home_assistant.incus, "run", record_run)
+
+    home_assistant.ensure_vm(True)
+
+    assert calls == [
+        (
+            "/usr/bin/incus",
+            "config",
+            "device",
+            "add",
+            "home-assistant",
+            "bluetooth",
+            "usb",
+            "vendorid=0a12",
+            "productid=0001",
         )
     ]

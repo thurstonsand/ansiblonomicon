@@ -43,6 +43,10 @@ resource "unifi_setting" "site" {
         name    = "Philips Hue"
         address = "_hue._tcp.local"
       },
+      {
+        name    = "HomeKit Accessory"
+        address = "_hap._tcp.local"
+      },
     ]
   }
 }
