@@ -12,10 +12,6 @@ onepassword_become_item: "Apple Macbook Login"
 configure_homebrew: true
 configure_mas: true
 configure_macos_defaults: true
-configure_terminal_theme: true
-terminal_theme_profile: detector
-terminal_theme_mirrors:
-  - pod042
 
 # Additional npm packages for macOS (extends npm_global_packages_base)
 npm_global_packages_extra:

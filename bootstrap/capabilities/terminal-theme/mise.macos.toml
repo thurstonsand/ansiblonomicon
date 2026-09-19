@@ -1,0 +1,19 @@
+[dotfiles]
+"~/.local/bin/terminal-theme-ssh-lease.py" = { source = "terminal-theme/terminal-theme-ssh-lease.py", mode = "symlink" }
+"~/.local/bin/terminal-theme-watch" = { source = "terminal-theme/terminal-theme-watch", mode = "symlink" }
+
+[bootstrap.hooks.post-dotfiles]
+run = '''
+service="gui/$(id -u)/house.thurstons.terminal-theme-watch"
+if launchctl print "$service" >/dev/null 2>&1; then
+  launchctl bootout "$service"
+fi
+'''
+
+[bootstrap.macos.launchd.agents."house.thurstons.terminal-theme-watch"]
+program = "{{ vars.terminal_theme_home }}/.local/bin/terminal-theme-watch"
+run_at_load = true
+keep_alive = true
+environment = { PATH = "{{ vars.terminal_theme_home }}/.local/bin:/opt/homebrew/bin:/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin", TERMINAL_THEME_RUNTIME_HASH = "{{ (read_file(path=config_root ~ '/terminal-theme/terminal-theme-watch') ~ read_file(path=config_root ~ '/terminal-theme/terminal-theme-switch.py') ~ read_file(path=config_root ~ '/terminal-theme/terminal_theme_common.py') ~ read_file(path=config_root ~ '/terminal-theme/hunk_gruvbox_theme.py') ~ read_file(path=config_root ~ '/terminal-theme/hunk-gruvbox-light.toml') ~ read_file(path=config_root ~ '/terminal-theme/hunk-gruvbox-dark.toml')) | hash }}" }
+stdout_path = "{{ vars.terminal_theme_home }}/Library/Logs/terminal-theme-watch.log"
+stderr_path = "{{ vars.terminal_theme_home }}/Library/Logs/terminal-theme-watch.err.log"

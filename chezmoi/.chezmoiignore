@@ -21,11 +21,6 @@ Library/
 {{ if ne .chezmoi.hostname "pod042" }}
 .ssh/id_ed25519_git
 .ssh/id_ed25519_git.pub
-.config/zsh/terminal-theme.zsh
-.config/hunk/config.toml
-.local/bin/terminal_theme_common.py
-.local/bin/terminal-theme-switch.py
-.local/bin/hunk_gruvbox_theme.py
 {{ end }}
 
 # The NAS is headless; desktop integrations remain on workstations.

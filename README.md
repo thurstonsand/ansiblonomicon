@@ -30,7 +30,9 @@ Use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND` to giv
 
 ### Terminal theme sync
 
-On macOS, `dark-notify` acts as the source of truth for terminal theme state. An Ansible-managed `terminal_theme` role installs a user LaunchAgent (`house.thurstons.terminal-theme-watch`), the `~/.local/bin/terminal-theme-watch` watcher, `~/.local/bin/terminal-theme-switch.py`, and the shared zsh helper at `~/.config/zsh/terminal-theme.zsh`. Together they keep `~/.terminal-bg`, Codex, Hunk, and tmux in sync while reloading the LaunchAgent only when the theme manager changes. The role owns `~/.config/hunk/config.toml` and injects the current Gruvbox Hard custom theme block from `hunk_gruvbox_theme.py`; this takes effect once the installed Hunk release supports custom themes.
+On macOS, `dark-notify` acts as the source of truth for terminal theme state. The shared [native mise capability](bootstrap/capabilities/terminal-theme/README.md) installs the runtime helpers and manages the user LaunchAgent (`dev.mise.house.thurstons.terminal-theme-watch`). Together they keep `~/.terminal-bg`, Codex, Hunk, and tmux in sync; active SSH leases mirror the personal Mac's theme to pod042. Mise renders Hunk's real-file config, while deployment and runtime switching read the same Gruvbox Hard palette assets. The watcher reloads only when its declaration or runtime inputs change.
+
+Run `mise terminal-theme` for this capability alone, or add `--check` for a nonmutating preview. Regular laptop and pod042 reconciliation includes it and updates the standalone mise binary to latest stable when its last successful update is at least 24 hours old. Check mode skips upgrades. `mise laptop -t terminal-theme` runs natively without Ansible; mixed tags route only the remaining tags to Ansible. Neither Ansible nor chezmoi owns these theme files.
 
 ### Retiring managed paths
 

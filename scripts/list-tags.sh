@@ -31,4 +31,7 @@ else
   control=inventory/control/linux.ini
 fi
 
+case "$playbook" in
+  macos|work) printf 'Native mise tags: terminal-theme\n' ;;
+esac
 exec ansible-playbook -i "$control" "playbooks/$playbook.yml" --list-tags

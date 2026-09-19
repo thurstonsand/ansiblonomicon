@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
-    / "ansible/roles/terminal_theme/files/terminal-theme-switch.py"
+    / "bootstrap/capabilities/terminal-theme/files/terminal-theme-switch.py"
 )
 sys.path.insert(0, str(MODULE_PATH.parent))
 SPEC = spec_from_file_location("terminal_theme_switch", MODULE_PATH)
@@ -20,6 +20,8 @@ set_codex_tui_theme = MODULE.set_codex_tui_theme
 set_hunk_theme = MODULE.set_hunk_theme
 update_tmux_theme = MODULE.update_tmux_theme
 write_atomic = MODULE.write_atomic
+HUNK_GRUVBOX_THEMES = sys.modules["hunk_gruvbox_theme"].HUNK_GRUVBOX_THEMES
+Mode = sys.modules["terminal_theme_common"].Mode
 
 
 def test_replaces_existing_tui_theme() -> None:
@@ -131,3 +133,15 @@ string = "#b8bb26"
     assert "base" not in parsed["custom_theme"]
     assert parsed["custom_theme"]["background"] == "#f9f5d7"
     assert parsed["custom_theme"]["syntax"]["string"] == "#79740e"
+
+
+def test_python_runtime_palettes_match_shared_assets() -> None:
+    for mode in Mode:
+        palette_path = MODULE_PATH.parent / f"hunk-gruvbox-{mode.value}.toml"
+        palette = tomllib.loads(palette_path.read_text())["custom_theme"]
+        syntax = palette.pop("syntax")
+
+        assert HUNK_GRUVBOX_THEMES[mode] == {
+            "custom_theme": palette,
+            "syntax": syntax,
+        }

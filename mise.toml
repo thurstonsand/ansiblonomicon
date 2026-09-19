@@ -129,6 +129,48 @@ quiet = true
 # Reconcile: converge a machine against this repo
 # ---------------------------------------------------------------------------
 
+[tasks."mise:maintain"]
+description = "Update the user-owned mise binary when its daily maintenance is due"
+run = 'bootstrap/capabilities/mise/mise-maintain "$HOME/.local/bin/mise" "$HOME/.cache/ansiblonomicon/mise-upgrade.stamp"'
+
+[tasks."terminal-theme"]
+description = "Reconcile the terminal theme capability on this registered host"
+alias = "terminal-theme"
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+'''
+run = '''
+host=$(hostname -s)
+case "$host" in
+  pod042|Thurstons-MacBook-Pro|ML-DFC6YK6VJQ) ;;
+  *) echo "Unregistered terminal-theme host" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+if [ "$host" = pod042 ]; then
+  export MISE_ENV=terminal-theme
+  parts=dotfiles
+else
+  export MISE_ENV=terminal-theme,terminal-theme-macos,terminal-theme-files
+  parts=files,dotfiles,macos-launchd-agents
+fi
+if [ -n "${usage_check:-}" ]; then
+  exec mise -C "$target" bootstrap --only "$parts" --force-dotfiles --dry-run
+fi
+if [ "$host" != pod042 ]; then
+  case "$host" in
+    ML-DFC6YK6VJQ) sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS_WORK ;;
+    *) sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS ;;
+  esac
+  export SUDO_ASKPASS="$MISE_PROJECT_ROOT/ansible/sudo-askpass.sh"
+  exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret "$sudo_secret" -- \
+    sh -ec 'sudo -A -v; exec mise -C "$1" bootstrap --only "$2" --force-dotfiles --yes' \
+    terminal-theme "$target" "$parts"
+fi
+exec mise -C "$target" bootstrap --only "$parts" --force-dotfiles --yes
+'''
+
 [tasks.reconcile]
 description = "Reconcile this machine, dispatching on hostname"
 dir = "ansible"
@@ -138,19 +180,10 @@ flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 '''
 run = '''
 case "$(hostname -s)" in
-  ML-DFC6YK6VJQ)
-    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS_WORK
-    set -- -i inventory/control/macos.ini playbooks/work.yml
-    ;;
-  Thurstons-MacBook-Pro)
-    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS
-    set -- -i inventory/control/macos.ini playbooks/macos.yml
-    ;;
+  ML-DFC6YK6VJQ|Thurstons-MacBook-Pro) exec mise run //:reconcile:laptop ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   pod042) exec python3 ../scripts/pod042_reconcile.py ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
   *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
 esac
-ANSIBLE_CACHE_PLUGIN=memory exec ../scripts/fnox-host exec --secret "$sudo_secret" -- \
-  ansible-playbook "$@" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
 '''
 
 [tasks."reconcile:laptop"]
@@ -162,6 +195,7 @@ flag "-c --check" help="Dry-run mode (no changes made)"
 flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 '''
 run = '''
+set -e
 case "$(hostname -s)" in
   ML-DFC6YK6VJQ)
     playbook=work.yml
@@ -175,10 +209,23 @@ case "$(hostname -s)" in
     ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-set -- --secret "$sudo_secret"
-[ -z "$consumer_secret" ] || set -- "$@" --secret "$consumer_secret"
-ANSIBLE_CACHE_PLUGIN=memory exec ../scripts/fnox-host exec "$@" -- \
-  ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${usage_tags:+--tags ${usage_tags}}
+theme=false
+case ",${usage_tags:-}," in
+  ,,|*,all,*|*,terminal-theme,*) theme=true ;;
+esac
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -v '^terminal-theme$' | paste -sd, -)
+if [ -z "${usage_check:-}" ]; then
+  mise run //:mise:maintain
+fi
+if [ -z "${usage_tags:-}" ] || [ -n "$ansible_tags" ]; then
+  set -- --secret "$sudo_secret"
+  [ -z "$consumer_secret" ] || set -- "$@" --secret "$consumer_secret"
+  ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
+    ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
+fi
+if [ "$theme" = true ]; then
+  exec mise run //:terminal-theme ${usage_check:+--check}
+fi
 '''
 
 [tasks."reconcile:udmp"]

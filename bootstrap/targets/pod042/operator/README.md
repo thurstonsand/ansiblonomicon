@@ -16,6 +16,6 @@ Agent installation follows the official installers: [Amp](https://ampcode.com/in
 
 The final hook runs those tasks as `thurstonsand` with an isolated environment. It does not load the project's credential hook or replace the base bootstrap task.
 
-Bootstrap owns software installation and service lifecycle. Chezmoi owns user configuration, including the shell, editor, and terminal-theme files. Pod042's theme templates reuse the existing role sources; the legacy role still owns their deployment on other hosts.
+Bootstrap owns software installation and service lifecycle. Chezmoi owns the remaining shell and editor configuration. The shared native `terminal-theme` capability owns theme helpers and Hunk configuration on pod042 and both Macs; the driver applies it after operator prerequisites.
 
 T3 and Amp enrollment and persistence belong to `remote-development`, not this capability. T3 serves multiple projects from the operator's home; Amp's runner belongs to this checkout. Harness-managed skill catalogues remain a separate migration item.

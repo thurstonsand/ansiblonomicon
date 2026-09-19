@@ -4,7 +4,6 @@ hostname: pod042
 configure_chezmoi: true
 configure_agent_harness: true
 configure_terminal_theme: true
-terminal_theme_profile: mirror
 
 apt_packages:
   - btop
