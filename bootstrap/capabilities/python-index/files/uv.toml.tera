@@ -1,0 +1,1 @@
+{{- vars.python_index_config | safe -}}

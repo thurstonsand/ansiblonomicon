@@ -12,7 +12,7 @@ local function ansible_root_dir(bufnr, on_dir)
   end
 end
 
-{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+{% if vars.host_profile == "work" %}
 return {
   {
     "mason-org/mason.nvim",
@@ -60,7 +60,7 @@ return {
     },
   },
 }
-{{- else }}
+{% else %}
 local mason_tools = {
   "ansible-language-server",
   "ansible-lint",
@@ -169,4 +169,4 @@ return {
     end,
   },
 }
-{{- end }}
+{% endif %}

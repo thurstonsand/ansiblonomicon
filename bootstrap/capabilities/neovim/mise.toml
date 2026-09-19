@@ -1,0 +1,34 @@
+[dotfiles]
+"~/.config/nvim" = { source = "neovim/nvim", mode = "symlink-each" }
+"~/.config/nvim/lua/plugins/mason.lua" = { source = "neovim/mason.lua.tera", mode = "template" }
+"~/.config/nvim/lua/plugins/jira.lua" = { source = "neovim/jira.lua.tera", mode = "template" }
+
+[tasks."neovim:plugins"]
+description = "Restore or synchronize Neovim plugins"
+timeout = "10m"
+run = '''
+if [ "$NEOVIM_MODE" = restore ]; then
+  exec nvim --headless '+Lazy! restore' +qa
+else
+  exec nvim --headless '+Lazy! sync' +qa
+fi
+'''
+
+[tasks."neovim:mason"]
+description = "Repair and update Neovim Mason tools"
+depends = ["neovim:plugins"]
+timeout = "10m"
+run = '''
+python3 neovim/repair-mason.py || exit "$?"
+if [ "$NEOVIM_MODE" = sync ]; then
+  exec nvim --headless '+MasonToolsUpdateSync' +qa
+fi
+'''
+
+[tasks."neovim:setup"]
+description = "Update Neovim plugins, tools, and parsers"
+depends = ["neovim:mason"]
+timeout = "10m"
+run = '''
+exec nvim --headless '+lua local ok, err = xpcall(function() require("nvim-treesitter").update(nil, { summary = true }):wait(600000) end, debug.traceback); if not ok then vim.api.nvim_err_writeln(err); vim.cmd.cquit() end' +qa
+'''

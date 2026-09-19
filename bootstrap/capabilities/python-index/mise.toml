@@ -1,0 +1,20 @@
+[dotfiles]
+"~/.config/uv/uv.toml" = { source = "python-index/uv.toml.tera", mode = "template" }
+"~/.config/pip/pip.conf" = { source = "python-index/pip.conf.tera", mode = "template" }
+
+[env]
+PYTHON_INDEX_CONFIG = '''{{ vars.python_index_config }}'''
+
+[tasks."python-index:apply"]
+description = "Validate and apply Python package index configuration"
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+'''
+run = '''
+PYTHON_INDEX_PIP_CONFIG=$(python-index/python-index-facts) || exit "$?"
+export PYTHON_INDEX_PIP_CONFIG
+if [ -n "${usage_check:-}" ]; then
+  exec mise bootstrap dotfiles apply --force --dry-run
+fi
+exec mise bootstrap dotfiles apply --force --yes
+'''

@@ -1,0 +1,58 @@
+#!/usr/bin/env python3
+"""Validate private uv TOML and render its pip equivalent."""
+
+import os
+import tomllib
+from typing import NoReturn
+from urllib.parse import urlsplit
+
+
+def fail(message: str) -> NoReturn:
+    raise SystemExit(f"invalid python_index_config: {message}")
+
+
+raw = os.environ.get("PYTHON_INDEX_CONFIG", "")
+if not raw:
+    fail("required on the work host")
+try:
+    config = tomllib.loads(raw)
+except tomllib.TOMLDecodeError as error:
+    fail(str(error))
+
+indexes = config.get("index")
+if not isinstance(indexes, list) or not indexes:
+    fail("must contain at least one [[index]] table")
+
+default_url = None
+extras: list[str] = []
+for position, index in enumerate(indexes, 1):
+    if not isinstance(index, dict):
+        fail(f"index {position} must be a table")
+    url = index.get("url")
+    if not isinstance(url, str) or "\n" in url or "\r" in url:
+        fail(f"index {position} url must be a string without line breaks")
+    parsed = urlsplit(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        fail(f"index {position} url is not a valid HTTP(S) URL")
+    default = index.get("default", False)
+    if not isinstance(default, bool):
+        fail(f"index {position} default must be a boolean when present")
+    name = index.get("name")
+    if name is not None and not isinstance(name, str):
+        fail(f"index {position} name must be a string when present")
+    if default:
+        if default_url is not None:
+            fail("multiple indexes set default = true")
+        default_url = url
+    else:
+        extras.append(url)
+
+pip_lines = ["[global]"]
+if default_url is not None:
+    pip_lines.append(f"index-url = {default_url}")
+if extras:
+    pip_lines.append(f"extra-index-url = {extras[0]}")
+    pip_lines.extend(f"    {url}" for url in extras[1:])
+pip_config = "\n".join(pip_lines) + "\n"
+
+print(pip_config, end="")

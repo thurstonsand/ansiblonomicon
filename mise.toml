@@ -219,6 +219,48 @@ fi
 exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes
 '''
 
+[tasks.neovim]
+description = "Reconcile Neovim configuration and dependencies on this registered host"
+alias = "nvim-deps"
+usage = '''
+flag "-c --check" help="Show configuration changes without applying them"
+'''
+run = '''
+host=$(hostname -s)
+case "$host" in
+  pod042|Thurstons-MacBook-Pro) environments=neovim,neovim-personal ;;
+  ML-DFC6YK6VJQ) environments=neovim,neovim-work ;;
+  *) echo "Unregistered neovim host" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+export MISE_ENV="$environments"
+if [ -n "${usage_check:-}" ]; then
+  exec mise -C "$target" bootstrap dotfiles apply --force --dry-run
+fi
+mise -C "$target" bootstrap dotfiles apply --force --yes || exit "$?"
+exec mise -C "$target" run neovim:setup
+'''
+
+[tasks."python-index"]
+description = "Reconcile work Python package indexes"
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+'''
+run = '''
+host=$(hostname -s)
+[ "$host" = ML-DFC6YK6VJQ ] || { echo "python-index is registered only on the work host" >&2; exit 1; }
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+export MISE_ENV=python-index
+if [ -n "${usage_check:-}" ]; then
+  exec mise -C "$target" run python-index:apply --check
+fi
+exec mise -C "$target" run python-index:apply
+'''
+
 [tasks.shell]
 description = "Reconcile shared shell configuration on this registered host"
 usage = '''
@@ -318,8 +360,10 @@ case "$(hostname -s)" in
     ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-native_capabilities="terminal-theme git-client jj-client shell terminal-tools"
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(terminal-theme|git-client|jj-client|shell|terminal-tools|tmux)$' | paste -sd, -)
+native_capabilities="terminal-theme git-client jj-client shell terminal-tools neovim"
+[ "$playbook" != work.yml ] || native_capabilities="terminal-theme git-client jj-client shell terminal-tools python-index neovim"
+normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | paste -sd, -)
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(terminal-theme|git-client|jj-client|shell|terminal-tools|tmux|neovim|nvim-deps|python-index)$' | paste -sd, -)
 if [ -z "${usage_check:-}" ]; then
   mise run //:mise:maintain
 fi
@@ -330,9 +374,8 @@ if [ -z "${usage_tags:-}" ] || [ -n "$ansible_tags" ]; then
     ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
 fi
 for native_capability in $native_capabilities; do
-  case ",${usage_tags:-}," in
+  case ",$normalized_tags," in
     ,,|*,all,*|*,"$native_capability",*) ;;
-    *,tmux,*) [ "$native_capability" = terminal-tools ] || continue ;;
     *) continue ;;
   esac
   mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
@@ -528,12 +571,12 @@ run = "basedpyright"
 
 [tasks."nvim:fmt"]
 description = "Format Neovim Lua with StyLua"
-dir = "chezmoi/dot_config/nvim"
+dir = "bootstrap/capabilities/neovim/files"
 run = "stylua ."
 
 [tasks."nvim:fmt:check"]
 description = "Report Neovim Lua files StyLua would reformat"
-dir = "chezmoi/dot_config/nvim"
+dir = "bootstrap/capabilities/neovim/files"
 run = "stylua --check ."
 
 [tasks."workers:typecheck"]

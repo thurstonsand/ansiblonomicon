@@ -1,0 +1,30 @@
+-- Snacks.gitbrowse configuration for on-prem SCM hosts.
+-- The private values are Lua fragments migrated exactly from chezmoi's [[scm]].
+return {
+  "folke/snacks.nvim",
+  opts = {
+    gitbrowse = {
+{% if vars.neovim_scm_remote_patterns | length > 0 %}
+      remote_patterns = {
+        { "^(https?://.*)%.git$", "%1" },
+        { "^git@(.+):(.+)%.git$", "https://%1/%2" },
+        { "^git@(.+):(.+)$", "https://%1/%2" },
+        { "^git@(.+)/(.+)$", "https://%1/%2" },
+        { "^org%-%d+@(.+):(.+)%.git$", "https://%1/%2" },
+        { "^ssh://git@(.*)$", "https://%1" },
+        { "^ssh://([^:/]+)(:%d+)/(.*)$", "https://%1/%3" },
+        { "^ssh://([^/]+)/(.*)$", "https://%1/%2" },
+        { "ssh%.dev%.azure%.com/v3/(.*)/(.*)$", "dev.azure.com/%1/_git/%2" },
+        { "^https://%w*@(.*)", "https://%1" },
+        { "^git@(.*)", "https://%1" },
+        { ":%d+", "" },
+        { "%.git$", "" },
+{{ vars.neovim_scm_remote_patterns | safe }}
+      },
+{% endif %}
+      url_patterns = {
+{{ vars.neovim_scm_url_patterns | safe }}
+      },
+    },
+  },
+}

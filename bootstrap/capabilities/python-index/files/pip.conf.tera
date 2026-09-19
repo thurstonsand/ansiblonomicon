@@ -1,0 +1,1 @@
+{{ get_env(name="PYTHON_INDEX_PIP_CONFIG") | safe }}

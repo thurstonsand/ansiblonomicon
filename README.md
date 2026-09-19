@@ -46,6 +46,12 @@ Run `mise git-client` or `mise jj-client`, with `--check` for a preview. Regular
 
 Temporary cutover code and its deletion conditions are tracked in the [mise migration cleanup ledger](docs/operations/mise-migration-cleanup.md). Work-host migration remains pending; keep the ledger current as capabilities move.
 
+### Editor and Python indexes
+
+The [Neovim capability](bootstrap/capabilities/neovim/README.md) owns editor configuration and dependency setup. Run `mise neovim` (alias `mise nvim-deps`) or add `--check` to preview configuration without upgrading dependencies. Personal hosts write Lazy's lockfile back to the shared source; work receives a copy and restores those versions. Full reconciliation runs this after software prerequisites.
+
+Work's [Python-index capability](bootstrap/capabilities/python-index/README.md) derives uv and pip configuration from one private uv TOML value; run `mise python-index` or add `--check`. Personal hosts retain their existing absence of system index configuration. Private work SCM, Jira, and index values must be transferred as documented in [README.work.md](README.work.md) before work cutover.
+
 ### Retiring managed paths
 
 Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work macOS run removes listed files, symlinks, or directories idempotently, including tagged runs. Relative and `~/` entries resolve beneath the managed user's home; absolute paths are used verbatim. Native pod042 and UDMP resources use `state = "absent"` instead.

@@ -4,23 +4,22 @@ This documents all files that live **only** on the work Mac and are not tracked 
 
 ## Native Mise Configuration
 
-Git/Jujutsu identity and corporate Git URL rewrites belong in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`; see the [Git capability instructions](bootstrap/capabilities/git-client/README.md). Work cutover is pending. Retain only the old SCM data below for Neovim until that consumer migrates; the [cleanup ledger](docs/operations/mise-migration-cleanup.md) tracks its removal condition.
+Git/Jujutsu identity, corporate Git URL rewrites, Neovim private values, and Python indexes belong in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`. See the Git, Neovim, and Python-index capability instructions. Work cutover is pending; copy the values described below before applying either new capability.
 
 ## Chezmoi Data Layer
 
 All fields live in `chezmoi/.chezmoidata/local.toml`:
 
-| Field                                | Consumed by                                              |
-| ------------------------------------ | -------------------------------------------------------- |
-| `[[scm]]`                            | `nvim` gitbrowse host URLs                               |
-| `goLocalImports` / `goplsBuildFlags` | Go tooling templates                                     |
-| `[work_models]`                      | pi models/settings, Claude Code overlay                  |
-| `[work_gateway]`                     | pi model templates (endpoint and provider names)         |
-| `inferenceBudgetUrl`                 | `settings.json.tmpl` (`powerlineCustom.budget.url`)      |
-| `costsDashboardUrl`                  | `settings.json.tmpl` (`powerlineCustom.budget.costsUrl`) |
-| `jiraBrowseUrl`                      | Pi footer settings and Neovim Jira ticket links          |
-| `[[mcp_servers]]`                    | Claude MCP registration                                  |
-| `pi_mcp_json`                        | `private_dot_pi/agent/mcp.json.tmpl`                     |
+| Field                                | Consumed by                                                    |
+| ------------------------------------ | -------------------------------------------------------------- |
+| `goLocalImports` / `goplsBuildFlags` | No tracked consumer; inspect private templates before retiring |
+| `[work_models]`                      | pi models/settings, Claude Code overlay                        |
+| `[work_gateway]`                     | pi model templates (endpoint and provider names)               |
+| `inferenceBudgetUrl`                 | `settings.json.tmpl` (`powerlineCustom.budget.url`)            |
+| `costsDashboardUrl`                  | `settings.json.tmpl` (`powerlineCustom.budget.costsUrl`)       |
+| `jiraBrowseUrl`                      | Pi footer settings (Neovim now uses native private data)       |
+| `[[mcp_servers]]`                    | Claude MCP registration                                        |
+| `pi_mcp_json`                        | `private_dot_pi/agent/mcp.json.tmpl`                           |
 
 ## Shell Extras
 
@@ -119,12 +118,35 @@ The chezmoi `run_onchange_after_register-mcp-servers.sh` script reads `[[mcp_ser
 
 ## Python Package Indexes (uv + pip)
 
-| File                              | Purpose                                                                                                     |
-| --------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| `chezmoi/.chezmoidata/local.toml` | System-level indexes (`pypiIndex`, `uvIndexStrategy`) → `~/.config/uv/uv.toml` and `~/.config/pip/pip.conf` |
-| `./uv.toml`                       | Project-level override for this repo (gitignored, non-CICD endpoint)                                        |
+| File                     | Purpose                                                              |
+| ------------------------ | -------------------------------------------------------------------- |
+| Target `mise.local.toml` | Native system-level uv and pip indexes                               |
+| `./uv.toml`              | Project-level override for this repo (gitignored, non-CICD endpoint) |
 
-Both `uv.toml` and `pip.conf` are rendered from the same `pypiIndex` data in `local.toml`. The default index becomes `global.index-url` in pip; non-default entries become `extra-index-url`. System-level config defaults to Artifactory. This repo overrides to the enterprise endpoint since it's a personal repo not deployed through CICD, meaning it has a different, broader set of packages.
+Both files are now rendered natively from ordinary uv TOML stored in the scalar `python_index_config` in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml` (mise variables cannot hold structured values). Copy the current uv configuration unchanged, including `index-strategy` and each ordered `[[index]]`; `default` and `name` remain optional. The same validated TOML is copied directly to uv and parsed to derive pip: the optional default becomes `index-url`, and every non-default URL is retained in one multiline `extra-index-url`. Work reconciliation and focused checks fail before writing either target when this required value is absent or invalid. Personal and pod042 hosts intentionally leave both files absent. Do not delete the old chezmoi values until other private consumers have been checked.
+
+Neovim's old `jiraBrowseUrl` maps exactly to `neovim_jira_browse_url`. Copy each old `gitbrowse.remote` pair as a Lua row into `neovim_scm_remote_patterns`. Copy each old host (with Lua dots escaped) and every key/value under `gitbrowse.url` as a Lua table into `neovim_scm_url_patterns`. Preserve Lua patterns and escaping exactly. These required fragments have no tracked internal defaults and are parsed by Neovim during fixture validation.
+
+```toml
+[vars]
+python_index_config = '''index-strategy = "unsafe-best-match"
+
+[[index]]
+url = "https://index.example/simple"
+default = true
+name = "default"
+
+[[index]]
+url = "https://extra.example/simple"
+name = "extra"
+'''
+neovim_jira_browse_url = "https://jira.example/browse/"
+neovim_scm_remote_patterns = '''        { "pattern", "replacement" },'''
+neovim_scm_url_patterns = '''        ["scm%.example"] = {
+          branch = "...",
+          file = "...",
+        },'''
+```
 
 ### uv.lock handling
 
@@ -170,7 +192,7 @@ Prettier skips gitignored paths by default. The project-local `.nvim.lua` (`exrc
 
 When setting up a new work Mac, copy these files from the old machine:
 
-- `chezmoi/.chezmoidata/local.toml`
+- `chezmoi/.chezmoidata/local.toml` (then map its Neovim/Python values into the target-local file above)
 - `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json`
 - `chezmoi/dot_zshrc.local.tmpl`
 - `chezmoi/private_dot_zshenv.local.tmpl`

@@ -22,6 +22,9 @@
 # Terminal configuration and helpers are owned by native mise.
 .config/tmux/
 .config/ghostty/
+.config/nvim/
+.config/uv/
+.config/pip/
 .local/bin/delta
 .local/bin/ide
 .local/bin/ideo
@@ -125,12 +128,6 @@ Library/Application Support/Code/User/mcp.json
 # Pi global MCP config: only rendered when pi_mcp_json is populated (gitignored local.toml)
 {{ if not .pi_mcp_json }}
 .pi/agent/mcp.json
-{{ end }}
-
-# Data-driven: skip uv/pip config when no indexes defined
-{{ if not .pypiIndex }}
-.config/uv/
-.config/pip/
 {{ end }}
 
 # App caches and generated files

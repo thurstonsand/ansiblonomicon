@@ -117,6 +117,9 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:jj-client" + suffix)
         expected.append("mise run //:shell" + suffix)
         expected.append("mise run //:terminal-tools" + suffix)
+        if host == "ML-DFC6YK6VJQ":
+            expected.append("mise run //:python-index" + suffix)
+        expected.append("mise run //:neovim" + suffix)
     assert calls == expected
 
 
@@ -200,6 +203,58 @@ def test_terminal_tools_tags_run_only_native_capability(
     assert status == 0
     assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
         "mise run //:terminal-tools" + (" --check" if check else "")
+    ]
+
+
+@pytest.mark.parametrize("tag", ["neovim", "nvim-deps"])
+@pytest.mark.parametrize("check", [False, True])
+def test_neovim_tags_run_only_native_capability(
+    tmp_path: Path, tag: str, check: bool
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags=tag,
+        check=check,
+    )
+    assert status == 0
+    assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
+        "mise run //:neovim" + (" --check" if check else "")
+    ]
+
+
+@pytest.mark.parametrize("check", [False, True])
+def test_python_index_tag_runs_only_on_work(tmp_path: Path, check: bool) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="ML-DFC6YK6VJQ",
+        tags="python-index",
+        check=check,
+    )
+    assert status == 0
+    assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
+        "mise run //:python-index" + (" --check" if check else "")
+    ]
+
+
+@pytest.mark.parametrize("check", [False, True])
+def test_mixed_aliases_route_to_both_native_capabilities(
+    tmp_path: Path, check: bool
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags="tmux,nvim-deps",
+        check=check,
+    )
+    suffix = " --check" if check else ""
+    assert status == 0
+    assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
+        "mise run //:terminal-tools" + suffix,
+        "mise run //:neovim" + suffix,
     ]
 
 

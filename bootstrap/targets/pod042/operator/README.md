@@ -17,6 +17,6 @@ Agent installation follows the official installers: [Amp](https://ampcode.com/in
 
 The final hook runs those tasks as `thurstonsand` with an isolated environment. It does not load the project's credential hook or replace the base bootstrap task.
 
-Bootstrap owns software installation and service lifecycle. Chezmoi owns the remaining editor configuration. The shared native `shell`, `terminal-theme`, `git-client`, and `jj-client` capabilities own shell configuration, theme helpers, Hunk configuration, Git configuration, and Jujutsu configuration on pod042 and both Macs; full reconciliation applies them after operator prerequisites. Focused VCS reconciliation loads shared identity facts and changes only the selected client's configuration.
+Bootstrap owns software installation and service lifecycle. The shared native `shell`, `terminal-theme`, `terminal-tools`, `git-client`, `jj-client`, and `neovim` capabilities own shell, terminal, VCS, and Neovim configuration on pod042 and both Macs; full reconciliation applies them after operator prerequisites. Focused VCS reconciliation loads shared identity facts and changes only the selected client's configuration. Chezmoi still owns the remaining application and agent dotfiles.
 
 T3 and Amp enrollment and persistence belong to `remote-development`, not this capability. T3 serves multiple projects from the operator's home; Amp's runner belongs to this checkout. Harness-managed skill catalogues remain a separate migration item.

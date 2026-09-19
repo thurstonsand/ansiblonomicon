@@ -1,0 +1,5 @@
+[dotfiles]
+"~/.config/nvim/lazy-lock.json" = { source = "neovim/lazy-lock.json", mode = "symlink" }
+
+[env]
+NEOVIM_MODE = "sync"
