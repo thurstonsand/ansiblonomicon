@@ -1,0 +1,21 @@
+{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
+#!/bin/bash
+# Docker contexts live in an opaque hashed store, so declare them through the CLI
+# instead of writing ~/.docker/contexts by hand.
+# pod042 runs everything worth looking at; the local daemon is for scratch work.
+set -euo pipefail
+
+command -v docker >/dev/null 2>&1 || exit 0
+
+if docker context inspect pod042 >/dev/null 2>&1; then
+  docker context update pod042 \
+    --description "pod042 Debian NAS over SSH" \
+    --docker host=ssh://pod042 >/dev/null
+else
+  docker context create pod042 \
+    --description "pod042 Debian NAS over SSH" \
+    --docker host=ssh://pod042 >/dev/null
+fi
+
+docker context use pod042 >/dev/null
+{{ end -}}

@@ -69,6 +69,7 @@ brew "chezmoi"
 brew "cloudflared"
 brew "cloudflare-wrangler"
 brew "cormacrelf/tap/dark-notify", trusted: true
+brew "lazydocker"
 brew "opentofu"
 brew "rclone"
 brew "restic"
