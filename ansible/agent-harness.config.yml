@@ -104,9 +104,9 @@ agent_harness_sources:
     excluded_on: [work] # no NAS reachable from the work machine
     plugins:
       - name: homelab
-        # amp is named so these stay machine-local Amp skills despite amp being
-        # explicit-only; both need the repo and fnox, so neither makes sense in an
-        # orb, hence the amp_publish exclusion.
-        target_agents: [claude, amp, codex, opencode, pi]
-        exclude_skills:
-          amp_publish: [operating-pod042, surveying-the-network, operating-the-printer]
+        # Amp receives these from its hosted catalogue everywhere, including
+        # local runners; other harnesses need machine-local copies.
+        target_agents:
+          amp_publish: [amp]
+          "*": [claude, codex, opencode, pi]
+        exclude_data: [__pycache__, "*.pyc"]

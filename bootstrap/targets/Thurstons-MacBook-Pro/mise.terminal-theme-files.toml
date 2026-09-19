@@ -1,0 +1,19 @@
+[bootstrap.directories."/Users/thurstonsand/.ssh"]
+owner = "thurstonsand"
+group = "staff"
+mode = "0700"
+
+[bootstrap.directories."/Users/thurstonsand/.ssh/config.d"]
+owner = "thurstonsand"
+group = "staff"
+mode = "0700"
+
+[bootstrap.files."/Users/thurstonsand/.ssh/config.d/terminal-theme.conf"]
+source = "terminal-theme/terminal-theme-ssh.conf.tera"
+template = true
+owner = "thurstonsand"
+group = "staff"
+mode = "0600"
+
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/house.thurstons.terminal-theme-watch.plist"]
+state = "absent"

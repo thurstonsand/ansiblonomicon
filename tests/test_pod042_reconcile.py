@@ -171,6 +171,92 @@ def test_check_uses_native_bootstrap_plan(monkeypatch: pytest.MonkeyPatch) -> No
     ]
 
 
+def test_apply_runs_mise_maintenance_before_bootstrap(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+
+    pod042_reconcile.run_local("storage", check_mode=False)
+
+    assert calls[0] == [
+        "mise",
+        "-C",
+        str(pod042_reconcile.TARGET_ROOT),
+        "run",
+        "mise:maintain",
+    ]
+    assert calls[1][-2:] == ["bootstrap", "--yes"]
+
+
+def test_terminal_theme_focused_apply_uses_only_canonical_root_task(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+
+    pod042_reconcile.run_local("terminal-theme", check_mode=False)
+
+    assert calls == [
+        [
+            "mise",
+            "-C",
+            str(pod042_reconcile.TARGET_ROOT),
+            "run",
+            "mise:maintain",
+        ],
+        [
+            "mise",
+            "-C",
+            str(pod042_reconcile.ROOT),
+            "run",
+            "terminal-theme",
+        ],
+    ]
+
+
+def test_terminal_theme_check_previews_canonical_dotfile_flow(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+
+    pod042_reconcile.run_local("terminal-theme", check_mode=True)
+
+    assert calls == [
+        [
+            "mise",
+            "-C",
+            str(pod042_reconcile.ROOT),
+            "run",
+            "terminal-theme",
+            "--check",
+        ]
+    ]
+
+
+def test_full_apply_runs_theme_once_after_prerequisite_bootstrap(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+
+    pod042_reconcile.run_local(None, check_mode=False)
+
+    theme_calls = [call for call in calls if call[-2:] == ["run", "terminal-theme"]]
+    assert len(theme_calls) == 1
+    assert calls.index(theme_calls[0]) > next(
+        index for index, call in enumerate(calls) if call[-2:] == ["bootstrap", "--yes"]
+    )
+    main_bootstrap = next(call for call in calls if call[-2:] == ["bootstrap", "--yes"])
+    environment = next(part for part in main_bootstrap if part.startswith("MISE_ENV="))
+    assert "terminal-theme" not in environment.split("=", 1)[1].split(",")
+
+
 @pytest.mark.parametrize(
     "capability", ["base", "operator", "agent-harness", "remote-development"]
 )
@@ -183,11 +269,12 @@ def test_base_packages_precede_local_accounts(
 
     pod042_reconcile.run_local(capability, check_mode=False)
 
-    assert len(calls) == 2
-    assert "MISE_ENV=base" in calls[0]
-    assert calls[0][-4:] == ["bootstrap", "--only", "packages", "--yes"]
-    assert calls[1][-2:] == ["bootstrap", "--yes"]
-    assert "--only" not in calls[1]
+    assert len(calls) == 3
+    assert calls[0][-2:] == ["run", "mise:maintain"]
+    assert "MISE_ENV=base" in calls[1]
+    assert calls[1][-4:] == ["bootstrap", "--only", "packages", "--yes"]
+    assert calls[2][-2:] == ["bootstrap", "--yes"]
+    assert "--only" not in calls[2]
 
 
 def test_unknown_capability_fails_before_building_a_command() -> None:
@@ -227,7 +314,7 @@ def test_local_capability_selects_only_consumed_secrets(
     monkeypatch.setattr(pod042_reconcile, "assert_hostname", accept_hostname)
     monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
     pod042_reconcile.run_local(capability, False)
-    assert len(calls) == (2 if capability == "operator" else 1)
+    assert len(calls) == (3 if capability == "operator" else 2)
     command = calls[-1]
     assert {
         command[index + 1]

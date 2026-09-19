@@ -3,3 +3,12 @@ min_version = "2026.8.12"
 [settings]
 jobs = 1
 system_packages.managers = ["apt"]
+
+[vars]
+terminal_theme_home = "/home/thurstonsand"
+terminal_theme_profile = "mirror"
+terminal_theme_mirrors = ""
+
+[tasks."mise:maintain"]
+description = "Update the system mise binary when its daily maintenance is due"
+run = "../../capabilities/mise/mise-maintain --sudo /usr/local/bin/mise /var/cache/ansiblonomicon/mise-upgrade.stamp"

@@ -166,10 +166,17 @@ def transport(handler: Callable[[httpx.Request], httpx.Response]) -> httpx.Clien
 def test_login_succeeds_and_keeps_the_session_cookie() -> None:
     def handler(request: httpx.Request) -> httpx.Response:
         assert b"rememberMe" in request.content
-        return httpx.Response(200, headers={"set-cookie": "TOKEN=abc; Path=/"})
+        return httpx.Response(
+            200,
+            headers={
+                "set-cookie": "TOKEN=abc; Path=/",
+                "x-csrf-token": "csrf-abc",
+            },
+        )
 
     with transport(handler) as client:
         detail = MODULE.login(client, "https://10.10.20.1", "admin", PASSWORD)
+        assert client.headers["X-CSRF-Token"] == "csrf-abc"
     assert detail == "authenticated to controller"
     assert PASSWORD not in detail
 

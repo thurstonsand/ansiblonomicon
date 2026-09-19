@@ -136,14 +136,6 @@
           tags: ["sessions"]
       tags: ["sessions"]
 
-    - name: Configure terminal theme manager
-      ansible.builtin.include_role:
-        name: terminal_theme
-        apply:
-          tags: ["terminal-theme"]
-      when: ansible_facts['os_family'] == "Darwin" and configure_terminal_theme | default(true)
-      tags: ["terminal-theme"]
-
     - name: Deploy AI agent resources
       ansible.builtin.include_role:
         name: agent_harness

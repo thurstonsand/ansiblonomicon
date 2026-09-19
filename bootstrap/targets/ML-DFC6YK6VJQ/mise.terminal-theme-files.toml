@@ -1,0 +1,19 @@
+[bootstrap.directories."/Users/tsandberg/.ssh"]
+owner = "tsandberg"
+group = "staff"
+mode = "0700"
+
+[bootstrap.directories."/Users/tsandberg/.ssh/config.d"]
+owner = "tsandberg"
+group = "staff"
+mode = "0700"
+
+[bootstrap.files."/Users/tsandberg/.ssh/config.d/terminal-theme.conf"]
+source = "terminal-theme/terminal-theme-ssh.conf.tera"
+template = true
+owner = "tsandberg"
+group = "staff"
+mode = "0600"
+
+[bootstrap.files."/Users/tsandberg/Library/LaunchAgents/house.thurstons.terminal-theme-watch.plist"]
+state = "absent"

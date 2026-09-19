@@ -1,0 +1,9 @@
+# Managed by mise. Registers active SSH sessions for terminal theme mirroring.
+{% if vars.terminal_theme_mirrors != "" %}
+{% for host in vars.terminal_theme_mirrors | split(pat=",") %}
+Host {{ host }}
+  PermitLocalCommand yes
+  LocalCommand sh -lc '{{ vars.terminal_theme_home }}/.local/bin/terminal-theme-ssh-lease.py --host {{ host }} --ssh-pid "$PPID" --ttl 90 --refresh 30 >/dev/null 2>&1 &'
+
+{% endfor %}
+{% endif %}

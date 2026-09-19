@@ -1,11 +1,15 @@
 from importlib.util import module_from_spec, spec_from_file_location
+import os
 from pathlib import Path
+import shutil
+import subprocess
 import sys
 import tomllib
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 BASE = ROOT / "bootstrap/targets/pod042/base"
+MISE_MAINTAIN = ROOT / "bootstrap/capabilities/mise/mise-maintain"
 SPEC = spec_from_file_location("apt_alert", BASE.parent / "alerting/apt-alert.py")
 assert SPEC is not None
 assert SPEC.loader is not None
@@ -89,3 +93,110 @@ def test_base_declaration_matches_accepted_contract() -> None:
     assert "Storage=persistent" in journal
     assert "SystemMaxUse=1G" in journal
     assert "MaxRetentionSec=30day" in journal
+
+
+def test_mise_maintenance_skips_fresh_stamp(tmp_path: Path) -> None:
+    binary = tmp_path / "mise"
+    stamp = tmp_path / "cache/upgrade.stamp"
+    calls = tmp_path / "calls"
+    binary.write_text(f"#!/bin/sh\nprintf '%s\\n' \"$*\" >> {calls}\n")
+    binary.chmod(0o755)
+
+    subprocess.run([MISE_MAINTAIN, binary, stamp], check=True)
+    subprocess.run([MISE_MAINTAIN, binary, stamp], check=True)
+
+    assert calls.read_text() == "self-update --yes --no-plugins\n"
+    assert stamp.is_file()
+
+
+def test_mise_maintenance_concurrent_runs_update_once(tmp_path: Path) -> None:
+    binary = tmp_path / "mise"
+    stamp = tmp_path / "cache/upgrade.stamp"
+    calls = tmp_path / "calls"
+    binary.write_text(f"#!/bin/sh\nprintf '%s\\n' \"$*\" >> {calls}\nsleep 0.2\n")
+    binary.chmod(0o755)
+
+    processes = [subprocess.Popen([MISE_MAINTAIN, binary, stamp]) for _ in range(4)]
+
+    assert [process.wait() for process in processes] == [0, 0, 0, 0]
+    assert calls.read_text() == "self-update --yes --no-plugins\n"
+    assert stamp.is_file()
+
+
+def test_mise_maintenance_failure_preserves_stamp_and_retries(tmp_path: Path) -> None:
+    binary = tmp_path / "mise"
+    stamp = tmp_path / "cache/upgrade.stamp"
+    calls = tmp_path / "calls"
+    stamp.parent.mkdir()
+    stamp.touch()
+    expired = stamp.stat().st_mtime - 86401
+    os.utime(stamp, (expired, expired))
+    binary.write_text(
+        f"#!/bin/sh\nprintf '%s\\n' \"$*\" >> {calls}\n"
+        f"[ $(wc -l < {calls}) -gt 1 ] || exit 19\n"
+    )
+    binary.chmod(0o755)
+
+    failed = subprocess.run([MISE_MAINTAIN, binary, stamp], check=False)
+
+    assert failed.returncode == 19
+    assert stamp.stat().st_mtime == expired
+    subprocess.run([MISE_MAINTAIN, binary, stamp], check=True)
+    assert calls.read_text() == ("self-update --yes --no-plugins\n" * 2)
+    assert stamp.stat().st_mtime > expired
+
+
+def test_pod042_mise_task_executes_expired_maintenance_through_sudo(
+    tmp_path: Path,
+) -> None:
+    target = tmp_path / "bootstrap/targets/pod042"
+    capability = tmp_path / "bootstrap/capabilities/mise"
+    fake_bin = tmp_path / "bin"
+    target.mkdir(parents=True)
+    capability.mkdir(parents=True)
+    fake_bin.mkdir()
+    shutil.copy2(MISE_MAINTAIN, capability / "mise-maintain")
+
+    updater = tmp_path / "system-mise"
+    stamp = tmp_path / "cache/upgrade.stamp"
+    calls = tmp_path / "calls"
+    updater.write_text(f"#!/bin/sh\nprintf 'mise %s\\n' \"$*\" >> {calls}\n")
+    updater.chmod(0o755)
+    stamp.parent.mkdir()
+    stamp.touch()
+    expired = stamp.stat().st_mtime - 86401
+    os.utime(stamp, (expired, expired))
+
+    sudo = fake_bin / "sudo"
+    sudo.write_text(
+        f"#!/bin/sh\nprintf 'sudo %s\\n' \"$*\" >> {calls}\n"
+        '[ "$1" = -n ] && shift\n'
+        'if [ "$1" = install ]; then\n'
+        '  for argument in "$@"; do directory=$argument; done\n'
+        '  exec install -d -m 0755 "$directory"\n'
+        "fi\n"
+        'exec "$@"\n'
+    )
+    sudo.chmod(0o755)
+
+    config = (
+        (BASE.parent / "mise.toml")
+        .read_text()
+        .replace(
+            "/usr/local/bin/mise /var/cache/ansiblonomicon/mise-upgrade.stamp",
+            f"{updater} {stamp}",
+        )
+    )
+    (target / "mise.toml").write_text(config)
+    environment = {**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}"}
+
+    subprocess.run(
+        ["mise", "-C", target, "run", "mise:maintain"],
+        check=True,
+        env=environment,
+    )
+
+    invocation = calls.read_text()
+    assert f"sudo -n {updater} self-update --yes --no-plugins" in invocation
+    assert "mise self-update --yes --no-plugins" in invocation
+    assert stamp.stat().st_mtime > expired

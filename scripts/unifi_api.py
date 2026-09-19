@@ -61,6 +61,11 @@ def login(client: httpx.Client, base_url: str, username: str, password: str) -> 
         raise ControllerError(f"login rejected with HTTP {response.status_code}")
     if not client.cookies.jar:
         raise ControllerError("login returned no session cookie")
+    csrf_token = response.headers.get("x-updated-csrf-token") or response.headers.get(
+        "x-csrf-token"
+    )
+    if csrf_token:
+        client.headers["X-CSRF-Token"] = csrf_token
     return "authenticated to controller"
 
 

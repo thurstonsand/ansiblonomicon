@@ -1,0 +1,6 @@
+min_version = "2026.9.6"
+
+[vars]
+terminal_theme_home = "/Users/tsandberg"
+terminal_theme_profile = "detector"
+terminal_theme_mirrors = ""

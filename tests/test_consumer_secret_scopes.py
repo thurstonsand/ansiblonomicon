@@ -33,7 +33,7 @@ def task_secrets(command: str) -> set[str]:
 def test_current_scoped_tasks_only_request_agent_credentials():
     tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
     secrets = tomllib.loads((ROOT / "fnox.toml").read_text())["secrets"]
-    laptop_tasks = {"reconcile", "reconcile:laptop"}
+    laptop_tasks = {"reconcile", "reconcile:laptop", "terminal-theme"}
     for task_name, task in tasks.items():
         commands = task.get("run", [])
         if isinstance(commands, str):
@@ -51,12 +51,20 @@ def test_current_scoped_tasks_only_request_agent_credentials():
 def test_laptop_reconcile_scopes_one_password_and_keeps_facts_in_memory():
     tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
 
-    for task_name in ("reconcile", "reconcile:laptop"):
-        command = tasks[task_name]["run"]
-        assert "HOMEBREW_SUDO_ASKPASS_PASS_WORK" in command
-        assert "HOMEBREW_SUDO_ASKPASS_PASS" in command
-        assert '--secret "$sudo_secret"' in command
-        assert "ANSIBLE_CACHE_PLUGIN=memory" in command
+    command = tasks["reconcile:laptop"]["run"]
+    assert "HOMEBREW_SUDO_ASKPASS_PASS_WORK" in command
+    assert "HOMEBREW_SUDO_ASKPASS_PASS" in command
+    assert '--secret "$sudo_secret"' in command
+    assert "ANSIBLE_CACHE_PLUGIN=memory" in command
+    assert "//:reconcile:laptop" in tasks["reconcile"]["run"]
+
+
+def test_terminal_theme_scopes_only_the_host_sudo_password():
+    tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
+    command = tasks["terminal-theme"]["run"]
+    assert task_secrets(command) == {"$sudo_secret"}
+    assert "HOMEBREW_SUDO_ASKPASS_PASS_WORK" in command
+    assert "HOMEBREW_SUDO_ASKPASS_PASS" in command
 
 
 @pytest.mark.parametrize("stack,provider", [("edge", CLOUDFLARE), ("unifi", UNIFI)])

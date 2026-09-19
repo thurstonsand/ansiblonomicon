@@ -55,6 +55,7 @@ CAPABILITIES = (
     "operator",
     "agent-harness",
     "remote-development",
+    "terminal-theme",
 )
 
 
@@ -101,6 +102,8 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("base", "operator", "agent-harness")
     if capability == "remote-development":
         return ("base", "operator", "agent-harness", "remote-development")
+    if capability == "terminal-theme":
+        return ("terminal-theme",)
     if capability == "storage":
         return ("repositories", "storage")
     if capability == "maintenance":
@@ -142,7 +145,10 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
 def run_local(capability: str | None, check_mode: bool) -> None:
     assert_hostname()
     selected = capabilities_for(capability)
-    environments = ",".join(selected)
+    bootstrap_capabilities = tuple(
+        item for item in selected if item != "terminal-theme"
+    )
+    environments = ",".join(bootstrap_capabilities)
     command = [
         "env",
         f"MISE_CEILING_PATHS={TARGET_ROOT.parent}",
@@ -180,7 +186,19 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             *command,
         ]
     if check_mode:
-        run_command([*command, "bootstrap", "plan"])
+        if bootstrap_capabilities:
+            run_command([*command, "bootstrap", "plan"])
+        if "terminal-theme" in selected:
+            run_command(
+                [
+                    "mise",
+                    "-C",
+                    str(ROOT),
+                    "run",
+                    "terminal-theme",
+                    "--check",
+                ]
+            )
         if "base" in selected:
             run_command(
                 [
@@ -237,6 +255,15 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                 ]
             )
     else:
+        run_command(
+            [
+                "mise",
+                "-C",
+                str(TARGET_ROOT),
+                "run",
+                "mise:maintain",
+            ]
+        )
         if "base" in selected:
             # Mise applies accounts before packages; the login shell must exist first.
             run_command(
@@ -254,7 +281,18 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     "--yes",
                 ]
             )
-        run_command([*command, "bootstrap", "--yes"])
+        if bootstrap_capabilities:
+            run_command([*command, "bootstrap", "--yes"])
+        if "terminal-theme" in selected:
+            run_command(
+                [
+                    "mise",
+                    "-C",
+                    str(ROOT),
+                    "run",
+                    "terminal-theme",
+                ]
+            )
 
 
 def build_parser() -> argparse.ArgumentParser:
