@@ -1,6 +1,6 @@
 # Doppelclaude hosting
 
-Status: the dedicated Worker, origin DNS/Access application, tunnel route and HSTS entries were deployed on 2026-09-19. Host installation still awaits the published image digest. The `pi-doppelclaude` repository owns the daemon-only Dockerfile and GitHub Actions build, test and publication workflow. Ansiblonomicon only consumes its published image and configures the service. Installation is gated by the empty `vars.doppelclaude_image` in `bootstrap/targets/pod042/mise.doppelclaude.toml`; set it to the reviewed registry image with an `@sha256:` digest, never a moving tag. Both focused and full reconciliation fail before host commands or secret resolution until it is set.
+Status: the dedicated Worker, origin DNS/Access application, tunnel route and HSTS entries were deployed on 2026-09-19. The first host image is pinned from the successful [application workflow](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35427699682), revision `0ef33ee04c554a006c75c0c0bae504f80593d116`, with anonymous registry access verified. The `pi-doppelclaude` repository owns the daemon-only Dockerfile and GitHub Actions build, test and publication workflow. Ansiblonomicon only consumes its published image and configures the service. `vars.doppelclaude_image` in `bootstrap/targets/pod042/mise.doppelclaude.toml` must contain a reviewed registry image with an `@sha256:` digest, never a moving tag. Both focused and full reconciliation reject invalid references before host commands or secret resolution.
 
 ## Route and authentication
 
