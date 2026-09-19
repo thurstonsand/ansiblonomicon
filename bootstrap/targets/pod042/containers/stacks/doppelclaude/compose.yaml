@@ -1,0 +1,46 @@
+services:
+  doppelclaude:
+    image: "${DOPPELCLAUDE_IMAGE:?set a reviewed digest-pinned image}"
+    platform: linux/amd64
+    user: "3456:3456"
+    init: true
+    restart: unless-stopped
+    stop_grace_period: 25s
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    tmpfs:
+      - /tmp:rw,nosuid,nodev,mode=1777
+    environment:
+      PORT: "3456"
+      DOPPELCLAUDE_HTTP_HOST: 0.0.0.0
+      HOME: /var/lib/doppelclaude
+      CLAUDE_CONFIG_DIR: /var/lib/doppelclaude/.claude
+      CLAUDE_CODE_OAUTH_TOKEN: "${CLAUDE_CODE_OAUTH_TOKEN:?required}"
+      DOPPELCLAUDE_HTTP_API_KEY: "${DOPPELCLAUDE_HTTP_API_KEY:?required}"
+      DOPPELCLAUDE_STATE_DIR: /var/lib/doppelclaude
+      DOPPELCLAUDE_MAX_RUNTIMES: "32"
+      DOPPELCLAUDE_IDLE_TTL_MS: "3600000"
+      DOPPELCLAUDE_MAX_BODY_BYTES: "2097152"
+      DOPPELCLAUDE_REQUEST_TIMEOUT_MS: "600000"
+      DOPPELCLAUDE_SHUTDOWN_TIMEOUT_MS: "15000"
+      DOPPELCLAUDE_RETRY_ATTEMPTS: "2"
+    volumes:
+      - type: bind
+        source: /mnt/black-box/docker/doppelclaude
+        target: /var/lib/doppelclaude
+        bind:
+          create_host_path: false
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3456/v1/models', {headers: {'x-api-key': process.env.DOPPELCLAUDE_HTTP_API_KEY}}).then(r => {if (!r.ok) process.exit(1)}).catch(() => process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    networks:
+      - ingress
+
+networks:
+  ingress:
+    external: true
+    name: ingress

@@ -340,6 +340,10 @@ flag "-f --force-secret" help="Update secrets even if they exist"
 '''
 run = "./scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN --secret CLI_PROXY_API_KEY --secret CLOUDFLARE_AI_GATEWAY_API_TOKEN --secret CF_ACCESS_CLIENT_ID --secret CF_ACCESS_CLIENT_SECRET -- uv run scripts/aig_deploy.py ${usage_force_secret:+--force-secret}"
 
+[tasks."edge:deploy:doppelclaude"]
+description = "Deploy the Doppelclaude Worker and reconcile its secrets"
+run = "./scripts/fnox-host exec --secret CLOUDFLARE_API_TOKEN --secret CLI_PROXY_API_KEY --secret CF_ACCESS_CLIENT_ID --secret CF_ACCESS_CLIENT_SECRET -- uv run scripts/doppelclaude_deploy.py"
+
 [tasks."edge:deploy:tesla"]
 description = "Deploy the tesla Cloudflare Pages site"
 dir = "cloudflare-pages/tesla"
@@ -427,12 +431,17 @@ run = "stylua --check ."
 
 [tasks."workers:typecheck"]
 description = "Type-check every Cloudflare Worker via a wrangler dry run"
-depends = ["workers:typecheck:aig"]
+depends = ["workers:typecheck:aig", "workers:typecheck:doppelclaude"]
 
 [tasks."workers:typecheck:aig"]
 description = "Type-check the aig Worker via a wrangler dry run"
 dir = "wrangler/aig"
 run = "wrangler deploy --dry-run"
+
+[tasks."workers:typecheck:doppelclaude"]
+description = "Check the Doppelclaude Worker bundle and proxy contract"
+dir = "wrangler/doppelclaude"
+run = "node --test worker.test.ts && wrangler deploy --dry-run"
 
 [tasks."pi:check"]
 description = "Lint and type-check the pi extensions"

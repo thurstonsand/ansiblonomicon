@@ -12,6 +12,7 @@ resource "cloudflare_tunnel" "home" {
 resource "cloudflare_tunnel_config" "home" {
   account_id = local.account_id
   tunnel_id  = cloudflare_tunnel.home.id
+  depends_on = [cloudflare_zero_trust_access_application.doppelclaude]
 
   config {
     ingress_rule {
