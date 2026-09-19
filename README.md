@@ -34,11 +34,11 @@ On macOS, `dark-notify` acts as the source of truth for terminal theme state. Th
 
 Run `mise terminal-theme` for this capability alone, or add `--check` for a nonmutating preview. Regular laptop and pod042 reconciliation includes it and updates the standalone mise binary to latest stable when its last successful update is at least 24 hours old. Check mode skips upgrades. `mise laptop -t terminal-theme` runs natively without Ansible; mixed tags route only the remaining tags to Ansible. Neither Ansible nor chezmoi owns these theme files.
 
-### Git client configuration
+### VCS client configuration
 
-The shared [native mise capability](bootstrap/capabilities/git-client/README.md) owns Git defaults, identities, signing configuration, attributes, and ignore patterns. A managed block preserves application-added settings outside it; attributes and ignore patterns are symlinked to the shared sources. SSH keys and Jujutsu remain outside this capability.
+The shared [Git capability](bootstrap/capabilities/git-client/README.md) owns Git defaults, identities, signing configuration, attributes, and ignore patterns. A managed block preserves application-added settings outside it; attributes and ignore patterns are symlinked to the shared sources. The [Jujutsu capability](bootstrap/capabilities/jj-client/README.md) uses a native `conf.d` fragment, preserving the existing user config. Both independently load shared `vcs-identity` facts. SSH key provisioning remains separate.
 
-Run `mise git-client` or `mise git-client --check` for this capability alone. Regular laptop and pod042 reconciliation includes it; `mise laptop -t git-client` runs without Ansible. Work identity and corporate URL rewrites belong in the work target's ignored `mise.local.toml`, as described in the capability README.
+Run `mise git-client` or `mise jj-client`, with `--check` for a preview. Regular laptop and pod042 reconciliation includes both; `mise laptop -t git-client,jj-client` runs without Ansible. Work identity and corporate URL rewrites belong in the work target's ignored `mise.local.toml`, as described in the capability README.
 
 Temporary cutover code and its deletion conditions are tracked in the [mise migration cleanup ledger](docs/operations/mise-migration-cleanup.md). Work-host migration remains pending; keep the ledger current as capabilities move.
 

@@ -8,6 +8,9 @@
 .config/git/attributes
 .config/git/ignore
 
+# Jujutsu configuration is owned by the native mise jj-client capability.
+.config/jj/config.toml
+
 # macOS-only scripts - ignore on non-Darwin
 {{ if ne .chezmoi.os "darwin" }}
 .chezmoiscripts/darwin/**

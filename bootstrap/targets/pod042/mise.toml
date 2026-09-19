@@ -12,6 +12,7 @@ terminal_theme_mirrors = ""
 git_client_home = "/home/thurstonsand"
 git_personal_signing_key = "/home/thurstonsand/.ssh/id_ed25519_git"
 git_signing_program = ""
+jj_signing_program = ""
 
 [tasks."mise:maintain"]
 description = "Update the system mise binary when its daily maintenance is due"

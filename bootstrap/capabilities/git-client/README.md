@@ -1,6 +1,6 @@
 # Git client capability
 
-This capability owns the shared Git settings as a managed block in `~/.config/git/config`, so application-added and otherwise unmanaged settings in that file remain intact. Static attributes and ignore files are symlinked; signer and work-personal identity files are native Tera templates. The shared personal identity defaults in this capability are temporarily duplicated in chezmoi data because jj still consumes the old facts and is deliberately outside this migration.
+This capability owns the shared Git settings as a managed block in `~/.config/git/config`, so application-added and otherwise unmanaged settings in that file remain intact. Static attributes and ignore files are symlinked; signer and work-personal identity files are native Tera templates. Git and Jujutsu independently consume defaults from the `vcs-identity` environment; Git's private signing-key override and SCM configuration remain Git-specific.
 
 The target's shared `vars.host_profile` selects `personal` or `work` behavior; this is host context available to every capability, not a Git-specific profile. Temporary adoption code and its removal conditions are tracked in the [migration cleanup ledger](../../../docs/operations/mise-migration-cleanup.md).
 
@@ -12,8 +12,8 @@ The work target requires an ignored `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.
 
 ```toml
 [vars]
-git_work_email = "name@example.com"
-git_work_signing_key = "ssh-ed25519 ..."
+vcs_work_email = "name@example.com"
+vcs_work_signing_key = "ssh-ed25519 ..."
 # Optional; omit when there are no corporate URL rewrites.
 git_scm_config = '''
 [url "ssh://git@git.example.com:2222"]

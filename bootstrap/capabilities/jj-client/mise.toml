@@ -1,0 +1,19 @@
+[dotfiles]
+"~/.config/jj/conf.d/00-ansiblonomicon.toml" = { source = "jj-client/config.toml.tera", mode = "template" }
+
+[env]
+HOST_PROFILE = "{{ vars.host_profile }}"
+JJ_CLIENT_PERSONAL_EMAIL = "{{ vars.vcs_personal_email }}"
+JJ_CLIENT_PERSONAL_SIGNING_KEY = "{{ vars.vcs_personal_public_signing_key }}"
+JJ_CLIENT_WORK_EMAIL = "{{ vars.vcs_work_email | default(value='') }}"
+JJ_CLIENT_WORK_SIGNING_KEY = "{{ vars.vcs_work_signing_key | default(value='') }}"
+
+[bootstrap.hooks.pre-dotfiles]
+run = '''
+{% if vars.host_profile == "work" and (vars.vcs_work_email | default(value="") == "" or vars.vcs_work_signing_key | default(value="") == "") %}
+echo "work jj-client requires vcs_work_email and vcs_work_signing_key in mise.local.toml" >&2
+exit 1
+{% else %}
+mise exec -- python3 jj-client/validate.py validate
+{% endif %}
+'''

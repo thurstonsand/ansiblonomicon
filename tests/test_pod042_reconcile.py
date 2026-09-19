@@ -65,7 +65,8 @@ def test_capability_environments_are_explicit_and_disjoint() -> None:
         path.stem.removeprefix("mise."): tomllib.loads(path.read_text())
         for path in target_root.glob("mise.*.toml")
     }
-    assert set(environment_files) == set(pod042_reconcile.CAPABILITIES)
+    assert set(environment_files) == set(pod042_reconcile.FULL_CAPABILITIES)
+    assert "vcs-identity" not in pod042_reconcile.CAPABILITIES
 
     exclusive_tables = (
         "packages",
@@ -98,8 +99,15 @@ def test_capability_environments_are_explicit_and_disjoint() -> None:
         (MODULE_PATH.parents[1] / "bootstrap/mise.toml").read_text()
     )
     assert tuple(inventory["bootstrap"]["remote"]["hosts"]["pod042"]["mise_env"]) == (
-        pod042_reconcile.CAPABILITIES
+        pod042_reconcile.FULL_CAPABILITIES
     )
+
+
+def test_vars_only_identity_is_not_a_public_capability() -> None:
+    with pytest.raises(
+        pod042_reconcile.ReconcileError, match="unknown pod042 capability"
+    ):
+        pod042_reconcile.capabilities_for("vcs-identity")
 
 
 def test_incus_capability_closure() -> None:
@@ -250,7 +258,28 @@ def test_git_client_focused_apply_runs_only_canonical_root_task(
     git_calls = [call for call in calls if call[-2:] == ["run", "git-client"]]
     assert len(git_calls) == 1
     assert not any(call[-2:] == ["bootstrap", "--yes"] for call in calls)
-    assert pod042_reconcile.capabilities_for("git-client") == ("git-client",)
+    assert pod042_reconcile.capabilities_for("git-client") == (
+        "vcs-identity",
+        "git-client",
+    )
+
+
+def test_jj_client_focused_apply_loads_identity_and_only_runs_root_task(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+
+    pod042_reconcile.run_local("jj-client", check_mode=False)
+
+    assert pod042_reconcile.capabilities_for("jj-client") == (
+        "vcs-identity",
+        "jj-client",
+    )
+    assert [call for call in calls if call[-2:] == ["run", "jj-client"]] == [
+        ["mise", "-C", str(pod042_reconcile.ROOT), "run", "jj-client"]
+    ]
 
 
 def test_full_apply_runs_theme_once_after_prerequisite_bootstrap(

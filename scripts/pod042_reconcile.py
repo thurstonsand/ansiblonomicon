@@ -54,9 +54,16 @@ CAPABILITIES = (
     "snapshots",
     "operator",
     "git-client",
+    "jj-client",
     "agent-harness",
     "remote-development",
     "terminal-theme",
+)
+_VCS_CLIENT_INDEX = CAPABILITIES.index("git-client")
+FULL_CAPABILITIES = (
+    *CAPABILITIES[:_VCS_CLIENT_INDEX],
+    "vcs-identity",
+    *CAPABILITIES[_VCS_CLIENT_INDEX:],
 )
 
 
@@ -94,13 +101,15 @@ def assert_hostname() -> None:
 
 def capabilities_for(capability: str | None) -> tuple[str, ...]:
     if capability is None:
-        return CAPABILITIES
+        return FULL_CAPABILITIES
     if capability == "network":
         return ("repositories", "network")
     if capability == "operator":
         return ("base", "operator")
     if capability == "git-client":
-        return ("git-client",)
+        return ("vcs-identity", "git-client")
+    if capability == "jj-client":
+        return ("vcs-identity", "jj-client")
     if capability == "agent-harness":
         return ("base", "operator", "agent-harness")
     if capability == "remote-development":
@@ -148,7 +157,7 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
 def run_local(capability: str | None, check_mode: bool) -> None:
     assert_hostname()
     selected = capabilities_for(capability)
-    root_capabilities = {"git-client", "terminal-theme"}
+    root_capabilities = {"vcs-identity", "git-client", "jj-client", "terminal-theme"}
     bootstrap_capabilities = tuple(
         item for item in selected if item not in root_capabilities
     )
@@ -211,6 +220,17 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     str(ROOT),
                     "run",
                     "git-client",
+                    "--check",
+                ]
+            )
+        if "jj-client" in selected:
+            run_command(
+                [
+                    "mise",
+                    "-C",
+                    str(ROOT),
+                    "run",
+                    "jj-client",
                     "--check",
                 ]
             )
@@ -316,6 +336,16 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     str(ROOT),
                     "run",
                     "git-client",
+                ]
+            )
+        if "jj-client" in selected:
+            run_command(
+                [
+                    "mise",
+                    "-C",
+                    str(ROOT),
+                    "run",
+                    "jj-client",
                 ]
             )
 

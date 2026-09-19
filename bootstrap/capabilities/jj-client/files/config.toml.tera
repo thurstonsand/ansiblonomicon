@@ -23,17 +23,17 @@ program = "code"
 [signing]
 backend = "ssh"
 behavior = "drop"
-{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-key = "{{ .workSigningKey }}"
-{{- else }}
-key = "{{ .personalSigningKey }}"
-{{- end }}
+{% if vars.host_profile == "work" %}
+key = "{{ vars.vcs_work_signing_key }}"
+{% else %}
+key = "{{ vars.vcs_personal_public_signing_key }}"
+{% endif %}
+{% if vars.jj_signing_program != "" %}
 
-{{ if eq .chezmoi.os "darwin" -}}
 [signing.backends.ssh]
-program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+program = "{{ vars.jj_signing_program }}"
+{% endif %}
 
-{{ end -}}
 [templates]
 log_node = "coalesce(\n  if(!self, label(\"elided\", \"~\")),\n  label(if(current_working_copy, \"working_copy\"),\n    if(conflict, label(\"conflict\", \"×\"), \"◉\")\n  ),\n)\n"
 
@@ -47,9 +47,9 @@ style = "curved"
 edit = true
 
 [user]
-{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-email = "{{ .workEmail }}"
-{{- else }}
-email = "{{ .personalEmail }}"
-{{- end }}
+{% if vars.host_profile == "work" %}
+email = "{{ vars.vcs_work_email }}"
+{% else %}
+email = "{{ vars.vcs_personal_email }}"
+{% endif %}
 name = "Thurston Sandberg"

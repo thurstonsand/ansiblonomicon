@@ -7,6 +7,7 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPABILITY = ROOT / "bootstrap/capabilities/git-client"
+IDENTITY = ROOT / "bootstrap/capabilities/vcs-identity/mise.toml"
 PUBLIC_KEY = "ssh-ed25519 AAAATEST personal@test"
 SIGNING_PROGRAM = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
 BASE_ENV = {
@@ -51,8 +52,8 @@ def fixture(tmp_path: Path, profile: str) -> tuple[Path, Path, dict[str, str]]:
     insteadOf = "https://forge.test/"
 """
     (target / "mise.local.toml").write_text(
-        '[vars]\ngit_personal_email = "personal@test"\n'
-        f'git_personal_public_signing_key = "{PUBLIC_KEY}"\n'
+        '[vars]\nvcs_personal_email = "personal@test"\n'
+        f'vcs_personal_public_signing_key = "{PUBLIC_KEY}"\n'
         f'git_client_home = "{home}"\n'
         f'host_profile = "{"work" if work else "personal"}"\n'
         + (
@@ -62,7 +63,7 @@ def fixture(tmp_path: Path, profile: str) -> tuple[Path, Path, dict[str, str]]:
         )
         + f"git_signing_program = {'"' + SIGNING_PROGRAM + '"' if profile != 'pod' else '""'}\n"
         + (
-            'git_work_email = "work@test"\ngit_work_signing_key = "ssh-ed25519 AAAAWORK"\n'
+            'vcs_work_email = "work@test"\nvcs_work_signing_key = "ssh-ed25519 AAAAWORK"\n'
             if work
             else ""
         )
@@ -95,10 +96,10 @@ def git(home: Path, *args: str, cwd: Path | None = None) -> str:
 
 
 def test_hosts_use_shared_personal_identity_defaults() -> None:
-    shared = tomllib.loads((CAPABILITY / "mise.toml").read_text())["vars"]
+    shared = tomllib.loads(IDENTITY.read_text())["vars"]
     assert shared == {
-        "git_personal_email": "thurstonsand@gmail.com",
-        "git_personal_public_signing_key": (
+        "vcs_personal_email": "thurstonsand@gmail.com",
+        "vcs_personal_public_signing_key": (
             "ssh-ed25519 "
             "AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
         ),
@@ -111,8 +112,8 @@ def test_hosts_use_shared_personal_identity_defaults() -> None:
             "work" if host == "ML-DFC6YK6VJQ" else "personal"
         )
         assert "git_client_profile" not in host_vars
-        assert "git_personal_email" not in host_vars
-        assert "git_personal_public_signing_key" not in host_vars
+        assert "vcs_personal_email" not in host_vars
+        assert "vcs_personal_public_signing_key" not in host_vars
     assert (
         "git_personal_signing_key"
         not in tomllib.loads(
@@ -278,8 +279,8 @@ def test_check_and_missing_work_facts_do_not_write(tmp_path: Path) -> None:
     env.pop("MISE_ENV")
     local_config = target / "mise.local.toml"
     text = local_config.read_text()
-    text = text.replace('git_work_email = "work@test"\n', "").replace(
-        'git_work_signing_key = "ssh-ed25519 AAAAWORK"\n', ""
+    text = text.replace('vcs_work_email = "work@test"\n', "").replace(
+        'vcs_work_signing_key = "ssh-ed25519 AAAAWORK"\n', ""
     )
     start = text.index("git_scm_config = '''")
     end = text.index("'''", start + len("git_scm_config = '''")) + 3
