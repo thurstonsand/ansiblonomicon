@@ -112,6 +112,8 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append(f"ansible {arguments}")
     if theme:
         expected.append("mise run //:terminal-theme" + suffix)
+    if not tags or tags == "all":
+        expected.append("mise run //:git-client" + suffix)
     assert calls == expected
 
 
@@ -131,6 +133,23 @@ def test_failed_prerequisite_stops_before_native_theme(
     assert "mise run //:terminal-theme" not in calls
     if failure == "mise:maintain":
         assert calls == ["mise run //:mise:maintain"]
+
+
+@pytest.mark.parametrize("check", [False, True])
+def test_git_client_tag_runs_only_native_capability(
+    tmp_path: Path, check: bool
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags="git-client",
+        check=check,
+    )
+    assert status == 0
+    assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
+        "mise run //:git-client" + (" --check" if check else "")
+    ]
 
 
 def test_ansible_no_longer_owns_terminal_theme() -> None:

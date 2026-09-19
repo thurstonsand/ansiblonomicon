@@ -1,0 +1,4 @@
+[user]
+	email = "{{ vars.git_personal_email }}"
+	name = "Thurston Sandberg"
+	signingKey = "{{ vars.git_personal_public_signing_key }}"

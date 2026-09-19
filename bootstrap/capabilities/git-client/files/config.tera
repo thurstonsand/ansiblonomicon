@@ -10,8 +10,7 @@
 
 [commit]
 	gpgSign = true
-
-{{- if lookPath "delta" }}
+{% if get_env(name="GIT_CLIENT_DELTA", default="false") == "true" %}
 
 [core]
 	pager = delta
@@ -24,7 +23,7 @@
 	side-by-side = true
 	line-numbers = true
 	hyperlinks = true
-{{- end }}
+{% endif %}
 
 [merge]
 	conflictStyle = zdiff3
@@ -50,10 +49,10 @@
 	format = "ssh"
 
 [gpg "ssh"]
-{{- if eq .chezmoi.os "darwin" }}
-	program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
-{{- end }}
-	allowedSignersFile = "{{ .chezmoi.homeDir }}/.config/git/allowed_signers"
+{% if vars.git_signing_program != "" %}
+	program = "{{ vars.git_signing_program }}"
+{% endif %}
+	allowedSignersFile = "{{ vars.git_client_home }}/.config/git/allowed_signers"
 
 [init]
 	defaultBranch = "main"
@@ -76,24 +75,18 @@
 	gpgSign = true
 
 [user]
-{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
-	email = "{{ .workEmail }}"
+{% if vars.host_profile == "work" %}
+	email = "{{ vars.git_work_email }}"
 	name = "Thurston Sandberg"
-	signingKey = "{{ .workSigningKey }}"
+	signingKey = "{{ vars.git_work_signing_key }}"
 
 [includeIf "gitdir:~/code/personal/"]
 	path = personal.inc
-{{- else }}
-	email = "{{ .personalEmail }}"
+{% else %}
+	email = "{{ vars.git_personal_email }}"
 	name = "Thurston Sandberg"
-{{- if eq .chezmoi.hostname "pod042" }}
-	signingKey = "{{ .chezmoi.homeDir }}/.ssh/id_ed25519_git"
-{{- else }}
-	signingKey = "{{ .personalSigningKey }}"
-{{- end }}
-{{- end }}
-{{- range .scm }}
-
-[url "ssh://git@{{ .host }}{{ with index . "sshPort" }}:{{ . }}{{ end }}"]
-	insteadOf = "https://{{ .host }}{{ index . "httpsPathPrefix" | default "" }}"
-{{- end }}
+	signingKey = "{{ vars.git_personal_signing_key | default(value=vars.git_personal_public_signing_key) }}"
+{% endif %}
+{% if vars.git_scm_config | default(value="") != "" %}
+{{ vars.git_scm_config | default(value="") }}
+{% endif %}

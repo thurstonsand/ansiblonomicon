@@ -1,0 +1,2 @@
+[dotfiles]
+"~/.config/git/personal.inc" = { source = "git-client/personal.inc.tera", mode = "template" }

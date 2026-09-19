@@ -53,6 +53,7 @@ CAPABILITIES = (
     "sharing",
     "snapshots",
     "operator",
+    "git-client",
     "agent-harness",
     "remote-development",
     "terminal-theme",
@@ -98,6 +99,8 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("repositories", "network")
     if capability == "operator":
         return ("base", "operator")
+    if capability == "git-client":
+        return ("git-client",)
     if capability == "agent-harness":
         return ("base", "operator", "agent-harness")
     if capability == "remote-development":
@@ -145,8 +148,9 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
 def run_local(capability: str | None, check_mode: bool) -> None:
     assert_hostname()
     selected = capabilities_for(capability)
+    root_capabilities = {"git-client", "terminal-theme"}
     bootstrap_capabilities = tuple(
-        item for item in selected if item != "terminal-theme"
+        item for item in selected if item not in root_capabilities
     )
     environments = ",".join(bootstrap_capabilities)
     command = [
@@ -196,6 +200,17 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     str(ROOT),
                     "run",
                     "terminal-theme",
+                    "--check",
+                ]
+            )
+        if "git-client" in selected:
+            run_command(
+                [
+                    "mise",
+                    "-C",
+                    str(ROOT),
+                    "run",
+                    "git-client",
                     "--check",
                 ]
             )
@@ -291,6 +306,16 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     str(ROOT),
                     "run",
                     "terminal-theme",
+                ]
+            )
+        if "git-client" in selected:
+            run_command(
+                [
+                    "mise",
+                    "-C",
+                    str(ROOT),
+                    "run",
+                    "git-client",
                 ]
             )
 

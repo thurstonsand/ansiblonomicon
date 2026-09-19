@@ -1,6 +1,9 @@
-min_version = "2026.9.6"
+min_version = "2026.9.11"
 
 [vars]
+host_profile = "personal"
 terminal_theme_home = "/Users/thurstonsand"
 terminal_theme_profile = "detector"
 terminal_theme_mirrors = "pod042"
+git_client_home = "/Users/thurstonsand"
+git_signing_program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"

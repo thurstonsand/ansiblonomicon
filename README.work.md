@@ -2,14 +2,18 @@
 
 This documents all files that live **only** on the work Mac and are not tracked in this repository. These are maintained manually.
 
+## Native Mise Configuration
+
+Git identity and corporate URL rewrites belong in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`; see the [Git capability instructions](bootstrap/capabilities/git-client/README.md). Work cutover is pending. Retain the old identity and SCM data below for Jujutsu and Neovim until those consumers migrate; the [cleanup ledger](docs/operations/mise-migration-cleanup.md) tracks their removal conditions.
+
 ## Chezmoi Data Layer
 
 All fields live in `chezmoi/.chezmoidata/local.toml`:
 
 | Field                                | Consumed by                                              |
 | ------------------------------------ | -------------------------------------------------------- |
-| `workEmail` / `workSigningKey`       | Git and Jujutsu identity templates                       |
-| `[[scm]]`                            | git / SCM templates, `nvim` gitbrowse host URLs          |
+| `workEmail` / `workSigningKey`       | Jujutsu identity template                                |
+| `[[scm]]`                            | `nvim` gitbrowse host URLs                               |
 | `goLocalImports` / `goplsBuildFlags` | Go tooling templates                                     |
 | `[work_models]`                      | pi models/settings, Claude Code overlay                  |
 | `[work_gateway]`                     | pi model templates (endpoint and provider names)         |

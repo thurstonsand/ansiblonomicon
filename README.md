@@ -34,6 +34,14 @@ On macOS, `dark-notify` acts as the source of truth for terminal theme state. Th
 
 Run `mise terminal-theme` for this capability alone, or add `--check` for a nonmutating preview. Regular laptop and pod042 reconciliation includes it and updates the standalone mise binary to latest stable when its last successful update is at least 24 hours old. Check mode skips upgrades. `mise laptop -t terminal-theme` runs natively without Ansible; mixed tags route only the remaining tags to Ansible. Neither Ansible nor chezmoi owns these theme files.
 
+### Git client configuration
+
+The shared [native mise capability](bootstrap/capabilities/git-client/README.md) owns Git defaults, identities, signing configuration, attributes, and ignore patterns. A managed block preserves application-added settings outside it; attributes and ignore patterns are symlinked to the shared sources. SSH keys and Jujutsu remain outside this capability.
+
+Run `mise git-client` or `mise git-client --check` for this capability alone. Regular laptop and pod042 reconciliation includes it; `mise laptop -t git-client` runs without Ansible. Work identity and corporate URL rewrites belong in the work target's ignored `mise.local.toml`, as described in the capability README.
+
+Temporary cutover code and its deletion conditions are tracked in the [mise migration cleanup ledger](docs/operations/mise-migration-cleanup.md). Work-host migration remains pending; keep the ledger current as capabilities move.
+
 ### Retiring managed paths
 
 Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work macOS run removes listed files, symlinks, or directories idempotently, including tagged runs. Relative and `~/` entries resolve beneath the managed user's home; absolute paths are used verbatim. Native pod042 and UDMP resources use `state = "absent"` instead.

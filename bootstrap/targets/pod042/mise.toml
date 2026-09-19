@@ -1,13 +1,17 @@
-min_version = "2026.8.12"
+min_version = "2026.9.11"
 
 [settings]
 jobs = 1
 system_packages.managers = ["apt"]
 
 [vars]
+host_profile = "personal"
 terminal_theme_home = "/home/thurstonsand"
 terminal_theme_profile = "mirror"
 terminal_theme_mirrors = ""
+git_client_home = "/home/thurstonsand"
+git_personal_signing_key = "/home/thurstonsand/.ssh/id_ed25519_git"
+git_signing_program = ""
 
 [tasks."mise:maintain"]
 description = "Update the system mise binary when its daily maintenance is due"

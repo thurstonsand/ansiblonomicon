@@ -75,7 +75,14 @@ def test_three_hosts_include_shared_capability_with_host_behavior() -> None:
         assert (target / "terminal-theme").is_symlink()
         assert (target / "terminal-theme").resolve() == (CAPABILITY / "files").resolve()
         config = tomllib.loads((target / "mise.toml").read_text())
-        assert config["vars"] == {
+        assert {
+            key: config["vars"][key]
+            for key in (
+                "terminal_theme_home",
+                "terminal_theme_profile",
+                "terminal_theme_mirrors",
+            )
+        } == {
             "terminal_theme_home": home,
             "terminal_theme_profile": profile,
             "terminal_theme_mirrors": mirrors,

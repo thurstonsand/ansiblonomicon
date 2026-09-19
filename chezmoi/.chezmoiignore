@@ -1,6 +1,13 @@
 # Files to ignore based on platform
 # Syntax: Go template conditionals around glob patterns
 
+# Git client configuration is owned by the native mise git-client capability.
+.config/git/config
+.config/git/personal.inc
+.config/git/allowed_signers
+.config/git/attributes
+.config/git/ignore
+
 # macOS-only scripts - ignore on non-Darwin
 {{ if ne .chezmoi.os "darwin" }}
 .chezmoiscripts/darwin/**

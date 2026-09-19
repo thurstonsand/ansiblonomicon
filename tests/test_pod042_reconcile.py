@@ -238,6 +238,21 @@ def test_terminal_theme_check_previews_canonical_dotfile_flow(
     ]
 
 
+def test_git_client_focused_apply_runs_only_canonical_root_task(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+
+    pod042_reconcile.run_local("git-client", check_mode=False)
+
+    git_calls = [call for call in calls if call[-2:] == ["run", "git-client"]]
+    assert len(git_calls) == 1
+    assert not any(call[-2:] == ["bootstrap", "--yes"] for call in calls)
+    assert pod042_reconcile.capabilities_for("git-client") == ("git-client",)
+
+
 def test_full_apply_runs_theme_once_after_prerequisite_bootstrap(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -255,6 +270,10 @@ def test_full_apply_runs_theme_once_after_prerequisite_bootstrap(
     main_bootstrap = next(call for call in calls if call[-2:] == ["bootstrap", "--yes"])
     environment = next(part for part in main_bootstrap if part.startswith("MISE_ENV="))
     assert "terminal-theme" not in environment.split("=", 1)[1].split(",")
+    git_calls = [call for call in calls if call[-2:] == ["run", "git-client"]]
+    assert len(git_calls) == 1
+    assert calls.index(git_calls[0]) > calls.index(main_bootstrap)
+    assert "git-client" not in environment.split("=", 1)[1].split(",")
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,3 @@
+{{ vars.git_personal_email }} namespaces="git" {{ vars.git_personal_public_signing_key }}
+{% if vars.host_profile == "work" %}{{ vars.git_work_email }} namespaces="git" {{ vars.git_work_signing_key }}
+{% endif %}

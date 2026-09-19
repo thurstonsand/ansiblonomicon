@@ -116,13 +116,6 @@
       when: configure_chezmoi | default(true)
       tags: ["chezmoi", "dotfiles"]
 
-    - name: Exclude user-level pre-push hook for personal projects
-      community.general.git_config:
-        name: "includeIf.gitdir:~/code/personal/.path"
-        value: "~/.config/git/personal.inc"
-        scope: global
-      tags: ["git-hooks"]
-
     - name: Upgrade Neovim dependencies
       ansible.builtin.include_tasks:
         file: ../tasks/neovim_deps.yml

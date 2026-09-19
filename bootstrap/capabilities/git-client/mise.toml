@@ -1,0 +1,30 @@
+[vars]
+git_personal_email = "thurstonsand@gmail.com"
+git_personal_public_signing_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
+
+[dotfiles]
+"~/.config/git/config/ansiblonomicon" = { source = "git-client/config.tera", template = "tera", comment = "#" }
+"~/.config/git/allowed_signers" = { source = "git-client/allowed_signers.tera", mode = "template" }
+"~/.config/git/attributes" = { source = "git-client/attributes", mode = "symlink" }
+"~/.config/git/ignore" = { source = "git-client/ignore", mode = "symlink" }
+
+[env]
+HOST_PROFILE = "{{ vars.host_profile }}"
+GIT_CLIENT_PERSONAL_EMAIL = "{{ vars.git_personal_email }}"
+GIT_CLIENT_PERSONAL_SIGNING_KEY = "{{ vars.git_personal_signing_key | default(value=vars.git_personal_public_signing_key) }}"
+GIT_CLIENT_WORK_EMAIL = "{{ vars.git_work_email | default(value='') }}"
+GIT_CLIENT_WORK_SIGNING_KEY = "{{ vars.git_work_signing_key | default(value='') }}"
+GIT_CLIENT_SCM_CONFIG = "{{ vars.git_scm_config | default(value='') }}"
+
+[bootstrap.hooks.pre-dotfiles]
+run = '''
+{% if vars.host_profile == "work" and (vars.git_work_email | default(value="") == "" or vars.git_work_signing_key | default(value="") == "") %}
+echo "work git-client requires git_work_email and git_work_signing_key in mise.local.toml" >&2
+exit 1
+{% else %}
+mise exec -- python3 git-client/adopt.py validate
+{% endif %}
+'''
+
+[bootstrap.hooks.post-dotfiles]
+run = "mise exec -- python3 git-client/adopt.py adopt"
