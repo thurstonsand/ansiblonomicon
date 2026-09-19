@@ -79,58 +79,54 @@ fi
 
 export EDITOR="nvim"
 export VISUAL="nvim"
-{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+{% if vars.host_profile == "work" %}
 
 # 1Password SSH agent
 export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-export SOURCEGRAPH_TOKEN={{ secret "SOURCEGRAPH_TOKEN" | quote }}
-{{- end }}
+export SOURCEGRAPH_TOKEN={{ get_env(name="SHELL_SOURCEGRAPH_TOKEN_QUOTED") }}
+{% endif %}
 
 
 # PATH additions (available to all shells including scripts)
-{{- if eq .chezmoi.os "darwin" }}
+{% if vars.host_os == "darwin" %}
 # Keep Homebrew executables available to non-login shells. .zprofile runs
 # brew shellenv for the remaining Homebrew environment configuration.
-{{- end }}
+{% endif %}
 typeset -U path
 path=(
-{{- if eq .chezmoi.hostname "pod042" }}
+{% if vars.host_os == "linux" %}
   "$HOME/.local/bin"
   "$HOME/.amp/bin"
   "$HOME/.opencode/bin"
-{{- end }}
-{{- if eq .chezmoi.os "darwin" }}
+{% endif %}
+{% if vars.host_os == "darwin" %}
   "/opt/homebrew/bin"
   "/opt/homebrew/sbin"
-{{- end }}
+{% endif %}
   "$HOME/.local/share/mise/shims"
   "$HOME/.bun/bin"
   "$HOME/.npm-global/bin"
-{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+{% if vars.host_profile != "work" %}
   "$HOME/.opencode/bin"
-{{- end }}
+{% endif %}
   "$HOME/.cargo/bin"
   "$HOME/.local/share/pnpm"
   "$HOME/go/bin"
-{{- if eq .chezmoi.os "darwin" }}
-{{- if lookPath "/opt/homebrew/opt/ruby/bin/ruby" }}
+{% if vars.host_os == "darwin" %}
+{% if get_env(name="SHELL_HAS_HOMEBREW_RUBY", default="false") == "true" %}
   "/opt/homebrew/opt/ruby/bin"
-  "/opt/homebrew/lib/ruby/gems/{{ output "/opt/homebrew/opt/ruby/bin/ruby" "-e" "puts RbConfig::CONFIG['ruby_version']" | trim }}/bin"
-{{- end }}
-{{- if lookPath "/opt/homebrew/opt/rustup/bin/rustup" }}
+  "/opt/homebrew/lib/ruby/gems/{{ get_env(name="SHELL_HOMEBREW_RUBY_VERSION") }}/bin"
+{% endif %}
+{% if get_env(name="SHELL_HAS_HOMEBREW_RUSTUP", default="false") == "true" %}
   "/opt/homebrew/opt/rustup/bin"
-{{- end }}
-{{- end }}
-{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+{% endif %}
+{% endif %}
+{% if vars.host_profile == "work" %}
   "$HOME/scripts"
-{{- end }}
-{{- if eq .chezmoi.hostname "openclaw" }}
-  "$HOME/bin"
-  "$HOME/.local/share/bob/nvim-bin"
-{{- end }}
-{{- if ne .chezmoi.os "darwin" }}
+{% endif %}
+{% if vars.host_os != "darwin" %}
   "$HOME/.local/bin"
-{{- end }}
+{% endif %}
   $path
 )
 

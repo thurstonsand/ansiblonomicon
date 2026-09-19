@@ -58,12 +58,14 @@ CAPABILITIES = (
     "agent-harness",
     "remote-development",
     "terminal-theme",
+    "shell",
 )
 _VCS_CLIENT_INDEX = CAPABILITIES.index("git-client")
 FULL_CAPABILITIES = (
     *CAPABILITIES[:_VCS_CLIENT_INDEX],
     "vcs-identity",
     *CAPABILITIES[_VCS_CLIENT_INDEX:],
+    "shell-personal",
 )
 
 
@@ -116,6 +118,8 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("base", "operator", "agent-harness", "remote-development")
     if capability == "terminal-theme":
         return ("terminal-theme",)
+    if capability == "shell":
+        return ("shell", "shell-personal")
     if capability == "storage":
         return ("repositories", "storage")
     if capability == "maintenance":
@@ -157,7 +161,14 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
 def run_local(capability: str | None, check_mode: bool) -> None:
     assert_hostname()
     selected = capabilities_for(capability)
-    root_capabilities = {"vcs-identity", "git-client", "jj-client", "terminal-theme"}
+    root_capabilities = {
+        "vcs-identity",
+        "git-client",
+        "jj-client",
+        "terminal-theme",
+        "shell",
+        "shell-personal",
+    }
     bootstrap_capabilities = tuple(
         item for item in selected if item not in root_capabilities
     )
@@ -234,6 +245,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     "--check",
                 ]
             )
+        if "shell" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "shell", "--check"])
         if "base" in selected:
             run_command(
                 [
@@ -348,6 +361,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     "jj-client",
                 ]
             )
+        if "shell" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "shell"])
 
 
 def build_parser() -> argparse.ArgumentParser:

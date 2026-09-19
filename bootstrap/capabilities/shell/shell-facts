@@ -1,0 +1,31 @@
+#!/bin/sh
+# Emit shell-safe environment assignments used by native Tera rendering.
+set -eu
+
+quote() {
+  # POSIX single-quote encoding; the result is data for `eval`, never executed
+  # as part of this helper.
+  printf "'"
+  printf %s "$1" | sed "s/'/'\\\\''/g"
+  printf "'"
+}
+
+if [ -x /opt/homebrew/opt/ruby/bin/ruby ]; then
+  version=$(/opt/homebrew/opt/ruby/bin/ruby -e "puts RbConfig::CONFIG['ruby_version']")
+  printf 'SHELL_HAS_HOMEBREW_RUBY=true\nSHELL_HOMEBREW_RUBY_VERSION=%s\n' "$(quote "$version")"
+else
+  printf 'SHELL_HAS_HOMEBREW_RUBY=false\nSHELL_HOMEBREW_RUBY_VERSION=%s\n' "$(quote '')"
+fi
+
+if [ -x /opt/homebrew/opt/rustup/bin/rustup ]; then
+  printf 'SHELL_HAS_HOMEBREW_RUSTUP=true\n'
+else
+  printf 'SHELL_HAS_HOMEBREW_RUSTUP=false\n'
+fi
+
+if [ -n "${SOURCEGRAPH_TOKEN+x}" ]; then
+  quoted_token=$(quote "$SOURCEGRAPH_TOKEN")
+  printf 'SHELL_SOURCEGRAPH_TOKEN_QUOTED=%s\n' "$(quote "$quoted_token")"
+else
+  printf "SHELL_SOURCEGRAPH_TOKEN_QUOTED=\"''\"\n"
+fi

@@ -11,6 +11,14 @@
 # Jujutsu configuration is owned by the native mise jj-client capability.
 .config/jj/config.toml
 
+# Shell startup and static tool configuration are owned by native mise.
+.zshenv
+.zprofile
+.zshrc
+.config/starship.toml
+.config/direnv/direnv.toml
+.local/bin/cleanh
+
 # macOS-only scripts - ignore on non-Darwin
 {{ if ne .chezmoi.os "darwin" }}
 .chezmoiscripts/darwin/**

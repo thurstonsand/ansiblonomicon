@@ -115,6 +115,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
     if not tags or tags == "all":
         expected.append("mise run //:git-client" + suffix)
         expected.append("mise run //:jj-client" + suffix)
+        expected.append("mise run //:shell" + suffix)
     assert calls == expected
 
 
@@ -165,6 +166,21 @@ def test_jj_client_tag_runs_only_native_capability(tmp_path: Path, check: bool) 
     assert status == 0
     assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
         "mise run //:jj-client" + (" --check" if check else "")
+    ]
+
+
+@pytest.mark.parametrize("check", [False, True])
+def test_shell_tag_runs_only_native_capability(tmp_path: Path, check: bool) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="ML-DFC6YK6VJQ",
+        tags="shell",
+        check=check,
+    )
+    assert status == 0
+    assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
+        "mise run //:shell" + (" --check" if check else "")
     ]
 
 

@@ -33,25 +33,25 @@ bindkey "^[[3;3~" kill-word # alt+fn+delete
 bindkey "^U" backward-kill-line
 bindkey -r -M emacs '^[a'
 
-{{- if eq .chezmoi.os "darwin" }}
+{% if vars.host_os == "darwin" %}
 # Autosuggestions (via Homebrew)
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null || :
-{{- else if eq .chezmoi.hostname "pod042" }}
+{% elif vars.host_os == "linux" %}
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
-{{- else }}
+{% else %}
 # Autosuggestions
 source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null || :
-{{- end }}
+{% endif %}
 
-{{- if eq .chezmoi.os "darwin" }}
+{% if vars.host_os == "darwin" %}
 # Syntax highlighting (via Homebrew)
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null || :
-{{- else if eq .chezmoi.hostname "pod042" }}
+{% elif vars.host_os == "linux" %}
 source /usr/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh
-{{- else }}
+{% else %}
 # Syntax highlighting
 source /usr/share/zsh/plugins/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null || :
-{{- end }}
+{% endif %}
 ZSH_HIGHLIGHT_HIGHLIGHTERS=(main brackets pattern line cursor root)
 
 # eza integration (ls replacement)
@@ -65,7 +65,7 @@ fi
 # Initialize tools with caching (interactive only)
 if [[ -o interactive ]]; then
   _evalcache fzf --zsh
-{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+{% if vars.host_profile == "work" %}
   [ -f /opt/homebrew/etc/profile.d/autojump.sh ] && . /opt/homebrew/etc/profile.d/autojump.sh
   # Mirror zoxide's `--cmd cd`: prefer literal dirs, fall through to autojump's `j`.
   cd() {
@@ -79,26 +79,26 @@ if [[ -o interactive ]]; then
       j "$@"
     fi
   }
-{{- else }}
+{% else %}
   _evalcache zoxide init zsh --cmd cd
-{{- end }}
+{% endif %}
   if [[ $TERM != "dumb" ]]; then
     _evalcache starship init zsh
   fi
 fi
-{{- if or (eq .chezmoi.os "darwin") (eq .chezmoi.hostname "openclaw") }}
+{% if vars.host_os == "darwin" %}
 _evalcache bun completions
-{{- end }}
+{% endif %}
 _evalcache sessions shell zsh
-{{- if eq .chezmoi.os "darwin" }}
+{% if vars.host_os == "darwin" %}
 _evalcache wt shell zsh
-{{- end }}
+{% endif %}
 _evalcache direnv hook zsh
 _evalcache mise activate zsh
 _evalcache mise completion zsh
-{{- if eq .chezmoi.hostname "Thurstons-MacBook-Pro" }}
+{% if vars.host_profile == "personal" and vars.host_os == "darwin" %}
 _evalcache shp completion zsh
-{{- end }}
+{% endif %}
 # Aliases
 if command -v prettyping &>/dev/null; then
   alias ping='prettyping'
@@ -109,25 +109,25 @@ alias lzd='lazydocker'
 alias vi='nvim'
 alias vim='nvim'
 
-{{- if eq .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+{% if vars.host_profile == "work" %}
 claude() {
   command claude \
     --plugin-dir ~/code/claude-code-plugin-auto-title \
     --plugin-dir ~/code/claude-code-plugin-sourcegraph \
     "$@"
 }
-{{- else }}
+{% else %}
 claude() {
   command claude --dangerously-skip-permissions "$@"
 }
-{{- end }}
+{% endif %}
 
 source ~/.config/zsh/terminal-theme.zsh 2>/dev/null || :
 
-{{- if eq .chezmoi.os "darwin" }}
+{% if vars.host_os == "darwin" %}
 alias bd='brew desc'
 alias bh='brew home'
-{{- end }}
+{% endif %}
 
 # Machine-local overrides (work integrations, extra aliases)
 [[ -f ~/.zshrc.local ]] && source ~/.zshrc.local

@@ -2,6 +2,7 @@ min_version = "2026.9.11"
 
 [vars]
 host_profile = "work"
+host_os = "darwin"
 terminal_theme_home = "/Users/tsandberg"
 terminal_theme_profile = "detector"
 terminal_theme_mirrors = ""

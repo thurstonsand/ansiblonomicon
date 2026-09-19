@@ -1,0 +1,9 @@
+[dotfiles]
+"~/.local/bin/cleanh" = { source = "shell/cleanh", mode = "symlink" }
+
+[bootstrap.files."/Users/tsandberg/.zshenv"]
+source = "shell/zshenv.tera"
+template = true
+owner = "tsandberg"
+group = "staff"
+mode = "0600"

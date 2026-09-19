@@ -2,7 +2,7 @@
 # Loaded once per login shell (before .zshrc)
 # Note: _evalcache and PATH are defined in .zshenv
 
-{{- if eq .chezmoi.os "darwin" }}
+{% if vars.host_os == "darwin" %}
 
 # Homebrew shell environment; not cacheable due to dynamic nature of the command
 eval "$(/opt/homebrew/bin/brew shellenv)"
@@ -10,9 +10,9 @@ eval "$(/opt/homebrew/bin/brew shellenv)"
 # Ensure local bins and mise shims take precedence over Homebrew formulas.
 typeset -U path
 path=("$HOME/.local/bin" "$HOME/.local/share/mise/shims" $path)
-{{- if ne .chezmoi.hostname "ML-DFC6YK6VJQ" }}
+{% if vars.host_profile != "work" %}
 
 # OrbStack shell integration
 source ~/.orbstack/shell/init.zsh 2>/dev/null || :
-{{- end }}
-{{- end }}
+{% endif %}
+{% endif %}

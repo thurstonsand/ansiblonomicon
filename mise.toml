@@ -219,6 +219,43 @@ fi
 exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes
 '''
 
+[tasks.shell]
+description = "Reconcile shared shell configuration on this registered host"
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+'''
+run = '''
+host=$(hostname -s)
+case "$host" in
+  pod042|Thurstons-MacBook-Pro) environments=shell,shell-personal; parts=dotfiles; work=false ;;
+  ML-DFC6YK6VJQ) environments=shell,shell-work; parts=files,dotfiles; work=true ;;
+  *) echo "Unregistered shell host" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+run_shell='set -e
+if [ "$6" = true ] && [ -z "${SOURCEGRAPH_TOKEN:-}" ]; then
+  echo "SOURCEGRAPH_TOKEN is required for work shell apply" >&2
+  exit 1
+fi
+facts=$("$1/bootstrap/capabilities/shell/shell-facts") || exit $?
+eval "$facts"
+export SHELL_HAS_HOMEBREW_RUBY SHELL_HOMEBREW_RUBY_VERSION SHELL_HAS_HOMEBREW_RUSTUP SHELL_SOURCEGRAPH_TOKEN_QUOTED
+export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"
+exec mise -C "$2" bootstrap --only "$4" --force-dotfiles "$5"'
+if [ -n "${usage_check:-}" ]; then
+  if [ "$work" = true ]; then export SOURCEGRAPH_TOKEN=preview; fi
+  exec sh -c "$run_shell" shell "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts" --dry-run false
+fi
+if [ "$work" = true ]; then
+  export SUDO_ASKPASS="$MISE_PROJECT_ROOT/ansible/sudo-askpass.sh"
+  exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec \
+    --secret SOURCEGRAPH_TOKEN --secret HOMEBREW_SUDO_ASKPASS_PASS_WORK -- \
+    sh -ec ': "${SOURCEGRAPH_TOKEN:?SOURCEGRAPH_TOKEN is required for work shell apply}"; sudo -A -v; exec sh -c "$1" shell "$2" "$3" "$4" "$5" --yes true' \
+    shell "$run_shell" "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts"
+fi
+exec sh -c "$run_shell" shell "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts" --yes
+'''
+
 [tasks.reconcile]
 description = "Reconcile this machine, dispatching on hostname"
 dir = "ansible"
@@ -260,6 +297,7 @@ esac
 theme=false
 git_client=false
 jj_client=false
+shell=false
 case ",${usage_tags:-}," in
   ,,|*,all,*|*,terminal-theme,*) theme=true ;;
 esac
@@ -269,7 +307,10 @@ esac
 case ",${usage_tags:-}," in
   ,,|*,all,*|*,jj-client,*) jj_client=true ;;
 esac
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(terminal-theme|git-client|jj-client)$' | paste -sd, -)
+case ",${usage_tags:-}," in
+  ,,|*,all,*|*,shell,*) shell=true ;;
+esac
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(terminal-theme|git-client|jj-client|shell)$' | paste -sd, -)
 if [ -z "${usage_check:-}" ]; then
   mise run //:mise:maintain
 fi
@@ -286,7 +327,10 @@ if [ "$git_client" = true ]; then
   mise run //:git-client ${usage_check:+--check} || exit "$?"
 fi
 if [ "$jj_client" = true ]; then
-  exec mise run //:jj-client ${usage_check:+--check}
+  mise run //:jj-client ${usage_check:+--check} || exit "$?"
+fi
+if [ "$shell" = true ]; then
+  exec mise run //:shell ${usage_check:+--check}
 fi
 '''
 
