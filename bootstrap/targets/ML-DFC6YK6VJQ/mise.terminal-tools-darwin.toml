@@ -1,0 +1,4 @@
+[dotfiles]
+"~/.local/bin/delta" = { source = "terminal-tools/bin/delta", mode = "symlink" }
+"~/.local/bin/ide" = { source = "terminal-tools/bin/ide", mode = "symlink" }
+"~/.config/ghostty/config" = { source = "terminal-tools/ghostty/config.tera", mode = "template" }

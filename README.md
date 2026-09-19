@@ -36,6 +36,8 @@ Run `mise terminal-theme` for this capability alone, or add `--check` for a nonm
 
 Shared Zsh startup files and static Starship/direnv configuration are also native mise resources; use `mise run shell` or `mise run shell --check`. Work rendering resolves its shell-wide Sourcegraph token and scoped sudo credential at apply time; check mode and personal/pod042 reconciliation perform no work-secret lookup. See the [shell capability](bootstrap/capabilities/shell/README.md).
 
+The [terminal-tools capability](bootstrap/capabilities/terminal-tools/README.md) owns tmux configuration, Mac Ghostty configuration and helpers, and personal-host TPM installation. Run `mise terminal-tools` or `mise laptop -t tmux`, adding `--check` for a preview. Full reconciliation supplies software prerequisites first; focused runs assume they are installed.
+
 ### VCS client configuration
 
 The shared [Git capability](bootstrap/capabilities/git-client/README.md) owns Git defaults, identities, signing configuration, attributes, and ignore patterns. A managed block preserves application-added settings outside it; attributes and ignore patterns are symlinked to the shared sources. The [Jujutsu capability](bootstrap/capabilities/jj-client/README.md) uses a native `conf.d` fragment, preserving the existing user config. Both independently load shared `vcs-identity` facts. SSH key provisioning remains separate.

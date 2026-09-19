@@ -116,6 +116,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:git-client" + suffix)
         expected.append("mise run //:jj-client" + suffix)
         expected.append("mise run //:shell" + suffix)
+        expected.append("mise run //:terminal-tools" + suffix)
     assert calls == expected
 
 
@@ -181,6 +182,24 @@ def test_shell_tag_runs_only_native_capability(tmp_path: Path, check: bool) -> N
     assert status == 0
     assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
         "mise run //:shell" + (" --check" if check else "")
+    ]
+
+
+@pytest.mark.parametrize("tag", ["terminal-tools", "tmux"])
+@pytest.mark.parametrize("check", [False, True])
+def test_terminal_tools_tags_run_only_native_capability(
+    tmp_path: Path, tag: str, check: bool
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags=tag,
+        check=check,
+    )
+    assert status == 0
+    assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
+        "mise run //:terminal-tools" + (" --check" if check else "")
     ]
 
 

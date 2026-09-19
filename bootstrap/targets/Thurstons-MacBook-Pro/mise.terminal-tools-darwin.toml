@@ -1,0 +1,14 @@
+[dotfiles]
+"~/.local/bin/delta" = { source = "terminal-tools/bin/delta", mode = "symlink" }
+"~/.local/bin/ide" = { source = "terminal-tools/bin/ide", mode = "symlink" }
+"~/.local/bin/ideo" = { source = "terminal-tools/bin/ideo", mode = "symlink" }
+"~/.config/ghostty/config" = { source = "terminal-tools/ghostty/config.tera", mode = "template" }
+
+[bootstrap.repos]
+"/Users/thurstonsand/.config/tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm.git" }
+
+[bootstrap.hooks.post-dotfiles]
+run = '''
+TMUX_PLUGIN_MANAGER_PATH=/Users/thurstonsand/.config/tmux/plugins \
+  /Users/thurstonsand/.config/tmux/plugins/tpm/bin/install_plugins
+'''

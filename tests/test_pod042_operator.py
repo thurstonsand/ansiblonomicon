@@ -15,13 +15,14 @@ def test_operator_task_order_preserves_base_bootstrap():
     assert "bootstrap" not in tasks
     assert "operator:setup" in config["bootstrap"]["hooks"]["final"]["run"]
     for task, prerequisite in (
-        ("setup", "tmux"),
-        ("tmux", "dotfiles"),
+        ("setup", "dotfiles"),
         ("dotfiles", "sessions"),
         ("sessions", "agents"),
         ("agents", "tools"),
     ):
         assert tasks[f"operator:{task}"]["depends"] == [f"operator:{prerequisite}"]
+    assert "operator:tmux" not in tasks
+    assert "repos" not in config["bootstrap"]
 
 
 def test_operator_bootstrap_only_owns_installation_config():

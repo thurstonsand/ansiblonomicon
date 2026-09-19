@@ -159,11 +159,6 @@
           tags: ["neovim", "nvim-deps"]
       tags: ["neovim", "nvim-deps"]
 
-    - name: Install tmux plugin manager and plugins
-      tags: ["tmux"]
-      ansible.builtin.include_tasks:
-        file: ../tasks/tmux_plugins.yml
-
     - name: Placeholder - Arch Linux tasks
       ansible.builtin.debug:
         msg: "Ready for Arch Linux configuration (pacman: {{ configure_pacman | default(false) }})"

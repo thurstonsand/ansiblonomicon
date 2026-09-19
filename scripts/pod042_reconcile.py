@@ -52,6 +52,7 @@ CAPABILITIES = (
     "home-assistant",
     "sharing",
     "snapshots",
+    "terminal-tools",
     "operator",
     "git-client",
     "jj-client",
@@ -65,6 +66,7 @@ FULL_CAPABILITIES = (
     *CAPABILITIES[:_VCS_CLIENT_INDEX],
     "vcs-identity",
     *CAPABILITIES[_VCS_CLIENT_INDEX:],
+    "terminal-tools-plugins",
     "shell-personal",
 )
 
@@ -120,6 +122,8 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("terminal-theme",)
     if capability == "shell":
         return ("shell", "shell-personal")
+    if capability in ("terminal-tools", "tmux"):
+        return ("terminal-tools", "terminal-tools-plugins")
     if capability == "storage":
         return ("repositories", "storage")
     if capability == "maintenance":
@@ -168,6 +172,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         "terminal-theme",
         "shell",
         "shell-personal",
+        "terminal-tools",
+        "terminal-tools-plugins",
     }
     bootstrap_capabilities = tuple(
         item for item in selected if item not in root_capabilities
@@ -247,6 +253,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             )
         if "shell" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "shell", "--check"])
+        if "terminal-tools" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "terminal-tools", "--check"])
         if "base" in selected:
             run_command(
                 [
@@ -363,6 +371,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             )
         if "shell" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "shell"])
+        if "terminal-tools" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "terminal-tools"])
 
 
 def build_parser() -> argparse.ArgumentParser:

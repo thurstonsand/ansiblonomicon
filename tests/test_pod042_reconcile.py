@@ -282,7 +282,7 @@ def test_jj_client_focused_apply_loads_identity_and_only_runs_root_task(
     ]
 
 
-def test_full_apply_runs_theme_once_after_prerequisite_bootstrap(
+def test_full_apply_runs_root_capabilities_after_prerequisite_bootstrap(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     calls: list[list[str]] = []
@@ -303,6 +303,12 @@ def test_full_apply_runs_theme_once_after_prerequisite_bootstrap(
     assert len(git_calls) == 1
     assert calls.index(git_calls[0]) > calls.index(main_bootstrap)
     assert "git-client" not in environment.split("=", 1)[1].split(",")
+    terminal_calls = [call for call in calls if call[-2:] == ["run", "terminal-tools"]]
+    assert len(terminal_calls) == 1
+    assert calls.index(terminal_calls[0]) > calls.index(main_bootstrap)
+    shell_call = next(call for call in calls if call[-2:] == ["run", "shell"])
+    assert calls.index(terminal_calls[0]) > calls.index(shell_call)
+    assert "terminal-tools" not in environment.split("=", 1)[1].split(",")
 
 
 @pytest.mark.parametrize(

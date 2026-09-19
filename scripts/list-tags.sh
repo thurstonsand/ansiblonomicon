@@ -15,7 +15,7 @@ if [[ -z "$playbook" ]]; then
 fi
 
 if [[ "$playbook" == pod042 ]]; then
-  exec python3 -B -c 'import sys; sys.path.insert(0, "../scripts"); from pod042_reconcile import CAPABILITIES; print("\n".join(CAPABILITIES))'
+  exec python3 -B -c 'import sys; sys.path.insert(0, "../scripts"); from pod042_reconcile import CAPABILITIES; print("\n".join((*CAPABILITIES, "tmux")))'
 fi
 
 if [[ ! -f "playbooks/$playbook.yml" ]]; then
@@ -32,6 +32,6 @@ else
 fi
 
 case "$playbook" in
-  macos|work) printf 'Native mise tags: git-client jj-client shell terminal-theme\n' ;;
+  macos|work) printf 'Native mise tags: git-client jj-client shell terminal-theme terminal-tools tmux\n' ;;
 esac
 exec ansible-playbook -i "$control" "playbooks/$playbook.yml" --list-tags

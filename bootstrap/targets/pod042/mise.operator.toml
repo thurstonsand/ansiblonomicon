@@ -51,9 +51,6 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0644"
 
-[bootstrap.repos]
-"/home/thurstonsand/.config/tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm.git" }
-
 [bootstrap.hooks.final]
 run = '''
 sudo -u thurstonsand env -i \
@@ -67,8 +64,8 @@ sudo -u thurstonsand env -i \
 '''
 
 [tasks."operator:setup"]
-description = "Install operator tools and agents, build sessions, apply dotfiles, then install tmux plugins"
-depends = ["operator:tmux"]
+description = "Install operator tools and agents, build sessions, then apply remaining dotfiles"
+depends = ["operator:dotfiles"]
 
 [tasks."operator:tools"]
 dir = "/home/thurstonsand"
@@ -128,9 +125,3 @@ run = [
   "chezmoi init --source=/home/thurstonsand/code/ansiblonomicon/chezmoi",
   "chezmoi --source=/home/thurstonsand/code/ansiblonomicon/chezmoi apply --force",
 ]
-
-[tasks."operator:tmux"]
-depends = ["operator:dotfiles"]
-dir = "/home/thurstonsand"
-env.TMUX_PLUGIN_MANAGER_PATH = "/home/thurstonsand/.config/tmux/plugins"
-run = "/home/thurstonsand/.config/tmux/plugins/tpm/bin/install_plugins"

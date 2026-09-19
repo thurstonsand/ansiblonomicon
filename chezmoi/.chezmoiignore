@@ -19,13 +19,19 @@
 .config/direnv/direnv.toml
 .local/bin/cleanh
 
+# Terminal configuration and helpers are owned by native mise.
+.config/tmux/
+.config/ghostty/
+.local/bin/delta
+.local/bin/ide
+.local/bin/ideo
+
 # macOS-only scripts - ignore on non-Darwin
 {{ if ne .chezmoi.os "darwin" }}
 .chezmoiscripts/darwin/**
 .config/linearmouse/
 .config/nextdns.conf
 .local/bin/btt-paste-image.sh
-.local/bin/delta
 .mactop/
 Library/
 {{ end }}
@@ -43,17 +49,10 @@ Library/
 
 # The NAS is headless; desktop integrations remain on workstations.
 {{ if eq .chezmoi.hostname "pod042" }}
-.config/ghostty/
 .config/zed/
 .config/eightctl/
-.local/bin/ide
 # The herdr machine catalogue belongs to clients; pod042 is the server side of it.
 .local/state/herdr/
-{{ end }}
-
-# ideo is personal to this Mac.
-{{ if ne .chezmoi.hostname "Thurstons-MacBook-Pro" }}
-.local/bin/ideo
 {{ end }}
 
 # Work-only utilities

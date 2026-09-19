@@ -1,0 +1,9 @@
+[dotfiles]
+"~/.config/tmux/tmux.conf" = { source = "terminal-tools/tmux/tmux.conf", mode = "symlink" }
+"~/.config/tmux/gruvbox-dark.conf" = { source = "terminal-tools/tmux/gruvbox-dark.conf", mode = "symlink" }
+"~/.config/tmux/gruvbox-light.conf" = { source = "terminal-tools/tmux/gruvbox-light.conf", mode = "symlink" }
+
+[vars]
+terminal_tools_font_family = "BerkeleyMono Nerd Font Mono"
+terminal_tools_window_title_font_family = "BerkeleyMono Nerd Font Mono Bold"
+terminal_tools_font_size = 13

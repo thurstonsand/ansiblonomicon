@@ -1,0 +1,8 @@
+[bootstrap.repos]
+"/home/thurstonsand/.config/tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm.git" }
+
+[bootstrap.hooks.post-dotfiles]
+run = '''
+TMUX_PLUGIN_MANAGER_PATH=/home/thurstonsand/.config/tmux/plugins \
+  /home/thurstonsand/.config/tmux/plugins/tpm/bin/install_plugins
+'''

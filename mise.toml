@@ -256,6 +256,30 @@ fi
 exec sh -c "$run_shell" shell "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts" --yes
 '''
 
+[tasks."terminal-tools"]
+description = "Reconcile terminal configuration and tools on this registered host"
+alias = "tmux"
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+'''
+run = '''
+host=$(hostname -s)
+case "$host" in
+  Thurstons-MacBook-Pro) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles,repos; update=--update ;;
+  ML-DFC6YK6VJQ) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles ;;
+  pod042) environments=terminal-tools,terminal-tools-plugins; parts=dotfiles,repos ;;
+  *) echo "Unregistered terminal-tools host" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+export MISE_ENV="$environments"
+if [ -n "${usage_check:-}" ]; then
+  exec mise -C "$target" bootstrap --only "$parts" --force-dotfiles --dry-run
+fi
+exec mise -C "$target" bootstrap --only "$parts" --force-dotfiles --yes ${update:-}
+'''
+
 [tasks.reconcile]
 description = "Reconcile this machine, dispatching on hostname"
 dir = "ansible"
@@ -294,23 +318,8 @@ case "$(hostname -s)" in
     ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-theme=false
-git_client=false
-jj_client=false
-shell=false
-case ",${usage_tags:-}," in
-  ,,|*,all,*|*,terminal-theme,*) theme=true ;;
-esac
-case ",${usage_tags:-}," in
-  ,,|*,all,*|*,git-client,*) git_client=true ;;
-esac
-case ",${usage_tags:-}," in
-  ,,|*,all,*|*,jj-client,*) jj_client=true ;;
-esac
-case ",${usage_tags:-}," in
-  ,,|*,all,*|*,shell,*) shell=true ;;
-esac
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(terminal-theme|git-client|jj-client|shell)$' | paste -sd, -)
+native_capabilities="terminal-theme git-client jj-client shell terminal-tools"
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(terminal-theme|git-client|jj-client|shell|terminal-tools|tmux)$' | paste -sd, -)
 if [ -z "${usage_check:-}" ]; then
   mise run //:mise:maintain
 fi
@@ -320,18 +329,14 @@ if [ -z "${usage_tags:-}" ] || [ -n "$ansible_tags" ]; then
   ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
     ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
 fi
-if [ "$theme" = true ]; then
-  mise run //:terminal-theme ${usage_check:+--check} || exit "$?"
-fi
-if [ "$git_client" = true ]; then
-  mise run //:git-client ${usage_check:+--check} || exit "$?"
-fi
-if [ "$jj_client" = true ]; then
-  mise run //:jj-client ${usage_check:+--check} || exit "$?"
-fi
-if [ "$shell" = true ]; then
-  exec mise run //:shell ${usage_check:+--check}
-fi
+for native_capability in $native_capabilities; do
+  case ",${usage_tags:-}," in
+    ,,|*,all,*|*,"$native_capability",*) ;;
+    *,tmux,*) [ "$native_capability" = terminal-tools ] || continue ;;
+    *) continue ;;
+  esac
+  mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
+done
 '''
 
 [tasks."reconcile:udmp"]

@@ -10,6 +10,7 @@ Track temporary compatibility and cutover code here as each capability migrates.
 | Git client | Live, verified | Live, verified | Pending; private identity and SCM settings must be transferred |
 | Jujutsu client | Config applied and parsed; JJ not installed | Live, verified including signing | Fixture-tested; private identity apply pending |
 | Shell | Live, verified | Live, verified | Fixture-tested; private local overrides deferred |
+| Terminal tools | Live, verified | Live, verified including Ghostty validation | Isolated render-tested; live Ghostty validation pending |
 
 ## Delete after work cutover is verified
 
@@ -20,6 +21,8 @@ Track temporary compatibility and cutover code here as each capability migrates.
 - [ ] **Work shell private templates.** Migrate the unseen gitignored chezmoi templates for `~/.zshenv.local` and `~/.zshrc.local` into native private sources first. Only retire the old templates after equivalent rendering and startup behavior are verified on work. The shared startup files continue sourcing these overrides; preserving that entry point alone is not enough to retire their source. Their contents remain deliberately deferred from native ownership.
 
 ## Delete only after remaining consumers migrate
+
+- [ ] **Duplicated terminal font defaults.** Terminal tools declares font variables while unmigrated applications still consume chezmoi's shared font data. Consolidate the declarations as those consumers migrate; remove the old shared values only after the last consumer migrates.
 
 - [ ] **Old work SCM data.** Retire `[[scm]]` in the work-only chezmoi data only after its remaining Neovim gitbrowse consumer migrates. Copying the Git URL rewrites into `git_scm_config` does not retire that other consumer.
 - [ ] **Chezmoi ownership guards.** Remove the Git paths from `chezmoi/.chezmoiignore`, including its older work-only `personal.inc` exclusion, when chezmoi is retired or its inability to touch these paths is otherwise established. They are ownership protection while both systems coexist, not runtime Git behavior.
