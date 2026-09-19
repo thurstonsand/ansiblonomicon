@@ -4,17 +4,21 @@ Track temporary compatibility and cutover code here as each capability migrates.
 
 ## Current rollout
 
-| Capability | pod042 | Personal Mac | Work Mac |
-| --- | --- | --- | --- |
-| Terminal theme | Live, verified | Live, verified | Pending |
-| Git client | Live, verified | Live, verified | Pending; private identity and SCM settings must be transferred |
-| Jujutsu client | Config applied and parsed; JJ not installed | Live, verified including signing | Fixture-tested; private identity apply pending |
-| Shell | Live, verified | Live, verified | Fixture-tested; private local overrides deferred |
-| Terminal tools | Live, verified | Live, verified including Ghostty validation | Isolated render-tested; live Ghostty validation pending |
-| Neovim | Live, verified including dependency setup | Live, verified including dependency setup | Fixture-tested; private SCM/Jira apply pending |
-| Python indexes | Not applicable | Intentionally absent | Fixture-tested; private index apply pending |
+| Capability     | pod042                                      | Personal Mac                                                | Work Mac                                                           |
+| -------------- | ------------------------------------------- | ----------------------------------------------------------- | ------------------------------------------------------------------ |
+| Terminal theme | Live, verified                              | Live, verified                                              | Pending                                                            |
+| Git client     | Live, verified                              | Live, verified                                              | Pending; private identity and SCM settings must be transferred     |
+| Jujutsu client | Config applied and parsed; JJ not installed | Live, verified including signing                            | Fixture-tested; private identity apply pending                     |
+| Shell          | Live, verified                              | Live, verified                                              | Fixture-tested; private local overrides deferred                   |
+| Terminal tools | Live, verified                              | Live, verified including Ghostty validation                 | Isolated render-tested; live Ghostty validation pending            |
+| Neovim         | Live, verified including dependency setup   | Live, verified including dependency setup                   | Fixture-tested; private SCM/Jira apply pending                     |
+| Python indexes | Not applicable                              | Intentionally absent                                        | Fixture-tested; private index apply pending                        |
+| Language tools | Not applicable                              | Live, verified including runtime upgrades and repeat no-ops | Fixture-tested; private inventory mapping and live cutover pending |
 
 ## Delete after work cutover is verified
+
+- [ ] **Legacy Mac software declarations.** After both Macs verify standalone mise, the native runtime/global-tool inventory, Node replacement hooks, private work extras, and repeat reconciliation, remove the Mac-only `mise` and `language_tools` role inputs from `ansible/{config,darwin.config,work.config}.yml`. Retain declarations still consumed by Linux playbooks or `system_maintenance`. Remove the old private `_extra`/`mise_tool_config` values only after mapping them to `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml` as documented in `README.work.md`. Brewfile migration is a later unit; do not remove its language-tool prerequisites in this cutover.
+- [ ] **Legacy language-tool stamp.** Retire `~/.cache/ansible-language-tools/update.stamp` on the Macs after no remaining maintenance consumer runs the legacy role. The native capability owns `~/.cache/ansiblonomicon/language-tools.stamp`; its `npm-globals.pending.json` is permanent failure-recovery machinery, not a cutover artifact to remove while a run is incomplete.
 
 - [ ] **Legacy theme watcher retirement.** Remove `bootstrap.hooks.post-dotfiles` from `bootstrap/capabilities/terminal-theme/mise.macos.toml` and the old `house.thurstons.terminal-theme-watch.plist` absent declarations from both Mac targets' `mise.terminal-theme-files.toml`. First verify that the old job and plist are absent on work, exactly one `dev.mise.house.thurstons.terminal-theme-watch` job is loaded, light/dark switching works, and repeat apply does not restart it. Remove `test_legacy_watcher_is_unloaded_by_native_hook_once` and legacy-plist assertions from `tests/test_terminal_theme_capability.py`; retain native watcher lifecycle coverage. Remove the temporary cleanup explanation from the capability README.
 - [ ] **Legacy Git adoption.** Remove the post-dotfiles hook from `bootstrap/capabilities/git-client/mise.toml`. Remove marker parsing, `LEGACY_OPTIONAL_KEYS`, `keys`, `remove_keys`, `adopt_file`, and `remove_legacy_global_include` from `files/adopt.py`; keep input validation in an appropriately named validation helper and update the pre-dotfiles hook. First verify work's effective configuration, corporate URL rewriting, personal-directory identity, signing, absence of duplicate managed keys outside the block, and absence of the old personal include in `~/.gitconfig`. Preserve unrelated settings in that file; do not delete it wholesale. Trim migration-specific fixtures/assertions in `tests/test_git_client_capability.py`, retaining tests for managed-block preservation of app keys, repeated values, validation, and no-op reconciliation. Update the capability README.

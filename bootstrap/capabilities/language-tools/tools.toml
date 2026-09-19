@@ -1,0 +1,33 @@
+# Shared Mac language-tool inventory. Tool names are keys so reconciliation can
+# install/upgrade only this declared set rather than every global mise tool.
+[tools.node]
+version = "lts"
+
+[tools.npm]
+version = "latest"
+
+[tools.golangci-lint]
+version = "latest"
+
+[tools.fnox]
+version = "latest"
+
+[npm]
+packages = [
+  "@earendil-works/pi-coding-agent",
+  "agent-browser",
+  "hunkdiff",
+  "sideshow",
+  "tuistory",
+]
+allow_scripts = ["agent-browser"]
+
+[go]
+packages = [
+  "github.com/steipete/eightctl/cmd/eightctl",
+  "mvdan.cc/gofumpt@latest",
+]
+
+[uv]
+packages = []
+retired = ["claude-code-tools"]

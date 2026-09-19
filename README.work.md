@@ -67,12 +67,30 @@ These should be used instead of hard-coding model values.
 
 ## Work-Local Config
 
-| File                            | Purpose                                                                        |
-| ------------------------------- | ------------------------------------------------------------------------------ |
-| `ansible/work.config.local.yml` | Uncommitted extras: agent harness sources, private language tools (gitignored) |
-| `mise.local.toml`               | Work-only exclusions for project tools supplied by Homebrew                    |
+| File                                                        | Purpose                                                         |
+| ----------------------------------------------------------- | --------------------------------------------------------------- |
+| `ansible/work.config.local.yml`                             | Uncommitted extras for remaining Ansible consumers (gitignored) |
+| `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml` | Native private language-tool additions (gitignored)             |
+| `mise.local.toml`                                           | Work-only exclusions for project tools supplied by Homebrew     |
 
-`mise.local.toml` disables `markdownlint-cli2` and `npm:mcp-remote`; Homebrew supplies both because Artifactory lacks the required npm releases. The work playbook conditionally includes `work.config.local.yml` if it exists. It defines `_extra` vars that get appended to their respective `_base` lists (defined in `work.config.yml`).
+`mise.local.toml` disables `markdownlint-cli2` and `npm:mcp-remote`; Homebrew supplies both because Artifactory lacks the required npm releases. The work playbook conditionally includes `work.config.local.yml` for unmigrated consumers. Native language-tool extras belong in `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml`. This file is required before `language-tools` runs; an empty file explicitly confirms there are no private extras. Map `mise_global_tools_extra` and `mise_tool_config` to `[tools.<tool>]` tables with a `version`, and map the npm, uv, Bun, Go, Cargo, and gem `_extra` lists to their corresponding `packages` arrays. `npm_allow_scripts_extra` belongs in `npm.allow_scripts`. The native task validates this inventory and applies the private Python-index configuration before running package managers. Keep the old YAML values until live work verification confirms the mapping; other Ansible consumers may still need them.
+
+Native private inventory example:
+
+```toml
+[tools.ruby]
+version = "latest"
+
+[npm]
+packages = ["private-cli"]
+allow_scripts = []
+
+[uv]
+packages = ["some-private-tool"]
+
+[go]
+packages = ["gitlab.internal/org/tool"]
+```
 
 Structure:
 

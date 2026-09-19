@@ -52,6 +52,14 @@ The [Neovim capability](bootstrap/capabilities/neovim/README.md) owns editor con
 
 Work's [Python-index capability](bootstrap/capabilities/python-index/README.md) derives uv and pip configuration from one private uv TOML value; run `mise python-index` or add `--check`. Personal hosts retain their existing absence of system index configuration. Private work SCM, Jira, and index values must be transferred as documented in [README.work.md](README.work.md) before work cutover.
 
+### Mac runtimes and global packages
+
+`mise language-tools` reconciles the inventories under `bootstrap/capabilities/language-tools/` without Ansible. It preserves unrelated global mise configuration and packages, updates only declared tools when their daily interval or inventory changes, and restores declared npm packages after Node replacement. `--check` validates the inventory and reports intended work without changing files or installing tools. Work requires its private inventory and Python-index mapping first; see [README.work.md](README.work.md).
+
+Capability-driven Node upgrades carry unmanaged registry npm globals into the new prefix at their installed versions, excluding bundled npm/Corepack. A private pending snapshot survives failed runs and is removed after successful reconciliation; linked/local packages require explicit handling before an upgrade. The self-contained Node postinstall hook restores declared packages even when Node is installed outside reconciliation.
+
+Full laptop reconciliation ensures the standalone mise binary exists before Homebrew cleanup, supplies Homebrew prerequisites, then reconciles language tools before the remaining consumers. `mise laptop -t mise,language-tools` runs only the native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
+
 ### Retiring managed paths
 
 Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work macOS run removes listed files, symlinks, or directories idempotently, including tagged runs. Relative and `~/` entries resolve beneath the managed user's home; absolute paths are used verbatim. Native pod042 and UDMP resources use `state = "absent"` instead.
@@ -93,7 +101,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work 
 
 ## Commands
 
-- `mise laptop` — Apply macOS Ansible playbook (auto-detects work vs personal)
+- `mise laptop` — Reconcile native capabilities and the remaining macOS Ansible tasks (auto-detects work vs personal)
 - `mise laptop --check` — Dry-run mode (shows what would change without applying)
 - `mise pod042 [capability]` — Reconcile pod042 locally or over SSH (`--check` previews changes)
 - `mise udmp` — Reconcile UDM Pro host state with native mise remote bootstrap

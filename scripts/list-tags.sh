@@ -32,7 +32,7 @@ else
 fi
 
 case "$playbook" in
-  macos) printf 'Native mise tags: git-client jj-client neovim nvim-deps shell terminal-theme terminal-tools tmux\n' ;;
-  work) printf 'Native mise tags: git-client jj-client neovim nvim-deps python-index shell terminal-theme terminal-tools tmux\n' ;;
+  macos) printf 'Native mise tags: language-tools mise git-client jj-client neovim nvim-deps shell terminal-theme terminal-tools tmux\n' ;;
+  work) printf 'Native mise tags: language-tools mise git-client jj-client neovim nvim-deps python-index shell terminal-theme terminal-tools tmux\n' ;;
 esac
 exec ansible-playbook -i "$control" "playbooks/$playbook.yml" --list-tags

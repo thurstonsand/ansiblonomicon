@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+binary=${1:?usage: install BINARY}
+check=${2:-}
+[ -x "$binary" ] && exit 0
+[ "$check" = --check ] && { echo "mise: standalone install required"; exit 0; }
+mkdir -p "$(dirname "$binary")"
+installer=$(mktemp)
+trap 'rm -f "$installer"' EXIT HUP INT TERM
+curl -fsSL https://mise.run -o "$installer"
+MISE_INSTALL_PATH="$binary" sh "$installer"
+[ -x "$binary" ] || { echo "mise installer did not create executable: $binary" >&2; exit 1; }

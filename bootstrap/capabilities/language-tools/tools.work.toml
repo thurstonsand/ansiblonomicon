@@ -1,0 +1,25 @@
+# The tracked work profile intentionally replaces the shared public package
+# lists, matching the former work.config.yml base declarations.
+[inventory]
+replace_shared = true
+
+[tools.node]
+version = "lts"
+
+[tools.golangci-lint]
+version = "latest"
+
+[tools.pnpm]
+version = "latest"
+postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"'
+
+[npm]
+packages = []
+allow_scripts = []
+
+[go]
+packages = []
+
+[uv]
+packages = ["basedpyright"]
+retired = []

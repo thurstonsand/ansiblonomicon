@@ -133,6 +133,35 @@ quiet = true
 description = "Update the user-owned mise binary when its daily maintenance is due"
 run = 'bootstrap/capabilities/mise/mise-maintain "$HOME/.local/bin/mise" "$HOME/.cache/ansiblonomicon/mise-upgrade.stamp"'
 
+[tasks."mise:install"]
+description = "Ensure the user-owned standalone mise exists"
+usage = '''
+flag "-c --check" help="Report a missing installation without downloading"
+'''
+run = 'bootstrap/capabilities/mise/install "$HOME/.local/bin/mise" ${usage_check:+--check}'
+
+[tasks."language-tools"]
+description = "Reconcile this Mac's runtimes and global language tools"
+usage = '''
+flag "-c --check" help="Validate inventory and report configuration and package work without writes"
+'''
+run = '''
+set -e
+set --
+case "$(hostname -s)" in
+  Thurstons-MacBook-Pro) profile=personal ;;
+  ML-DFC6YK6VJQ)
+    profile=work
+    set -- --extension "$MISE_PROJECT_ROOT/bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml"
+    python3 bootstrap/capabilities/language-tools/reconcile.py --profile work "$@" --check
+    mise run //:python-index ${usage_check:+--check}
+    ;;
+  *) echo "language-tools is registered only on Mac laptops" >&2; exit 1 ;;
+esac
+exec python3 bootstrap/capabilities/language-tools/reconcile.py \
+  --profile "$profile" "$@" ${usage_check:+--check}
+'''
+
 [tasks."terminal-theme"]
 description = "Reconcile the terminal theme capability on this registered host"
 alias = "terminal-theme"
@@ -360,20 +389,34 @@ case "$(hostname -s)" in
     ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-native_capabilities="terminal-theme git-client jj-client shell terminal-tools neovim"
-[ "$playbook" != work.yml ] || native_capabilities="terminal-theme git-client jj-client shell terminal-tools python-index neovim"
+native_capabilities="language-tools terminal-theme git-client jj-client shell terminal-tools neovim"
+[ "$playbook" != work.yml ] || native_capabilities="language-tools terminal-theme git-client jj-client shell terminal-tools python-index neovim"
 normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | paste -sd, -)
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(terminal-theme|git-client|jj-client|shell|terminal-tools|tmux|neovim|nvim-deps|python-index)$' | paste -sd, -)
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|language-tools|terminal-theme|git-client|jj-client|shell|terminal-tools|tmux|neovim|nvim-deps|python-index)$' | paste -sd, -)
+case ",${normalized_tags}," in
+  ,,|*,all,*|*,mise,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
+esac
 if [ -z "${usage_check:-}" ]; then
   mise run //:mise:maintain
 fi
-if [ -z "${usage_tags:-}" ] || [ -n "$ansible_tags" ]; then
+full=
+case ",${normalized_tags}," in ,,|*,all,*) full=true ;; esac
+if [ -n "$full" ]; then
+  set -- --secret "$sudo_secret"
+  [ -z "$consumer_secret" ] || set -- "$@" --secret "$consumer_secret"
+  ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
+    ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} --tags homebrew,mas || exit "$?"
+  mise run //:language-tools ${usage_check:+--check} || exit "$?"
+  ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
+    ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} --skip-tags homebrew,mas || exit "$?"
+elif [ -n "$ansible_tags" ]; then
   set -- --secret "$sudo_secret"
   [ -z "$consumer_secret" ] || set -- "$@" --secret "$consumer_secret"
   ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
     ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
 fi
 for native_capability in $native_capabilities; do
+  if [ -n "$full" ] && [ "$native_capability" = language-tools ]; then continue; fi
   case ",$normalized_tags," in
     ,,|*,all,*|*,"$native_capability",*) ;;
     *) continue ;;

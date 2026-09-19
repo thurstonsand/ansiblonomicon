@@ -35,6 +35,7 @@ ansible/Brewfile.work.*
 ansible/tasks/work.local.yml
 ansible/work.config.local.yml
 mise.local.toml
+bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml
 chezmoi/.chezmoidata/local.toml
 chezmoi/.chezmoitemplates/local/
 chezmoi/dot_claude/hooks/local/

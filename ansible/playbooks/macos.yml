@@ -40,13 +40,6 @@
       tags: ["always"]
 
   tasks:
-    - name: Install and update mise
-      ansible.builtin.include_role:
-        name: mise
-        apply:
-          tags: ["mise"]
-      tags: ["mise"]
-
     - name: Install packages with brew bundle
       ansible.builtin.include_role:
         name: homebrew
@@ -70,14 +63,6 @@
         apply:
           tags: ["claude-code"]
       tags: ["claude-code"]
-
-    - name: Install global language tools
-      ansible.builtin.include_role:
-        name: language_tools
-        apply:
-          tags: ["language-tools"]
-      tags: ["language-tools"]
-
 
     - name: Set hostname
       ansible.builtin.hostname:
