@@ -11,6 +11,8 @@ A Canon imageCLASS MF654Cdw, advertised as `Canon MF650C Series`, sits on Scanne
 
 Bunker cannot initiate toward Scanners, so pod042 cannot talk to the printer from its own address. Its probe namespace holds a leg on every client VLAN, and the `scanners` leg is the way in:
 
+Run the commands below directly on pod042. From an orb or another host, execute them on pod042 through `agents/homelab/skills/operating-pod042/scripts/with-pod042-access ssh --`.
+
 ```sh
 sudo -n net-probe ping -c2 10.10.40.187
 sudo -n net-probe curl -s http://10.10.40.187/

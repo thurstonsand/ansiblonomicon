@@ -270,6 +270,10 @@ run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --sec
 description = "Read-only view of what is on the network and what it resolves"
 run = '"{{config_root}}/scripts/fnox-host" exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD --secret NEXTDNS_API_KEY --secret NEXTDNS_PROFILE_ID -- uv run scripts/network_survey.py'
 
+[tasks."network:power-cycle"]
+description = "Power-cycle one UniFi-managed PDU outlet or PoE port"
+run = '"{{config_root}}/scripts/fnox-host" exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD -- uv run python "{{config_root}}/agents/homelab/skills/surveying-the-network/scripts/power_cycle.py"'
+
 [tasks."unifi:smoke"]
 description = "Read-only smoke checks for the WAS-110 WAN path"
 run = "./scripts/fnox-host exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD -- uv run scripts/unifi_smoke.py"

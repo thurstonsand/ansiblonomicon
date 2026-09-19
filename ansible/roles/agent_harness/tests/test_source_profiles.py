@@ -412,6 +412,12 @@ def test_real_amp_publish_local_sources_have_valid_resources(tmp_path: Path) -> 
     resources = agent_harness_build_plugin_resources(local_sources, str(tmp_path))
 
     assert resources["skills"]
+    names = {skill["name"] for skill in resources["skills"]}
+    assert {
+        "operating-pod042",
+        "operating-the-printer",
+        "surveying-the-network",
+    } <= names
 
 
 def test_real_work_profile_excludes_claude_retitle() -> None:

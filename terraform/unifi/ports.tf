@@ -39,7 +39,7 @@ resource "unifi_port_profile" "infrastructure_trunk" {
 }
 
 resource "unifi_port_profile" "pod042" {
-  name                  = "pod042"
+  name = "pod042"
   # Every client VLAN is tagged here so pod042 can observe each segment from the
   # probe namespace, which is the only place those tags terminate. The host itself
   # holds no address on them. The controller expresses "every VLAN tagged" as
@@ -110,8 +110,8 @@ resource "unifi_device" "power_distribution_pro" {
   }
 }
 
-# Outlet names cannot be declared, only observed. A warning keeps a lost label visible
-# without blocking unrelated applies; restore it in the controller UI.
+# Outlet names cannot be declared, only observed. Warnings keep lost labels visible
+# without blocking unrelated applies; restore them in the controller UI.
 check "pdu_outlet_names" {
   assert {
     condition = one([
@@ -119,6 +119,22 @@ check "pdu_outlet_names" {
       if o.index == 1
     ]) == "Hue Bridge Pro"
     error_message = "PDU USB outlet 1 should be named \"Hue Bridge Pro\"; it powers the bridge on switch port 2."
+  }
+
+  assert {
+    condition = one([
+      for o in unifi_device.power_distribution_pro.outlet_overrides : o.name
+      if o.index == 5
+    ]) == "USW Pro Max 24 PoE"
+    error_message = "PDU outlet 5 should be named \"USW Pro Max 24 PoE\"."
+  }
+
+  assert {
+    condition = one([
+      for o in unifi_device.power_distribution_pro.outlet_overrides : o.name
+      if o.index == 7
+    ]) == "UDM Pro"
+    error_message = "PDU outlet 7 should be named \"UDM Pro\"."
   }
 }
 

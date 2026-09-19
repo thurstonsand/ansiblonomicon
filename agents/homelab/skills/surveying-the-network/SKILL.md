@@ -1,13 +1,22 @@
 ---
 name: surveying-the-network
-description: Answers what is attached to the house network, where it sits, and what it resolves, without touching the segment. Use when identifying an unknown device, auditing client names, or checking whether something is online.
+description: Inspects the house network, including direct probes across VLANs, and power-cycles UniFi-managed endpoints. Use for device identification, connectivity, discovery faults, or recovery.
 ---
 
 # Surveying the network
 
-Two read-only sources answer most questions about the house network without any access to the segment a device sits on. The UniFi controller knows what is attached, on which VLAN, and how its radio is behaving. NextDNS knows what each device resolves, and names devices it recognises.
+Use `net-probe` whenever the answer depends on connecting directly to a device on a client VLAN. It enters that segment from pod042's isolated probe namespace; a command run from the host namespace cannot establish reachability.
+
+For indirect inspection, the UniFi controller knows what is attached, on which VLAN, and how its radio is behaving. NextDNS knows what each device resolves, and names devices it recognises. A separate command power-cycles one explicitly named UniFi-managed power endpoint.
 
 Run everything from the repository root. Credentials resolve through fnox; never read them yourself.
+
+On pod042, run the commands below directly. From an orb or another host, execute them on pod042 through the Tailscale helper:
+
+```sh
+agents/homelab/skills/operating-pod042/scripts/with-pod042-access ssh -- \
+  bash -lc 'cd /home/thurstonsand/code/ansiblonomicon && mise run network:survey -- clients'
+```
 
 ```sh
 mise run network:survey -- clients                  # what is attached, by network
@@ -18,6 +27,16 @@ mise run network:survey -- traffic 10.10.40.187     # what one address resolves
 mise run network:survey -- traffic 10.10.40.187 --window -30d
 mise run network:survey -- resolvers                # devices NextDNS has seen, by volume
 ```
+
+## Power cycling a device
+
+After the user explicitly approves the interruption, name the adopted UniFi device and its PDU outlet or PoE port exactly. The command verifies that the controller device is online and that the selected endpoint currently supplies power. It cycles PoE through UniFi's device command. UniFi's nominal PDU cycle command leaves the PDU Pro's USB-C outlets without power while falsely reporting the relay as on, so PDU outlets instead use explicit relay provisioning: wait until off is applied, hold a true five seconds, restore power, and wait until on is applied.
+
+```sh
+mise run network:power-cycle -- "USP PDU Pro" 1    # Hue Bridge Pro on USB outlet 1
+```
+
+Use the PDU outlet or switch port that physically powers the target, not the target client's own name or address. Verify that the client and its service recover afterward.
 
 ## Identifying an unknown device
 
@@ -31,6 +50,8 @@ Work in this order. Each step is cheaper than the next and usually enough.
 ## Probing a segment
 
 pod042 terminates each client VLAN inside a network namespace that holds no service, no default route and no path back to the host. Interfaces are named for their networks.
+
+From an orb or another host, run these through the same helper's `ssh --` mode.
 
 ```sh
 sudo -n net-probe ip -br address                          # yorha, lunar-tear, scanners, village
