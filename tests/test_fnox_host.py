@@ -270,6 +270,32 @@ def test_real_fnox_merges_host_and_root_without_leaking_tokens(
     assert all(call["token"] == "sentinel-token" for call in calls)
 
 
+def test_exec_overwrites_inherited_python_metadata(
+    configuration: Path, environment: dict[str, str], fnox_binary: str, tmp_path: Path
+) -> None:
+    output = tmp_path / "python"
+    environment[fnox_host.EXEC_PYTHON] = "/bogus/inherited/python"
+    assert (
+        run_fnox(
+            configuration,
+            "macos",
+            "exec",
+            [
+                sys.executable,
+                "-c",
+                "import os,sys; open(sys.argv[1], 'w').write(os.environ['HOMEBREW_ANSIBLONOMICON_EXEC_PYTHON'])",
+                str(output),
+            ],
+            environment,
+            None,
+            fnox=fnox_binary,
+            secrets=["SHARED"],
+        )
+        == 0
+    )
+    assert output.read_text() == sys.executable
+
+
 def test_strict_provider_failure_does_not_run_child(
     configuration: Path, environment: dict[str, str], fnox_binary: str, tmp_path: Path
 ) -> None:

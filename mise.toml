@@ -140,6 +140,34 @@ flag "-c --check" help="Report a missing installation without downloading"
 '''
 run = 'bootstrap/capabilities/mise/install "$HOME/.local/bin/mise" ${usage_check:+--check}'
 
+[tasks."mac-apps"]
+description = "Reconcile this Mac's Homebrew and App Store software"
+alias = ["homebrew", "mas"]
+usage = '''
+flag "-c --check" help="Report Brewfile drift without installing or resolving credentials"
+'''
+run = '''
+case "$(hostname -s)" in
+  Thurstons-MacBook-Pro)
+    brewfile="$MISE_PROJECT_ROOT/ansible/Brewfile"
+    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS
+    ;;
+  ML-DFC6YK6VJQ)
+    brewfile="$MISE_PROJECT_ROOT/ansible/Brewfile.work"
+    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS_WORK
+    ;;
+  *) echo "mac-apps is registered only on Mac laptops" >&2; exit 1 ;;
+esac
+set -- python3 "$MISE_PROJECT_ROOT/bootstrap/capabilities/mac-apps/reconcile.py" --brewfile "$brewfile"
+if [ -n "${usage_check:-}" ]; then
+  exec "$@" --check
+fi
+mise run //:mise:install || exit "$?"
+export PATH="$HOME/.local/bin:$PATH"
+export SUDO_ASKPASS="$MISE_PROJECT_ROOT/ansible/sudo-askpass.sh"
+exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret "$sudo_secret" -- "$@"
+'''
+
 [tasks."language-tools"]
 description = "Reconcile this Mac's runtimes and global language tools"
 usage = '''
@@ -389,34 +417,35 @@ case "$(hostname -s)" in
     ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-native_capabilities="language-tools terminal-theme git-client jj-client shell terminal-tools neovim"
-[ "$playbook" != work.yml ] || native_capabilities="language-tools terminal-theme git-client jj-client shell terminal-tools python-index neovim"
-normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | paste -sd, -)
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|language-tools|terminal-theme|git-client|jj-client|shell|terminal-tools|tmux|neovim|nvim-deps|python-index)$' | paste -sd, -)
+software_capabilities="mac-apps language-tools"
+config_capabilities="terminal-theme git-client jj-client shell terminal-tools neovim"
+[ "$playbook" != work.yml ] || config_capabilities="$config_capabilities python-index"
+normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^homebrew$/mac-apps/; s/^mas$/mac-apps/; s/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | awk '!seen[$0]++' | paste -sd, -)
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|terminal-theme|git-client|jj-client|shell|terminal-tools|tmux|neovim|nvim-deps|python-index)$' | paste -sd, -)
 case ",${normalized_tags}," in
-  ,,|*,all,*|*,mise,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
+  ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
 esac
 if [ -z "${usage_check:-}" ]; then
   mise run //:mise:maintain
 fi
+export PATH="$HOME/.local/bin:$PATH"
 full=
 case ",${normalized_tags}," in ,,|*,all,*) full=true ;; esac
-if [ -n "$full" ]; then
-  set -- --secret "$sudo_secret"
-  [ -z "$consumer_secret" ] || set -- "$@" --secret "$consumer_secret"
-  ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
-    ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} --tags homebrew,mas || exit "$?"
-  mise run //:language-tools ${usage_check:+--check} || exit "$?"
-  ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
-    ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} --skip-tags homebrew,mas || exit "$?"
-elif [ -n "$ansible_tags" ]; then
+for native_capability in $software_capabilities; do
+  case ",$normalized_tags," in
+    ,,|*,all,*|*,"$native_capability",*) mise run "//:$native_capability" ${usage_check:+--check} || exit "$?" ;;
+  esac
+done
+if [ -n "$full" ] || [ -n "$ansible_tags" ]; then
+  [ -z "$full" ] || ansible_tags=
   set -- --secret "$sudo_secret"
   [ -z "$consumer_secret" ] || set -- "$@" --secret "$consumer_secret"
   ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
     ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
 fi
-for native_capability in $native_capabilities; do
-  if [ -n "$full" ] && [ "$native_capability" = language-tools ]; then continue; fi
+for native_capability in $config_capabilities; do
+  # language-tools already reconciles work's Python index prerequisite.
+  if [ -n "$full" ] && [ "$native_capability" = python-index ]; then continue; fi
   case ",$normalized_tags," in
     ,,|*,all,*|*,"$native_capability",*) ;;
     *) continue ;;

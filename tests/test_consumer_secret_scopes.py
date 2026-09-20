@@ -33,7 +33,13 @@ def task_secrets(command: str) -> set[str]:
 def test_current_scoped_tasks_only_request_agent_credentials():
     tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
     secrets = tomllib.loads((ROOT / "fnox.toml").read_text())["secrets"]
-    laptop_tasks = {"reconcile", "reconcile:laptop", "shell", "terminal-theme"}
+    laptop_tasks = {
+        "reconcile",
+        "reconcile:laptop",
+        "mac-apps",
+        "shell",
+        "terminal-theme",
+    }
     for task_name, task in tasks.items():
         commands = task.get("run", [])
         if isinstance(commands, str):
@@ -65,6 +71,14 @@ def test_terminal_theme_scopes_only_the_host_sudo_password():
     assert task_secrets(command) == {"$sudo_secret"}
     assert "HOMEBREW_SUDO_ASKPASS_PASS_WORK" in command
     assert "HOMEBREW_SUDO_ASKPASS_PASS" in command
+
+
+def test_mac_apps_scopes_only_host_sudo_and_check_bypasses_fnox():
+    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["mac-apps"]
+    command = task["run"]
+    assert task_secrets(command) == {"$sudo_secret"}
+    assert command.index('if [ -n "${usage_check:-}" ]') < command.index("fnox-host")
+    assert "SUDO_ASKPASS" in command
 
 
 def test_shell_scopes_only_the_work_render_and_sudo_secrets():

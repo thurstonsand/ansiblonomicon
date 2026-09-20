@@ -16,7 +16,7 @@ mise laptop
 
 ### Sudo Access
 
-Run `mise laptop` normally. The laptop reconciliation resolves only that host's sudo password before launching Ansible and keeps its fact cache in memory so the scoped value is never persisted. That read can require one desktop authorization; subsequent `SUDO_ASKPASS` calls reuse the scoped value without returning to 1Password.
+Run `mise laptop` normally. The remaining Ansible reconciliation resolves only the host credentials needed by each scoped consumer, including in check mode, and keeps Ansible's fact cache in memory so scoped values are never persisted. Native Mac-app reconciliation bypasses credential lookup in check mode. A read can require one desktop authorization; subsequent `SUDO_ASKPASS` calls reuse the scoped value without returning to 1Password.
 
 Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 
@@ -54,11 +54,13 @@ Work's [Python-index capability](bootstrap/capabilities/python-index/README.md) 
 
 ### Mac runtimes and global packages
 
+`mise mac-apps` (aliases `mise homebrew` and `mise mas`) reconciles the host's original Brewfile directly through Homebrew Bundle. The Brewfiles remain authoritative Ruby, including work extensions and `trusted`, `restart_service`, `link`, and `greedy` options. It preserves the legacy Homebrew upgrade stamp as the daily-maintenance authority, installs or upgrades only declared App Store IDs with scoped `sudo -A`, and limits cleanup to taps, formulae, and casks. `--check` parses the real Brewfile and reports drift without credentials or installs. This native capability now owns Mac application installation; the retained Ansible role is rollback/cutover cleanup state, not a playbook owner.
+
 `mise language-tools` reconciles the inventories under `bootstrap/capabilities/language-tools/` without Ansible. It preserves unrelated global mise configuration and packages, updates only declared tools when their daily interval or inventory changes, and restores declared npm packages after Node replacement. `--check` validates the inventory and reports intended work without changing files or installing tools. Work requires its private inventory and Python-index mapping first; see [README.work.md](README.work.md).
 
 Capability-driven Node upgrades carry unmanaged registry npm globals into the new prefix at their installed versions, excluding bundled npm/Corepack. A private pending snapshot survives failed runs and is removed after successful reconciliation; linked/local packages require explicit handling before an upgrade. The self-contained Node postinstall hook restores declared packages even when Node is installed outside reconciliation.
 
-Full laptop reconciliation ensures the standalone mise binary exists before Homebrew cleanup, supplies Homebrew prerequisites, then reconciles language tools before the remaining consumers. `mise laptop -t mise,language-tools` runs only the native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
+Full laptop reconciliation ensures and maintains the standalone mise binary before Homebrew cleanup, then runs Mac apps, language tools, one remaining Ansible invocation, and native configuration capabilities. `mise laptop -t homebrew,language-tools` runs only the selected native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
 
 ### Retiring managed paths
 

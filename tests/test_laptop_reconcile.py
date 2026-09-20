@@ -85,6 +85,10 @@ if [ "$FAILURE" = ansible ]; then exit 23; fi
     for path, body in commands.items():
         path.write_text("#!/bin/sh\n" + body + "\n")
         path.chmod(0o755)
+    home = tmp_path / "home"
+    standalone = home / ".local/bin"
+    standalone.mkdir(parents=True)
+    (standalone / "mise").symlink_to(binary / "mise")
     result = subprocess.run(
         ["sh", "-c", tasks[task]["run"]],
         cwd=tmp_path / "ansible",
@@ -97,7 +101,54 @@ if [ "$FAILURE" = ansible ]; then exit 23; fi
             "FAILURE": failure,
             "usage_tags": tags,
             "usage_check": "true" if check else "",
+            "HOME": str(home),
         },
+        check=False,
+    )
+    return result.returncode, calls.read_text().splitlines()
+
+
+def run_mac_apps(
+    tmp_path: Path, *, host: str, check: bool, fail_install: bool = False
+) -> tuple[int, list[str]]:
+    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["mac-apps"]
+    binary = tmp_path / "bin"
+    binary.mkdir()
+    scripts = tmp_path / "scripts"
+    scripts.mkdir()
+    calls = tmp_path / "calls"
+    commands = {
+        binary / "hostname": 'printf "%s\\n" "$HOST"',
+        binary
+        / "mise": 'printf "mise %s\\n" "$*" >> "$CALLS"; [ "$FAIL_INSTALL" != true ] || exit 23',
+        binary
+        / "python3": 'printf "python3 %s askpass=%s\\n" "$*" "${SUDO_ASKPASS-}" >> "$CALLS"',
+        scripts / "fnox-host": """printf 'fnox %s\n' "$*" >> "$CALLS"
+while [ "$1" != -- ]; do shift; done
+shift
+exec "$@"
+""",
+    }
+    for path, body in commands.items():
+        path.write_text("#!/bin/sh\n" + body + "\n")
+        path.chmod(0o755)
+    environment = dict(os.environ)
+    environment.pop("SUDO_ASKPASS", None)
+    environment.update(
+        {
+            "PATH": f"{binary}:/usr/bin:/bin",
+            "HOST": host,
+            "CALLS": str(calls),
+            "MISE_PROJECT_ROOT": str(tmp_path),
+            "usage_check": "true" if check else "",
+            "HOME": str(tmp_path / "home"),
+            "FAIL_INSTALL": "true" if fail_install else "false",
+        }
+    )
+    result = subprocess.run(
+        ["sh", "-c", task["run"]],
+        cwd=tmp_path,
+        env=environment,
         check=False,
     )
     return result.returncode, calls.read_text().splitlines()
@@ -116,6 +167,43 @@ def test_personal_language_tools_executes_without_private_extension(
         "--profile personal" + (" --check" if check else "")
     ]
     assert "language-tools.local.toml" not in calls[0]
+
+
+@pytest.mark.parametrize(
+    "host,brewfile,secret",
+    [
+        ("Thurstons-MacBook-Pro", "Brewfile", "HOMEBREW_SUDO_ASKPASS_PASS"),
+        ("ML-DFC6YK6VJQ", "Brewfile.work", "HOMEBREW_SUDO_ASKPASS_PASS_WORK"),
+    ],
+)
+@pytest.mark.parametrize("check", [False, True])
+def test_mac_apps_executes_scoped_host_payload(
+    tmp_path: Path, host: str, brewfile: str, secret: str, check: bool
+) -> None:
+    status, calls = run_mac_apps(tmp_path, host=host, check=check)
+    helper = tmp_path / "bootstrap/capabilities/mac-apps/reconcile.py"
+    file = tmp_path / f"ansible/{brewfile}"
+    python = f"python3 {helper} --brewfile {file}"
+    assert status == 0
+    if check:
+        assert calls == [f"{python} --check askpass="]
+    else:
+        askpass = tmp_path / "ansible/sudo-askpass.sh"
+        assert calls == [
+            "mise run //:mise:install",
+            f"fnox exec --secret {secret} -- python3 {helper} --brewfile {file}",
+            f"{python} askpass={askpass}",
+        ]
+
+
+def test_mac_apps_stops_before_auth_and_cleanup_if_standalone_install_fails(
+    tmp_path: Path,
+) -> None:
+    status, calls = run_mac_apps(
+        tmp_path, host="Thurstons-MacBook-Pro", check=False, fail_install=True
+    )
+    assert status == 23
+    assert calls == ["mise run //:mise:install"]
 
 
 @pytest.mark.parametrize("check", [False, True])
@@ -153,15 +241,15 @@ def test_work_language_tools_failure_stops_runtime_writes(
 @pytest.mark.parametrize("host", ["Thurstons-MacBook-Pro", "ML-DFC6YK6VJQ"])
 @pytest.mark.parametrize("check", [False, True])
 @pytest.mark.parametrize(
-    "tags,remaining,theme",
+    "tags,theme",
     [
-        ("", "", True),
-        ("terminal-theme", None, True),
-        ("chezmoi,terminal-theme,homebrew", "chezmoi,homebrew", True),
-        ("chezmoi", "chezmoi", False),
-        ("terminal-theme-extra", "terminal-theme-extra", False),
-        ("all", "all", True),
-        ("all,terminal-theme", "all", True),
+        ("", True),
+        ("terminal-theme", True),
+        ("chezmoi,terminal-theme,homebrew", True),
+        ("chezmoi", False),
+        ("terminal-theme-extra", False),
+        ("all", True),
+        ("all,terminal-theme", True),
     ],
 )
 def test_laptop_dispatches_native_theme_outside_ansible(
@@ -170,7 +258,6 @@ def test_laptop_dispatches_native_theme_outside_ansible(
     host: str,
     check: bool,
     tags: str,
-    remaining: str | None,
     theme: bool,
 ) -> None:
     status, calls = run_laptop(tmp_path, task=task, host=host, tags=tags, check=check)
@@ -183,46 +270,50 @@ def test_laptop_dispatches_native_theme_outside_ansible(
             + (f" --tags {tags}" if tags else "")
             + suffix
         )
-    full = not tags or "all" in tags.split(",")
-    installs_mise = full or "mise" in tags.split(",")
+    selected = tags.split(",") if tags else []
+    normalized = ["mac-apps" if tag in ("homebrew", "mas") else tag for tag in selected]
+    full = not tags or "all" in selected
+    installs_mise = full or "mise" in selected or "mac-apps" in normalized
     if installs_mise:
         expected.append("mise run //:mise:install" + suffix)
     if not check:
         expected.append("mise run //:mise:maintain")
-    if remaining is not None and not full:
+    if full or "mac-apps" in normalized:
+        expected.append("mise run //:mac-apps" + suffix)
+    if full or "language-tools" in selected:
+        expected.append("mise run //:language-tools" + suffix)
+    native = {
+        "mise",
+        "mac-apps",
+        "homebrew",
+        "mas",
+        "language-tools",
+        "terminal-theme",
+        "git-client",
+        "jj-client",
+        "shell",
+        "terminal-tools",
+        "tmux",
+        "neovim",
+        "nvim-deps",
+        "python-index",
+    }
+    ansible_tags = [tag for tag in selected if tag not in native]
+    if full or ansible_tags:
         work = host == "ML-DFC6YK6VJQ"
         playbook = "work" if work else "macos"
-        secret = (
-            "HOMEBREW_SUDO_ASKPASS_PASS_WORK" if work else "HOMEBREW_SUDO_ASKPASS_PASS"
-        )
-        arguments = f"-i inventory/control/macos.ini playbooks/{playbook}.yml" + suffix
-        if remaining:
-            arguments += f" --tags {remaining}"
-        expected.append(
-            f"fnox exec --secret {secret}"
-            + (" --secret ANTHROPIC_AUTH_TOKEN" if work else "")
-            + f" -- ansible-playbook {arguments}"
-        )
-        expected.append(f"ansible {arguments}")
-    elif full:
-        work = host == "ML-DFC6YK6VJQ"
-        playbook = "work" if work else "macos"
+        args = f"-i inventory/control/macos.ini playbooks/{playbook}.yml"
+        if check:
+            args += " --check"
+        if not full:
+            args += f" --tags {','.join(ansible_tags)}"
         secret = (
             "HOMEBREW_SUDO_ASKPASS_PASS_WORK" if work else "HOMEBREW_SUDO_ASKPASS_PASS"
         )
         fnox = f"fnox exec --secret {secret}" + (
             " --secret ANTHROPIC_AUTH_TOKEN" if work else ""
         )
-        base = f"-i inventory/control/macos.ini playbooks/{playbook}.yml{suffix}"
-        expected.extend(
-            [
-                f"{fnox} -- ansible-playbook {base} --tags homebrew,mas",
-                f"ansible {base} --tags homebrew,mas",
-                "mise run //:language-tools" + suffix,
-                f"{fnox} -- ansible-playbook {base} --skip-tags homebrew,mas",
-                f"ansible {base} --skip-tags homebrew,mas",
-            ]
-        )
+        expected.extend([f"{fnox} -- ansible-playbook {args}", f"ansible {args}"])
     if theme:
         expected.append("mise run //:terminal-theme" + suffix)
     if full:
@@ -230,13 +321,11 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:jj-client" + suffix)
         expected.append("mise run //:shell" + suffix)
         expected.append("mise run //:terminal-tools" + suffix)
-        if host == "ML-DFC6YK6VJQ":
-            expected.append("mise run //:python-index" + suffix)
         expected.append("mise run //:neovim" + suffix)
     assert calls == expected
 
 
-@pytest.mark.parametrize("failure", ["mise:maintain", "ansible"])
+@pytest.mark.parametrize("failure", ["mise:maintain", "mac-apps", "ansible"])
 def test_failed_prerequisite_stops_before_native_theme(
     tmp_path: Path, failure: str
 ) -> None:
@@ -252,6 +341,22 @@ def test_failed_prerequisite_stops_before_native_theme(
     assert "mise run //:terminal-theme" not in calls
     if failure == "mise:maintain":
         assert calls == ["mise run //:mise:install", "mise run //:mise:maintain"]
+
+
+@pytest.mark.parametrize("tags", ["mac-apps", "homebrew", "mas", "homebrew,mas"])
+def test_mac_app_aliases_run_once_without_ansible(tmp_path: Path, tags: str) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags=tags,
+        check=True,
+    )
+    assert status == 0
+    assert calls == [
+        "mise run //:mise:install --check",
+        "mise run //:mac-apps --check",
+    ]
 
 
 @pytest.mark.parametrize("host", ["Thurstons-MacBook-Pro", "ML-DFC6YK6VJQ"])

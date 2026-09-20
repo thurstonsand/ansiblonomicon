@@ -29,8 +29,10 @@ HOST_PROFILES = {
     "pod042": "pod042",
 }
 PROFILES = ("macos", "work", "pod042", "orb")
-EXEC_PROFILE = "ANSIBLONOMICON_EXEC_PROFILE"
-EXEC_KEYS = "ANSIBLONOMICON_EXEC_KEYS"
+# Homebrew's `env -i` cask boundary retains HOMEBREW_* metadata only.
+EXEC_PROFILE = "HOMEBREW_ANSIBLONOMICON_EXEC_PROFILE"
+EXEC_KEYS = "HOMEBREW_ANSIBLONOMICON_EXEC_KEYS"
+EXEC_PYTHON = "HOMEBREW_ANSIBLONOMICON_EXEC_PYTHON"
 TOKEN_NAME = "FNOX_HOST_OP_TOKEN"
 TOKEN_PATH = Path("/home/thurstonsand/.config/op-service-account/token")
 
@@ -243,6 +245,7 @@ def prepare_invocation(
         environment.update(values)
         environment[EXEC_PROFILE] = profile
         environment[EXEC_KEYS] = json.dumps(sorted(values))
+        environment[EXEC_PYTHON] = sys.executable
         return FnoxCommand(invocation, environment)
     if not inherited.get("HOME"):
         raise ConfigurationError("HOME is required for the native host identity")
