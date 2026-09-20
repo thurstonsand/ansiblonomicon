@@ -1,0 +1,37 @@
+[settings.task]
+source_freshness_hash_contents = true
+
+[tasks.claude-code]
+run = 'software/install-official claude-code "$HOME/.local/bin/claude" https://claude.ai/install.sh ${SOFTWARE_CHECK:+--check}'
+
+[tasks.opencode]
+run = 'software/install-official opencode "$HOME/.opencode/bin/opencode" https://opencode.ai/install ${SOFTWARE_CHECK:+--check} --no-modify-path'
+
+[tasks."sessions:deps"]
+run = 'python3 software/deps-maintenance.py "{{config_root}}/../../../ansible/roles/sessions/files/sessions" "$HOME/.cache/ansiblonomicon/sessions/upgrade.stamp" ${SOFTWARE_CHECK:+--check}'
+
+[tasks."shp:deps"]
+run = 'python3 software/deps-maintenance.py "{{config_root}}/../../../ansible/roles/shp/files/shp" "$HOME/.cache/ansiblonomicon/shp/upgrade.stamp" ${SOFTWARE_CHECK:+--check}'
+
+[tasks."uvc-util:repo"]
+run = 'python3 software/uvc-repo.py "$HOME/.local/opt/uvc-util" --origin "$UVC_UTIL_ORIGIN" ${SOFTWARE_CHECK:+--check}'
+
+[tasks."uvc-util:files"]
+run = '''
+set -eu
+if [ -n "${SOFTWARE_CHECK:-}" ]; then
+  mise bootstrap --only files --dry-run
+  if [ -f "$HOME/.local/opt/uvc-util/configure_camera.py" ]; then
+    mise bootstrap --only dotfiles --dry-run
+  else
+    echo "configure_camera.py link would be reconciled after file deployment" >&2
+  fi
+  exit 0
+fi
+mise bootstrap --only files,dotfiles --yes
+'''
+
+[tasks."uvc-util"]
+sources = ["{{env.HOME}}/.local/opt/uvc-util/src/*.m", "{{env.HOME}}/.local/opt/uvc-util/src/*.h"]
+outputs = ["{{env.HOME}}/.local/opt/uvc-util/src/uvc-util"]
+run = 'set -eu; cd "$HOME/.local/opt/uvc-util/src"; gcc -o uvc-util -framework IOKit -framework Foundation uvc-util.m UVCController.m UVCType.m UVCValue.m'

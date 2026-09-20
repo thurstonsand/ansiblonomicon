@@ -1,0 +1,15 @@
+[tools]
+"github:earendil-works/pi" = { version = "latest", asset_pattern = "pi-{{ os(macos=\"darwin\") }}-{{ arch() }}.tar.gz", strip_components = 0, bin_path = "pi" }
+
+[tasks.pi]
+run = '''
+set -eu
+mise install --yes github:earendil-works/pi@latest
+mise upgrade --yes --no-prune github:earendil-works/pi@latest
+target="$(mise where github:earendil-works/pi)/pi/pi"
+test -x "$target"
+mkdir -p "$HOME/.local/libexec"
+if [ "$(readlink "$HOME/.local/libexec/pi" 2>/dev/null || true)" != "$target" ]; then
+  ln -sfn "$target" "$HOME/.local/libexec/pi"
+fi
+'''

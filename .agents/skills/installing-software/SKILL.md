@@ -9,11 +9,10 @@ Manage host software through this repo's desired state. Use the host's existing 
 
 ## macOS
 
-- Homebrew and Mac App Store apps: `ansible/Brewfile`, with `ansible/Brewfile.work` for work.
-- Shared package and language-tool lists: `ansible/config.yml`; host additions in `ansible/darwin.config.yml` and `ansible/work.config.yml`.
-- Reconciliation: `ansible/playbooks/macos.yml` and `ansible/playbooks/work.yml`, selected through `mise laptop`.
-- Locally built utilities: the corresponding role under `ansible/roles/`, including `ghostty_nav` and `uvc_util`.
-- Claude Code and opencode: their roles referenced by the macOS playbook.
+- Homebrew and Mac App Store apps: `ansible/Brewfile`, with `ansible/Brewfile.work` for work; reconcile through `mise mac-apps`.
+- Runtime and global-package inventories: `bootstrap/capabilities/language-tools/`; work's private inventory lives in its native target. Reconcile through `mise language-tools`.
+- Reconciliation: `mise laptop` routes software through native capabilities before the remaining Ansible playbook and native configuration tasks.
+- Claude Code, OpenCode, sessions, shp, and uvc-util: `bootstrap/capabilities/software/`, registered under the Mac targets. Go and UVC overlay sources remain under their `ansible/roles/` paths. Use the matching root task with `--check` before applying; UVC reconciliation builds but never runs camera settings.
 
 ## pod042
 
@@ -33,7 +32,7 @@ Native capabilities live under `bootstrap/targets/udmp/`. Use `mise udmp` for OS
 
 ## Pi extensions and packages
 
-Pi itself is installed by `ansible/roles/pi_release/`. Its extensions and package declarations are dotfiles delivered through chezmoi and the Ansible `chezmoi` role.
+Work's Pi release is declared in `bootstrap/targets/ML-DFC6YK6VJQ/mise.pi.toml` and reconciled through `mise pi`; personal Pi belongs to the language-tool npm inventory. Its extensions and package declarations are dotfiles delivered through chezmoi and the Ansible `chezmoi` role.
 
 - Config and packages: `chezmoi/private_dot_pi/agent/settings.json.tmpl`.
 - Local extension sources: `chezmoi/private_dot_pi/agent/extensions/`.

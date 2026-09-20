@@ -1,0 +1,28 @@
+#!/bin/sh
+set -eu
+
+name=$1
+executable=$2
+url=$3
+shift 3
+
+if [ -x "$executable" ]; then
+  exit 0
+fi
+if [ "${1:-}" = --check ]; then
+  echo "$name would be installed: $executable" >&2
+  exit 0
+fi
+
+tmp=$(mktemp -d "${TMPDIR:-/tmp}/ansiblonomicon-${name}.XXXXXX")
+trap 'rm -rf "$tmp"' EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
+curl -fsSL "$url" -o "$tmp/install"
+chmod 0700 "$tmp/install"
+"$tmp/install" "$@"
+if [ ! -x "$executable" ]; then
+  echo "$name installer did not create $executable" >&2
+  exit 1
+fi

@@ -1,0 +1,98 @@
+#!/bin/sh
+set -eu
+
+capability=$1
+target=$2
+mode=${3:-apply}
+origin=${4:-}
+export MISE_CEILING_PATHS="${MISE_PROJECT_ROOT}/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+export MISE_ENV=software
+
+if [ "$mode" = check ]; then
+  # mise 2026.9.11 records successful task fingerprints even for --dry-run.
+  real_state=${MISE_STATE_DIR:-${XDG_STATE_HOME:-$HOME/.local/state}/mise}
+  check_root=$(mktemp -d "${TMPDIR:-/tmp}/ansiblonomicon-mise-state.XXXXXX")
+  trap 'rm -rf "$check_root"' EXIT
+  trap 'exit 129' HUP
+  trap 'exit 130' INT
+  trap 'exit 143' TERM
+  check_state=$check_root/state
+  mkdir -p "$check_state"
+  if [ -d "$real_state" ]; then
+    cp -a "$real_state/." "$check_state/"
+  fi
+  export MISE_STATE_DIR=$check_state
+  case "$capability" in
+    pi)
+      export MISE_ENV=software,pi
+      tool=github:earendil-works/pi
+      desired=$(mise -C "$target" latest "$tool@latest")
+      installed=$(mise -C "$target" latest --installed "$tool@latest")
+      if [ -z "$installed" ]; then
+        echo "pi would be installed: $desired" >&2
+        echo "pi link would be created: $HOME/.local/libexec/pi" >&2
+        exit 0
+      fi
+      if [ "$installed" != "$desired" ]; then
+        echo "pi would be upgraded: $installed -> $desired" >&2
+      fi
+      install=$(mise -C "$target" where "$tool@$installed")
+      expected="$install/pi/pi"
+      if [ ! -x "$expected" ]; then
+        echo "pi executable is missing from installed release: $expected" >&2
+      fi
+      if [ "$(readlink "$HOME/.local/libexec/pi" 2>/dev/null || true)" != "$expected" ]; then
+        echo "pi link would be updated: $HOME/.local/libexec/pi -> $expected" >&2
+      fi
+      exit 0
+      ;;
+    claude-code|opencode)
+      export SOFTWARE_CHECK=true
+      mise -C "$target" run "$capability"
+      ;;
+    sessions|shp)
+      export SOFTWARE_CHECK=true
+      mise -C "$target" run "$capability:deps"
+      project="${MISE_PROJECT_ROOT}/ansible/roles/$capability/files/$capability"
+      MISE_CEILING_PATHS=${project%/*} MISE_TRUSTED_CONFIG_PATHS="$target:$project" \
+        mise -C "$project" run --skip-tools --dry-run install
+      ;;
+    uvc-util)
+      test -n "$origin" || { echo "uvc-util origin is required" >&2; exit 2; }
+      export UVC_UTIL_ORIGIN=$origin
+      export MISE_ENV=software,software-files
+      export SOFTWARE_CHECK=true
+      mise -C "$target" run uvc-util:repo
+      if [ ! -d "$HOME/.local/opt/uvc-util" ]; then
+        echo "uvc-util files and build would follow clone" >&2
+        exit 0
+      fi
+      mise -C "$target" run uvc-util:files
+      mise -C "$target" run --dry-run uvc-util
+      ;;
+  esac
+  exit 0
+fi
+
+unset SOFTWARE_CHECK
+if [ "$capability" = pi ]; then
+  export MISE_ENV=software,pi
+fi
+case "$capability" in
+  sessions|shp)
+    mise -C "$target" run "$capability:deps"
+    project="${MISE_PROJECT_ROOT}/ansible/roles/$capability/files/$capability"
+    MISE_CEILING_PATHS=${project%/*} MISE_TRUSTED_CONFIG_PATHS="$target:$project" \
+      mise -C "$project" run --skip-tools install
+    exit 0
+    ;;
+esac
+if [ "$capability" = uvc-util ]; then
+  test -n "$origin" || { echo "uvc-util origin is required" >&2; exit 2; }
+  export UVC_UTIL_ORIGIN=$origin
+  export MISE_ENV=software,software-files
+  mise -C "$target" run uvc-util:repo
+  mise -C "$target" run uvc-util:files
+fi
+exec mise -C "$target" run "$capability"

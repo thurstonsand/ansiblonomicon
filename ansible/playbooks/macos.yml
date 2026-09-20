@@ -40,20 +40,6 @@
       tags: ["always"]
 
   tasks:
-    - name: Install opencode
-      ansible.builtin.include_role:
-        name: opencode
-        apply:
-          tags: ["opencode"]
-      tags: ["opencode"]
-
-    - name: Install Claude Code
-      ansible.builtin.include_role:
-        name: claude_code
-        apply:
-          tags: ["claude-code"]
-      tags: ["claude-code"]
-
     - name: Set hostname
       ansible.builtin.hostname:
         name: "{{ hostname }}"
@@ -83,33 +69,10 @@
       when: ansible_facts['os_family'] == "Darwin"
       tags: ["always"]
 
-    - name: Build uvc-util for camera control
-      ansible.builtin.include_role:
-        name: uvc_util
-        apply:
-          tags: ["uvc-util"]
-      when: ansible_facts['os_family'] == "Darwin" and configure_uvc_util | default(true)
-      tags: ["uvc-util"]
-
     # TODO: Delete this cleanup job after it has run across all managed machines.
     - name: Remove legacy GhosttyKit predecessor artifacts
       ansible.builtin.import_tasks: ../tasks/remove_legacy_ghostty_nav.yml
       tags: ["ghosttykit"]
-
-    - name: Build shp for shpool SSH sessions
-      ansible.builtin.include_role:
-        name: shp
-        apply:
-          tags: ["shp"]
-      when: hostname == "Thurstons-MacBook-Pro"
-      tags: ["shp"]
-
-    - name: Build sessions CLI for agent session recovery
-      ansible.builtin.include_role:
-        name: sessions
-        apply:
-          tags: ["sessions"]
-      tags: ["sessions"]
 
     - name: Deploy AI agent resources
       ansible.builtin.include_role:

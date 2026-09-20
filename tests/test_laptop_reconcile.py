@@ -282,12 +282,26 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:mac-apps" + suffix)
     if full or "language-tools" in selected:
         expected.append("mise run //:language-tools" + suffix)
+    software = (
+        ["pi", "sessions", "uvc-util"]
+        if host == "ML-DFC6YK6VJQ"
+        else ["claude-code", "opencode", "sessions", "shp", "uvc-util"]
+    )
+    for capability in software:
+        if full or capability in selected:
+            expected.append(f"mise run //:{capability}" + suffix)
     native = {
         "mise",
         "mac-apps",
         "homebrew",
         "mas",
         "language-tools",
+        "claude-code",
+        "opencode",
+        "pi",
+        "sessions",
+        "shp",
+        "uvc-util",
         "terminal-theme",
         "git-client",
         "jj-client",
@@ -520,3 +534,39 @@ def test_ansible_no_longer_owns_terminal_theme() -> None:
             "terminal_theme"
             not in (ROOT / f"ansible/playbooks/{playbook}.yml").read_text()
         )
+
+
+def test_ansible_no_longer_routes_migrated_mac_software_roles() -> None:
+    personal = (ROOT / "ansible/playbooks/macos.yml").read_text()
+    work = (ROOT / "ansible/playbooks/work.yml").read_text()
+    for role in ("claude_code", "opencode", "sessions", "shp", "uvc_util"):
+        assert f"name: {role}" not in personal
+    for role in ("pi_release", "sessions", "uvc_util"):
+        assert f"name: {role}" not in work
+
+
+@pytest.mark.parametrize(
+    "host,tag",
+    [
+        ("Thurstons-MacBook-Pro", "claude-code"),
+        ("Thurstons-MacBook-Pro", "opencode"),
+        ("Thurstons-MacBook-Pro", "sessions"),
+        ("Thurstons-MacBook-Pro", "shp"),
+        ("Thurstons-MacBook-Pro", "uvc-util"),
+        ("ML-DFC6YK6VJQ", "pi"),
+        ("ML-DFC6YK6VJQ", "sessions"),
+        ("ML-DFC6YK6VJQ", "uvc-util"),
+    ],
+)
+def test_migrated_software_tag_routes_only_native_capability(
+    tmp_path: Path, host: str, tag: str
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host=host,
+        tags=tag,
+        check=True,
+    )
+    assert status == 0
+    assert calls == [f"mise run //:{tag} --check"]

@@ -14,7 +14,7 @@ fi
 path=("${pi_node:h}" $path)
 
 {{ if eq .chezmoi.hostname "ML-DFC6YK6VJQ" -}}
-# pi is a self-contained bun binary in libexec via the pi_release role.
+# pi is a self-contained bun binary in libexec via the native GitHub release tool.
 pi_bin="$HOME/.local/libexec/pi"
 pi_command=("$pi_bin")
 {{- else -}}

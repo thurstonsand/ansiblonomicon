@@ -52,28 +52,6 @@
           "permissions",
         ]
 
-    - name: Build uvc-util for camera control
-      ansible.builtin.include_role:
-        name: uvc_util
-        apply:
-          tags: ["uvc-util"]
-      when: configure_uvc_util | default(true)
-      tags: ["uvc-util"]
-
-    - name: Build sessions CLI for agent session recovery
-      ansible.builtin.include_role:
-        name: sessions
-        apply:
-          tags: ["sessions"]
-      tags: ["sessions"]
-
-    - name: Install pi from GitHub releases
-      ansible.builtin.include_role:
-        name: pi_release
-        apply:
-          tags: ["pi"]
-      tags: ["pi"]
-
     - name: Deploy AI agent resources
       ansible.builtin.include_role:
         name: agent_harness

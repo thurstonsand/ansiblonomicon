@@ -2,6 +2,9 @@
 go = "latest"
 golangci-lint = "latest"
 
+[settings.task]
+source_freshness_hash_contents = true
+
 [tasks.fmt]
 description = "Rewrite Go sources with gofmt"
 run = "gofmt -w ."
@@ -33,6 +36,8 @@ run = "go build -o sessions ."
 
 [tasks.install]
 description = "Build the sessions binary into ~/.local/bin"
+sources = ["**/*.go", "go.mod", "go.sum", ".golangci.yml", "mise.toml"]
+outputs = ["{{env.HOME}}/.local/bin/sessions"]
 run = '''
 mkdir -p "$HOME/.local/bin"
 go build -o "$HOME/.local/bin/sessions" .
