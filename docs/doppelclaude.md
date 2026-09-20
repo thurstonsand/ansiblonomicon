@@ -22,7 +22,7 @@ The capability selects only `CLI_PROXY_API_KEY` and `CLAUDE_CODE_OAUTH_TOKEN`. N
 
 The requester selects the model through `body.model`, using a stable Claude ID, bare or provider-qualified. The server operator does not set a model or default. `/v1/models` advertises the SDK's startup `supportedModels` result for discovery, not as an allowlist.
 
-The declaration sets 32 runtimes, a one-hour idle TTL, 2 MiB maximum request body, ten-minute request timeout, 15-second shutdown timeout and two application retry attempts. The Worker never retries a request. The authenticated `/v1/models` healthcheck calls the daemon on loopback port 3456 without sending a Claude request.
+The declaration sets 32 runtimes, a one-hour idle TTL, 32,000,000-byte maximum request body, ten-minute request timeout, 15-second shutdown timeout and two application retry attempts. The body cap conservatively interprets Anthropic's published [32 MB Messages request limit](https://platform.claude.com/docs/en/api/overview#request-size-limits) as decimal bytes, not 32 MiB; it covers the entire JSON request, including encoded images and history. Compose explicitly overrides the application default, so both must remain aligned. The Worker never retries a request. The authenticated `/v1/models` healthcheck calls the daemon on loopback port 3456 without sending a Claude request.
 
 ## Streaming
 
@@ -86,9 +86,11 @@ Final commissioning passed on `sha256:bbb296e5e3c0ab604d30da036572f88c68f7f341a2
 
 The application commissioning thread checked sandbox execution, permanent mode keys, completed turns and all four successful shell calls. Recall used conversation history, not file/thread reads. Sanitized evidence is `.amp/in/artifacts/durable-doppelclaude-modes.json` in that thread's workspace; application CI passed 364 checks and the targeted HTTP suite passed 18 tests. Both modes are ready for personal use. The initial lost-payload Fable error remains unexplained and was not reproduced by these checks. UI fork remains waived, not passed. No further host operation is required.
 
-## Structured request diagnostics
+## Image request body limit
 
-The logging-only image from [workflow 35521759529](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35521759529), [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/69318b5e38570819188db022be2eafc3c239dc46), is pinned as `sha256:29916f79ae43791be0e5a390abc7ae1afac3873c7dead4619998a468c74ee74e`. Its anonymous registry manifest and `linux/amd64` configuration were verified against that revision. Rollback image: `ghcr.io/thurstonsand/http-doppelclaude@sha256:51574f882441a1ac8f610c2ae0584f6a0c0e248e9000b3a78746b67a8518dd84`; retain it and use only the focused Doppelclaude check/apply to restore it.
+The body-limit image from [workflow 35524085938](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35524085938), [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/51e6e85410a4d99f465d28ab6706dc031b3437db), is pinned as `sha256:3c6cf26163f0b91ffe5244075a6b5e185f12ec76b3e4112868082281c5a4e70c`. Its anonymous registry manifest and `linux/amd64` configuration were verified against that revision. Both application default and explicit Compose override are 32,000,000 bytes. Rollback requires restoring image `ghcr.io/thurstonsand/http-doppelclaude@sha256:29916f79ae43791be0e5a390abc7ae1afac3873c7dead4619998a468c74ee74e` and Compose `DOPPELCLAUDE_MAX_BODY_BYTES: "2097152"`, then running only the focused Doppelclaude check/apply. Retain that image; the previous image and cap are recorded in infrastructure revision `b4070fe98f55e5c542bf17dde186b50e08bd1e64`.
+
+## Structured request diagnostics
 
 Normal JSON `request_complete` records expose request/thread/runtime identifiers, marker counts, configuration fingerprints, model observations, execution decisions, usage including cache creation, and failure categories. Inspect only these structured records for an exact thread and bounded time window; do not enable broad debug logs or inspect Claude conversation logs. A runtime rebuild alone does not establish a provider cache miss. Main/Oracle/main interference requires correlated request and execution evidence, not inference from the earlier unstructured completion lines. This release changes no routing, modes or model aliases.
 

@@ -53,7 +53,7 @@ def test_compose_contract_and_private_runtime() -> None:
     assert "DOPPELCLAUDE_HTTP_MODEL" not in environment
     assert environment["DOPPELCLAUDE_MAX_RUNTIMES"] == "32"
     assert environment["DOPPELCLAUDE_IDLE_TTL_MS"] == "3600000"
-    assert environment["DOPPELCLAUDE_MAX_BODY_BYTES"] == "2097152"
+    assert environment["DOPPELCLAUDE_MAX_BODY_BYTES"] == "32000000"
     assert environment["DOPPELCLAUDE_REQUEST_TIMEOUT_MS"] == "600000"
     assert environment["DOPPELCLAUDE_SHUTDOWN_TIMEOUT_MS"] == "15000"
     assert environment["DOPPELCLAUDE_RETRY_ATTEMPTS"] == "2"
