@@ -88,9 +88,11 @@ The application commissioning thread checked sandbox execution, permanent mode k
 
 ## Structured request diagnostics
 
-The logging-only image from [workflow 35520752197](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35520752197), [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/2899c0e0380d19ebb7521924bbabdcb8e164f71c), is pinned as `sha256:51574f882441a1ac8f610c2ae0584f6a0c0e248e9000b3a78746b67a8518dd84`. Its anonymous registry manifest and `linux/amd64` configuration were verified against that revision. Rollback image: `ghcr.io/thurstonsand/http-doppelclaude@sha256:bbb296e5e3c0ab604d30da036572f88c68f7f341a27ff0de8fb4b0b66d8d2963`; retain it and use only the focused Doppelclaude check/apply to restore it.
+The logging-only image from [workflow 35521759529](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35521759529), [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/69318b5e38570819188db022be2eafc3c239dc46), is pinned as `sha256:29916f79ae43791be0e5a390abc7ae1afac3873c7dead4619998a468c74ee74e`. Its anonymous registry manifest and `linux/amd64` configuration were verified against that revision. Rollback image: `ghcr.io/thurstonsand/http-doppelclaude@sha256:51574f882441a1ac8f610c2ae0584f6a0c0e248e9000b3a78746b67a8518dd84`; retain it and use only the focused Doppelclaude check/apply to restore it.
 
 Normal JSON `request_complete` records expose request/thread/runtime identifiers, marker counts, configuration fingerprints, model observations, execution decisions, usage including cache creation, and failure categories. Inspect only these structured records for an exact thread and bounded time window; do not enable broad debug logs or inspect Claude conversation logs. A runtime rebuild alone does not establish a provider cache miss. Main/Oracle/main interference requires correlated request and execution evidence, not inference from the earlier unstructured completion lines. This release changes no routing, modes or model aliases.
+
+`configurationFields` records hashes for model, prompt, tools, toolChoice, effort, thinking and maxTokens; `changedConfigurationFields` identifies changed field names without logging their values. These distinguish baseline configuration changes from Oracle-induced changes without capturing request bodies.
 
 ## Local checks
 
