@@ -67,6 +67,9 @@ def test_real_mise_render_is_valid_zsh_and_noop(
     home, target = tmp_path / "home", tmp_path / "target"
     home.mkdir()
     target.mkdir()
+    retired = home / ".config/direnv/direnv.toml"
+    retired.parent.mkdir(parents=True)
+    retired.symlink_to(target / "removed-direnv.toml")
     (target / "shell").symlink_to(CAPABILITY / "files", target_is_directory=True)
     (target / "mise.shell.toml").symlink_to(CAPABILITY / "mise.toml")
     (target / "mise.shell-personal.toml").write_text(
@@ -76,23 +79,35 @@ def test_real_mise_render_is_valid_zsh_and_noop(
         f'[vars]\nhost_profile = "{profile}"\nhost_os = "{host_os}"\n'
     )
     env = isolated_env(home, target)
-    env.update(
-        {"MISE_ENV": "shell,shell-personal", "SHELL_SOURCEGRAPH_TOKEN_QUOTED": "''"}
-    )
+    env["MISE_ENV"] = "shell,shell-personal"
+    if profile == "work":
+        env["SOURCEGRAPH_TOKEN"] = "sgp_synthetic-ABC123456789"
     command = [
         "mise",
         "-C",
         str(target),
         "bootstrap",
         "--only",
-        "dotfiles",
+        "files,dotfiles",
         "--force-dotfiles",
         "--yes",
     ]
+    preview = subprocess.run(
+        [*command[:-1], "--dry-run"],
+        env=env,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    assert "direnv.toml" in preview.stdout + preview.stderr
+    assert retired.is_symlink()
     subprocess.run(command, env=env, check=True, capture_output=True, text=True)
+    assert not retired.is_symlink()
+    assert not retired.exists()
     paths = [home / name for name in (".zshenv", ".zprofile", ".zshrc")]
     for path in paths:
         subprocess.run(["zsh", "-n", str(path)], check=True)
+        assert "direnv" not in path.read_text()
     before = [
         (
             p.stat().st_ino,
@@ -136,32 +151,127 @@ def test_real_mise_render_is_valid_zsh_and_noop(
     assert override.stdout == "loaded"
 
 
-def test_punctuated_token_renders_literally_without_command_execution(
-    tmp_path: Path,
-) -> None:
-    marker = tmp_path / "executed"
-    token = f"a'b\"c $HOME $(touch {marker})\n"
-    result = subprocess.run(
-        [str(CAPABILITY / "shell-facts")],
-        env={"PATH": os.environ["PATH"], "SOURCEGRAPH_TOKEN": token},
-        check=True,
+def render_fixture_zshenv(
+    tmp_path: Path, homebrew_prefix: Path, *, ruby_body: str | None
+) -> subprocess.CompletedProcess[str]:
+    home, target = tmp_path / "home", tmp_path / "target"
+    home.mkdir()
+    (target / "shell").mkdir(parents=True)
+    template = (
+        (CAPABILITY / "files/zshenv.tera")
+        .read_text()
+        .replace("/opt/homebrew", str(homebrew_prefix))
+    )
+    (target / "shell/zshenv.tera").write_text(template)
+    (target / "mise.shell-personal.toml").write_text(
+        '[dotfiles]\n"~/.zshenv" = { source = "shell/zshenv.tera", mode = "template" }\n'
+    )
+    (target / "mise.toml").write_text(
+        '[vars]\nhost_profile = "personal"\nhost_os = "darwin"\n'
+    )
+    if ruby_body is not None:
+        ruby = homebrew_prefix / "opt/ruby/bin/ruby"
+        ruby.parent.mkdir(parents=True)
+        ruby.write_text(f"#!/bin/sh\n{ruby_body}\n")
+        ruby.chmod(0o755)
+    env = isolated_env(home, target)
+    env["MISE_ENV"] = "shell-personal"
+    return subprocess.run(
+        ["mise", "-C", str(target), "bootstrap", "--only", "dotfiles", "--yes"],
+        env=env,
+        check=False,
         capture_output=True,
         text=True,
     )
-    shell = subprocess.run(
+
+
+def test_native_template_detects_ruby_and_rustup_and_renders_sourceable_path(
+    tmp_path: Path,
+) -> None:
+    prefix = tmp_path / "homebrew"
+    rustup = prefix / "opt/rustup/bin/rustup"
+    rustup.parent.mkdir(parents=True)
+    rustup.write_text("#!/bin/sh\nexit 0\n")
+    rustup.chmod(0o755)
+    result = render_fixture_zshenv(tmp_path, prefix, ruby_body="printf '3.3.0\\n'")
+    assert result.returncode == 0, result.stderr
+    rendered = tmp_path / "home/.zshenv"
+    sourced = subprocess.run(
         [
-            "sh",
+            "env",
+            "-i",
+            f"HOME={tmp_path / 'home'}",
+            "zsh",
+            "-f",
             "-c",
-            'eval "$1"; printf "%s" "$SHELL_SOURCEGRAPH_TOKEN_QUOTED"',
-            "shell",
-            result.stdout,
+            'source "$1"; print -rl -- $path',
+            "zsh",
+            str(rendered),
         ],
         check=True,
         capture_output=True,
         text=True,
+    ).stdout.splitlines()
+    assert str(prefix / "opt/ruby/bin") in sourced
+    assert str(prefix / "lib/ruby/gems/3.3.0/bin") in sourced
+    assert str(prefix / "opt/rustup/bin") in sourced
+
+
+def test_native_template_excludes_missing_tools(tmp_path: Path) -> None:
+    prefix = tmp_path / "missing-homebrew"
+    result = render_fixture_zshenv(tmp_path, prefix, ruby_body=None)
+    assert result.returncode == 0, result.stderr
+    rendered = (tmp_path / "home/.zshenv").read_text()
+    assert str(prefix / "opt/ruby/bin") not in rendered
+    assert str(prefix / "opt/rustup/bin") not in rendered
+
+
+@pytest.mark.parametrize("hook_status", [0, 23])
+def test_tmux_clears_mise_environment_and_preserves_arguments(
+    tmp_path: Path, hook_status: int
+) -> None:
+    result = render_fixture_zshenv(tmp_path, tmp_path / "missing", ruby_body=None)
+    assert result.returncode == 0, result.stderr
+    binaries = tmp_path / "bin"
+    binaries.mkdir()
+    for name, body in {
+        "mise": (
+            '[ "$*" = "-C / hook-env -s zsh" ] || exit 99\n'
+            f"printf 'unset PROJECT_SECRET\\n'\nexit {hook_status}\n"
+        ),
+        "tmux": 'printf "%s\\n" "${PROJECT_SECRET-unset}" "$@"',
+        "direnv": "exit 98",
+    }.items():
+        executable = binaries / name
+        executable.write_text(f"#!/bin/sh\n{body}\n")
+        executable.chmod(0o755)
+    result = subprocess.run(
+        [
+            "zsh",
+            "-f",
+            "-c",
+            'source "$1"; path=("$2" $path); export PROJECT_SECRET=fixture; '
+            'tmux new-session "two words"; result=$?; '
+            'print -r -- "parent=$PROJECT_SECRET"; exit $result',
+            "zsh",
+            str(tmp_path / "home/.zshenv"),
+            str(binaries),
+        ],
+        env=isolated_env(tmp_path / "home", tmp_path / "target"),
+        capture_output=True,
+        text=True,
     )
-    assert shell.stdout == "'" + token.replace("'", "'\\''") + "'"
-    assert not marker.exists()
+    assert result.returncode == hook_status, result.stderr
+    assert result.stdout.splitlines() == (
+        ["unset", "new-session", "two words", "parent=fixture"]
+        if hook_status == 0
+        else ["parent=fixture"]
+    )
+
+
+def test_native_template_fails_when_present_ruby_query_fails(tmp_path: Path) -> None:
+    result = render_fixture_zshenv(tmp_path, tmp_path / "homebrew", ruby_body="exit 23")
+    assert result.returncode != 0
 
 
 def test_work_private_file_renders_token_atomically_and_is_noop(tmp_path: Path) -> None:
@@ -185,33 +295,9 @@ def test_work_private_file_renders_token_atomically_and_is_noop(tmp_path: Path) 
     (target / "mise.toml").write_text(
         '[vars]\nhost_profile = "work"\nhost_os = "darwin"\n'
     )
-    marker = tmp_path / "executed"
-    token = f"a'b\"c $HOME $(touch {marker})\n"
-    facts = subprocess.run(
-        [str(CAPABILITY / "shell-facts")],
-        env={"PATH": os.environ["PATH"], "SOURCEGRAPH_TOKEN": token},
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout
-    fact_env = subprocess.run(
-        ["sh", "-c", 'set -a; eval "$1"; env -0', "shell", facts],
-        env={"PATH": os.environ["PATH"]},
-        check=True,
-        capture_output=True,
-    ).stdout
-    rendered = dict(
-        item.split(b"=", 1) for item in fact_env.split(b"\0") if b"=" in item
-    )
+    token = "sgp_synthetic-ABC123456789"
     env = isolated_env(home, target)
-    env.update(
-        {
-            "MISE_ENV": "shell-work",
-            "SHELL_SOURCEGRAPH_TOKEN_QUOTED": rendered[
-                b"SHELL_SOURCEGRAPH_TOKEN_QUOTED"
-            ].decode(),
-        }
-    )
+    env.update({"MISE_ENV": "shell-work", "SOURCEGRAPH_TOKEN": token})
     command = [
         "mise",
         "-C",
@@ -249,7 +335,6 @@ def test_work_private_file_renders_token_atomically_and_is_noop(tmp_path: Path) 
         text=True,
     )
     assert result.stdout == token
-    assert not marker.exists()
 
 
 @pytest.mark.parametrize("check", [False, True])
@@ -259,12 +344,6 @@ def test_work_task_credentials_sudo_and_check_are_scoped(
     task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["shell"]["run"]
     project, calls = tmp_path / "repo", tmp_path / "calls"
     (project / "scripts").mkdir(parents=True)
-    (project / "bootstrap/capabilities/shell").mkdir(parents=True)
-    helper = project / "bootstrap/capabilities/shell/shell-facts"
-    helper.write_text(
-        "#!/bin/sh\nprintf 'SHELL_HAS_HOMEBREW_RUBY=false\\nSHELL_HOMEBREW_RUBY_VERSION=\\x27\\x27\\nSHELL_HAS_HOMEBREW_RUSTUP=false\\nSHELL_SOURCEGRAPH_TOKEN_QUOTED=\\x22\\x27preview\\x27\\x22\\n'\n"
-    )
-    helper.chmod(0o755)
     fnox = project / "scripts/fnox-host"
     fnox.write_text(
         "#!/bin/sh\n"
@@ -290,13 +369,13 @@ def test_work_task_credentials_sudo_and_check_are_scoped(
             "CALLS": str(calls),
             "MISE_PROJECT_ROOT": str(project),
             "usage_check": "1" if check else "",
-            "SYNTHETIC_TOKEN": "synthetic token",
+            "SYNTHETIC_TOKEN": "sgp_synthetic-ABC123",
             "SYNTHETIC_PASSWORD": "own password",
         },
         capture_output=True,
         text=True,
     )
-    assert "synthetic token" not in result.stdout + result.stderr
+    assert "sgp_synthetic-ABC123" not in result.stdout + result.stderr
     assert "own password" not in result.stdout + result.stderr
     lines = calls.read_text().splitlines()
     if check:
@@ -310,26 +389,5 @@ def test_work_task_credentials_sudo_and_check_are_scoped(
         )
         assert lines[1:] == [
             "sudo -A -v",
-            f"mise -C {project}/bootstrap/targets/ML-DFC6YK6VJQ bootstrap --only files,dotfiles --force-dotfiles --yes env=shell,shell-work token=synthetic token",
+            f"mise -C {project}/bootstrap/targets/ML-DFC6YK6VJQ bootstrap --only files,dotfiles --force-dotfiles --yes env=shell,shell-work token=sgp_synthetic-ABC123",
         ]
-
-
-def test_facts_failure_precedes_native_write(tmp_path: Path) -> None:
-    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["shell"]["run"]
-    project = tmp_path / "repo"
-    helper = project / "bootstrap/capabilities/shell/shell-facts"
-    helper.parent.mkdir(parents=True)
-    helper.write_text("#!/bin/sh\nexit 23\n")
-    helper.chmod(0o755)
-    hostname = tmp_path / "hostname"
-    hostname.write_text("#!/bin/sh\necho pod042\n")
-    hostname.chmod(0o755)
-    result = subprocess.run(
-        ["sh", "-c", task],
-        env={
-            "PATH": f"{tmp_path}:{os.environ['PATH']}",
-            "MISE_PROJECT_ROOT": str(project),
-        },
-        capture_output=True,
-    )
-    assert result.returncode == 23

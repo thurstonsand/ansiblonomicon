@@ -2,4 +2,6 @@
 "~/.zprofile" = { source = "shell/zprofile.tera", mode = "template" }
 "~/.zshrc" = { source = "shell/zshrc.tera", mode = "template" }
 "~/.config/starship.toml" = { source = "shell/starship.toml", mode = "symlink" }
-"~/.config/direnv/direnv.toml" = { source = "shell/direnv.toml", mode = "symlink" }
+
+[bootstrap.files."~/.config/direnv/direnv.toml"]
+state = "absent"

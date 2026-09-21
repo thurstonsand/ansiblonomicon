@@ -365,7 +365,7 @@ flag "-c --check" help="Show changes without applying them"
 run = '''
 host=$(hostname -s)
 case "$host" in
-  pod042|Thurstons-MacBook-Pro) environments=shell,shell-personal; parts=dotfiles; work=false ;;
+  pod042|Thurstons-MacBook-Pro) environments=shell,shell-personal; parts=files,dotfiles; work=false ;;
   ML-DFC6YK6VJQ) environments=shell,shell-work; parts=files,dotfiles; work=true ;;
   *) echo "Unregistered shell host" >&2; exit 1 ;;
 esac
@@ -375,9 +375,6 @@ if [ "$6" = true ] && [ -z "${SOURCEGRAPH_TOKEN:-}" ]; then
   echo "SOURCEGRAPH_TOKEN is required for work shell apply" >&2
   exit 1
 fi
-facts=$("$1/bootstrap/capabilities/shell/shell-facts") || exit $?
-eval "$facts"
-export SHELL_HAS_HOMEBREW_RUBY SHELL_HOMEBREW_RUBY_VERSION SHELL_HAS_HOMEBREW_RUSTUP SHELL_SOURCEGRAPH_TOKEN_QUOTED
 export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"
 exec mise -C "$2" bootstrap --only "$4" --force-dotfiles "$5"'
 if [ -n "${usage_check:-}" ]; then

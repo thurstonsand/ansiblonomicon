@@ -60,7 +60,7 @@ tmux() (
   local clean_env
   clean_env="$(mise -C / hook-env -s zsh)" || return
   eval "$clean_env"
-  direnv exec / "$(whence -p tmux)" "$@"
+  command tmux "$@"
 )
 
 # Environment variables
@@ -83,7 +83,7 @@ export VISUAL="nvim"
 
 # 1Password SSH agent
 export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-export SOURCEGRAPH_TOKEN={{ get_env(name="SHELL_SOURCEGRAPH_TOKEN_QUOTED") }}
+export SOURCEGRAPH_TOKEN='{{ get_env(name="SOURCEGRAPH_TOKEN") }}'
 {% endif %}
 
 
@@ -113,11 +113,11 @@ path=(
   "$HOME/.local/share/pnpm"
   "$HOME/go/bin"
 {% if vars.host_os == "darwin" %}
-{% if get_env(name="SHELL_HAS_HOMEBREW_RUBY", default="false") == "true" %}
+{% if "/opt/homebrew/opt/ruby/bin/ruby" is file %}
   "/opt/homebrew/opt/ruby/bin"
-  "/opt/homebrew/lib/ruby/gems/{{ get_env(name="SHELL_HOMEBREW_RUBY_VERSION") }}/bin"
+  "/opt/homebrew/lib/ruby/gems/{{ exec(command="/opt/homebrew/opt/ruby/bin/ruby -e \"puts RbConfig::CONFIG['ruby_version']\"") | trim }}/bin"
 {% endif %}
-{% if get_env(name="SHELL_HAS_HOMEBREW_RUSTUP", default="false") == "true" %}
+{% if "/opt/homebrew/opt/rustup/bin/rustup" is file %}
   "/opt/homebrew/opt/rustup/bin"
 {% endif %}
 {% endif %}
