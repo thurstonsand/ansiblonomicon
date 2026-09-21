@@ -1,0 +1,208 @@
+{
+  "colorize_brackets": true,
+  "audio": {
+    "experimental.rodio_audio": true
+  },
+  "git": {
+    "inline_blame": {
+      "show_commit_summary": true
+    }
+  },
+  "collaboration_panel": {
+    "dock": "left",
+    "button": true
+  },
+  "debugger": {
+    "stepping_granularity": "statement",
+    "dock": "bottom"
+  },
+  "git_panel": {
+    "dock": "left",
+    "collapse_untracked_diff": true,
+    "sort_by_path": true,
+    "button": true
+  },
+  "outline_panel": {
+    "indent_size": 13.0,
+    "dock": "left"
+  },
+  "terminal": {
+    "toolbar": {
+      "breadcrumbs": true
+    },
+    "keep_selection_on_copy": true,
+    "dock": "bottom"
+  },
+  "project_panel": {
+    "dock": "left",
+    "entry_spacing": "standard"
+  },
+  "use_system_window_tabs": true,
+  "bottom_dock_layout": "contained",
+  "title_bar": {
+    "show_branch_icon": true
+  },
+  "preferred_line_length": 88,
+  "scroll_beyond_last_line": "off",
+  "redact_private_values": true,
+  "agent_servers": {
+    "opencode": {
+      "type": "registry"
+    }
+  },
+  "theme": {
+    "mode": "system",
+    "light": "Catppuccin Latte",
+    "dark": "Catppuccin Mocha"
+  },
+  "icon_theme": {
+    "mode": "system",
+    "light": "Catppuccin Latte",
+    "dark": "Catppuccin Mocha"
+  },
+  "telemetry": {
+    "diagnostics": false,
+    "metrics": false
+  },
+  "base_keymap": "VSCode",
+  "buffer_font_family": "BerkeleyMono Nerd Font Mono",
+  "buffer_font_size": 13,
+  "buffer_line_height": "standard",
+  "ui_font_family": "BerkeleyMono Nerd Font Mono",
+  "ui_font_size": 14,
+  "active_pane_modifiers": {
+    "inactive_opacity": 0.85
+  },
+  "hover_popover_delay": 200,
+  "drop_target_size": 0.4,
+  "use_system_path_prompts": false,
+  "use_system_prompts": false,
+  "auto_signature_help": true,
+  "drag_and_drop_selection": {
+    "enabled": false
+  },
+  "wrap_guides": [
+    88
+  ],
+  "always_treat_brackets_as_autoclosed": true,
+  "toolbar": {
+    "quick_actions": true,
+    "selections_menu": false,
+    "code_actions": true
+  },
+  "agent": {
+    "dock": "right",
+    "always_allow_tool_actions": true,
+    "model_parameters": []
+  },
+  "inlay_hints": {
+    "enabled": true,
+    "show_value_hints": true,
+    "show_type_hints": true,
+    "show_parameter_hints": true,
+    "show_other_hints": true,
+    "show_background": true,
+    "edit_debounce_ms": 700,
+    "scroll_debounce_ms": 50,
+    "toggle_on_modifiers_press": {
+      "control": false,
+      "alt": false,
+      "shift": false,
+      "platform": false,
+      "function": false
+    }
+  },
+  "autosave": "on_focus_change",
+  "multi_cursor_modifier": "alt",
+  "minimap": {
+    "show": "auto"
+  },
+  "auto_indent_on_paste": true,
+  "soft_wrap": "editor_width",
+  "tabs": {
+    "show_diagnostics": "all",
+    "git_status": true
+  },
+  "languages": {
+    "Python": {
+      "language_servers": [
+        "pylsp",
+        "ruff",
+        "pyright"
+      ],
+      "format_on_save": "on",
+      "formatter": [
+        {
+          "code_action": "source.organizeImports.ruff"
+        },
+        {
+          "code_action": "source.fixAll.ruff"
+        },
+        {
+          "language_server": {
+            "name": "ruff"
+          }
+        }
+      ]
+    }
+  },
+  "lsp": {
+    "pylsp": {
+      "binary": {
+        "path": "uv",
+        "arguments": [
+          "run",
+          "--with",
+          "python-lsp-server[all],pylsp-rope",
+          "pylsp"
+        ]
+      },
+      "settings": {
+        "plugins": {
+          "pycodestyle": {
+            "enabled": false
+          },
+          "pyflakes": {
+            "enabled": false
+          },
+          "mccabe": {
+            "enabled": false
+          },
+          "pylint": {
+            "enabled": false
+          },
+          "flake8": {
+            "enabled": false
+          },
+          "pydocstyle": {
+            "enabled": false
+          },
+          "yapf": {
+            "enabled": false
+          },
+          "autopep8": {
+            "enabled": false
+          },
+          "rope_autoimport": {
+            "enabled": true,
+            "completions": {
+              "enabled": true
+            },
+            "code_actions": {
+              "enabled": true
+            },
+            "memory": false
+          },
+          "rope_completion": {
+            "enabled": true,
+            "eager": false
+          }
+        },
+        "rope": {
+          "extensionModules": null,
+          "ropeFolder": null
+        }
+      }
+    }
+  }
+}

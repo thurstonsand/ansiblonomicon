@@ -158,5 +158,19 @@ Library/Application Support/Code/User/mcp.json
 **/*.pyc
 **/node_modules/
 
+# Native editor-config capability
+.config/zed/settings.json
+.config/zed/keymap.json
+.config/zed/tasks.json
+Library/Application Support/Cursor/User/settings.json
+Library/Application Support/Cursor/User/keybindings.json
+Library/Application Support/Windsurf/User/settings.json
+Library/Application Support/Windsurf/User/keybindings.json
+Library/Application Support/Antigravity/User/settings.json
+Library/Application Support/Antigravity/User/keybindings.json
+Library/Application Support/io.datasette.llm/keys.json
+Library/Application Support/io.datasette.llm/extra-openai-models.yaml
+Library/Application Support/io.datasette.llm/default_model.txt
+
 # Extension dev artifacts (for IDE type checking, not deployed)
 **/*.pyi

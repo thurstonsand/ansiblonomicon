@@ -490,6 +490,37 @@ fi
 exec sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
 '''
 
+[tasks."editor-config"]
+description = "Reconcile model-backed editor and LLM configuration on a registered Mac"
+usage = '''
+flag "-c --check" help="Show changes without resolving real credentials or writing"
+'''
+run = '''
+host=$(hostname -s)
+case "$host" in
+  Thurstons-MacBook-Pro) profile=personal ;;
+  ML-DFC6YK6VJQ) profile=work ;;
+  *) echo "editor-config is registered only on the two Macs" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$MISE_PROJECT_ROOT"
+export EDITOR_CONFIG_PYTHON="$MISE_PROJECT_ROOT/.venv/bin/python"
+export EDITOR_CONFIG_RENDERER="$MISE_PROJECT_ROOT/bootstrap/capabilities/editor-config/render.py"
+export EDITOR_CONFIG_MODELS="$MISE_PROJECT_ROOT/ansible/models.yml"
+run_editor_config='exec mise -E editor-config -C "$1" bootstrap --only files "$2"'
+if [ -n "${usage_check:-}" ]; then
+  export CLI_PROXY_API_KEY=preview CF_ACCESS_CLIENT_ID=preview CF_ACCESS_CLIENT_SECRET=preview
+  exec sh -c "$run_editor_config" editor-config "$target" --dry-run
+fi
+if [ "$profile" = personal ]; then
+  exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec \
+    --secret CLI_PROXY_API_KEY --secret CF_ACCESS_CLIENT_ID --secret CF_ACCESS_CLIENT_SECRET -- \
+    sh -c "$run_editor_config" editor-config "$target" --yes
+fi
+exec sh -c "$run_editor_config" editor-config "$target" --yes
+'''
+
 [tasks.reconcile]
 description = "Reconcile this machine, dispatching on hostname"
 dir = "ansible"
@@ -533,7 +564,7 @@ case "$playbook" in
   macos.yml) software_capabilities="$software_capabilities claude-code opencode sessions shp uvc-util" ;;
   work.yml) software_capabilities="$software_capabilities pi sessions uvc-util" ;;
 esac
-config_capabilities="terminal-theme git-client jj-client shell terminal-tools user-tools desktop-tools neovim"
+config_capabilities="terminal-theme git-client jj-client shell terminal-tools user-tools desktop-tools editor-config neovim"
 [ "$playbook" = work.yml ] || config_capabilities="$config_capabilities ssh-client"
 [ "$playbook" != work.yml ] || config_capabilities="$config_capabilities python-index"
 normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^homebrew$/mac-apps/; s/^mas$/mac-apps/; s/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | awk '!seen[$0]++' | paste -sd, -)
@@ -543,7 +574,7 @@ case "$playbook:${usage_tags:-}" in
     exit 1
     ;;
 esac
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|neovim|nvim-deps|python-index)$' | paste -sd, -)
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index)$' | paste -sd, -)
 case ",${normalized_tags}," in
   ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
 esac

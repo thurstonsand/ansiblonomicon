@@ -19,6 +19,7 @@ Track temporary compatibility and cutover code here as each capability migrates.
 | User tools               | Live, verified including repeat no-op       | Live, verified including repeat no-op                          | Fixture-tested; private LazyGit SCM apply pending                  |
 | SSH client               | Live, verified including key load and no-op | Live, verified including effective config and repeat no-op     | Intentionally unmanaged                                            |
 | Desktop tools            | Not applicable                              | Live, already converged; zero writes on apply and repeat       | Fixture-tested common Go telemetry only; live apply pending        |
+| Editor and LLM config    | Not applicable                              | Live, all 12 outputs semantically preserved; repeat no-op      | Fixture-tested Zed-only render; live apply pending                 |
 
 ## Delete after work cutover is verified
 
@@ -37,6 +38,7 @@ Track temporary compatibility and cutover code here as each capability migrates.
 ## Delete only after remaining consumers migrate
 
 - [ ] **Duplicated terminal font defaults.** Terminal tools declares font variables while unmigrated applications still consume chezmoi's shared font data. Consolidate the declarations as those consumers migrate; remove the old shared values only after the last consumer migrates.
+- [ ] **Duplicated editor font defaults.** Editor configuration temporarily repeats the canonical chezmoi font values while unmigrated agent consumers still read `.chezmoidata.toml`. Remove the chezmoi values and consolidate the native declarations only after those consumers migrate.
 
 - [ ] **Old work developer data.** After live work cutover verifies Neovim SCM/Jira links, LazyGit services, and uv/pip parse the native files, remove `[[scm]]`, `pypiIndex`, and `uvIndexStrategy` from `chezmoi/.chezmoidata/local.toml`. Keep `jiraBrowseUrl` while Pi still consumes it. The exact private mapping is in `README.work.md`; do not remove the old values before comparing the effective configurations.
 - [ ] **Chezmoi ownership guards.** Remove the native-owned theme, VCS, SSH, shell, terminal, user-tools, Neovim, and Python-index paths from `chezmoi/.chezmoiignore`, including the older work-only `personal.inc` exclusion, when chezmoi is retired or its inability to touch these paths is otherwise established. They protect ownership while both systems coexist.

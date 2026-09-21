@@ -1,0 +1,7 @@
+{%- set client_id = secret(name="cf_access_client_id") -%}
+{%- set client_secret = secret(name="cf_access_client_secret") -%}
+{%- set encoded_client_id = client_id | json_encode -%}
+{%- set encoded_client_secret = client_secret | json_encode -%}
+{%- set headers = '{"CF-Access-Client-Id":' ~ encoded_client_id ~ ',"CF-Access-Client-Secret":' ~ encoded_client_secret ~ '}' -%}
+{%- set metadata = exec(command=env.EDITOR_CONFIG_PYTHON | quote ~ " " ~ env.EDITOR_CONFIG_RENDERER | quote ~ " llm --models=" ~ env.EDITOR_CONFIG_MODELS | quote) -%}
+{{ metadata | replace(from='"headers": null', to='"headers": ' ~ headers) | safe }}

@@ -1,23 +1,4 @@
-{{- /* Template for VSCode-alike keybindings.json files */ -}}
-{{- /* Usage: {{ template "vscode-keybindings" "vscode" }} */ -}}
-{{- $editor := . -}}
-{{- $isVSCode := or (eq $editor "vscode") (eq $editor "insiders") -}}
-{{- $isCursor := eq $editor "cursor" -}}
-{{- $isWindsurf := eq $editor "windsurf" -}}
-{{- $isAntigravity := eq $editor "antigravity" -}}
 [
-{{- if $isVSCode }}
-  {
-    "key": "cmd+r",
-    "command": "-inlineChat.regenerate",
-    "when": "inlineChatHasNotebookInline && inlineChatVisible && activeEditor == 'workbench.editor.notebook' || inlineChatHasProvider && inlineChatVisible && activeEditor != 'workbench.editor.notebook'"
-  },
-  {
-    "key": "cmd+r",
-    "command": "-workbench.action.terminal.chat.rerunRequest",
-    "when": "chatIsEnabled && terminalChatFocus && terminalHasBeenCreated && !terminalChatActiveRequest || chatIsEnabled && terminalChatFocus && terminalProcessSupported && !terminalChatActiveRequest"
-  },
-{{- else if $isCursor }}
   {
     "key": "shift+cmd+k",
     "command": "cursorai.action.generateInTerminal",
@@ -48,13 +29,6 @@
     "command": "-workbench.action.toggleMaximizeEditorGroup",
     "when": "editorPartMaximizedEditorGroup || editorPartMultipleEditorGroups"
   },
-{{- else if $isWindsurf }}
-  {
-    "key": "alt+cmd+b",
-    "command": "-workbench.action.toggleAuxiliaryBar"
-  },
-{{- else if $isAntigravity }}
-{{- end }}
   {
     "key": "shift+enter",
     "command": "workbench.action.terminal.sendSequence",
@@ -81,3 +55,4 @@
     "when": "terminalFocus && !terminalTextSelected"
   }
 ]
+

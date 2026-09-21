@@ -1,88 +1,4 @@
-{{- /* Template for VSCode-alike settings.json files */ -}}
-{{- /* Usage: {{ template "vscode-settings" (dict "editor" "vscode" "models" .models "fonts" .fonts "hostname" .chezmoi.hostname "aigEnabled" .aigEnabled "goLocalImports" .goLocalImports "goplsBuildFlags" .goplsBuildFlags) }} */ -}}
-{{- /* Valid editors: vscode, insiders, cursor, windsurf, antigravity */ -}}
-{{- $editor := .editor -}}
-{{- $isVSCode := or (eq $editor "vscode") (eq $editor "insiders") -}}
-{{- $isCursor := eq $editor "cursor" -}}
-{{- $m := .models -}}
 {
-{{- if $isCursor }}
-  // ============================================================================
-  // CURSOR SETTINGS
-  // ============================================================================
-  "cursor.composer.cmdPFilePicker2": true,
-  "cursor.diffs.useCharacterLevelDiffs": true,
-  "cursor.general.enableShadowWorkspace": true,
-  "cursor.general.gitGraphIndexing": "enabled",
-  "cursor.composer.shouldChimeAfterChatFinishes": true,
-  "update.releaseTrack": "prerelease",
-  "cursorStats.progressBarWarningThreshold": 80,
-  "window.newWindowProfile": "Default",
-  "window.commandCenter": true,
-
-{{- end }}
-{{- if $isVSCode }}
-  // ============================================================================
-  // CLAUDE CODE
-  // ============================================================================
-  "claudeCode.selectedModel": "opus",
-  "claudeCode.useTerminal": true,
-  "claudeCode.preferredLocation": "sidebar",
-{{- if .aigEnabled }}
-  // ============================================================================
-  // GEMINI CODE ASSIST
-  // ============================================================================
-  "geminicodeassist.project": "seraphic-orb-99jrc",
-  "geminicodeassist.inlineSuggestions.enableAuto": false,
-  "geminicodeassist.displayInlineContextHint": false,
-
-  // ============================================================================
-  // CODEX
-  // ============================================================================
-  "chatgpt.commentCodeLensEnabled": false,
-
-  // ============================================================================
-  // AI ANALYTICS
-  // ============================================================================
-  "editor.aiStats.enabled": true,
-
-  // ============================================================================
-  // GITHUB COPILOT
-  // ============================================================================
-  "github.copilot.enable": {
-    "*": false,
-    "python": false,
-  },
-  "github.copilot.nextEditSuggestions.enabled": false,
-  "chat.agent.thinkingStyle": "collapsedPreview",
-  "chat.agent.maxRequests": 2500,
-  "chat.checkpoints.showFileChanges": true,
-  "chat.edits2.enabled": true,
-  "chat.promptFilesLocations": {
-    ".claude/commands": true,
-  },
-  "chat.tools.terminal.blockDetectedFileWrites": "never",
-  "chat.useNestedAgentsMdFiles": true,
-  "inlineChat.enableV2": true,
-  "inlineChat.holdToSpeech": false,
-  "inlineChat.notebookAgent": true,
-  "chat.useAgentsMdFile": true,
-  "github.copilot.chat.copilotDebugCommand.enabled": false,
-  "github.copilot.chat.byok.ollamaEndpoint": "",
-  "github.copilot.chat.tools.memory.enabled": true,
-  "chat.extensionUnification.enabled": true,
-  "github.copilot.chat.anthropic.tools.websearch.userLocation": {
-    "city": "Atlanta",
-    "region": "Georgia",
-    "country": "US",
-    "timezone": "America/New York",
-  },
-  "github.copilot.chat.customOAIModels": {
-{{- template "vscode-models" .models }}
-  },
-
-{{- end }}
-{{- end }}
   // ============================================================================
   // CORE UI & APPEARANCE
   // ============================================================================
@@ -91,10 +7,10 @@
   "workbench.preferredDarkColorTheme": "Gruvbox Dark Hard",
   "workbench.preferredLightColorTheme": "Gruvbox Light Hard",
   "workbench.startupEditor": "none",
-  "editor.fontFamily": "{{ .fonts.propo }}",
-  "editor.fontSize": {{ .fonts.size }},
-  "terminal.integrated.fontFamily": "{{ .fonts.mono }}",
-  "terminal.integrated.fontSize": {{ .fonts.size }},
+  "editor.fontFamily": "BerkeleyMono Nerd Font Mono",
+  "editor.fontSize": 13,
+  "terminal.integrated.fontFamily": "BerkeleyMono Nerd Font Mono",
+  "terminal.integrated.fontSize": 13,
   "workbench.list.smoothScrolling": true,
   "terminal.integrated.smoothScrolling": true,
   "editor.cursorSmoothCaretAnimation": "on",
@@ -165,11 +81,6 @@
   // GITLENS
   // ============================================================================
   "gitlens.mode.active": "zen",
-{{- if and .aigEnabled $isVSCode }}
-  "gitlens.ai.model": "vscode",
-  "gitlens.ai.vscode.model": "customOAIModels:{{ $m.anthropic.haiku.version }}",
-  "gitlens.ai.experimental.composer.enabled": true,
-{{- end }}
 
   // ============================================================================
   // REMOTE & PORT FORWARDING
@@ -206,20 +117,12 @@
   },
 
   // --- PYRIGHT ---
-{{- if $isCursor }}
-  "cursorpyright.analysis.inlayHints.functionReturnTypes": true,
-  "cursorpyright.analysis.inlayHints.variableTypes": true,
-  "cursorpyright.analysis.diagnosticMode": "workspace",
-  "cursorpyright.analysis.inlayHints.callArgumentNames": true,
-  "cursorpyright.analysis.typeCheckingMode": "strict",
-{{- else }}
   "basedpyright.analysis.inlayHints.functionReturnTypes": true,
   "basedpyright.analysis.inlayHints.variableTypes": true,
   "basedpyright.analysis.diagnosticMode": "workspace",
   "basedpyright.analysis.inlayHints.callArgumentNames": true,
   "basedpyright.analysis.inlayHints.callArgumentNamesMatching": false,
   "basedpyright.analysis.typeCheckingMode": "strict",
-{{- end }}
 
   // --- YAML ---
   "redhat.telemetry.enabled": false,
@@ -318,25 +221,13 @@
     "staticcheck": false,
     "completeUnimported": true,
     "deepCompletion": true,
-    "ui.semanticTokens": true{{ if .goLocalImports }},
-    "local": "{{ .goLocalImports }}"{{ end }}{{ if .goplsBuildFlags }},
-    "buildFlags": [
-      "{{ .goplsBuildFlags }}",
-    ]{{ end }}
+    "ui.semanticTokens": true
   },
-{{- if .goLocalImports }}
-  "go.formatFlags": [
-    "-local",
-    "{{ .goLocalImports }}",
-  ],
-{{- end }}
-{{- if .aigEnabled }}
 
   // ============================================================================
   // CODERABBIT
   // ============================================================================
   "coderabbit.autoReviewMode": "disabled",
-{{- end }}
 
   // ============================================================================
   // Accessibility
@@ -464,3 +355,4 @@
     "announcement": "auto",
   },
 }
+

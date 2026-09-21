@@ -1,0 +1,16 @@
+{
+  "cursor.composer.cmdPFilePicker2": true,
+  "cursor.diffs.useCharacterLevelDiffs": true,
+  "cursor.general.enableShadowWorkspace": true,
+  "cursor.general.gitGraphIndexing": "enabled",
+  "cursor.composer.shouldChimeAfterChatFinishes": true,
+  "update.releaseTrack": "prerelease",
+  "cursorStats.progressBarWarningThreshold": 80,
+  "window.newWindowProfile": "Default",
+  "window.commandCenter": true,
+  "cursorpyright.analysis.inlayHints.variableTypes": true,
+  "cursorpyright.analysis.inlayHints.functionReturnTypes": true,
+  "cursorpyright.analysis.inlayHints.callArgumentNames": true,
+  "cursorpyright.analysis.typeCheckingMode": "strict",
+  "cursorpyright.analysis.diagnosticMode": "workspace"
+}

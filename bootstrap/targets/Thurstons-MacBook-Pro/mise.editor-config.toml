@@ -1,0 +1,58 @@
+[bootstrap.secrets]
+cli_proxy_api_key = "CLI_PROXY_API_KEY"
+cf_access_client_id = "CF_ACCESS_CLIENT_ID"
+cf_access_client_secret = "CF_ACCESS_CLIENT_SECRET"
+
+[bootstrap.files."~/.config/zed/settings.json"]
+source = "editor-config/files/zed-settings.json.tera"
+template = true
+mode = "0600"
+
+[bootstrap.files."~/.config/zed/keymap.json"]
+source = "editor-config/files/baselines/zed-keymap.jsonc"
+mode = "0644"
+
+[bootstrap.files."~/.config/zed/tasks.json"]
+source = "editor-config/files/baselines/zed-tasks.jsonc"
+mode = "0644"
+
+[bootstrap.files."~/Library/Application Support/Cursor/User/settings.json"]
+source = "editor-config/files/Cursor-settings.json.tera"
+template = true
+mode = "0644"
+
+[bootstrap.files."~/Library/Application Support/Cursor/User/keybindings.json"]
+source = "editor-config/files/baselines/Cursor-keybindings.jsonc"
+mode = "0644"
+
+[bootstrap.files."~/Library/Application Support/Windsurf/User/settings.json"]
+source = "editor-config/files/Windsurf-settings.json.tera"
+template = true
+mode = "0644"
+
+[bootstrap.files."~/Library/Application Support/Windsurf/User/keybindings.json"]
+source = "editor-config/files/baselines/Windsurf-keybindings.jsonc"
+mode = "0644"
+
+[bootstrap.files."~/Library/Application Support/Antigravity/User/settings.json"]
+source = "editor-config/files/Antigravity-settings.json.tera"
+template = true
+mode = "0644"
+
+[bootstrap.files."~/Library/Application Support/Antigravity/User/keybindings.json"]
+source = "editor-config/files/baselines/Antigravity-keybindings.jsonc"
+mode = "0644"
+
+[bootstrap.files."~/Library/Application Support/io.datasette.llm/keys.json"]
+source = "editor-config/files/keys.json.tera"
+template = true
+mode = "0600"
+
+[bootstrap.files."~/Library/Application Support/io.datasette.llm/extra-openai-models.yaml"]
+source = "editor-config/files/llm-models.json.tera"
+template = true
+mode = "0600"
+
+[bootstrap.files."~/Library/Application Support/io.datasette.llm/default_model.txt"]
+source = "editor-config/files/default_model.txt"
+mode = "0644"

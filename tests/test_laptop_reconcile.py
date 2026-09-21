@@ -358,6 +358,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         "tmux",
         "user-tools",
         "desktop-tools",
+        "editor-config",
         "neovim",
         "nvim-deps",
         "python-index",
@@ -387,6 +388,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:terminal-tools" + suffix)
         expected.append("mise run //:user-tools" + suffix)
         expected.append("mise run //:desktop-tools" + suffix)
+        expected.append("mise run //:editor-config" + suffix)
         expected.append("mise run //:neovim" + suffix)
         if host == "Thurstons-MacBook-Pro":
             expected.append("mise run //:ssh-client" + suffix)
