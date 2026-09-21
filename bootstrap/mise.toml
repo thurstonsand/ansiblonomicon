@@ -7,7 +7,7 @@ exclude = [".env", "*.local.*"]
 host = "pod042"
 user = "thurstonsand"
 source = "targets/pod042"
-mise_env = ["base", "network", "repositories", "storage", "alerting", "containers", "maintenance", "monitoring", "datasets", "incus", "home-assistant", "sharing", "snapshots", "terminal-tools", "operator", "vcs-identity", "git-client", "jj-client", "agent-harness", "remote-development", "terminal-theme", "shell", "neovim", "doppelclaude", "terminal-tools-plugins", "shell-personal", "neovim-personal"]
+mise_env = ["base", "network", "repositories", "storage", "alerting", "containers", "maintenance", "monitoring", "datasets", "incus", "home-assistant", "sharing", "snapshots", "terminal-tools", "operator", "vcs-identity", "git-client", "jj-client", "agent-harness", "remote-development", "terminal-theme", "shell", "user-tools", "neovim", "doppelclaude", "terminal-tools-plugins", "shell-personal", "user-tools-personal", "neovim-personal"]
 tags = ["storage"]
 remote_mise = "/usr/local/bin/mise"
 

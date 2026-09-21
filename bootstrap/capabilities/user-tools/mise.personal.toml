@@ -1,0 +1,3 @@
+[dotfiles]
+"~/.config/gh/config.yml" = { source = "user-tools/gh.yml", mode = "copy" }
+"~/.rustup/settings.toml" = { source = "user-tools/rustup-settings.toml.tera", mode = "template" }

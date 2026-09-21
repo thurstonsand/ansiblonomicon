@@ -112,6 +112,16 @@ agent_harness_sources_extra:
           deployed-name: skills/some-skill
 ```
 
+LazyGit's old `[[scm]]` entries map to native LazyGit YAML in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`. The value is the indented body of LazyGit's `services` mapping; preserve the two-space indentation inside the TOML multiline literal exactly:
+
+```toml
+[vars]
+lazygit_services = '''
+  "scm.example": "gitlab:scm.example"
+  "another.example:7999/projects/tools": "bitbucketServer:another.example:7999/projects/tools"
+'''
+```
+
 ## Agent Harness Local Plugin
 
 | File           | Purpose                                           |

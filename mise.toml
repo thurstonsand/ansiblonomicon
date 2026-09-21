@@ -415,6 +415,28 @@ fi
 exec mise -C "$target" bootstrap --only "$parts" --force-dotfiles --yes ${update:-}
 '''
 
+[tasks."user-tools"]
+description = "Reconcile shared CLI configuration and standalone helpers"
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+'''
+run = '''
+host=$(hostname -s)
+case "$host" in
+  pod042|Thurstons-MacBook-Pro) environments=user-tools,user-tools-personal ;;
+  ML-DFC6YK6VJQ) environments=user-tools ;;
+  *) echo "Unregistered user-tools host" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+export MISE_ENV="$environments"
+if [ -n "${usage_check:-}" ]; then
+  exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --dry-run
+fi
+exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes
+'''
+
 [tasks.reconcile]
 description = "Reconcile this machine, dispatching on hostname"
 dir = "ansible"
@@ -458,10 +480,10 @@ case "$playbook" in
   macos.yml) software_capabilities="$software_capabilities claude-code opencode sessions shp uvc-util" ;;
   work.yml) software_capabilities="$software_capabilities pi sessions uvc-util" ;;
 esac
-config_capabilities="terminal-theme git-client jj-client shell terminal-tools neovim"
+config_capabilities="terminal-theme git-client jj-client shell terminal-tools user-tools neovim"
 [ "$playbook" != work.yml ] || config_capabilities="$config_capabilities python-index"
 normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^homebrew$/mac-apps/; s/^mas$/mac-apps/; s/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | awk '!seen[$0]++' | paste -sd, -)
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|shell|terminal-tools|tmux|neovim|nvim-deps|python-index)$' | paste -sd, -)
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|shell|terminal-tools|tmux|user-tools|neovim|nvim-deps|python-index)$' | paste -sd, -)
 case ",${normalized_tags}," in
   ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
 esac

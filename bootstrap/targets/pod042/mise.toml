@@ -16,6 +16,8 @@ git_signing_program = ""
 jj_signing_program = ""
 terminal_tools_home = "/home/thurstonsand"
 terminal_tools_develop_dir = "code"
+lazygit_services = ""
+rustup_default_toolchain = "stable-x86_64-unknown-linux-gnu"
 
 [tasks."mise:maintain"]
 description = "Update the system mise binary when its daily maintenance is due"

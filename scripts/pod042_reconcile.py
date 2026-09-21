@@ -62,6 +62,7 @@ CAPABILITIES = (
     "remote-development",
     "terminal-theme",
     "shell",
+    "user-tools",
     "neovim",
     "doppelclaude",
 )
@@ -72,6 +73,7 @@ FULL_CAPABILITIES = (
     *CAPABILITIES[_VCS_CLIENT_INDEX:],
     "terminal-tools-plugins",
     "shell-personal",
+    "user-tools-personal",
     "neovim-personal",
 )
 
@@ -127,6 +129,8 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("terminal-theme",)
     if capability == "shell":
         return ("shell", "shell-personal")
+    if capability == "user-tools":
+        return ("user-tools", "user-tools-personal")
     if capability in ("neovim", "nvim-deps"):
         return ("neovim", "neovim-personal")
     if capability in ("terminal-tools", "tmux"):
@@ -179,6 +183,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         "terminal-theme",
         "shell",
         "shell-personal",
+        "user-tools",
+        "user-tools-personal",
         "neovim",
         "neovim-personal",
         "terminal-tools",
@@ -276,6 +282,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             run_command(["mise", "-C", str(ROOT), "run", "shell", "--check"])
         if "terminal-tools" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "terminal-tools", "--check"])
+        if "user-tools" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "user-tools", "--check"])
         if "neovim" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "neovim", "--check"])
         if "base" in selected:
@@ -397,6 +405,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             run_command(["mise", "-C", str(ROOT), "run", "shell"])
         if "terminal-tools" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "terminal-tools"])
+        if "user-tools" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "user-tools"])
         if "neovim" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "neovim"])
 

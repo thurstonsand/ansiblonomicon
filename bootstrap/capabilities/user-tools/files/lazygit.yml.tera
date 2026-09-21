@@ -1,9 +1,5 @@
 os:
-{{- if eq .chezmoi.hostname "clawdbot" }}
-  editPreset: "vim"
-{{- else }}
   editPreset: "vscode"
-{{- end }}
 
 gui:
   nerdFontsVersion: "3"
@@ -15,23 +11,24 @@ git:
   log:
     order: "topo-order"
     showGraph: always
-{{- if lookPath "hunk" }}
+{% set hunk = exec(command="command -v hunk || true") | trim %}
+{% set delta = exec(command="command -v delta || true") | trim %}
+{% if hunk != "" %}
   diffRenderers:
     - command: hunk pager
       colorArg: always
-{{- else if lookPath "delta" }}
+{% elif delta != "" %}
   diffRenderers:
     - command: delta --paging=never
       colorArg: always
-{{- end }}
+{% endif %}
   autoFetch: false
   overrideGpg: true
 
 promptToReturnFromSubprocess: false
-{{- if .scm }}
+{% set services = vars.lazygit_services | default(value="") %}
+{% if services != "" %}
 
 services:
-{{-   range .scm }}
-  '{{ .host }}': '{{ .type }}:{{ .host }}'
-{{-   end }}
-{{- end }}
+{{ services | safe }}
+{% endif %}

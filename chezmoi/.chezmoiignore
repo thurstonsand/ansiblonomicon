@@ -29,6 +29,19 @@
 .local/bin/ide
 .local/bin/ideo
 
+# Shared CLI configuration and helpers are owned by native mise. These guards
+# are unconditional so private work sources cannot reclaim the same paths.
+.config/gh/config.yml
+.config/lazygit/config.yml
+.rustup/settings.toml
+.sourcekit-lsp/config.json
+.vimrc
+.markdownlint-cli2.yaml
+.local/libexec/tab-title.py
+.local/libexec/hunk/nvim
+.local/bin/fnox-host
+.local/bin/mcp-credentials
+
 # macOS-only scripts - ignore on non-Darwin
 {{ if ne .chezmoi.os "darwin" }}
 .chezmoiscripts/darwin/**

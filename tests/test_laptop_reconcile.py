@@ -308,6 +308,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         "shell",
         "terminal-tools",
         "tmux",
+        "user-tools",
         "neovim",
         "nvim-deps",
         "python-index",
@@ -335,6 +336,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:jj-client" + suffix)
         expected.append("mise run //:shell" + suffix)
         expected.append("mise run //:terminal-tools" + suffix)
+        expected.append("mise run //:user-tools" + suffix)
         expected.append("mise run //:neovim" + suffix)
     assert calls == expected
 
@@ -490,6 +492,23 @@ def test_neovim_tags_run_only_native_capability(
     assert status == 0
     assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
         "mise run //:neovim" + (" --check" if check else "")
+    ]
+
+
+@pytest.mark.parametrize("check", [False, True])
+def test_user_tools_tag_runs_only_native_capability(
+    tmp_path: Path, check: bool
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags="user-tools",
+        check=check,
+    )
+    assert status == 0
+    assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
+        "mise run //:user-tools" + (" --check" if check else "")
     ]
 
 

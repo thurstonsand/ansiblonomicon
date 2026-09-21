@@ -1,0 +1,3 @@
+version = "12"
+default_toolchain = "{{ vars.rustup_default_toolchain }}"
+[overrides]

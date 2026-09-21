@@ -1,0 +1,9 @@
+[dotfiles]
+"~/.config/lazygit/config.yml" = { source = "user-tools/lazygit.yml.tera", mode = "template" }
+"~/.sourcekit-lsp/config.json" = { source = "user-tools/sourcekit-lsp.json", mode = "symlink" }
+"~/.vimrc" = { source = "user-tools/vimrc", mode = "symlink" }
+"~/.markdownlint-cli2.yaml" = { source = "user-tools/markdownlint-cli2.yaml", mode = "symlink" }
+"~/.local/libexec/tab-title.py" = { source = "user-tools/tab-title.py", mode = "symlink" }
+"~/.local/libexec/hunk/nvim" = { source = "user-tools/hunk/nvim", mode = "symlink" }
+"~/.local/bin/fnox-host" = { source = "user-tools/fnox-host", mode = "symlink" }
+"~/.local/bin/mcp-credentials" = { source = "user-tools/mcp-credentials", mode = "symlink" }
