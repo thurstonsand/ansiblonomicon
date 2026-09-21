@@ -10,7 +10,7 @@ blocked-by: []
 
 One consolidated conversation with an electrician. Known items so far; more will accrue from other tickets (cooktop, lighting, bidets, cameras):
 
-The electrical plan lives in the separate [Loch Highland Atlas](26-atlas.md) project. A contractor is currently discussing the low-voltage work and outlets, potentially with a handyman for door alignment.
+The electrical plan lives in the separate [Loch Highland Atlas](26-atlas.md) project. A quote has been received for the high-voltage work; execution is pending.
 
 - ethernet in just about every room of the house; there's effectively none now (design in [Ethernet, rack, and cellular](02-ethernet-rack-cellular.md))
 - ethernet drops for ubiquiti cameras if installed internally, and for a PoE doorbell ([Cameras and doorbell](09-cameras-and-doorbell.md))

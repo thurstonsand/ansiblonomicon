@@ -4,9 +4,11 @@
 import argparse
 from collections.abc import Sequence
 from pathlib import Path
+import re
 import socket
 import subprocess
 import sys
+import tomllib
 from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -61,6 +63,7 @@ CAPABILITIES = (
     "terminal-theme",
     "shell",
     "neovim",
+    "doppelclaude",
 )
 _VCS_CLIENT_INDEX = CAPABILITIES.index("git-client")
 FULL_CAPABILITIES = (
@@ -181,6 +184,13 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         "terminal-tools",
         "terminal-tools-plugins",
     }
+    if "doppelclaude" in selected:
+        config = tomllib.loads((TARGET_ROOT / "mise.doppelclaude.toml").read_text())
+        image = config["vars"]["doppelclaude_image"]
+        if not re.fullmatch(r"[\w./:-]+@sha256:[0-9a-f]{64}", image):
+            fail("Set vars.doppelclaude_image to a reviewed image@sha256 digest first")
+        run_command(["findmnt", "--mountpoint", "/mnt/black-box/docker"])
+        run_command(["sudo", "-n", "docker", "network", "inspect", "ingress"])
     bootstrap_capabilities = tuple(
         item for item in selected if item not in root_capabilities
     )
@@ -204,7 +214,10 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             "--",
             *command,
         ]
-    if "alerting" in selected or "containers" in selected or "sharing" in selected:
+    if any(
+        item in selected
+        for item in ("alerting", "containers", "sharing", "doppelclaude")
+    ):
         secrets: list[str] = list(CONTAINER_SECRETS) if "containers" in selected else []
         if "alerting" in selected and "HARK_WEBHOOK_URL_POD042" not in secrets:
             secrets.append("HARK_WEBHOOK_URL_POD042")
@@ -212,6 +225,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             secrets.append("HEALTHCHECKS_API_KEY")
         if "sharing" in selected:
             secrets.append("SAMBA_MEDIA_PASSWORD")
+        if "doppelclaude" in selected:
+            secrets.extend(("CLI_PROXY_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"))
         command = [
             sys.executable,
             "-B",
@@ -319,15 +334,16 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                 ]
             )
     else:
-        run_command(
-            [
-                "mise",
-                "-C",
-                str(TARGET_ROOT),
-                "run",
-                "mise:maintain",
-            ]
-        )
+        if capability != "doppelclaude":
+            run_command(
+                [
+                    "mise",
+                    "-C",
+                    str(TARGET_ROOT),
+                    "run",
+                    "mise:maintain",
+                ]
+            )
         if "base" in selected:
             # Mise applies accounts before packages; the login shell must exist first.
             run_command(

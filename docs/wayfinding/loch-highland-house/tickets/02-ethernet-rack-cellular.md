@@ -13,4 +13,4 @@ blocked-by: []
 - cellular extender: coverage is poor; evaluate options
 - camera and doorbell drops feed [Cameras and doorbell](09-cameras-and-doorbell.md)
 
-The contractor is currently discussing execution of the pulls. The physical plan lives in [Loch Highland Atlas](26-atlas.md); coordination remains in [Electrician scope of work](01-electrician-scope.md). WiFi layer is already charted in Bunker Rebuild's [WiFi coverage survey](../../bunker-rebuild/tickets/21-wifi-coverage-and-tuning.md).
+A quote has been received for the low-voltage work; execution is pending. The physical plan lives in [Loch Highland Atlas](26-atlas.md); coordination remains in [Electrician scope of work](01-electrician-scope.md). WiFi layer is already charted in Bunker Rebuild's [WiFi coverage survey](../../bunker-rebuild/tickets/21-wifi-coverage-and-tuning.md).

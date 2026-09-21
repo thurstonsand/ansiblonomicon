@@ -8,4 +8,4 @@ blocked-by: []
 
 ## Question
 
-Assemble the delivered Deskhaus desk, including the desktop, controls, cable management, workstation equipment, and a stable standing-height setup.
+The Deskhaus desk is assembled. Wiring and cable management remain; the required supplies are ordered, so completion is waiting on delivery.

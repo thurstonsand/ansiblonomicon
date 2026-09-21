@@ -8,9 +8,10 @@ The new house is livable the way I want it and the old house is sold: every item
 
 - Execution is in scope. This is a living backlog as much as a map: tickets group related chores under one question, and pure chores are `task` tickets. Add items to the ticket they belong to; add a ticket when nothing fits.
 - Charted 2026-09-01 from a raw list, one week after the move. Not grilled: the items are captured in Thurston's words, questions sharpened as tickets get picked up.
-- Cross-map links: network is in [New-house Internet cutover](../new-house-internet-cutover/map.md) (done) and Bunker Rebuild's [WiFi coverage survey](../bunker-rebuild/tickets/21-wifi-coverage-and-tuning.md); the eGPU decision is Bunker Rebuild's [eGPU enclosure qualification](../bunker-rebuild/tickets/22-egpu-enclosure-qualification.md); the smart-home rebuild (HAOS under incus) belongs to Bunker Rebuild's Phase 4.
+- Cross-map links: network is in [New-house Internet cutover](../new-house-internet-cutover/map.md) (done) and Bunker Rebuild's [WiFi coverage survey](../bunker-rebuild/tickets/21-wifi-coverage-and-tuning.md); the eGPU decision is Bunker Rebuild's [eGPU enclosure qualification](../bunker-rebuild/tickets/22-egpu-enclosure-qualification.md); Home Assistant runs under incus from Bunker Rebuild's Phase 4, with the live House dashboard preserved under `docs/operations/house-dashboard/`.
+- Smart-home baseline: Home Assistant, Hue lighting, Apple Home, UniFi SuperLink sensors, and the Schlage locks are set up. The door automation locks only after its sensor reports the door closed.
 - Standing preferences: prefer local-first smart devices that keep working without HA (Matter over Thread bindings); ubiquiti-native where a ubiquiti option exists; get professional help for lighting rather than repeating the can-light mistake.
-- Trades to coordinate: contractor (low-voltage wiring, electrical outlets, cameras, and possibly door alignment through a handyman), hood/duct contractor, TV mounters (The TV Mount Men), Wellbourne (old house door), cleaners, painters.
+- Trades to coordinate: quotes received for low-voltage wiring, high-voltage work, screened-porch repairs, and door alignment; execution pending. Still coordinate the hood/duct contractor, Wellbourne (old house door), cleaners, and painters.
 - Hard date: moving boxes review **2026-12-10**.
 
 ## Decisions so far
@@ -29,7 +30,7 @@ The new house is livable the way I want it and the old house is sold: every item
 
 ## Not yet specified
 
-- Whole-house smart-home rebuild design (automations as code, device inventory keep/drop from the pre-move HA worksheet) — belongs to Bunker Rebuild Phase 4 but the device-side choices here (switches, blinds, sensors, sprinklers, locks, cameras) feed it.
+- Remaining whole-house smart-home design: device inventory keep/drop, switch and blind choices, sprinkler and camera integration, and additional automations. The Home Assistant, Hue, Apple Home, SuperLink, lock-automation, and House-dashboard foundation is already live.
 - Omarchy laptop onboarding as a repo-declared host — own effort after the dotfiles migrate fully from chezmoi to mise; dual boot itself is done.
 - Old-house sale timeline: listing date and what "ready to sell" requires beyond the prep list.
 

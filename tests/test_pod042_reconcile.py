@@ -284,10 +284,17 @@ def test_jj_client_focused_apply_loads_identity_and_only_runs_root_task(
 
 def test_full_apply_runs_root_capabilities_after_prerequisite_bootstrap(
     monkeypatch: pytest.MonkeyPatch,
+    tmp_path: Path,
 ) -> None:
     calls: list[list[str]] = []
     monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
     monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+    monkeypatch.setattr(pod042_reconcile, "TARGET_ROOT", tmp_path)
+    (tmp_path / "mise.doppelclaude.toml").write_text(
+        '[vars]\ndoppelclaude_image = "example.com/doppelclaude@sha256:'
+        + "a" * 64
+        + '"\n'
+    )
 
     pod042_reconcile.run_local(None, check_mode=False)
 
@@ -309,6 +316,51 @@ def test_full_apply_runs_root_capabilities_after_prerequisite_bootstrap(
     shell_call = next(call for call in calls if call[-2:] == ["run", "shell"])
     assert calls.index(terminal_calls[0]) > calls.index(shell_call)
     assert "terminal-tools" not in environment.split("=", 1)[1].split(",")
+
+
+@pytest.mark.parametrize(
+    "image", ["", "example.com/app:latest", "example.com/app@sha256:abc"]
+)
+@pytest.mark.parametrize("check_mode", [True, False])
+def test_doppelclaude_refuses_unpinned_image_before_any_command(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, image: str, check_mode: bool
+) -> None:
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(pod042_reconcile, "TARGET_ROOT", tmp_path)
+    (tmp_path / "mise.doppelclaude.toml").write_text(
+        f'[vars]\ndoppelclaude_image = "{image}"\n'
+    )
+    run = Mock()
+    monkeypatch.setattr(pod042_reconcile, "run_command", run)
+    with pytest.raises(pod042_reconcile.ReconcileError, match="reviewed image@sha256"):
+        pod042_reconcile.run_local("doppelclaude", check_mode)
+    run.assert_not_called()
+
+
+@pytest.mark.parametrize("check_mode", [True, False])
+def test_doppelclaude_is_isolated_and_checks_prerequisites(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, check_mode: bool
+) -> None:
+    calls: list[list[str]] = []
+    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
+    monkeypatch.setattr(pod042_reconcile, "TARGET_ROOT", tmp_path)
+    (tmp_path / "mise.doppelclaude.toml").write_text(
+        '[vars]\ndoppelclaude_image = "example.com/doppelclaude@sha256:'
+        + "b" * 64
+        + '"\n'
+    )
+    monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
+    pod042_reconcile.run_local("doppelclaude", check_mode)
+    assert calls[0] == ["findmnt", "--mountpoint", "/mnt/black-box/docker"]
+    assert calls[1] == ["sudo", "-n", "docker", "network", "inspect", "ingress"]
+    assert len(calls) == 3
+    plan = calls[2]
+    assert "MISE_ENV=doppelclaude" in plan
+    assert plan[-2:] == ["bootstrap", "plan" if check_mode else "--yes"]
+    assert [plan[index + 1] for index, arg in enumerate(plan) if arg == "--secret"] == [
+        "CLI_PROXY_API_KEY",
+        "CLAUDE_CODE_OAUTH_TOKEN",
+    ]
 
 
 @pytest.mark.parametrize(

@@ -1,0 +1,55 @@
+[vars]
+doppelclaude_image = "ghcr.io/thurstonsand/http-doppelclaude@sha256:dedd8811e6b2f99154967b52fa63dac116176662e3b25aead7e6962c18052d16"
+
+[bootstrap.secrets]
+doppelclaude_api_key = "CLI_PROXY_API_KEY"
+doppelclaude_oauth_token = "CLAUDE_CODE_OAUTH_TOKEN"
+
+[bootstrap.groups.doppelclaude]
+gid = 3456
+
+[bootstrap.users.doppelclaude]
+uid = 3456
+group = "doppelclaude"
+home = "/mnt/black-box/docker/doppelclaude"
+shell = "/usr/sbin/nologin"
+create_home = false
+
+[bootstrap.directories."/mnt/black-box/docker/doppelclaude"]
+owner = "doppelclaude"
+group = "doppelclaude"
+mode = "0700"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/doppelclaude"]
+owner = "root"
+group = "root"
+mode = "0700"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/doppelclaude/compose.yaml"]
+source = "containers/stacks/doppelclaude/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/doppelclaude/.env"]
+content = '''
+DOPPELCLAUDE_IMAGE={{ vars.doppelclaude_image }}
+DOPPELCLAUDE_HTTP_API_KEY='{{ secret(name="doppelclaude_api_key") }}'
+CLAUDE_CODE_OAUTH_TOKEN='{{ secret(name="doppelclaude_oauth_token") }}'
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.compose.doppelclaude]
+project_dir = "/etc/ansiblonomicon/containers/doppelclaude"
+files = ["compose.yaml"]
+env_files = [".env"]
+project_name = "doppelclaude"
+state = "running"
+sudo = true
+pull = "missing"
+wait = true
+wait_timeout = 120
+remove_orphans = true
