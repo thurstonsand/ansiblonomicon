@@ -6,6 +6,8 @@ This documents all files that live **only** on the work Mac and are not tracked 
 
 Git/Jujutsu identity, corporate Git URL rewrites, Neovim private values, and Python indexes belong in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`. See the Git, Neovim, and Python-index capability instructions. Work cutover is pending; copy the values described below before applying either new capability.
 
+macOS preferences and sudo Touch ID are now native. Review private `configure_macos_defaults` and `configure_pam_reattach` overrides before work cutover; native reconciliation does not read them. The tracked profile manages all 27 preferences and `pam_tid`, leaves hostname unmanaged, and neither adds nor removes existing `pam_reattach` lines.
+
 ## Chezmoi Data Layer
 
 All fields live in `chezmoi/.chezmoidata/local.toml`:

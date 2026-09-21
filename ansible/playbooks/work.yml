@@ -37,21 +37,6 @@
       tags: ["always"]
 
   tasks:
-    - name: Apply macOS system defaults
-      ansible.builtin.include_role:
-        name: macos_defaults
-      when: configure_macos_defaults | default(true)
-      tags:
-        [
-          "sysconfig",
-          "dock",
-          "finder",
-          "nsglobaldomain",
-          "menubar",
-          "desktop-services",
-          "permissions",
-        ]
-
     - name: Deploy AI agent resources
       ansible.builtin.include_role:
         name: agent_harness

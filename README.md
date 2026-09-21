@@ -68,7 +68,9 @@ Small vendor-installed and source-built software is also native: run `mise claud
 
 Capability-driven Node upgrades carry unmanaged registry npm globals into the new prefix at their installed versions, excluding bundled npm/Corepack. A private pending snapshot survives failed runs and is removed after successful reconciliation; linked/local packages require explicit handling before an upgrade. The self-contained Node postinstall hook restores declared packages even when Node is installed outside reconciliation.
 
-Full laptop reconciliation ensures and maintains the standalone mise binary before Homebrew cleanup, then runs Mac apps, language tools, vendor-installed and source-built software tasks, one remaining Ansible invocation, and native configuration capabilities. `mise laptop -t homebrew,language-tools` runs only the selected native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
+Full laptop reconciliation ensures and maintains the standalone mise binary before Homebrew cleanup, then runs Mac apps, language tools, vendor-installed and source-built software tasks, native system configuration, one remaining Ansible invocation, and native user configuration capabilities. `mise laptop -t homebrew,language-tools` runs only the selected native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
+
+The [macOS system capability](bootstrap/capabilities/macos-system/README.md) owns typed preferences, sudo Touch ID, and personal hostname. Run `mise sysconfig` or `mise laptop -t dock,finder`, adding `--check` for a preview. Apps restart only when their preferences change; work hostname and existing work `pam_reattach` lines remain unmanaged.
 
 ### Retiring managed paths
 

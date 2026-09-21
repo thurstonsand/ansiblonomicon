@@ -61,7 +61,7 @@ One playbook per machine, selected by hostname. `macos.yml` layers `darwin.confi
 mise laptop -t homebrew    # also: chezmoi, language-tools
 ```
 
-Homebrew formulae, casks, and Mac App Store apps come from `ansible/Brewfile`, with `Brewfile.work` for the work machine. System preferences live in the `macos_defaults` role, grouped by domain so they can be applied piecemeal.
+Homebrew formulae, casks, and Mac App Store apps come from `ansible/Brewfile`, with `Brewfile.work` for the work machine. System preferences and sudo Touch ID live in `bootstrap/capabilities/macos-system`, grouped by domain for `mise laptop -t dock,finder` or reconciled together with `mise sysconfig`. The legacy `macos_defaults` role is retained only as a work-cutover reference.
 
 The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json` files are masked with `skip-worktree` there. Use `mise run pull`, and be careful with `merge`, `rebase`, or `stash pop` on work. Confirm a version exists on the mirror before bumping a dependency.
 

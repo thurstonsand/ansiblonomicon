@@ -1,0 +1,1 @@
+{{ exec(command=env.MACOS_SYSTEM_PYTHON | quote ~ " " ~ env.MACOS_SYSTEM_PAM_RENDERER | quote ~ " --path " ~ target | quote ~ " --profile " ~ vars.host_profile | quote) | b64_decode -}}

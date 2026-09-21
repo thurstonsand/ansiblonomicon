@@ -1,0 +1,9 @@
+[bootstrap.macos.defaults."com.apple.finder"]
+_FXShowPosixPathInTitle = true
+FXPreferredViewStyle = "Nlsv"
+AppleShowAllFiles = true
+AppleShowAllExtensions = true
+FXEnableExtensionChangeWarning = false
+QuitMenuItem = true
+ShowPathbar = true
+ShowStatusBar = true

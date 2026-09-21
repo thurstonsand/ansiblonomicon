@@ -190,6 +190,31 @@ exec python3 bootstrap/capabilities/language-tools/reconcile.py \
   --profile "$profile" "$@" ${usage_check:+--check}
 '''
 
+[tasks.sysconfig]
+description = "Reconcile native macOS preferences, sudo Touch ID, and personal hostname"
+alias = "macos-system"
+usage = '''
+flag "-c --check" help="Report drift without writes, sudo, credentials, or app restarts"
+option "--sections <sections>" help="Comma-separated legacy sections"
+'''
+run = '''
+host=$(hostname -s)
+case "$host" in
+  Thurstons-MacBook-Pro) profile=personal; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,permissions,hostname} ;;
+  ML-DFC6YK6VJQ) profile=work; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,permissions} ;;
+  *) echo "sysconfig is registered only on Mac laptops" >&2; exit 1 ;;
+esac
+case ",$sections," in
+  *,hostname,*) [ "$profile" = personal ] || { echo "hostname is intentionally unmanaged on work" >&2; exit 1; } ;;
+esac
+if [ -z "${usage_check:-}" ] && printf '%s' "$sections" | grep -Eq '(^|,)(permissions|hostname)(,|$)'; then
+  export SUDO_ASKPASS="${SUDO_ASKPASS:-$MISE_PROJECT_ROOT/ansible/sudo-askpass.sh}"
+fi
+exec "$MISE_PROJECT_ROOT/.venv/bin/python" "$MISE_PROJECT_ROOT/bootstrap/capabilities/macos-system/reconcile.py" \
+  --target "$MISE_PROJECT_ROOT/bootstrap/targets/$host" --profile "$profile" \
+  --sections "$sections" ${usage_check:+--check}
+'''
+
 [tasks."software:dispatch"]
 description = "Reconcile one native Mac software capability"
 usage = '''
@@ -570,7 +595,7 @@ case "$playbook" in
   macos.yml) software_capabilities="$software_capabilities claude-code opencode sessions shp uvc-util docker-context" ;;
   work.yml) software_capabilities="$software_capabilities pi sessions uvc-util" ;;
 esac
-config_capabilities="terminal-theme git-client jj-client shell terminal-tools user-tools desktop-tools editor-config neovim"
+config_capabilities="sysconfig terminal-theme git-client jj-client shell terminal-tools user-tools desktop-tools editor-config neovim"
 [ "$playbook" = work.yml ] || config_capabilities="$config_capabilities ssh-client"
 [ "$playbook" != work.yml ] || config_capabilities="$config_capabilities python-index"
 normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^homebrew$/mac-apps/; s/^mas$/mac-apps/; s/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | awk '!seen[$0]++' | paste -sd, -)
@@ -584,7 +609,13 @@ case "$playbook:${usage_tags:-}" in
     exit 1
     ;;
 esac
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|berkeley-mono|docker-context|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index)$' | paste -sd, -)
+case "$playbook:${usage_tags:-}" in
+  work.yml:hostname|work.yml:*,hostname|work.yml:hostname,*|work.yml:*,hostname,*)
+    echo "hostname is intentionally unmanaged on the work host" >&2
+    exit 1
+    ;;
+esac
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|berkeley-mono|docker-context|claude-code|opencode|pi|sessions|shp|uvc-util|sysconfig|dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index)$' | paste -sd, -)
 case ",${normalized_tags}," in
   ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
 esac
@@ -599,6 +630,11 @@ for native_capability in $software_capabilities; do
     ,,|*,all,*|*,"$native_capability",*) mise run "//:$native_capability" ${usage_check:+--check} || exit "$?" ;;
   esac
 done
+sysconfig_sections=$(printf '%s' "$normalized_tags" | tr ',' '\n' | grep -E '^(dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname)$' | paste -sd, -)
+case ",$normalized_tags," in
+  ,,|*,all,*|*,sysconfig,*) mise run //:sysconfig ${usage_check:+--check} || exit "$?" ;;
+  *) [ -z "$sysconfig_sections" ] || mise run //:sysconfig --sections "$sysconfig_sections" ${usage_check:+--check} || exit "$?" ;;
+esac
 if [ -n "$full" ] || [ -n "$ansible_tags" ]; then
   [ -z "$full" ] || ansible_tags=
   set -- --secret "$sudo_secret"
@@ -607,6 +643,7 @@ if [ -n "$full" ] || [ -n "$ansible_tags" ]; then
     ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
 fi
 for native_capability in $config_capabilities; do
+  [ "$native_capability" != sysconfig ] || continue
   # language-tools already reconciles work's Python index prerequisite.
   if [ -n "$full" ] && [ "$native_capability" = python-index ]; then continue; fi
   case ",$normalized_tags," in

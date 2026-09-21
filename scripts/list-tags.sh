@@ -32,7 +32,7 @@ else
 fi
 
 case "$playbook" in
-  macos) printf 'Native mise tags: berkeley-mono claude-code desktop-tools docker-context editor-config homebrew language-tools mac-apps mas mise opencode sessions shp uvc-util git-client jj-client ssh-client neovim nvim-deps shell terminal-theme terminal-tools tmux user-tools\n' ;;
-  work) printf 'Native mise tags: berkeley-mono desktop-tools editor-config homebrew language-tools mac-apps mas mise pi sessions uvc-util git-client jj-client neovim nvim-deps python-index shell terminal-theme terminal-tools tmux user-tools\n' ;;
+  macos) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions hostname berkeley-mono claude-code desktop-tools docker-context editor-config homebrew language-tools mac-apps mas mise opencode sessions shp uvc-util git-client jj-client ssh-client neovim nvim-deps shell terminal-theme terminal-tools tmux user-tools\n' ;;
+  work) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions berkeley-mono desktop-tools editor-config homebrew language-tools mac-apps mas mise pi sessions uvc-util git-client jj-client neovim nvim-deps python-index shell terminal-theme terminal-tools tmux user-tools\n' ;;
 esac
 exec ansible-playbook -i "$control" "playbooks/$playbook.yml" --list-tags

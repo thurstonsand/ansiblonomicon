@@ -346,6 +346,8 @@ def test_laptop_dispatches_native_theme_outside_ansible(
     for capability in software:
         if full or capability in selected:
             expected.append(f"mise run //:{capability}" + suffix)
+    if full:
+        expected.append("mise run //:sysconfig" + suffix)
     native = {
         "mise",
         "mac-apps",
@@ -360,6 +362,14 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         "sessions",
         "shp",
         "uvc-util",
+        "sysconfig",
+        "dock",
+        "finder",
+        "nsglobaldomain",
+        "menubar",
+        "desktop-services",
+        "permissions",
+        "hostname",
         "terminal-theme",
         "git-client",
         "jj-client",
@@ -422,6 +432,40 @@ def test_failed_prerequisite_stops_before_native_theme(
     assert "mise run //:terminal-theme" not in calls
     if failure == "mise:maintain":
         assert calls == ["mise run //:mise:install", "mise run //:mise:maintain"]
+
+
+def test_mixed_scopes_run_sysconfig_once_before_ansible_and_theme(
+    tmp_path: Path,
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags="dock,terminal-theme,agent-harness",
+        check=True,
+    )
+    assert status == 0
+    assert calls == [
+        "mise run //:sysconfig --sections dock --check",
+        "fnox exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- ansible-playbook "
+        "-i inventory/control/macos.ini playbooks/macos.yml --check "
+        "--tags agent-harness",
+        "ansible -i inventory/control/macos.ini playbooks/macos.yml --check "
+        "--tags agent-harness",
+        "mise run //:terminal-theme --check",
+    ]
+
+
+def test_sysconfig_plus_scoped_tag_keeps_full_union_semantics(tmp_path: Path) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags="sysconfig,dock",
+        check=True,
+    )
+    assert status == 0
+    assert calls == ["mise run //:sysconfig --check"]
 
 
 @pytest.mark.parametrize("tags", ["mac-apps", "homebrew", "mas", "homebrew,mas"])

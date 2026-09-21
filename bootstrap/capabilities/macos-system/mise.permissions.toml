@@ -1,0 +1,6 @@
+[bootstrap.files."/etc/pam.d/sudo_local"]
+source = "macos-system/sudo_local.tera"
+template = true
+owner = "root"
+group = "wheel"
+mode = "0444"

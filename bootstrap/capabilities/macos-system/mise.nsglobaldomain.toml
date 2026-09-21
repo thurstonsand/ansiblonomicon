@@ -1,0 +1,12 @@
+[bootstrap.macos.defaults.NSGlobalDomain]
+AppleShowAllFiles = true
+AppleShowAllExtensions = true
+AppleShowScrollBars = "Always"
+NSAutomaticCapitalizationEnabled = false
+NSAutomaticDashSubstitutionEnabled = false
+NSAutomaticPeriodSubstitutionEnabled = false
+NSAutomaticQuoteSubstitutionEnabled = false
+NSAutomaticSpellingCorrectionEnabled = false
+NSNavPanelExpandedStateForSaveMode = true
+NSNavPanelExpandedStateForSaveMode2 = true
+WebAutomaticTextReplacementEnabled = false

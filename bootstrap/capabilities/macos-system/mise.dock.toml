@@ -1,0 +1,6 @@
+[bootstrap.macos.defaults."com.apple.dock"]
+autohide = true
+orientation = "left"
+"show-process-indicators" = true
+"show-recents" = false
+"mru-spaces" = false
