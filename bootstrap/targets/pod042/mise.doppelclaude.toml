@@ -1,5 +1,5 @@
 [vars]
-doppelclaude_image = "ghcr.io/thurstonsand/http-doppelclaude@sha256:791dffbcd7a155e5f7df6b24028ac997855f7c10e5576556424dcdc0179e7df2"
+doppelclaude_image = "ghcr.io/thurstonsand/http-doppelclaude@sha256:dedd8811e6b2f99154967b52fa63dac116176662e3b25aead7e6962c18052d16"
 
 [bootstrap.secrets]
 doppelclaude_api_key = "CLI_PROXY_API_KEY"
