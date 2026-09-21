@@ -1,0 +1,15 @@
+[bootstrap.directories."~/.ssh"]
+mode = "0700"
+
+[bootstrap.directories."~/.local/libexec"]
+mode = "0755"
+
+[bootstrap.files."~/.ssh/config"]
+source = "ssh-client/config.tera"
+template = true
+mode = "0600"
+
+[bootstrap.files."~/.local/libexec/ssh-smart-proxy"]
+source = "ssh-client/ssh-smart-proxy.tera"
+template = true
+mode = "0755"

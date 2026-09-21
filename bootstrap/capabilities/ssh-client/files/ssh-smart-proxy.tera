@@ -10,8 +10,8 @@ TUNNEL_HOST="$4"
 # exactly what OpenSSH's PerSourcePenalties punishes (noauth:1, min:15), and a burst of
 # them gets the whole source address dropped for 15 seconds. Hosts that stay silent on
 # ICMP still fall through to the TCP probe.
-if ping -c 1 -W {{ if eq .chezmoi.os "darwin" }}1000{{ else }}1{{ end }} "$LOCAL_IP" >/dev/null 2>&1 ||
-  nc -z {{- if eq .chezmoi.os "darwin" }} -G 1 {{- else }} -w 1 {{- end }} "$LOCAL_IP" "$LOCAL_PORT" 2>/dev/null; then
+if ping -c 1 -W {% if vars.host_os == "darwin" %}1000{% else %}1{% endif %} "$LOCAL_IP" >/dev/null 2>&1 ||
+  nc -z{% if vars.host_os == "darwin" %} -G 1{% else %} -w 1{% endif %} "$LOCAL_IP" "$LOCAL_PORT" 2>/dev/null; then
   exec nc "$LOCAL_IP" "$LOCAL_PORT"
 else
   exec cloudflared access ssh --hostname "$TUNNEL_HOST"

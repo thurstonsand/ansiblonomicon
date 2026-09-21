@@ -1,0 +1,15 @@
+[bootstrap.secrets]
+pod042_git_ssh_private_key = "POD042_GIT_SSH_PRIVATE_KEY"
+pod042_git_ssh_public_key = "POD042_GIT_SSH_PUBLIC_KEY"
+
+[bootstrap.files."~/.ssh/id_ed25519_git"]
+content = '''{{ secret(name="pod042_git_ssh_private_key") | trim }}
+'''
+template = true
+mode = "0600"
+
+[bootstrap.files."~/.ssh/id_ed25519_git.pub"]
+content = '''{{ secret(name="pod042_git_ssh_public_key") | trim }}
+'''
+template = true
+mode = "0644"

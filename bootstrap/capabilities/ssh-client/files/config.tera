@@ -16,15 +16,12 @@ Host haos
   HostKeyAlias haos
   ProxyCommand ~/.local/libexec/ssh-smart-proxy haos 192.168.1.89 22222 haos-ssh.thurstons.house
 
-{{- if eq .chezmoi.hostname "pod042" }}
+{% if vars.ssh_client_host == "pod042" %}
 Host github.com
   User git
   IdentityFile ~/.ssh/id_ed25519_git
   IdentitiesOnly yes
-
-{{- end }}
-{{- if ne .chezmoi.hostname "pod042" }}
-
+{% else %}
 Host pod042
   User thurstonsand
   ForwardAgent yes
@@ -59,8 +56,7 @@ Host pod042-kvm-ts
   HostKeyAlias pod042-kvm
   IdentityFile ~/.ssh/id_ecdsa_glkvm
   IdentitiesOnly yes
-
-{{- end }}
+{% endif %}
 
 Host udmp
   HostName 10.10.20.1
@@ -72,6 +68,6 @@ Host *
   ServerAliveCountMax 3
   AddKeysToAgent no
   HashKnownHosts no
-{{- if eq .chezmoi.os "darwin" }}
+{% if vars.host_os == "darwin" %}
   IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-{{- end }}
+{% endif %}

@@ -66,6 +66,7 @@ def run_laptop(
     binary = tmp_path / "bin"
     binary.mkdir()
     calls = tmp_path / "calls"
+    calls.touch()
     commands = {
         binary / "hostname": 'printf "%s\\n" "$HOST"',
         binary / "mise": """printf 'mise %s\n' "$*" >> "$CALLS"
@@ -305,6 +306,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         "terminal-theme",
         "git-client",
         "jj-client",
+        "ssh-client",
         "shell",
         "terminal-tools",
         "tmux",
@@ -338,6 +340,8 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:terminal-tools" + suffix)
         expected.append("mise run //:user-tools" + suffix)
         expected.append("mise run //:neovim" + suffix)
+        if host == "Thurstons-MacBook-Pro":
+            expected.append("mise run //:ssh-client" + suffix)
     assert calls == expected
 
 
@@ -510,6 +514,35 @@ def test_user_tools_tag_runs_only_native_capability(
     assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
         "mise run //:user-tools" + (" --check" if check else "")
     ]
+
+
+@pytest.mark.parametrize("check", [False, True])
+def test_ssh_client_tag_runs_only_on_personal_mac(tmp_path: Path, check: bool) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags="ssh-client",
+        check=check,
+    )
+    assert status == 0
+    assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
+        "mise run //:ssh-client" + (" --check" if check else "")
+    ]
+
+
+def test_ssh_client_tag_is_rejected_on_work_without_ansible_fallthrough(
+    tmp_path: Path,
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="ML-DFC6YK6VJQ",
+        tags="ssh-client",
+        check=True,
+    )
+    assert status != 0
+    assert calls == []
 
 
 @pytest.mark.parametrize("check", [False, True])

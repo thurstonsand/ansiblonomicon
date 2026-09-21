@@ -42,6 +42,14 @@
 .local/bin/fnox-host
 .local/bin/mcp-credentials
 
+# SSH client files owned by native mise. The work profile already ignores the
+# whole SSH tree and proxy; these guards prevent chezmoi reclaiming them on
+# personal hosts while preserving every unrelated child of ~/.ssh.
+.ssh/config
+.ssh/id_ed25519_git
+.ssh/id_ed25519_git.pub
+.local/libexec/ssh-smart-proxy
+
 # macOS-only scripts - ignore on non-Darwin
 {{ if ne .chezmoi.os "darwin" }}
 .chezmoiscripts/darwin/**
@@ -55,12 +63,6 @@ Library/
 # Linux-only files - ignore on non-Linux
 {{ if ne .chezmoi.os "linux" }}
 # (none yet)
-{{ end }}
-
-# Agent-host files
-{{ if ne .chezmoi.hostname "pod042" }}
-.ssh/id_ed25519_git
-.ssh/id_ed25519_git.pub
 {{ end }}
 
 # The NAS is headless; desktop integrations remain on workstations.

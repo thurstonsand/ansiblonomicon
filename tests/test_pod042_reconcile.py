@@ -120,6 +120,13 @@ def test_incus_capability_closure() -> None:
     )
 
 
+def test_ssh_client_capability_includes_pod042_key_overlay() -> None:
+    assert pod042_reconcile.capabilities_for("ssh-client") == (
+        "ssh-client",
+        "ssh-client-pod042",
+    )
+
+
 def test_network_capability_includes_package_repositories() -> None:
     assert pod042_reconcile.capabilities_for("network") == (
         "repositories",

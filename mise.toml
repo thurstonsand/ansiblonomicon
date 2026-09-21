@@ -315,6 +315,33 @@ fi
 exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes
 '''
 
+[tasks."ssh-client"]
+description = "Reconcile SSH client configuration on this registered personal host"
+usage = '''
+flag "-c --check" help="Show changes using non-secret placeholders"
+'''
+run = '''
+host=$(hostname -s)
+case "$host" in
+  Thurstons-MacBook-Pro) environments=ssh-client ;;
+  pod042) environments=ssh-client,ssh-client-pod042 ;;
+  ML-DFC6YK6VJQ) echo "ssh-client is intentionally unavailable on the work host" >&2; exit 1 ;;
+  *) echo "Unregistered ssh-client host" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+run_ssh_client='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles "$4"'
+if [ -n "${usage_check:-}" ]; then
+  export POD042_GIT_SSH_PRIVATE_KEY=preview-private-key POD042_GIT_SSH_PUBLIC_KEY=preview-public-key
+  exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" --dry-run
+fi
+if [ "$host" = pod042 ]; then
+  exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec \
+    --secret POD042_GIT_SSH_PRIVATE_KEY --secret POD042_GIT_SSH_PUBLIC_KEY -- \
+    sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
+fi
+exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
+'''
+
 [tasks.neovim]
 description = "Reconcile Neovim configuration and dependencies on this registered host"
 alias = "nvim-deps"
@@ -481,9 +508,16 @@ case "$playbook" in
   work.yml) software_capabilities="$software_capabilities pi sessions uvc-util" ;;
 esac
 config_capabilities="terminal-theme git-client jj-client shell terminal-tools user-tools neovim"
+[ "$playbook" = work.yml ] || config_capabilities="$config_capabilities ssh-client"
 [ "$playbook" != work.yml ] || config_capabilities="$config_capabilities python-index"
 normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^homebrew$/mac-apps/; s/^mas$/mac-apps/; s/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | awk '!seen[$0]++' | paste -sd, -)
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|shell|terminal-tools|tmux|user-tools|neovim|nvim-deps|python-index)$' | paste -sd, -)
+case "$playbook:${usage_tags:-}" in
+  work.yml:ssh-client|work.yml:*,ssh-client|work.yml:ssh-client,*|work.yml:*,ssh-client,*)
+    echo "ssh-client is intentionally unavailable on the work host" >&2
+    exit 1
+    ;;
+esac
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|neovim|nvim-deps|python-index)$' | paste -sd, -)
 case ",${normalized_tags}," in
   ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
 esac

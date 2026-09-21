@@ -136,7 +136,7 @@ See [nixonomicon/docs/designs/nix-to-chezmoi-ansible-migration.md](https://githu
 
 ## Hosts
 
-SSH aliases are configured via chezmoi (`~/.ssh/config`). Infrastructure aliases use `ssh-smart-proxy` for LAN access with Cloudflare Access fallback. pod042 also answers on Tailscale as `pod042-ts`, and `pod042-remote` forces the Cloudflare path when the LAN probe needs bypassing.
+SSH aliases are configured by the [SSH client capability](bootstrap/capabilities/ssh-client/README.md), which owns `~/.ssh/config` and `ssh-smart-proxy` without pruning unrelated SSH state. Infrastructure aliases use the proxy for LAN access with Cloudflare Access fallback. pod042 also answers on Tailscale as `pod042-ts`, and `pod042-remote` forces the Cloudflare path when the LAN probe needs bypassing. pod042 alone receives its GitHub key pair through two scoped secrets. Run `mise ssh-client` or `mise laptop -t ssh-client`; checks use non-secret placeholders.
 
 | Target                                            | Alias        | Description             |
 | ------------------------------------------------- | ------------ | ----------------------- |

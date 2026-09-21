@@ -7,6 +7,7 @@ system_packages.managers = ["apt"]
 [vars]
 host_profile = "personal"
 host_os = "linux"
+ssh_client_host = "pod042"
 terminal_theme_home = "/home/thurstonsand"
 terminal_theme_profile = "mirror"
 terminal_theme_mirrors = ""

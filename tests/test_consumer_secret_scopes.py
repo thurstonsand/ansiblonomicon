@@ -32,7 +32,10 @@ def task_secrets(command: str) -> set[str]:
 
 def test_current_scoped_tasks_only_request_agent_credentials():
     tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
-    secrets = tomllib.loads((ROOT / "fnox.toml").read_text())["secrets"]
+    secrets = {
+        **tomllib.loads((ROOT / "fnox.toml").read_text())["secrets"],
+        **tomllib.loads((ROOT / "fnox.pod042.toml").read_text())["secrets"],
+    }
     laptop_tasks = {
         "reconcile",
         "reconcile:laptop",
@@ -52,6 +55,14 @@ def test_current_scoped_tasks_only_request_agent_credentials():
             selected = task_secrets(command)
             assert selected
             assert all(secrets[name]["provider"] == "agent" for name in selected)
+
+
+def test_ssh_client_scopes_exactly_the_pod042_key_pair():
+    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["ssh-client"]
+    assert task_secrets(task["run"]) == {
+        "POD042_GIT_SSH_PRIVATE_KEY",
+        "POD042_GIT_SSH_PUBLIC_KEY",
+    }
 
 
 def test_laptop_reconcile_scopes_one_password_and_keeps_facts_in_memory():
