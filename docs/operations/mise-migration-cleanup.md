@@ -20,6 +20,9 @@ Track temporary compatibility and cutover code here as each capability migrates.
 | SSH client               | Live, verified including key load and no-op | Live, verified including effective config and repeat no-op     | Intentionally unmanaged                                            |
 | Desktop tools            | Not applicable                              | Live, already converged; zero writes on apply and repeat       | Fixture-tested common Go telemetry only; live apply pending        |
 | Editor and LLM config    | Not applicable                              | Live, all 12 outputs semantically preserved; repeat no-op      | Fixture-tested Zed-only render; live apply pending                 |
+| Fonts and Docker context | Not applicable                              | Live direct capability check/apply/repeat; zero writes         | Font fixture-tested; live work font verification pending           |
+
+Font and Docker hardware verification used `bootstrap/capabilities/software/reconcile` directly with blocking provider/mutation sentinels. The instrumented root task path entered repository authentication before reaching the capability; root task routing is fixture-tested, not live-verified under those sentinels. Fresh font acquisition is fixture-tested only because all four fonts already exist on the personal Mac.
 
 ## Delete after work cutover is verified
 

@@ -199,8 +199,8 @@ flag "-c --check"
 run = '''
 host=$(hostname -s)
 case "$host:$usage_capability" in
-  Thurstons-MacBook-Pro:claude-code|Thurstons-MacBook-Pro:opencode|Thurstons-MacBook-Pro:sessions|Thurstons-MacBook-Pro:shp|Thurstons-MacBook-Pro:uvc-util) ;;
-  ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:sessions|ML-DFC6YK6VJQ:uvc-util) ;;
+  Thurstons-MacBook-Pro:claude-code|Thurstons-MacBook-Pro:opencode|Thurstons-MacBook-Pro:sessions|Thurstons-MacBook-Pro:shp|Thurstons-MacBook-Pro:uvc-util|Thurstons-MacBook-Pro:berkeley-mono|Thurstons-MacBook-Pro:docker-context) ;;
+  ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:sessions|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
 mode=apply
@@ -227,6 +227,12 @@ run = "mise run //:software:dispatch shp ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks."uvc-util"]
 run = "mise run //:software:dispatch uvc-util ${usage_check:+--check}"
+usage = 'flag "-c --check"'
+[tasks."berkeley-mono"]
+run = "mise run //:software:dispatch berkeley-mono ${usage_check:+--check}"
+usage = 'flag "-c --check"'
+[tasks."docker-context"]
+run = "mise run //:software:dispatch docker-context ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 
 [tasks."terminal-theme"]
@@ -559,9 +565,9 @@ case "$(hostname -s)" in
     ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
-software_capabilities="mac-apps language-tools"
+software_capabilities="mac-apps language-tools berkeley-mono"
 case "$playbook" in
-  macos.yml) software_capabilities="$software_capabilities claude-code opencode sessions shp uvc-util" ;;
+  macos.yml) software_capabilities="$software_capabilities claude-code opencode sessions shp uvc-util docker-context" ;;
   work.yml) software_capabilities="$software_capabilities pi sessions uvc-util" ;;
 esac
 config_capabilities="terminal-theme git-client jj-client shell terminal-tools user-tools desktop-tools editor-config neovim"
@@ -573,8 +579,12 @@ case "$playbook:${usage_tags:-}" in
     echo "ssh-client is intentionally unavailable on the work host" >&2
     exit 1
     ;;
+  work.yml:docker-context|work.yml:*,docker-context|work.yml:docker-context,*|work.yml:*,docker-context,*)
+    echo "docker-context is intentionally unavailable on the work host" >&2
+    exit 1
+    ;;
 esac
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index)$' | paste -sd, -)
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|berkeley-mono|docker-context|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index)$' | paste -sd, -)
 case ",${normalized_tags}," in
   ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
 esac

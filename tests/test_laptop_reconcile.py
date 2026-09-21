@@ -329,10 +329,19 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:mac-apps" + suffix)
     if full or "language-tools" in selected:
         expected.append("mise run //:language-tools" + suffix)
+    if full or "berkeley-mono" in selected:
+        expected.append("mise run //:berkeley-mono" + suffix)
     software = (
         ["pi", "sessions", "uvc-util"]
         if host == "ML-DFC6YK6VJQ"
-        else ["claude-code", "opencode", "sessions", "shp", "uvc-util"]
+        else [
+            "claude-code",
+            "opencode",
+            "sessions",
+            "shp",
+            "uvc-util",
+            "docker-context",
+        ]
     )
     for capability in software:
         if full or capability in selected:
@@ -343,6 +352,8 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         "homebrew",
         "mas",
         "language-tools",
+        "berkeley-mono",
+        "docker-context",
         "claude-code",
         "opencode",
         "pi",
@@ -613,6 +624,20 @@ def test_ssh_client_tag_is_rejected_on_work_without_ansible_fallthrough(
     assert calls == []
 
 
+def test_docker_context_tag_is_rejected_on_work_without_ansible_fallthrough(
+    tmp_path: Path,
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="ML-DFC6YK6VJQ",
+        tags="docker-context",
+        check=True,
+    )
+    assert status != 0
+    assert calls == []
+
+
 @pytest.mark.parametrize("check", [False, True])
 def test_python_index_tag_runs_only_on_work(tmp_path: Path, check: bool) -> None:
     status, calls = run_laptop(
@@ -673,9 +698,12 @@ def test_ansible_no_longer_routes_migrated_mac_software_roles() -> None:
         ("Thurstons-MacBook-Pro", "sessions"),
         ("Thurstons-MacBook-Pro", "shp"),
         ("Thurstons-MacBook-Pro", "uvc-util"),
+        ("Thurstons-MacBook-Pro", "berkeley-mono"),
+        ("Thurstons-MacBook-Pro", "docker-context"),
         ("ML-DFC6YK6VJQ", "pi"),
         ("ML-DFC6YK6VJQ", "sessions"),
         ("ML-DFC6YK6VJQ", "uvc-util"),
+        ("ML-DFC6YK6VJQ", "berkeley-mono"),
     ],
 )
 def test_migrated_software_tag_routes_only_native_capability(

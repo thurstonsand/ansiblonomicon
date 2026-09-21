@@ -172,5 +172,9 @@ Library/Application Support/io.datasette.llm/keys.json
 Library/Application Support/io.datasette.llm/extra-openai-models.yaml
 Library/Application Support/io.datasette.llm/default_model.txt
 
+# Native software capability owns these former script source paths.
+.chezmoiscripts/darwin/run_once_install-berkeley-mono.sh
+.chezmoiscripts/darwin/run_onchange_after_configure-docker-contexts.sh.tmpl
+
 # Extension dev artifacts (for IDE type checking, not deployed)
 **/*.pyi

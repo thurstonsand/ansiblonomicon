@@ -47,7 +47,7 @@ if [ "$mode" = check ]; then
       fi
       exit 0
       ;;
-    claude-code|opencode)
+    claude-code|opencode|berkeley-mono|docker-context)
       export SOFTWARE_CHECK=true
       mise -C "$target" run "$capability"
       ;;

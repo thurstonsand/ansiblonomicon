@@ -30,6 +30,8 @@ target-version = "py314"
 extend-exclude = [".venv", ".git", "build", "stubs"]
 
 [tool.ruff.per-file-target-version]
+"bootstrap/capabilities/software/berkeley_mono.py" = "py39"
+"bootstrap/capabilities/software/docker_context.py" = "py39"
 "bootstrap/targets/pod042/**/*.py" = "py313"
 "scripts/fnox_host.py" = "py313"
 "scripts/pod042_reconcile.py" = "py313"
