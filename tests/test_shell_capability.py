@@ -107,7 +107,7 @@ def test_real_mise_render_is_valid_zsh_and_noop(
     paths = [home / name for name in (".zshenv", ".zprofile", ".zshrc")]
     for path in paths:
         subprocess.run(["zsh", "-n", str(path)], check=True)
-        assert "direnv" not in path.read_text()
+    assert "_evalcache direnv hook zsh" in (home / ".zshrc").read_text()
     before = [
         (
             p.stat().st_ino,
@@ -240,7 +240,10 @@ def test_tmux_clears_mise_environment_and_preserves_arguments(
             f"printf 'unset PROJECT_SECRET\\n'\nexit {hook_status}\n"
         ),
         "tmux": 'printf "%s\\n" "${PROJECT_SECRET-unset}" "$@"',
-        "direnv": "exit 98",
+        "direnv": (
+            '[ "$1" = exec ] && [ "$2" = / ] || exit 98\n'
+            'shift 2\nprintf "direnv-cleanup\\n"\nexec "$@"'
+        ),
     }.items():
         executable = binaries / name
         executable.write_text(f"#!/bin/sh\n{body}\n")
@@ -263,7 +266,7 @@ def test_tmux_clears_mise_environment_and_preserves_arguments(
     )
     assert result.returncode == hook_status, result.stderr
     assert result.stdout.splitlines() == (
-        ["unset", "new-session", "two words", "parent=fixture"]
+        ["direnv-cleanup", "unset", "new-session", "two words", "parent=fixture"]
         if hook_status == 0
         else ["parent=fixture"]
     )

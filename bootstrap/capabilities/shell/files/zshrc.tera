@@ -93,6 +93,7 @@ _evalcache sessions shell zsh
 {% if vars.host_os == "darwin" %}
 _evalcache wt shell zsh
 {% endif %}
+_evalcache direnv hook zsh
 _evalcache mise activate zsh
 _evalcache mise completion zsh
 {% if vars.host_profile == "personal" and vars.host_os == "darwin" %}

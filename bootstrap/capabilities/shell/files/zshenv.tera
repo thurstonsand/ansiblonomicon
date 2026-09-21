@@ -60,7 +60,7 @@ tmux() (
   local clean_env
   clean_env="$(mise -C / hook-env -s zsh)" || return
   eval "$clean_env"
-  command tmux "$@"
+  direnv exec / "$(whence -p tmux)" "$@"
 )
 
 # Environment variables
