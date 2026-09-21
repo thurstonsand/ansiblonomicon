@@ -42,6 +42,7 @@ def test_current_scoped_tasks_only_request_agent_credentials():
         "mac-apps",
         "shell",
         "terminal-theme",
+        "desktop-tools",
     }
     for task_name, task in tasks.items():
         commands = task.get("run", [])
@@ -63,6 +64,11 @@ def test_ssh_client_scopes_exactly_the_pod042_key_pair():
         "POD042_GIT_SSH_PRIVATE_KEY",
         "POD042_GIT_SSH_PUBLIC_KEY",
     }
+
+
+def test_desktop_tools_scopes_exactly_the_eightctl_pair():
+    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["desktop-tools"]
+    assert task_secrets(task["run"]) == {"EIGHTCTL_EMAIL", "EIGHTCTL_PASSWORD"}
 
 
 def test_laptop_reconcile_scopes_one_password_and_keeps_facts_in_memory():

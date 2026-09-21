@@ -42,6 +42,14 @@
 .local/bin/fnox-host
 .local/bin/mcp-credentials
 
+# Mutable desktop application files are copied by native mise.
+.config/linearmouse/linearmouse.json
+.config/nextdns.conf
+.mactop/config.json
+.local/state/herdr/client/endpoints.json
+.config/eightctl/config.yaml
+Library/Application Support/go/telemetry/mode
+
 # SSH client files owned by native mise. The work profile already ignores the
 # whole SSH tree and proxy; these guards prevent chezmoi reclaiming them on
 # personal hosts while preserving every unrelated child of ~/.ssh.

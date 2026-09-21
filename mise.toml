@@ -464,6 +464,32 @@ fi
 exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes
 '''
 
+[tasks."desktop-tools"]
+description = "Reconcile mutable desktop application configuration on a registered Mac"
+usage = '''
+flag "-c --check" help="Show changes using non-secret eightctl placeholders"
+'''
+run = '''
+host=$(hostname -s)
+case "$host" in
+  Thurstons-MacBook-Pro) environments=desktop-tools,desktop-tools-personal ;;
+  ML-DFC6YK6VJQ) environments=desktop-tools ;;
+  *) echo "desktop-tools is registered only on the two Macs" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+run_desktop_tools='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files "$4"'
+if [ -n "${usage_check:-}" ]; then
+  export EIGHTCTL_EMAIL=preview-email EIGHTCTL_PASSWORD=preview-password
+  exec sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --dry-run
+fi
+if [ "$host" = Thurstons-MacBook-Pro ]; then
+  exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec \
+    --secret EIGHTCTL_EMAIL --secret EIGHTCTL_PASSWORD -- \
+    sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
+fi
+exec sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
+'''
+
 [tasks.reconcile]
 description = "Reconcile this machine, dispatching on hostname"
 dir = "ansible"
@@ -507,7 +533,7 @@ case "$playbook" in
   macos.yml) software_capabilities="$software_capabilities claude-code opencode sessions shp uvc-util" ;;
   work.yml) software_capabilities="$software_capabilities pi sessions uvc-util" ;;
 esac
-config_capabilities="terminal-theme git-client jj-client shell terminal-tools user-tools neovim"
+config_capabilities="terminal-theme git-client jj-client shell terminal-tools user-tools desktop-tools neovim"
 [ "$playbook" = work.yml ] || config_capabilities="$config_capabilities ssh-client"
 [ "$playbook" != work.yml ] || config_capabilities="$config_capabilities python-index"
 normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^homebrew$/mac-apps/; s/^mas$/mac-apps/; s/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | awk '!seen[$0]++' | paste -sd, -)
@@ -517,7 +543,7 @@ case "$playbook:${usage_tags:-}" in
     exit 1
     ;;
 esac
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|neovim|nvim-deps|python-index)$' | paste -sd, -)
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|claude-code|opencode|pi|sessions|shp|uvc-util|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|neovim|nvim-deps|python-index)$' | paste -sd, -)
 case ",${normalized_tags}," in
   ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
 esac

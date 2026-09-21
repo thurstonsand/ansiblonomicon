@@ -155,6 +155,52 @@ exec "$@"
     return result.returncode, calls.read_text().splitlines()
 
 
+@pytest.mark.parametrize(
+    "host,environments",
+    [
+        ("Thurstons-MacBook-Pro", "desktop-tools,desktop-tools-personal"),
+        ("ML-DFC6YK6VJQ", "desktop-tools"),
+    ],
+)
+def test_desktop_tools_root_check_never_fetches_secrets(
+    tmp_path: Path, host: str, environments: str
+) -> None:
+    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["desktop-tools"]
+    binary = tmp_path / "bin"
+    scripts = tmp_path / "scripts"
+    binary.mkdir()
+    scripts.mkdir()
+    calls = tmp_path / "calls"
+    commands = {
+        binary / "hostname": 'printf "%s\\n" "$HOST"',
+        binary / "mise": 'printf "mise %s env=%s\\n" "$*" "$MISE_ENV" >> "$CALLS"',
+        scripts / "fnox-host": 'printf "fnox %s\\n" "$*" >> "$CALLS"; exit 23',
+    }
+    for path, body in commands.items():
+        path.write_text("#!/bin/sh\n" + body + "\n")
+        path.chmod(0o755)
+
+    result = subprocess.run(
+        ["sh", "-c", task["run"]],
+        cwd=tmp_path,
+        env={
+            **os.environ,
+            "PATH": f"{binary}:/usr/bin:/bin",
+            "HOST": host,
+            "CALLS": str(calls),
+            "MISE_PROJECT_ROOT": str(tmp_path),
+            "usage_check": "true",
+        },
+        check=False,
+    )
+
+    assert result.returncode == 0
+    assert calls.read_text().splitlines() == [
+        f"mise -C {tmp_path}/bootstrap/targets/{host} bootstrap --only files "
+        f"--dry-run env={environments}"
+    ]
+
+
 @pytest.mark.parametrize("check", [False, True])
 def test_personal_language_tools_executes_without_private_extension(
     tmp_path: Path, check: bool
@@ -311,6 +357,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         "terminal-tools",
         "tmux",
         "user-tools",
+        "desktop-tools",
         "neovim",
         "nvim-deps",
         "python-index",
@@ -339,6 +386,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:shell" + suffix)
         expected.append("mise run //:terminal-tools" + suffix)
         expected.append("mise run //:user-tools" + suffix)
+        expected.append("mise run //:desktop-tools" + suffix)
         expected.append("mise run //:neovim" + suffix)
         if host == "Thurstons-MacBook-Pro":
             expected.append("mise run //:ssh-client" + suffix)
@@ -513,6 +561,24 @@ def test_user_tools_tag_runs_only_native_capability(
     assert status == 0
     assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
         "mise run //:user-tools" + (" --check" if check else "")
+    ]
+
+
+@pytest.mark.parametrize("host", ["Thurstons-MacBook-Pro", "ML-DFC6YK6VJQ"])
+@pytest.mark.parametrize("check", [False, True])
+def test_desktop_tools_tag_runs_only_native_capability(
+    tmp_path: Path, host: str, check: bool
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host=host,
+        tags="desktop-tools",
+        check=check,
+    )
+    assert status == 0
+    assert calls == ([] if check else ["mise run //:mise:maintain"]) + [
+        "mise run //:desktop-tools" + (" --check" if check else "")
     ]
 
 

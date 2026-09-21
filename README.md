@@ -40,6 +40,8 @@ The [terminal-tools capability](bootstrap/capabilities/terminal-tools/README.md)
 
 The [user-tools capability](bootstrap/capabilities/user-tools/README.md) owns shared LazyGit, SourceKit-LSP, Vim and markdownlint configuration plus standalone helpers. Personal hosts also receive GitHub CLI and Rustup settings. Run `mise user-tools` or `mise laptop -t user-tools`, adding `--check` for a nonmutating preview.
 
+The [desktop-tools capability](bootstrap/capabilities/desktop-tools/README.md) copies mutable application configuration. Go's local telemetry mode is shared by both Macs; five additional configurations and two narrowly scoped eightctl credentials are personal-only. Run `mise desktop-tools` or `mise laptop -t desktop-tools`; checks do not fetch secrets.
+
 ### VCS client configuration
 
 The shared [Git capability](bootstrap/capabilities/git-client/README.md) owns Git defaults, identities, signing configuration, attributes, and ignore patterns. A managed block preserves application-added settings outside it; attributes and ignore patterns are symlinked to the shared sources. The [Jujutsu capability](bootstrap/capabilities/jj-client/README.md) uses a native `conf.d` fragment, preserving the existing user config. Both independently load shared `vcs-identity` facts. SSH key provisioning remains separate.

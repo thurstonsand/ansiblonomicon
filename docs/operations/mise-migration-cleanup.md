@@ -18,6 +18,7 @@ Track temporary compatibility and cutover code here as each capability migrates.
 | Vendor installers/builds | Not applicable                              | Live, verified builds, preserved installers and repeat no-ops  | Pi release verified in isolated Mac; live work cutover pending     |
 | User tools               | Live, verified including repeat no-op       | Live, verified including repeat no-op                          | Fixture-tested; private LazyGit SCM apply pending                  |
 | SSH client               | Live, verified including key load and no-op | Live, verified including effective config and repeat no-op     | Intentionally unmanaged                                            |
+| Desktop tools            | Not applicable                              | Live, already converged; zero writes on apply and repeat       | Fixture-tested common Go telemetry only; live apply pending        |
 
 ## Delete after work cutover is verified
 
