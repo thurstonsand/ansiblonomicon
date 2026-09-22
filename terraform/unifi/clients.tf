@@ -126,17 +126,19 @@ resource "unifi_client" "matic_vacuum_main_floor" {
 }
 
 resource "unifi_client" "ratgdo_garage_door" {
-  mac            = "f4:2d:c9:91:93:04"
-  name           = "ratgdo - Garage Door"
-  fixed_ip       = "10.10.50.105"
-  allow_existing = true
+  mac              = "f4:2d:c9:91:93:04"
+  name             = "ratgdo - Garage Door"
+  fixed_ip         = "10.10.50.105"
+  local_dns_record = "ratgdo-door"
+  allow_existing   = true
 }
 
 resource "unifi_client" "ratgdo_car_occupancy" {
-  mac            = "e0:8c:fe:d8:45:6c"
-  name           = "ratgdo - Car Occupancy"
-  fixed_ip       = "10.10.50.106"
-  allow_existing = true
+  mac              = "e0:8c:fe:d8:45:6c"
+  name             = "ratgdo - Car Occupancy"
+  fixed_ip         = "10.10.50.106"
+  local_dns_record = "ratgdo-occupancy"
+  allow_existing   = true
 }
 
 resource "unifi_client" "honeywell_t5_main_floor" {
