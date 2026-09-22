@@ -1,0 +1,5 @@
+[harness]
+name = "opencode"
+skills_root = "~/.config/opencode/skill"
+name_transform = "lowercase_dash"
+agents_root = "~/.config/opencode/agent"

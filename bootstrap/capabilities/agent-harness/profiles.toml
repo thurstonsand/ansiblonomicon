@@ -1,0 +1,15 @@
+[profiles.personal]
+target_agents = ["claude", "amp", "codex", "opencode", "pi"]
+explicit_only = ["amp"]
+
+[profiles.work]
+target_agents = ["claude", "pi"]
+explicit_only = []
+
+[profiles.pod042]
+target_agents = ["claude", "amp", "codex", "opencode", "pi"]
+explicit_only = ["amp"]
+
+[profiles.amp_publish]
+target_agents = ["amp"]
+explicit_only = []

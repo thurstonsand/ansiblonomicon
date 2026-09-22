@@ -87,7 +87,7 @@ Remote inventory in `bootstrap/mise.toml`. Resources in `terraform/unifi/`.
 
 ## Agent tooling
 
-Spans every host and every harness. Driven by `roles/agent_harness/vars/agents.yml` with sources in `agent-harness.config.yml` and host-specific configs in `agent_harness_profile`.
+Spans every host and every harness. The shared plugin catalogue and harness-native layouts live in `bootstrap/capabilities/agent-harness/`; host declarations select a profile and enabled harnesses. Work and `amp_publish` still consume the catalogue through the Ansible role, with private source extras supplied by host configuration.
 
 - **Plugins** at `agents/<plugin>/skills/`, listed in `.claude-plugin/marketplace.json`. A skill may be a plain `SKILL.md` or a `SKILL.md.j2` templated at deploy time, and this applies to any other `.j2` file in the skill dir. Repo-local skills live at `.agents/skills/`, symlinked into `.claude/skills/`. The `.j2` skills mean a plugin is not installable through Claude's own plugin mechanism, which does no templating — deployment goes through `agent_harness` instead. see `agents/README.md` for more.
 - **User-level Instructions** at `chezmoi/.chezmoitemplates/agents-md`, rendered per harness. Amp is the exception: its user instructions live in a hosted store updated by hand, less the model picker and git verbiage.

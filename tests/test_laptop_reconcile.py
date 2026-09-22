@@ -348,6 +348,8 @@ def test_laptop_dispatches_native_theme_outside_ansible(
             expected.append(f"mise run //:{capability}" + suffix)
     if full:
         expected.append("mise run //:sysconfig" + suffix)
+    if host == "Thurstons-MacBook-Pro" and (full or "agent-harness" in selected):
+        expected.append("mise run //:agent-harness" + suffix)
     native = {
         "mise",
         "mac-apps",
@@ -383,6 +385,7 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         "neovim",
         "nvim-deps",
         "python-index",
+        "agent-harness",
     }
     ansible_tags = [tag for tag in selected if tag not in native]
     if full or ansible_tags:
@@ -447,13 +450,78 @@ def test_mixed_scopes_run_sysconfig_once_before_ansible_and_theme(
     assert status == 0
     assert calls == [
         "mise run //:sysconfig --sections dock --check",
-        "fnox exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- ansible-playbook "
-        "-i inventory/control/macos.ini playbooks/macos.yml --check "
-        "--tags agent-harness",
-        "ansible -i inventory/control/macos.ini playbooks/macos.yml --check "
-        "--tags agent-harness",
+        "mise run //:agent-harness --check",
         "mise run //:terminal-theme --check",
     ]
+
+
+def test_work_agent_harness_continues_through_ansible() -> None:
+    # The work playbook retains private extras and Glimpse support in the role.
+    assert "name: agent_harness" in (ROOT / "ansible/playbooks/work.yml").read_text()
+    assert (
+        "name: agent_harness" not in (ROOT / "ansible/playbooks/macos.yml").read_text()
+    )
+
+
+def test_personal_agent_harness_failure_stops_before_ansible_and_chezmoi(
+    tmp_path: Path,
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags="all",
+        check=True,
+        failure="agent-harness",
+    )
+    assert status == 23
+    assert calls[-1] == "mise run //:agent-harness --check"
+    assert not any(call.startswith(("fnox ", "ansible ")) for call in calls)
+
+
+def test_public_agent_harness_task_routes_only_personal_and_forwards_check(
+    tmp_path: Path,
+) -> None:
+    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["agent-harness"]
+    binary = tmp_path / "bin"
+    python = tmp_path / ".venv/bin/python"
+    binary.mkdir()
+    python.parent.mkdir(parents=True)
+    calls = tmp_path / "calls"
+    (binary / "hostname").write_text('#!/bin/sh\nprintf "%s\\n" "$HOST"\n')
+    (binary / "hostname").chmod(0o755)
+    python.write_text('#!/bin/sh\nprintf "%s\\n" "$*" > "$CALLS"\n')
+    python.chmod(0o755)
+    base_env = {
+        **os.environ,
+        "PATH": f"{binary}:/usr/bin:/bin",
+        "MISE_PROJECT_ROOT": str(tmp_path),
+        "HOME": str(tmp_path / "home"),
+        "CALLS": str(calls),
+        "usage_check": "true",
+        "usage_cached": "",
+    }
+    personal = subprocess.run(
+        ["sh", "-c", task["run"]],
+        env={**base_env, "HOST": "Thurstons-MacBook-Pro"},
+        check=False,
+    )
+    assert personal.returncode == 0
+    assert calls.read_text().splitlines() == [
+        f"{tmp_path}/bootstrap/capabilities/agent-harness/agent_harness_deploy.py "
+        f"--repo {tmp_path} --home {tmp_path}/home "
+        f"--cache {tmp_path}/home/.cache/ansiblonomicon-harness "
+        f"--host-config {tmp_path}/bootstrap/targets/Thurstons-MacBook-Pro/"
+        "mise.agent-harness.toml --check"
+    ]
+    calls.unlink()
+    work = subprocess.run(
+        ["sh", "-c", task["run"]],
+        env={**base_env, "HOST": "ML-DFC6YK6VJQ"},
+        check=False,
+    )
+    assert work.returncode != 0
+    assert not calls.exists()
 
 
 def test_sysconfig_plus_scoped_tag_keeps_full_union_semantics(tmp_path: Path) -> None:

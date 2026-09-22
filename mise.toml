@@ -567,6 +567,31 @@ case "$(hostname -s)" in
 esac
 '''
 
+[tasks."agent-harness"]
+description = "Reconcile native agent skills, subagents, and hook fragments"
+usage = '''
+flag "-c --check" help="Compare cached sources without fetching or writing destinations"
+flag "--cached" help="Apply cached sources without fetching"
+'''
+run = '''
+set -e
+case "$(hostname -s)" in
+  Thurstons-MacBook-Pro)
+    exec "$MISE_PROJECT_ROOT/.venv/bin/python" \
+      "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/agent_harness_deploy.py" \
+      --repo "$MISE_PROJECT_ROOT" --home "$HOME" \
+      --cache "$HOME/.cache/ansiblonomicon-harness" \
+      --host-config "$MISE_PROJECT_ROOT/bootstrap/targets/Thurstons-MacBook-Pro/mise.agent-harness.toml" \
+      ${usage_check:+--check} ${usage_cached:+--cached}
+    ;;
+  pod042)
+    exec uv run --script "$MISE_PROJECT_ROOT/bootstrap/targets/pod042/agent-harness/reconcile.py" \
+      ${usage_check:+--check} ${usage_cached:+--cached}
+    ;;
+  *) echo "Native agent-harness is available only on registered personal systems" >&2; exit 1 ;;
+esac
+'''
+
 [tasks."reconcile:laptop"]
 description = "Reconcile this laptop (auto-detects work vs personal)"
 alias = "laptop"
@@ -616,6 +641,9 @@ case "$playbook:${usage_tags:-}" in
     ;;
 esac
 ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|berkeley-mono|docker-context|claude-code|opencode|pi|sessions|shp|uvc-util|sysconfig|dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index)$' | paste -sd, -)
+if [ "$playbook" = macos.yml ]; then
+  ansible_tags=$(printf '%s' "$ansible_tags" | tr ',' '\n' | grep -Ev '^agent-harness$' | paste -sd, -)
+fi
 case ",${normalized_tags}," in
   ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
 esac
@@ -635,6 +663,11 @@ case ",$normalized_tags," in
   ,,|*,all,*|*,sysconfig,*) mise run //:sysconfig ${usage_check:+--check} || exit "$?" ;;
   *) [ -z "$sysconfig_sections" ] || mise run //:sysconfig --sections "$sysconfig_sections" ${usage_check:+--check} || exit "$?" ;;
 esac
+if [ "$playbook" = macos.yml ]; then
+  case ",$normalized_tags," in
+    ,,|*,all,*|*,agent-harness,*) mise run //:agent-harness ${usage_check:+--check} || exit "$?" ;;
+  esac
+fi
 if [ -n "$full" ] || [ -n "$ansible_tags" ]; then
   [ -z "$full" ] || ansible_tags=
   set -- --secret "$sudo_secret"

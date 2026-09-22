@@ -5,6 +5,7 @@ from dataclasses import dataclass, field
 import json
 from pathlib import Path
 import re
+import tomllib
 from typing import Any, TypedDict, cast
 
 
@@ -42,10 +43,54 @@ PLUGIN_FIELDS = frozenset(
         "exclude_agents",
         "hooks",
         "exclude_data",
+        "remove",
     }
 )
 RESOURCE_KINDS = ("skills", "agents")
 ANY_PROFILE = "*"
+
+
+def agent_harness_load_catalogue(path: str, playbook_dir: str) -> list[SourceConfig]:
+    """Load the canonical TOML catalogue for legacy Ansible consumers."""
+    document = tomllib.loads(Path(path).read_text())
+    sources = document.get("sources")
+    if not isinstance(sources, list):
+        raise ValueError("agent harness catalogue must contain [[sources]]")
+    del playbook_dir
+    repo = Path(path).resolve().parents[3]
+    result = cast(list[SourceConfig], sources)
+    for source in result:
+        local = source.get("local")
+        if isinstance(local, str) and not Path(local).is_absolute():
+            source["local"] = str(repo / local)
+    return result
+
+
+def agent_harness_load_declarations(
+    path: str, home: str, amp_skills_dir: str | None = None
+) -> dict[str, object]:
+    """Load canonical profiles and layouts for the legacy role."""
+    root = Path(path).resolve()
+    profiles = tomllib.loads((root / "profiles.toml").read_text())["profiles"]
+    agents: dict[str, dict[str, object]] = {}
+    for declaration in sorted((root / "harnesses").glob("*/mise.toml")):
+        harness = tomllib.loads(declaration.read_text())["harness"]
+        name = harness["name"]
+        skills = str(harness["skills_root"]).replace("~", home, 1)
+        if name == "amp" and amp_skills_dir:
+            skills = amp_skills_dir
+        agents[name] = {
+            "config_root": str(Path(skills).parent),
+            "skills_dir": skills,
+            "agents_dir": (
+                str(harness["agents_root"]).replace("~", home, 1)
+                if "agents_root" in harness
+                else None
+            ),
+            "name_transform": harness["name_transform"],
+            **({"cleanup_orphaned_skills": False} if name == "codex" else {}),
+        }
+    return {"profiles": profiles, "agents": agents}
 
 
 @dataclass
@@ -58,6 +103,8 @@ class ResourceInfo:
     plugin_root: str = ""
     target_agents: list[str] = field(default_factory=list)
     exclude_data: list[str] = field(default_factory=list)
+    plugin_name: str = ""
+    source_id: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         """Convert to dict for Ansible/Jinja2 compatibility."""
@@ -68,6 +115,8 @@ class ResourceInfo:
             "plugin_root": self.plugin_root,
             "target_agents": list(self.target_agents),
             "exclude_data": list(self.exclude_data),
+            "plugin_name": self.plugin_name,
+            "source_id": self.source_id,
         }
 
 
@@ -78,9 +127,16 @@ class HookFragment:
     name: str
     content: str
     plugin_root: str = ""
+    plugin_name: str = ""
+    source_id: str = ""
 
     def to_dict(self) -> dict[str, str]:
-        return {"name": self.name, "content": self.content}
+        return {
+            "name": self.name,
+            "content": self.content,
+            "plugin_name": self.plugin_name,
+            "source_id": self.source_id,
+        }
 
 
 @dataclass
@@ -103,7 +159,11 @@ class PluginResources:
         if existing is None:
             self.hooks[fragment.name] = fragment
             return
-        if existing.content != fragment.content:
+        same_owner = (
+            existing.source_id == fragment.source_id
+            and existing.plugin_name == fragment.plugin_name
+        )
+        if not same_owner or existing.content != fragment.content:
             msg = (
                 f"plugin {fragment.name}: conflicting hook fragments from "
                 f"{existing.plugin_root} and {fragment.plugin_root}"
@@ -136,6 +196,7 @@ class ResolvedPlugin:
     exclude: dict[str, list[str] | None] = field(default_factory=dict)
     hooks: bool = True
     exclude_data: list[str] = field(default_factory=list)
+    remove: bool = False
 
     @classmethod
     def from_dict(cls, plugin: Mapping[str, Any]) -> ResolvedPlugin:
@@ -157,6 +218,7 @@ class ResolvedPlugin:
             },
             hooks=plugin.get("hooks", True),
             exclude_data=list(plugin.get("exclude_data", [])),
+            remove=plugin.get("remove", False),
         )
 
     @property
@@ -394,6 +456,8 @@ def _resolve_plugin(
         )
     if "hooks" in plugin:
         resolved["hooks"] = _require_bool(plugin["hooks"], label, "hooks")
+    if "remove" in plugin:
+        resolved["remove"] = _require_bool(plugin["remove"], label, "remove")
     return resolved
 
 
@@ -620,6 +684,7 @@ def _apply_selection(
     exclude: list[str] | None,
     label: str,
     kind: str,
+    allow_missing: bool = False,
 ) -> list[tuple[str, Path]]:
     """Narrow discovered resources, rejecting selections that match nothing.
 
@@ -630,6 +695,8 @@ def _apply_selection(
     for selector, entries in (("include", include), ("exclude", exclude)):
         for entry in entries or []:
             if entry not in discovered:
+                if allow_missing:
+                    continue
                 msg = (
                     f"{label}: {selector}_{kind} names {entry!r}, which the plugin "
                     f"does not provide (found: {', '.join(sorted(discovered)) or 'none'})"
@@ -642,12 +709,19 @@ def _apply_selection(
 
 
 def _explicit_skills(
-    source_root: Path, mapping: dict[str, str], label: str
+    source_root: Path, mapping: dict[str, str], label: str, allow_missing: bool = False
 ) -> list[tuple[str, Path]]:
     resolved: list[tuple[str, Path]] = []
     for name, relative in mapping.items():
         skill_dir = _join_within(source_root, relative, label, f"skill {name!r} path")
+        if allow_missing and not skill_dir.exists() and not skill_dir.is_symlink():
+            continue
+        if not skill_dir.is_dir():
+            msg = f"{label}: skill {name!r} at {skill_dir} has no SKILL.md"
+            raise ValueError(msg)
         if _find_skill_md(skill_dir) is None:
+            if allow_missing:
+                continue
             msg = f"{label}: skill {name!r} at {skill_dir} has no SKILL.md"
             raise ValueError(msg)
         resolved.append((name, skill_dir))
@@ -655,11 +729,13 @@ def _explicit_skills(
 
 
 def _explicit_agents(
-    source_root: Path, mapping: dict[str, str], label: str
+    source_root: Path, mapping: dict[str, str], label: str, allow_missing: bool = False
 ) -> list[tuple[str, Path]]:
     resolved: list[tuple[str, Path]] = []
     for name, relative in mapping.items():
         agent_file = _join_within(source_root, relative, label, f"agent {name!r} path")
+        if allow_missing and not agent_file.exists() and not agent_file.is_symlink():
+            continue
         if not agent_file.is_file() or agent_file.suffix != ".md":
             msg = f"{label}: agent {name!r} at {agent_file} is not a .md file"
             raise ValueError(msg)
@@ -672,12 +748,14 @@ DISCOVERERS: dict[
 ] = {"skills": _discover_skills, "agents": _discover_agents}
 
 EXPLICIT_RESOLVERS: dict[
-    str, Callable[[Path, dict[str, str], str], list[tuple[str, Path]]]
+    str, Callable[[Path, dict[str, str], str, bool], list[tuple[str, Path]]]
 ] = {"skills": _explicit_skills, "agents": _explicit_agents}
 
 
 def agent_harness_build_plugin_resources(
-    sources: list[SourceConfig], cache_dir: str
+    sources: list[SourceConfig],
+    cache_dir: str,
+    allow_missing_selections: set[str] | None = None,
 ) -> dict[str, list[dict[str, Any]]]:
     """Resolve every plugin in the resolved sources to files on disk.
 
@@ -702,7 +780,15 @@ def agent_harness_build_plugin_resources(
 
         for entry in source.get("plugins", []):
             plugin = ResolvedPlugin.from_dict(_as_plugin_mapping(entry, source_label))
+            if plugin.remove:
+                continue
+            if not source_root.is_dir():
+                raise ValueError(
+                    f"{source_label}: source root is not an available directory: {source_root}"
+                )
             label = f"{source_label}: plugin {plugin.name}"
+            owner = f"{source.get('repo') or source.get('local')}\0{plugin.name}"
+            allow_missing = owner in (allow_missing_selections or set())
 
             # An explicit map decides the whole plugin: no manifest is consulted
             # for either kind, and the plugin contributes no hooks. Its root is
@@ -725,7 +811,9 @@ def agent_harness_build_plugin_resources(
                     found = (
                         []
                         if explicit is None
-                        else EXPLICIT_RESOLVERS[kind](source_root, explicit, label)
+                        else EXPLICIT_RESOLVERS[kind](
+                            source_root, explicit, label, allow_missing
+                        )
                     )
                 else:
                     found = _apply_selection(
@@ -734,6 +822,7 @@ def agent_harness_build_plugin_resources(
                         plugin.exclude[kind],
                         label,
                         kind,
+                        allow_missing,
                     )
 
                 resources.by_kind[kind].extend(
@@ -744,6 +833,8 @@ def agent_harness_build_plugin_resources(
                         plugin_root=str(plugin_root),
                         target_agents=list(plugin.target_agents),
                         exclude_data=list(plugin.exclude_data),
+                        plugin_name=plugin.name,
+                        source_id=str(source.get("repo") or source.get("local")),
                     )
                     for name, path in found
                 )
@@ -759,6 +850,8 @@ def agent_harness_build_plugin_resources(
                         name=plugin.name,
                         content=hooks,
                         plugin_root=str(plugin_root),
+                        plugin_name=plugin.name,
+                        source_id=str(source.get("repo") or source.get("local")),
                     )
                 )
 
@@ -851,6 +944,22 @@ def agent_harness_filter_resources(
         }
         name = transformed_resource["name"]
         if existing_resource := resources_by_name.get(name):
+            # Selector rows for one plugin can overlap.  Selection is already
+            # resolved for this target, so target_agents is not resource
+            # identity and identical rows collapse here.
+            identity_fields = (
+                "source",
+                "origin",
+                "plugin_root",
+                "exclude_data",
+                "plugin_name",
+                "source_id",
+            )
+            if all(
+                existing_resource.get(field) == transformed_resource.get(field)
+                for field in identity_fields
+            ):
+                continue
             msg = (
                 f"Multiple resources target {target_agent}:{name}: "
                 f"{existing_resource['source']} and {resource['source']}"
@@ -1034,4 +1143,6 @@ class FilterModule:
             "agent_harness_transform_skill": agent_harness_transform_skill,
             "agent_harness_transform_skill_content": agent_harness_transform_skill_content,
             "agent_harness_repo_to_cache_name": agent_harness_repo_to_cache_name,
+            "agent_harness_load_catalogue": agent_harness_load_catalogue,
+            "agent_harness_load_declarations": agent_harness_load_declarations,
         }

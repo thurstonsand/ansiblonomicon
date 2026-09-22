@@ -1,0 +1,5 @@
+[harness]
+name = "claude"
+skills_root = "~/.claude/skills"
+name_transform = "preserve"
+agents_root = "~/.claude/agents"

@@ -1,0 +1,79 @@
+# Canonical shared plugin catalogue. Host/profile and harness layout live beside this file.
+
+[[sources]]
+repo = "mattpocock/skills"
+[[sources.plugins]]
+name = "mattpocock-skills"
+include_skills = ["resolving-merge-conflicts", "teach", "to-questionnaire", "wizard", "writing-for-agents"]
+
+[[sources]]
+repo = "vercel-labs/agent-browser"
+excluded_on = ["work"]
+[[sources.plugins]]
+name = "agent-browser"
+target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "opencode", "pi"] }
+
+[[sources]]
+repo = "modem-dev/hunk"
+excluded_on = ["work"]
+[[sources.plugins]]
+name = "hunk"
+skills = { "hunk-review" = "packages/hunk/skills/hunk-review", "hunk-extensions" = "packages/hunk/skills/hunk-extensions" }
+
+[[sources]]
+repo = "remorses/tuistory"
+excluded_on = ["work"]
+[[sources.plugins]]
+name = "tuistory"
+skills = { "tuistory" = "skills/tuistory" }
+
+[[sources]]
+repo = "Shpigford/nurb"
+excluded_on = ["work"]
+[[sources.plugins]]
+name = "nurb"
+skills = { "nurb" = "skills/nurb" }
+
+[[sources]]
+local = "agents/pi"
+[[sources.plugins]]
+name = "pi"
+target_agents = ["pi"]
+
+[[sources]]
+local = "agents/project-management"
+[[sources.plugins]]
+name = "project-management"
+target_agents = ["pi"]
+exclude_skills = { "work" = ["grill-me", "tui-screenshot"], "*" = ["grill-me"] }
+[[sources.plugins]]
+name = "project-management"
+target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex", "opencode"] }
+exclude_skills = { "work" = ["tui-screenshot"], "amp_publish" = ["notify"] }
+
+[[sources]]
+local = "agents/claude"
+[[sources.plugins]]
+name = "claude"
+target_agents = ["claude"]
+exclude_skills = { "work" = ["retitle"] }
+
+[[sources]]
+local = "agents/codex"
+[[sources.plugins]]
+name = "codex"
+target_agents = ["codex"]
+
+[[sources]]
+local = "agents/work"
+included_on = ["work"]
+[[sources.plugins]]
+name = "work"
+
+[[sources]]
+local = "agents/homelab"
+excluded_on = ["work"]
+[[sources.plugins]]
+name = "homelab"
+target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex", "opencode", "pi"] }
+exclude_data = ["__pycache__", "*.pyc"]

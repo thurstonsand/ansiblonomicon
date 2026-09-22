@@ -1,0 +1,8 @@
+[agent_harness]
+profile = "personal"
+enabled = ["claude", "amp", "codex", "opencode", "pi"]
+explicit_only = ["amp"]
+hostname = "Thurstons-MacBook-Pro"
+trim_blocks = true
+update = "86400s"
+manifest = "macos-managed-files.json"

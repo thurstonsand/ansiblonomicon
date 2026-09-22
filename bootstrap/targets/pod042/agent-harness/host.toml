@@ -1,0 +1,8 @@
+[agent_harness]
+profile = "pod042"
+enabled = ["claude", "amp", "codex", "opencode", "pi"]
+explicit_only = ["amp"]
+hostname = "pod042"
+trim_blocks = false
+update = "always"
+manifest = "pod042-managed-files.json"

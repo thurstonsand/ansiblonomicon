@@ -1,0 +1,4 @@
+[harness]
+name = "pi"
+skills_root = "~/.pi/agent/skills"
+name_transform = "lowercase_dash"

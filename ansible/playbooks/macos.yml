@@ -51,14 +51,6 @@
       ansible.builtin.import_tasks: ../tasks/remove_legacy_ghostty_nav.yml
       tags: ["ghosttykit"]
 
-    - name: Deploy AI agent resources
-      ansible.builtin.include_role:
-        name: agent_harness
-        apply:
-          tags: ["agent-harness"]
-      when: configure_agent_harness | default(true)
-      tags: ["agent-harness"]
-
     - name: Apply chezmoi dotfiles
       ansible.builtin.include_role:
         name: chezmoi

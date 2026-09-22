@@ -1,9 +1,9 @@
 """Tests for the agent harness adapter schema."""
 
 from pathlib import Path
-from typing import Any
+from typing import cast
 
-import yaml
+from harness_filters import agent_harness_load_declarations
 
 ROLE_ROOT = Path(__file__).parent.parent
 REQUIRED_ADAPTER_FIELDS = {
@@ -21,9 +21,12 @@ ALLOWED_ADAPTER_FIELDS = REQUIRED_ADAPTER_FIELDS | OPTIONAL_ADAPTER_FIELDS
 
 
 def test_agent_adapters_conform_to_schema() -> None:
-    agents_file = ROLE_ROOT / "vars" / "agents.yml"
-    document: dict[str, Any] = yaml.safe_load(agents_file.read_text())
-    agents: dict[str, dict[str, Any]] = document["agent_harness_agents"]
+    declarations = agent_harness_load_declarations(
+        str(ROLE_ROOT.parents[2] / "bootstrap/capabilities/agent-harness"),
+        "/home/test",
+    )
+    agents = cast(dict[str, dict[str, object]], declarations["agents"])
+    assert isinstance(agents, dict)
 
     for agent_name, adapter in agents.items():
         assert not REQUIRED_ADAPTER_FIELDS - adapter.keys(), agent_name

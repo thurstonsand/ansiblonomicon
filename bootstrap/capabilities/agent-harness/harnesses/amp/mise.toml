@@ -1,0 +1,4 @@
+[harness]
+name = "amp"
+skills_root = "~/.config/amp/skills"
+name_transform = "preserve"

@@ -1,6 +1,6 @@
 # agents/
 
-Skill plugins deployed by the `agent_harness` role. Each directory here is one plugin, listed in `.claude-plugin/marketplace.json` and wired up in `ansible/agent-harness.config.yml`.
+Locally authored skill plugins deployed by the agent harness capability. Each directory here is one plugin, listed in `.claude-plugin/marketplace.json` and selected for deployment from `bootstrap/capabilities/agent-harness/catalogue.toml`.
 
 Most of what a harness ends up with is pulled verbatim from upstream repos and never lands in this tree. This file covers the exceptions: skills we fork rather than consume, and therefore have to re-sync by hand. Two upstreams so far, [mattpocock/skills](https://github.com/mattpocock/skills) and [cursor/plugins](https://github.com/cursor/plugins).
 

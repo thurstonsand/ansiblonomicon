@@ -68,9 +68,15 @@ Small vendor-installed and source-built software is also native: run `mise claud
 
 Capability-driven Node upgrades carry unmanaged registry npm globals into the new prefix at their installed versions, excluding bundled npm/Corepack. A private pending snapshot survives failed runs and is removed after successful reconciliation; linked/local packages require explicit handling before an upgrade. The self-contained Node postinstall hook restores declared packages even when Node is installed outside reconciliation.
 
-Full laptop reconciliation ensures and maintains the standalone mise binary before Homebrew cleanup, then runs Mac apps, language tools, vendor-installed and source-built software tasks, native system configuration, one remaining Ansible invocation, and native user configuration capabilities. `mise laptop -t homebrew,language-tools` runs only the selected native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
+Full laptop reconciliation ensures and maintains the standalone mise binary before Homebrew cleanup, then runs Mac apps, language tools, vendor-installed and source-built software tasks, native system configuration, the personal agent catalogue, one remaining Ansible invocation, and native user configuration capabilities. `mise laptop -t homebrew,language-tools` runs only the selected native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
 
 The [macOS system capability](bootstrap/capabilities/macos-system/README.md) owns typed preferences, sudo Touch ID, and personal hostname. Run `mise sysconfig` or `mise laptop -t dock,finder`, adding `--check` for a preview. Apps restart only when their preferences change; work hostname and existing work `pam_reattach` lines remain unmanaged.
+
+### Agent catalogue
+
+On the personal Mac, `mise agent-harness` reconciles skills, subagents, and hook fragments through the [native catalogue capability](bootstrap/capabilities/agent-harness/README.md). `--check` compares cached sources without refreshing them; `--cached` applies those same cached sources. Normal apply refreshes declared Git sources at most once per day. Exact-file ownership preserves independently installed skills, Claude's `synced/` tree, and existing parent-directory permissions.
+
+Full personal laptop reconciliation runs the catalogue before chezmoi consumes hook fragments. Work still uses the Ansible role through `mise laptop -t agent-harness`; its private sources and Glimpse integration have not migrated. Harness settings, MCP registration, package dependencies, and hosted Amp publication retain their existing owners.
 
 ### Retiring managed paths
 
@@ -84,7 +90,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work 
 │   ├── ansible.cfg          # Ansible configuration
 │   ├── inventory/           # Host definitions
 │   ├── config.yml           # Shared configuration variables
-│   ├── agent-harness.config.yml # Agent skill catalogue + host capability profiles
+│   ├── agent-harness.config.yml # Legacy Ansible compatibility and private host extras
 │   ├── darwin.config.yml    # macOS-specific config
 │   ├── work.config.yml     # Work macOS-specific config
 │   ├── pod042.config.yml    # Retained pod042 service migration declarations
@@ -100,9 +106,9 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work 
 │       ├── work.yml         # Work macOS playbook
 ├── chezmoi/                  # Dotfiles managed by chezmoi
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
-├── agents/                   # Reusable AI agent bundles (source for agent_harness role)
+├── agents/                   # Locally authored plugins selected by the native agent catalogue
 ├── .agents/                  # Project-local Claude/Pi skills for this repo
-├── bootstrap/                # Native mise host bootstrap projects and remote inventory
+├── bootstrap/                # Native mise capabilities, agent catalogue, host targets, and remote inventory
 ├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
 ├── terraform/unifi/          # UniFi Network application (VLANs, zones, WLANs, ports)
 ├── wrangler/                 # Cloudflare Workers (deployed via wrangler)

@@ -2,6 +2,10 @@
 
 Track temporary compatibility and cutover code here as each capability migrates. Remove an item only after its exit condition is verified on every affected host, including the work laptop. A passing fixture is not a completed work-host cutover. Update this ledger in the same change that adds or removes migration machinery.
 
+## After the current harness changes are completed, committed, and pushed
+
+- [ ] **Audit every `bootstrap.files` usage against native `dotfiles`.** Review all declarations and generated resources for migration to `dotfiles`, keeping explicit permission/ownership requirements, mutable application files, templates, and removals intact. Apply a consistent source policy: link unchanged ansiblonomicon-native assets, copy external Git assets, and render transformed content into real files; document justified exceptions. Do not start this audit before the current harness changes have shipped.
+
 ## Current rollout
 
 | Capability               | pod042                                      | Personal Mac                                                   | Work Mac                                                           |
@@ -22,12 +26,19 @@ Track temporary compatibility and cutover code here as each capability migrates.
 | Editor and LLM config    | Not applicable                              | Live, all 12 outputs semantically preserved; repeat no-op      | Fixture-tested Zed-only render; live apply pending                 |
 | Fonts and Docker context | Not applicable                              | Live direct capability check/apply/repeat; zero writes         | Font fixture-tested; live work font verification pending           |
 | macOS system config      | Not applicable                              | Live; induced drift repaired and repeat verified               | Fixture-tested; private inventory review and live cutover pending  |
+| Agent catalogue          | Live, 236 outputs preserved                 | Live, 236 exact outputs; cached apply and repeat verified      | Ansible retained; private sources and Glimpse cutover pending      |
 
 Font and Docker hardware verification used `bootstrap/capabilities/software/reconcile` directly with blocking provider/mutation sentinels. The instrumented root task path entered repository authentication before reaching the capability; root task routing is fixture-tested, not live-verified under those sentinels. Fresh font acquisition is fixture-tested only because all four fonts already exist on the personal Mac.
 
 macOS system hardware verification used the direct `reconcile.py` entry point. Native status loaded all 27 preferences and the single PAM resource. An authorized drift test changed `NSAutomaticCapitalizationEnabled` from boolean false to true: native status detected exactly one drifted key, check mode reported the correction without writing, apply restored boolean false, and repeat was a no-op. Independent full snapshots confirmed all 27 typed preferences, PAM bytes/ownership/mode/inode/mtime, and all three hostnames matched the original baseline. Blocking sentinels observed no credentials, sudo, app restarts, or hostname writes. Native PAM rendering/apply/repeat is tested with unprivileged disposable files; production root-owned PAM and hostname writes remain unexercised. Root task routing is fixture-tested, not live-verified under the sentinels.
 
+Agent-harness catalogue rendering and per-plugin ownership are shared across the personal Mac and pod042. Native mise dotfiles link unchanged local assets and copy Git or transformed assets; explicit absence resources propagate recorded removals. Omitted plugins retain their paths and provenance. On pod042, cached apply produced 236 exact outputs (152 source links and 84 regular files); repeat preserved output and manifest metadata, foreign files, parent permissions/ownership/inodes, and all 10 source-cache records. Local links inherit source permissions without modifying the checkout.
+
+The personal Mac's cached per-plugin apply converted 152 copies to source links and preserved 84 regular files. Repeat preserved output metadata; foreign Claude checkout and `synced/` content, the local Amp `operating-pod042` skill, 15 source stamps, and 7 Git checkouts remained unchanged. The version 3 selection-proof upgrade is verified live on both systems: ten validated plugin selections were recorded without changing outputs, and repeat snapshots were identical. It permits upstream removal of previously validated named selections while rejecting changed selector typos; legacy inventories establish proof before refreshing sources. Verification uses direct entry points; public root routing is fixture-tested only. Disposable fixtures cover cloning, refresh recovery, legacy adoption, omission, deletion propagation, explicit retirement, and cross-owner collisions. Work deployment remains on the Ansible role. Harness settings, MCP registration, package dependencies and hosted Amp publication remain unchanged.
+
 ## Delete after work cutover is verified
+
+- [ ] **Legacy harness deployment tasks.** Retain the Ansible role while work-private source additions and Glimpse linkage remain unmigrated and hosted Amp publication still consumes it. The shared renderer intentionally reuses the existing resolver and catalogue declarations. Do not delete those sources with the deployment tasks. Unknown installed resources and stale source caches are not native-owned on adoption; do not prune entire directories to simulate ownership.
 
 - [ ] **Legacy macOS defaults role and facts.** Native mise owns the 27 preferences, sudo Touch ID policy, and personal hostname. Retain `ansible/roles/macos_defaults` plus `configure_macos_defaults` and `configure_pam_reattach` facts as cutover references until both Macs verify typed preference parity and repeat no-ops, and the private work inventory has been checked for overrides. Then remove them together.
 

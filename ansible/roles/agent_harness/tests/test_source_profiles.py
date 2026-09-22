@@ -5,6 +5,8 @@ from typing import Any
 
 from harness_filters import (
     agent_harness_build_plugin_resources,
+    agent_harness_load_catalogue,
+    agent_harness_load_declarations,
     agent_harness_resolve_sources,
 )
 import pytest
@@ -374,6 +376,17 @@ def real_config() -> dict[str, Any]:
         (ANSIBLE_ROOT / "agent-harness.config.yml").read_text()
     )
     assert isinstance(document, dict)
+    document["agent_harness_sources"] = agent_harness_load_catalogue(
+        str(
+            ANSIBLE_ROOT.parent / "bootstrap/capabilities/agent-harness/catalogue.toml"
+        ),
+        "{{ playbook_dir }}",
+    )
+    declarations = agent_harness_load_declarations(
+        str(ANSIBLE_ROOT.parent / "bootstrap/capabilities/agent-harness"),
+        "/home/test",
+    )
+    document["agent_harness_profiles"] = declarations["profiles"]
     return document
 
 
@@ -463,5 +476,5 @@ def test_real_work_profile_only_adds_its_machine_local_source() -> None:
             )
         }
 
-    work_only = "{{ playbook_dir }}/../../agents/work"
+    work_only = str(ANSIBLE_ROOT.parent / "agents/work")
     assert names("work") - {work_only} <= names("personal")

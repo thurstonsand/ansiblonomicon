@@ -1,0 +1,4 @@
+[harness]
+name = "codex"
+skills_root = "~/.codex/skills"
+name_transform = "preserve"
