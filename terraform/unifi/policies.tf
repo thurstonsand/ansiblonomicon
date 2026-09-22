@@ -116,6 +116,52 @@ resource "unifi_firewall_policy" "home_assistant_to_matic" {
   }
 }
 
+resource "unifi_firewall_policy" "home_assistant_to_ratgdo" {
+  name                 = "Home Assistant to ratgdo"
+  action               = "ALLOW"
+  protocol             = "tcp"
+  ip_version           = "IPV4"
+  create_allow_respond = true
+
+  source = {
+    zone_id         = unifi_firewall_zone.scanners.id
+    matching_target = "IP"
+    ips             = ["10.10.40.42"]
+  }
+
+  destination = {
+    zone_id            = unifi_firewall_zone.the_village.id
+    matching_target    = "IP"
+    ips                = ["10.10.50.105", "10.10.50.106"]
+    port               = "6053"
+    port_matching_type = "SPECIFIC"
+  }
+}
+
+# Resideo does not publish the thermostats' HAP port, and they only advertise it
+# during a timed pairing window, so there is no port to pin here. The blast radius
+# is bounded the other way instead: one source address, two destination addresses.
+resource "unifi_firewall_policy" "home_assistant_to_thermostats" {
+  name                 = "Home Assistant to Honeywell thermostats"
+  action               = "ALLOW"
+  protocol             = "all"
+  ip_version           = "IPV4"
+  create_allow_respond = true
+
+  source = {
+    zone_id         = unifi_firewall_zone.scanners.id
+    matching_target = "IP"
+    ips             = ["10.10.40.42"]
+  }
+
+  destination = {
+    zone_id            = unifi_firewall_zone.the_village.id
+    matching_target    = "IP"
+    ips                = ["10.10.50.180", "10.10.50.117"]
+    port_matching_type = "ANY"
+  }
+}
+
 resource "unifi_firewall_policy" "yorha_to_the_village" {
   name                 = "YoRHa to The Village"
   action               = "ALLOW"

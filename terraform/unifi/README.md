@@ -18,7 +18,7 @@ OpenTofu owns:
 - the disabled Internet 1 backup and primary WAS-110 DHCP WAN, including priority, failover mode, and the sensitive cloned MAC
 - the `192.168.11.0/24` WAS-110 LCT interface route
 - the Plex TCP `32400` WAN port forward to pod042
-- Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, and Scanners, restricted to Apple AirPlay, HomeKit, and the `_ipp._tcp.local`, `_ipps._tcp.local`, `_uscan._tcp.local`, `_uscans._tcp.local`, `_hue._tcp.local`, and `_hap._tcp.local` custom services
+- Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, Scanners, and The Village, restricted to Apple AirPlay, HomeKit, and the `_ipp._tcp.local`, `_ipps._tcp.local`, `_uscan._tcp.local`, `_uscans._tcp.local`, `_hue._tcp.local`, and `_hap._tcp.local` custom services
 - Network-device automatic update policy
 
 Manual state remains manual because the provider cannot represent or safely round-trip it:
@@ -48,19 +48,20 @@ The controller was factory-reset and bootstrapped behind the BGW620 on UDM port 
 - YoRHa may initiate toward Bunker, Lunar Tear, Scanners, and The Village, with automatic return traffic
 - Lunar Tear may initiate toward Scanners, with automatic return traffic
 - Bunker initiation toward YoRHa has an explicit logged block; the zone matrix denies other unapproved inter-zone initiation
-- Gateway mDNS Proxy uses Custom mode for YoRHa, Lunar Tear, and Scanners only; Bunker and The Village remain excluded. Service scope contains the predefined Apple AirPlay and HomeKit groups plus the AirPrint, AirScan, Philips Hue, and explicit `_hap._tcp.local` HomeKit Accessory custom services. The gateway browses only service types a network lists when asked, and the Canon printer never answers, so `pod042 mDNS Beacon` on Scanners answers on its behalf.
+- Gateway mDNS Proxy uses Custom mode for YoRHa, Lunar Tear, Scanners, and The Village; Bunker remains excluded. Service scope contains the predefined Apple AirPlay and HomeKit groups plus the AirPrint, AirScan, Philips Hue, and explicit `_hap._tcp.local` HomeKit Accessory custom services. The gateway browses only service types a network lists when asked, and the Canon printer never answers, so `pod042 mDNS Beacon` on Scanners answers on its behalf.
 
 The full physical cutover and rollback gates live in [`docs/wayfinding/new-house-internet-cutover/tickets/03-cutover-safety-gates.md`](../../docs/wayfinding/new-house-internet-cutover/tickets/03-cutover-safety-gates.md).
 
 ## Provider constraints
 
-The provider is pinned exactly to `github.com/thurstonsand/unifi` 0.56.0-ansiblonomicon.6, built from the `release` branch of the permanent [`terraform-provider-unifi`](https://github.com/thurstonsand/terraform-provider-unifi) fork. `provider.toml` records the checksums for macOS ARM64, Linux AMD64, and Linux ARM64. `mise run unifi:provider:install` verifies the matching GitHub Release archive and installs only its binary into OpenTofu's implied filesystem mirror; extra archive files change OpenTofu's directory hash. The fork is not published to a provider registry.
+The provider is pinned exactly to `github.com/thurstonsand/unifi` 0.56.0-ansiblonomicon.7, built from the `release` branch of the permanent [`terraform-provider-unifi`](https://github.com/thurstonsand/terraform-provider-unifi) fork. `provider.toml` records the checksums for macOS ARM64, Linux AMD64, and Linux ARM64. `mise run unifi:provider:install` verifies the matching GitHub Release archive and installs only its binary into OpenTofu's implied filesystem mirror; extra archive files change OpenTofu's directory hash. The fork is not published to a provider registry.
 
 Shared R2 state moved from `registry.opentofu.org/ubiquiti-community/unifi` to the fork source once with `tofu state replace-provider`. Do not repeat that migration. The backend uses OpenTofu's native S3 lockfile; R2 rejects a competing conditional lock write. The encrypted pre-migration snapshot lives outside Git under `~/Documents/Network Backups/`.
 
 Known sharp edges:
 
 - The provider exposes both `unifi_network.firewall_zone_id` and `unifi_firewall_zone.network_ids`, which fight when both own membership. This module deliberately leaves `firewall_zone_id` unset; zones alone own membership here.
+- mDNS membership is owned solely by `unifi_setting.site`'s `enabled_for_network_ids`. The controller writes it through a v2 endpoint and recomputes `unifi_network.multicast_dns` from it, so that attribute is computed-only as of 0.56.0-ansiblonomicon.7 and setting it is a plan error. Add a network to the list here, never to the network resource.
 - policy ordering is read-only. Confirm named allows precede named/default blocks in the UI after import or creation.
 - native Bunker may normalize VLAN 1 differently across controller versions. Conform HCL to a harmless imported representation; never apply a VLAN change merely to silence a plan.
 - `unifi_wan` owns both WAN records and the sensitive cloned MAC. The UDM's `ethernet_override` blocks own only the `eth8`/WAN and `eth9`/WAN2 assignments; they do not force port 10 speed or duplex.

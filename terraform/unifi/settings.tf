@@ -11,6 +11,13 @@ resource "unifi_setting" "site" {
       unifi_network.yorha.id,
       unifi_network.lunar_tear.id,
       unifi_network.scanners.id,
+      # Untrusted vendor hardware lives on The Village, but Home Assistant sits on
+      # Scanners, and HomeKit accessories are resolved through mDNS on every
+      # reconnect rather than only at pairing. Without reflection the thermostats
+      # are reachable exactly until they renumber. Reflection is mutual and
+      # discovery-only: The Village can now see the reflected service records from
+      # the other segments, but no policy permits it to open a connection to them.
+      unifi_network.the_village.id,
     ]
     predefined_services = [
       "apple_airPlay",

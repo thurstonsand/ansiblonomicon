@@ -15,14 +15,14 @@ resource "unifi_wlan" "yorha" {
   # AWDL, which carries Continuity, only runs on 2.4 and 5 GHz. A Mac parked on
   # 6 GHz cannot discover an iPhone associated to the same SSID on 5 GHz, and
   # macOS reports it as "not on the same network".
-  wlan_bands      = ["2g", "5g"]
+  wlan_bands = ["2g", "5g"]
   # MLO splits the SSID into an MLD BSS and a legacy one. Clients on the legacy
   # side, which here is every device except the iPhone, then receive no
   # group-addressed traffic at all: no reflected mDNS, and nothing from each
   # other. Discovery across VLANs cannot work while that is true. Worth retesting
   # once more than one device here speaks Wi-Fi 7, with a 30-second capture of
   # udp/5353 on a legacy-side client as the verdict.
-  mlo_enabled     = false
+  mlo_enabled = false
 
   lifecycle {
     ignore_changes = [ap_group_ids]

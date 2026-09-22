@@ -125,6 +125,34 @@ resource "unifi_client" "matic_vacuum_main_floor" {
   allow_existing = true
 }
 
+resource "unifi_client" "ratgdo_garage_door" {
+  mac            = "f4:2d:c9:91:93:04"
+  name           = "ratgdo - Garage Door"
+  fixed_ip       = "10.10.50.105"
+  allow_existing = true
+}
+
+resource "unifi_client" "ratgdo_car_occupancy" {
+  mac            = "e0:8c:fe:d8:45:6c"
+  name           = "ratgdo - Car Occupancy"
+  fixed_ip       = "10.10.50.106"
+  allow_existing = true
+}
+
+resource "unifi_client" "honeywell_t5_main_floor" {
+  mac            = "5c:fc:e1:ed:98:e4"
+  name           = "Honeywell T5 - Main Floor"
+  fixed_ip       = "10.10.50.180"
+  allow_existing = true
+}
+
+resource "unifi_client" "honeywell_t5_second_floor" {
+  mac            = "5c:fc:e1:ed:9b:a8"
+  name           = "Honeywell T5 - Second Floor"
+  fixed_ip       = "10.10.50.117"
+  allow_existing = true
+}
+
 resource "unifi_client" "breville_oracle_dual_boiler" {
   mac            = "98:a1:4a:3c:22:d8"
   name           = "Breville Oracle Dual Boiler"
