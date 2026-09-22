@@ -2,11 +2,11 @@
 # Manual edits may be lost in future updates.
 
 provider "github.com/thurstonsand/unifi" {
-  version     = "0.56.0-ansiblonomicon.6"
-  constraints = "0.56.0-ansiblonomicon.6"
+  version     = "0.56.0-ansiblonomicon.7"
+  constraints = "0.56.0-ansiblonomicon.7"
   hashes = [
-    "h1:Ag5ViXpIkrK0iyNrdcCk7Xp2uDyB9U3XG9e3jWDhs64=",
-    "h1:aoO0ulOCLfkA12PcolsHdSomJJvEhtOzTKzUZoc3dq4=",
-    "h1:rsQ84ZwuCMPlSopjN0RBNC2EMgpbgyjOdf+6ibA6oVE=",
+    "h1:C8eaCwzfpKgwqsjzGl6fBOXW6hRYihLif3S1x0m5+mQ=",
+    "h1:hcamNVh1tVLFkvJhsJSOEHqaORXdbocL6903kWwkgmI=",
+    "h1:zCcc3n2Nic2dqyXk3P9dBhTHIzAoHPKNw40SZ//VogU=",
   ]
 }
