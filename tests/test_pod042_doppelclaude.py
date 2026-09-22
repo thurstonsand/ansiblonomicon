@@ -21,7 +21,7 @@ def test_compose_contract_and_private_runtime() -> None:
         ],
         env=os.environ
         | {
-            "DOPPELCLAUDE_IMAGE": "example.com/doppelclaude@sha256:" + "a" * 64,
+            "DOPPELCLAUDE_IMAGE": "example.com/doppelclaude:latest",
             "DOPPELCLAUDE_HTTP_API_KEY": "test-client-key",
             "CLAUDE_CODE_OAUTH_TOKEN": "test-subscription-token",
         },
@@ -30,6 +30,7 @@ def test_compose_contract_and_private_runtime() -> None:
         check=True,
     )
     service = json.loads(result.stdout)["services"]["doppelclaude"]
+    assert service["image"] == "example.com/doppelclaude:latest"
     assert service["platform"] == "linux/amd64"
     assert service["user"] == "3456:3456"
     assert service["read_only"] is True

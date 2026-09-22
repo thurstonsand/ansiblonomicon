@@ -4,11 +4,9 @@
 import argparse
 from collections.abc import Sequence
 from pathlib import Path
-import re
 import socket
 import subprocess
 import sys
-import tomllib
 from typing import NoReturn
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -197,10 +195,6 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         "terminal-tools-plugins",
     }
     if "doppelclaude" in selected:
-        config = tomllib.loads((TARGET_ROOT / "mise.doppelclaude.toml").read_text())
-        image = config["vars"]["doppelclaude_image"]
-        if not re.fullmatch(r"[\w./:-]+@sha256:[0-9a-f]{64}", image):
-            fail("Set vars.doppelclaude_image to a reviewed image@sha256 digest first")
         run_command(["findmnt", "--mountpoint", "/mnt/black-box/docker"])
         run_command(["sudo", "-n", "docker", "network", "inspect", "ingress"])
     bootstrap_capabilities = tuple(

@@ -1,6 +1,6 @@
 services:
   doppelclaude:
-    image: "${DOPPELCLAUDE_IMAGE:?set a reviewed digest-pinned image}"
+    image: "${DOPPELCLAUDE_IMAGE:?required}"
     platform: linux/amd64
     user: "3456:3456"
     init: true

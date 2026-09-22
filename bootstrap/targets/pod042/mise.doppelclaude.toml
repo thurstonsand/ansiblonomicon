@@ -1,5 +1,5 @@
 [vars]
-doppelclaude_image = "ghcr.io/thurstonsand/http-doppelclaude@sha256:dedd8811e6b2f99154967b52fa63dac116176662e3b25aead7e6962c18052d16"
+doppelclaude_image = "ghcr.io/thurstonsand/http-doppelclaude:latest"
 
 [bootstrap.secrets]
 doppelclaude_api_key = "CLI_PROXY_API_KEY"
@@ -49,7 +49,7 @@ env_files = [".env"]
 project_name = "doppelclaude"
 state = "running"
 sudo = true
-pull = "missing"
+pull = "always"
 wait = true
 wait_timeout = 120
 remove_orphans = true

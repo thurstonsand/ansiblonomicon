@@ -1,6 +1,6 @@
 # Doppelclaude hosting
 
-Status: the dedicated Worker, origin DNS/Access application, tunnel route, HSTS entries and pod042 daemon were deployed on 2026-09-19. The first host image is pinned from the successful [application workflow](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35427699682), [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/0ef33ee04c554a006c75c0c0bae504f80593d116), with anonymous registry access verified. The `pi-doppelclaude` repository owns the daemon-only Dockerfile and GitHub Actions build, test and publication workflow. Ansiblonomicon only consumes its published image and configures the service. `vars.doppelclaude_image` in `bootstrap/targets/pod042/mise.doppelclaude.toml` must contain a reviewed registry image with an `@sha256:` digest, never a moving tag. Both focused and full reconciliation reject invalid references before host commands or secret resolution.
+Status: the dedicated Worker, origin DNS/Access application, tunnel route, HSTS entries and pod042 daemon were deployed on 2026-09-19. The `pi-doppelclaude` repository owns the daemon-only Dockerfile and GitHub Actions build, test and publication workflow. Stable releases publish a multi-architecture `ghcr.io/thurstonsand/http-doppelclaude:latest` image. Ansiblonomicon consumes that tag, always pulls it during reconciliation and configures the service; it does not build or promote images.
 
 ## Route and authentication
 
@@ -32,8 +32,8 @@ Return `Content-Type: text/event-stream`, flush headers immediately, and send SS
 
 ## Installation and activation gates
 
-1. Obtain the successful application GitHub Actions run and its published `linux/amd64` image digest. The intended registry package is `ghcr.io/thurstonsand/http-doppelclaude`. Image building, base-image selection, tests, tagging and publication belong to that application repository, not this host or repo.
-2. Record the reviewed registry reference in `vars.doppelclaude_image`. There is no local image assembly or runtime-tarball handoff. Do not substitute a candidate package or unbuilt source branch for the published image.
+1. Confirm the stable application GitHub Actions run published `ghcr.io/thurstonsand/http-doppelclaude:latest` with `linux/amd64` and `linux/arm64` manifests. Image building, base-image selection, tests, tagging and publication belong to that application repository, not this host or repo.
+2. Keep `vars.doppelclaude_image` on the stable `latest` tag. Reconciliation always pulls it before converging the service. There is no local image assembly or runtime-tarball handoff.
 3. Confirm pod042 already has the Docker `ingress` network and mounted `/mnt/black-box/docker`. The driver checks these prerequisites without reconciling the shared containers capability. The focused apply also skips mise binary maintenance. Review UID/GID 3456 availability before creating the service account.
 4. Obtain approval to push the reviewed infrastructure changes, create the new host stack, apply Cloudflare changes, and deploy the Worker and its secret bindings. Run the host commands on pod042's reviewed checkout; they reject any other hostname. Application workflow execution/publication has its own approval boundary.
 5. On pod042, run `mise pod042 doppelclaude --check`, then `mise pod042 doppelclaude` after approval. These select only the new capability, not existing stacks. Run `mise run edge:plan`, review the plan, and apply with `mise run edge:apply` after approval. The tunnel configuration depends on the origin Access application so protection is created before the route.
@@ -92,7 +92,7 @@ The body-limit image from [workflow 35524085938](https://github.com/thurstonsand
 
 ## Structured request diagnostics
 
-The current image is `ghcr.io/thurstonsand/http-doppelclaude@sha256:dedd8811e6b2f99154967b52fa63dac116176662e3b25aead7e6962c18052d16`, from successful [workflow 35551482494](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35551482494) and [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/abbecc412f2418aa7328bcdfbcb5ef27f47c6e23). Anonymous manifest digest, `linux/amd64` and source revision were independently verified. Roll back by restoring the retained image `ghcr.io/thurstonsand/http-doppelclaude@sha256:791dffbcd7a155e5f7df6b24028ac997855f7c10e5576556424dcdc0179e7df2` without changing the 32,000,000-byte cap.
+The last digest-pinned image before adopting the stable `latest` tag was `ghcr.io/thurstonsand/http-doppelclaude@sha256:dedd8811e6b2f99154967b52fa63dac116176662e3b25aead7e6962c18052d16`, from successful [workflow 35551482494](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35551482494) and [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/abbecc412f2418aa7328bcdfbcb5ef27f47c6e23). Its anonymous manifest digest, `linux/amd64` platform and source revision were independently verified.
 
 The bounded unkeyed trial admits a single nonempty text-only user message, no tools, at most 16,384 UTF-8 serialized system/messages bytes and `max_tokens` at most 4,096. Anonymous runtimes are ephemeral, do not evict keyed runtimes and do not retry HTTP/core failures. Malformed or duplicate markers remain invalid. Synthetic public-route verification does not establish compatibility with Amp's actual title request shape, which remains unverified. `runtime_close` records the start of cleanup; `runtime_close_failed` reports a cleanup failure.
 

@@ -325,25 +325,6 @@ def test_full_apply_runs_root_capabilities_after_prerequisite_bootstrap(
     assert "terminal-tools" not in environment.split("=", 1)[1].split(",")
 
 
-@pytest.mark.parametrize(
-    "image", ["", "example.com/app:latest", "example.com/app@sha256:abc"]
-)
-@pytest.mark.parametrize("check_mode", [True, False])
-def test_doppelclaude_refuses_unpinned_image_before_any_command(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, image: str, check_mode: bool
-) -> None:
-    monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
-    monkeypatch.setattr(pod042_reconcile, "TARGET_ROOT", tmp_path)
-    (tmp_path / "mise.doppelclaude.toml").write_text(
-        f'[vars]\ndoppelclaude_image = "{image}"\n'
-    )
-    run = Mock()
-    monkeypatch.setattr(pod042_reconcile, "run_command", run)
-    with pytest.raises(pod042_reconcile.ReconcileError, match="reviewed image@sha256"):
-        pod042_reconcile.run_local("doppelclaude", check_mode)
-    run.assert_not_called()
-
-
 @pytest.mark.parametrize("check_mode", [True, False])
 def test_doppelclaude_is_isolated_and_checks_prerequisites(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path, check_mode: bool
@@ -352,9 +333,7 @@ def test_doppelclaude_is_isolated_and_checks_prerequisites(
     monkeypatch.setattr(pod042_reconcile, "assert_hostname", Mock())
     monkeypatch.setattr(pod042_reconcile, "TARGET_ROOT", tmp_path)
     (tmp_path / "mise.doppelclaude.toml").write_text(
-        '[vars]\ndoppelclaude_image = "example.com/doppelclaude@sha256:'
-        + "b" * 64
-        + '"\n'
+        '[vars]\ndoppelclaude_image = "example.com/doppelclaude:latest"\n'
     )
     monkeypatch.setattr(pod042_reconcile, "run_command", calls.append)
     pod042_reconcile.run_local("doppelclaude", check_mode)
