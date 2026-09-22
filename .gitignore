@@ -15,9 +15,14 @@ node_modules
 
 # ai
 /.claude/settings.local.json
-/.amp/artifacts/
 AGENTS.local.md
 CLAUDE.local.md
+
+# Agent scratch evidence: patches, dumps, logs, screenshots an agent produced to
+# prove a change worked. None of it is repo state. Matched as /.amp/* rather than
+# /.amp/ so a future negation can opt a real config file back in; git cannot
+# unignore anything inside an ignored directory.
+/.amp/*
 
 # Terraform
 **/.terraform/
