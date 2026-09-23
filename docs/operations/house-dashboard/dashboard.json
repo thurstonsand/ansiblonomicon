@@ -261,16 +261,32 @@
                   "name": "Garage",
                   "path": "M10 320h170v180h-170Z",
                   "label": [
-                    95.0,
-                    410.0
+                    132.0,
+                    345.0
                   ],
                   "lines": [
                     "Garage"
                   ],
+                  "entity": "cover.garage_door",
+                  "mapNote": "Garage Door",
                   "pickup": {
                     "entity": "sensor.trash_pickup_reminder",
                     "position": [34, 332]
-                  }
+                  },
+                  "vehicles": [
+                    {
+                      "id": "beetle",
+                      "name": "Beetle",
+                      "entity": "binary_sensor.garage_beetle_parked",
+                      "position": [106.5, 462.4]
+                    },
+                    {
+                      "id": "model3",
+                      "name": "Model 3",
+                      "entity": "binary_sensor.garage_tesla_parked",
+                      "position": [101.3, 399.2]
+                    }
+                  ]
                 },
                 {
                   "id": "hall_bath",

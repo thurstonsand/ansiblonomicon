@@ -14,6 +14,11 @@ const resource = (type, text) => ({
   location: `data:${type},${encodeURIComponent(text)}`,
   cache: true,
 });
+// Top-down silhouettes drawn to scale at 1 unit = 40mm, nose toward -y, rendered rotated to face the bays.
+const CAR_SHAPES = {
+  beetle: `<path class="car-wheel" d="M-27 -39.7H-19V-23.7H-27ZM19 -39.7H27V-23.7H19ZM-27 23.7H-19V39.7H-27ZM19 23.7H27V39.7H19Z"/><path class="car-body" d="M-22 -15L-27 -13.5V-9.5L-22 -8.5ZM22 -15L27 -13.5V-9.5L22 -8.5Z"/><path class="car-body" d="M0 -53.5C11 -53.5 19.5 -50.5 22.5 -44C24.2 -39 24.6 -33 24.6 -27C24.6 -18 23.8 -8 23.8 2C23.8 12 24.8 20 24.8 29C24.8 38 24 46 20 50.5C16 53.2 9 53.5 0 53.5C-9 53.5 -16 53.2 -20 50.5C-24 46 -24.8 38 -24.8 29C-24.8 20 -23.8 12 -23.8 2C-23.8 -8 -24.6 -18 -24.6 -27C-24.6 -33 -24.2 -39 -22.5 -44C-19.5 -50.5 -11 -53.5 0 -53.5Z"/><path class="car-glass" d="M-15 -23.5C-5 -24.5 5 -24.5 15 -23.5C17.5 -20 19 -15.5 19.5 -11H-19.5C-19 -15.5 -17.5 -20 -15 -23.5Z"/><path class="car-glass" d="M-19.2 7H19.2C18.8 12 17.5 17 15 20.5C6 21.5 -6 21.5 -15 20.5C-17.5 17 -18.8 12 -19.2 7Z"/>`,
+  model3: `<path class="car-wheel" d="M-25.5 -45.5H-18.5V-29.5H-25.5ZM18.5 -45.5H25.5V-29.5H18.5ZM-25.5 26.4H-18.5V42.4H-25.5ZM18.5 26.4H25.5V42.4H18.5Z"/><path class="car-body" d="M-21 -13L-25.5 -11.5V-7.5L-21 -6.5ZM21 -13L25.5 -11.5V-7.5L21 -6.5Z"/><path class="car-body" d="M0 -58.7C8 -58.7 14 -57.6 17.5 -55C21 -52 23.1 -46 23.1 -34C23.3 -10 23.1 12 22.6 32C22.3 44 21.8 52.5 20 55.8C17 58.2 8 58.7 0 58.7C-8 58.7 -17 58.2 -20 55.8C-21.8 52.5 -22.3 44 -22.6 32C-23.1 12 -23.3 -10 -23.1 -34C-23.1 -46 -21 -52 -17.5 -55C-14 -57.6 -8 -58.7 0 -58.7Z"/><path class="car-glass" d="M-11.5 -31C-4 -32.2 4 -32.2 11.5 -31C15 -27 17.4 -20 17.8 -12C18 -8 18 -4 18 -1H-18C-18 -4 -18 -8 -17.8 -12C-17.4 -20 -15 -27 -11.5 -31Z"/><path class="car-glass" d="M-18 2H18C17.8 12 16.5 22 14 28C12.5 31 7 32 0 32C-7 32 -12.5 31 -14 28C-16.5 22 -17.8 12 -18 2Z"/>`,
+};
 
 class HouseAtlas extends HTMLElement {
   constructor() {
@@ -71,6 +76,9 @@ class HouseAtlas extends HTMLElement {
           !room.label
         )
           throw new Error("Invalid room definition.");
+        for (const vehicle of room.vehicles || [])
+          if (!CAR_SHAPES[vehicle.id])
+            throw new Error(`No car shape for vehicle "${vehicle.id}".`);
       }
     }
     this.config = config;
@@ -100,11 +108,8 @@ class HouseAtlas extends HTMLElement {
     }
     // Floorplan binds rules only for entities present when the map is created.
     if (
-      this.floor.rooms.some(
-        (room) =>
-          room.pickup &&
-          !previous?.states[room.pickup.entity] &&
-          hass.states[room.pickup.entity],
+      this.mapEntities(this.floor).some(
+        (id) => !previous?.states[id] && hass.states[id],
       )
     ) {
       this.renderMap();
@@ -122,6 +127,13 @@ class HouseAtlas extends HTMLElement {
   }
   get room() {
     return this.floor.rooms.find((room) => room.id === this.roomId);
+  }
+
+  mapEntities(floor) {
+    return floor.rooms.flatMap((room) => [
+      ...(room.pickup ? [room.pickup.entity] : []),
+      ...(room.vehicles || []).map((vehicle) => vehicle.entity),
+    ]);
   }
 
   summary(room) {
@@ -338,6 +350,13 @@ class HouseAtlas extends HTMLElement {
       .pickup-body{fill:currentColor}
       .pickup-lid{fill:currentColor;stroke:var(--atlas-bg);stroke-width:.5}
       .pickup-window{fill:var(--atlas-bg);opacity:.85}
+      .vehicle{display:none;pointer-events:none}
+      .vehicle.visible{display:inline}
+      .car-body{fill:currentColor;stroke:var(--atlas-wall);stroke-width:.8;stroke-linejoin:round}
+      .car-wheel{fill:var(--atlas-wall)}
+      .car-glass{fill:var(--atlas-wall);opacity:.45}
+      .car-beetle{color:#fcfcfe}
+      .car-model3{color:#f7f6f3}
     `;
     const rooms = floor.rooms
       .map((room) => {
@@ -366,7 +385,16 @@ class HouseAtlas extends HTMLElement {
         return `<g id="pickup-${room.id}" class="pickup" transform="translate(${x} ${y})" role="img" aria-labelledby="pickup-title-${room.id}"><title id="pickup-title-${room.id}"></title>${bins}</g>`;
       })
       .join("");
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${floor.width} ${floor.height}" role="group" aria-label="${escapeXml(floor.name)} floor rooms"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6"><path d="M0 6L6 0" stroke="var(--atlas-border)" stroke-width=".6"/></pattern><pattern id="deck" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="12" fill="var(--atlas-surface)"/><path d="M0 11H12" stroke="var(--atlas-border)" stroke-width=".7"/></pattern></defs>${floor.context || ""}${rooms}${floor.stairs || ""}${openings}${pickups}</svg>`;
+    const vehicles = floor.rooms
+      .flatMap((room) =>
+        (room.vehicles || []).map((vehicle) => {
+          const [x, y] = vehicle.position;
+          const title = `vehicle-title-${room.id}-${vehicle.id}`;
+          return `<g id="vehicle-${room.id}-${vehicle.id}" class="vehicle car-${vehicle.id}" transform="translate(${x} ${y}) rotate(90)" role="img" aria-labelledby="${title}"><title id="${title}"></title>${CAR_SHAPES[vehicle.id]}</g>`;
+        }),
+      )
+      .join("");
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${floor.width} ${floor.height}" role="group" aria-label="${escapeXml(floor.name)} floor rooms"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6"><path d="M0 6L6 0" stroke="var(--atlas-border)" stroke-width=".6"/></pattern><pattern id="deck" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="12" fill="var(--atlas-surface)"/><path d="M0 11H12" stroke="var(--atlas-border)" stroke-width=".7"/></pattern></defs>${floor.context || ""}${rooms}${floor.stairs || ""}${openings}${pickups}${vehicles}</svg>`;
     const rules = floor.rooms.map((room) => ({
       element: `room-${room.id}`,
       tap_action: { action: "fire-dom-event", atlas_room: room.id },
@@ -394,6 +422,30 @@ class HouseAtlas extends HTMLElement {
             service: "floorplan.text_set",
             service_data: {
               text: `> return (entity.attributes.pickup_types || []).join(' and ') + ' pickup ' + entity.state;`,
+            },
+          },
+        });
+      }
+      for (const vehicle of room.vehicles || []) {
+        rules.push({
+          entity: vehicle.entity,
+          element: `vehicle-${room.id}-${vehicle.id}`,
+          state_action: {
+            action: "call-service",
+            service: "floorplan.class_set",
+            service_data: {
+              class: `> return 'vehicle car-${vehicle.id}' + (entity.state === 'on' ? ' visible' : '');`,
+            },
+          },
+        });
+        rules.push({
+          entity: vehicle.entity,
+          element: `vehicle-title-${room.id}-${vehicle.id}`,
+          state_action: {
+            action: "call-service",
+            service: "floorplan.text_set",
+            service_data: {
+              text: `> return '${vehicle.name} ' + (entity.state === 'on' ? 'parked' : 'away');`,
             },
           },
         });
@@ -572,6 +624,15 @@ class HouseAtlas extends HTMLElement {
       }
       body.append(actions);
       this.updateLockButtons();
+    } else if (room.entity?.startsWith("cover.")) {
+      add({
+        type: "tile",
+        entity: room.entity,
+        name: "Garage Door",
+        tap_action: { action: "more-info" },
+        icon_tap_action: { action: "more-info" },
+        features: [{ type: "cover-open-close" }],
+      });
     } else if (room.entity?.startsWith("media_player.")) {
       add({
         type: "tile",
