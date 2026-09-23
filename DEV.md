@@ -49,7 +49,7 @@ Prefer `[dotfiles]` for home configuration: symlink in-repo sources so applicati
 
 ### Secrets
 
-Declare shared `op://` references in `fnox.toml` and host-only references in `fnox.<host>.toml`.
+Declare shared `op://` references in `fnox.toml` and host-only references in `fnox.<host>.toml`. Read one with `scripts/fnox-host get NAME`.
 
 ### Retiring managed state
 
