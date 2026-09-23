@@ -23,7 +23,7 @@ Before the first native apply, copy these values from `chezmoi/.chezmoidata/loca
 | `[[mcp_servers]]` | Claude MCP registration |
 | `pi_mcp_json` | Native Pi renderer (`~/.pi/agent/mcp.json`) |
 
-Keep credentials out of this file. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml` and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` first, then `mise agent-config --check --real-secrets` to prove credential access without writing. Only the Mac sudo credential path has been proved; the agent configuration real-secret check, live apply, and repeat verification remain pending. Preserve the old chezmoi data and templates until before/after output parity is established on the work Mac.
+Keep credentials out of this file. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml` and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` first, then `mise agent-config --check --real-secrets` to prove credential access without writing. The personal Mac and pod042 have passed live apply and repeat verification; work remains fixture-only, with its private inputs and credential access unverified. Preserve the old chezmoi data and templates until before/after output parity is established on the work Mac.
 
 ## Shell Extras
 
