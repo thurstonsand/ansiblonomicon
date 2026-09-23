@@ -634,10 +634,24 @@ def test_explicit_retirement_preserves_foreign_sibling(
 ) -> None:
     home = tmp_path / "home"
     retired = home / ".pi/agent/extensions/permission-gate"
-    retired.mkdir(parents=True)
+    nested = retired / "nested/deeper"
+    nested.mkdir(parents=True)
     (retired / "old.ts").write_text("old")
+    (nested / "old.json").write_bytes(b"retired")
+    external = tmp_path / "external"
+    external.mkdir()
+    external_file = external / "keep.bin"
+    external_file.write_bytes(b"external")
+    (retired / "external-link").symlink_to(external, target_is_directory=True)
     sibling = retired.parent / "foreign.ts"
-    sibling.write_text("keep")
+    sibling.write_bytes(b"sibling")
+    sudo_calls = tmp_path / "sudo-calls"
+    binary = tmp_path / "bin"
+    binary.mkdir()
+    sudo = binary / "sudo"
+    sudo.write_text(f"#!/bin/sh\nprintf call >> {sudo_calls}\nexit 97\n")
+    sudo.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{binary}:{os.environ['PATH']}")
     monkeypatch.setattr(deploy, "load_data", lambda *_: {"mcp_servers": []})
     monkeypatch.setattr(deploy, "render_all", lambda *_: {})
     monkeypatch.setattr(
@@ -646,6 +660,20 @@ def test_explicit_retirement_preserves_foreign_sibling(
         lambda *_: ([], [], [".pi/agent/extensions/permission-gate"]),
     )
 
+    before = {path: path.read_bytes() for path in (external_file, sibling)}
+    assert (
+        deploy.reconcile(
+            repo=ROOT, home=home, hostname="pod042", secrets={}, check=True
+        )
+        == 1
+    )
+    assert retired.is_dir()
+    assert (nested / "old.json").read_bytes() == b"retired"
+    assert {path: path.read_bytes() for path in before} == before
+    assert not sudo_calls.exists()
+
     deploy.reconcile(repo=ROOT, home=home, hostname="pod042", secrets={}, check=False)
     assert not retired.exists()
-    assert sibling.read_text() == "keep"
+    assert external_file.read_bytes() == b"external"
+    assert sibling.read_bytes() == b"sibling"
+    assert not sudo_calls.exists()

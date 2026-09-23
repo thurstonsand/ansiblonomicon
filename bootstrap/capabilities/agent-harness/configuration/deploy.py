@@ -330,11 +330,26 @@ def _stage_native(
     for source, relative in links:
         dotfiles[str(home / relative)] = {"source": str(source), "mode": "symlink"}
     for path in sorted(stale):
-        resources = directories if path.is_dir() and not path.is_symlink() else files
-        declaration: dict[str, object] = {"state": "absent"}
-        if resources is directories:
-            declaration["recursive"] = True
-        resources[str(path)] = declaration
+        if path.is_dir() and not path.is_symlink():
+            retired_directories = [path]
+            for root, names, leaves in os.walk(path, followlinks=False):
+                current = Path(root)
+                for name in leaves:
+                    files[str(current / name)] = {"state": "absent"}
+                for name in list(names):
+                    child = current / name
+                    if child.is_symlink():
+                        files[str(child)] = {"state": "absent"}
+                        names.remove(name)
+                    else:
+                        retired_directories.append(child)
+            for directory in retired_directories:
+                directories[str(directory)] = {
+                    "state": "absent",
+                    "recursive": False,
+                }
+        else:
+            files[str(path)] = {"state": "absent"}
     (target / "mise.toml").write_text(tomlkit.dumps(document))
 
 
