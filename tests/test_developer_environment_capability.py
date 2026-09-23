@@ -121,6 +121,9 @@ def test_hosts_register_neovim_with_the_intended_lock_policy(host: str) -> None:
     assert manifest["dotfiles"]["~/.config/nvim/lazy-lock.json"]["mode"] == (
         "copy" if profile == "work" else "symlink"
     )
+    assert manifest["dotfiles"]["~/.config/nvim/lazy-lock.json"]["source"] == (
+        "neovim/lazy-lock.work.json" if profile == "work" else "neovim/lazy-lock.json"
+    )
     shared = tomllib.loads((NVIM / "mise.toml").read_text())
     assert shared["tasks"]["neovim:plugins"]["timeout"] == "10m"
     assert shared["tasks"]["neovim:mason"] == {
@@ -148,9 +151,10 @@ def test_real_neovim_manifests_render_idempotently_and_keep_neighbors(
     (home / ".config/nvim/init.lua").write_text("-- old chezmoi file\n")
     (home / ".config/nvim/lazy-lock.json").write_text('{"old":true}\n')
     source_lock = tmp_path / "lock-source.json"
-    source_lock.write_bytes((NVIM / "files/lazy-lock.json").read_bytes())
-    (target / "neovim/lazy-lock.json").unlink()
-    (target / "neovim/lazy-lock.json").symlink_to(source_lock)
+    lock_name = "lazy-lock.work.json" if host == "ML-DFC6YK6VJQ" else "lazy-lock.json"
+    source_lock.write_bytes((NVIM / "files" / lock_name).read_bytes())
+    (target / "neovim" / lock_name).unlink()
+    (target / "neovim" / lock_name).symlink_to(source_lock)
 
     preview = dotfiles(target, env, "--dry-run")
     assert "nvim --headless" not in preview.stdout + preview.stderr

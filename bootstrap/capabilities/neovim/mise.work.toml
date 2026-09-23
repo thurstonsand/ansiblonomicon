@@ -1,5 +1,5 @@
 [dotfiles]
-"~/.config/nvim/lazy-lock.json" = { source = "neovim/lazy-lock.json", mode = "copy" }
+"~/.config/nvim/lazy-lock.json" = { source = "neovim/lazy-lock.work.json", mode = "copy" }
 "~/.config/nvim/lua/plugins/gitbrowse.work.lua" = { source = "neovim/gitbrowse.lua.tera", mode = "template" }
 
 [env]

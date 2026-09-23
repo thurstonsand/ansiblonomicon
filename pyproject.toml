@@ -69,6 +69,7 @@ exclude = [
   "build",
   "dist",
   "stubs",
+  "ansible",
   # Research prototypes import tools this repo deliberately does not depend on, so
   # every import is unresolvable here by design. Judging them is the trial's job.
   "docs/wayfinding/**/prototypes",

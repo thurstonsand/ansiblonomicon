@@ -17,13 +17,21 @@ retirements: Any = module_from_spec(SPEC)
 SPEC.loader.exec_module(retirements)
 
 
+@pytest.mark.parametrize(
+    "relative",
+    [
+        ".codex/skills/bro",
+        ".local/share/nvim/mason/packages/ansible-lint",
+        ".local/share/nvim/mason/packages/ansible-language-server",
+    ],
+)
 def test_native_retirement_preserves_foreign_content_without_sudo(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, relative: str
 ) -> None:
     if shutil.which("mise") is None:
         pytest.skip("mise is required for the native removal regression")
     home = tmp_path / "home"
-    retired = home / ".codex/skills/bro"
+    retired = home / relative
     (retired / "nested").mkdir(parents=True)
     (retired / "nested/file").write_text("retired")
     foreign = tmp_path / "foreign"

@@ -54,7 +54,7 @@ Temporary cutover code and its deletion conditions are tracked in the [mise migr
 
 The [editor-config capability](bootstrap/capabilities/editor-config/README.md) is the source of truth for Zed on both Macs and for the personal Mac's VSCode-family and Datasette LLM configuration. `bootstrap/capabilities/agent-harness/models.yml` is the shared model catalogue. Run `mise editor-config` or add `--check`; previews use explicit non-secret placeholders and never resolve credentials.
 
-The [Neovim capability](bootstrap/capabilities/neovim/README.md) owns editor configuration and dependency setup. Run `mise neovim` (alias `mise nvim-deps`) or add `--check` to preview configuration without upgrading dependencies. Personal hosts write Lazy's lockfile back to the shared source; work receives a copy and restores those versions. Full reconciliation runs this after software prerequisites.
+The [Neovim capability](bootstrap/capabilities/neovim/README.md) owns editor configuration and dependency setup. Run `mise neovim` (alias `mise nvim-deps`) or add `--check` to preview configuration without upgrading dependencies. Personal hosts write Lazy's lockfile back to the shared source; work receives its separate `lazy-lock.work.json` and restores those versions. Full reconciliation runs this after software prerequisites.
 
 Work's [Python-index capability](bootstrap/capabilities/python-index/README.md) derives uv and pip configuration from one private uv TOML value; run `mise python-index` or add `--check`. Personal hosts retain their existing absence of system index configuration. Private work SCM, Jira, and index values must be transferred as documented in [README.work.md](README.work.md) before work cutover.
 

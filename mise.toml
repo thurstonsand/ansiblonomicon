@@ -903,9 +903,9 @@ description = "Autofix Markdown lint findings"
 run = "markdownlint-cli2 --fix"
 
 [tasks."ansible:lint"]
-description = "Lint retained work-laptop Ansible configuration"
+description = "Lint and type-check retained work-laptop Ansible configuration"
 dir = "ansible"
-run = "uv run --group work ansible-lint"
+run = ["uv run --group work ansible-lint", "uv run --group work basedpyright callback_plugins"]
 
 [tasks."python:lint"]
 description = "Report ruff lint findings"

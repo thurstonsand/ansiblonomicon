@@ -24,6 +24,10 @@ paths = [
   ".config/chezmoi",
   ".local/share/chezmoi",
   ".cache/chezmoi",
+  ".local/share/nvim/mason/bin/ansible-lint",
+  ".local/share/nvim/mason/bin/ansible-language-server",
+  ".local/share/nvim/mason/packages/ansible-lint",
+  ".local/share/nvim/mason/packages/ansible-language-server",
 ]
 
 [macos]
