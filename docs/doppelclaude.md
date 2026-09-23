@@ -4,13 +4,13 @@ Status: the dedicated Worker, origin DNS/Access application, tunnel route, HSTS 
 
 ## Route and authentication
 
-`https://doppelclaude.thurstons.house/v1/messages` and `/v1/models` terminate at the dedicated Worker. The Worker accepts `Authorization: Bearer` or `x-api-key`, using the existing `CLI_PROXY_API_KEY`. This intentionally gives existing personal proxy-key holders access to both services; a separate client key would require a new 1Password item and fnox reference before deployment.
+`https://doppelclaude.thurstons.house/v1/messages`, `/v1/models` and `/v1/sdk-models` terminate at the dedicated Worker. The Worker accepts `Authorization: Bearer` or `x-api-key`, using the existing `CLI_PROXY_API_KEY` for all three routes.
 
 The Worker forwards directly to `https://doppelclaude-origin.thurstons.house`, adding the existing `CF_ACCESS_CLIENT_ID` and `CF_ACCESS_CLIENT_SECRET`. A dedicated Access application allows only the existing service-auth policy: no home-network bypass, WARP bypass, or interactive browser login. Terraform owns the origin DNS, tunnel ingress and Access application; Wrangler owns the public Worker custom domain.
 
 The `home` tunnel forwards directly to `http://doppelclaude:3456` on pod042's private Docker `ingress` network. Compose sets `DOPPELCLAUDE_HTTP_HOST=0.0.0.0` and `PORT=3456`, matching the image's container binding; standalone daemon use defaults to loopback. No host port is published. The daemon retains its API-key check. There is no extra proxy or supervisor; Docker supplies an init process and a 25-second stop grace for the daemon's 15-second shutdown bound, including prebind authentication probes.
 
-Unlike `aig`, this Worker does not route through AI Gateway. It does not read, rewrite, cache or log request bodies. Only `POST /v1/messages` and `GET /v1/models` are forwarded. The daemon validates the `Amp Thread URL` system marker for keyed conversations and admits narrowly bounded markerless requests as described below; the proxy leaves the body untouched. Redirects are not followed and requests are not automatically retried.
+Unlike `aig`, this Worker does not route through AI Gateway. It does not read, rewrite, cache or log request bodies. Only `POST /v1/messages`, `GET /v1/models` and `GET /v1/sdk-models` are forwarded. The daemon validates the `Amp Thread URL` system marker for keyed conversations and admits narrowly bounded markerless requests as described below; the proxy leaves the body untouched. Redirects are not followed and requests are not automatically retried.
 
 ## Host and subscription credentials
 
@@ -19,6 +19,8 @@ The dedicated `doppelclaude` capability owns definitions under `/etc/ansiblonomi
 The host already has unattended 1Password access through its retained service-account token. `fnox.toml` declares `CLAUDE_CODE_OAUTH_TOKEN`; the confirmed daemon contract inherits this subscription credential into Claude's SDK child. It is not an Anthropic API key. Confirm token validity, renewal and vault access without displaying the value. Do not install the 1Password service-account token in the daemon or the Worker.
 
 The capability selects only `CLI_PROXY_API_KEY` and `CLAUDE_CODE_OAUTH_TOKEN`. Native mise renders a root-owned mode-0600 Compose environment file, mapping the former to `DOPPELCLAUDE_HTTP_API_KEY`; the mutually exclusive `_FILE` setting is not used. The Worker receives the proxy key and Access credentials only, never Claude's subscription token. Rotating its key also requires reconciling the daemon and clients.
+
+The personal plugin's Show models command reads `CLI_PROXY_API_KEY` from its environment; the same existing key is stored as an Amp personal secret. Existing orbs need their secret environment refreshed. An independent local CLI needs supported Amp personal environment injection (`--amp-env` for runners) or secret-manager injection; arbitrary running local processes do not inherit the Amp secret automatically. Never store the value in git or artifacts. `GET /v1/sdk-models` exposes the startup SDK version, capture timestamp, model values/resolved IDs/display names and bridge aliases without inference. Deploy a verified endpoint-capable image before activating the Worker route; catalog readiness remains pending that rollout.
 
 The requester selects the model through `body.model`, using a stable Claude ID, bare or provider-qualified. The server operator does not set a model or default. `/v1/models` advertises the SDK's startup `supportedModels` result for discovery, not as an allowlist.
 
@@ -93,6 +95,8 @@ The body-limit image from [workflow 35524085938](https://github.com/thurstonsand
 ## Structured request diagnostics
 
 The last digest-pinned image before adopting the stable `latest` tag was `ghcr.io/thurstonsand/http-doppelclaude@sha256:dedd8811e6b2f99154967b52fa63dac116176662e3b25aead7e6962c18052d16`, from successful [workflow 35551482494](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35551482494) and [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/abbecc412f2418aa7328bcdfbcb5ef27f47c6e23). Its anonymous manifest digest, `linux/amd64` platform and source revision were independently verified.
+
+The catalog release from successful [workflow 35827446320](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35827446320) is [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/bb80a92675aae24750b98077c1bb99f88e87c554), with independently verified multiarch index `sha256:d830744a55f8e782f68cbf3176a1902c10f706a90903eaa22a32bd22efab880e` and amd64 manifest `sha256:9e4961eea59b86e0c69306daeba96c9628157a9bd5d9660e05f3ef0c56cc37fa`. It excludes balanced injected instruction regions from thread identity parsing, adds the Sonnet alias and SDK catalog, and updates Agent SDK to 0.3.280 without a Pi upgrade. Reconciliation retains the stable-tag policy; verify the resolved digest and running revision for a release-specific rollout. The prior digest above remains the rollback image, without changing the 32,000,000-byte cap; it does not serve `/v1/sdk-models`.
 
 The bounded unkeyed trial admits a single nonempty text-only user message, no tools, at most 16,384 UTF-8 serialized system/messages bytes and `max_tokens` at most 4,096. Anonymous runtimes are ephemeral, do not evict keyed runtimes and do not retry HTTP/core failures. Malformed or duplicate markers remain invalid. Synthetic public-route verification does not establish compatibility with Amp's actual title request shape, which remains unverified. `runtime_close` records the start of cleanup; `runtime_close_failed` reports a cleanup failure.
 

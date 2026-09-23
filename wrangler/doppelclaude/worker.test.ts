@@ -9,6 +9,25 @@ const env = {
 };
 const base = "https://doppelclaude.thurstons.house";
 
+test("SDK catalog uses existing authentication and exact GET route", async (t) => {
+  const origin = t.mock.method(globalThis, "fetch", async (url: string, init: RequestInit) => {
+    assert.equal(url, "https://doppelclaude-origin.thurstons.house/v1/sdk-models");
+    assert.equal(init.method, "GET");
+    assert.equal(new Headers(init.headers).get("Authorization"), `Bearer ${env.API_KEY}`);
+    return Response.json({ sdkVersion: "test" });
+  });
+  for (const headers of [{ "x-api-key": env.API_KEY }, { Authorization: `Bearer ${env.API_KEY}` }]) {
+    assert.equal((await worker.fetch(new Request(`${base}/v1/sdk-models`, { headers }), env)).status, 200);
+    for (const [method, path] of [["POST", "/v1/sdk-models"], ["HEAD", "/v1/sdk-models"], ["GET", "/v1/sdk-models/"]]) {
+      assert.equal((await worker.fetch(new Request(`${base}${path}`, { method, headers }), env)).status, 404);
+    }
+  }
+  for (const headers of [{}, { "x-api-key": "wrong" }]) {
+    assert.equal((await worker.fetch(new Request(`${base}/v1/sdk-models`, { headers }), env)).status, 401);
+  }
+  assert.equal(origin.mock.callCount(), 2);
+});
+
 test("rejects missing credentials and unrecognized routes without contacting origin", async (t) => {
   const origin = t.mock.method(globalThis, "fetch", () => {
     throw new Error("Origin must not be contacted");

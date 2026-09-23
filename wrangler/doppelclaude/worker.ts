@@ -26,7 +26,8 @@ export default {
     const url = new URL(request.url);
     if (
       !(request.method === "POST" && url.pathname === "/v1/messages") &&
-      !(request.method === "GET" && url.pathname === "/v1/models")
+      !(request.method === "GET" && url.pathname === "/v1/models") &&
+      !(request.method === "GET" && url.pathname === "/v1/sdk-models")
     ) {
       return new Response("Not found", { status: 404 });
     }
