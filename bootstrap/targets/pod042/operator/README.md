@@ -1,6 +1,6 @@
 # Operator environment
 
-`operator/mise.toml` is the operator's global runtime and utility inventory. `mise.operator.toml` declares Debian packages, the global mise config needed to install chezmoi, and the sessions binary directory.
+`operator/mise.toml` is the operator's global runtime and utility inventory. `mise.operator.toml` declares Debian packages and links that global mise config into the operator's home before setup, while bootstrap directories retain explicit operator ownership.
 
 Base owns the zsh package and the operator's `/usr/bin/zsh` login shell; the driver applies base packages before accounts, so the account is never created with a shell path that has not been installed.
 

@@ -117,7 +117,7 @@ def test_macos_private_resources_are_host_local_and_watcher_is_shared() -> None:
                 "template": True,
                 "owner": owner,
                 "group": "staff",
-                "mode": "0600",
+                "mode": "0644",
             },
             f"{home}/Library/LaunchAgents/house.thurstons.terminal-theme-watch.plist": {
                 "state": "absent"
@@ -321,7 +321,7 @@ def test_native_hunk_palette_matches_shared_asset_and_detects_drift(
     ("terminal_home", "mirrors"),
     [("/Users/thurstonsand", "pod042"), ("/Users/tsandberg", "")],
 )
-def test_native_private_template_enforces_0600_from_0644_source(
+def test_native_ssh_include_enforces_0644_from_0600_source(
     tmp_path: Path, terminal_home: str, mirrors: str
 ) -> None:
     home = tmp_path / "home"
@@ -330,13 +330,13 @@ def test_native_private_template_enforces_0600_from_0644_source(
     config.mkdir()
     source = config / "terminal-theme-ssh.conf.tera"
     source.write_text((CAPABILITY / "files/terminal-theme-ssh.conf.tera").read_text())
-    source.chmod(0o644)
+    source.chmod(0o600)
     target = home / ".ssh/config.d/terminal-theme.conf"
     (config / "mise.toml").write_text(
         f'''[vars]\nterminal_theme_home = "{terminal_home}"\nterminal_theme_mirrors = "{mirrors}"\n'''
         f'''[bootstrap.directories."{target.parent}"]\nmode = "0700"\n'''
         f'''[bootstrap.files."{target}"]\nsource = "terminal-theme-ssh.conf.tera"\n'''
-        """template = true\nmode = "0600"\n"""
+        """template = true\nmode = "0644"\n"""
     )
     env = isolated_mise_env(home, config)
     subprocess.run(
@@ -346,8 +346,8 @@ def test_native_private_template_enforces_0600_from_0644_source(
         capture_output=True,
         text=True,
     )
-    assert stat.S_IMODE(source.stat().st_mode) == 0o644
-    assert stat.S_IMODE(target.stat().st_mode) == 0o600
+    assert stat.S_IMODE(source.stat().st_mode) == 0o600
+    assert stat.S_IMODE(target.stat().st_mode) == 0o644
     assert stat.S_IMODE(target.parent.stat().st_mode) == 0o700
     rendered = target.read_text()
     assert rendered.startswith("# Managed by mise.")

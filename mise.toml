@@ -360,7 +360,7 @@ case "$host" in
   *) echo "Unregistered ssh-client host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
-run_ssh_client='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles "$4"'
+run_ssh_client='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles --force-dotfiles "$4"'
 if [ -n "${usage_check:-}" ]; then
   export POD042_GIT_SSH_PRIVATE_KEY=preview-private-key POD042_GIT_SSH_PUBLIC_KEY=preview-public-key
   exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" --dry-run
@@ -496,9 +496,9 @@ exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes
 '''
 
 [tasks."desktop-tools"]
-description = "Reconcile mutable desktop application configuration on a registered Mac"
+description = "Reconcile desktop application configuration on a registered Mac"
 usage = '''
-flag "-c --check" help="Show changes using non-secret eightctl placeholders"
+flag "-c --check" help="Show changes without applying them"
 '''
 run = '''
 host=$(hostname -s)
@@ -508,15 +508,9 @@ case "$host" in
   *) echo "desktop-tools is registered only on the two Macs" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
-run_desktop_tools='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files "$4"'
+run_desktop_tools='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles --force-dotfiles "$4"'
 if [ -n "${usage_check:-}" ]; then
-  export EIGHTCTL_EMAIL=preview-email EIGHTCTL_PASSWORD=preview-password
   exec sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --dry-run
-fi
-if [ "$host" = Thurstons-MacBook-Pro ]; then
-  exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec \
-    --secret EIGHTCTL_EMAIL --secret EIGHTCTL_PASSWORD -- \
-    sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
 fi
 exec sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
 '''
@@ -539,7 +533,7 @@ export MISE_TRUSTED_CONFIG_PATHS="$MISE_PROJECT_ROOT"
 export EDITOR_CONFIG_PYTHON="$MISE_PROJECT_ROOT/.venv/bin/python"
 export EDITOR_CONFIG_RENDERER="$MISE_PROJECT_ROOT/bootstrap/capabilities/editor-config/render.py"
 export EDITOR_CONFIG_MODELS="$MISE_PROJECT_ROOT/ansible/models.yml"
-run_editor_config='exec mise -E editor-config -C "$1" bootstrap --only files "$2"'
+run_editor_config='exec mise -E editor-config -C "$1" bootstrap --only files,dotfiles --force-dotfiles "$2"'
 if [ -n "${usage_check:-}" ]; then
   export CLI_PROXY_API_KEY=preview CF_ACCESS_CLIENT_ID=preview CF_ACCESS_CLIENT_SECRET=preview
   exec sh -c "$run_editor_config" editor-config "$target" --dry-run

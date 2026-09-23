@@ -40,7 +40,7 @@ The [terminal-tools capability](bootstrap/capabilities/terminal-tools/README.md)
 
 The [user-tools capability](bootstrap/capabilities/user-tools/README.md) owns shared LazyGit, SourceKit-LSP, Vim and markdownlint configuration plus standalone helpers. Personal hosts also receive GitHub CLI and Rustup settings. Run `mise user-tools` or `mise laptop -t user-tools`, adding `--check` for a nonmutating preview.
 
-The [desktop-tools capability](bootstrap/capabilities/desktop-tools/README.md) copies mutable application configuration. Go's local telemetry mode is shared by both Macs; five additional configurations and two narrowly scoped eightctl credentials are personal-only. Run `mise desktop-tools` or `mise laptop -t desktop-tools`; checks do not fetch secrets.
+The [desktop-tools capability](bootstrap/capabilities/desktop-tools/README.md) links application configuration to first-party repository sources. Go's local telemetry mode is shared by both Macs; four additional configurations are personal-only. Run `mise desktop-tools` or `mise laptop -t desktop-tools`; no credentials are required.
 
 ### VCS client configuration
 

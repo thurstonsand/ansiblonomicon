@@ -14,14 +14,14 @@ ROOT = Path(__file__).resolve().parents[1]
 CAPABILITY = ROOT / "bootstrap/capabilities/editor-config"
 PYTHON = ROOT / ".venv/bin/python"
 PERSONAL_FILES = {
-    ".config/zed/settings.json": 0o600,
+    ".config/zed/settings.json": None,
     ".config/zed/keymap.json": 0o644,
     ".config/zed/tasks.json": 0o644,
-    "Library/Application Support/Cursor/User/settings.json": 0o644,
+    "Library/Application Support/Cursor/User/settings.json": None,
     "Library/Application Support/Cursor/User/keybindings.json": 0o644,
-    "Library/Application Support/Windsurf/User/settings.json": 0o644,
+    "Library/Application Support/Windsurf/User/settings.json": None,
     "Library/Application Support/Windsurf/User/keybindings.json": 0o644,
-    "Library/Application Support/Antigravity/User/settings.json": 0o644,
+    "Library/Application Support/Antigravity/User/settings.json": None,
     "Library/Application Support/Antigravity/User/keybindings.json": 0o644,
     "Library/Application Support/io.datasette.llm/keys.json": 0o600,
     "Library/Application Support/io.datasette.llm/extra-openai-models.yaml": 0o600,
@@ -111,7 +111,8 @@ def run_native(
             str(target),
             "bootstrap",
             "--only",
-            "files",
+            "files,dotfiles",
+            "--force-dotfiles",
             "--yes",
         ],
         env=environment,
@@ -122,14 +123,15 @@ def run_native(
 
 
 def metadata(
-    home: Path, expected: dict[str, int]
+    home: Path, expected: dict[str, int | None]
 ) -> list[tuple[str, int, int, int, int, int]]:
     values: list[tuple[str, int, int, int, int, int]] = []
     for relative, mode in expected.items():
         path = home / relative
         info = path.stat()
         assert stat.S_ISREG(info.st_mode)
-        assert stat.S_IMODE(info.st_mode) == mode
+        if mode is not None:
+            assert stat.S_IMODE(info.st_mode) == mode
         assert info.st_uid == os.getuid()
         assert info.st_gid == os.getgid()
         values.append(
@@ -256,7 +258,8 @@ def test_work_needs_no_secrets_and_preserves_excluded_apps(tmp_path: Path) -> No
             str(target),
             "bootstrap",
             "--only",
-            "files",
+            "files,dotfiles",
+            "--force-dotfiles",
             "--yes",
         ],
         env=environment,
@@ -550,7 +553,8 @@ exec "$@"
             str(target),
             "bootstrap",
             "--only",
-            "files",
+            "files,dotfiles",
+            "--force-dotfiles",
             "--yes",
         ],
         env=environment,

@@ -6,12 +6,6 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
 
-[bootstrap.files."/home/thurstonsand/.config/t3code/npmrc"]
-source = "remote-development/t3.npmrc"
-owner = "thurstonsand"
-group = "thurstonsand"
-mode = "0644"
-
 [bootstrap.directories."/home/thurstonsand/.config/systemd/user"]
 owner = "thurstonsand"
 group = "thurstonsand"
@@ -22,23 +16,12 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
 
-[bootstrap.files."/home/thurstonsand/.config/systemd/user/amp-remote.service"]
-source = "remote-development/amp-remote.service"
-owner = "thurstonsand"
-group = "thurstonsand"
-mode = "0644"
-
-[bootstrap.files."/home/thurstonsand/.config/systemd/user/herdr.service"]
-source = "remote-development/herdr.service"
-owner = "thurstonsand"
-group = "thurstonsand"
-mode = "0644"
-
-[bootstrap.files."/home/thurstonsand/.config/systemd/user/t3code.service.d/operator.conf"]
-source = "remote-development/t3-operator.conf"
-owner = "thurstonsand"
-group = "thurstonsand"
-mode = "0644"
+[dotfiles]
+"/home/thurstonsand/.config/t3code/npmrc" = { source = "remote-development/t3.npmrc", mode = "symlink" }
+# User services must remain runnable while this checkout is unavailable.
+"/home/thurstonsand/.config/systemd/user/amp-remote.service" = { source = "remote-development/amp-remote.service", mode = "copy" }
+"/home/thurstonsand/.config/systemd/user/herdr.service" = { source = "remote-development/herdr.service", mode = "copy" }
+"/home/thurstonsand/.config/systemd/user/t3code.service.d/operator.conf" = { source = "remote-development/t3-operator.conf", mode = "copy" }
 
 [bootstrap.hooks.final]
 run = "python3 remote-development/services.py apply"

@@ -24,7 +24,6 @@ allow_scripts = ["agent-browser"]
 
 [go]
 packages = [
-  "github.com/steipete/eightctl/cmd/eightctl",
   "mvdan.cc/gofumpt@latest",
 ]
 

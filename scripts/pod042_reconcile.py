@@ -244,7 +244,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         ]
     if check_mode:
         if bootstrap_capabilities:
-            run_command([*command, "bootstrap", "plan"])
+            run_command([*command, "bootstrap", "--force-dotfiles", "--dry-run"])
         if "terminal-theme" in selected:
             run_command(
                 [
@@ -372,7 +372,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                 ]
             )
         if bootstrap_capabilities:
-            run_command([*command, "bootstrap", "--yes"])
+            run_command([*command, "bootstrap", "--force-dotfiles", "--yes"])
         if "terminal-theme" in selected:
             run_command(
                 [

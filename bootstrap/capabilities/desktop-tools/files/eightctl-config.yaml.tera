@@ -1,2 +1,0 @@
-email: {{ secret(name="eightctl_email") | json_encode }}
-password: {{ secret(name="eightctl_password") | json_encode }}

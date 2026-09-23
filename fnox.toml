@@ -31,7 +31,5 @@ CF_ACCESS_CLIENT_ID = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt
 CF_ACCESS_CLIENT_SECRET = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client secret", env = true }
 CLI_PROXY_API_KEY = { provider = "agent", value = "op://agent/vf3jsatixwtzauzoebt66xkiqe/apikey" }
 PARALLEL_API_KEY = { provider = "agent", value = "op://agent/ujvwlvzywxv4z654bro2wjkaqq/credential" }
-EIGHTCTL_EMAIL = { provider = "agent", value = "op://agent/fxseiurccsgzesskccvfvihsgm/username" }
-EIGHTCTL_PASSWORD = { provider = "agent", value = "op://agent/fxseiurccsgzesskccvfvihsgm/password" }
 HARK_WEBHOOK_URL_2B = { provider = "agent", value = "op://agent/u3wmydm5i7fe3cgdxx6c7juhxq/add more/2B webhook url" }
 HOMEASSISTANT_API_KEY = { provider = "agent", value = "op://agent/egreim5x2o4amrderxqg2gaxd4/long-lived token" }

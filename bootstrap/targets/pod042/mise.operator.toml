@@ -45,11 +45,11 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
 
-[bootstrap.files."/home/thurstonsand/.config/mise/config.toml"]
-source = "operator/mise.toml"
-owner = "thurstonsand"
-group = "thurstonsand"
-mode = "0644"
+[bootstrap.files."/home/thurstonsand/.config/eightctl/config.yaml"]
+state = "absent"
+
+[dotfiles]
+"/home/thurstonsand/.config/mise/config.toml" = { source = "operator/mise.toml", mode = "symlink" }
 
 [bootstrap.hooks.final]
 run = '''

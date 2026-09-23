@@ -196,8 +196,8 @@ def test_desktop_tools_root_check_never_fetches_secrets(
 
     assert result.returncode == 0
     assert calls.read_text().splitlines() == [
-        f"mise -C {tmp_path}/bootstrap/targets/{host} bootstrap --only files "
-        f"--dry-run env={environments}"
+        f"mise -C {tmp_path}/bootstrap/targets/{host} bootstrap "
+        f"--only files,dotfiles --force-dotfiles --dry-run env={environments}"
     ]
 
 

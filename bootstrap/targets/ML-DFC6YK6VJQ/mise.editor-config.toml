@@ -1,12 +1,4 @@
-[bootstrap.files."~/.config/zed/settings.json"]
-source = "editor-config/files/zed-settings.json.tera"
-template = true
-mode = "0600"
-
-[bootstrap.files."~/.config/zed/keymap.json"]
-source = "editor-config/files/baselines/zed-keymap.jsonc"
-mode = "0644"
-
-[bootstrap.files."~/.config/zed/tasks.json"]
-source = "editor-config/files/baselines/zed-tasks.jsonc"
-mode = "0644"
+[dotfiles]
+"~/.config/zed/settings.json" = { source = "editor-config/files/zed-settings.json.tera", mode = "template" }
+"~/.config/zed/keymap.json" = { source = "editor-config/files/baselines/zed-keymap.jsonc", mode = "symlink" }
+"~/.config/zed/tasks.json" = { source = "editor-config/files/baselines/zed-tasks.jsonc", mode = "symlink" }

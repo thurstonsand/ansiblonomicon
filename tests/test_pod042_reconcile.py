@@ -1,6 +1,7 @@
 from collections.abc import Sequence
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -8,6 +9,7 @@ from typing import Any
 from unittest.mock import Mock
 
 import pytest
+from test_user_tools_capability import isolated_env
 
 MODULE_PATH = Path(__file__).resolve().parents[1] / "scripts/pod042_reconcile.py"
 SPEC = spec_from_file_location("pod042_reconcile", MODULE_PATH)
@@ -16,6 +18,8 @@ assert SPEC.loader is not None
 pod042_reconcile: Any = module_from_spec(SPEC)
 sys.modules[SPEC.name] = pod042_reconcile
 SPEC.loader.exec_module(pod042_reconcile)
+MISE = shutil.which("mise")
+assert MISE is not None
 
 
 def completed(
@@ -103,6 +107,72 @@ def test_capability_environments_are_explicit_and_disjoint() -> None:
     )
 
 
+def test_production_operator_and_remote_dotfiles_apply_and_repeat(
+    tmp_path: Path,
+) -> None:
+    assert MISE is not None
+    production = MODULE_PATH.parents[1] / "bootstrap/targets/pod042"
+    target = tmp_path / "target"
+    home = tmp_path / "home"
+    target.mkdir()
+    home.mkdir()
+    for capability in ("operator", "remote-development"):
+        shutil.copytree(production / capability, target / capability)
+        source = (production / f"mise.{capability}.toml").read_text()
+        rebased = source.replace("/home/thurstonsand", str(home))
+        (target / f"mise.{capability}.toml").write_text(rebased)
+    (target / "mise.toml").write_text('min_version = "2026.9.11"\n')
+    env = isolated_env(home, target, "/usr/bin:/bin")
+    env["MISE_ENV"] = "operator,remote-development"
+    command = [
+        MISE,
+        "-C",
+        str(target),
+        "bootstrap",
+        "--only",
+        "files,dotfiles",
+        "--force-dotfiles",
+    ]
+    retired = home / ".config/eightctl/config.yaml"
+    retired.parent.mkdir(parents=True)
+    retired.write_text("retired\n")
+    sibling = retired.with_name("keep")
+    sibling.write_text("keep\n")
+
+    preview = subprocess.run(
+        [*command, "--dry-run"], env=env, capture_output=True, text=True
+    )
+    assert preview.returncode == 0, preview.stderr
+    assert retired.exists()
+    assert not (home / ".config/mise/config.toml").exists()
+
+    applied = subprocess.run(
+        [*command, "--yes"], env=env, capture_output=True, text=True
+    )
+    assert applied.returncode == 0, applied.stderr
+    assert not retired.exists()
+    assert sibling.read_text() == "keep\n"
+    operator_config = home / ".config/mise/config.toml"
+    npmrc = home / ".config/t3code/npmrc"
+    assert operator_config.is_symlink()
+    assert operator_config.resolve() == target / "operator/mise.toml"
+    assert npmrc.is_symlink()
+    assert npmrc.resolve() == target / "remote-development/t3.npmrc"
+    copied = [
+        home / ".config/systemd/user/amp-remote.service",
+        home / ".config/systemd/user/herdr.service",
+        home / ".config/systemd/user/t3code.service.d/operator.conf",
+    ]
+    assert all(path.is_file() and not path.is_symlink() for path in copied)
+    before = [(path.stat().st_ino, path.stat().st_mtime_ns) for path in copied]
+    repeated = subprocess.run(
+        [*command, "--yes"], env=env, capture_output=True, text=True
+    )
+    assert repeated.returncode == 0, repeated.stderr
+    assert [(path.stat().st_ino, path.stat().st_mtime_ns) for path in copied] == before
+    assert sibling.read_text() == "keep\n"
+
+
 def test_vars_only_identity_is_not_a_public_capability() -> None:
     with pytest.raises(
         pod042_reconcile.ReconcileError, match="unknown pod042 capability"
@@ -145,7 +215,9 @@ def test_home_assistant_capability_closure() -> None:
     )
 
 
-def test_check_uses_native_bootstrap_plan(monkeypatch: pytest.MonkeyPatch) -> None:
+def test_check_previews_native_bootstrap_with_public_dotfile_force(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
     calls: list[list[str]] = []
 
     def accept_hostname() -> None:
@@ -175,7 +247,8 @@ def test_check_uses_native_bootstrap_plan(monkeypatch: pytest.MonkeyPatch) -> No
             "-C",
             str(pod042_reconcile.TARGET_ROOT),
             "bootstrap",
-            "plan",
+            "--force-dotfiles",
+            "--dry-run",
         ],
         [
             "sudo",
@@ -202,7 +275,7 @@ def test_apply_runs_mise_maintenance_before_bootstrap(
         "run",
         "mise:maintain",
     ]
-    assert calls[1][-2:] == ["bootstrap", "--yes"]
+    assert calls[1][-3:] == ["bootstrap", "--force-dotfiles", "--yes"]
 
 
 def test_terminal_theme_focused_apply_uses_only_canonical_root_task(
@@ -308,9 +381,15 @@ def test_full_apply_runs_root_capabilities_after_prerequisite_bootstrap(
     theme_calls = [call for call in calls if call[-2:] == ["run", "terminal-theme"]]
     assert len(theme_calls) == 1
     assert calls.index(theme_calls[0]) > next(
-        index for index, call in enumerate(calls) if call[-2:] == ["bootstrap", "--yes"]
+        index
+        for index, call in enumerate(calls)
+        if call[-3:] == ["bootstrap", "--force-dotfiles", "--yes"]
     )
-    main_bootstrap = next(call for call in calls if call[-2:] == ["bootstrap", "--yes"])
+    main_bootstrap = next(
+        call
+        for call in calls
+        if call[-3:] == ["bootstrap", "--force-dotfiles", "--yes"]
+    )
     environment = next(part for part in main_bootstrap if part.startswith("MISE_ENV="))
     assert "terminal-theme" not in environment.split("=", 1)[1].split(",")
     git_calls = [call for call in calls if call[-2:] == ["run", "git-client"]]
@@ -342,7 +421,11 @@ def test_doppelclaude_is_isolated_and_checks_prerequisites(
     assert len(calls) == 3
     plan = calls[2]
     assert "MISE_ENV=doppelclaude" in plan
-    assert plan[-2:] == ["bootstrap", "plan" if check_mode else "--yes"]
+    assert plan[-3:] == [
+        "bootstrap",
+        "--force-dotfiles",
+        "--dry-run" if check_mode else "--yes",
+    ]
     assert [plan[index + 1] for index, arg in enumerate(plan) if arg == "--secret"] == [
         "CLI_PROXY_API_KEY",
         "CLAUDE_CODE_OAUTH_TOKEN",
@@ -365,7 +448,7 @@ def test_base_packages_precede_local_accounts(
     assert calls[0][-2:] == ["run", "mise:maintain"]
     assert "MISE_ENV=base" in calls[1]
     assert calls[1][-4:] == ["bootstrap", "--only", "packages", "--yes"]
-    assert calls[2][-2:] == ["bootstrap", "--yes"]
+    assert calls[2][-3:] == ["bootstrap", "--force-dotfiles", "--yes"]
     assert "--only" not in calls[2]
 
 

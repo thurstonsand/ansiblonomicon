@@ -1,9 +1,8 @@
-[bootstrap.directories."~/Library/Application Support/go"]
-mode = "0700"
+[bootstrap.files."~/.config/eightctl/config.yaml"]
+state = "absent"
 
-[bootstrap.directories."~/Library/Application Support/go/telemetry"]
-mode = "0700"
+[bootstrap.files."~/go/bin/eightctl"]
+state = "absent"
 
-[bootstrap.files."~/Library/Application Support/go/telemetry/mode"]
-source = "desktop-tools/go-telemetry-mode"
-mode = "0644"
+[dotfiles]
+"~/Library/Application Support/go/telemetry/mode" = { source = "desktop-tools/go-telemetry-mode", mode = "symlink" }

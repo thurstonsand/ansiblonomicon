@@ -26,15 +26,15 @@ run = 'python3 software/uvc-repo.py "$HOME/.local/opt/uvc-util" --origin "$UVC_U
 run = '''
 set -eu
 if [ -n "${SOFTWARE_CHECK:-}" ]; then
-  mise bootstrap --only files --dry-run
+  mise bootstrap --only dotfiles --force-dotfiles --dry-run
   if [ -f "$HOME/.local/opt/uvc-util/configure_camera.py" ]; then
-    mise bootstrap --only dotfiles --dry-run
+    :
   else
     echo "configure_camera.py link would be reconciled after file deployment" >&2
   fi
   exit 0
 fi
-mise bootstrap --only files,dotfiles --yes
+mise bootstrap --only dotfiles --force-dotfiles --yes
 '''
 
 [tasks."uvc-util"]

@@ -67,9 +67,9 @@ def test_ssh_client_scopes_exactly_the_pod042_key_pair():
     }
 
 
-def test_desktop_tools_scopes_exactly_the_eightctl_pair():
+def test_desktop_tools_needs_no_secrets():
     task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["desktop-tools"]
-    assert task_secrets(task["run"]) == {"EIGHTCTL_EMAIL", "EIGHTCTL_PASSWORD"}
+    assert task_secrets(task["run"]) == set()
 
 
 def test_editor_config_scopes_exactly_the_llm_credentials():

@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import tomllib
 
@@ -7,6 +8,82 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "bootstrap/targets/pod042"
+
+
+def test_home_dotfiles_transition_and_runtime_independence(tmp_path: Path):
+    source = tmp_path / "checkout"
+    home = tmp_path / "home"
+    source.mkdir()
+    home.mkdir()
+    (source / "mise.toml").write_text("[tools]\nnode = 'lts'\n")
+    (source / "npmrc").write_text("allow-scripts=node-pty\n")
+    (source / "amp.service").write_text("[Service]\nExecStart=amp\n")
+    config = tmp_path / "target"
+    config.mkdir()
+    (config / "mise.toml").write_text(
+        "[dotfiles]\n"
+        f'"{home}/.config/mise/config.toml" = '
+        f'{{ source = "{source}/mise.toml", mode = "symlink" }}\n'
+        f'"{home}/.config/t3code/npmrc" = '
+        f'{{ source = "{source}/npmrc", mode = "symlink" }}\n'
+        f'"{home}/.config/systemd/user/amp.service" = '
+        f'{{ source = "{source}/amp.service", mode = "copy" }}\n'
+    )
+    legacy = home / ".config/mise/config.toml"
+    legacy.parent.mkdir(parents=True)
+    legacy.write_text("legacy\n")
+    foreign = home / ".config/systemd/user/foreign.service"
+    foreign.parent.mkdir(parents=True)
+    foreign.write_text("keep\n")
+    environment = {
+        **os.environ,
+        "HOME": str(home),
+        "MISE_CEILING_PATHS": str(tmp_path),
+        "MISE_TRUSTED_CONFIG_PATHS": str(tmp_path),
+        "MISE_GLOBAL_CONFIG_FILE": str(tmp_path / "absent-global.toml"),
+        "MISE_SYSTEM_CONFIG_FILE": str(tmp_path / "absent-system.toml"),
+    }
+    command = [
+        shutil.which("mise") or "mise",
+        "-C",
+        str(config),
+        "bootstrap",
+        "--only",
+        "dotfiles",
+        "--force-dotfiles",
+    ]
+    preview = subprocess.run(
+        [*command, "--dry-run"], env=environment, capture_output=True, text=True
+    )
+    assert preview.returncode == 0, preview.stderr
+    assert legacy.read_text() == "legacy\n"
+    applied = subprocess.run(
+        [*command, "--yes"], env=environment, capture_output=True, text=True
+    )
+    assert applied.returncode == 0, applied.stderr
+    assert legacy.is_symlink()
+    service = home / ".config/systemd/user/amp.service"
+    assert not service.is_symlink()
+    assert service.read_text() == "[Service]\nExecStart=amp\n"
+    legacy.write_text("[tools]\nnode = '22'\n")
+    assert (source / "mise.toml").read_text() == "[tools]\nnode = '22'\n"
+    (source / "amp.service").write_text("[Service]\nExecStart=amp-next\n")
+    assert service.read_text() == "[Service]\nExecStart=amp\n"
+    before = {path: path.stat().st_mtime_ns for path in (legacy, service, foreign)}
+    repeated = subprocess.run(
+        [*command, "--yes"], env=environment, capture_output=True, text=True
+    )
+    assert repeated.returncode == 0, repeated.stderr
+    assert service.read_text() == "[Service]\nExecStart=amp-next\n"
+    assert foreign.read_text() == "keep\n"
+    stable = {path: path.stat().st_mtime_ns for path in (legacy, service, foreign)}
+    assert stable[legacy] == before[legacy]
+    assert stable[foreign] == before[foreign]
+    no_op = subprocess.run(
+        [*command, "--yes"], env=environment, capture_output=True, text=True
+    )
+    assert no_op.returncode == 0, no_op.stderr
+    assert {path: path.stat().st_mtime_ns for path in stable} == stable
 
 
 def test_operator_task_order_preserves_base_bootstrap():
@@ -27,8 +104,10 @@ def test_operator_task_order_preserves_base_bootstrap():
 
 def test_operator_bootstrap_only_owns_installation_config():
     config = tomllib.loads((TARGET / "mise.operator.toml").read_text())
-    assert set(config["bootstrap"]["files"]) == {
-        "/home/thurstonsand/.config/mise/config.toml"
+    assert set(config["dotfiles"]) == {"/home/thurstonsand/.config/mise/config.toml"}
+    assert config["dotfiles"]["/home/thurstonsand/.config/mise/config.toml"] == {
+        "source": "operator/mise.toml",
+        "mode": "symlink",
     }
     for script in ("configure", "reconcile"):
         assert not (TARGET / "operator" / script).exists()

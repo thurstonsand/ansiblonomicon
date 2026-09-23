@@ -1,36 +1,5 @@
-[bootstrap.secrets]
-eightctl_email = "EIGHTCTL_EMAIL"
-eightctl_password = "EIGHTCTL_PASSWORD"
-
-[bootstrap.directories."~/.config/linearmouse"]
-mode = "0755"
-
-[bootstrap.directories."~/.config/eightctl"]
-mode = "0755"
-
-[bootstrap.directories."~/.mactop"]
-mode = "0755"
-
-[bootstrap.directories."~/.local/state/herdr/client"]
-mode = "0755"
-
-[bootstrap.files."~/.config/linearmouse/linearmouse.json"]
-source = "desktop-tools/linearmouse.json"
-mode = "0644"
-
-[bootstrap.files."~/.config/nextdns.conf"]
-source = "desktop-tools/nextdns.conf"
-mode = "0644"
-
-[bootstrap.files."~/.mactop/config.json"]
-source = "desktop-tools/mactop.json"
-mode = "0644"
-
-[bootstrap.files."~/.local/state/herdr/client/endpoints.json"]
-source = "desktop-tools/herdr-endpoints.json"
-mode = "0600"
-
-[bootstrap.files."~/.config/eightctl/config.yaml"]
-source = "desktop-tools/eightctl-config.yaml.tera"
-template = true
-mode = "0600"
+[dotfiles]
+"~/.config/linearmouse/linearmouse.json" = { source = "desktop-tools/linearmouse.json", mode = "symlink" }
+"~/.config/nextdns.conf" = { source = "desktop-tools/nextdns.conf", mode = "symlink" }
+"~/.mactop/config.json" = { source = "desktop-tools/mactop.json", mode = "symlink" }
+"~/.local/state/herdr/client/endpoints.json" = { source = "desktop-tools/herdr-endpoints.json", mode = "symlink" }

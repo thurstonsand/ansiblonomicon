@@ -73,7 +73,16 @@ def bootstrap(
     target: Path, env: dict[str, str], *args: str
 ) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        ["mise", "-C", str(target), "bootstrap", "--only", "files", *args],
+        [
+            "mise",
+            "-C",
+            str(target),
+            "bootstrap",
+            "--only",
+            "files,dotfiles",
+            "--force-dotfiles",
+            *args,
+        ],
         env=env,
         capture_output=True,
         text=True,
@@ -98,18 +107,22 @@ def test_real_mise_renders_parsable_config_with_modes_and_stable_repeat(
     unrelated = home / ".ssh/known_hosts"
     unrelated.parent.mkdir()
     unrelated.write_text("fixture-host fixture-key\n")
+    config = home / ".ssh/config"
+    config.write_text("stale config\n")
+    config.chmod(0o664)
 
     preview = bootstrap(target, env, "--dry-run")
     assert preview.returncode == 0, preview.stderr
-    assert not (home / ".ssh/config").exists()
+    assert config.read_text() == "stale config\n"
+    assert stat.S_IMODE(config.stat().st_mode) == 0o664
     assert unrelated.read_text() == "fixture-host fixture-key\n"
 
     applied = bootstrap(target, env, "--yes")
     assert applied.returncode == 0, applied.stderr
-    config = home / ".ssh/config"
     proxy = home / ".local/libexec/ssh-smart-proxy"
     assert stat.S_IMODE((home / ".ssh").stat().st_mode) == 0o700
-    assert stat.S_IMODE(config.stat().st_mode) == 0o600
+    assert stat.S_ISREG(config.stat().st_mode)
+    assert stat.S_IMODE(config.stat().st_mode) == 0o644
     assert stat.S_IMODE(proxy.stat().st_mode) == 0o755
     assert unrelated.read_text() == "fixture-host fixture-key\n"
     repeated_paths = [config, proxy]

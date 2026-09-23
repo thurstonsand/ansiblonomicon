@@ -45,6 +45,8 @@ uv run pytest
 
 A capability lives in `bootstrap/targets/<host>/mise.<capability>.toml`; the target's `mise.toml` holds settings and resources shared by multiple capabilities. Register capability order in both the host driver and `bootstrap/mise.toml`. Keep resource ownership disjoint across capability files because mise environments resolve collisions last-wins, reserve mise's OS environment names, and keep hooks independent of `MISE_ENV`. Retire managed files and directories with native `state = "absent"` declarations.
 
+Prefer `[dotfiles]` for home configuration: symlink in-repo sources so application edits reach the repo, copy external Git sources, and render templates; accept source-derived permissions for ordinary files, and reserve `[bootstrap.files]` for secrets requiring private permissions, system files, explicit removals, or consumer-required permissions and ownership.
+
 ### Secrets
 
 Declare shared `op://` references in `fnox.toml` and host-only references in `fnox.<host>.toml`.

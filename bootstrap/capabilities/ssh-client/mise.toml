@@ -7,9 +7,7 @@ mode = "0755"
 [bootstrap.files."~/.ssh/config"]
 source = "ssh-client/config.tera"
 template = true
-mode = "0600"
+mode = "0644"
 
-[bootstrap.files."~/.local/libexec/ssh-smart-proxy"]
-source = "ssh-client/ssh-smart-proxy.tera"
-template = true
-mode = "0755"
+[dotfiles]
+"~/.local/libexec/ssh-smart-proxy" = { source = "ssh-client/ssh-smart-proxy.tera", mode = "template" }

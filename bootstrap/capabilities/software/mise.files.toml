@@ -1,14 +1,5 @@
-[bootstrap.files."~/.local/opt/uvc-util/AGENTS.md"]
-source = "uvc-files/AGENTS.md"
-mode = "0644"
-
-[bootstrap.files."~/.local/opt/uvc-util/configure_camera.py"]
-source = "uvc-files/configure_camera.py"
-mode = "0755"
-
-[bootstrap.files."~/.local/opt/uvc-util/camera_settings.json"]
-source = "uvc-files/camera_settings.json"
-mode = "0644"
-
 [dotfiles]
-"~/.local/bin/configure_camera.py" = { source = "~/.local/opt/uvc-util/configure_camera.py", mode = "symlink" }
+"~/.local/opt/uvc-util/AGENTS.md" = { source = "uvc-files/AGENTS.md", mode = "symlink" }
+"~/.local/opt/uvc-util/configure_camera.py" = { source = "uvc-files/configure_camera.py", mode = "symlink" }
+"~/.local/opt/uvc-util/camera_settings.json" = { source = "uvc-files/camera_settings.json", mode = "symlink" }
+"~/.local/bin/configure_camera.py" = { source = "uvc-files/configure_camera.py", mode = "symlink" }

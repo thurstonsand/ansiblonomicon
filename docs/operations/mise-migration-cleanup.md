@@ -2,9 +2,11 @@
 
 Track temporary compatibility and cutover code here as each capability migrates. Remove an item only after its exit condition is verified on every affected host, including the work laptop. A passing fixture is not a completed work-host cutover. Update this ledger in the same change that adds or removes migration machinery.
 
-## After the current harness changes are completed, committed, and pushed
+## Native dotfiles audit
 
-- [ ] **Audit every `bootstrap.files` usage against native `dotfiles`.** Review all declarations and generated resources for migration to `dotfiles`, keeping explicit permission/ownership requirements, mutable application files, templates, and removals intact. Apply a consistent source policy: link unchanged ansiblonomicon-native assets, copy external Git assets, and render transformed content into real files; document justified exceptions. Do not start this audit before the current harness changes have shipped.
+- [x] **Audit `bootstrap.files` usage against native `dotfiles`.** Editor, desktop-tools, UVC, SSH proxy, and pod042 operator/remote-development home files follow the source policy: link unchanged first-party assets (including app-writable config), copy service units that require checkout-independent runtime, and render templates into regular files. Retained bootstrap files own secrets, system files, removals, and consumer-required ownership or permissions. Nonsecret SSH configuration explicitly uses `0644` to prevent group-writable source modes from reaching OpenSSH.
+
+The dotfiles migration is verified live on pod042: two regular files became source links and SSH config changed to `0644`; contents, private-key permissions, foreign siblings, and service PIDs were preserved. Repeat snapshots were identical. The repository suite passed 905 tests with two platform skips. Personal Mac migration verification is pending; work remains fixture-tested only.
 
 ## Current rollout
 

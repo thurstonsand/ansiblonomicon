@@ -13,7 +13,7 @@ source = "terminal-theme/terminal-theme-ssh.conf.tera"
 template = true
 owner = "tsandberg"
 group = "staff"
-mode = "0600"
+mode = "0644"
 
 [bootstrap.files."/Users/tsandberg/Library/LaunchAgents/house.thurstons.terminal-theme-watch.plist"]
 state = "absent"
