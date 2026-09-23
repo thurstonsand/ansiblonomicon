@@ -6,5 +6,5 @@ account = "PQ7X5W7V6FDADHPFFEO62TLFEM"
 auth_command = ""
 
 [secrets]
-HOMEBREW_SUDO_ASKPASS_PASS = { provider = "personal", value = "op://Private/Apple Macbook Login/password" }
+HOMEBREW_SUDO_ASKPASS_PASS = { provider = "agent", value = "op://agent/oeqloglekpsdkjkpxgcsz4kag4/password" }
 POD042_SERVICE_ACCOUNT_TOKEN = { provider = "personal", value = "op://agent/gvsmrehmd3icpq3c5uow7s6mh4/credential", env = false }

@@ -548,9 +548,11 @@ def test_checked_in_host_sets_with_real_fnox(
         accounts = {
             call["args"][call["args"].index("--account") + 1] for call in desktop_calls
         }
-        expected_accounts = {"PQ7X5W7V6FDADHPFFEO62TLFEM"}
-        if profile == "work":
-            expected_accounts.add("verified-work-account")
+        expected_accounts: set[str] = (
+            {"PQ7X5W7V6FDADHPFFEO62TLFEM", "verified-work-account"}
+            if profile == "work"
+            else set()
+        )
         assert accounts == expected_accounts
 
 
