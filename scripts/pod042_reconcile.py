@@ -64,6 +64,7 @@ CAPABILITIES = (
     "user-tools",
     "neovim",
     "doppelclaude",
+    "retirements",
 )
 _VCS_CLIENT_INDEX = CAPABILITIES.index("git-client")
 FULL_CAPABILITIES = (
@@ -288,6 +289,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             run_command(["mise", "-C", str(ROOT), "run", "user-tools", "--check"])
         if "neovim" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "neovim", "--check"])
+        if "retirements" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "retirements", "--check"])
         if "base" in selected:
             run_command(
                 [

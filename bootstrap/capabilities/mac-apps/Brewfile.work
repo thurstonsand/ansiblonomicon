@@ -1,0 +1,136 @@
+# Homebrew Bundle file (work macOS)
+# Run with: brew bundle --file=Brewfile.work
+
+# Local overrides (corporate taps, gitignored)
+Dir.glob(File.join(__dir__, "../../../ansible/Brewfile.work.*")).sort.each do |f|
+  instance_eval(File.read(f))
+end
+
+# =============================================================================
+# Shell & Terminal
+# =============================================================================
+brew "autojump"
+brew "bat"
+brew "direnv"
+brew "duti"
+brew "fd"
+brew "fzf"
+brew "htop"
+brew "jq"
+brew "ripgrep"
+brew "starship"
+brew "tldr"
+brew "tmux"
+brew "tree"
+brew "unzip"
+brew "vim"
+brew "zsh-autocomplete"
+brew "zsh-syntax-highlighting"
+
+# =============================================================================
+# Software Engineering
+# =============================================================================
+# Agent tools
+brew "asheshgoplani/tap/agent-deck"
+
+# Git
+brew "gh"
+brew "git"
+brew "git-delta"
+brew "glab"
+brew "jujutsu"
+brew "lazygit"
+cask "bruno"
+
+# Languages & build tools
+brew "go"
+brew "libpq", link: true
+brew "oven-sh/bun/bun", trusted: true
+brew "poetry"
+brew "uv"
+
+# Go tools
+brew "delve"
+brew "goimports"
+brew "golang-migrate"
+brew "gopls"
+
+# LSP / Formatters
+brew "ansible-language-server"
+brew "biome"
+brew "prettier"
+brew "vtsls"
+brew "yaml-language-server"
+
+# Linters
+brew "hadolint"
+brew "markdownlint-cli2"
+brew "mcp-remote"
+brew "pyright"
+brew "ruff"
+brew "stylua"
+brew "swiftformat"
+brew "swiftlint"
+
+# Containers
+brew "colima"
+brew "docker"
+brew "docker-buildx"
+brew "docker-compose"
+brew "docker-credential-helper"
+brew "skopeo"
+
+# Kubernetes
+brew "kubernetes-cli"
+brew "kubectx"
+brew "stern"
+
+# Infra
+brew "chezmoi"
+brew "cormacrelf/tap/dark-notify", trusted: true
+brew "openssh"
+
+# Editors/Terminals
+brew "neovim"
+brew "pngpaste"
+brew "thurstonsand/tap/ghosttykit-nightly", trusted: true, restart_service: true
+cask "ghostty"
+cask "thurstonsand/tap/wt"
+cask "zed"
+
+# =============================================================================
+# Productivity
+# =============================================================================
+cask "bettertouchtool"
+cask "obsidian"
+cask "rectangle-pro"
+cask "setapp"
+
+# JetBrains
+cask "goland"
+cask "pycharm"
+
+# Fonts
+cask "font-blex-mono-nerd-font"
+cask "font-liberation-nerd-font"
+cask "font-mononoki-nerd-font"
+cask "font-montserrat"
+
+# Hardware
+cask "bazecor"
+cask "monitorcontrol"
+
+# =============================================================================
+# Possibly corporate-managed (uncomment if not provided by IT)
+# =============================================================================
+cask "1password-cli"
+cask "google-chrome"
+cask "google-drive"
+# cask "iterm2"
+# cask "slack"
+# cask "zoom"
+
+# =============================================================================
+# Voice
+# =============================================================================
+cask "thurstonsand/tap/mini-whisper-nightly"

@@ -1,26 +1,25 @@
 [project]
 name = "ansiblonomicon"
 version = "0.1.0"
-description = "Ansible configuration for macOS systems"
+description = "Declarative host configuration with native mise"
 requires-python = ">=3.14"
-# requests is community.docker's HTTP client: pod042 runs its playbook against
-# this venv, so the docker modules import it from here.
 dependencies = [
-    "ansible>=12.3.0",
     "httpx>=0.28.1",
+    "jinja2>=3.1.6",
+    "pyyaml>=6.0",
     "requests>=2.32.3",
+    "tomlkit>=0.13.2",
     "websockets>=15.0.1",
 ]
 
 [dependency-groups]
+work = ["ansible>=12.3.0", "ansible-lint>=25.12.1"]
 dev = [
-  "ansible-lint>=25.12.1",
   "ruff>=0.11.7",
   "basedpyright>=1.31.7",
   "mypy>=1.19.1",
   "json-with-comments>=1.2.10",
   "pytest>=9.0.2",
-  "tomlkit>=0.13.2",
 ]
 
 # Ruff configuration
@@ -52,10 +51,6 @@ ignore = [
   "E501", # line too long (handled by line-length)
 ]
 
-[tool.ruff.lint.per-file-ignores]
-# Ansible modules have DOCUMENTATION before imports (required structure)
-"ansible/collections/**/modules/*.py" = ["E402"]
-
 [tool.ruff.lint.isort]
 combine-as-imports = true
 force-sort-within-sections = true
@@ -78,8 +73,7 @@ exclude = [
   # every import is unresolvable here by design. Judging them is the trial's job.
   "docs/wayfinding/**/prototypes",
 ]
-# Ansible filter plugins aren't proper Python packages; this lets tests import them
-extraPaths = ["ansible/roles/agent_harness/filter_plugins"]
+extraPaths = ["bootstrap/capabilities/agent-harness"]
 stubPath = "stubs"
 typeCheckingMode = "strict"
 pythonVersion = "3.14"
@@ -92,7 +86,7 @@ reportUnusedVariable = "warning"
 [[tool.basedpyright.executionEnvironments]]
 root = "bootstrap/capabilities/agent-harness"
 pythonVersion = "3.14"
-extraPaths = ["ansible/roles/agent_harness/filter_plugins"]
+extraPaths = ["bootstrap/capabilities/agent-harness"]
 
 [[tool.basedpyright.executionEnvironments]]
 root = "bootstrap/targets/pod042/agent-harness"
@@ -111,7 +105,7 @@ extraPaths = ["bootstrap/targets/pod042/maintenance"]
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = ["ansible/roles/agent_harness/tests", "tests"]
+testpaths = ["tests"]
 addopts = "-ra -q --tb=short --strict-markers"
 filterwarnings = ["error"]
 markers = ["unit: marks tests as unit tests (fast, no external dependencies)"]

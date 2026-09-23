@@ -1,11 +1,11 @@
 # ansiblonomicon
 
-System configuration via Ansible + Chezmoi, replacing nix-darwin + home-manager.
+System configuration through native mise capabilities and Terraform. Ansible and chezmoi remain only for work-laptop necessities awaiting cutover.
 
 ## Quick Start
 
 ```bash
-# First time setup (installs Xcode CLI, Homebrew, Ansible, chezmoi, 1Password CLI)
+# First time setup (Xcode CLI, Homebrew, mise, fnox, uv, 1Password CLI; Ansible/chezmoi only on work)
 ./scripts/bootstrap.sh
 # Use --ignore-certs if behind a corporate proxy that intercepts TLS
 ./scripts/bootstrap.sh --ignore-certs
@@ -16,7 +16,7 @@ mise laptop
 
 ### Sudo Access
 
-Run `mise laptop` normally. The remaining Ansible reconciliation resolves only the host credentials needed by each scoped consumer, including in check mode, and keeps Ansible's fact cache in memory so scoped values are never persisted. Native Mac-app reconciliation bypasses credential lookup in check mode. A read can require one desktop authorization; subsequent `SUDO_ASKPASS` calls reuse the scoped value without returning to 1Password.
+Run `mise laptop` normally. Native consumers resolve only the credentials they need; personal reconciliation has no enclosing fnox or Ansible invocation. Work's remaining Ansible invocation keeps its fact cache in memory so scoped values are never persisted. Native Mac-app reconciliation bypasses credential lookup in check mode. A read can require one desktop authorization; subsequent `SUDO_ASKPASS` calls through `scripts/sudo-askpass.sh` reuse the scoped value without returning to 1Password.
 
 Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 
@@ -32,7 +32,7 @@ Use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND` to giv
 
 On macOS, `dark-notify` acts as the source of truth for terminal theme state. The shared [native mise capability](bootstrap/capabilities/terminal-theme/README.md) installs the runtime helpers and manages the user LaunchAgent (`dev.mise.house.thurstons.terminal-theme-watch`). Together they keep `~/.terminal-bg`, Codex, Hunk, and tmux in sync; active SSH leases mirror the personal Mac's theme to pod042. Mise renders Hunk's real-file config, while deployment and runtime switching read the same Gruvbox Hard palette assets. The watcher reloads only when its declaration or runtime inputs change.
 
-Run `mise terminal-theme` for this capability alone, or add `--check` for a nonmutating preview. Regular laptop and pod042 reconciliation includes it and updates the standalone mise binary to latest stable when its last successful update is at least 24 hours old. Check mode skips upgrades. `mise laptop -t terminal-theme` runs natively without Ansible; mixed tags route only the remaining tags to Ansible. Neither Ansible nor chezmoi owns these theme files.
+Run `mise terminal-theme` for this capability alone, or add `--check` for a nonmutating preview. Regular laptop and pod042 reconciliation includes it and updates the standalone mise binary to latest stable when its last successful update is at least 24 hours old. Check mode skips upgrades. `mise laptop -t terminal-theme` runs natively; only work routes remaining legacy tags to Ansible. Personal runs reject unsupported tags before taking action. Neither Ansible nor chezmoi owns these theme files.
 
 Shared Zsh startup files and static Starship configuration are also native mise resources; use `mise run shell` or `mise run shell --check`. Work rendering resolves its shell-wide Sourcegraph token and scoped sudo credential at apply time; check mode and personal/pod042 reconciliation perform no work-secret lookup. This repo's environment uses mise; direnv remains installed with its automatic shell hook for external projects. See the [shell capability](bootstrap/capabilities/shell/README.md).
 
@@ -52,7 +52,7 @@ Temporary cutover code and its deletion conditions are tracked in the [mise migr
 
 ### Editor and Python indexes
 
-The [editor-config capability](bootstrap/capabilities/editor-config/README.md) is the source of truth for Zed on both Macs and for the personal Mac's VSCode-family and Datasette LLM configuration. `ansible/models.yml` remains the shared model catalogue. Run `mise editor-config` or add `--check`; previews use explicit non-secret placeholders and never resolve credentials.
+The [editor-config capability](bootstrap/capabilities/editor-config/README.md) is the source of truth for Zed on both Macs and for the personal Mac's VSCode-family and Datasette LLM configuration. `bootstrap/capabilities/agent-harness/models.yml` is the shared model catalogue. Run `mise editor-config` or add `--check`; previews use explicit non-secret placeholders and never resolve credentials.
 
 The [Neovim capability](bootstrap/capabilities/neovim/README.md) owns editor configuration and dependency setup. Run `mise neovim` (alias `mise nvim-deps`) or add `--check` to preview configuration without upgrading dependencies. Personal hosts write Lazy's lockfile back to the shared source; work receives a copy and restores those versions. Full reconciliation runs this after software prerequisites.
 
@@ -60,15 +60,15 @@ Work's [Python-index capability](bootstrap/capabilities/python-index/README.md) 
 
 ### Mac runtimes and global packages
 
-`mise mac-apps` (aliases `mise homebrew` and `mise mas`) reconciles the host's original Brewfile directly through Homebrew Bundle. The Brewfiles remain authoritative Ruby, including work extensions and `trusted`, `restart_service`, `link`, and `greedy` options. It preserves the legacy Homebrew upgrade stamp as the daily-maintenance authority, installs or upgrades only declared App Store IDs with scoped `sudo -A`, and limits cleanup to taps, formulae, and casks. `--check` parses the real Brewfile and reports drift without credentials or installs. This native capability now owns Mac application installation; the retained Ansible role is rollback/cutover cleanup state, not a playbook owner.
+`mise mac-apps` (aliases `mise homebrew` and `mise mas`) reconciles the host's Brewfile under `bootstrap/capabilities/mac-apps/` directly through Homebrew Bundle. The Brewfiles remain authoritative Ruby, including private `ansible/Brewfile.work.*` extensions and `trusted`, `restart_service`, `link`, and `greedy` options. It preserves the legacy Homebrew upgrade stamp as the daily-maintenance authority, installs or upgrades only declared App Store IDs with scoped `sudo -A`, and limits cleanup to taps, formulae, and casks. `--check` parses the real Brewfile and reports drift without credentials or installs.
 
 `mise language-tools` reconciles the inventories under `bootstrap/capabilities/language-tools/` without Ansible. It preserves unrelated global mise configuration and packages, updates only declared tools when their daily interval or inventory changes, and restores declared npm packages after Node replacement. `--check` validates the inventory and reports intended work without changing files or installing tools. Work requires its private inventory and Python-index mapping first; see [README.work.md](README.work.md).
 
-Small vendor-installed and source-built software is also native: run `mise claude-code`, `mise opencode`, `mise pi`, `mise sessions`, `mise shp`, or `mise uvc-util`, with `--check` for a nonmutating drift report. Host registration limits each command to the laptops that declare it.
+Small vendor-installed and source-built software is also native: run `mise claude-code`, `mise opencode`, `mise pi`, `mise sessions`, `mise shp`, or `mise uvc-util`, with `--check` for a nonmutating drift report. Host registration limits each command to the laptops that declare it. Go and UVC sources live under `bootstrap/capabilities/software/sources/`.
 
 Capability-driven Node upgrades carry unmanaged registry npm globals into the new prefix at their installed versions, excluding bundled npm/Corepack. A private pending snapshot survives failed runs and is removed after successful reconciliation; linked/local packages require explicit handling before an upgrade. The self-contained Node postinstall hook restores declared packages even when Node is installed outside reconciliation.
 
-Full laptop reconciliation ensures and maintains the standalone mise binary before Homebrew cleanup, then runs Mac apps, language tools, vendor-installed and source-built software tasks, native system configuration, the personal agent catalogue, one remaining Ansible invocation, and native user configuration capabilities. `mise laptop -t homebrew,language-tools` runs only the selected native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
+Full laptop reconciliation ensures and maintains the standalone mise binary before Homebrew cleanup, then runs Mac apps, language tools, vendor-installed and source-built software, system configuration, agent deployment, and user configuration. Personal runs finish with native retirements and never invoke Ansible or chezmoi. Work alone retains an Ansible invocation for its private catalogue, chezmoi state, and local tasks. `mise laptop -t homebrew,language-tools` runs only the selected native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
 
 The [macOS system capability](bootstrap/capabilities/macos-system/README.md) owns typed preferences, sudo Touch ID, and personal hostname. Run `mise sysconfig` or `mise laptop -t dock,finder`, adding `--check` for a preview. Apps restart only when their preferences change; work hostname and existing work `pam_reattach` lines remain unmanaged.
 
@@ -78,35 +78,21 @@ On the personal Mac, `mise agent-harness` reconciles skills, subagents, and hook
 
 `bootstrap/capabilities/agent-harness/configuration/` is the canonical source for harness settings, instructions, extensions, plugins, and shared libraries. `mise agent-config --check` previews with non-secret placeholders and exits 2 when secret-backed parity remains unresolved; add `--real-secrets` for read-only parity with scoped fnox resolution, or omit `--check` to apply. Static first-party assets are symlinked; rendered, host-dependent, and private outputs are regular files, with private outputs mode `0600`. Host-local non-secret inputs belong in `bootstrap/capabilities/agent-harness/local/<hostname>/data.toml`; credentials remain SecretRefs resolved only for the command.
 
-`mise agent-harness` reconciles the catalogue and then calls `agent-config`. Full reconciliation routes both through the `agent-harness` tag; work still uses Ansible only for its private plugin catalogue. Chezmoi ignores the native destinations and no longer supplies agent configuration. This migration is fixture-tested but has not yet been applied live.
+`mise agent-harness` reconciles the catalogue and then calls `agent-config`. Full reconciliation routes both through the `agent-harness` tag; work still uses Ansible for its private plugin catalogue. Chezmoi ignores the native destinations and no longer supplies agent configuration. Personal Mac and pod042 live verification is recorded in the cleanup ledger; work private-input cutover remains pending. Hosted Amp publication uses the native catalogue, resolver, and `publish_amp_skills.py`, without Ansible.
 
 ### Retiring managed paths
 
-Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work macOS run removes listed files, symlinks, or directories idempotently, including tagged runs. Relative and `~/` entries resolve beneath the managed user's home; absolute paths are used verbatim. Native pod042 and UDMP resources use `state = "absent"` instead.
+Declare native absence resources in the capability that owns the path. Personal legacy cleanup lives in `bootstrap/capabilities/retirements/paths.toml`; `mise retirements --check` previews it. Personal laptop full runs execute retirements last; focused runs require `-t retirements`. Work instead retains `.ansibleremove` through its playbook and `chezmoi/.chezmoiremove` through chezmoi. Deleting a source alone does not remove deployed state.
 
 ## Structure
 
 ```text
-├── .ansibleremove             # Retired paths removed from user-managed hosts
-├── ansible/
-│   ├── ansible.cfg          # Ansible configuration
-│   ├── inventory/           # Host definitions
-│   ├── config.yml           # Shared configuration variables
-│   ├── agent-harness.config.yml # Legacy Ansible compatibility and private host extras
-│   ├── darwin.config.yml    # macOS-specific config
-│   ├── work.config.yml     # Work macOS-specific config
-│   ├── pod042.config.yml    # Retained pod042 service migration declarations
-│   ├── archlinux.config.yml # Arch Linux-specific config
-│   ├── Brewfile             # Homebrew packages, casks, and MAS apps
-│   ├── requirements.yml     # Ansible Galaxy dependencies
-│   ├── roles/               # Custom and Galaxy roles
-│   ├── tasks/               # Task files by category
-│   ├── collections/         # Local Ansible collections (local.truenas)
-│   ├── stacks/              # Docker Compose stacks for TrueNAS
-│   └── playbooks/
-│       ├── macos.yml        # macOS playbook
-│       ├── work.yml         # Work macOS playbook
-├── chezmoi/                  # Dotfiles managed by chezmoi
+├── .ansibleremove             # Work-only legacy retirements
+├── ansible/                  # Work playbook, adapters, and private inputs
+│   ├── work.config.yml       # Remaining work configuration
+│   ├── roles/                # Work adapters and fallback roles pending private-caller audit
+│   └── playbooks/work.yml    # Only remaining playbook
+├── chezmoi/                  # Work-only private templates, data, and cleanup
 ├── cloudflare-pages/         # Static sites deployed via Cloudflare Pages
 ├── agents/                   # Locally authored plugins selected by the native agent catalogue
 ├── .agents/                  # Project-local Claude/Pi skills for this repo
@@ -121,14 +107,15 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work 
 
 ## Commands
 
-- `mise laptop` — Reconcile native capabilities and the remaining macOS Ansible tasks (auto-detects work vs personal)
+- `mise laptop` — Reconcile native capabilities; only work also runs its remaining Ansible tasks (auto-detects work vs personal)
 - `mise laptop --check` — Dry-run mode (shows what would change without applying)
 - `mise pod042 [capability]` — Reconcile pod042 locally or over SSH (`--check` previews changes)
 - `mise udmp` — Reconcile UDM Pro host state with native mise remote bootstrap
 - `mise udmp --check` — Preview UDM Pro host-state changes
-- `mise run reconcile:tags [playbook]` — List the `--tags` a playbook offers (defaults to this machine's own)
-- `mise run chezmoi:diff` — Preview dotfile changes (source → home), excluding lockfiles
-- `mise run chezmoi:re-add` — Update source from local changes (dry-run by default, use `--apply` to apply)
+- `mise run reconcile:tags` — List native personal tags or remaining work playbook tags
+- `mise retirements --check` — Preview personal legacy cleanup
+- `mise run chezmoi:diff` — Preview work-only dotfile changes (source → home), excluding lockfiles
+- `mise run chezmoi:re-add` — Update work-only source from local changes (dry-run by default, use `--apply` to apply)
 - `mise run edge:init` — Terraform init (Cloudflare)
 - `mise run edge:plan` — Terraform plan (Cloudflare)
 - `mise run edge:apply` — Terraform apply (Cloudflare)
@@ -146,7 +133,7 @@ Add obsolete Ansible-managed paths to `.ansibleremove`. Every personal and work 
 
 ## Design
 
-See [nixonomicon/docs/designs/nix-to-chezmoi-ansible-migration.md](https://github.com/thurstonsand/nixonomicon/blob/main/docs/designs/nix-to-chezmoi-ansible-migration.md) for the full migration plan.
+The earlier Nix-to-Ansible/chezmoi migration is documented in [nixonomicon/docs/designs/nix-to-chezmoi-ansible-migration.md](https://github.com/thurstonsand/nixonomicon/blob/main/docs/designs/nix-to-chezmoi-ansible-migration.md). Current native cutover status is in the [cleanup ledger](docs/operations/mise-migration-cleanup.md).
 
 ## Hosts
 
@@ -162,5 +149,5 @@ SSH aliases are configured by the [SSH client capability](bootstrap/capabilities
 
 - **macOS** (Darwin) — Primary, fully supported
 - **Debian** (pod042) — Physical NAS reconciled locally or over SSH with native mise bootstrap resources
-- **TrueNAS** — Retired migration source; its declarations remain until replacement capabilities absorb them
-- **Arch Linux** (omarchy) — Future, structure ready
+- **TrueNAS** — Retired; historical migration notes only
+- **Arch Linux** (omarchy) — Future; no active target

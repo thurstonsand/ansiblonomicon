@@ -16,7 +16,7 @@ Use the following prompt to guide the title inside the `{title}` tag. The title 
 {% if ansible_hostname is match('ML-') %}
 !`jq -r '.prompt' ~/.cache/claude-code-auto-title/config.json`
 {% else %}
-{{ lookup('file', playbook_dir ~ '/../session-title-prompt.txt') }}
+{{ lookup('file', agent_harness_root ~ '/session-title-prompt.txt') }}
 {% endif %}
 ```
 

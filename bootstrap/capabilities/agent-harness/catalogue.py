@@ -13,15 +13,11 @@ from typing import TypedDict, cast
 import jinja2
 import yaml
 
-sys.path.insert(
-    0,
-    str(
-        Path(__file__).resolve().parents[3]
-        / "ansible/roles/agent_harness/filter_plugins"
-    ),
-)
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 import harness_filters as filters
 from harness_filters import SourceConfig
+
+CAPABILITY = "bootstrap/capabilities/agent-harness"
 
 
 class Profile(TypedDict):
@@ -88,7 +84,7 @@ def environment(repo: Path, home: Path, hostname: str) -> jinja2.Environment:
     cast(dict[str, object], env.globals).update(
         ansible_facts={"env": {"HOME": str(home)}},
         ansible_hostname=hostname,
-        playbook_dir=str(repo / "ansible/playbooks"),
+        agent_harness_root=str(repo / CAPABILITY),
         lookup=lookup,
     )
     return env
@@ -98,8 +94,8 @@ def declarations(
     repo: Path, home: Path, profile: str, hostname: str
 ) -> tuple[jinja2.Environment, Profile, dict[str, Layout], list[SourceConfig]]:
     env = environment(repo, home, hostname)
-    canonical = repo / "bootstrap/capabilities/agent-harness/catalogue.toml"
-    profiles_path = repo / "bootstrap/capabilities/agent-harness/profiles.toml"
+    canonical = repo / CAPABILITY / "catalogue.toml"
+    profiles_path = repo / CAPABILITY / "profiles.toml"
     if not canonical.is_file() or not profiles_path.is_file():
         raise ValueError("Canonical harness catalogue and profiles are required")
     catalogue_data = mapping(tomllib.loads(canonical.read_text()))
@@ -108,7 +104,7 @@ def declarations(
         "agent_harness_profiles": profile_data["profiles"],
         "agent_harness_sources": catalogue_data["sources"],
     }
-    harness_root = repo / "bootstrap/capabilities/agent-harness/harnesses"
+    harness_root = repo / CAPABILITY / "harnesses"
     declarations = sorted(harness_root.glob("*/mise.toml"))
     if not declarations:
         raise ValueError("Canonical harness layouts are required")
@@ -164,6 +160,11 @@ def declarations(
         list(layouts),
     )
     return env, selected_profile, layouts, sources
+
+
+def load_models(repo: Path) -> dict[str, object]:
+    document = mapping(yaml.safe_load((repo / CAPABILITY / "models.yml").read_text()))
+    return mapping(document["models"])
 
 
 def excluded(path: Path, patterns: list[str]) -> bool:
@@ -233,9 +234,7 @@ def render_files(
     resources = filters.agent_harness_build_plugin_resources(
         sources, str(cache), allow_missing_selections
     )
-    models = mapping(
-        mapping(yaml.safe_load((repo / "ansible/models.yml").read_text()))["models"]
-    )
+    models = load_models(repo)
     files: dict[Path, tuple[bytes, int]] = {}
 
     def add(
@@ -363,7 +362,7 @@ def native_resources(
 ) -> list[NativeResource]:
     """Load declarations for mise to interpret, only rebasing their sources."""
     resources: list[NativeResource] = []
-    root = repo / "bootstrap/capabilities/agent-harness/harnesses"
+    root = repo / CAPABILITY / "harnesses"
     for target in enabled_harnesses:
         declaration = root / target / "mise.toml"
         document = mapping(tomllib.loads(declaration.read_text()))

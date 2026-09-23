@@ -72,7 +72,4 @@ for package_lock in "${package_locks[@]}"; do
   "$node_bin_dir/npm" --prefix "$package_dir" ci --no-audit --no-fund --silent
 done
 
-step "Install Ansible collections"
-"$repo_root/.venv/bin/ansible-galaxy" collection install -r ansible/requirements.yml
-
 mise --no-env trust --quiet

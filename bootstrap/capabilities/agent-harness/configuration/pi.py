@@ -272,7 +272,10 @@ def _settings(
                 "model": profile["auto_title"],
                 "thinkingLevel": "off",
                 "timeoutSecs": 60,
-                "prompt": (repo / "ansible/session-title-prompt.txt").read_text(),
+                "prompt": (
+                    repo
+                    / "bootstrap/capabilities/agent-harness/session-title-prompt.txt"
+                ).read_text(),
             },
             "ask": {"persistRuns": True},
             "handoff": {

@@ -54,4 +54,4 @@ cd "$repo_root/ansible"
 # --offline skips the `ansible-galaxy collection install` every invocation would
 # otherwise run (1.83s -> 1.36s per role). The full `ansible:lint` task stays
 # online; that is where a newly added collection requirement surfaces.
-exec ansible-lint --offline "${lintables[@]}"
+exec uv run --group work ansible-lint --offline "${lintables[@]}"

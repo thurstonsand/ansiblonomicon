@@ -64,28 +64,14 @@ if [[ "$PLATFORM" == "darwin" ]]; then
     fi
 fi
 
-# Install Ansible
-if ! command -v ansible-playbook &>/dev/null; then
-    echo "==> Installing Ansible..."
-    if [[ "$PLATFORM" == "darwin" ]]; then
-        brew install ansible
-    elif [[ "$PLATFORM" == "archlinux" ]]; then
-        sudo pacman -S --noconfirm ansible
-    fi
-else
-    echo "==> Ansible already installed"
-fi
-
-# Install chezmoi
-if ! command -v chezmoi &>/dev/null; then
-    echo "==> Installing chezmoi..."
-    if [[ "$PLATFORM" == "darwin" ]]; then
-        brew install chezmoi
-    elif [[ "$PLATFORM" == "archlinux" ]]; then
-        sudo pacman -S --noconfirm chezmoi
-    fi
-else
-    echo "==> chezmoi already installed"
+# Only work retains legacy reconciliation until its private-input cutover.
+if [[ "$(hostname -s)" == "ML-DFC6YK6VJQ" ]]; then
+    for tool in ansible chezmoi; do
+        if ! command -v "$tool" &>/dev/null; then
+            echo "==> Installing $tool for work reconciliation..."
+            brew install "$tool"
+        fi
+    done
 fi
 
 # Install mise (provides this repo's toolchain, venv, and environment)
@@ -127,8 +113,8 @@ else
     echo "==> 1Password CLI already installed"
 fi
 
-# Install Ansible Galaxy requirements (if requirements.yml exists)
-if [[ -f "$REPO_DIR/ansible/requirements.yml" ]]; then
+# Install the work laptop's remaining Ansible collections.
+if [[ "$(hostname -s)" == "ML-DFC6YK6VJQ" ]]; then
     echo "==> Installing Ansible Galaxy requirements..."
     if ! ansible-galaxy install -r "$REPO_DIR/ansible/requirements.yml" $GALAXY_IGNORE_CERTS; then
         echo ""
@@ -146,6 +132,6 @@ echo ""
 echo "Next step: let mise build the environment, then open a new shell:"
 echo "    mise trust && mise run bootstrap"
 echo ""
-echo "Then run the appropriate playbook, e.g.:"
+echo "Then reconcile the appropriate host, e.g.:"
 echo "    mise laptop"
 echo "    mise pod042"

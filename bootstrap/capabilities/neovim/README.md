@@ -1,6 +1,6 @@
 # Neovim capability
 
-Native mise owns Neovim configuration while chezmoi continues to own other dotfiles. Static files use `symlink-each`, preserving unknown children under `~/.config/nvim`; host-sensitive Lua files are rendered as regular files. The lockfile is deliberately outside the shared tree: personal hosts symlink it writable-back to the repository, while work receives a copy that every reconcile restores.
+Native mise owns Neovim configuration directly. Static files use `symlink-each`, preserving unknown children under `~/.config/nvim`; host-sensitive Lua files are rendered as regular files. The lockfile is deliberately outside the shared tree: personal hosts symlink it writable-back to the repository, while work receives a copy that every reconcile restores.
 
 Sources live in `bootstrap/capabilities/neovim/files/`; each registered target exposes that directory as `neovim/` beside its mise environment files.
 

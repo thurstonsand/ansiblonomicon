@@ -1,6 +1,6 @@
 ---
 name: installing-software
-description: Use when adding, removing, or updating software, including agent skills, extensions and packages. Find its declared Ansible or native mise host configuration before changing the machine.
+description: Use when adding, removing, or updating software, including agent skills, extensions and packages. Find its native mise declaration or remaining work-only legacy consumer before changing the machine.
 ---
 
 # Installing Software
@@ -9,14 +9,14 @@ Manage host software through this repo's desired state. Use the host's existing 
 
 ## macOS
 
-- Homebrew and Mac App Store apps: `ansible/Brewfile`, with `ansible/Brewfile.work` for work; reconcile through `mise mac-apps`.
+- Homebrew and Mac App Store apps: `bootstrap/capabilities/mac-apps/Brewfile`, with `Brewfile.work` for work; reconcile through `mise mac-apps`. Work's private `ansible/Brewfile.work.*` includes retain their existing location.
 - Runtime and global-package inventories: `bootstrap/capabilities/language-tools/`; work's private inventory lives in its native target. Reconcile through `mise language-tools`.
-- Reconciliation: `mise laptop` routes software through native capabilities before the remaining Ansible playbook and native configuration tasks.
-- Claude Code, OpenCode, sessions, shp, and uvc-util: `bootstrap/capabilities/software/`, registered under the Mac targets. Go and UVC overlay sources remain under their `ansible/roles/` paths. Use the matching root task with `--check` before applying; UVC reconciliation builds but never runs camera settings.
+- Reconciliation: `mise laptop` is native-only on personal hosts. Work additionally runs its remaining Ansible catalogue, chezmoi, and private local tasks. Do not add personal consumers to either legacy tree.
+- Claude Code, OpenCode, sessions, shp, and uvc-util: `bootstrap/capabilities/software/`, registered under the Mac targets. Go and UVC overlay sources live in its `sources/` directory. Use the matching root task with `--check` before applying; UVC reconciliation builds but never runs camera settings.
 
 ## pod042
 
-Use native mise at `bootstrap/targets/pod042/`. The remaining Ansible pod042 config and stack templates are migration references, not executable deployment authority. Never run retired Ansible playbooks on the fresh Debian host.
+Use native mise at `bootstrap/targets/pod042/`. Ansible pod042 declarations have been retired; native target resources are the deployment authority.
 
 - Do not install packages directly except for temporary diagnosis. Declare packages and files in the capability that owns them. `mise.repositories.toml` owns APT sources, signing keys, and preferences; native pre-package hooks install repository files before refreshing or installing packages.
 - Containerized applications belong in a Compose project under `bootstrap/targets/pod042/containers/stacks/` and a matching native `[bootstrap.compose]` declaration. Let Compose own service dependencies, health, networks, and image references rather than installing an equivalent host package.
@@ -41,10 +41,10 @@ Work's Pi release is declared in `bootstrap/targets/ML-DFC6YK6VJQ/mise.pi.toml` 
 
 ## Skills and agents
 
-- Source catalogue, host profiles and exclusions: `ansible/agent-harness.config.yml`.
-- Host-only additions: `agent_harness_sources_extra` in the host's local config.
-- Source/plugin keys: `ansible/roles/agent_harness/defaults/main.yml`.
-- Harness layout: `ansible/roles/agent_harness/vars/agents.yml`.
-- Resolution and filtering: `ansible/roles/agent_harness/filter_plugins/harness_filters.py`.
+- Source catalogue, host profiles and exclusions: `bootstrap/capabilities/agent-harness/{catalogue,profiles}.toml`.
+- Harness layout: `bootstrap/capabilities/agent-harness/harnesses/`.
+- Source/plugin keys, resolution and filtering: `bootstrap/capabilities/agent-harness/harness_filters.py`.
+- Work-only private catalogue additions: `agent_harness_sources_extra` in `ansible/work.config.local.yml`; the retained Ansible adapter loads the native catalogue and resolver.
+- Hosted Amp publication: native `bootstrap/capabilities/agent-harness/publish_amp_skills.py`, invoked by `scripts/publish-amp-skills.sh`.
 
 Keep agent configuration and skills in their declared sources rather than editing installed copies.

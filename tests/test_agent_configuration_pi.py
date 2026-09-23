@@ -61,7 +61,9 @@ def test_personal_mac_uses_local_packages_and_canonical_aliases(tmp_path: Path) 
     assert str(tmp_path / "Develop/pi-permissions") in settings["packages"]
     assert (
         settings["sessions"]["autoTitle"]["prompt"]
-        == (ROOT / "ansible/session-title-prompt.txt").read_text()
+        == (
+            ROOT / "bootstrap/capabilities/agent-harness/session-title-prompt.txt"
+        ).read_text()
     )
     assert ".pi/agent/mcp.json" not in result
     assert (

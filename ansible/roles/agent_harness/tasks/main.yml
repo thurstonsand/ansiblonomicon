@@ -1,13 +1,15 @@
 ---
 # Agent Harness - Deploy AI agent skills/agents
 
+- name: Locate the canonical agent harness capability
+  ansible.builtin.set_fact:
+    agent_harness_root: "{{ (playbook_dir ~ '/../../bootstrap/capabilities/agent-harness') | realpath }}"
+
 - name: Load canonical agent harness profiles and layouts
   ansible.builtin.set_fact:
     agent_harness_declarations: >-
-      {{ (playbook_dir ~ '/../../bootstrap/capabilities/agent-harness')
-         | agent_harness_load_declarations(
-             ansible_facts.env.HOME,
-             agent_harness_amp_skills_dir | default(none)) }}
+      {{ agent_harness_root
+         | agent_harness_load_declarations(ansible_facts.env.HOME) }}
 
 - name: Select canonical agent harness profiles and layouts
   ansible.builtin.set_fact:
@@ -16,9 +18,7 @@
 
 - name: Load canonical agent harness catalogue
   ansible.builtin.set_fact:
-    agent_harness_sources: >-
-      {{ (playbook_dir ~ '/../../bootstrap/capabilities/agent-harness/catalogue.toml')
-         | agent_harness_load_catalogue(playbook_dir) }}
+    agent_harness_sources: "{{ (agent_harness_root ~ '/catalogue.toml') | agent_harness_load_catalogue }}"
 
 - name: Select agent harness source execution context
   ansible.builtin.set_fact:

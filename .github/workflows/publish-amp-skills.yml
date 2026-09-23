@@ -6,10 +6,8 @@ on:
     paths:
       - .github/workflows/publish-amp-skills.yml
       - agents/**
-      - ansible/config.yml
-      - ansible/models.yml
-      - ansible/playbooks/publish-amp-skills.yml
-      - ansible/roles/agent_harness/**
+      - bootstrap/capabilities/agent-harness/**
+      - pyproject.toml
       - scripts/publish-amp-skills.sh
       - uv.lock
   schedule:

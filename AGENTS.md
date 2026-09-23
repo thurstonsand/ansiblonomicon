@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Ansiblonomicon is a central store of all of my computer configurations, administered primarily through ansible, chezmoi, and terraform. It strives to be declarative, and reconciles real state towards the configured one in the repo. It covers my personal and work laptops, a NAS, my router, a dev VM, and the Cloudflare edge in front of all of them.
+Ansiblonomicon is a central store of all of my computer configurations, administered through native mise capabilities and terraform. Ansible and chezmoi remain only for work-laptop necessities awaiting verified cutover. It strives to be declarative, and reconciles real state towards the configured one in the repo. It covers my personal and work laptops, a NAS, my router, and the Cloudflare edge in front of all of them.
 
 ## Project context
 
@@ -17,8 +17,8 @@ I also wanted to capture the various AI agent harnesses in a unified and flexibl
 ## Core principles
 
 - reconciliation over execution: I want to declare my desired state and have the system align with it; this means minimize one-way operations and make reruns idempotent
-- roles for clean abstractions: save roles for when it's possible to encapsulate an idea or system as an abstraction for its complexity; suggest to the user when a role might be appropriate
-- for removals that may need to propagate across systems, prefer `.chezmoiremove` and `.ansibleremove` files to keep state declarative. Do not need to do this if the change was never deployed to a different machine or was still in progress
+- capabilities for clean abstractions: group native mise resources by the system they own; extend the existing owner before adding another
+- for removals that may need to propagate across systems, declare native absence resources; personal legacy cleanup belongs in `bootstrap/capabilities/retirements/paths.toml`. Work still consumes `.ansibleremove` and `chezmoi/.chezmoiremove`. No retirement is needed for changes never deployed elsewhere
 - on the terminal, I use `cmd` to represent ghostty actions, `ctrl` for shell interactions, and `alt` for whatever is holding the alt-screen. This may not always be universally possible, but is a general rule of thumb
 
 ## Development Guidelines

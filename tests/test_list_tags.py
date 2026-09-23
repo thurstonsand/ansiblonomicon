@@ -16,9 +16,9 @@ def test_agent_harness_tag_ownership(
 ) -> None:
     binary = tmp_path / "bin"
     binary.mkdir()
-    ansible_playbook = binary / "ansible-playbook"
+    ansible_playbook = binary / "uv"
     ansible_playbook.write_text(
-        "#!/bin/sh\nprintf 'playbook tags: [agent-harness]\\n'\n"
+        "#!/bin/sh\nprintf '%s\\n' \"$*\"\nprintf 'playbook tags: [agent-harness]\\n'\n"
     )
     ansible_playbook.chmod(0o755)
 
@@ -36,4 +36,8 @@ def test_agent_harness_tag_ownership(
         result.stdout.splitlines()[0].removeprefix("Native mise tags: ").split()
     )
     assert ("agent-harness" in native_tags) is native_owns_agent_harness
-    assert "playbook tags: [agent-harness]" in result.stdout
+    assert (
+        "playbook tags: [agent-harness]" in result.stdout
+    ) is not native_owns_agent_harness
+    if not native_owns_agent_harness:
+        assert "--group work ansible-playbook" in result.stdout

@@ -33,8 +33,12 @@ def test_load_data_uses_host_develop_directory(
     tmp_path: Path, hostname: str, expected: str
 ) -> None:
     repo = tmp_path / "repo"
-    (repo / "ansible").mkdir(parents=True)
-    shutil.copy(ROOT / "ansible/models.yml", repo / "ansible/models.yml")
+    capability = repo / "bootstrap/capabilities/agent-harness"
+    capability.mkdir(parents=True)
+    shutil.copy(
+        ROOT / "bootstrap/capabilities/agent-harness/models.yml",
+        capability / "models.yml",
+    )
     if hostname == deploy.WORK_HOST:
         local = repo / "bootstrap/capabilities/agent-harness/local" / hostname
         local.mkdir(parents=True)
@@ -48,8 +52,12 @@ def test_load_data_uses_host_develop_directory(
 
 def test_load_data_local_overlay_overrides_host_default(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
-    (repo / "ansible").mkdir(parents=True)
-    shutil.copy(ROOT / "ansible/models.yml", repo / "ansible/models.yml")
+    capability = repo / "bootstrap/capabilities/agent-harness"
+    capability.mkdir(parents=True)
+    shutil.copy(
+        ROOT / "bootstrap/capabilities/agent-harness/models.yml",
+        capability / "models.yml",
+    )
     local = repo / "bootstrap/capabilities/agent-harness/local/pod042"
     local.mkdir(parents=True)
     (local / "data.toml").write_text('developDir = "/srv/source"\n')
@@ -61,11 +69,15 @@ def test_load_data_local_overlay_overrides_host_default(tmp_path: Path) -> None:
 
 def test_render_all_work_uses_exact_declared_secret_scope(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
-    (repo / "ansible").mkdir(parents=True)
-    shutil.copy(ROOT / "ansible/models.yml", repo / "ansible/models.yml")
+    capability = repo / "bootstrap/capabilities/agent-harness"
+    capability.mkdir(parents=True)
     shutil.copy(
-        ROOT / "ansible/session-title-prompt.txt",
-        repo / "ansible/session-title-prompt.txt",
+        ROOT / "bootstrap/capabilities/agent-harness/models.yml",
+        capability / "models.yml",
+    )
+    shutil.copy(
+        ROOT / "bootstrap/capabilities/agent-harness/session-title-prompt.txt",
+        capability / "session-title-prompt.txt",
     )
     local = repo / "bootstrap/capabilities/agent-harness/local" / deploy.WORK_HOST
     local.mkdir(parents=True)

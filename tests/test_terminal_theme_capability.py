@@ -60,7 +60,7 @@ def test_macos_task_authenticates_only_on_apply(
         if host == "ML-DFC6YK6VJQ":
             secret += "_WORK"
         assert lines.pop(0) == f"resolve {secret}"
-        assert lines.pop(0) == f"sudo -A -v {project}/ansible/sudo-askpass.sh"
+        assert lines.pop(0) == f"sudo -A -v {project}/scripts/sudo-askpass.sh"
     assert len(lines) == 1
     assert "--dry-run" in lines[0] if check else "--yes" in lines[0]
     assert lines[0].endswith("terminal-theme,terminal-theme-macos,terminal-theme-files")
@@ -213,9 +213,13 @@ def test_helper_source_modes() -> None:
 
 
 def isolated_mise_env(home: Path, config: Path) -> dict[str, str]:
+    uv = Path(subprocess.check_output(["mise", "which", "uv"], text=True).strip())
     return {
         "HOME": str(home),
-        "PATH": os.environ["PATH"],
+        "PATH": f"{uv.parent}:{os.environ['PATH']}",
+        "UV_PYTHON": sys.executable,
+        "UV_PYTHON_DOWNLOADS": "never",
+        "UV_OFFLINE": "true",
         "USER": os.environ.get("USER", "thurstonsand"),
         "XDG_CACHE_HOME": str(home / ".cache"),
         "XDG_CONFIG_HOME": str(home / ".config"),

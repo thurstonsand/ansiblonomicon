@@ -290,7 +290,11 @@ def render(
         raise ValueError(
             "CLI_PROXY_API_KEY is required for Claude title hooks"
         ) from error
-    title_prompt = (repo / "ansible/session-title-prompt.txt").read_text().strip()
+    title_prompt = (
+        (repo / "bootstrap/capabilities/agent-harness/session-title-prompt.txt")
+        .read_text()
+        .strip()
+    )
     outputs[".claude/hooks/_config.py"] = (
         '"""Rendered configuration for auto-title hooks."""\n\n'
         'API_URL = "https://aig.thurstons.house/v1/messages"\n'

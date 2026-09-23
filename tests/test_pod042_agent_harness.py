@@ -21,11 +21,10 @@ catalogue_spec.loader.exec_module(catalogue)
 
 
 def asymmetric_catalogue(repo: Path) -> None:
-    (repo / "ansible/roles/agent_harness/vars").mkdir(parents=True)
-    (repo / "ansible/playbooks").mkdir()
-    (repo / "ansible/models.yml").write_text("models: {}\n")
-    (repo / "ansible/template.txt").write_text("looked-up\n")
     capability = repo / "bootstrap/capabilities/agent-harness"
+    capability.mkdir(parents=True)
+    (capability / "models.yml").write_text("models: {}\n")
+    (capability / "template.txt").write_text("looked-up\n")
     for name, skills, agents in (
         ("claude", "~/personal/skills", "~/personal/agents"),
         ("amp", "~/amp/skills", None),
@@ -47,18 +46,6 @@ explicit_only = []
 [profiles.pod042]
 target_agents = ["claude", "amp"]
 explicit_only = ["amp"]
-"""
-    )
-    (repo / "ansible/roles/agent_harness/vars/agents.yml").write_text(
-        """agent_harness_agents:
-  claude:
-    skills_dir: "{{ ansible_facts.env.HOME }}/{{ 'work' if ansible_hostname == 'work-mac' else 'personal' }}/skills"
-    agents_dir: "{{ ansible_facts.env.HOME }}/{{ 'work' if ansible_hostname == 'work-mac' else 'personal' }}/agents"
-    name_transform: preserve
-  amp:
-    skills_dir: "{{ ansible_facts.env.HOME }}/amp/skills"
-    agents_dir: null
-    name_transform: preserve
 """
     )
     (capability / "catalogue.toml").write_text(
@@ -96,7 +83,7 @@ skills = { not-work = "not-work" }
         skill.mkdir()
         (skill / "SKILL.md.j2").write_text(
             "---\nname: " + name + "\n---\n{{ ansible_hostname }} "
-            "{{ lookup('file', playbook_dir + '/../template.txt') }}\n"
+            "{{ lookup('file', agent_harness_root + '/template.txt') }}\n"
         )
     script = plugins / "common/run.sh"
     script.write_bytes(b"#!/bin/sh\necho fixture\n")
@@ -265,7 +252,7 @@ def test_profile_and_linux_layout() -> None:
     assert layouts["codex"]["agents_dir"] is None
     assert (
         Path(catalogue.filters.__file__)
-        == REPO / "ansible/roles/agent_harness/filter_plugins/harness_filters.py"
+        == REPO / "bootstrap/capabilities/agent-harness/harness_filters.py"
     )
     assert any(source.get("repo") == "Shpigford/nurb" for source in sources)
     assert not any(
@@ -308,7 +295,9 @@ def test_local_resources_all_platforms(
     assert "{{" not in handoff
     assert "{%" not in handoff
     assert "claude-code-auto-title" not in handoff
-    assert (REPO / "ansible/session-title-prompt.txt").read_text().strip() in handoff
+    assert (
+        REPO / "bootstrap/capabilities/agent-harness/session-title-prompt.txt"
+    ).read_text().strip() in handoff
     notify = home / ".pi/agent/skills/notify/scripts/notify.sh"
     source = REPO / "agents/project-management/skills/notify/scripts/notify.sh"
     assert files[notify][1] == source.stat().st_mode & 0o777

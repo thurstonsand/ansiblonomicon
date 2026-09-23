@@ -39,9 +39,6 @@ def git(*args: str, cwd: Path) -> None:
 def fixture_repo(root: Path, home: Path) -> tuple[Path, Path]:
     repo = root / "repo"
     cache = home / ".cache/ansiblonomicon-harness"
-    (repo / "ansible/roles/agent_harness/vars").mkdir(parents=True)
-    (repo / "ansible/roles/agent_harness/filter_plugins").mkdir(parents=True)
-    (repo / "ansible/playbooks").mkdir()
     capability = repo / "bootstrap/capabilities/agent-harness"
     (capability / "harnesses/claude").mkdir(parents=True)
     (capability / "harnesses/claude/mise.toml").write_text(
@@ -55,21 +52,7 @@ name_transform = "preserve"
     (capability / "profiles.toml").write_text(
         '[profiles.personal]\ntarget_agents = ["claude"]\nexplicit_only = []\n'
     )
-    source_filter = (
-        ROOT / "ansible/roles/agent_harness/filter_plugins/harness_filters.py"
-    )
-    (
-        repo / "ansible/roles/agent_harness/filter_plugins/harness_filters.py"
-    ).write_bytes(source_filter.read_bytes())
-    (repo / "ansible/models.yml").write_text("models: {}\n")
-    (repo / "ansible/roles/agent_harness/vars/agents.yml").write_text(
-        f'''agent_harness_agents:
-  claude:
-    skills_dir: "{home}/.claude/skills"
-    agents_dir: "{home}/.claude/agents"
-    name_transform: preserve
-'''
-    )
+    (capability / "models.yml").write_text("models: {}\n")
     (capability / "catalogue.toml").write_text(
         '[[sources]]\nrepo = "example/catalogue"\n'
         '[[sources.plugins]]\nname = "fixture"\n'
@@ -148,14 +131,6 @@ def test_real_native_apply_check_repeat_and_exact_ownership(tmp_path: Path) -> N
     home.mkdir()
     home.chmod(0o700)
     repo, cache = fixture_repo(tmp_path, home)
-    with (repo / "ansible/roles/agent_harness/vars/agents.yml").open("a") as layouts:
-        layouts.write(
-            f'''  config_fixture:
-    skills_dir: "{home}/.config/fixture/skills"
-    agents_dir: null
-    name_transform: preserve
-'''
-        )
     config_layout = (
         repo / "bootstrap/capabilities/agent-harness/harnesses/config_fixture"
     )

@@ -92,12 +92,12 @@ def test_operator_task_order_preserves_base_bootstrap():
     assert "bootstrap" not in tasks
     assert "operator:setup" in config["bootstrap"]["hooks"]["final"]["run"]
     for task, prerequisite in (
-        ("setup", "dotfiles"),
-        ("dotfiles", "sessions"),
+        ("setup", "sessions"),
         ("sessions", "agents"),
         ("agents", "tools"),
     ):
         assert tasks[f"operator:{task}"]["depends"] == [f"operator:{prerequisite}"]
+    assert "operator:dotfiles" not in tasks
     assert "operator:tmux" not in tasks
     assert "repos" not in config["bootstrap"]
 
@@ -115,13 +115,17 @@ def test_operator_bootstrap_only_owns_installation_config():
 
 def test_agents_use_vendor_installers_and_node_globals():
     config = tomllib.loads((TARGET / "operator/mise.toml").read_text())
-    for tool in ("amp", "codex", "claude", "opencode", "npm:t3"):
+    for tool in ("amp", "codex", "claude", "opencode", "npm:t3", "chezmoi"):
         assert tool not in config["tools"]
     tasks = tomllib.loads((TARGET / "mise.operator.toml").read_text())["tasks"]
     # One inventory, one installer: both call sites pass their own npm and nothing else.
     installer = "operator/node_packages.py"
     assert installer in config["tools"]["node"]["postinstall"]
-    assert installer in tasks["operator:tools"]["run"][2]
+    assert installer in tasks["operator:tools"]["run"][3]
+    assert (
+        tasks["operator:tools"]["run"][2]
+        == "mise --no-config --no-env uninstall --all chezmoi"
+    )
     assert tasks["operator:agents"]["shell"] == "bash -c"
 
 

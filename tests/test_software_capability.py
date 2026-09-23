@@ -64,12 +64,12 @@ def isolated(tmp_path: Path) -> tuple[dict[str, str], Path, Path, Path, Path]:
             if source.exists():
                 shutil.copy2(source, target / name)
         (target / "software").symlink_to(SOFTWARE)
-    shutil.copytree(ROOT / "ansible/roles/uvc_util/files", personal / "uvc-files")
-    shutil.copytree(ROOT / "ansible/roles/uvc_util/files", work / "uvc-files")
-    for role in ("sessions", "shp"):
+    shutil.copytree(SOFTWARE / "sources/uvc-util", personal / "uvc-files")
+    shutil.copytree(SOFTWARE / "sources/uvc-util", work / "uvc-files")
+    for name in ("sessions", "shp"):
         shutil.copytree(
-            ROOT / f"ansible/roles/{role}/files/{role}",
-            project / f"ansible/roles/{role}/files/{role}",
+            SOFTWARE / "sources" / name,
+            project / "bootstrap/capabilities/software/sources" / name,
         )
 
     home = tmp_path / "home"
@@ -177,7 +177,7 @@ def test_go_native_touch_is_noop_but_same_mtime_content_change_rebuilds(
     )
     assert run(str(reconcile), "shp", str(personal), "apply", env=env).returncode == 0
     home = Path(env["HOME"])
-    source = project / "ansible/roles/shp/files/shp/main.go"
+    source = project / "bootstrap/capabilities/software/sources/shp/main.go"
     output = home / ".local/bin/shp"
     stamp = home / ".cache/ansiblonomicon/shp/upgrade.stamp"
     output_metadata = output.stat()

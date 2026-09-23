@@ -77,7 +77,9 @@ def load_data(repo: Path, hostname: str, home: Path) -> dict[str, Any]:
     ):
         raise ValueError("host_defaults and each host entry must be mappings")
     defaults = _merge(defaults, cast(dict[str, Any], host_defaults.get(hostname, {})))
-    models = yaml.safe_load((repo / "ansible/models.yml").read_text())
+    models = yaml.safe_load(
+        (repo / "bootstrap/capabilities/agent-harness/models.yml").read_text()
+    )
     if not isinstance(models, dict):
         raise ValueError("agent configuration data sources must be mappings")
     data = _merge(defaults, models)

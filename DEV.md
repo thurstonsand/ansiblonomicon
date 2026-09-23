@@ -3,24 +3,24 @@
 ## Setup
 
 ```sh
-./scripts/bootstrap.sh                  # new machine: Xcode CLI, Homebrew, Ansible, chezmoi, mise, fnox, uv, 1Password CLI
+./scripts/bootstrap.sh                  # new Mac: Xcode CLI, Homebrew, mise, fnox, uv, 1Password CLI; Ansible/chezmoi only on work
 ./scripts/bootstrap.sh --ignore-certs   # behind a TLS-intercepting proxy
 ```
 
-`mise trust` does the rest — `uv sync --dev`, venv activation, `ANSIBLE_CONFIG` and `SUDO_ASKPASS`, the commit hook, Pi extension deps. Reconciliation resolves credentials through fnox before starting consumers.
+`mise trust` does the rest — `uv sync --dev` (plus `--group work` on work), venv activation, `SUDO_ASKPASS`, the commit hook, Pi extension deps. The shared askpass helper is `scripts/sudo-askpass.sh`. Consumers resolve only their required credentials through fnox; personal reconciliation has no enclosing fnox or Ansible invocation.
 
 ## Working here
 
-`ansible/` declares what a host should have. `chezmoi/` holds what lands in `$HOME`, delivered by the `chezmoi` role during reconciliation. Anything an agent consumes lives in `agents/`, anything I read lives in `docs/`, and `scripts/` holds what the mise tasks shell out to.
+`bootstrap/targets/` declares hosts; `bootstrap/capabilities/` holds shared configuration and source assets. `ansible/` and `chezmoi/` remain solely for work's unmigrated private consumers. Agent plugins live in `agents/`, harness configuration in `bootstrap/capabilities/agent-harness/`, human documentation in `docs/`, and task entry points in `scripts/`.
 
 Every host reconciles the same way:
 
 ```sh
 mise <host>                # laptop | udmp | pod042
 mise <host> --check        # dry run
-mise <host> -t chezmoi
+mise laptop -t shell       # focused native capability
 mise reconcile             # whichever of those this machine's hostname selects
-mise run reconcile:tags    # what this machine's playbook offers; takes an optional playbook name
+mise run reconcile:tags    # native personal tags or remaining work playbook tags
 ```
 
 Gotcha: running this WILL change the host that the agent itself is running in, so be aware of what changes will actually apply.
@@ -38,8 +38,8 @@ uv run pytest
 
 ### Code style
 
-- Prefer extending a role over adding one.
-- Facts belong in `config.yml` or `<host>.config.yml`, not usually inline in a task.
+- Prefer extending the capability that owns the resource over adding one.
+- Host values belong in target configuration; shared declarations belong in the capability, not inline in task dispatchers.
 
 ### Native bootstrap capabilities
 
@@ -53,17 +53,17 @@ Declare shared `op://` references in `fnox.toml` and host-only references in `fn
 
 ### Retiring managed state
 
-Deleting a file from the repo does not remove it from a host. Declare the retirement instead: `.ansibleremove` for Ansible-managed paths, consumed by the macOS playbooks; `.chezmoiremove` for dotfiles, consumed wherever chezmoi applies. Native bootstrap owns pod042 and UDMP removals through `state = "absent"`.
+Deleting a file from the repo does not remove it from a host. Declare native `state = "absent"` resources. Personal legacy cleanup is listed in `bootstrap/capabilities/retirements/paths.toml`, applied by `mise retirements`; personal laptop full runs execute it last, and focused runs require the explicit `retirements` tag. Work does not run this capability: its playbook consumes `.ansibleremove`, and chezmoi consumes `chezmoi/.chezmoiremove`.
 
 ## macOS
 
-One playbook per machine, selected by hostname. `macos.yml` layers `darwin.config.yml` over the shared config; `work.yml` takes `work.config.yml` instead, plus an untracked `work.config.local.yml` for anything that cannot be committed.
+Hostname selects the native target. Personal reconciliation is native-only and rejects unknown or legacy tags before taking action. Work additionally runs `ansible/playbooks/work.yml` for its plugin catalogue, private chezmoi state, and local tasks, using `work.config.yml` plus untracked `work.config.local.yml`. Its scoped command uses `uv run --group work ansible-playbook` with explicit configuration, inventory, and playbook paths.
 
 ```sh
-mise laptop -t homebrew    # also: chezmoi, language-tools
+mise laptop -t homebrew    # also: language-tools, shell, agent-harness
 ```
 
-Homebrew formulae, casks, and Mac App Store apps come from `ansible/Brewfile`, with `Brewfile.work` for the work machine. System preferences and sudo Touch ID live in `bootstrap/capabilities/macos-system`, grouped by domain for `mise laptop -t dock,finder` or reconciled together with `mise sysconfig`. The legacy `macos_defaults` role is retained only as a work-cutover reference.
+Homebrew formulae, casks, and Mac App Store apps come from `bootstrap/capabilities/mac-apps/Brewfile`, with `Brewfile.work` for work. Work's private `ansible/Brewfile.work.*` includes remain supported. Go and UVC sources live under `bootstrap/capabilities/software/sources/`. System preferences and sudo Touch ID live in `bootstrap/capabilities/macos-system`, grouped by domain for `mise laptop -t dock,finder` or reconciled together with `mise sysconfig`.
 
 The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json` files are masked with `skip-worktree` there. Use `mise run pull`, and be careful with `merge`, `rebase`, or `stash pop` on work. Confirm a version exists on the mirror before bumping a dependency.
 
@@ -89,13 +89,13 @@ Remote inventory in `bootstrap/mise.toml`. Resources in `terraform/unifi/`.
 
 ## Agent tooling
 
-Spans every host and every harness. `bootstrap/capabilities/agent-harness/` is canonical: `catalogue.toml`, `profiles.toml`, and `harnesses/` declare plugins; `configuration/data.toml`, `configuration/templates/`, and `configuration/assets/` declare harness settings and source assets. Host-local, untracked configuration overlays belong in `bootstrap/capabilities/agent-harness/local/<hostname>/data.toml`. Work and `amp_publish` still consume the plugin catalogue through the Ansible role, but native `agent-config` owns settings and assets on every registered host.
+Spans every host and every harness. `bootstrap/capabilities/agent-harness/` is canonical: `catalogue.toml`, `profiles.toml`, and `harnesses/` declare plugins; `harness_filters.py` owns resolution; `configuration/data.toml`, `configuration/templates/`, and `configuration/assets/` declare settings and source assets. Host-local, untracked configuration overlays belong in `bootstrap/capabilities/agent-harness/local/<hostname>/data.toml`. Work's Ansible adapter consumes the same catalogue and resolver; native `agent-config` owns settings and assets on every registered host.
 
 - **Plugins** at `agents/<plugin>/skills/`, listed in `.claude-plugin/marketplace.json`. A skill may be a plain `SKILL.md` or a `SKILL.md.j2` templated at deploy time, and this applies to any other `.j2` file in the skill dir. Repo-local skills live at `.agents/skills/`, symlinked into `.claude/skills/`. The `.j2` skills mean a plugin is not installable through Claude's own plugin mechanism, which does no templating — deployment goes through `agent_harness` instead. see `agents/README.md` for more.
 - **User-level instructions** render from `configuration/templates/`; Amp's hosted instructions remain updated by hand.
-- **Models** at `ansible/models.yml` remain the single source for versions, aliases, and per-editor config. Native renderers merge them with `configuration/data.toml` and the host overlay.
+- **Models** at `bootstrap/capabilities/agent-harness/models.yml` are the single source for versions, aliases, and per-editor config. Native renderers merge them with `configuration/data.toml` and the host overlay.
 - **Assets** under `configuration/assets/` are first-party source. `assets.toml` declares assets, package dependencies, and explicit retirements; native configuration symlinks unchanged files into `$HOME` and renders host-dependent or secret-bearing files as regular files. Never put credentials in templates, assets, or host overlays: declare SecretRefs in fnox and let `agent-config` resolve only the keys required by that host. Private outputs use mode `0600`.
-- **Amp User Skills** are rendered from the Amp-targeted `agent_harness` sources by the `amp_publish` profile and published on git push. Overrideable by explicitly specifying `amp` as a target of a skill.
+- **Amp User Skills** are rendered natively by `publish_amp_skills.py` using the `amp_publish` profile. `scripts/publish-amp-skills.sh` is the CI entry point, triggered on relevant main-branch pushes and a daily schedule. Overrideable by explicitly specifying `amp` as a target of a skill.
 - **Session recovery** lives under `configuration/assets/shared/session-recovery/`, with consumers under the Pi and Claude asset trees. Lint it through `mise run session-recovery:check` rather than from inside a consumer.
 
 Run `mise agent-config --check` for a placeholder-secret preview; exit 2 means the preview completed but secret-backed content remains unresolved. Use `mise agent-config --check --real-secrets` for read-only parity with resolved credentials, and `mise agent-config` to apply. `mise agent-harness` runs the catalogue first and then configuration; full host reconciliation routes both through the `agent-harness` tag. Chezmoi ignores all native destinations and no longer supplies agent configuration.

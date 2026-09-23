@@ -12,6 +12,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPABILITY = ROOT / "bootstrap/capabilities/editor-config"
+MODELS = ROOT / "bootstrap/capabilities/agent-harness/models.yml"
 PYTHON = ROOT / ".venv/bin/python"
 PERSONAL_FILES = {
     ".config/zed/settings.json": None,
@@ -90,7 +91,7 @@ def run_native(
         "MISE_TRUSTED_CONFIG_PATHS": str(tmp_path),
         "EDITOR_CONFIG_PYTHON": str(PYTHON),
         "EDITOR_CONFIG_RENDERER": str(CAPABILITY / "render.py"),
-        "EDITOR_CONFIG_MODELS": str(ROOT / "ansible/models.yml"),
+        "EDITOR_CONFIG_MODELS": str(MODELS),
     }
     for name in FAKE_SECRET_NAMES:
         environment.pop(name, None)
@@ -245,7 +246,7 @@ def test_work_needs_no_secrets_and_preserves_excluded_apps(tmp_path: Path) -> No
         "MISE_TRUSTED_CONFIG_PATHS": str(tmp_path),
         "EDITOR_CONFIG_PYTHON": str(PYTHON),
         "EDITOR_CONFIG_RENDERER": str(CAPABILITY / "render.py"),
-        "EDITOR_CONFIG_MODELS": str(ROOT / "ansible/models.yml"),
+        "EDITOR_CONFIG_MODELS": str(MODELS),
     }
     for name in FAKE_SECRET_NAMES:
         environment.pop(name, None)
@@ -346,7 +347,7 @@ def test_settings_commands_require_settings_arguments(kind: str) -> None:
             str(PYTHON),
             str(CAPABILITY / "render.py"),
             kind,
-            f"--models={ROOT / 'ansible/models.yml'}",
+            f"--models={MODELS}",
         ],
         capture_output=True,
         text=True,
@@ -393,8 +394,9 @@ def test_root_check_uses_real_mise_without_secrets_or_writes(
     (project / "bootstrap/capabilities/editor-config").symlink_to(
         CAPABILITY, target_is_directory=True
     )
-    (project / "ansible").mkdir()
-    (project / "ansible/models.yml").symlink_to(ROOT / "ansible/models.yml")
+    model_source = project / "bootstrap/capabilities/agent-harness/models.yml"
+    model_source.parent.mkdir()
+    model_source.symlink_to(MODELS)
     (project / ".venv").symlink_to(ROOT / ".venv", target_is_directory=True)
     sentinel = tmp_path / "fnox-was-called"
     (project / "scripts").mkdir()
@@ -531,7 +533,7 @@ exec "$@"
         "MISE_TRUSTED_CONFIG_PATHS": str(tmp_path),
         "EDITOR_CONFIG_PYTHON": str(PYTHON),
         "EDITOR_CONFIG_RENDERER": str(CAPABILITY / "render.py"),
-        "EDITOR_CONFIG_MODELS": str(ROOT / "ansible/models.yml"),
+        "EDITOR_CONFIG_MODELS": str(MODELS),
     }
     for name in FAKE_SECRET_NAMES:
         environment.pop(name, None)

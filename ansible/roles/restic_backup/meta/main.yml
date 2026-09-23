@@ -1,5 +1,0 @@
----
-# The backup units run under hc-run and load their ping URLs from
-# alerting_state_dir; the dependency is what puts that interface in scope.
-dependencies:
-  - role: alerting

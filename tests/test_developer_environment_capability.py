@@ -164,6 +164,9 @@ def test_real_neovim_manifests_render_idempotently_and_keep_neighbors(
     assert init.is_symlink()
     assert neighbor.read_text() == "return 'keep'\n"
     assert lock.is_symlink() is (host != "ML-DFC6YK6VJQ")
+    mason = (home / ".config/nvim/lua/plugins/mason.lua").read_text()
+    for legacy in ("chezmoi", "ansible"):
+        assert (legacy in mason) is (host == "ML-DFC6YK6VJQ")
     if host == "ML-DFC6YK6VJQ":
         assert "https://jira.example/a'b/" in jira.read_text()
         assert (home / ".config/nvim/lua/plugins/gitbrowse.work.lua").is_file()
@@ -306,8 +309,10 @@ def test_rendered_lua_returns_expected_literal_configuration(tmp_path: Path) -> 
     script = tmp_path / "assert-config.lua"
     plugins = home / ".config/nvim/lua/plugins"
     script.write_text(f'''local mason = assert(loadfile("{plugins}/mason.lua"))()
-assert(mason[1][1] == "mason-org/mason.nvim")
-assert(#mason[1].opts.ensure_installed == 0)
+assert(mason[1].import == "lazyvim.plugins.extras.util.chezmoi")
+assert(mason[2].import == "lazyvim.plugins.extras.lang.ansible")
+assert(mason[3][1] == "mason-org/mason.nvim")
+assert(#mason[3].opts.ensure_installed == 0)
 local jira = assert(loadfile("{plugins}/jira.lua"))()
 assert(jira[1] == "folke/snacks.nvim")
 local browse = assert(loadfile("{plugins}/gitbrowse.work.lua"))()

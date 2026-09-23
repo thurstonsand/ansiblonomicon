@@ -14,10 +14,10 @@ run = 'python3 software/berkeley_mono.py ${SOFTWARE_CHECK:+--check}'
 run = 'python3 software/docker_context.py ${SOFTWARE_CHECK:+--check}'
 
 [tasks."sessions:deps"]
-run = 'python3 software/deps-maintenance.py "{{config_root}}/../../../ansible/roles/sessions/files/sessions" "$HOME/.cache/ansiblonomicon/sessions/upgrade.stamp" ${SOFTWARE_CHECK:+--check}'
+run = 'python3 software/deps-maintenance.py "{{config_root}}/../../capabilities/software/sources/sessions" "$HOME/.cache/ansiblonomicon/sessions/upgrade.stamp" ${SOFTWARE_CHECK:+--check}'
 
 [tasks."shp:deps"]
-run = 'python3 software/deps-maintenance.py "{{config_root}}/../../../ansible/roles/shp/files/shp" "$HOME/.cache/ansiblonomicon/shp/upgrade.stamp" ${SOFTWARE_CHECK:+--check}'
+run = 'python3 software/deps-maintenance.py "{{config_root}}/../../capabilities/software/sources/shp" "$HOME/.cache/ansiblonomicon/shp/upgrade.stamp" ${SOFTWARE_CHECK:+--check}'
 
 [tasks."uvc-util:repo"]
 run = 'python3 software/uvc-repo.py "$HOME/.local/opt/uvc-util" --origin "$UVC_UTIL_ORIGIN" ${SOFTWARE_CHECK:+--check}'

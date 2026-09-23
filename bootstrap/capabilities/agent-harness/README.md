@@ -1,6 +1,6 @@
 # Declarative agent harness capability
 
-`catalogue.toml` is the single checked-in plugin catalogue. The existing resolver still performs manifest discovery and selector handling; the legacy Ansible work and `amp_publish` routes load this catalogue through `agent_harness_load_catalogue`. Their private `agent_harness_sources_extra` support remains unchanged.
+`catalogue.toml` is the single checked-in plugin catalogue. `harness_filters.py` beside it performs manifest discovery, selector handling, and the per-harness SKILL.md transforms; `models.yml` and `session-title-prompt.txt` are the canonical model catalogue and session-title prompt that those transforms, the configuration renderers, and skill templates read. Skill templates reach files in this directory through the `agent_harness_root` Jinja global. The work laptop's Ansible role loads the same module as a filter plugin through a symlink under `ansible/roles/agent_harness/filter_plugins/`; its private `agent_harness_sources_extra` support remains unchanged.
 
 Each `harnesses/<name>/mise.toml` is a native mise project fragment. Its `[harness]` table declares destination roots and the name transform; it may also compose ordinary `[vars]`, `[dotfiles]`, and `[bootstrap.files]` resources owned by that harness. Only enabled harness fragments are applied. For example, a template stored beside the declaration can become a native dotfile:
 
@@ -40,3 +40,7 @@ The version 3 ownership manifest also retains a canonical, profile-resolved sele
 The ownership manifest is atomically expanded before native apply and narrowed only after success. Selector proof is retained on empty tombstones, omitted owners, and pending recovery; old rendered bytes are never replayed. Destination parents may not redirect outside the operator home; intentional local-source links may point back into the repository. `--check` requires cached Git sources and writes neither source timestamps nor managed state. `--cached` applies the fixed cache. Normal updates are every 86400 seconds on the Mac and every run on pod042. Mac templates retain `trim_blocks = true`; pod042 retains `false`.
 
 Run `mise agent-harness [--check|--cached]` on either registered personal system. pod042 retains its hostname, UID, GID, and home guard. Work continues through Ansible until its private-source cutover.
+
+## Publishing Amp User Skills
+
+`publish_amp_skills.py --repo . --output DIR` renders the `amp_publish` profile through the same `render_files` path the hosts use, with `trim_blocks` on, and writes only the Amp skills tree into an empty `DIR`: Git sources are cloned fresh into a throwaway cache (or `--cache DIR`, with `--cached` to skip the refresh), hook fragments are never emitted, and nothing under the operator home is read or written. `scripts/publish-amp-skills.sh` runs it and syncs the result into the hosted User Skills repository; the GitHub workflow does the same on push.

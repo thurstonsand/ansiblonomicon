@@ -61,7 +61,6 @@ def run_laptop(
     failure: str = "",
 ) -> tuple[int, list[str]]:
     tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
-    (tmp_path / "ansible").mkdir()
     (tmp_path / "scripts").mkdir()
     binary = tmp_path / "bin"
     binary.mkdir()
@@ -74,12 +73,21 @@ if [ "$2" = //:reconcile:laptop ]; then exec sh -c "$LAPTOP_RUN"; fi
 if [ "$2" = "//:$FAILURE" ]; then exit 23; fi
 """,
         tmp_path / "scripts/fnox-host": """printf 'fnox %s\n' "$*" >> "$CALLS"
+[ "$HOST" = ML-DFC6YK6VJQ ] || exit 99
 while [ "$1" != -- ]; do shift; done
 shift
 exec "$@"
 """,
+        binary / "uv": """printf 'uv %s\n' "$*" >> "$CALLS"
+[ "$HOST" = ML-DFC6YK6VJQ ] || exit 99
+[ "$1 $2 $3" = 'run --group work' ] || exit 99
+shift 3
+exec "$@"
+""",
         binary / "ansible-playbook": """printf 'ansible %s\n' "$*" >> "$CALLS"
+[ "$HOST" = ML-DFC6YK6VJQ ] || exit 99
 test "$ANSIBLE_CACHE_PLUGIN" = memory || exit 99
+test "$ANSIBLE_CONFIG" = "$MISE_PROJECT_ROOT/ansible/ansible.cfg" || exit 99
 if [ "$FAILURE" = ansible ]; then exit 23; fi
 """,
     }
@@ -92,7 +100,7 @@ if [ "$FAILURE" = ansible ]; then exit 23; fi
     (standalone / "mise").symlink_to(binary / "mise")
     result = subprocess.run(
         ["sh", "-c", tasks[task]["run"]],
-        cwd=tmp_path / "ansible",
+        cwd=tmp_path / tasks[task].get("dir", "."),
         env={
             **os.environ,
             "PATH": f"{binary}:/usr/bin:/bin",
@@ -103,9 +111,11 @@ if [ "$FAILURE" = ansible ]; then exit 23; fi
             "usage_tags": tags,
             "usage_check": "true" if check else "",
             "HOME": str(home),
+            "MISE_PROJECT_ROOT": str(tmp_path),
         },
         check=False,
     )
+    assert not (tmp_path / "ansible").exists()
     return result.returncode, calls.read_text().splitlines()
 
 
@@ -229,13 +239,13 @@ def test_mac_apps_executes_scoped_host_payload(
 ) -> None:
     status, calls = run_mac_apps(tmp_path, host=host, check=check)
     helper = tmp_path / "bootstrap/capabilities/mac-apps/reconcile.py"
-    file = tmp_path / f"ansible/{brewfile}"
+    file = tmp_path / f"bootstrap/capabilities/mac-apps/{brewfile}"
     python = f"python3 {helper} --brewfile {file}"
     assert status == 0
     if check:
         assert calls == [f"{python} --check askpass="]
     else:
-        askpass = tmp_path / "ansible/sudo-askpass.sh"
+        askpass = tmp_path / "scripts/sudo-askpass.sh"
         assert calls == [
             "mise run //:mise:install",
             f"fnox exec --secret {secret} -- python3 {helper} --brewfile {file}",
@@ -308,7 +318,6 @@ def test_laptop_dispatches_native_theme_outside_ansible(
     theme: bool,
 ) -> None:
     status, calls = run_laptop(tmp_path, task=task, host=host, tags=tags, check=check)
-    assert status == 0
     expected: list[str] = []
     suffix = " --check" if check else ""
     if task == "reconcile":
@@ -318,6 +327,13 @@ def test_laptop_dispatches_native_theme_outside_ansible(
             + suffix
         )
     selected = tags.split(",") if tags else []
+    if host == "Thurstons-MacBook-Pro" and any(
+        tag in {"chezmoi", "terminal-theme-extra"} for tag in selected
+    ):
+        assert status != 0
+        assert calls == expected
+        return
+    assert status == 0
     normalized = ["mac-apps" if tag in ("homebrew", "mas") else tag for tag in selected]
     full = not tags or "all" in selected
     installs_mise = full or "mise" in selected or "mac-apps" in normalized
@@ -391,21 +407,23 @@ def test_laptop_dispatches_native_theme_outside_ansible(
     if host == "ML-DFC6YK6VJQ":
         native.remove("agent-harness")
     ansible_tags = [tag for tag in selected if tag not in native]
-    if full or ansible_tags:
-        work = host == "ML-DFC6YK6VJQ"
-        playbook = "work" if work else "macos"
-        args = f"-i inventory/control/macos.ini playbooks/{playbook}.yml"
+    if host == "ML-DFC6YK6VJQ" and (full or ansible_tags):
+        args = (
+            f"-i {tmp_path}/ansible/inventory/control/macos.ini "
+            f"{tmp_path}/ansible/playbooks/work.yml"
+        )
         if check:
             args += " --check"
         if not full:
             args += f" --tags {','.join(ansible_tags)}"
-        secret = (
-            "HOMEBREW_SUDO_ASKPASS_PASS_WORK" if work else "HOMEBREW_SUDO_ASKPASS_PASS"
+        expected.extend(
+            [
+                "fnox exec --secret HOMEBREW_SUDO_ASKPASS_PASS_WORK "
+                f"--secret ANTHROPIC_AUTH_TOKEN -- uv run --group work ansible-playbook {args}",
+                f"uv run --group work ansible-playbook {args}",
+                f"ansible {args}",
+            ]
         )
-        fnox = f"fnox exec --secret {secret}" + (
-            " --secret ANTHROPIC_AUTH_TOKEN" if work else ""
-        )
-        expected.extend([f"{fnox} -- ansible-playbook {args}", f"ansible {args}"])
     if host == "ML-DFC6YK6VJQ" and (full or "agent-harness" in selected):
         expected.append("mise run //:agent-config" + suffix)
     if "agent-config" in selected and "agent-harness" not in selected:
@@ -423,17 +441,25 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         expected.append("mise run //:neovim" + suffix)
         if host == "Thurstons-MacBook-Pro":
             expected.append("mise run //:ssh-client" + suffix)
+            expected.append("mise run //:retirements" + suffix)
     assert calls == expected
 
 
-@pytest.mark.parametrize("failure", ["mise:maintain", "mac-apps", "ansible"])
+@pytest.mark.parametrize(
+    "host,failure",
+    [
+        ("Thurstons-MacBook-Pro", "mise:maintain"),
+        ("Thurstons-MacBook-Pro", "mac-apps"),
+        ("ML-DFC6YK6VJQ", "ansible"),
+    ],
+)
 def test_failed_prerequisite_stops_before_native_theme(
-    tmp_path: Path, failure: str
+    tmp_path: Path, host: str, failure: str
 ) -> None:
     status, calls = run_laptop(
         tmp_path,
         task="reconcile:laptop",
-        host="Thurstons-MacBook-Pro",
+        host=host,
         tags="",
         check=False,
         failure=failure,
@@ -444,7 +470,7 @@ def test_failed_prerequisite_stops_before_native_theme(
         assert calls == ["mise run //:mise:install", "mise run //:mise:maintain"]
 
 
-def test_mixed_scopes_run_sysconfig_once_before_ansible_and_theme(
+def test_mixed_scopes_run_sysconfig_once_before_agent_harness_and_theme(
     tmp_path: Path,
 ) -> None:
     status, calls = run_laptop(
@@ -465,9 +491,7 @@ def test_mixed_scopes_run_sysconfig_once_before_ansible_and_theme(
 def test_work_agent_harness_continues_through_ansible() -> None:
     # The work playbook retains private extras and Glimpse support in the role.
     assert "name: agent_harness" in (ROOT / "ansible/playbooks/work.yml").read_text()
-    assert (
-        "name: agent_harness" not in (ROOT / "ansible/playbooks/macos.yml").read_text()
-    )
+    assert not (ROOT / "ansible/playbooks/macos.yml").exists()
 
 
 def test_personal_agent_harness_failure_stops_before_ansible_and_chezmoi(
@@ -796,18 +820,13 @@ def test_mixed_aliases_route_to_both_native_capabilities(
 
 def test_ansible_no_longer_owns_terminal_theme() -> None:
     assert not (ROOT / "ansible/roles/terminal_theme/tasks/main.yml").exists()
-    for playbook in ("macos", "work"):
-        assert (
-            "terminal_theme"
-            not in (ROOT / f"ansible/playbooks/{playbook}.yml").read_text()
-        )
+    assert not (ROOT / "ansible/playbooks/macos.yml").exists()
+    assert "terminal_theme" not in (ROOT / "ansible/playbooks/work.yml").read_text()
 
 
 def test_ansible_no_longer_routes_migrated_mac_software_roles() -> None:
-    personal = (ROOT / "ansible/playbooks/macos.yml").read_text()
+    assert not (ROOT / "ansible/playbooks/macos.yml").exists()
     work = (ROOT / "ansible/playbooks/work.yml").read_text()
-    for role in ("claude_code", "opencode", "sessions", "shp", "uvc_util"):
-        assert f"name: {role}" not in personal
     for role in ("pi_release", "sessions", "uvc_util"):
         assert f"name: {role}" not in work
 
@@ -840,3 +859,61 @@ def test_migrated_software_tag_routes_only_native_capability(
     )
     assert status == 0
     assert calls == [f"mise run //:{tag} --check"]
+
+
+@pytest.mark.parametrize("check", [False, True])
+@pytest.mark.parametrize(
+    "tags", ["dotfiles", "all,chezmoi", "terminal-theme,not-a-capability"]
+)
+def test_personal_unsupported_tags_fail_before_any_action(
+    tmp_path: Path, check: bool, tags: str
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags=tags,
+        check=check,
+    )
+    assert status != 0
+    assert calls == []
+
+
+@pytest.mark.parametrize("check", [False, True])
+@pytest.mark.parametrize(
+    "tags", ["retirements", "retirements,terminal-theme,retirements"]
+)
+def test_personal_explicit_retirements_run_once_after_config(
+    tmp_path: Path, check: bool, tags: str
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags=tags,
+        check=check,
+    )
+    suffix = " --check" if check else ""
+    expected = [] if check else ["mise run //:mise:maintain"]
+    if "terminal-theme" in tags:
+        expected.append("mise run //:terminal-theme" + suffix)
+    assert status == 0
+    assert calls == [*expected, "mise run //:retirements" + suffix]
+
+
+@pytest.mark.parametrize("failure", ["terminal-theme", "retirements"])
+def test_retirements_respect_config_failure_and_propagate_own_failure(
+    tmp_path: Path, failure: str
+) -> None:
+    status, calls = run_laptop(
+        tmp_path,
+        task="reconcile:laptop",
+        host="Thurstons-MacBook-Pro",
+        tags="retirements,terminal-theme",
+        check=True,
+        failure=failure,
+    )
+    assert status == 23
+    assert calls == ["mise run //:terminal-theme --check"] + (
+        ["mise run //:retirements --check"] if failure == "retirements" else []
+    )

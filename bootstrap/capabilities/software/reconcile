@@ -54,7 +54,7 @@ if [ "$mode" = check ]; then
     sessions|shp)
       export SOFTWARE_CHECK=true
       mise -C "$target" run "$capability:deps"
-      project="${MISE_PROJECT_ROOT}/ansible/roles/$capability/files/$capability"
+      project="${MISE_PROJECT_ROOT}/bootstrap/capabilities/software/sources/$capability"
       MISE_CEILING_PATHS=${project%/*} MISE_TRUSTED_CONFIG_PATHS="$target:$project" \
         mise -C "$project" run --skip-tools --dry-run install
       ;;
@@ -82,7 +82,7 @@ fi
 case "$capability" in
   sessions|shp)
     mise -C "$target" run "$capability:deps"
-    project="${MISE_PROJECT_ROOT}/ansible/roles/$capability/files/$capability"
+    project="${MISE_PROJECT_ROOT}/bootstrap/capabilities/software/sources/$capability"
     MISE_CEILING_PATHS=${project%/*} MISE_TRUSTED_CONFIG_PATHS="$target:$project" \
       mise -C "$project" run --skip-tools install
     exit 0

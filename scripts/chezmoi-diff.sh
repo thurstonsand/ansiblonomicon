@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+[[ "$(hostname -s)" == ML-DFC6YK6VJQ ]] || { echo 'chezmoi is retained only for work' >&2; exit 1; }
+
 LOCKFILE_RE='(^|/)(lazy-lock\.json|package-lock\.json|pnpm-lock\.yaml|yarn\.lock|bun\.lockb?|uv\.lock)$'
 
 declare -a diff_targets=()

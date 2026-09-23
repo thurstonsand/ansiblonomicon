@@ -22,12 +22,10 @@ def test_askpass_requests_only_selected_password(
     tmp_path: Path, user: str, secret: str, provider_status: int
 ) -> None:
     root = tmp_path / "checkout with spaces"
-    ansible = root / "ansible"
     scripts = root / "scripts"
-    ansible.mkdir(parents=True)
-    scripts.mkdir()
-    askpass = ansible / "sudo-askpass.sh"
-    shutil.copyfile(ROOT / "ansible/sudo-askpass.sh", askpass)
+    scripts.mkdir(parents=True)
+    askpass = scripts / "sudo-askpass.sh"
+    shutil.copyfile(ROOT / "scripts/sudo-askpass.sh", askpass)
     provider = scripts / "fnox-host"
     provider.write_text(
         '#!/bin/bash\nprintf "%s\\n" "$@" > "$(dirname "$0")/calls"\n'
@@ -73,13 +71,11 @@ def test_brew_filtered_scoped_exec_askpass_uses_cached_password(
 ) -> None:
     root = tmp_path / "checkout with spaces"
     scripts = root / "scripts"
-    ansible = root / "ansible"
     scripts.mkdir(parents=True)
-    ansible.mkdir()
     for name in ("fnox-host", "fnox_host.py", "automation_identity.py"):
         shutil.copy2(ROOT / "scripts" / name, scripts / name)
-    askpass = ansible / "sudo-askpass.sh"
-    shutil.copy2(ROOT / "ansible/sudo-askpass.sh", askpass)
+    askpass = scripts / "sudo-askpass.sh"
+    shutil.copy2(ROOT / "scripts/sudo-askpass.sh", askpass)
 
     (root / "fnox.toml").write_text(
         'root = true\nenv = "exec"\nif_missing = "error"\nprompt_auth = false\n'
@@ -183,12 +179,11 @@ def test_brew_filtered_invalid_scope_rejects_without_provider_or_secret_output(
     tmp_path: Path, metadata: dict[str, str]
 ) -> None:
     root = tmp_path / "checkout"
-    (root / "ansible").mkdir(parents=True)
-    (root / "scripts").mkdir()
+    (root / "scripts").mkdir(parents=True)
     for name in ("fnox-host", "fnox_host.py", "automation_identity.py"):
         shutil.copy2(ROOT / "scripts" / name, root / "scripts" / name)
-    askpass = root / "ansible/sudo-askpass.sh"
-    shutil.copy2(ROOT / "ansible/sudo-askpass.sh", askpass)
+    askpass = root / "scripts/sudo-askpass.sh"
+    shutil.copy2(ROOT / "scripts/sudo-askpass.sh", askpass)
     (root / "fnox.toml").write_text(
         'root = true\nenv = "exec"\nif_missing = "error"\nprompt_auth = false\n'
         "[daemon]\nenabled = false\n[secrets]\n"
@@ -246,12 +241,11 @@ def test_installed_brew_ruby_calls_askpass_through_clean_environment(
         pytest.skip("Mac hostname has no declared fnox profile")
 
     root = tmp_path / "isolated checkout"
-    (root / "ansible").mkdir(parents=True)
-    (root / "scripts").mkdir()
+    (root / "scripts").mkdir(parents=True)
     for name in ("fnox-host", "fnox_host.py", "automation_identity.py"):
         shutil.copy2(ROOT / "scripts" / name, root / "scripts" / name)
-    askpass = root / "ansible/sudo-askpass.sh"
-    shutil.copy2(ROOT / "ansible/sudo-askpass.sh", askpass)
+    askpass = root / "scripts/sudo-askpass.sh"
+    shutil.copy2(ROOT / "scripts/sudo-askpass.sh", askpass)
     secret = (
         "HOMEBREW_SUDO_ASKPASS_PASS_WORK"
         if profile == "work"
@@ -300,10 +294,9 @@ def test_askpass_does_not_fallback_from_present_bad_python_pin(
     tmp_path: Path, pin: str
 ) -> None:
     root = tmp_path / "checkout"
-    (root / "ansible").mkdir(parents=True)
-    (root / "scripts").mkdir()
-    askpass = root / "ansible/sudo-askpass.sh"
-    shutil.copy2(ROOT / "ansible/sudo-askpass.sh", askpass)
+    (root / "scripts").mkdir(parents=True)
+    askpass = root / "scripts/sudo-askpass.sh"
+    shutil.copy2(ROOT / "scripts/sudo-askpass.sh", askpass)
     launcher = root / "scripts/fnox-host"
     launcher.write_text("#!/bin/sh\necho fallback-must-not-run\n")
     launcher.chmod(0o755)

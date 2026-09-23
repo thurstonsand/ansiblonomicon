@@ -1,0 +1,2 @@
+[bootstrap.hooks.final]
+run = "sudo -H -u thurstonsand /home/thurstonsand/code/ansiblonomicon/.venv/bin/python /home/thurstonsand/code/ansiblonomicon/bootstrap/capabilities/retirements/reconcile.py"

@@ -11,7 +11,6 @@
   ],
   "ignorePaths": [
     "**/node_modules/**",
-    "ansible/stacks/ghost/ghost/**",
     "docs/wayfinding/**/prototypes/**"
   ],
   "dependencyDashboard": true,
@@ -68,8 +67,8 @@
       "description": "The two Go config roots ask for `go = \"latest\"` and `golangci-lint = \"latest\"` deliberately: these are throwaway CLIs that should build against whatever toolchain the machine last installed, and pinning them would mean a PR every time either project releases. The mise manager extracts `latest` with a real datasource attached and no skip reason, so it has to be turned off by name rather than left to be ignored on its own.",
       "matchManagers": ["mise"],
       "matchFileNames": [
-        "ansible/roles/shp/files/shp/mise.toml",
-        "ansible/roles/sessions/files/sessions/mise.toml"
+        "bootstrap/capabilities/software/sources/shp/mise.toml",
+        "bootstrap/capabilities/software/sources/sessions/mise.toml"
       ],
       "enabled": false
     },

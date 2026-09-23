@@ -112,8 +112,8 @@ wait_for_ssh() {
 # Cleanup on exit
 cleanup() {
     # Restore original Brewfile if we swapped it
-    if [[ -f "$REPO_DIR/ansible/Brewfile.bak" ]]; then
-        mv "$REPO_DIR/ansible/Brewfile.bak" "$REPO_DIR/ansible/Brewfile"
+    if [[ -f "$REPO_DIR/bootstrap/capabilities/mac-apps/Brewfile.bak" ]]; then
+        mv "$REPO_DIR/bootstrap/capabilities/mac-apps/Brewfile.bak" "$REPO_DIR/bootstrap/capabilities/mac-apps/Brewfile"
     fi
     
     if [[ "$KEEP_RUNNING" == "false" ]] && tart list 2>/dev/null | grep -q "$VM_NAME.*running"; then
@@ -179,8 +179,8 @@ main() {
     # Swap to minimal Brewfile if not using full (do locally so trap can restore)
     if [[ "$FULL_BREW_BUNDLE" == "false" ]]; then
         log "Using minimal test Brewfile..."
-        cp "$REPO_DIR/ansible/Brewfile" "$REPO_DIR/ansible/Brewfile.bak"
-        cp "$REPO_DIR/ansible/Brewfile.test" "$REPO_DIR/ansible/Brewfile"
+        cp "$REPO_DIR/bootstrap/capabilities/mac-apps/Brewfile" "$REPO_DIR/bootstrap/capabilities/mac-apps/Brewfile.bak"
+        cp "$REPO_DIR/bootstrap/capabilities/mac-apps/Brewfile.test" "$REPO_DIR/bootstrap/capabilities/mac-apps/Brewfile"
     fi
     
     # Run bootstrap (expect it to fail at 1Password signin check)
@@ -204,11 +204,11 @@ main() {
     echo -n "    Homebrew: "
     if vm_ssh "test -x /opt/homebrew/bin/brew" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
     
-    echo -n "    Ansible: "
-    if vm_ssh "$brew_env && command -v ansible-playbook" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
+    echo -n "    mise: "
+    if vm_ssh "$brew_env && command -v mise" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
     
-    echo -n "    chezmoi: "
-    if vm_ssh "$brew_env && command -v chezmoi" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
+    echo -n "    uv: "
+    if vm_ssh "$brew_env && command -v uv" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi
     
     echo -n "    1Password CLI: "
     if vm_ssh "$brew_env && command -v op" &>/dev/null; then echo "OK"; else echo "MISSING"; all_ok=false; fi

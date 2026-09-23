@@ -1,6 +1,6 @@
 # Work Mac: Out-of-Git Files
 
-This documents all files that live **only** on the work Mac and are not tracked in this repository. These are maintained manually.
+This documents private files that live **only** on the work Mac, plus their tracked consumers. Private files are maintained manually. Work is the only host that still runs Ansible and chezmoi: its plugin catalogue, private dotfiles, and local tasks remain pending cutover.
 
 ## Native Mise Configuration
 
@@ -12,16 +12,16 @@ macOS preferences and sudo Touch ID are now native. Review private `configure_ma
 
 Before the first native apply, copy these values from `chezmoi/.chezmoidata/local.toml` into the untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/data.toml`:
 
-| Field | Consumed by |
-| --- | --- |
-| `goLocalImports` / `goplsBuildFlags` | No agent consumer; leave with their remaining owner |
-| `[work_models]` | pi models/settings, Claude Code overlay |
-| `[work_gateway]` | pi model templates (endpoint and provider names) |
-| `inferenceBudgetUrl` | Native Pi renderer (`powerlineCustom.budget.url`) |
-| `costsDashboardUrl` | Native Pi renderer (`powerlineCustom.budget.costsUrl`) |
-| `jiraBrowseUrl` | Pi footer settings (Neovim now uses native private data) |
-| `[[mcp_servers]]` | Claude MCP registration |
-| `pi_mcp_json` | Native Pi renderer (`~/.pi/agent/mcp.json`) |
+| Field                                | Consumed by                                              |
+| ------------------------------------ | -------------------------------------------------------- |
+| `goLocalImports` / `goplsBuildFlags` | No agent consumer; leave with their remaining owner      |
+| `[work_models]`                      | pi models/settings, Claude Code overlay                  |
+| `[work_gateway]`                     | pi model templates (endpoint and provider names)         |
+| `inferenceBudgetUrl`                 | Native Pi renderer (`powerlineCustom.budget.url`)        |
+| `costsDashboardUrl`                  | Native Pi renderer (`powerlineCustom.budget.costsUrl`)   |
+| `jiraBrowseUrl`                      | Pi footer settings (Neovim now uses native private data) |
+| `[[mcp_servers]]`                    | Claude MCP registration                                  |
+| `pi_mcp_json`                        | Native Pi renderer (`~/.pi/agent/mcp.json`)              |
 
 Keep credentials out of this file. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml` and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` first, then `mise agent-config --check --real-secrets` to prove credential access without writing. The personal Mac and pod042 have passed live apply and repeat verification; work remains fixture-only, with its private inputs and credential access unverified. Preserve the old chezmoi data and templates until before/after output parity is established on the work Mac.
 
@@ -61,7 +61,7 @@ Note: The `permissions.allow` array in the overlay **replaces** the base entirel
 
 ### Model Configuration
 
-`local.toml` defines models under `[work_models]`, one entry per model the gateway serves: `version` (the bare id), `pi_alias` (the `provider/id` pair pi resolves by, mirroring `agent_harness.aliases.pi` in `models.yml`), `display_name`, `context_window`, `max_output`, and the negotiated `cost` rates.
+The native host-local `data.toml` defines models under `[work_models]`, one entry per model the gateway serves: `version` (the bare id), `pi_alias` (the `provider/id` pair pi resolves by, mirroring `agent_harness.aliases.pi` in `bootstrap/capabilities/agent-harness/models.yml`), `display_name`, `context_window`, `max_output`, and the negotiated `cost` rates.
 
 `[work_gateway]` holds the endpoint and the two pi provider names. One gateway fronts two wire protocols — Anthropic Messages and OpenAI Responses (at `{base_url}/v1`) — so Pi needs a provider per protocol. Both authenticate with `ANTHROPIC_AUTH_TOKEN`, resolved through fnox by the native agent configuration renderer or supplied to the agent by `scripts/fnox-host exec --secret ANTHROPIC_AUTH_TOKEN -- COMMAND`.
 
@@ -69,12 +69,12 @@ These should be used instead of hard-coding model values.
 
 ## Homebrew
 
-| File                          | Purpose                                                  |
-| ----------------------------- | -------------------------------------------------------- |
-| `ansible/Brewfile.work`       | Work-specific brews, casks, and taps (committed to git)  |
-| `ansible/Brewfile.work.local` | Machine-local additions not committed to git (if needed) |
+| File                                            | Purpose                                                  |
+| ----------------------------------------------- | -------------------------------------------------------- |
+| `bootstrap/capabilities/mac-apps/Brewfile.work` | Work-specific brews, casks, and taps (committed to git)  |
+| `ansible/Brewfile.work.local`                   | Machine-local additions not committed to git (if needed) |
 
-`Brewfile.work` **is** committed. The `.local` variant is for tools that are not publicly available.
+`Brewfile.work` **is** committed. It still includes private `ansible/Brewfile.work.*` files from their existing location; the `.local` variant is for tools that are not publicly available. Native Mac-app reconciliation consumes both, and the work Brewfile retains chezmoi.
 
 ## Work-Local Config
 
@@ -139,7 +139,7 @@ lazygit_services = '''
 | -------------- | ------------------------------------------------- |
 | `agents/work/` | Gitignored local plugin with work-specific skills |
 
-Declared for the `work` profile in `ansible/agent-harness.config.yml`.
+Declared for the `work` profile in `bootstrap/capabilities/agent-harness/catalogue.toml`. Work's Ansible adapter loads the native catalogue and resolver; private `agent_harness_sources_extra` remains in `ansible/work.config.local.yml`.
 
 ## Local Agent Instructions
 
@@ -149,11 +149,11 @@ Declared for the `work` profile in `ansible/agent-harness.config.yml`.
 
 ## MCP Servers
 
-| File                              | Purpose                                                   |
-| --------------------------------- | --------------------------------------------------------- |
-| `chezmoi/.chezmoidata/local.toml` | `[[mcp_servers]]` entries for user-scope MCP registration |
+| File                                                                 | Purpose                                                   |
+| -------------------------------------------------------------------- | --------------------------------------------------------- |
+| `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/data.toml` | `[[mcp_servers]]` entries for user-scope MCP registration |
 
-The chezmoi `run_onchange_after_register-mcp-servers.sh` script reads `[[mcp_servers]]` from `local.toml` and runs `claude mcp add --scope user` for each entry. Repo-local skills can only launch subprocess MCP servers, so the Cloudflare skill uses Homebrew's `mcp-remote` to translate stdio MCP traffic to Cloudflare's authenticated HTTP endpoint. Pi and Claude's static project config support HTTP directly and bypass the adapter.
+Native agent configuration reads `[[mcp_servers]]` from the host-local data and registers Claude user-scope servers. Transfer the old chezmoi entries before applying it. Repo-local skills can only launch subprocess MCP servers, so the Cloudflare skill uses Homebrew's `mcp-remote` to translate stdio MCP traffic to Cloudflare's authenticated HTTP endpoint. Pi and Claude's static project config support HTTP directly and bypass the adapter.
 
 ## Python Package Indexes (uv + pip)
 
@@ -231,6 +231,10 @@ Prettier skips gitignored paths by default. The project-local `.nvim.lua` (`exrc
 
 When setting up a new work Mac, copy these files from the old machine:
 
+- `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`
+- `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml`
+- `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/` (data, overlay, and private assets)
+- `ansible/Brewfile.work.*` (private Homebrew additions)
 - `chezmoi/.chezmoidata/local.toml` (then map its Neovim/Python values into the target-local file above)
 - `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json`
 - `chezmoi/dot_zshrc.local.tmpl`
@@ -242,4 +246,4 @@ When setting up a new work Mac, copy these files from the old machine:
 - `./AGENTS.local.md`
 - `./uv.toml`
 
-Then run `chezmoi apply` and `mise laptop`.
+If native private inputs do not yet exist, create them from the legacy values using the mappings above before reconciliation. Preserve legacy inputs until live work parity is established. Run `mise laptop --check` before `mise laptop`; the work playbook applies its remaining chezmoi state. Work retains `.ansibleremove` and `chezmoi/.chezmoiremove` consumers and does not run personal native retirements.

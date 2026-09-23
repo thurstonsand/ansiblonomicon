@@ -2,8 +2,8 @@ monorepo_root = true
 
 [monorepo]
 config_roots = [
-  "ansible/roles/shp/files/shp",
-  "ansible/roles/sessions/files/sessions",
+  "bootstrap/capabilities/software/sources/shp",
+  "bootstrap/capabilities/software/sources/sessions",
 ]
 
 [tools]
@@ -31,8 +31,7 @@ _.python.venv = { path = ".venv", create = true }
 # and the version spec: that spelling ignores MISE_DATA_DIR and names the `3.14`
 # alias directory instead of the concrete install pyvenv.cfg records.
 UV_PYTHON = { value = "{{ tools.python.path }}/bin/python", tools = true }
-ANSIBLE_CONFIG = "{{config_root}}/ansible/ansible.cfg"
-SUDO_ASKPASS = "{{config_root}}/ansible/sudo-askpass.sh"
+SUDO_ASKPASS = "{{config_root}}/scripts/sudo-askpass.sh"
 
 [hooks]
 enter = "mise run --quiet bootstrap"
@@ -43,7 +42,13 @@ depends = ["bootstrap:*"]
 
 [tasks."bootstrap:deps"]
 description = "Sync Python dependencies into .venv"
-run = "uv sync --dev"
+run = '''
+if [ "$(hostname -s)" = ML-DFC6YK6VJQ ]; then
+  uv sync --dev --group work
+else
+  uv sync --dev
+fi
+'''
 # pyvenv.cfg is a source so that deleting .venv resyncs it: mise recreates the
 # venv during env resolution, and the fresh mtime invalidates the cache.
 sources = ["pyproject.toml", "uv.lock", ".venv/pyvenv.cfg"]
@@ -152,11 +157,11 @@ flag "-c --check" help="Report Brewfile drift without installing or resolving cr
 run = '''
 case "$(hostname -s)" in
   Thurstons-MacBook-Pro)
-    brewfile="$MISE_PROJECT_ROOT/ansible/Brewfile"
+    brewfile="$MISE_PROJECT_ROOT/bootstrap/capabilities/mac-apps/Brewfile"
     sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS
     ;;
   ML-DFC6YK6VJQ)
-    brewfile="$MISE_PROJECT_ROOT/ansible/Brewfile.work"
+    brewfile="$MISE_PROJECT_ROOT/bootstrap/capabilities/mac-apps/Brewfile.work"
     sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS_WORK
     ;;
   *) echo "mac-apps is registered only on Mac laptops" >&2; exit 1 ;;
@@ -167,7 +172,7 @@ if [ -n "${usage_check:-}" ]; then
 fi
 mise run //:mise:install || exit "$?"
 export PATH="$HOME/.local/bin:$PATH"
-export SUDO_ASKPASS="$MISE_PROJECT_ROOT/ansible/sudo-askpass.sh"
+export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
 exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret "$sudo_secret" -- "$@"
 '''
 
@@ -211,7 +216,7 @@ case ",$sections," in
   *,hostname,*) [ "$profile" = personal ] || { echo "hostname is intentionally unmanaged on work" >&2; exit 1; } ;;
 esac
 if [ -z "${usage_check:-}" ] && printf '%s' "$sections" | grep -Eq '(^|,)(permissions|hostname)(,|$)'; then
-  export SUDO_ASKPASS="${SUDO_ASKPASS:-$MISE_PROJECT_ROOT/ansible/sudo-askpass.sh}"
+  export SUDO_ASKPASS="${SUDO_ASKPASS:-$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh}"
 fi
 exec "$MISE_PROJECT_ROOT/.venv/bin/python" "$MISE_PROJECT_ROOT/bootstrap/capabilities/macos-system/reconcile.py" \
   --target "$MISE_PROJECT_ROOT/bootstrap/targets/$host" --profile "$profile" \
@@ -293,7 +298,7 @@ if [ "$host" != pod042 ]; then
     ML-DFC6YK6VJQ) sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS_WORK ;;
     *) sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS ;;
   esac
-  export SUDO_ASKPASS="$MISE_PROJECT_ROOT/ansible/sudo-askpass.sh"
+  export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
   exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret "$sudo_secret" -- \
     sh -ec 'sudo -A -v; exec mise -C "$1" bootstrap --only "$2" --force-dotfiles --yes' \
     terminal-theme "$target" "$parts"
@@ -443,7 +448,7 @@ if [ -n "${usage_check:-}" ]; then
   exec sh -c "$run_shell" shell "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts" --dry-run false
 fi
 if [ "$work" = true ]; then
-  export SUDO_ASKPASS="$MISE_PROJECT_ROOT/ansible/sudo-askpass.sh"
+  export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
   exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec \
     --secret SOURCEGRAPH_TOKEN --secret HOMEBREW_SUDO_ASKPASS_PASS_WORK -- \
     sh -ec ': "${SOURCEGRAPH_TOKEN:?SOURCEGRAPH_TOKEN is required for work shell apply}"; sudo -A -v; exec sh -c "$1" shell "$2" "$3" "$4" "$5" --yes true' \
@@ -535,7 +540,7 @@ export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$MISE_PROJECT_ROOT"
 export EDITOR_CONFIG_PYTHON="$MISE_PROJECT_ROOT/.venv/bin/python"
 export EDITOR_CONFIG_RENDERER="$MISE_PROJECT_ROOT/bootstrap/capabilities/editor-config/render.py"
-export EDITOR_CONFIG_MODELS="$MISE_PROJECT_ROOT/ansible/models.yml"
+export EDITOR_CONFIG_MODELS="$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/models.yml"
 run_editor_config='exec mise -E editor-config -C "$1" bootstrap --only files,dotfiles --force-dotfiles "$2"'
 if [ -n "${usage_check:-}" ]; then
   export CLI_PROXY_API_KEY=preview CF_ACCESS_CLIENT_ID=preview CF_ACCESS_CLIENT_SECRET=preview
@@ -551,7 +556,6 @@ exec sh -c "$run_editor_config" editor-config "$target" --yes
 
 [tasks.reconcile]
 description = "Reconcile this machine, dispatching on hostname"
-dir = "ansible"
 usage = '''
 flag "-c --check" help="Dry-run mode (no changes made)"
 flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
@@ -559,7 +563,7 @@ flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 run = '''
 case "$(hostname -s)" in
   ML-DFC6YK6VJQ|Thurstons-MacBook-Pro) exec mise run //:reconcile:laptop ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
-  pod042) exec python3 ../scripts/pod042_reconcile.py ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
+  pod042) exec python3 "$MISE_PROJECT_ROOT/scripts/pod042_reconcile.py" ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
   *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
 esac
 '''
@@ -622,7 +626,6 @@ exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec "$@"
 [tasks."reconcile:laptop"]
 description = "Reconcile this laptop (auto-detects work vs personal)"
 alias = "laptop"
-dir = "ansible"
 usage = '''
 flag "-c --check" help="Dry-run mode (no changes made)"
 flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
@@ -669,7 +672,11 @@ case "$playbook:${usage_tags:-}" in
 esac
 ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|berkeley-mono|docker-context|claude-code|opencode|pi|sessions|shp|uvc-util|sysconfig|dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index|agent-config)$' | paste -sd, -)
 if [ "$playbook" = macos.yml ]; then
-  ansible_tags=$(printf '%s' "$ansible_tags" | tr ',' '\n' | grep -Ev '^agent-harness$' | paste -sd, -)
+  ansible_tags=$(printf '%s' "$ansible_tags" | tr ',' '\n' | grep -Ev '^(agent-harness|retirements)$' | paste -sd, -)
+  if [ -n "$ansible_tags" ] && [ "$ansible_tags" != all ]; then
+    echo "Unsupported personal-host tags: $ansible_tags" >&2
+    exit 1
+  fi
 fi
 case ",${normalized_tags}," in
   ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
@@ -695,12 +702,13 @@ if [ "$playbook" = macos.yml ]; then
     ,,|*,all,*|*,agent-harness,*) mise run //:agent-harness ${usage_check:+--check} || exit "$?" ;;
   esac
 fi
-if [ -n "$full" ] || [ -n "$ansible_tags" ]; then
+if [ "$playbook" = work.yml ] && { [ -n "$full" ] || [ -n "$ansible_tags" ]; }; then
   [ -z "$full" ] || ansible_tags=
   set -- --secret "$sudo_secret"
   [ -z "$consumer_secret" ] || set -- "$@" --secret "$consumer_secret"
-  ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
-    ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
+  ANSIBLE_CONFIG="$MISE_PROJECT_ROOT/ansible/ansible.cfg" ANSIBLE_CACHE_PLUGIN=memory \
+    "$MISE_PROJECT_ROOT/scripts/fnox-host" exec "$@" -- \
+    uv run --group work ansible-playbook -i "$MISE_PROJECT_ROOT/ansible/inventory/control/macos.ini" "$MISE_PROJECT_ROOT/ansible/playbooks/work.yml" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
 fi
 if [ "$playbook" = work.yml ]; then
   case ",$normalized_tags," in
@@ -721,7 +729,17 @@ for native_capability in $config_capabilities; do
   esac
   mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
 done
+if [ "$playbook" = macos.yml ]; then
+  case ",$normalized_tags," in
+    ,,|*,all,*|*,retirements,*) mise run //:retirements ${usage_check:+--check} || exit "$?" ;;
+  esac
+fi
 '''
+
+[tasks.retirements]
+description = "Retire legacy personal-host files through native mise"
+usage = 'flag "-c --check" help="Preview retired paths without removing them"'
+run = '"$MISE_PROJECT_ROOT/.venv/bin/python" "$MISE_PROJECT_ROOT/bootstrap/capabilities/retirements/reconcile.py" ${usage_check:+--check}'
 
 [tasks."reconcile:udmp"]
 description = "Reconcile the UDM Pro router"
@@ -848,12 +866,9 @@ run = '"{{config_root}}/scripts/fnox-host" exec --secret CLOUDFLARE_API_TOKEN --
 # Checks: component first, verb second. `check` never mutates; `fix` may.
 # ---------------------------------------------------------------------------
 
-# `//ansible/...` rather than `//...`: the latter matches the monorepo root too,
-# which would make this task depend on itself.
 [tasks.check]
 description = "Run every non-mutating check across the repo"
 depends = [
-  "ansible:lint",
   "docs:lint",
   "python:fmt:check",
   "python:lint",
@@ -863,7 +878,7 @@ depends = [
   "pi:check",
   "amp:check",
   "session-recovery:check",
-  "//ansible/...:check",
+  "//bootstrap/capabilities/software/sources/...:check",
 ]
 
 [tasks.fix]
@@ -876,7 +891,7 @@ depends = [
   "pi:fix",
   "amp:fix",
   "session-recovery:fix",
-  "//ansible/...:fmt",
+  "//bootstrap/capabilities/software/sources/...:fmt",
 ]
 
 [tasks."docs:lint"]
@@ -888,9 +903,9 @@ description = "Autofix Markdown lint findings"
 run = "markdownlint-cli2 --fix"
 
 [tasks."ansible:lint"]
-description = "Lint the Ansible tree (online: refreshes galaxy collections)"
+description = "Lint retained work-laptop Ansible configuration"
 dir = "ansible"
-run = "ansible-lint"
+run = "uv run --group work ansible-lint"
 
 [tasks."python:lint"]
 description = "Report ruff lint findings"
@@ -1019,7 +1034,7 @@ git pull --rebase
 uv run --no-project --with tomlkit python scripts/work_lock_environment.py pyproject.toml
 uv lock --no-build --upgrade
 cp -f "$pyproject_bak" pyproject.toml
-uv sync --dev
+uv sync --dev --group work
 '''
 
 [tasks."chezmoi:diff"]
@@ -1035,6 +1050,7 @@ usage = '''
 flag "-a --apply" help="Actually apply changes (default: dry-run)"
 '''
 run = '''
+[ "$(hostname -s)" = ML-DFC6YK6VJQ ] || { echo 'chezmoi is retained only for work' >&2; exit 1; }
 if [ -n "${usage_apply:-}" ]; then
   chezmoi re-add
 else

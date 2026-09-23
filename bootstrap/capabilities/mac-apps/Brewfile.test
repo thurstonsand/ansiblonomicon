@@ -1,0 +1,11 @@
+# Minimal test Brewfile for CI/testing
+# Skip MAS - requires Apple ID sign-in
+
+# Required by bootstrap
+cask "1password-cli"
+
+# Brew formula
+brew "tree"
+
+# Cask
+cask "qlmarkdown"

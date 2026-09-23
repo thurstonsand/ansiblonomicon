@@ -14,11 +14,9 @@ render_dir="$(mktemp -d)"
 checkout_dir="$(mktemp -d)"
 trap 'rm -rf "$render_dir" "$checkout_dir"' EXIT
 
-ANSIBLE_CONFIG="$repo_root/ansible/ansible.cfg" \
-  uv run --directory "$repo_root" --no-sync ansible-playbook \
-  -i localhost, \
-  "$repo_root/ansible/playbooks/publish-amp-skills.yml" \
-  -e "agent_harness_amp_skills_dir=$render_dir"
+uv run --directory "$repo_root" --no-sync python \
+  "$repo_root/bootstrap/capabilities/agent-harness/publish_amp_skills.py" \
+  --repo "$repo_root" --output "$render_dir"
 
 repository="$(amp skills repositories --json | jq -ce '.[] | select(.scope == "user")')"
 clone_url="$(jq -r '.cloneURL' <<<"$repository")"

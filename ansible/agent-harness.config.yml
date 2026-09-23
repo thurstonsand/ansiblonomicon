@@ -1,4 +1,0 @@
----
-# Agent harness profile selection. Canonical profiles and layouts live under
-# bootstrap/capabilities/agent-harness/ for both native and legacy consumers.
-agent_harness_profile: personal

@@ -64,14 +64,15 @@ sudo -u thurstonsand env -i \
 '''
 
 [tasks."operator:setup"]
-description = "Install operator tools and agents, build sessions, then apply remaining dotfiles"
-depends = ["operator:dotfiles"]
+description = "Install operator tools and agents, then build sessions"
+depends = ["operator:sessions"]
 
 [tasks."operator:tools"]
 dir = "/home/thurstonsand"
 run = [
   "mise install --yes",
   "mise upgrade --yes",
+  "mise --no-config --no-env uninstall --all chezmoi",
   '''
 node_bin=$(dirname "$(mise which node)")
 python3 /home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042/operator/node_packages.py "$node_bin/npm"
@@ -111,17 +112,9 @@ mise --no-config --no-env uninstall --all amp codex claude opencode npm:t3
 depends = ["operator:agents"]
 dir = "/home/thurstonsand"
 sources = [
-  "/home/thurstonsand/code/ansiblonomicon/ansible/roles/sessions/files/sessions/**/*.go",
-  "/home/thurstonsand/code/ansiblonomicon/ansible/roles/sessions/files/sessions/go.mod",
-  "/home/thurstonsand/code/ansiblonomicon/ansible/roles/sessions/files/sessions/go.sum",
+  "/home/thurstonsand/code/ansiblonomicon/bootstrap/capabilities/software/sources/sessions/**/*.go",
+  "/home/thurstonsand/code/ansiblonomicon/bootstrap/capabilities/software/sources/sessions/go.mod",
+  "/home/thurstonsand/code/ansiblonomicon/bootstrap/capabilities/software/sources/sessions/go.sum",
 ]
 outputs = ["/home/thurstonsand/.local/bin/sessions"]
-run = "go -C /home/thurstonsand/code/ansiblonomicon/ansible/roles/sessions/files/sessions build -o /home/thurstonsand/.local/bin/sessions ."
-
-[tasks."operator:dotfiles"]
-depends = ["operator:sessions"]
-dir = "/home/thurstonsand"
-run = [
-  "chezmoi init --source=/home/thurstonsand/code/ansiblonomicon/chezmoi",
-  "chezmoi --source=/home/thurstonsand/code/ansiblonomicon/chezmoi apply --force",
-]
+run = "go -C /home/thurstonsand/code/ansiblonomicon/bootstrap/capabilities/software/sources/sessions build -o /home/thurstonsand/.local/bin/sessions ."

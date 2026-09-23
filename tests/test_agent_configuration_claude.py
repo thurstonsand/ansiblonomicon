@@ -42,8 +42,9 @@ def test_render_merges_overlay_hooks_and_preserves_live_model_and_order(
     home = tmp_path / "home"
     local = repo / "bootstrap/capabilities/agent-harness/local/pod042"
     local.mkdir(parents=True)
-    (repo / "ansible").mkdir()
-    (repo / "ansible/session-title-prompt.txt").write_text("Name it.\n")
+    (repo / "bootstrap/capabilities/agent-harness/session-title-prompt.txt").write_text(
+        "Name it.\n"
+    )
     (local / "claude-settings-overlay.json").write_text(
         '{"permissions":{"defaultMode":"ask","deny":null},'
         '"model":"${work_models.fast.id}","overlayOnly":7}'
@@ -165,8 +166,10 @@ def test_title_entrypoints_load_runtime_home_config_through_deployed_symlinks(
 def test_malformed_live_settings_are_refused(tmp_path: Path) -> None:
     module = _module()
     repo = tmp_path / "repo"
-    (repo / "ansible").mkdir(parents=True)
-    (repo / "ansible/session-title-prompt.txt").write_text("Prompt")
+    (repo / "bootstrap/capabilities/agent-harness").mkdir(parents=True)
+    (repo / "bootstrap/capabilities/agent-harness/session-title-prompt.txt").write_text(
+        "Prompt"
+    )
     target = tmp_path / "home/.claude/settings.json"
     target.parent.mkdir(parents=True)
     target.write_text("not json")
