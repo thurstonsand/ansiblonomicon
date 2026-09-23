@@ -42,6 +42,21 @@
 .local/bin/fnox-host
 .local/bin/mcp-credentials
 
+# Agent configuration and static assets are owned by native agent-config on all
+# registered hosts. Keep these unconditional so host-private chezmoi extras
+# cannot reclaim a native output.
+.claude/
+.codex/
+.pi/agent/
+.config/amp/
+.config/opencode/
+.config/session-recovery/
+.gemini/
+.oracle/
+.local/lib/session-recovery/
+.local/bin/pi
+.terminal-bg
+
 # Mutable desktop application files are copied by native mise.
 .config/linearmouse/linearmouse.json
 .config/nextdns.conf

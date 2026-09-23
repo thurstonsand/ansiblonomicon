@@ -1,0 +1,149 @@
+#:schema https://developers.openai.com/codex/config-schema.json
+model = "{{ model }}"
+model_reasoning_effort = "medium"
+model_reasoning_summary = "auto"
+approval_policy = "on-request"
+approvals_reviewer = "auto_review"
+sandbox_mode = "danger-full-access"
+personality = "friendly"
+web_search = "live"
+default_mode_request_user_input = true
+service_tier = "default"
+
+[features]
+unified_exec = true
+apply_patch_freeform = true
+shell_snapshot = true
+multi_agent = true
+apps = true
+prevent_idle_sleep = true
+memories = true
+chronicle = true
+remote_connections = true
+undo = true
+default_mode_request_user_input = true
+artifact = true
+child_agents_md = true
+terminal_resize_reflow = true
+goals = true
+js_repl = false
+
+[history]
+persistence = "save-all"
+
+[tui]
+notifications = true
+theme = "gruvbox-{{ terminal_background }}"
+status_line = [ "context-remaining", "model-with-reasoning", "project-root", "git-branch" ]
+
+[projects."{{ projects_root }}/nixonomicon"]
+trust_level = "trusted"
+
+[projects."{{ projects_root }}/anypod"]
+trust_level = "trusted"
+
+{% if hostname == "pod042" %}
+[projects."{{ home }}"]
+trust_level = "trusted"
+
+{% endif %}
+
+[projects."{{ projects_root }}/ansiblonomicon"]
+trust_level = "trusted"
+
+[projects."{{ projects_root }}/pi-sessions"]
+trust_level = "trusted"
+
+[projects."{{ projects_root }}/mtool"]
+trust_level = "trusted"
+
+[projects."/"]
+trust_level = "trusted"
+
+[projects."{{ projects_root }}/ghosttykit"]
+trust_level = "trusted"
+
+[projects."{{ projects_root }}/flux-keyboard-sdk"]
+trust_level = "trusted"
+
+[plugins."google-calendar@openai-curated"]
+enabled = true
+
+[plugins."gmail@openai-curated"]
+enabled = true
+
+[plugins."github@openai-curated"]
+enabled = true
+
+[plugins."google-drive@openai-curated"]
+enabled = true
+
+[plugins."documents@openai-primary-runtime"]
+enabled = true
+
+[plugins."spreadsheets@openai-primary-runtime"]
+enabled = true
+
+[plugins."presentations@openai-primary-runtime"]
+enabled = true
+
+[plugins."computer-use@openai-bundled"]
+enabled = true
+
+[plugins."chrome@openai-bundled"]
+enabled = true
+
+[plugins."sites@openai-bundled"]
+enabled = true
+
+[plugins."visualize@openai-bundled"]
+enabled = true
+
+[plugins."browser@openai-bundled"]
+enabled = true
+
+[plugins."pdf@openai-primary-runtime"]
+enabled = true
+
+[plugins."template-creator@openai-primary-runtime"]
+enabled = true
+
+[desktop]
+followUpQueueMode = "steer"
+mac-menu-bar-enabled = false
+preventSleepWhileRunning = true
+hotkey-window-projectless-default-enabled = true
+appearanceLightCodeThemeId = "gruvbox"
+appearanceDarkCodeThemeId = "gruvbox"
+usePointerCursors = true
+selected-avatar-id = "custom:2b"
+open-local-url-in-target-preference = "in-app-browser"
+git-always-force-push = true
+dock-icon-preference = "app-default"
+
+[desktop.open-in-target-preferences]
+global = "zed"
+
+[desktop.appearanceLightChromeTheme]
+accent = "#458588"
+contrast = 45
+ink = "#3c3836"
+opaqueWindows = false
+surface = "#fbf1c7"
+
+[desktop.appearanceLightChromeTheme.semanticColors]
+diffAdded = "#3c3836"
+diffRemoved = "#cc241d"
+skill = "#b16286"
+
+[desktop.appearanceDarkChromeTheme]
+accent = "#458588"
+contrast = 60
+ink = "#ebdbb2"
+opaqueWindows = false
+surface = "#282828"
+
+[desktop.appearanceDarkChromeTheme.semanticColors]
+diffAdded = "#ebdbb2"
+diffRemoved = "#cc241d"
+skill = "#b16286"

@@ -93,10 +93,10 @@ local linters = new Mapping<String, Step> {
 
   ["pi"] {
     glob = List(
-      "chezmoi/private_dot_pi/agent/extensions/**/*.ts",
-      "chezmoi/private_dot_pi/agent/extensions/**/*.json",
-      "chezmoi/private_dot_pi/agent/permissions/**/*.ts",
-      "chezmoi/private_dot_pi/agent/permissions/**/*.json"
+      "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/**/*.ts",
+      "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/**/*.json",
+      "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/**/*.ts",
+      "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/**/*.json"
     )
     exclude = "**/node_modules/**"
     // The lint scripts discover their own packages and lint each in full; they
@@ -107,8 +107,8 @@ local linters = new Mapping<String, Step> {
 
   ["amp"] {
     glob = List(
-      "chezmoi/dot_config/private_amp/plugins/**/*.ts",
-      "chezmoi/dot_config/private_amp/plugins/**/*.json"
+      "bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins/**/*.ts",
+      "bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins/**/*.json"
     )
     exclude = "**/node_modules/**"
     // amp-lint.sh writes by default; --check is the non-mutating form.
@@ -118,10 +118,10 @@ local linters = new Mapping<String, Step> {
 
   ["session-recovery"] {
     glob = List(
-      "chezmoi/dot_local/lib/session-recovery/**/*.ts",
-      "chezmoi/dot_local/lib/session-recovery/**/*.json",
-      "chezmoi/dot_claude/scripts/session-recovery/**/*.ts",
-      "chezmoi/dot_claude/scripts/session-recovery/**/*.json"
+      "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/**/*.ts",
+      "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/**/*.json",
+      "bootstrap/capabilities/agent-harness/configuration/assets/claude/scripts/session-recovery/**/*.ts",
+      "bootstrap/capabilities/agent-harness/configuration/assets/claude/scripts/session-recovery/**/*.json"
     )
     exclude = "**/node_modules/**"
     check = "./scripts/session-recovery-lint.sh"

@@ -356,6 +356,8 @@ def test_native_hook_operator_ownership() -> None:
     assert "sudo -u thurstonsand env -i" in config
     assert "HOME=/home/thurstonsand" in config
     assert "uv run --script" in config
+    assert "run //:agent-config" in config
+    assert "chezmoi" not in config
     assert "ansible-playbook" not in config
     assert "os.getuid() != 1000" in SCRIPT.read_text()
     assert "os.getgid() != 1000" in SCRIPT.read_text()

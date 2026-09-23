@@ -2,8 +2,8 @@
 set -euo pipefail
 
 ROOT_DIRS=(
-  "chezmoi/private_dot_pi/agent/extensions"
-  "chezmoi/private_dot_pi/agent/permissions"
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions"
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions"
 )
 WRITE_FLAG=""
 MODE="check"

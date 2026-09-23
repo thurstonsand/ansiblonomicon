@@ -1,0 +1,407 @@
+#!/usr/bin/env bash
+set -euo pipefail
+trap 'echo "[statusline error]" >&2' ERR
+
+# =============================================================================
+# CONFIGURATION
+# =============================================================================
+
+BAR_LENGTH=21
+GAUGE_WARN_AT=50
+GAUGE_ERROR_AT=80
+MAX_TOKENS_CAP=400000 # artificial cap; 1M-window models still gauge against this
+CACHE_DIR="${HOME}/.cache/claude-statusline"
+
+# =============================================================================
+# COLORS
+# =============================================================================
+
+# Fixed 256-palette Gruvbox indices (16-231) because CC's statusline
+# renderer doesn't theme-map ANSI 0-15.
+CURRENT_THEME=$(cat ~/.terminal-bg 2>/dev/null || echo "dark")
+RESET='\033[0m'
+
+rgb_fg() { printf '\\033[38;2;%s;%s;%sm' "$1" "$2" "$3"; }
+
+if [[ "$CURRENT_THEME" == "light" ]]; then
+  FG_GREEN=$(rgb_fg 121 116 14)  # gruvbox-light-hard green #79740e
+  FG_YELLOW=$(rgb_fg 181 118 20) # gruvbox-light-hard yellow #b57614
+  FG_RED=$(rgb_fg 157 0 6)       # gruvbox-light-hard red #9d0006
+  FG_ORANGE=$(rgb_fg 175 58 3)   # gruvbox-light-hard orange #af3a03
+  FG_MUTED=$(rgb_fg 102 92 84)   # gruvbox-light-hard muted #665c54
+  STYLE_PALETTE=(
+    "$(rgb_fg 143 63 113)" # purple #8f3f71
+    "$(rgb_fg 66 123 88)"  # cyan/green #427b58
+    "$(rgb_fg 181 118 20)" # yellow #b57614
+    "$(rgb_fg 121 116 14)" # green #79740e
+    "$(rgb_fg 157 0 6)"    # red #9d0006
+    "$(rgb_fg 175 58 3)"   # orange #af3a03
+  )
+else
+  FG_GREEN=$(rgb_fg 184 187 38)  # gruvbox-dark-hard green #b8bb26
+  FG_YELLOW=$(rgb_fg 250 189 47) # gruvbox-dark-hard yellow #fabd2f
+  FG_RED=$(rgb_fg 251 73 52)     # gruvbox-dark-hard red #fb4934
+  FG_ORANGE=$(rgb_fg 254 128 25) # gruvbox-dark-hard orange #fe8019
+  FG_MUTED=$(rgb_fg 189 174 147) # gruvbox-dark-hard muted #bdae93
+  STYLE_PALETTE=(
+    "$(rgb_fg 211 134 155)" # purple #d3869b
+    "$(rgb_fg 142 192 124)" # cyan/green #8ec07c
+    "$(rgb_fg 250 189 47)"  # yellow #fabd2f
+    "$(rgb_fg 184 187 38)"  # green #b8bb26
+    "$(rgb_fg 251 73 52)"   # red #fb4934
+    "$(rgb_fg 254 128 25)"  # orange #fe8019
+  )
+fi
+
+# =============================================================================
+# ARGS
+# =============================================================================
+
+SECTION_ORDER=()
+if [[ $# -eq 0 ]]; then
+  SECTION_ORDER=(model folder branch gauge)
+else
+  for arg in "$@"; do
+    case "$arg" in
+    --gauge) SECTION_ORDER+=(gauge) ;;
+    --model) SECTION_ORDER+=(model) ;;
+    --folder) SECTION_ORDER+=(folder) ;;
+    --branch) SECTION_ORDER+=(branch) ;;
+    --style) SECTION_ORDER+=(style) ;;
+    --usage) SECTION_ORDER+=(usage) ;;
+    esac
+  done
+fi
+
+# =============================================================================
+# MODEL ENRICHMENT
+# =============================================================================
+
+enrich_model_display() {
+  local model_id="$1"
+  local display_name="$2"
+
+  # NEW format: claude-{major}-{minor}-{name}[{context}][-{date}]
+  if [[ "$model_id" =~ ^claude-([0-9]+)-([0-9]+)-([a-z]+)(\[[0-9]+[mk]\])?(-[0-9]{8})?$ ]]; then
+    local version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+    local name="${BASH_REMATCH[3]}"
+    local context="${BASH_REMATCH[4]}"
+
+    # Prefer the configured display name for this tier when set.
+    local env_var="ANTHROPIC_DEFAULT_${name^^}_MODEL_NAME"
+    if [[ -n "${!env_var:-}" ]]; then
+      echo "${!env_var}"
+      return
+    fi
+
+    local friendly
+    friendly=$(awk -v n="$name" 'BEGIN { print toupper(substr(n,1,1)) substr(n,2) }')
+    echo "${friendly} ${version}${context}"
+    return
+  fi
+
+  # OLD format: claude-{name}-{major}-{minor}[-{date}]
+  if [[ "$model_id" =~ -([0-9]+)-([0-9]+)(-[0-9]{8})?$ ]]; then
+    local version="${BASH_REMATCH[1]}.${BASH_REMATCH[2]}"
+    if [[ "$display_name" != *"$version"* ]]; then
+      echo "${display_name} ${version}"
+    else
+      echo "$display_name"
+    fi
+    return
+  fi
+
+  echo "$display_name"
+}
+
+# =============================================================================
+# CACHE
+# =============================================================================
+
+get_session_cache_file() {
+  local sid="$1"
+  [[ -n "$sid" ]] || return 0
+  local safe_sid
+  safe_sid=$(printf '%s' "$sid" | tr -cd 'a-zA-Z0-9_-')
+  [[ -n "$safe_sid" ]] || return 0
+  echo "${CACHE_DIR}/${safe_sid}.cache"
+}
+
+cleanup_stale_caches() {
+  [[ -d "$CACHE_DIR" ]] || return 0
+  find "$CACHE_DIR" -name "*.cache" -mtime +7 -delete 2>/dev/null || true
+}
+
+read_cache() {
+  local cache_file="$1"
+  [[ -n "$cache_file" && -f "$cache_file" ]] || return 1
+  local cache_data
+  cache_data=$(cat "$cache_file" 2>/dev/null) || return 1
+  [[ -n "$cache_data" ]] || return 1
+  mapfile -t _cache < <(awk -F'\t' '{for(i=1;i<=7;i++) print $i}' <<<"$cache_data")
+  CACHED_USED_PCT="${_cache[0]}"
+  CACHED_OVER_CAP="${_cache[1]}"
+  CACHED_MODEL="${_cache[2]}"
+  CACHED_DIR="${_cache[3]}"
+  CACHED_BRANCH="${_cache[4]}"
+  CACHED_STYLE="${_cache[5]}"
+  CACHED_WORKTREE="${_cache[6]:-0}"
+  [[ "$CACHED_USED_PCT" =~ ^[0-9]+$ && "$CACHED_OVER_CAP" =~ ^[01]$ ]]
+}
+
+write_cache() {
+  local cache_file="$1"
+  [[ -n "$cache_file" ]] || return 1
+  mkdir -p "$CACHE_DIR" 2>/dev/null || return 1
+  local tmp_file="${cache_file}.tmp.$$"
+  printf '%s\t%s\t%s\t%s\t%s\t%s\t%s' "$2" "$3" "$4" "$5" "$6" "$7" "$8" >"$tmp_file" 2>/dev/null || {
+    rm -f "$tmp_file"
+    return 1
+  }
+  mv "$tmp_file" "$cache_file" 2>/dev/null || {
+    rm -f "$tmp_file"
+    return 1
+  }
+}
+
+# =============================================================================
+# RENDER
+# =============================================================================
+
+get_gauge_color() {
+  local used_pct=$1
+  local over_cap=$2
+  if [[ $over_cap -eq 1 || $used_pct -ge $GAUGE_ERROR_AT ]]; then
+    echo "$FG_RED"
+  elif [[ $used_pct -ge $GAUGE_WARN_AT ]]; then
+    echo "$FG_YELLOW"
+  else
+    echo "$FG_MUTED"
+  fi
+}
+
+build_gauge() {
+  local used_pct=$1
+  local over_cap=$2
+  local label
+  if [[ $over_cap -eq 1 ]]; then
+    printf -v label '%02d!' "$used_pct"
+  else
+    printf -v label '%02d%%' "$used_pct"
+  fi
+
+  local label_len=${#label}
+  local visible_bar_width=$((BAR_LENGTH - label_len))
+  [[ $visible_bar_width -lt 0 ]] && visible_bar_width=0
+
+  local filled=$(((used_pct * visible_bar_width + 50) / 100))
+  [[ $filled -lt 0 ]] && filled=0
+  [[ $filled -gt $visible_bar_width ]] && filled=$visible_bar_width
+  local empty=$((visible_bar_width - filled))
+
+  local bar=""
+  for ((i = 0; i < filled; i++)); do
+    bar="${bar}━"
+  done
+  bar="${bar}${label}"
+  for ((i = 0; i < empty; i++)); do
+    bar="${bar}─"
+  done
+
+  local color
+  color=$(get_gauge_color "$used_pct" "$over_cap")
+  printf '%b' "${color}[${bar}]${RESET}"
+}
+
+render_section_model() {
+  printf '%b' "${FG_ORANGE}$1${RESET}"
+}
+
+render_section_folder() {
+  printf '%b' "${FG_GREEN}\uf115 $1${RESET}"
+}
+
+render_section_branch() {
+  local branch="$1"
+  local worktree="${2:-0}"
+  [[ -n "$branch" ]] || return
+
+  local color="$FG_MUTED"
+  case "$branch" in
+    main|master) color="$FG_YELLOW" ;;
+  esac
+
+  if [[ "$worktree" -eq 1 ]]; then
+    printf '%b' "${color}\ue725 \uf126 $branch${RESET}"
+  else
+    printf '%b' "${color}\uf126 $branch${RESET}"
+  fi
+}
+
+hash_style_color() {
+  local name="$1"
+  local hash
+  hash=$(printf '%s' "$name" | cksum | cut -d' ' -f1)
+  echo $((hash % ${#STYLE_PALETTE[@]}))
+}
+
+render_section_style() {
+  local style="$1"
+  [[ -n "$style" ]] || return
+  local idx
+  idx=$(hash_style_color "$style")
+  local color="${STYLE_PALETTE[$idx]}"
+  printf '%b' "${color}◉ ${style}${RESET}"
+}
+
+{{ statusline_usage }}
+
+output_line() {
+  local used_pct=$1 over_cap=$2 model="$3" dir="$4" branch="$5" style="$6" worktree="${7:-0}"
+  local sections=()
+  for section in "${SECTION_ORDER[@]}"; do
+    case "$section" in
+    gauge) sections+=("$(build_gauge "$used_pct" "$over_cap")") ;;
+    model) sections+=("$(render_section_model "$model")") ;;
+    folder) sections+=("$(render_section_folder "$dir")") ;;
+    branch) [[ -n "$branch" ]] && sections+=("$(render_section_branch "$branch" "$worktree")") ;;
+    style) [[ -n "$style" ]] && sections+=("$(render_section_style "$style")") ;;
+    usage)
+{% if statusline_usage %}
+      local usage_out
+      usage_out=$(render_section_usage)
+      [[ -n "$usage_out" ]] && sections+=("$usage_out")
+{% else %}
+      : # usage elided
+{% endif %}
+      ;;
+    esac
+  done
+
+  local out=""
+  local separator=" ${FG_MUTED}▸${RESET} "
+  for ((i = 0; i < ${#sections[@]}; i++)); do
+    [[ $i -gt 0 ]] && out+="$separator"
+    out+="${sections[$i]}"
+  done
+  printf '%b\n' "$out"
+}
+
+# =============================================================================
+# EXECUTE
+# =============================================================================
+
+cleanup_stale_caches
+
+input=$(cat)
+
+if ! command -v jq &>/dev/null; then
+  echo "[statusline] jq not installed"
+  exit 0
+fi
+
+mapfile -t _jq_fields < <(
+  echo "$input" | jq -r '
+        .session_id,
+        (.model.id // ""),
+        .model.display_name,
+        .workspace.current_dir,
+        (.output_style.name // ""),
+        (.worktree.branch // ""),
+        ((.context_window.used_percentage // "") | tostring),
+        (.context_window.context_window_size | tostring),
+        (.effort.level // "")
+    '
+)
+session_id="${_jq_fields[0]}"
+model_id="${_jq_fields[1]}"
+model_display="${_jq_fields[2]}"
+current_dir="${_jq_fields[3]}"
+output_style="${_jq_fields[4]}"
+worktree_branch="${_jq_fields[5]}"
+USED_PCT_RAW="${_jq_fields[6]}"
+WINDOW_SIZE="${_jq_fields[7]}"
+effort_level="${_jq_fields[8]}"
+
+for var in session_id model_id model_display current_dir output_style worktree_branch; do
+  printf -v "$var" '%s' "$(printf '%s' "${!var}" | tr -d '\000-\037\177')"
+done
+
+model_display=$(enrich_model_display "$model_id" "$model_display")
+
+case "$effort_level" in
+  low)    model_display="${model_display}⁻¹" ;;
+  high)   model_display="${model_display}²" ;;
+  xhigh)  model_display="${model_display}³" ;;
+  max)    model_display="${model_display}⁴" ;;
+esac
+
+git_branch="$worktree_branch"
+if [[ -z "$git_branch" && -n "$current_dir" ]]; then
+  git_branch=$(git -C "$current_dir" symbolic-ref --short HEAD 2>/dev/null | tr -d '\000-\037\177' || true)
+fi
+
+is_worktree=0
+main_dir_name=""
+if [[ -n "$current_dir" ]]; then
+  git_dir=$(git -C "$current_dir" rev-parse --git-dir 2>/dev/null || true)
+  common_dir=$(git -C "$current_dir" rev-parse --git-common-dir 2>/dev/null || true)
+  if [[ -n "$git_dir" && -n "$common_dir" && "$git_dir" != "$common_dir" ]]; then
+    is_worktree=1
+    case "$common_dir" in
+      /*) abs_common="$common_dir" ;;
+      *)  abs_common="$current_dir/$common_dir" ;;
+    esac
+    main_dir=$(cd "$(dirname "$abs_common")" 2>/dev/null && pwd -P || true)
+    [[ -n "$main_dir" ]] && main_dir_name="${main_dir##*/}"
+  fi
+fi
+
+if [[ $is_worktree -eq 1 && -n "$main_dir_name" ]]; then
+  dir_name="$main_dir_name"
+else
+  dir_name="${current_dir##*/}"
+fi
+
+SESSION_CACHE_FILE=$(get_session_cache_file "$session_id")
+
+USED_PCT_INT=""
+if [[ "$USED_PCT_RAW" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
+  USED_PCT_INT="${USED_PCT_RAW%%.*}"
+fi
+
+if [[ -z "$USED_PCT_INT" || "$USED_PCT_INT" == "0" ]]; then
+  if [[ -n "$SESSION_CACHE_FILE" ]] && read_cache "$SESSION_CACHE_FILE"; then
+    output_line "$CACHED_USED_PCT" "$CACHED_OVER_CAP" "$CACHED_MODEL" "$CACHED_DIR" "$CACHED_BRANCH" "$CACHED_STYLE" "$CACHED_WORKTREE"
+  else
+    output_line 0 0 "$model_display" "$dir_name" "$git_branch" "$output_style" "$is_worktree"
+  fi
+  exit 0
+fi
+
+TOKENS_USED=$((USED_PCT_INT * WINDOW_SIZE / 100))
+if [[ $WINDOW_SIZE -ge 1000000 ]]; then
+  COMPACTION_THRESHOLD=95
+else
+  COMPACTION_THRESHOLD=80
+fi
+COMPACTION_TOKENS=$((WINDOW_SIZE * COMPACTION_THRESHOLD / 100))
+
+if [[ $COMPACTION_TOKENS -lt $MAX_TOKENS_CAP ]]; then
+  EFFECTIVE_MAX=$COMPACTION_TOKENS
+else
+  EFFECTIVE_MAX=$MAX_TOKENS_CAP
+fi
+
+OVER_CAP=0
+if [[ $COMPACTION_TOKENS -gt $EFFECTIVE_MAX && $TOKENS_USED -gt $EFFECTIVE_MAX ]]; then
+  OVER_CAP=1
+  DISPLAY_PCT=$((TOKENS_USED * 100 / COMPACTION_TOKENS))
+else
+  DISPLAY_PCT=$((TOKENS_USED * 100 / EFFECTIVE_MAX))
+fi
+[[ $DISPLAY_PCT -gt 100 ]] && DISPLAY_PCT=100
+
+output_line "$DISPLAY_PCT" "$OVER_CAP" "$model_display" "$dir_name" "$git_branch" "$output_style" "$is_worktree"
+
+write_cache "$SESSION_CACHE_FILE" "$DISPLAY_PCT" "$OVER_CAP" "$model_display" "$dir_name" "$git_branch" "$output_style" "$is_worktree" || true

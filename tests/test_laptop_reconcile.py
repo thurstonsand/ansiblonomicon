@@ -386,7 +386,10 @@ def test_laptop_dispatches_native_theme_outside_ansible(
         "nvim-deps",
         "python-index",
         "agent-harness",
+        "agent-config",
     }
+    if host == "ML-DFC6YK6VJQ":
+        native.remove("agent-harness")
     ansible_tags = [tag for tag in selected if tag not in native]
     if full or ansible_tags:
         work = host == "ML-DFC6YK6VJQ"
@@ -403,6 +406,10 @@ def test_laptop_dispatches_native_theme_outside_ansible(
             " --secret ANTHROPIC_AUTH_TOKEN" if work else ""
         )
         expected.extend([f"{fnox} -- ansible-playbook {args}", f"ansible {args}"])
+    if host == "ML-DFC6YK6VJQ" and (full or "agent-harness" in selected):
+        expected.append("mise run //:agent-config" + suffix)
+    if "agent-config" in selected and "agent-harness" not in selected:
+        expected.append("mise run //:agent-config" + suffix)
     if theme:
         expected.append("mise run //:terminal-theme" + suffix)
     if full:
@@ -479,7 +486,7 @@ def test_personal_agent_harness_failure_stops_before_ansible_and_chezmoi(
     assert not any(call.startswith(("fnox ", "ansible ")) for call in calls)
 
 
-def test_public_agent_harness_task_routes_only_personal_and_forwards_check(
+def test_public_agent_harness_routes_all_hosts_to_native_config_after_catalogue(
     tmp_path: Path,
 ) -> None:
     task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["agent-harness"]
@@ -490,7 +497,9 @@ def test_public_agent_harness_task_routes_only_personal_and_forwards_check(
     calls = tmp_path / "calls"
     (binary / "hostname").write_text('#!/bin/sh\nprintf "%s\\n" "$HOST"\n')
     (binary / "hostname").chmod(0o755)
-    python.write_text('#!/bin/sh\nprintf "%s\\n" "$*" > "$CALLS"\n')
+    (binary / "mise").write_text('#!/bin/sh\nprintf "mise %s\\n" "$*" >> "$CALLS"\n')
+    (binary / "mise").chmod(0o755)
+    python.write_text('#!/bin/sh\nprintf "python %s\\n" "$*" >> "$CALLS"\n')
     python.chmod(0o755)
     base_env = {
         **os.environ,
@@ -508,20 +517,21 @@ def test_public_agent_harness_task_routes_only_personal_and_forwards_check(
     )
     assert personal.returncode == 0
     assert calls.read_text().splitlines() == [
-        f"{tmp_path}/bootstrap/capabilities/agent-harness/agent_harness_deploy.py "
+        f"python {tmp_path}/bootstrap/capabilities/agent-harness/agent_harness_deploy.py "
         f"--repo {tmp_path} --home {tmp_path}/home "
         f"--cache {tmp_path}/home/.cache/ansiblonomicon-harness "
         f"--host-config {tmp_path}/bootstrap/targets/Thurstons-MacBook-Pro/"
-        "mise.agent-harness.toml --check"
+        "mise.agent-harness.toml --check",
+        "mise run //:agent-config --check",
     ]
-    calls.unlink()
+    calls.write_text("")
     work = subprocess.run(
         ["sh", "-c", task["run"]],
         env={**base_env, "HOST": "ML-DFC6YK6VJQ"},
         check=False,
     )
-    assert work.returncode != 0
-    assert not calls.exists()
+    assert work.returncode == 0
+    assert calls.read_text().splitlines() == ["mise run //:agent-config --check"]
 
 
 def test_sysconfig_plus_scoped_tag_keeps_full_union_semantics(tmp_path: Path) -> None:

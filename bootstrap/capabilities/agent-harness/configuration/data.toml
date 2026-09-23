@@ -1,0 +1,27 @@
+goLocalImports = ""
+goplsBuildFlags = ""
+scm = []
+pypiIndex = []
+mcp_servers = []
+pi_mcp_json = []
+uvIndexStrategy = ""
+anthropicAuthToken = ""
+anthropicBaseUrl = ""
+inferenceBudgetUrl = ""
+costsDashboardUrl = ""
+jiraBrowseUrl = ""
+piWorkPackages = []
+
+[host_defaults."Thurstons-MacBook-Pro"]
+developDir = "Develop"
+
+[host_defaults.ML-DFC6YK6VJQ]
+developDir = "code"
+
+[host_defaults.pod042]
+developDir = "code"
+
+[fonts]
+mono = "BerkeleyMono Nerd Font Mono"
+propo = "BerkeleyMono Nerd Font Mono"
+size = 13

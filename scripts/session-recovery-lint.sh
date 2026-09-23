@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT_DIR="chezmoi/dot_local/lib/session-recovery"
-CLAUDE_CONSUMER_DIR="chezmoi/dot_claude/scripts/session-recovery"
+ROOT_DIR="bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery"
+CLAUDE_CONSUMER_DIR="bootstrap/capabilities/agent-harness/configuration/assets/claude/scripts/session-recovery"
 WRITE_FLAG=""
 MODE="check"
 

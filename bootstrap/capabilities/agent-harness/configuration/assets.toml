@@ -1,0 +1,810 @@
+# Static agent source assets and their canonical runtime destinations.
+# Rendered configuration is intentionally excluded and remains owned by renderers.
+
+[[absent]]
+destination = '.pi/agent/extensions/glimpse-companion/companion/status.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+
+[[absent]]
+destination = '.pi/agent/extensions/auto-theme.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+
+[[absent]]
+destination = '.pi/agent/extensions/permission-gate'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+
+[[absent]]
+destination = '.pi/agent/extensions/parallel-web-tools'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+
+[[absent]]
+destination = '.pi/agent/extensions/pin-model'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+
+[[absent]]
+destination = '.codex/rules/10-command-gates.rules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+
+[[absent]]
+destination = '.config/amp/plugins/permission-gate.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+
+[[files]]
+source = 'assets/gemini/GEMINI.md'
+destination = '.gemini/GEMINI.md'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/gemini/settings.json'
+destination = '.gemini/settings.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/oracle/config.json'
+destination = '.oracle/config.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/shared/session-recovery/config.json'
+destination = '.config/session-recovery/config.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/biome.json'
+destination = '.config/amp/plugins/biome.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/handoff/tool.ts'
+destination = '.config/amp/plugins/handoff/tool.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/handoff.ts'
+destination = '.config/amp/plugins/handoff.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/package-lock.json'
+destination = '.config/amp/plugins/package-lock.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/package.json'
+destination = '.config/amp/plugins/package.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/permission-gate/commands.ts'
+destination = '.config/amp/plugins/permission-gate/commands.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/permission-gate/hooks.ts'
+destination = '.config/amp/plugins/permission-gate/hooks.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/permission-gate/pending-approvals.ts'
+destination = '.config/amp/plugins/permission-gate/pending-approvals.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/permission-gate/presentation.ts'
+destination = '.config/amp/plugins/permission-gate/presentation.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/permission-gate/rules.test.ts'
+destination = '.config/amp/plugins/permission-gate/rules.test.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/permission-gate/rules.ts'
+destination = '.config/amp/plugins/permission-gate/rules.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/permission-gate/state.ts'
+destination = '.config/amp/plugins/permission-gate/state.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/permission-gate/status.ts'
+destination = '.config/amp/plugins/permission-gate/status.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/permission-gate/subjects.ts'
+destination = '.config/amp/plugins/permission-gate/subjects.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/amp/plugins/tsconfig.json'
+destination = '.config/amp/plugins/tsconfig.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/hooks/_common.py'
+destination = '.claude/hooks/_common.py'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/hooks/_config.pyi'
+destination = '.claude/hooks/_config.pyi'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/hooks/derive-title.py'
+destination = '.claude/hooks/derive-title.py'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/hooks/force-ask-patterns.mjs'
+destination = '.claude/hooks/force-ask-patterns.mjs'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/hooks/force-ask-patterns.test.mjs'
+destination = '.claude/hooks/force-ask-patterns.test.mjs'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/hooks/retitle.py'
+destination = '.claude/hooks/retitle.py'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/hooks/set-title.py'
+destination = '.claude/hooks/set-title.py'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/output-styles/support-line.md'
+destination = '.claude/output-styles/support-line.md'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/scripts/session-recovery/index.ts'
+destination = '.claude/scripts/session-recovery/index.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/scripts/session-recovery/package.json'
+destination = '.claude/scripts/session-recovery/package.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/scripts/session-recovery/tsconfig.json'
+destination = '.claude/scripts/session-recovery/tsconfig.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/opencode/antigravity.json'
+destination = '.config/opencode/antigravity.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/opencode/config.json'
+destination = '.config/opencode/config.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/opencode/tui.json'
+destination = '.config/opencode/tui.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/agents-context/detect.ts'
+destination = '.pi/agent/extensions/agents-context/detect.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/agents-context/index.ts'
+destination = '.pi/agent/extensions/agents-context/index.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/agents-context/load.test.ts'
+destination = '.pi/agent/extensions/agents-context/load.test.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/agents-context/load.ts'
+destination = '.pi/agent/extensions/agents-context/load.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/agents-context/package-lock.json'
+destination = '.pi/agent/extensions/agents-context/package-lock.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/agents-context/package.json'
+destination = '.pi/agent/extensions/agents-context/package.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/agents-context/render.ts'
+destination = '.pi/agent/extensions/agents-context/render.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/agents-context/settings.ts'
+destination = '.pi/agent/extensions/agents-context/settings.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/agents-context/tsconfig.json'
+destination = '.pi/agent/extensions/agents-context/tsconfig.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/biome.json'
+destination = '.pi/agent/extensions/biome.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/codexctl/command.ts'
+destination = '.pi/agent/extensions/codexctl/command.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/codexctl/index.ts'
+destination = '.pi/agent/extensions/codexctl/index.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/codexctl/package-lock.json'
+destination = '.pi/agent/extensions/codexctl/package-lock.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/codexctl/package.json'
+destination = '.pi/agent/extensions/codexctl/package.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/codexctl/panel.ts'
+destination = '.pi/agent/extensions/codexctl/panel.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/codexctl/request.ts'
+destination = '.pi/agent/extensions/codexctl/request.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/codexctl/settings.ts'
+destination = '.pi/agent/extensions/codexctl/settings.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/codexctl/tsconfig.json'
+destination = '.pi/agent/extensions/codexctl/tsconfig.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/DESIGN.md'
+destination = '.pi/agent/extensions/glimpse-companion/DESIGN.md'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/PRODUCT.md'
+destination = '.pi/agent/extensions/glimpse-companion/PRODUCT.md'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/activity.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/activity.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/attention.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/attention.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/client/app.js'
+destination = '.pi/agent/extensions/glimpse-companion/companion/client/app.js'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/client/index.html'
+destination = '.pi/agent/extensions/glimpse-companion/companion/client/index.html'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/client/styles.css'
+destination = '.pi/agent/extensions/glimpse-companion/companion/client/styles.css'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/command.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/command.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/connection.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/connection.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/focus.test.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/focus.test.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/focus.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/focus.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/glimpse-support.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/glimpse-support.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/handlers.test.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/handlers.test.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/handlers.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/handlers.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/session.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/session.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/settings.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/settings.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/theme.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/theme.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion/typebox.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion/typebox.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/companion.ts'
+destination = '.pi/agent/extensions/glimpse-companion/companion.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/index.ts'
+destination = '.pi/agent/extensions/glimpse-companion/index.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/package-lock.json'
+destination = '.pi/agent/extensions/glimpse-companion/package-lock.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/package.json'
+destination = '.pi/agent/extensions/glimpse-companion/package.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/shared/messages.ts'
+destination = '.pi/agent/extensions/glimpse-companion/shared/messages.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/shared/socket-path.ts'
+destination = '.pi/agent/extensions/glimpse-companion/shared/socket-path.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/shared/status.ts'
+destination = '.pi/agent/extensions/glimpse-companion/shared/status.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/glimpse-companion/tsconfig.json'
+destination = '.pi/agent/extensions/glimpse-companion/tsconfig.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/interview-attention.ts'
+destination = '.pi/agent/extensions/interview-attention.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/package-lock.json'
+destination = '.pi/agent/extensions/package-lock.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/package.json'
+destination = '.pi/agent/extensions/package.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/PRODUCT.md'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/PRODUCT.md'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/budget-client.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/budget-client.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/codexctl-config.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/codexctl-config.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/context-gauge-colors-preview.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/context-gauge-colors-preview.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/context-gauge-shapes-preview.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/context-gauge-shapes-preview.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/context-gauge.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/context-gauge.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/context-usage.test.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/context-usage.test.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/context-usage.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/context-usage.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/cost-display.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/cost-display.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/debounced-task.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/debounced-task.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/file-backed-state-watcher.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/file-backed-state-watcher.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/gauge.test.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/gauge.test.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/gauge.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/gauge.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/index.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/index.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/json-file.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/json-file.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/model-display.test.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/model-display.test.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/model-display.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/model-display.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/preview-helpers.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/preview-helpers.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/settings.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/settings.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/typebox.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/typebox.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/workspace-display.test.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/workspace-display.test.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-powerline-footer-custom/workspace-display.ts'
+destination = '.pi/agent/extensions/pi-powerline-footer-custom/workspace-display.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/pi-source.ts'
+destination = '.pi/agent/extensions/pi-source.ts'
+hosts = ['ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/session-recovery/index.ts'
+destination = '.pi/agent/extensions/session-recovery/index.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/session-recovery/package.json'
+destination = '.pi/agent/extensions/session-recovery/package.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/session-recovery/tsconfig.json'
+destination = '.pi/agent/extensions/session-recovery/tsconfig.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/session-title.ts'
+destination = '.pi/agent/extensions/session-title.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/tsconfig.json'
+destination = '.pi/agent/extensions/tsconfig.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/interview-themes/gruvbox-dark-hard.css'
+destination = '.pi/agent/interview-themes/gruvbox-dark-hard.css'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/interview-themes/gruvbox-light-hard.css'
+destination = '.pi/agent/interview-themes/gruvbox-light-hard.css'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/keybindings.json'
+destination = '.pi/agent/keybindings.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/permissions/biome.json'
+destination = '.pi/agent/permissions/biome.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/permissions/default.ts'
+destination = '.pi/agent/permissions/default.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/permissions/package-lock.json'
+destination = '.pi/agent/permissions/package-lock.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/permissions/package.json'
+destination = '.pi/agent/permissions/package.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/permissions/tsconfig.json'
+destination = '.pi/agent/permissions/tsconfig.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/shared/session-recovery/core.ts'
+destination = '.local/lib/session-recovery/core.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/shared/session-recovery/package-lock.json'
+destination = '.local/lib/session-recovery/package-lock.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/shared/session-recovery/package.json'
+destination = '.local/lib/session-recovery/package.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/shared/session-recovery/settings.ts'
+destination = '.local/lib/session-recovery/settings.ts'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/shared/session-recovery/tsconfig.json'
+destination = '.local/lib/session-recovery/tsconfig.json'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+mode = 'symlink'
+
+[[packages]]
+source = 'assets/amp/plugins'
+destination = '.config/amp/plugins/node_modules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042']
+work_omit_dev = true
+
+[[packages]]
+source = 'assets/claude/scripts/session-recovery'
+destination = '.claude/scripts/session-recovery/node_modules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+work_omit_dev = true
+
+[[packages]]
+source = 'assets/pi/extensions/agents-context'
+destination = '.pi/agent/extensions/agents-context/node_modules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+work_omit_dev = true
+
+[[packages]]
+source = 'assets/pi/extensions/codexctl'
+destination = '.pi/agent/extensions/codexctl/node_modules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+work_omit_dev = true
+
+[[packages]]
+source = 'assets/pi/extensions/glimpse-companion'
+destination = '.pi/agent/extensions/glimpse-companion/node_modules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+work_omit_dev = true
+
+[[packages]]
+source = 'assets/pi/extensions'
+destination = '.pi/agent/extensions/node_modules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+work_omit_dev = true
+
+[[packages]]
+source = 'assets/pi/extensions/session-recovery'
+destination = '.pi/agent/extensions/session-recovery/node_modules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+work_omit_dev = true
+
+[[packages]]
+source = 'assets/pi/permissions'
+destination = '.pi/agent/permissions/node_modules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+work_omit_dev = true
+
+[[packages]]
+source = 'assets/shared/session-recovery'
+destination = '.local/lib/session-recovery/node_modules'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
+work_omit_dev = true

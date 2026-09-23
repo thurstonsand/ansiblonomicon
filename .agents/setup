@@ -57,10 +57,10 @@ UV_PYTHON="$python_bin" "$uv_bin" sync --locked --dev
 step "Sync TypeScript dependencies"
 mapfile -t package_locks < <(
   find \
-    chezmoi/private_dot_pi/agent/extensions \
-    chezmoi/private_dot_pi/agent/permissions \
-    chezmoi/dot_config/private_amp/plugins \
-    chezmoi/dot_local/lib/session-recovery \
+    bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions \
+    bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions \
+    bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins \
+    bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery \
     -name package-lock.json \
     -not -path '*/node_modules/*' \
     -print | sort

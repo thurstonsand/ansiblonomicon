@@ -43,6 +43,7 @@ mise.local.toml
 bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml
 chezmoi/.chezmoidata/local.toml
 chezmoi/.chezmoitemplates/local/
+bootstrap/capabilities/agent-harness/local/
 chezmoi/dot_claude/hooks/local/
 chezmoi/dot_zshrc.local.tmpl
 chezmoi/private_dot_zshenv.local.tmpl

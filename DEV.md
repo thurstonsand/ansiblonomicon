@@ -89,15 +89,16 @@ Remote inventory in `bootstrap/mise.toml`. Resources in `terraform/unifi/`.
 
 ## Agent tooling
 
-Spans every host and every harness. The shared plugin catalogue and harness-native layouts live in `bootstrap/capabilities/agent-harness/`; host declarations select a profile and enabled harnesses. Work and `amp_publish` still consume the catalogue through the Ansible role, with private source extras supplied by host configuration.
+Spans every host and every harness. `bootstrap/capabilities/agent-harness/` is canonical: `catalogue.toml`, `profiles.toml`, and `harnesses/` declare plugins; `configuration/data.toml`, `configuration/templates/`, and `configuration/assets/` declare harness settings and source assets. Host-local, untracked configuration overlays belong in `bootstrap/capabilities/agent-harness/local/<hostname>/data.toml`. Work and `amp_publish` still consume the plugin catalogue through the Ansible role, but native `agent-config` owns settings and assets on every registered host.
 
 - **Plugins** at `agents/<plugin>/skills/`, listed in `.claude-plugin/marketplace.json`. A skill may be a plain `SKILL.md` or a `SKILL.md.j2` templated at deploy time, and this applies to any other `.j2` file in the skill dir. Repo-local skills live at `.agents/skills/`, symlinked into `.claude/skills/`. The `.j2` skills mean a plugin is not installable through Claude's own plugin mechanism, which does no templating — deployment goes through `agent_harness` instead. see `agents/README.md` for more.
-- **User-level Instructions** at `chezmoi/.chezmoitemplates/agents-md`, rendered per harness. Amp is the exception: its user instructions live in a hosted store updated by hand, less the model picker and git verbiage.
-- **Models** at `ansible/models.yml` — the single source for versions, aliases, and per-editor config, symlinked to `chezmoi/.chezmoidata/models.yaml`. `ansible/session-title-prompt.txt` is symlinked the same way.
-- **Pi** at `chezmoi/private_dot_pi/agent/`: extensions under `extensions/`, permission rules under `permissions/`, external packages referenced from `settings.json.tmpl`.
+- **User-level instructions** render from `configuration/templates/`; Amp's hosted instructions remain updated by hand.
+- **Models** at `ansible/models.yml` remain the single source for versions, aliases, and per-editor config. Native renderers merge them with `configuration/data.toml` and the host overlay.
+- **Assets** under `configuration/assets/` are first-party source. `assets.toml` declares assets, package dependencies, and explicit retirements; native configuration symlinks unchanged files into `$HOME` and renders host-dependent or secret-bearing files as regular files. Never put credentials in templates, assets, or host overlays: declare SecretRefs in fnox and let `agent-config` resolve only the keys required by that host. Private outputs use mode `0600`.
 - **Amp User Skills** are rendered from the Amp-targeted `agent_harness` sources by the `amp_publish` profile and published on git push. Overrideable by explicitly specifying `amp` as a target of a skill.
-- **Codex** at `chezmoi/.chezmoitemplates/codex-config.toml.tmpl` — the declared keys only. Codex and the ChatGPT app write into the file as well, so it's additive.
-- **Session recovery**: the shared core at `chezmoi/dot_local/lib/session-recovery/`, consumed by a Pi extension at `private_dot_pi/agent/extensions/session-recovery/` and a Claude script at `dot_claude/scripts/session-recovery/`. User config sits at `dot_config/session-recovery/`. Consumers carry no devDeps and borrow the core's toolchain, so lint it through `mise run session-recovery:check` rather than from inside a consumer.
+- **Session recovery** lives under `configuration/assets/shared/session-recovery/`, with consumers under the Pi and Claude asset trees. Lint it through `mise run session-recovery:check` rather than from inside a consumer.
+
+Run `mise agent-config --check` for a placeholder-secret preview; exit 2 means the preview completed but secret-backed content remains unresolved. Use `mise agent-config --check --real-secrets` for read-only parity with resolved credentials, and `mise agent-config` to apply. `mise agent-harness` runs the catalogue first and then configuration; full host reconciliation routes both through the `agent-harness` tag. Chezmoi ignores all native destinations and no longer supplies agent configuration.
 
 ## Cloudflare
 

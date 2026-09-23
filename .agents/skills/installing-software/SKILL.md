@@ -32,10 +32,11 @@ Native capabilities live under `bootstrap/targets/udmp/`. Use `mise udmp` for OS
 
 ## Pi extensions and packages
 
-Work's Pi release is declared in `bootstrap/targets/ML-DFC6YK6VJQ/mise.pi.toml` and reconciled through `mise pi`; personal Pi belongs to the language-tool npm inventory. Its extensions and package declarations are dotfiles delivered through chezmoi and the Ansible `chezmoi` role.
+Work's Pi release is declared in `bootstrap/targets/ML-DFC6YK6VJQ/mise.pi.toml` and reconciled through `mise pi`; personal Pi belongs to the language-tool npm inventory. Native agent configuration owns Pi settings, extensions, and package declarations.
 
-- Config and packages: `chezmoi/private_dot_pi/agent/settings.json.tmpl`.
-- Local extension sources: `chezmoi/private_dot_pi/agent/extensions/`.
+- Config renderer and package declarations: `bootstrap/capabilities/agent-harness/configuration/pi.py` and `assets.toml`.
+- Local extension sources: `bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/`.
+- Reconcile configuration with `mise agent-config --check`, then `mise agent-config` to apply.
 - TypeScript maintenance commands: `scripts/pi-lint.sh`, `scripts/amp-lint.sh`, `scripts/ts-package-deps.sh`.
 
 ## Skills and agents

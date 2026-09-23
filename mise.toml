@@ -61,9 +61,10 @@ if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
   # can hang for minutes while package fetches are fine. It blocks every shell
   # entry when it does, and it tells us nothing we act on here.
   scripts/ts-package-json-paths.sh \
-    chezmoi/private_dot_pi/agent/extensions \
-    chezmoi/private_dot_pi/agent/permissions \
-    chezmoi/dot_config/private_amp/plugins |
+    bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions \
+    bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions \
+    bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins \
+    bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery |
     while IFS= read -r package_json; do
       package_dir="$(dirname "$package_json")"
       if [ -f "$package_dir/package-lock.json" ]; then
@@ -71,22 +72,24 @@ if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
       fi
     done
 fi
-mkdir -p chezmoi/private_dot_pi/agent/extensions/node_modules
-touch chezmoi/private_dot_pi/agent/extensions/node_modules/agent-deps-stamp
+mkdir -p bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/node_modules
+touch bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/node_modules/agent-deps-stamp
 '''
 sources = [
-  "chezmoi/private_dot_pi/agent/extensions/package.json",
-  "chezmoi/private_dot_pi/agent/extensions/package-lock.json",
-  "chezmoi/private_dot_pi/agent/extensions/*/package.json",
-  "chezmoi/private_dot_pi/agent/extensions/*/package-lock.json",
-  "chezmoi/private_dot_pi/agent/permissions/package.json",
-  "chezmoi/private_dot_pi/agent/permissions/package-lock.json",
-  "chezmoi/dot_config/private_amp/plugins/package.json",
-  "chezmoi/dot_config/private_amp/plugins/package-lock.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/package.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/package-lock.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/*/package.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/*/package-lock.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/package.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/package-lock.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins/package.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins/package-lock.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/package.json",
+  "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/package-lock.json",
   "scripts/ts-package-json-paths.sh",
 ]
 outputs = [
-  "chezmoi/private_dot_pi/agent/extensions/node_modules/agent-deps-stamp",
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/node_modules/agent-deps-stamp",
 ]
 quiet = true
 
@@ -112,8 +115,8 @@ if [ "$(hostname -s)" = "ML-DFC6YK6VJQ" ]; then
   # Same three the `pull` task unmasks across a rebase; the two-entry list this
   # inherited from .envrc left the permissions lockfile rewriting itself visibly.
   for f in uv.lock \
-           chezmoi/private_dot_pi/agent/extensions/package-lock.json \
-           chezmoi/private_dot_pi/agent/permissions/package-lock.json; do
+           bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/package-lock.json \
+           bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/package-lock.json; do
     # `git ls-files -v` prefixes a skip-worktree entry with S. Ask before writing:
     # the flag is git index state, not something a timestamp can stand in for.
     case "$(git ls-files -v -- "$f")" in
@@ -562,7 +565,7 @@ esac
 '''
 
 [tasks."agent-harness"]
-description = "Reconcile native agent skills, subagents, and hook fragments"
+description = "Reconcile native agent catalogue, then host configuration"
 usage = '''
 flag "-c --check" help="Compare cached sources without fetching or writing destinations"
 flag "--cached" help="Apply cached sources without fetching"
@@ -571,7 +574,7 @@ run = '''
 set -e
 case "$(hostname -s)" in
   Thurstons-MacBook-Pro)
-    exec "$MISE_PROJECT_ROOT/.venv/bin/python" \
+    "$MISE_PROJECT_ROOT/.venv/bin/python" \
       "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/agent_harness_deploy.py" \
       --repo "$MISE_PROJECT_ROOT" --home "$HOME" \
       --cache "$HOME/.cache/ansiblonomicon-harness" \
@@ -579,11 +582,41 @@ case "$(hostname -s)" in
       ${usage_check:+--check} ${usage_cached:+--cached}
     ;;
   pod042)
-    exec uv run --script "$MISE_PROJECT_ROOT/bootstrap/targets/pod042/agent-harness/reconcile.py" \
+    uv run --script "$MISE_PROJECT_ROOT/bootstrap/targets/pod042/agent-harness/reconcile.py" \
       ${usage_check:+--check} ${usage_cached:+--cached}
     ;;
-  *) echo "Native agent-harness is available only on registered personal systems" >&2; exit 1 ;;
+  ML-DFC6YK6VJQ) ;; # The existing Ansible role continues to own the work catalogue.
+  *) echo "Native agent-harness is available only on registered systems" >&2; exit 1 ;;
 esac
+exec mise run //:agent-config ${usage_check:+--check}
+'''
+
+[tasks."agent-config"]
+description = "Reconcile native rendered agent configuration only"
+usage = '''
+flag "-c --check" help="Render and compare without changing files or installing packages"
+flag "--real-secrets" help="Resolve secrets during read-only validation"
+'''
+run = '''
+set -e
+host=$(hostname -s)
+case "$host" in
+  ML-DFC6YK6VJQ) set -- --secret ANTHROPIC_AUTH_TOKEN ;;
+  Thurstons-MacBook-Pro|pod042) set -- --secret CLI_PROXY_API_KEY --secret PARALLEL_API_KEY ;;
+  *) echo "Native agent configuration is available only on registered systems" >&2; exit 1 ;;
+esac
+if [ -n "${usage_check:-}" ] && [ -z "${usage_real_secrets:-}" ]; then
+  exec "$MISE_PROJECT_ROOT/.venv/bin/python" \
+    "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
+    --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host" --check
+fi
+set -- "$@" -- \
+  "$MISE_PROJECT_ROOT/.venv/bin/python" \
+  "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
+  --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host"
+[ -z "${usage_check:-}" ] || set -- "$@" --check
+[ -z "${usage_real_secrets:-}" ] || set -- "$@" --real-secrets
+exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec "$@"
 '''
 
 [tasks."reconcile:laptop"]
@@ -634,7 +667,7 @@ case "$playbook:${usage_tags:-}" in
     exit 1
     ;;
 esac
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|berkeley-mono|docker-context|claude-code|opencode|pi|sessions|shp|uvc-util|sysconfig|dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index)$' | paste -sd, -)
+ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|berkeley-mono|docker-context|claude-code|opencode|pi|sessions|shp|uvc-util|sysconfig|dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index|agent-config)$' | paste -sd, -)
 if [ "$playbook" = macos.yml ]; then
   ansible_tags=$(printf '%s' "$ansible_tags" | tr ',' '\n' | grep -Ev '^agent-harness$' | paste -sd, -)
 fi
@@ -669,6 +702,15 @@ if [ -n "$full" ] || [ -n "$ansible_tags" ]; then
   ANSIBLE_CACHE_PLUGIN=memory ../scripts/fnox-host exec "$@" -- \
     ansible-playbook -i inventory/control/macos.ini "playbooks/$playbook" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
 fi
+if [ "$playbook" = work.yml ]; then
+  case ",$normalized_tags," in
+    ,,|*,all,*|*,agent-harness,*) mise run //:agent-config ${usage_check:+--check} || exit "$?" ;;
+  esac
+fi
+case ",$normalized_tags," in
+  *,agent-harness,*) ;;
+  *,agent-config,*) mise run //:agent-config ${usage_check:+--check} || exit "$?" ;;
+esac
 for native_capability in $config_capabilities; do
   [ "$native_capability" != sysconfig ] || continue
   # language-tools already reconciles work's Python index prerequisite.
@@ -965,7 +1007,7 @@ if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
   exit 0
 fi
 
-locks="uv.lock chezmoi/private_dot_pi/agent/extensions/package-lock.json chezmoi/private_dot_pi/agent/permissions/package-lock.json"
+locks="uv.lock bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/package-lock.json bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/package-lock.json"
 pyproject_bak=$(mktemp)
 cp pyproject.toml "$pyproject_bak"
 trap 'cp -f "$pyproject_bak" pyproject.toml; rm -f "$pyproject_bak"; git update-index --skip-worktree $locks' EXIT

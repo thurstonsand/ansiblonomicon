@@ -76,7 +76,9 @@ The [macOS system capability](bootstrap/capabilities/macos-system/README.md) own
 
 On the personal Mac, `mise agent-harness` reconciles skills, subagents, and hook fragments through the [native catalogue capability](bootstrap/capabilities/agent-harness/README.md). `--check` compares cached sources without refreshing them; `--cached` applies those same cached sources. Normal apply refreshes declared Git sources at most once per day. Exact-file ownership preserves independently installed skills, Claude's `synced/` tree, and existing parent-directory permissions.
 
-Full personal laptop reconciliation runs the catalogue before chezmoi consumes hook fragments. Work still uses the Ansible role through `mise laptop -t agent-harness`; its private sources and Glimpse integration have not migrated. Harness settings, MCP registration, package dependencies, and hosted Amp publication retain their existing owners.
+`bootstrap/capabilities/agent-harness/configuration/` is the canonical source for harness settings, instructions, extensions, plugins, and shared libraries. `mise agent-config --check` previews with non-secret placeholders and exits 2 when secret-backed parity remains unresolved; add `--real-secrets` for read-only parity with scoped fnox resolution, or omit `--check` to apply. Static first-party assets are symlinked; rendered, host-dependent, and private outputs are regular files, with private outputs mode `0600`. Host-local non-secret inputs belong in `bootstrap/capabilities/agent-harness/local/<hostname>/data.toml`; credentials remain SecretRefs resolved only for the command.
+
+`mise agent-harness` reconciles the catalogue and then calls `agent-config`. Full reconciliation routes both through the `agent-harness` tag; work still uses Ansible only for its private plugin catalogue. Chezmoi ignores the native destinations and no longer supplies agent configuration. This migration is fixture-tested but has not yet been applied live.
 
 ### Retiring managed paths
 

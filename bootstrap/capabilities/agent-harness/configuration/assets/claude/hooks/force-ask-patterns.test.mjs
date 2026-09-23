@@ -1,0 +1,77 @@
+#!/usr/bin/env node
+
+// Static regression test for the adjacent deployed hook.
+
+import { execFile } from "node:child_process";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
+
+const HOOK = join(
+  dirname(fileURLToPath(import.meta.url)),
+  "force-ask-patterns.mjs",
+);
+
+const cases = [
+  // [command, expected("ask" | "pass"), description]
+
+  // git: destructive operations should ask
+  ["git stash", "ask", "git stash"],
+  ["git add .", "ask", "git add"],
+  ["git commit -m 'test'", "ask", "git commit"],
+  ["git push origin main", "ask", "git push"],
+  ["git checkout -- .", "ask", "git checkout"],
+  ["git reset --hard HEAD~1", "ask", "git reset"],
+  ["git clean -fd", "ask", "git clean"],
+  ["git rebase main", "ask", "git rebase"],
+  ["git branch -D feature", "ask", "git branch -D"],
+  ["git branch -d feature", "ask", "git branch -d"],
+
+  // git: safe commands should pass
+  ["git status", "pass", "git status"],
+  ["git diff", "pass", "git diff"],
+  ["git log --oneline -10", "pass", "git log"],
+  ["git branch --list", "pass", "git branch --list"],
+  ["git remote -v", "pass", "git remote -v"],
+
+  // non-git commands should pass (delegated to auto mode)
+  ["rm -rf /tmp/foo", "pass", "rm -rf (auto mode handles)"],
+  ['find . -name "*.go" -exec rm {} ;', "pass", "find -exec (auto mode handles)"],
+  ["rm foo.txt", "pass", "rm single file"],
+
+  // non-Bash tools should pass
+  [
+    null,
+    "pass",
+    "non-Bash tool (Read)",
+    { tool_name: "Read", tool_input: { file_path: "/tmp/foo" } },
+  ],
+];
+
+let passed = 0;
+let failed = 0;
+
+for (const [command, expected, desc, override] of cases) {
+  const input = override ?? { tool_name: "Bash", tool_input: { command } };
+
+  const result = await new Promise((resolve, reject) => {
+    const child = execFile("node", [HOOK], (err, stdout) => {
+      if (err) return reject(err);
+      resolve(stdout.trim());
+    });
+    child.stdin.end(JSON.stringify(input));
+  });
+
+  const actual = result.includes('"ask"') ? "ask" : "pass";
+
+  if (actual === expected) {
+    passed++;
+  } else {
+    failed++;
+    console.log(
+      `FAIL: ${desc}\n  command:  ${command}\n  expected: ${expected}\n  got:      ${actual}\n`,
+    );
+  }
+}
+
+console.log(`\n${passed} passed, ${failed} failed, ${passed + failed} total`);
+process.exit(failed > 0 ? 1 : 0);

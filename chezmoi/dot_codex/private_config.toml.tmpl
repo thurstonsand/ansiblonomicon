@@ -1,3 +1,0 @@
-{{- $overlay := includeTemplate "codex-config.toml.tmpl" . -}}
-{{- $merger := joinPath .chezmoi.sourceDir ".chezmoitemplates/merge-codex-config.py" -}}
-{{- output "uv" "run" "--no-project" "--with" "tomlkit" "python3" $merger $overlay -}}

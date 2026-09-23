@@ -1,3 +1,0 @@
-{{- $base := includeTemplate "claude-settings.json.tmpl" . -}}
-{{- $resolver := joinPath .chezmoi.sourceDir ".chezmoitemplates/resolve-overlay.py" -}}
-{{- output "python3" $resolver $base -}}

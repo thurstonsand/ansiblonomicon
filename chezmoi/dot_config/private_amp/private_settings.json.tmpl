@@ -1,3 +1,0 @@
-{{- /* amp CLI requires strict JSON, but amp-settings uses JSONC (trailing commas).
-       Convert to strict. */ -}}
-{{ includeTemplate "amp-settings" (dict "hostname" .chezmoi.hostname) | printf "{%s}" | fromJsonc | toPrettyJson }}

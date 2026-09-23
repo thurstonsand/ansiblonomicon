@@ -8,22 +8,22 @@ Git/Jujutsu identity, corporate Git URL rewrites, Neovim private values, and Pyt
 
 macOS preferences and sudo Touch ID are now native. Review private `configure_macos_defaults` and `configure_pam_reattach` overrides before work cutover; native reconciliation does not read them. The tracked profile manages all 27 preferences and `pam_tid`, leaves hostname unmanaged, and neither adds nor removes existing `pam_reattach` lines.
 
-## Chezmoi Data Layer
+## Agent Configuration
 
-All fields live in `chezmoi/.chezmoidata/local.toml`:
+Before the first native apply, copy these values from `chezmoi/.chezmoidata/local.toml` into the untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/data.toml`:
 
-| Field                                | Consumed by                                                    |
-| ------------------------------------ | -------------------------------------------------------------- |
-| `goLocalImports` / `goplsBuildFlags` | No tracked consumer; inspect private templates before retiring |
-| `[work_models]`                      | pi models/settings, Claude Code overlay                        |
-| `[work_gateway]`                     | pi model templates (endpoint and provider names)               |
-| `inferenceBudgetUrl`                 | `settings.json.tmpl` (`powerlineCustom.budget.url`)            |
-| `costsDashboardUrl`                  | `settings.json.tmpl` (`powerlineCustom.budget.costsUrl`)       |
-| `jiraBrowseUrl`                      | Pi footer settings (Neovim now uses native private data)       |
-| `[[mcp_servers]]`                    | Claude MCP registration                                        |
-| `pi_mcp_json`                        | `private_dot_pi/agent/mcp.json.tmpl`                           |
+| Field | Consumed by |
+| --- | --- |
+| `goLocalImports` / `goplsBuildFlags` | No agent consumer; leave with their remaining owner |
+| `[work_models]` | pi models/settings, Claude Code overlay |
+| `[work_gateway]` | pi model templates (endpoint and provider names) |
+| `inferenceBudgetUrl` | Native Pi renderer (`powerlineCustom.budget.url`) |
+| `costsDashboardUrl` | Native Pi renderer (`powerlineCustom.budget.costsUrl`) |
+| `jiraBrowseUrl` | Pi footer settings (Neovim now uses native private data) |
+| `[[mcp_servers]]` | Claude MCP registration |
+| `pi_mcp_json` | Native Pi renderer (`~/.pi/agent/mcp.json`) |
 
-The native `go_local_imports` and `gopls_build_flags` scalar variables affect only the personal Cursor, Windsurf, and Antigravity outputs. The work profile does not install those files, so the old work values currently have no native consumer.
+Keep credentials out of this file. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml` and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` first, then `mise agent-config --check --real-secrets` to prove credential access without writing. Only the Mac sudo credential path has been proved; the agent configuration real-secret check, live apply, and repeat verification remain pending. Preserve the old chezmoi data and templates until before/after output parity is established on the work Mac.
 
 ## Shell Extras
 
@@ -31,17 +31,24 @@ The shared startup files are owned by the native mise shell capability. It conti
 
 ## Claude Code
 
-| File                                                           | Purpose                                                        |
-| -------------------------------------------------------------- | -------------------------------------------------------------- |
-| `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json` | Work-machine overrides merged onto base during `chezmoi apply` |
-| `chezmoi/.chezmoitemplates/resolve-overlay.py`                 | Script that merges overlay with base                           |
-| `chezmoi/dot_claude/hooks/local/`                              | Work-only hook scripts deployed to `~/.claude/hooks/local/`    |
+- `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/claude-settings-overlay.json`
+  supplies the work-only settings overlay.
+- `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/assets.toml`
+  declares work-only assets. Sources are relative to that same host-local directory;
+  destinations are HOME-relative and `mode` must be `symlink`:
+
+  ```toml
+  [[files]]
+  source = "claude/hooks/local/private-hook.py"
+  destination = ".claude/hooks/local/private-hook.py"
+  mode = "symlink"
+  ```
 
 ### Merge Semantics
 
-The chezmoi template `dot_claude/settings.json.tmpl` calls `resolve-overlay.py` which:
+The native Claude renderer:
 
-1. Deep-merges the work overlay (`.chezmoitemplates/local/claude-settings-overlay.json`) onto the base if the overlay exists
+1. Deep-merges the work overlay onto the tracked base
 2. Aggregates hook fragments from `~/.cache/ansiblonomicon-harness/hooks/*.json` into the hooks section
 
 Rules:
@@ -56,7 +63,7 @@ Note: The `permissions.allow` array in the overlay **replaces** the base entirel
 
 `local.toml` defines models under `[work_models]`, one entry per model the gateway serves: `version` (the bare id), `pi_alias` (the `provider/id` pair pi resolves by, mirroring `agent_harness.aliases.pi` in `models.yml`), `display_name`, `context_window`, `max_output`, and the negotiated `cost` rates.
 
-`[work_gateway]` holds the endpoint and the two pi provider names. One gateway fronts two wire protocols — Anthropic Messages and OpenAI Responses (at `{base_url}/v1`) — so Pi needs a provider per protocol. Both authenticate with `ANTHROPIC_AUTH_TOKEN`, resolved through fnox by the shared `work-gateway-token` chezmoi template or supplied to the agent by `scripts/fnox-host exec --secret ANTHROPIC_AUTH_TOKEN -- COMMAND`.
+`[work_gateway]` holds the endpoint and the two pi provider names. One gateway fronts two wire protocols — Anthropic Messages and OpenAI Responses (at `{base_url}/v1`) — so Pi needs a provider per protocol. Both authenticate with `ANTHROPIC_AUTH_TOKEN`, resolved through fnox by the native agent configuration renderer or supplied to the agent by `scripts/fnox-host exec --secret ANTHROPIC_AUTH_TOKEN -- COMMAND`.
 
 These should be used instead of hard-coding model values.
 
@@ -198,7 +205,7 @@ The mechanism is generic (no per-package pins, no version numbers anywhere) and 
 
 ### pi extension package-lock.json handling
 
-The pi extensions `package-lock.json` (`chezmoi/private_dot_pi/agent/extensions/`) has the same mirror-URL problem: `npm install` on work rewrites it with Artifactory URLs. `mise run bootstrap` sets `skip-worktree` on it (gated by hostname) so the rewrite never reaches git, and `mise run pull` lifts/re-applies the mask around the rebase (see above). Dependency/lock bumps for pi extensions must be committed from a personal machine, where it resolves against the public npm registry.
+The pi extensions `package-lock.json` (`bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/`) has the same mirror-URL problem: `npm install` on work rewrites it with Artifactory URLs. `mise run bootstrap` sets `skip-worktree` on it (gated by hostname) so the rewrite never reaches git, and `mise run pull` lifts/re-applies the mask around the rebase (see above). Dependency/lock bumps for pi extensions must be committed from a personal machine, where it resolves against the public npm registry.
 
 ## Ansible Local Tasks
 

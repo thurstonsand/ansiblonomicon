@@ -2,11 +2,11 @@
 set -euo pipefail
 
 PI_ROOT_DIRS=(
-  "chezmoi/private_dot_pi/agent/extensions"
-  "chezmoi/private_dot_pi/agent/permissions"
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions"
+  "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions"
 )
-AMP_ROOT_DIR="chezmoi/dot_config/private_amp/plugins"
-SESSION_RECOVERY_DIR="chezmoi/dot_local/lib/session-recovery"
+AMP_ROOT_DIR="bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins"
+SESSION_RECOVERY_DIR="bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery"
 
 find_pi_package_json() {
   local pi_bin=""
@@ -74,14 +74,12 @@ NODE_TYPES_VERSION="^$(node -p 'process.versions.node.split(".")[0]')"
 mapfile -t PACKAGE_DIRS < <(collect_package_dirs)
 
 # The Pi session-recovery extension depends on the shared library via a
-# live-layout `file:` path that only resolves on the deployed machine (chezmoi's
-# run_onchange installer links it there). `npm install` in the source checkout
-# would fail, and it carries no registry deps to pin, so skip it. The shared
-# library it points at (under dot_local/lib) is tracked normally.
+# local `file:` dependency on the shared source package. It carries no registry
+# deps to pin, so skip it; the shared package is tracked normally.
 FILTERED_DIRS=()
 for dir in "${PACKAGE_DIRS[@]}"; do
   case "$dir" in
-    */private_dot_pi/agent/extensions/session-recovery) continue ;;
+    */assets/pi/extensions/session-recovery) continue ;;
   esac
   FILTERED_DIRS+=("$dir")
 done
