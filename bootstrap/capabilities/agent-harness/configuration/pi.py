@@ -76,13 +76,13 @@ def _profile(
         gateway = data["work_gateway"]
         sol, opus = wm["gpt_sol"]["pi_alias"], wm["opus"]["pi_alias"]
         return {
-            "provider": gateway["openai_provider"],
-            "model": str(wm["gpt_sol"]["version"]).removesuffix("[1m]"),
+            "provider": gateway["anthropic_provider"],
+            "model": str(wm["opus"]["version"]).removesuffix("[1m]"),
             "librarian": sol,
             "auto_title": wm["sonnet"]["pi_alias"],
             "handoff": sol,
             "vibe": wm["gpt_luna"]["pi_alias"],
-            "enabled": [f"{sol}:medium", f"{opus}:medium"],
+            "enabled": [f"{opus}:medium", f"{sol}:medium"],
             "roster": [f"{opus}:medium", f"{sol}:low", f"{sol}:medium", f"{sol}:high"],
             "packages": [*data.get("piWorkPackages", []), *WORK_PACKAGES, THEMES],
         }
@@ -186,7 +186,7 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
                 },
                 "models": [
                     model(n, anthropic=False)
-                    for n in ("gpt_sol", "gpt_terra", "gpt_luna")
+                    for n in ("gpt_sol", "gpt_luna")
                 ],
             },
         }

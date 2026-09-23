@@ -106,7 +106,6 @@ def test_work_gateway_models_packages_and_runtime(tmp_path: Path) -> None:
                     "sonnet",
                     "haiku",
                     "gpt_sol",
-                    "gpt_terra",
                     "gpt_luna",
                 )
             },
@@ -121,7 +120,13 @@ def test_work_gateway_models_packages_and_runtime(tmp_path: Path) -> None:
     )
     settings = json.loads(result[".pi/agent/settings.json"])
     providers = json.loads(result[".pi/agent/models.json"])["providers"]
-    assert settings["defaultProvider"] == "corp-openai"
+    assert settings["defaultProvider"] == "corp-anthropic"
+    assert settings["defaultModel"] == "opus-v"
+    assert settings["enabledModels"] == ["corp/opus:medium", "corp/gpt_sol:medium"]
+    assert [m["id"] for m in providers["corp-openai"]["models"]] == [
+        "gpt_sol-v[1m]",
+        "gpt_luna-v[1m]",
+    ]
     assert settings["packages"][0] == "npm:corporate"
     assert "doppelclaude" not in settings
     assert ".pi/agent/pi-smart-btw.json" not in result

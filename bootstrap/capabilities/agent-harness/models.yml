@@ -28,8 +28,8 @@ models:
       zed: true
 
     opus:
-      version: "claude-opus-5"
-      display_name: "Claude Opus 5"
+      version: "claude-opus-5-5"
+      display_name: "Claude Opus 5.5"
       max_input: 1000000
       max_output: 128000
       vision: true
@@ -37,8 +37,8 @@ models:
       agent_harness:
         aliases:
           claude: "opus[1m]"
-          opencode: "anthropic/claude-opus-5"
-          pi: "doppelclaude/claude-opus-5"
+          opencode: "anthropic/claude-opus-5-5"
+          pi: "doppelclaude/claude-opus-5-5"
       vscode:
         include: true
         thinking: true
@@ -95,58 +95,44 @@ models:
       zed: true
 
     gpt_sol:
-      version: "gpt-5.6-sol"
-      display_name: "GPT 5.6 Sol"
+      version: "gpt-6-sol"
+      display_name: "GPT 6 Sol"
       # Check current subscription-backed limits with:
-      # codex debug models | jq -r '.models[] | select(.slug=="gpt-5.6-sol") | {slug, context_window, max_context_window, effective_context_window_percent}'
+      # codex debug models | jq -r '.models[] | select(.slug=="gpt-6-sol") | {slug, context_window, max_context_window, effective_context_window_percent}'
       max_input: 272000
       max_output: 128000
       vision: true
       agent_harness:
         aliases:
-          pi: "openai-codex/gpt-5.6-sol"
+          pi: "openai-codex/gpt-6-sol"
       vscode:
         include: true
         thinking: true
       zed: true
       variants:
         medium:
-          id: "gpt-5.6-sol(medium)"
-          display_name: "GPT 5.6 Sol Medium"
+          id: "gpt-6-sol(medium)"
+          display_name: "GPT 6 Sol Medium"
           vscode: true
         high:
-          id: "gpt-5.6-sol(high)"
-          display_name: "GPT 5.6 Sol High"
+          id: "gpt-6-sol(high)"
+          display_name: "GPT 6 Sol High"
           vscode: true
           zed: true
         xhigh:
-          id: "gpt-5.6-sol(xhigh)"
-          display_name: "GPT 5.6 Sol XHigh"
+          id: "gpt-6-sol(xhigh)"
+          display_name: "GPT 6 Sol XHigh"
           vscode: true
 
-    gpt_terra:
-      version: "gpt-5.6-terra"
-      display_name: "GPT 5.6 Terra"
-      max_input: 372000
-      max_output: 128000
-      vision: true
-      agent_harness:
-        aliases:
-          pi: "openai-codex/gpt-5.6-terra"
-      vscode:
-        include: true
-        thinking: true
-      zed: true
-
     gpt_luna:
-      version: "gpt-5.6-luna"
-      display_name: "GPT 5.6 Luna"
+      version: "gpt-6-luna"
+      display_name: "GPT 6 Luna"
       max_input: 372000
       max_output: 128000
       vision: true
       agent_harness:
         aliases:
-          pi: "openai-codex/gpt-5.6-luna"
+          pi: "openai-codex/gpt-6-luna"
       vscode:
         include: true
         thinking: true
@@ -252,6 +238,7 @@ cli_proxy_api:
       - claude-sonnet-4-6
       - claude-opus-4-6
       - claude-fable-5
+      - claude-opus-5
     gemini-cli:
       - gemini-2.5-computer-use-preview-10-2025
       - gemini-2.0-*
@@ -277,3 +264,6 @@ cli_proxy_api:
       - gpt-5.3-codex-spark
       - gpt-5.4-mini
       - gpt-5.5
+      - gpt-5.6-sol
+      - gpt-5.6-terra
+      - gpt-5.6-luna
