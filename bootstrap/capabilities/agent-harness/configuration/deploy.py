@@ -516,13 +516,6 @@ def reconcile(
     rendered = state_dir / "rendered"
     _private_dir(native, home / ".cache")
     _private_dir(rendered, home / ".cache")
-    legacy_package_directories = {
-        destination
-        for _, _, _, _, destination in package_states
-        if destination is not None
-        and destination.is_dir()
-        and not destination.is_symlink()
-    }
     # Install at the canonical source before publishing links to its dependency tree.
     for source, command, digest, stamp, destination in package_states:
         if (
@@ -534,21 +527,6 @@ def reconcile(
             stamp.write_text(digest + "\n")
             stamp.chmod(0o600)
     _stage_native(native, rendered, outputs, links, home, hostname, stale)
-    if legacy_package_directories:
-        transition = state_dir / "native-transition"
-        transition_rendered = state_dir / "rendered-transition"
-        _private_dir(transition, home / ".cache")
-        _private_dir(transition_rendered, home / ".cache")
-        _stage_native(
-            transition,
-            transition_rendered,
-            {},
-            [],
-            home,
-            hostname,
-            legacy_package_directories,
-        )
-        _apply_native(transition, state_dir / "mise-transition-state", home, False)
     _apply_native(native, state_dir / "mise-state", home, False)
     current = {
         relative: _fingerprint(target)

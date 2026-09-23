@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 from pathlib import Path
 import shutil
 import stat
@@ -291,7 +292,7 @@ def test_lockless_package_install_is_stable_on_immediate_repeat(
     assert after == before
 
 
-def test_package_replaces_legacy_tree_and_jiti_resolves_from_deployed_path(
+def test_package_replaces_legacy_tree_without_sudo_and_resolves_from_deployed_path(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     home = tmp_path / "home"
@@ -302,8 +303,16 @@ def test_package_replaces_legacy_tree_and_jiti_resolves_from_deployed_path(
     legacy = home / destination
     legacy.mkdir(parents=True)
     (legacy / "generated-package").mkdir()
+    (legacy / "generated-package/package.json").write_text('{"generated":true}\n')
     sibling = legacy.parent / "foreign.ts"
     sibling.write_text("keep\n")
+    sudo_called = tmp_path / "sudo-called"
+    binary = tmp_path / "bin"
+    binary.mkdir()
+    sudo = binary / "sudo"
+    sudo.write_text(f"#!/bin/sh\nprintf '%s\\n' \"$*\" > {sudo_called}\nexit 97\n")
+    sudo.chmod(0o755)
+    monkeypatch.setenv("PATH", f"{binary}:{os.environ['PATH']}")
     source = PATH.parent / "assets/pi/extensions"
     monkeypatch.setattr(deploy, "load_data", lambda *_: {"mcp_servers": []})
     monkeypatch.setattr(deploy, "render_all", lambda *_: {})
@@ -323,16 +332,21 @@ def test_package_replaces_legacy_tree_and_jiti_resolves_from_deployed_path(
         ),
     )
 
-    deploy.reconcile(repo=ROOT, home=home, hostname="pod042", secrets={}, check=False)
+    deploy.reconcile(
+        repo=ROOT,
+        home=home,
+        hostname="Thurstons-MacBook-Pro",
+        secrets={},
+        check=False,
+    )
 
     assert legacy.is_symlink()
     assert legacy.resolve() == source / "node_modules"
     assert sibling.read_text() == "keep\n"
-    transition = (
-        home / ".cache/ansiblonomicon-harness/configuration/native-transition/mise.toml"
-    )
-    assert str(legacy) in transition.read_text()
-    assert 'state = "absent"' in transition.read_text()
+    assert not sudo_called.exists()
+    assert not (
+        home / ".cache/ansiblonomicon-harness/configuration/native-transition"
+    ).exists()
     jiti_module = source / "node_modules/jiti/lib/jiti.mjs"
     script = (
         f"import {{ createJiti }} from {json.dumps(jiti_module.as_uri())};"
