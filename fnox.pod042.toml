@@ -18,6 +18,7 @@ QBITTORRENT_PASSWORD = { provider = "agent", value = "op://agent/u7mtgl5vtxpisyn
 PROWLARR_API_KEY = { provider = "agent", value = "op://agent/v44vsx76b6hriwclevnwelhs6i/apikey" }
 RADARR_API_KEY = { provider = "agent", value = "op://agent/sil4v5ljh7d52fam7s2nxdfddu/apikey" }
 SONARR_API_KEY = { provider = "agent", value = "op://agent/oqqqt2eb5lbh4gjnxuo4jgmouu/apikey" }
+READWISE_API_TOKEN = { provider = "agent", value = "op://agent/e7aixfii4nbz2nskjjyf5hhame/access token" }
 TORRENT_WIREGUARD_PRIVATE_KEY = { provider = "agent", value = "op://agent/hyqqxr44mqyzudmu327t2aowpu/wireguard/private key" }
 TORRENT_WIREGUARD_ADDRESS = { provider = "agent", value = "op://agent/hyqqxr44mqyzudmu327t2aowpu/wireguard/address" }
 HARK_WEBHOOK_URL_POD042 = { provider = "agent", value = "op://agent/u3wmydm5i7fe3cgdxx6c7juhxq/add more/pod042 webhook url" }
