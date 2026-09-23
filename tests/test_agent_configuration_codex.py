@@ -62,7 +62,7 @@ def test_render_is_additive_and_preserves_live_model_comments_and_app_tables(
     )
 
 
-def test_fresh_home_uses_declared_model_and_pod042_trust(tmp_path: Path) -> None:
+def test_fresh_home_uses_declared_model_and_project_trust(tmp_path: Path) -> None:
     module = _module()
     home = tmp_path / "home"
     rendered = module.render(
@@ -74,7 +74,30 @@ def test_fresh_home_uses_declared_model_and_pod042_trust(tmp_path: Path) -> None
     )[".codex/config.toml"]
     parsed = tomlkit.parse(rendered)
     assert parsed["model"] == "declared-astra"
-    assert parsed["projects"][str(home)]["trust_level"] == "trusted"
+    assert (
+        parsed["projects"][str(home / "Code Garden/ansiblonomicon")]["trust_level"]
+        == "trusted"
+    )
+    assert str(home) not in parsed["projects"]
+
+
+def test_existing_home_trust_is_preserved(tmp_path: Path) -> None:
+    module = _module()
+    home = tmp_path / "home"
+    target = home / ".codex/config.toml"
+    target.parent.mkdir(parents=True)
+    target.write_text(f'[projects."{home}"]\ntrust_level = "untrusted"\n')
+
+    rendered = module.render(
+        repo=tmp_path,
+        home=home,
+        hostname="pod042",
+        data=_data(),
+        secrets={},
+    )[".codex/config.toml"]
+    parsed = tomlkit.parse(rendered)
+
+    assert parsed["projects"][str(home)]["trust_level"] == "untrusted"
 
 
 def test_work_host_preserves_old_exclusion(tmp_path: Path) -> None:
