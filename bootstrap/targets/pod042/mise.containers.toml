@@ -690,4 +690,8 @@ depends_on = ["service:docker"]
 run = [
   "sudo -n systemctl daemon-reload",
   "sudo -n /usr/bin/python3 containers/finalize.py",
+  "sudo -n /usr/bin/python3 containers/check.py",
 ]
+
+[tasks."containers:check"]
+run = "sudo -n /usr/bin/python3 containers/check.py"

@@ -1,0 +1,23 @@
+[Unit]
+Description=Wait for DHCP to deliver a route and a resolver
+# ifup hands enp5s0 to dhcpcd and returns success when dhcpcd's timeout expires,
+# lease or no lease, so networking.service can finish with no address, no route
+# and an empty /etc/resolv.conf. Everything ordered after network-online.target
+# then believes the host is online. Docker starts its restart-policy containers
+# immediately and stamps each container's resolv.conf from the host's, so a lease
+# that lands seconds later leaves every container of that boot without an external
+# nameserver for its whole lifetime. Holding the target shut until the lease is
+# real is the only ordering that makes the target's promise true.
+DefaultDependencies=no
+After=networking.service
+Before=network-online.target shutdown.target
+Conflicts=shutdown.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+TimeoutStartSec=180
+ExecStart=/usr/bin/python3 /etc/ansiblonomicon/network/resolver-online.py
+
+[Install]
+WantedBy=network-online.target

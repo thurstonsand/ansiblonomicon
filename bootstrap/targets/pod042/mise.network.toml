@@ -85,12 +85,26 @@ group = "root"
 mode = "0755"
 notify = ["probe"]
 
+[bootstrap.files."/etc/ansiblonomicon/network/resolver-online.py"]
+source = "network/resolver-online.py"
+owner = "root"
+group = "root"
+mode = "0755"
+notify = ["resolver-online"]
+
 [bootstrap.files."/etc/systemd/system/probe.service"]
 source = "network/probe.service"
 owner = "root"
 group = "root"
 mode = "0644"
 notify = ["probe"]
+
+[bootstrap.files."/etc/systemd/system/resolver-online.service"]
+source = "network/resolver-online.service"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["resolver-online"]
 
 [bootstrap.files."/usr/local/bin/net-probe"]
 source = "network/net-probe"
@@ -109,6 +123,11 @@ state = "running"
 enabled = true
 
 [bootstrap.services.probe]
+state = "running"
+enabled = true
+on_change = "restart"
+
+[bootstrap.services.resolver-online]
 state = "running"
 enabled = true
 on_change = "restart"

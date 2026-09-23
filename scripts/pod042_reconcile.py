@@ -297,6 +297,15 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     str(TARGET_ROOT / "base/check.py"),
                 ]
             )
+        if "containers" in selected:
+            run_command(
+                [
+                    "sudo",
+                    "-n",
+                    "/usr/bin/python3",
+                    str(TARGET_ROOT / "containers/check.py"),
+                ]
+            )
         if "datasets" in selected:
             run_command(
                 [
