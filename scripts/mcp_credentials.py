@@ -47,13 +47,17 @@ def remote_environment(name: str, value: str) -> dict[str, str]:
     return environment
 
 
-def exec_remote(endpoint: str, credential_name: str) -> None:
+def exec_remote(
+    endpoint: str, credential_name: str, extra_headers: tuple[str, ...] = ()
+) -> None:
     command = [
         "mcp-remote",
         endpoint,
         "--header",
         f"Authorization:Bearer ${{{credential_name}}}",
     ]
+    for header in extra_headers:
+        command.extend(["--header", header])
     os.execvpe(
         command[0],
         command,
@@ -81,7 +85,11 @@ def main() -> None:
         return
     if not args.endpoint:
         parser.error("work-web-search requires an endpoint")
-    exec_remote(args.endpoint, "ANTHROPIC_AUTH_TOKEN")
+    exec_remote(
+        args.endpoint,
+        "ANTHROPIC_AUTH_TOKEN",
+        ("User-Agent:claude-code/2.1.2 pi-mcp-adapter",),
+    )
 
 
 if __name__ == "__main__":

@@ -96,6 +96,35 @@ def test_headers_print_json(
     assert json.loads(capsys.readouterr().out) == {"Authorization": "Bearer resolved"}
 
 
+def test_work_web_search_uses_approved_user_agent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    invocation: dict[str, object] = {}
+
+    def exec_remote(
+        endpoint: str, credential_name: str, extra_headers: tuple[str, ...] = ()
+    ) -> None:
+        invocation.update(
+            endpoint=endpoint,
+            credential_name=credential_name,
+            extra_headers=extra_headers,
+        )
+
+    monkeypatch.setattr(mcp_credentials, "exec_remote", exec_remote)
+    monkeypatch.setattr(
+        "sys.argv",
+        ["mcp_credentials.py", "work-web-search", "https://example.test/mcp"],
+    )
+
+    mcp_credentials.main()
+
+    assert invocation == {
+        "endpoint": "https://example.test/mcp",
+        "credential_name": "ANTHROPIC_AUTH_TOKEN",
+        "extra_headers": ("User-Agent:claude-code/2.1.2 pi-mcp-adapter",),
+    }
+
+
 def test_work_web_search_requires_endpoint(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
