@@ -76,25 +76,25 @@ test("waits for agent settlement before marking queued work done", async () => {
   assert.equal(doneCount, 1);
 });
 
-test("passes idle state through the compaction lifecycle", async () => {
-  const compactedStates: boolean[] = [];
+test("passes the compaction reason through the compaction lifecycle", async () => {
+  const compactedReasons: string[] = [];
   const session = {
     isEnabled: false,
     noteContext() {},
-    compacted(isIdle: boolean) {
-      compactedStates.push(isIdle);
+    compacted(reason: string) {
+      compactedReasons.push(reason);
     },
   } as unknown as CompanionSession;
   const handlers = registerHandlers(session);
   const compacted = handlerFor(handlers, "session_compact");
 
-  await compacted(undefined as never, context(false));
-  await compacted(undefined as never, context(true));
+  await compacted({ reason: "manual" } as never, context(false));
+  await compacted({ reason: "threshold" } as never, context(false));
 
-  assert.deepEqual(compactedStates, [false, true]);
+  assert.deepEqual(compactedReasons, ["manual", "threshold"]);
 });
 
-test("manual idle compaction completes while active-run compaction does not", () => {
+test("manual compaction completes while automatic compaction defers to agent_settled", () => {
   let doneCount = 0;
   const session = Object.assign(Object.create(CompanionSession.prototype), {
     enabled: true,
@@ -104,10 +104,11 @@ test("manual idle compaction completes while active-run compaction does not", ()
     },
   }) as CompanionSession;
 
-  session.compacted(false);
+  session.compacted("threshold");
+  session.compacted("overflow");
   assert.equal(doneCount, 0);
 
-  session.compacted(true);
+  session.compacted("manual");
   assert.equal(doneCount, 1);
 });
 

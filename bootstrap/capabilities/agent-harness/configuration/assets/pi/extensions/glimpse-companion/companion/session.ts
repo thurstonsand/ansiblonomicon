@@ -126,8 +126,10 @@ export class CompanionSession {
     this.send(COMPANION_STATUS.compacting, reason);
   }
 
-  compacted(isIdle: boolean): void {
-    if (!this.active || !isIdle) return;
+  // Manual compaction aborts any run before it starts, so nothing else will report done.
+  // Automatic compaction happens inside a run, and agent_settled reports done for it.
+  compacted(reason: string): void {
+    if (!this.active || reason !== "manual") return;
     this.done();
   }
 

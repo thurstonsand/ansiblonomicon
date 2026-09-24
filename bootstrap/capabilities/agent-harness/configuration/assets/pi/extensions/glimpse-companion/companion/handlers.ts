@@ -60,9 +60,9 @@ export function registerCompanionHandlers(pi: ExtensionAPI, session: CompanionSe
     await session.compacting(event.reason);
   });
 
-  pi.on("session_compact", async (_event, ctx) => {
+  pi.on("session_compact", async (event, ctx) => {
     session.noteContext(ctx);
-    session.compacted(ctx.isIdle());
+    session.compacted(event.reason);
   });
 
   pi.on("session_compact_failed", async (_event, ctx) => {
