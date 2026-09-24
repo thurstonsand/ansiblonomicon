@@ -7,22 +7,12 @@ from pathlib import Path
 import pwd
 import socket
 import subprocess
-import tomllib
 
 HOME = Path("/home/thurstonsand")
 SHIMS = HOME / ".local/share/mise/shims"
 HERDR = SHIMS / "herdr"
 UNITS = ("t3code.service", "amp-remote.service", "herdr.service")
-
-# operator:tools installs T3's CLI into its own prefix and records there why it can be
-# neither a global install nor an npx invocation. Read that inventory rather than repeating
-# its paths: the service's own copy of them lives in the t3-operator.conf drop-in, which
-# systemd requires as literals, and two homes for a path are already one too many.
-T3_INVENTORY = tomllib.loads(
-    (Path(__file__).parents[1] / "operator/node-packages.toml").read_text()
-)["prefixed"]["t3"]
-T3 = Path(T3_INVENTORY["prefix"]) / "node_modules/.bin/t3"
-T3_NPMRC = T3_INVENTORY["npmrc"]
+T3 = HOME / ".local/bin/t3"
 
 
 def run(*command: str) -> None:
@@ -88,7 +78,7 @@ def main() -> None:
             "Remote development requires pod042's normal thurstonsand user, never root."
         )
     os.environ["HOME"] = str(HOME)
-    os.environ["NPM_CONFIG_USERCONFIG"] = T3_NPMRC
+    os.environ["NPM_CONFIG_USERCONFIG"] = str(HOME / ".config/t3code/npmrc")
     os.environ["PATH"] = (
         f"{HOME}/.local/bin:{HOME}/.amp/bin:{HOME}/.opencode/bin:"
         f"{SHIMS}:/usr/local/bin:/usr/bin:/bin"

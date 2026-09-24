@@ -97,10 +97,15 @@ fi
 if [ ! -x "$HOME/.opencode/bin/opencode" ]; then
   curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
 fi
+release=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
+if [ "$(readlink "$HOME/.local/bin/t3" || true)" != "$HOME/.t3/runtime/versions/${release##*/v}/t3" ]; then
+  curl -fsSL https://t3.codes/install.sh | T3CODE_VERSION="${release##*/v}" sh
+fi
 test -x "$HOME/.amp/bin/amp"
 test -x "$HOME/.local/bin/claude"
 test -x "$HOME/.local/bin/codex"
 test -x "$HOME/.opencode/bin/opencode"
+"$HOME/.local/bin/t3" --version
 '''
 
 [tasks."operator:sessions"]
