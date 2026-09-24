@@ -1,3 +1,4 @@
+import json
 import os
 from pathlib import Path
 import runpy
@@ -23,7 +24,8 @@ def fixture(
     declared: str = "101\n202\n",
     installed: str = "101 One\n999 Unmanaged\n",
     outdated: str = "101 One\n999 Unmanaged\n",
-    brew_outdated: str = "",
+    brew_outdated: str = '{"formulae": [], "casks": []}',
+    brew_after_upgrade: str | None = None,
     fail: str = "",
     check_rc: int = 0,
     mas_outdated_check: bool = False,
@@ -31,6 +33,10 @@ def fixture(
     binary = tmp_path / "bin"
     binary.mkdir()
     calls = tmp_path / "calls"
+    brew_state = tmp_path / "brew-state.json"
+    brew_state.write_text(brew_outdated)
+    after_upgrade = tmp_path / "brew-state-after-upgrade.json"
+    after_upgrade.write_text(brew_after_upgrade or brew_outdated)
     brewfile = tmp_path / "Brewfile.work"
     brewfile.write_text(
         'private_homebrew_dsl(:keep_me)\nbrew "libpq", link: true\n'
@@ -62,7 +68,11 @@ case "$*" in
   "bundle check "*)
     [ "{fail}" != check ] || {{ printf 'check diagnostic marker\\n' >&2; exit 29; }}
     {'case "$*" in *--no-upgrade*) exit 0;; *) exit 1;; esac' if mas_outdated_check else f"exit {check_rc}"} ;;
-  "outdated") printf "{brew_outdated}" ;;
+  "outdated --formula --json=v2") cat "$BREW_STATE" ;;
+  "upgrade --formula")
+    [ "{fail}" = "upgrade" ] && exit 23
+    cp "$BREW_AFTER_UPGRADE" "$BREW_STATE"
+    ;;
   "install mas") [ "{fail}" = "mas" ] && exit 23 || exit 0 ;;
   "bundle install "*) [ "{fail}" = "install" ] && exit 23 || exit 0 ;;
   "bundle cleanup "*)
@@ -90,6 +100,8 @@ esac
         "PATH": f"{binary}:/usr/bin:/bin",
         "CALLS": str(calls),
         "BREWFILE": str(brewfile.resolve()),
+        "BREW_STATE": str(brew_state),
+        "BREW_AFTER_UPGRADE": str(after_upgrade),
         "HOME": str(tmp_path / "home"),
     }
     env.pop("HOMEBREW_NO_REQUIRE_TAP_TRUST", None)
@@ -135,7 +147,10 @@ def test_missing_legacy_stamp_is_due_and_updates_then_scoped_cleanup(
     )
     bundle = next(i for i, line in enumerate(lines) if "brew bundle install" in line)
     cleanup = next(i for i, line in enumerate(lines) if "brew bundle cleanup" in line)
-    assert upgrade < bundle < cleanup
+    formula_upgrade = next(
+        i for i, line in enumerate(lines) if line == "brew upgrade --formula"
+    )
+    assert upgrade < bundle < cleanup < formula_upgrade
     assert not any("upgrade 999" in line for line in lines)
     assert f"brew bundle install --file={brewfile.resolve()}" in lines
     assert (
@@ -221,7 +236,7 @@ def test_brewfile_parser_gets_delimiter_and_exact_path_without_rewriting(
     assert f"parser-path {brewfile.resolve()}" in calls.read_text().splitlines()
 
 
-@pytest.mark.parametrize("failure", ["install", "cleanup", "mas", "sudo"])
+@pytest.mark.parametrize("failure", ["install", "cleanup", "upgrade", "mas", "sudo"])
 def test_failure_preserves_existing_stamp_metadata(
     tmp_path: Path, failure: str
 ) -> None:
@@ -248,7 +263,7 @@ def test_check_parses_before_treating_rc1_as_drift(tmp_path: Path) -> None:
         i for i, line in enumerate(lines) if line.startswith("brew ruby -e ")
     ) < next(i for i, line in enumerate(lines) if "brew bundle check" in line)
     assert result.stdout.strip() == "mac-apps: drift"
-    assert "brew outdated" not in calls.read_text()
+    assert "brew outdated --formula --json=v2" in calls.read_text()
     assert "mas list" not in calls.read_text()
     assert not (drift / "stamp").exists()
     assert (
@@ -265,12 +280,29 @@ def test_check_parses_before_treating_rc1_as_drift(tmp_path: Path) -> None:
     assert "bundle check" not in calls2.read_text()
 
 
-def test_check_ignores_outdated_undeclared_formulae(tmp_path: Path) -> None:
-    brewfile, calls, env = fixture(tmp_path, check_rc=0, brew_outdated="wget\n")
+def test_check_ignores_pinned_formulae_and_casks(tmp_path: Path) -> None:
+    brewfile, calls, env = fixture(
+        tmp_path,
+        check_rc=0,
+        brew_outdated=json.dumps(
+            {
+                "formulae": [
+                    {
+                        "name": "wget",
+                        "installed_versions": ["1"],
+                        "current_version": "2",
+                        "pinned": True,
+                        "pinned_version": "1",
+                    }
+                ],
+                "casks": [{"name": "firefox"}],
+            }
+        ),
+    )
     result = invoke(brewfile, env, tmp_path / "stamp", "--check")
     assert result.returncode == 0, result.stderr
     assert result.stdout == "mac-apps: current\n"
-    assert "brew outdated" not in calls.read_text()
+    assert "brew outdated --formula --json=v2" in calls.read_text()
 
 
 def test_check_detects_installed_outdated_declared_mas_without_no_upgrade(
@@ -280,7 +312,6 @@ def test_check_detects_installed_outdated_declared_mas_without_no_upgrade(
         tmp_path,
         installed="101 Declared App\n",
         outdated="101 Declared App\n",
-        brew_outdated="",
         mas_outdated_check=True,
     )
     result = invoke(brewfile, env, tmp_path / "stamp", "--check")
@@ -290,6 +321,83 @@ def test_check_detects_installed_outdated_declared_mas_without_no_upgrade(
         line for line in calls.read_text().splitlines() if "bundle check" in line
     )
     assert "--no-upgrade" not in check
+
+
+def test_due_formula_upgrade_updates_transitive_state_once_without_casks_or_pins(
+    tmp_path: Path,
+) -> None:
+    eligible = {
+        "name": "transitive-lib",
+        "installed_versions": ["1"],
+        "current_version": "2",
+        "pinned": False,
+        "pinned_version": None,
+    }
+    pinned = {
+        "name": "held-tool",
+        "installed_versions": ["3"],
+        "current_version": "4",
+        "pinned": True,
+        "pinned_version": "3",
+    }
+    cask = {"name": "desktop-app", "installed_versions": ["1"]}
+    initial = {"formulae": [eligible, pinned], "casks": [cask]}
+    remaining = {"formulae": [pinned], "casks": [cask]}
+    brewfile, calls, env = fixture(
+        tmp_path,
+        brew_outdated=json.dumps(initial),
+        brew_after_upgrade=json.dumps(remaining),
+    )
+    stamp = tmp_path / "stamp"
+
+    first = invoke(brewfile, env, stamp)
+    assert first.returncode == 0, first.stderr
+    assert json.loads((tmp_path / "brew-state.json").read_text()) == remaining
+
+    second = invoke(brewfile, env, stamp)
+    assert second.returncode == 0, second.stderr
+    assert calls.read_text().splitlines().count("brew upgrade --formula") == 1
+    assert json.loads((tmp_path / "brew-state.json").read_text()) == remaining
+
+
+def test_check_detects_unpinned_formula_drift_without_mutation_or_stamp_write(
+    tmp_path: Path,
+) -> None:
+    state = {
+        "formulae": [
+            {
+                "name": "transitive-lib",
+                "installed_versions": ["1"],
+                "current_version": "2",
+                "pinned": False,
+                "pinned_version": None,
+            }
+        ],
+        "casks": [{"name": "desktop-app"}],
+    }
+    brewfile, _, env = fixture(tmp_path, brew_outdated=json.dumps(state))
+    stamp = tmp_path / "stamp"
+    metadata = old_stamp(stamp)
+
+    result = invoke(brewfile, env, stamp, "--check")
+
+    assert result.returncode == 1, result.stderr
+    assert result.stdout == "mac-apps: drift\n"
+    assert json.loads((tmp_path / "brew-state.json").read_text()) == state
+    assert (
+        stamp.read_bytes(),
+        stamp.stat().st_mode,
+        stamp.stat().st_mtime_ns,
+    ) == metadata
+
+
+def test_check_surfaces_malformed_outdated_json(tmp_path: Path) -> None:
+    brewfile, _, env = fixture(tmp_path, brew_outdated="not json")
+
+    result = invoke(brewfile, env, tmp_path / "stamp", "--check")
+
+    assert result.returncode != 0
+    assert "JSONDecodeError" in result.stderr
 
 
 @pytest.mark.parametrize("failure", ["parser", "check"])

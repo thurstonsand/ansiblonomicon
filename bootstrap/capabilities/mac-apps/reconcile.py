@@ -2,6 +2,7 @@
 """Reconcile a Brewfile while keeping privileged MAS work explicit."""
 
 import argparse
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -90,8 +91,18 @@ def main() -> None:
         )
         if check.returncode not in (0, 1):
             raise subprocess.CalledProcessError(check.returncode, check.args)
-        print("mac-apps: drift" if check.returncode else "mac-apps: current")
-        raise SystemExit(check.returncode)
+        outdated = json.loads(
+            run(
+                ["brew", "outdated", "--formula", "--json=v2"],
+                env,
+                capture=True,
+            )
+        )
+        drift = check.returncode == 1 or any(
+            formula["pinned"] is False for formula in outdated["formulae"]
+        )
+        print("mac-apps: drift" if drift else "mac-apps: current")
+        raise SystemExit(1 if drift else 0)
 
     if declared:
         # MAS must be available before Bundle because privileged app operations
@@ -127,6 +138,7 @@ def main() -> None:
             ],
             env,
         )
+        run(["brew", "upgrade", "--formula"], env)
         stamp.parent.mkdir(parents=True, exist_ok=True)
         stamp.touch()
         stamp.chmod(0o644)
