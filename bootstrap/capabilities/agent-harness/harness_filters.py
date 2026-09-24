@@ -1,15 +1,10 @@
-"""Catalogue resolution shared by the native harness engine and the Ansible role.
-
-The work laptop's ``agent_harness`` role loads this module as a filter plugin
-through a symlink at ``ansible/roles/agent_harness/filter_plugins/``.
-"""
+"""Catalogue resolution for the native agent-harness engine."""
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field
 import json
 from pathlib import Path
 import re
-import tomllib
 from typing import Any, TypedDict, cast
 
 
@@ -30,7 +25,7 @@ class PluginEntry(TypedDict, total=False):
     exclude_data: list[str]  # rsync --exclude patterns for deployed files
 
 
-SourceConfig = dict[str, Any]  # Union of git/local source dicts from Ansible
+SourceConfig = dict[str, Any]  # Union of git/local source dicts
 
 SOURCE_FIELDS = frozenset({"repo", "local", "included_on", "excluded_on", "plugins"})
 PLUGIN_FIELDS = frozenset(
@@ -54,44 +49,6 @@ RESOURCE_KINDS = ("skills", "agents")
 ANY_PROFILE = "*"
 
 
-def agent_harness_load_catalogue(path: str) -> list[SourceConfig]:
-    """Load the canonical TOML catalogue for legacy Ansible consumers."""
-    document = tomllib.loads(Path(path).read_text())
-    sources = document.get("sources")
-    if not isinstance(sources, list):
-        raise ValueError("agent harness catalogue must contain [[sources]]")
-    repo = Path(path).resolve().parents[3]
-    result = cast(list[SourceConfig], sources)
-    for source in result:
-        local = source.get("local")
-        if isinstance(local, str) and not Path(local).is_absolute():
-            source["local"] = str(repo / local)
-    return result
-
-
-def agent_harness_load_declarations(path: str, home: str) -> dict[str, object]:
-    """Load canonical profiles and layouts for the legacy role."""
-    root = Path(path).resolve()
-    profiles = tomllib.loads((root / "profiles.toml").read_text())["profiles"]
-    agents: dict[str, dict[str, object]] = {}
-    for declaration in sorted((root / "harnesses").glob("*/mise.toml")):
-        harness = tomllib.loads(declaration.read_text())["harness"]
-        name = harness["name"]
-        skills = str(harness["skills_root"]).replace("~", home, 1)
-        agents[name] = {
-            "config_root": str(Path(skills).parent),
-            "skills_dir": skills,
-            "agents_dir": (
-                str(harness["agents_root"]).replace("~", home, 1)
-                if "agents_root" in harness
-                else None
-            ),
-            "name_transform": harness["name_transform"],
-            **({"cleanup_orphaned_skills": False} if name == "codex" else {}),
-        }
-    return {"profiles": profiles, "agents": agents}
-
-
 @dataclass
 class ResourceInfo:
     """A skill or agent resolved to a path on disk."""
@@ -106,7 +63,6 @@ class ResourceInfo:
     source_id: str = ""
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dict for Ansible/Jinja2 compatibility."""
         return {
             "name": self.name,
             "source": self.source,
@@ -170,7 +126,6 @@ class PluginResources:
             raise ValueError(msg)
 
     def to_dict(self) -> dict[str, list[dict[str, Any]]]:
-        """Convert to dict for Ansible/Jinja2 compatibility."""
         return {
             **{
                 kind: [resource.to_dict() for resource in resources]
@@ -312,7 +267,7 @@ def _require_string_map(value: Any, label: str, field_name: str) -> dict[str, st
 
 
 def _as_plugin_mapping(plugin: Any, source_label: str) -> Mapping[str, Any]:
-    """Conform an untrusted plugin entry from YAML into a mapping."""
+    """Conform an untrusted plugin entry from the catalogue into a mapping."""
     if not isinstance(plugin, Mapping):
         msg = f"{source_label}: plugin entry must be a mapping, got {plugin!r}"
         raise ValueError(msg)
@@ -763,7 +718,7 @@ def agent_harness_build_plugin_resources(
         cache_dir: Path to the cache directory for git repos
 
     Returns:
-        Dict with 'skills', 'agents' and 'hooks' keys for Ansible/Jinja2
+        Dict with 'skills', 'agents' and 'hooks' keys
     """
     resources = PluginResources()
 
@@ -904,7 +859,7 @@ def _read_hooks_file(path: Path) -> str | None:
 
 
 def agent_harness_repo_to_cache_name(repo: str) -> str:
-    """Public filter: normalize a repo identifier to a filesystem-safe cache name."""
+    """Normalize a repo identifier to a filesystem-safe cache name."""
     return _repo_to_cache_name(repo)
 
 
@@ -982,7 +937,6 @@ class SkillTransformResult:
     modified: bool
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dict for Ansible/Jinja2 compatibility."""
         return {
             "content": self.content,
             "modified": self.modified,
@@ -1030,22 +984,6 @@ def _build_model_alias_map(
     return alias_map
 
 
-def _deep_convert_to_dict(obj: Any) -> Any:
-    """Recursively convert Ansible lazy containers to regular Python types.
-
-    Ansible passes _AnsibleLazyTemplateDict and similar types that can't be
-    serialized by standard YAML libraries.
-    """
-    if isinstance(obj, dict):
-        return {
-            str(k): _deep_convert_to_dict(v)
-            for k, v in cast(dict[Any, Any], obj).items()
-        }
-    if isinstance(obj, list):
-        return [_deep_convert_to_dict(item) for item in cast(list[Any], obj)]
-    return obj
-
-
 def agent_harness_transform_skill_content(
     content: str,
     target_agent: str,
@@ -1066,8 +1004,7 @@ def agent_harness_transform_skill_content(
     model_match = re.search(r"^model:\s*(.+)$", content, flags=re.MULTILINE)
     if model_match:
         model_value = model_match.group(1).strip()
-        plain_config = _deep_convert_to_dict(models_config)
-        alias_map = _build_model_alias_map(plain_config)
+        alias_map = _build_model_alias_map(models_config)
         replacement = alias_map.get(model_value, {}).get(target_agent)
         if replacement and replacement != model_value:
             content = re.sub(
@@ -1129,19 +1066,3 @@ def agent_harness_transform_skill(
     return agent_harness_transform_skill_content(
         path.read_text(), target_agent, models_config, plugin_root, name_override
     )
-
-
-class FilterModule:
-    """Ansible filter plugin for agent harness."""
-
-    def filters(self) -> dict[str, object]:
-        return {
-            "agent_harness_build_plugin_resources": agent_harness_build_plugin_resources,
-            "agent_harness_resolve_sources": agent_harness_resolve_sources,
-            "agent_harness_filter_resources": agent_harness_filter_resources,
-            "agent_harness_transform_skill": agent_harness_transform_skill,
-            "agent_harness_transform_skill_content": agent_harness_transform_skill_content,
-            "agent_harness_repo_to_cache_name": agent_harness_repo_to_cache_name,
-            "agent_harness_load_catalogue": agent_harness_load_catalogue,
-            "agent_harness_load_declarations": agent_harness_load_declarations,
-        }

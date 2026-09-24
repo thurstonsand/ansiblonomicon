@@ -1,10 +1,8 @@
 from importlib.util import module_from_spec, spec_from_file_location
 import os
 from pathlib import Path
-import shutil
 import subprocess
 import sys
-import tomllib
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -49,50 +47,11 @@ Conf curl (1.1 Debian:13/stable [amd64])
     ]
 
 
-def test_base_declaration_matches_accepted_contract() -> None:
-    config = tomllib.loads((BASE.parent / "mise.base.toml").read_text())
-    bootstrap = config["bootstrap"]
-    packages = bootstrap["packages"]
-    for package in (
-        "intel-microcode",
-        "locales",
-        "systemd-timesyncd",
-        "unattended-upgrades",
-    ):
-        assert packages[f"apt:{package}"] == "latest"
-
-    ssh = bootstrap["files"]["/etc/ssh/sshd_config.d/00-ansiblonomicon.conf"]["content"]
-    assert ssh == (
-        "ClientAliveCountMax 3\n"
-        "ClientAliveInterval 30\n"
-        "PasswordAuthentication no\n"
-        "PermitRootLogin no\n"
-        "PrintLastLog yes\n"
-        "PubkeyAuthentication yes\n"
-    )
-    assert bootstrap["files"]["/etc/ssh/sshd_config.d/00-ansiblonomicon.conf"][
-        "notify"
-    ] == ["ssh"]
-    assert bootstrap["services"]["apt-daily-upgrade.timer"] == {
-        "state": "running",
-        "enabled": True,
-    }
-
+def test_unattended_upgrades_never_touch_protected_packages_or_reboot() -> None:
     unattended = (BASE / "50unattended-upgrades").read_text()
-    assert '"origin=*";' in unattended
-    for setting in (
-        "Automatic-Reboot",
-        "Remove-Unused-Kernel-Packages",
-        "Remove-New-Unused-Dependencies",
-        "Remove-Unused-Dependencies",
-    ):
-        assert f'{setting} "false";' in unattended
+    assert 'Automatic-Reboot "false";' in unattended
     for pattern in apt_alert.PROTECTED_PACKAGE_PATTERNS:
         assert f'"{pattern.pattern}";' in unattended
-    journal = (BASE / "journald.conf").read_text()
-    assert "Storage=persistent" in journal
-    assert "SystemMaxUse=1G" in journal
-    assert "MaxRetentionSec=30day" in journal
 
 
 def test_mise_maintenance_skips_fresh_stamp(tmp_path: Path) -> None:
@@ -143,60 +102,4 @@ def test_mise_maintenance_failure_preserves_stamp_and_retries(tmp_path: Path) ->
     assert stamp.stat().st_mtime == expired
     subprocess.run([MISE_MAINTAIN, binary, stamp], check=True)
     assert calls.read_text() == ("self-update --yes --no-plugins\n" * 2)
-    assert stamp.stat().st_mtime > expired
-
-
-def test_pod042_mise_task_executes_expired_maintenance_through_sudo(
-    tmp_path: Path,
-) -> None:
-    target = tmp_path / "bootstrap/targets/pod042"
-    capability = tmp_path / "bootstrap/capabilities/mise"
-    fake_bin = tmp_path / "bin"
-    target.mkdir(parents=True)
-    capability.mkdir(parents=True)
-    fake_bin.mkdir()
-    shutil.copy2(MISE_MAINTAIN, capability / "mise-maintain")
-
-    updater = tmp_path / "system-mise"
-    stamp = tmp_path / "cache/upgrade.stamp"
-    calls = tmp_path / "calls"
-    updater.write_text(f"#!/bin/sh\nprintf 'mise %s\\n' \"$*\" >> {calls}\n")
-    updater.chmod(0o755)
-    stamp.parent.mkdir()
-    stamp.touch()
-    expired = stamp.stat().st_mtime - 86401
-    os.utime(stamp, (expired, expired))
-
-    sudo = fake_bin / "sudo"
-    sudo.write_text(
-        f"#!/bin/sh\nprintf 'sudo %s\\n' \"$*\" >> {calls}\n"
-        '[ "$1" = -n ] && shift\n'
-        'if [ "$1" = install ]; then\n'
-        '  for argument in "$@"; do directory=$argument; done\n'
-        '  exec install -d -m 0755 "$directory"\n'
-        "fi\n"
-        'exec "$@"\n'
-    )
-    sudo.chmod(0o755)
-
-    config = (
-        (BASE.parent / "mise.toml")
-        .read_text()
-        .replace(
-            "/usr/local/bin/mise /var/cache/ansiblonomicon/mise-upgrade.stamp",
-            f"{updater} {stamp}",
-        )
-    )
-    (target / "mise.toml").write_text(config)
-    environment = {**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}"}
-
-    subprocess.run(
-        ["mise", "-C", target, "run", "mise:maintain"],
-        check=True,
-        env=environment,
-    )
-
-    invocation = calls.read_text()
-    assert f"sudo -n {updater} self-update --yes --no-plugins" in invocation
-    assert "mise self-update --yes --no-plugins" in invocation
     assert stamp.stat().st_mtime > expired

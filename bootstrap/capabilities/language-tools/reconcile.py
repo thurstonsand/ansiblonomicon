@@ -7,6 +7,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import shlex
 import subprocess
 import sys
@@ -34,6 +35,7 @@ ToolEntry: TypeAlias = dict[str, ConfigValue]  # noqa: UP040
 class Inventory:
     tools: dict[str, ToolEntry]
     sections: dict[str, dict[str, list[str]]]
+    npm_links: dict[str, str]
 
 
 def npm_package_name(spec: str) -> str:
@@ -77,7 +79,7 @@ def pending_npm_extras(pending: Path) -> dict[str, str]:
 
 
 def capture_npm_extras(
-    mise: str, pending: Path, managed: list[str], home: Path
+    mise: str, pending: Path, managed: list[str], linked: set[str], home: Path
 ) -> None:
     if pending.exists():
         # A failed run's old prefix is authoritative; never replace it after mise
@@ -104,7 +106,9 @@ def capture_npm_extras(
         prefix,
         cwd=home,
     )
-    excluded = {npm_package_name(spec) for spec in managed} | {"npm", "corepack"}
+    excluded = (
+        {npm_package_name(spec) for spec in managed} | linked | {"npm", "corepack"}
+    )
     saved: dict[str, str] = {}
     for name, raw_package in dependencies.items():
         if name in excluded:
@@ -162,6 +166,7 @@ def empty_inventory() -> Inventory:
             "cargo": {"packages": []},
             "gem": {"packages": []},
         },
+        npm_links={},
     )
 
 
@@ -232,6 +237,8 @@ def read_source(path: Path) -> tuple[Inventory, bool]:
             data.get(section, {}),
             f"invalid inventory {path}: malformed [{section}] table",
         )
+        if section == "npm" and "links" in value:
+            result.npm_links = npm_links(value.pop("links"), path)
         if set(value) - set(keys):
             raise SystemExit(f"invalid inventory {path}: malformed [{section}] table")
         for key, entries in value.items():
@@ -240,6 +247,47 @@ def read_source(path: Path) -> tuple[Inventory, bool]:
                 f"invalid inventory {path}: {section}.{key} must be a string array",
             )
     return result, replace_shared
+
+
+def npm_links(value: object, path: Path) -> dict[str, str]:
+    message = (
+        f"invalid inventory {path}: npm.links must map package names "
+        "to HOME-relative paths"
+    )
+    links = table(value, message)
+    result: dict[str, str] = {}
+    for name, target in links.items():
+        if (
+            not re.fullmatch(r"(@[a-z0-9._-]+/)?[a-z0-9._-]+", name)
+            or not isinstance(target, str)
+            or Path(target).is_absolute()
+            or ".." in Path(target).parts
+        ):
+            raise SystemExit(message)
+        result[name] = target
+    return result
+
+
+def link_npm_globals(links: dict[str, str], npm: str, home: Path) -> None:
+    if not links:
+        return
+    root = Path(run([npm, "root", "-g"], cwd=home, capture=True))
+    for name, relative in links.items():
+        target = home / relative
+        link = root / name
+        if not target.exists():
+            print(
+                f"language-tools: {target} is absent; {name} stays unlinked until it exists",
+                file=sys.stderr,
+            )
+            continue
+        if link.is_symlink() and link.readlink() == target:
+            continue
+        if link.exists() and not link.is_symlink():
+            raise SystemExit(f"refusing to replace installed npm package: {link}")
+        link.parent.mkdir(parents=True, exist_ok=True)
+        link.unlink(missing_ok=True)
+        link.symlink_to(target)
 
 
 def validate_tool_entry(value: dict[str, object], key: str, path: Path) -> ToolEntry:
@@ -276,6 +324,7 @@ def load(paths: list[Path]) -> Inventory:
         if replace_shared:
             result = empty_inventory()
         result.tools.update(data.tools)
+        result.npm_links.update(data.npm_links)
         for section, keys in LIST_SECTIONS.items():
             for key in keys:
                 result.sections[section][key].extend(data.sections[section][key])
@@ -312,7 +361,7 @@ def main() -> None:
         args.extension is None or not args.extension.is_file()
     ):
         raise SystemExit(
-            "work migration requires an explicit private TOML inventory (an empty file is valid)"
+            "work requires an explicit private TOML inventory (an empty file is valid)"
         )
     if args.extension is not None and not args.extension.is_file():
         raise SystemExit(f"inventory does not exist: {args.extension}")
@@ -351,7 +400,12 @@ def main() -> None:
     stamp = home / ".cache/ansiblonomicon/language-tools.stamp"
     fingerprint = hashlib.sha256(
         json.dumps(
-            {"tools": inventory.tools, "sections": inventory.sections}, sort_keys=True
+            {
+                "tools": inventory.tools,
+                "sections": inventory.sections,
+                "npm_links": inventory.npm_links,
+            },
+            sort_keys=True,
         ).encode()
     ).hexdigest()
     due = (
@@ -368,6 +422,8 @@ def main() -> None:
         print(
             f"language-tools: ensure installed {', '.join(specs) if specs else 'none'}"
         )
+        if inventory.npm_links:
+            print(f"language-tools: link npm globals {', '.join(inventory.npm_links)}")
         print(
             "language-tools: managed upgrades due"
             if due
@@ -377,7 +433,7 @@ def main() -> None:
 
     mise = os.environ.get("MISE_BIN", str(home / ".local/bin/mise"))
     pending = home / ".cache/ansiblonomicon/npm-globals.pending.json"
-    capture_npm_extras(mise, pending, packages, home)
+    capture_npm_extras(mise, pending, packages, set(inventory.npm_links), home)
     config.parent.mkdir(parents=True, exist_ok=True)
     if not config.exists():
         config.touch()
@@ -400,16 +456,20 @@ def main() -> None:
         f"{prefix}/opt/zig@0.15/bin:{home}/.cargo/bin:{os.environ['PATH']}"
     )
 
+    # Resolve npm through mise: the inherited PATH can put Homebrew's node ahead
+    # of mise's, and that npm has a different global root.
+    npm = run([mise, "which", "npm"], cwd=home, capture=True)
     npm_exec = [
         sys.executable,
         str(npm_script),
         *(["--present"] if not due else []),
-        "npm",
+        npm,
         *map(str, sources),
     ]
     if packages:
         run(npm_exec, cwd=home)
-    restore_npm_extras(pending, "npm", home)
+    restore_npm_extras(pending, npm, home)
+    link_npm_globals(inventory.npm_links, npm, home)
     if inventory.sections["uv"]["retired"]:
         tool_dir = Path(run(["uv", "tool", "dir"], cwd=home, capture=True))
         for tool in inventory.sections["uv"]["retired"]:

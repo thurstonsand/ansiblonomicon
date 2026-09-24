@@ -146,7 +146,8 @@ def _mcp_output(
             raise ValueError(f"unsupported MCP transport: {transport}")
         if transport == "stdio":
             server = {
-                key: item[key] for key in ("command", "args", "env") if key in item
+                "type": "stdio",
+                **{key: item[key] for key in ("command", "args", "env") if key in item},
             }
         else:
             server = {"type": transport, "url": item.get("url")}
@@ -304,7 +305,8 @@ def _stage_native(
         dict[str, object], cast(dict[str, object], document["bootstrap"])["directories"]
     )
     directories[str(home / ".pi/agent")] = {"mode": "0700"}
-    directories[str(home / ".config/amp")] = {"mode": "0700"}
+    if any(relative.startswith(".config/amp/") for relative in outputs):
+        directories[str(home / ".config/amp")] = {"mode": "0700"}
     directories[str(home / ".cache/ansiblonomicon-harness/configuration")] = {
         "mode": "0700"
     }

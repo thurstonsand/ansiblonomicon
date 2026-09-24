@@ -46,6 +46,7 @@ def test_current_scoped_tasks_only_request_agent_credentials():
         "terminal-theme",
         "desktop-tools",
         "editor-config",
+        "work-local",
     }
     for task_name, task in tasks.items():
         commands = task.get("run", [])
@@ -175,64 +176,23 @@ def test_agent_config_real_secret_check_uses_fnox_and_both_flags(
     assert python[-2:] == ["--check", "--real-secrets"]
 
 
-def test_ssh_client_scopes_exactly_the_pod042_key_pair():
-    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["ssh-client"]
-    assert task_secrets(task["run"]) == {
-        "POD042_GIT_SSH_PRIVATE_KEY",
-        "POD042_GIT_SSH_PUBLIC_KEY",
-    }
-
-
-def test_desktop_tools_needs_no_secrets():
-    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["desktop-tools"]
-    assert task_secrets(task["run"]) == set()
-
-
-def test_editor_config_scopes_exactly_the_llm_credentials():
-    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["editor-config"]
-    assert task_secrets(task["run"]) == {
-        "CLI_PROXY_API_KEY",
-        "CF_ACCESS_CLIENT_ID",
-        "CF_ACCESS_CLIENT_SECRET",
-    }
-
-
-def test_laptop_reconcile_scopes_one_password_and_keeps_facts_in_memory():
+def test_each_capability_task_requests_only_its_own_secrets():
     tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
-
-    command = tasks["reconcile:laptop"]["run"]
-    assert "HOMEBREW_SUDO_ASKPASS_PASS_WORK" in command
-    assert "HOMEBREW_SUDO_ASKPASS_PASS" in command
-    assert '--secret "$sudo_secret"' in command
-    assert "ANSIBLE_CACHE_PLUGIN=memory" in command
-    assert "//:reconcile:laptop" in tasks["reconcile"]["run"]
-
-
-def test_terminal_theme_scopes_only_the_host_sudo_password():
-    tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
-    command = tasks["terminal-theme"]["run"]
-    assert task_secrets(command) == {"$sudo_secret"}
-    assert "HOMEBREW_SUDO_ASKPASS_PASS_WORK" in command
-    assert "HOMEBREW_SUDO_ASKPASS_PASS" in command
-
-
-def test_mac_apps_scopes_only_host_sudo_and_check_bypasses_fnox():
-    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["mac-apps"]
-    command = task["run"]
-    assert task_secrets(command) == {"$sudo_secret"}
-    assert command.index('if [ -n "${usage_check:-}" ]') < command.index("fnox-host")
-    assert "SUDO_ASKPASS" in command
-
-
-def test_shell_scopes_only_the_work_render_and_sudo_secrets():
-    tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
-    command = tasks["shell"]["run"]
-    assert task_secrets(command) == {
-        "SOURCEGRAPH_TOKEN",
-        "HOMEBREW_SUDO_ASKPASS_PASS_WORK",
+    expected: dict[str, set[str]] = {
+        "ssh-client": {"POD042_GIT_SSH_PRIVATE_KEY", "POD042_GIT_SSH_PUBLIC_KEY"},
+        "desktop-tools": set(),
+        "editor-config": {
+            "CLI_PROXY_API_KEY",
+            "CF_ACCESS_CLIENT_ID",
+            "CF_ACCESS_CLIENT_SECRET",
+        },
+        "work-local": {"HOMEBREW_SUDO_ASKPASS_PASS_WORK"},
+        "terminal-theme": {"$sudo_secret"},
+        "mac-apps": {"$sudo_secret"},
     }
-    assert "usage_check" in command
-    assert "SOURCEGRAPH_TOKEN=preview" in command
+    assert {name: task_secrets(tasks[name]["run"]) for name in expected} == expected
+    # The umbrella task delegates, so it must never open one wide secret scope itself.
+    assert "fnox-host" not in tasks["reconcile:laptop"]["run"]
 
 
 @pytest.mark.parametrize("stack,provider", [("edge", CLOUDFLARE), ("unifi", UNIFI)])

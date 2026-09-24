@@ -88,18 +88,8 @@ def test_active_datasets_and_readonly_pool_roots(
     assert all(changes[name]["xattr"] == "on" for name in ACTIVE)
 
 
-@pytest.mark.parametrize(
-    "source", ["ark/anypod", "black-box/docker/anypod", "black-box/docker/plex"]
-)
-def test_old_active_names_require_explicit_cutover(
-    monkeypatch: pytest.MonkeyPatch, source: str
-) -> None:
-    with pytest.raises(ValueError, match="Unclassified dataset"):
-        run_check(monkeypatch, [source])
-
-
-def test_retired_legacy_namespace_is_not_tolerated(
+def test_unclassified_dataset_blocks_reconcile(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     with pytest.raises(ValueError, match="Unclassified dataset"):
-        run_check(monkeypatch, ["black-box/legacy/old-vm"])
+        run_check(monkeypatch, ["black-box/docker/stray"])

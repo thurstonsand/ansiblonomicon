@@ -313,22 +313,3 @@ def test_askpass_does_not_fallback_from_present_bad_python_pin(
     )
     assert result.returncode != 0
     assert result.stdout == ""
-
-
-def test_ansible_does_not_propagate_sudo_password_environment() -> None:
-    for path in (ROOT / "ansible").rglob("*.yml"):
-        assert "HOMEBREW_SUDO_ASKPASS_PASS" not in path.read_text(), path
-    homebrew = (ROOT / "ansible/roles/homebrew/tasks/main.yml").read_text()
-    assert homebrew.count('SUDO_ASKPASS: "{{') == 3
-    assert homebrew.count('HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS: "1"') == 4
-
-
-def test_bootstrap_does_not_preauthenticate_desktop_account() -> None:
-    bootstrap = (ROOT / "scripts/bootstrap.sh").read_text()
-    assert "op account get" not in bootstrap
-    assert "op signin" not in bootstrap
-
-
-def test_token_installer_discovers_fnox_without_project_environment() -> None:
-    installer = (ROOT / "scripts/pod042_service_token.py").read_text()
-    assert '["mise", "--no-env", "which", "fnox"]' in installer

@@ -60,7 +60,7 @@ def main() -> None:
     args = parser.parse_args()
 
     brewfile = args.brewfile.resolve(strict=True)
-    stamp = args.stamp or Path.home() / ".cache/ansible-homebrew/upgrade.stamp"
+    stamp = args.stamp or Path.home() / ".cache/ansiblonomicon/homebrew-upgrade.stamp"
     due = not stamp.exists() or time.time() - stamp.stat().st_mtime >= INTERVAL
     env = {
         **os.environ,

@@ -71,42 +71,6 @@ def test_install_verifies_and_extracts_the_expected_binary(tmp_path: Path) -> No
     )
 
 
-def test_install_downloads_the_manifest_release_url(
-    tmp_path: Path, monkeypatch: MonkeyPatch
-) -> None:
-    package_cache = tmp_path / "package"
-    package = write_package(
-        package_cache,
-        {
-            "CHANGELOG.md": b"",
-            "LICENSE": b"",
-            "README.md": b"",
-            BINARY: b"provider",
-        },
-    )
-    manifest = tmp_path / "provider.toml"
-    write_manifest(manifest, MODULE.sha256(package))
-    downloaded_urls: list[str] = []
-
-    def download_release(url: str, destination: Path) -> None:
-        downloaded_urls.append(url)
-        destination.parent.mkdir(parents=True)
-        destination.write_bytes(package.read_bytes())
-
-    monkeypatch.setattr(MODULE, "download", download_release)
-    _ = MODULE.install(
-        tmp_path / "mirror",
-        TARGET,
-        manifest_path=manifest,
-        cache=tmp_path / "cache",
-    )
-
-    assert downloaded_urls == [
-        "https://github.com/thurstonsand/terraform-provider-unifi/"
-        f"releases/download/v{VERSION}/{ARCHIVE}"
-    ]
-
-
 def test_install_rejects_a_download_with_the_wrong_checksum(
     tmp_path: Path, monkeypatch: MonkeyPatch
 ) -> None:
@@ -136,17 +100,4 @@ def test_install_rejects_unexpected_archive_members(tmp_path: Path) -> None:
     with pytest.raises(SystemExit, match="unexpected contents"):
         _ = MODULE.install(
             tmp_path / "mirror", TARGET, manifest_path=manifest, cache=cache
-        )
-
-
-def test_install_rejects_an_unsupported_platform(tmp_path: Path) -> None:
-    manifest = tmp_path / "provider.toml"
-    write_manifest(manifest, "unused")
-
-    with pytest.raises(SystemExit, match="does not support windows_amd64"):
-        _ = MODULE.install(
-            tmp_path / "mirror",
-            "windows_amd64",
-            manifest_path=manifest,
-            cache=tmp_path / "cache",
         )

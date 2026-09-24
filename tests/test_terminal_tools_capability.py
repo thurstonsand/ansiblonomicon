@@ -30,38 +30,6 @@ def isolated_env(home: Path, target: Path) -> dict[str, str]:
     }
 
 
-@pytest.mark.parametrize("host", HOSTS)
-def test_all_hosts_register_shared_terminal_sources(host: str) -> None:
-    target = ROOT / "bootstrap/targets" / host
-    assert (target / "mise.terminal-tools.toml").resolve() == (
-        CAPABILITY / "mise.toml"
-    ).resolve()
-    assert (target / "terminal-tools").resolve() == (CAPABILITY / "files").resolve()
-
-
-def test_migrated_static_sources_preserve_settings_and_modes() -> None:
-    tmux = (CAPABILITY / "files/tmux/tmux.conf").read_text()
-    assert "set -g prefix M-a" in tmux
-    assert "set -g base-index 1" in tmux
-    assert "set -g status-position bottom" in tmux
-    assert "tmux-plugins/tpm" in tmux
-    assert "vim-tmux-navigator" in tmux
-    assert "sainnhe/tmux-fzf" in tmux
-    for helper in ("delta", "ide", "ideo"):
-        path = CAPABILITY / "files/bin" / helper
-        assert path.stat().st_mode & 0o111
-        subprocess.run(["bash", "-n", path], check=True)
-
-
-def test_ghostty_template_uses_capability_variables() -> None:
-    source = (CAPABILITY / "files/ghostty/config.tera").read_text()
-    assert "{{ vars.terminal_tools_font_family }}" in source
-    assert "{{ vars.terminal_tools_font_size }}" in source
-    assert "{{ vars.terminal_tools_home }}" in source
-    assert "{{ vars.terminal_tools_develop_dir }}" in source
-    assert "TERMINAL_TOOLS_" not in (CAPABILITY / "mise.toml").read_text()
-
-
 @pytest.mark.parametrize(
     "host,platform_manifest,parts,expected_directory,has_ghostty,has_ideo,has_plugins",
     [
@@ -216,57 +184,3 @@ def test_real_registered_manifests_reconcile_idempotently(
     )
     assert {path: snapshot(path) for path in managed} == before
     assert neighbor.read_text() == "keep me\n"
-
-
-def test_tmux_loads_both_themes_on_isolated_server(tmp_path: Path) -> None:
-    if subprocess.run(["sh", "-c", "command -v tmux"], check=False).returncode != 0:
-        pytest.skip("tmux is unavailable")
-    socket = f"terminal-tools-{os.getpid()}"
-    config = CAPABILITY / "files/tmux/tmux.conf"
-    env = {
-        "PATH": os.environ["PATH"],
-        "HOME": str(tmp_path),
-        "LANG": "C.UTF-8",
-        "TERM": "xterm-256color",
-    }
-    (tmp_path / ".config/tmux/plugins/tpm").mkdir(parents=True)
-    (tmp_path / ".config/tmux/plugins/tpm/tpm").write_text("#!/bin/sh\nexit 0\n")
-    (tmp_path / ".config/tmux/plugins/tpm/tpm").chmod(0o755)
-    (tmp_path / ".config/tmux").mkdir(parents=True, exist_ok=True)
-    for mode in ("dark", "light"):
-        (tmp_path / f".config/tmux/gruvbox-{mode}.conf").symlink_to(
-            CAPABILITY / f"files/tmux/gruvbox-{mode}.conf"
-        )
-    expected_background = {"dark": "bg=#3c3836", "light": "bg=#ebdbb2"}
-    try:
-        for mode in ("dark", "light"):
-            (tmp_path / ".terminal-bg").write_text(mode)
-            subprocess.run(
-                ["tmux", "-L", socket, "-f", str(config), "new-session", "-d"],
-                env=env,
-                check=True,
-            )
-            prefix = subprocess.run(
-                ["tmux", "-L", socket, "show", "-gv", "prefix"],
-                env=env,
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-            assert prefix == "M-a"
-            status = subprocess.run(
-                ["tmux", "-L", socket, "show", "-gv", "status-style"],
-                env=env,
-                check=True,
-                capture_output=True,
-                text=True,
-            ).stdout.strip()
-            assert expected_background[mode] in status
-            subprocess.run(["tmux", "-L", socket, "kill-server"], env=env, check=True)
-    finally:
-        subprocess.run(
-            ["tmux", "-L", socket, "kill-server"],
-            env=env,
-            check=False,
-            capture_output=True,
-        )

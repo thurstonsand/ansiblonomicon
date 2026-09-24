@@ -13,7 +13,6 @@ dependencies = [
 ]
 
 [dependency-groups]
-work = ["ansible>=12.3.0", "ansible-lint>=25.12.1"]
 dev = [
   "ruff>=0.11.7",
   "basedpyright>=1.31.7",
@@ -69,7 +68,6 @@ exclude = [
   "build",
   "dist",
   "stubs",
-  "ansible",
   # Research prototypes import tools this repo deliberately does not depend on, so
   # every import is unresolvable here by design. Judging them is the trial's job.
   "docs/wayfinding/**/prototypes",

@@ -13,7 +13,7 @@ Your goal is to prepare a prompt for a new thread based on the work done so far,
 Use the following prompt to guide the title inside the `{title}` tag. The title must be prefixed with `handoff:`.
 
 ```md
-{% if ansible_hostname is match('ML-') %}
+{% if hostname == "ML-DFC6YK6VJQ" %}
 !`jq -r '.prompt' ~/.cache/claude-code-auto-title/config.json`
 {% else %}
 {{ lookup('file', agent_harness_root ~ '/session-title-prompt.txt') }}

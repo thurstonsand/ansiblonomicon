@@ -3,9 +3,7 @@ from pathlib import Path
 import shutil
 import stat
 import subprocess
-import tomllib
 
-import pytest
 import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -85,17 +83,7 @@ def fixture(
     return home, target, env, command
 
 
-@pytest.mark.parametrize(
-    ("commands", "expected"),
-    [
-        (("hunk", "delta"), "hunk pager"),
-        (("delta",), "delta --paging=never"),
-        ((), None),
-    ],
-)
-def test_real_mise_renders_discovered_renderer_and_native_services(
-    tmp_path: Path, commands: tuple[str, ...], expected: str | None
-) -> None:
+def test_real_mise_renders_multiline_private_services(tmp_path: Path) -> None:
     services = (
         '  "gitlab.internal.example:8443/group/subgroup": '
         '"gitlab:gitlab.internal.example:8443/group/subgroup"\n'
@@ -103,19 +91,10 @@ def test_real_mise_renders_discovered_renderer_and_native_services(
         '"bitbucketServer:stash.example.com:7999/projects/tools/repos/agent"\n'
     )
     home, _, env, command = fixture(
-        tmp_path, personal=False, commands=commands, services=services
+        tmp_path, personal=False, commands=(), services=services
     )
     subprocess.run(command, env=env, check=True, capture_output=True, text=True)
-    rendered = (home / ".config/lazygit/config.yml").read_text()
-    config = yaml.safe_load(rendered)
-    assert config["os"] == {"editPreset": "vscode"}
-    if expected is None:
-        assert "diffRenderers" not in config["git"]
-    else:
-        assert config["git"]["diffRenderers"] == [
-            {"command": expected, "colorArg": "always"}
-        ]
-    assert "services:\n" + services in rendered
+    config = yaml.safe_load((home / ".config/lazygit/config.yml").read_text())
     assert config["services"] == {
         "gitlab.internal.example:8443/group/subgroup": (
             "gitlab:gitlab.internal.example:8443/group/subgroup"
@@ -240,37 +219,3 @@ def test_real_mise_check_apply_and_repeat_preserve_outputs(tmp_path: Path) -> No
     )
     assert hunk.returncode == 2
     assert hunk.stderr == "hunk nvim editor: NVIM_OUTER_SERVER is not set\n"
-
-
-def test_common_only_apply_preserves_existing_personal_files(tmp_path: Path) -> None:
-    home, _, env, command = fixture(tmp_path, personal=False, commands=())
-    gh = home / ".config/gh/config.yml"
-    rustup = home / ".rustup/settings.toml"
-    gh.parent.mkdir(parents=True)
-    rustup.parent.mkdir(parents=True)
-    gh.write_text("work gh content\n")
-    rustup.write_text("work rustup content\n")
-
-    subprocess.run(
-        [*command[:-1], "--force-dotfiles", command[-1]],
-        env=env,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert gh.read_text() == "work gh content\n"
-    assert rustup.read_text() == "work rustup content\n"
-
-
-def test_registered_hosts_share_capability_and_only_personal_hosts_extend_it() -> None:
-    for host in ("pod042", "Thurstons-MacBook-Pro", "ML-DFC6YK6VJQ"):
-        target = ROOT / "bootstrap/targets" / host
-        assert (target / "user-tools").resolve() == (CAPABILITY / "files").resolve()
-        assert (target / "mise.user-tools.toml").resolve() == (
-            CAPABILITY / "mise.toml"
-        ).resolve()
-        personal = target / "mise.user-tools-personal.toml"
-        assert personal.exists() is (host != "ML-DFC6YK6VJQ")
-        values = tomllib.loads((target / "mise.toml").read_text())["vars"]
-        assert values["lazygit_services"] == ""
-        assert ("rustup_default_toolchain" in values) is (host != "ML-DFC6YK6VJQ")

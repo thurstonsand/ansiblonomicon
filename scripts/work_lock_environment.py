@@ -9,7 +9,12 @@ import sys
 
 import tomlkit
 
-WORK_ENVIRONMENT = "sys_platform == 'darwin' and platform_machine == 'arm64'"
+# Bound the Python version too
+MINOR = f"{sys.version_info.major}.{sys.version_info.minor}"
+WORK_ENVIRONMENT = (
+    "sys_platform == 'darwin' and platform_machine == 'arm64' "
+    f"and python_version == '{MINOR}'"
+)
 
 
 def main() -> None:

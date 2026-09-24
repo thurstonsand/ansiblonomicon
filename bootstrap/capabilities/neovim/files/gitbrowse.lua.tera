@@ -1,5 +1,5 @@
 -- Snacks.gitbrowse configuration for on-prem SCM hosts.
--- The private values are Lua fragments migrated exactly from chezmoi's [[scm]].
+-- The private values are Lua fragments from the work target's ignored mise.local.toml.
 return {
   "folke/snacks.nvim",
   opts = {

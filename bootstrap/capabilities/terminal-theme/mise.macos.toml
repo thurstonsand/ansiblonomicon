@@ -2,14 +2,6 @@
 "~/.local/bin/terminal-theme-ssh-lease.py" = { source = "terminal-theme/terminal-theme-ssh-lease.py", mode = "symlink" }
 "~/.local/bin/terminal-theme-watch" = { source = "terminal-theme/terminal-theme-watch", mode = "symlink" }
 
-[bootstrap.hooks.post-dotfiles]
-run = '''
-service="gui/$(id -u)/house.thurstons.terminal-theme-watch"
-if launchctl print "$service" >/dev/null 2>&1; then
-  launchctl bootout "$service"
-fi
-'''
-
 [bootstrap.macos.launchd.agents."house.thurstons.terminal-theme-watch"]
 program = "{{ vars.terminal_theme_home }}/.local/bin/terminal-theme-watch"
 run_at_load = true

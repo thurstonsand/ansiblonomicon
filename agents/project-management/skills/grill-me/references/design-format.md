@@ -142,7 +142,7 @@ raw input
   -> serialized output
 ```
 
-Include failure, retry, cancellation, idempotency, and observability flows when they are reachable. Keep the notation in whatever the project actually is: Ansible task names and handlers, a chezmoi template chain, a CLI command path, a function trace. Signatures earn a place only for the handful of functions too internal for the exposed shape but easy for an implementer to get wrong.
+Include failure, retry, cancellation, idempotency, and observability flows when they are reachable. Keep the notation in whatever the project actually is: mise task names and hooks, a template render chain, a CLI command path, a function trace. Signatures earn a place only for the handful of functions too internal for the exposed shape but easy for an implementer to get wrong.
 
 ## Implementation plan rules
 

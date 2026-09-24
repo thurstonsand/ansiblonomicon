@@ -1,7 +1,6 @@
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import struct
-import subprocess
 import sys
 from typing import Any
 
@@ -42,13 +41,6 @@ def pointer_types(packet: bytes) -> list[str]:
         targets.append(beacon.read_name(packet, offset)[0])
         offset += length
     return targets
-
-
-def test_mdns_beacon_compose_is_valid() -> None:
-    subprocess.run(
-        ["docker", "compose", "-f", str(STACK / "compose.yaml"), "config", "--quiet"],
-        check=True,
-    )
 
 
 def test_mdns_beacon_holds_the_named_scanners_identity() -> None:

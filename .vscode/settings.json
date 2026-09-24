@@ -1,11 +1,4 @@
 {
-  "files.associations": {
-    "**/ansible/**/*.yml": "ansible",
-    "**/ansible/**/*.yaml": "ansible",
-    "inventory": "ini",
-    "**/chezmoi/.chezmoitemplates/*": "gotmpl",
-    "**/chezmoi/**/modify_*": "shellscript"
-  },
   "python.defaultInterpreterPath": ".venv/bin/python",
   "basedpyright.analysis.ignore": ["**/.venv/**"]
 }

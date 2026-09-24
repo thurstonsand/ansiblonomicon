@@ -5,9 +5,6 @@ __pycache__/
 # Typescript
 node_modules
 
-# Ansible
-*.retry
-.ansible/
 .build-checksum
 
 # macOS
@@ -36,17 +33,11 @@ CLAUDE.local.md
 
 # Machine-local
 agents/work/
-ansible/Brewfile.work.*
-ansible/tasks/work.local.yml
-ansible/work.config.local.yml
+bootstrap/capabilities/mac-apps/Brewfile.work.local
 mise.local.toml
-bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml
-chezmoi/.chezmoidata/local.toml
-chezmoi/.chezmoitemplates/local/
+*.local.toml
+bootstrap/targets/*/local/
 bootstrap/capabilities/agent-harness/local/
-chezmoi/dot_claude/hooks/local/
-chezmoi/dot_zshrc.local.tmpl
-chezmoi/private_dot_zshenv.local.tmpl
 
 # uv (project-level override)
 uv.toml

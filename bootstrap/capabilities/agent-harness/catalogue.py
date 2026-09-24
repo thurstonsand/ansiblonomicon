@@ -82,8 +82,8 @@ def environment(repo: Path, home: Path, hostname: str) -> jinja2.Environment:
         return source.read_text().rstrip("\n")
 
     cast(dict[str, object], env.globals).update(
-        ansible_facts={"env": {"HOME": str(home)}},
-        ansible_hostname=hostname,
+        home=str(home),
+        hostname=hostname,
         agent_harness_root=str(repo / CAPABILITY),
         lookup=lookup,
     )
@@ -149,7 +149,19 @@ def declarations(
     if not isinstance(raw_sources, list):
         raise ValueError("Expected harness source list")
     source_entries = [mapping(source) for source in cast(list[object], raw_sources)]
-    for source in source_entries:
+    local_catalogue = repo / CAPABILITY / "local" / hostname / "catalogue.toml"
+    local_entries: list[dict[str, object]] = []
+    if local_catalogue.is_file():
+        local_data = mapping(tomllib.loads(local_catalogue.read_text()))
+        if set(local_data) - {"sources"} or not isinstance(
+            local_data.get("sources", []), list
+        ):
+            raise ValueError(f"{local_catalogue}: only a sources array is supported")
+        local_entries = [
+            mapping(source)
+            for source in cast(list[object], local_data.get("sources", []))
+        ]
+    for source in [*source_entries, *local_entries]:
         local = source.get("local")
         if isinstance(local, str) and not Path(local).is_absolute():
             source["local"] = str(repo / local)
@@ -158,6 +170,7 @@ def declarations(
         profile,
         list(profiles),
         list(layouts),
+        local_entries,
     )
     return env, selected_profile, layouts, sources
 

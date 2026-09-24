@@ -6,13 +6,6 @@ set -euo pipefail
 
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-GALAXY_IGNORE_CERTS=""
-for arg in "$@"; do
-    case "$arg" in
-        --ignore-certs) GALAXY_IGNORE_CERTS="--ignore-certs" ;;
-    esac
-done
-
 echo "==> ansiblonomicon bootstrap"
 echo "    Repo: $REPO_DIR"
 
@@ -64,19 +57,9 @@ if [[ "$PLATFORM" == "darwin" ]]; then
     fi
 fi
 
-# Only work retains legacy reconciliation until its private-input cutover.
-if [[ "$(hostname -s)" == "ML-DFC6YK6VJQ" ]]; then
-    for tool in ansible chezmoi; do
-        if ! command -v "$tool" &>/dev/null; then
-            echo "==> Installing $tool for work reconciliation..."
-            brew install "$tool"
-        fi
-    done
-fi
-
 # Install mise (provides this repo's toolchain, venv, and environment)
 # The official installer, not a package manager: package-managed mise refuses
-# `mise self-update`, which is how the language_tools role keeps it current.
+# `mise self-update`, which is how `mise:maintain` keeps it current.
 if ! command -v mise &>/dev/null; then
     echo "==> Installing mise..."
     curl -fsSL https://mise.run | sh
@@ -100,7 +83,7 @@ else
     echo "==> uv already installed"
 fi
 
-# Install 1Password CLI (required for secrets in Ansible and Chezmoi)
+# Install 1Password CLI (fnox resolves op:// secrets through it)
 if ! command -v op &>/dev/null; then
     echo "==> Installing 1Password CLI..."
     if [[ "$PLATFORM" == "darwin" ]]; then
@@ -111,20 +94,6 @@ if ! command -v op &>/dev/null; then
     fi
 else
     echo "==> 1Password CLI already installed"
-fi
-
-# Install the work laptop's remaining Ansible collections.
-if [[ "$(hostname -s)" == "ML-DFC6YK6VJQ" ]]; then
-    echo "==> Installing Ansible Galaxy requirements..."
-    if ! ansible-galaxy install -r "$REPO_DIR/ansible/requirements.yml" $GALAXY_IGNORE_CERTS; then
-        echo ""
-        echo "ERROR: Failed to install Ansible Galaxy requirements."
-        echo ""
-        echo "If this is an SSL/certificate error (e.g. corporate proxy with TLS inspection),"
-        echo "re-run with:"
-        echo "    ./scripts/bootstrap.sh --ignore-certs"
-        exit 1
-    fi
 fi
 
 echo "==> Bootstrap complete!"

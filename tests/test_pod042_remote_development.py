@@ -63,6 +63,7 @@ def apply_services(
     monkeypatch.setattr(services, "output", output)
     monkeypatch.setattr(services, "run", run)
     monkeypatch.setattr(services, "require_amp", lambda: None)
+    monkeypatch.setattr(services, "require_herdr", lambda: None)
 
     def unit_active(unit: str) -> bool:
         return herdr_unit_active
@@ -84,13 +85,6 @@ def test_starts_enrolled_service_before_first_link(
     assert ("systemctl", "--user", "start", "amp-remote.service") in calls
     assert ("systemctl", "--user", "enable", "herdr.service") in calls
     assert ("systemctl", "--user", "start", "herdr.service") in calls
-
-
-def test_leaves_an_unowned_herdr_server_alone_when_none_is_running(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-):
-    calls = apply_services(monkeypatch, tmp_path)
-    assert not [call for call in calls if call[1:] == ("server", "stop")]
 
 
 def test_stops_a_herdr_server_systemd_does_not_own(

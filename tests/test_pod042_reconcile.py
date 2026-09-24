@@ -133,25 +133,17 @@ def test_production_operator_and_remote_dotfiles_apply_and_repeat(
         "files,dotfiles",
         "--force-dotfiles",
     ]
-    retired = home / ".config/eightctl/config.yaml"
-    retired.parent.mkdir(parents=True)
-    retired.write_text("retired\n")
-    sibling = retired.with_name("keep")
-    sibling.write_text("keep\n")
 
     preview = subprocess.run(
         [*command, "--dry-run"], env=env, capture_output=True, text=True
     )
     assert preview.returncode == 0, preview.stderr
-    assert retired.exists()
     assert not (home / ".config/mise/config.toml").exists()
 
     applied = subprocess.run(
         [*command, "--yes"], env=env, capture_output=True, text=True
     )
     assert applied.returncode == 0, applied.stderr
-    assert not retired.exists()
-    assert sibling.read_text() == "keep\n"
     operator_config = home / ".config/mise/config.toml"
     npmrc = home / ".config/t3code/npmrc"
     assert operator_config.is_symlink()
@@ -170,7 +162,6 @@ def test_production_operator_and_remote_dotfiles_apply_and_repeat(
     )
     assert repeated.returncode == 0, repeated.stderr
     assert [(path.stat().st_ino, path.stat().st_mtime_ns) for path in copied] == before
-    assert sibling.read_text() == "keep\n"
 
 
 def test_vars_only_identity_is_not_a_public_capability() -> None:

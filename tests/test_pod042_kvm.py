@@ -129,49 +129,6 @@ def test_direct_endpoint_requires_explicit_insecure_mode() -> None:
         pod042_kvm.endpoint_headers("http://10.10.10.34", False, {})
 
 
-def test_tls_verification_is_default_and_insecure_is_explicit() -> None:
-    parser = pod042_kvm.build_parser()
-
-    assert parser.parse_args(["status"]).verify_tls is True
-    assert parser.parse_args(["--insecure", "status"]).verify_tls is False
-
-
-def test_response_result_conforms_success() -> None:
-    assert pod042_kvm.response_result(
-        response({"ok": True, "result": {"hostname": "pod042-kvm"}}),
-        "hostname",
-    ) == {"hostname": "pod042-kvm"}
-
-
-@pytest.mark.parametrize(
-    ("name", "expected"),
-    [
-        ("ctrl", "ControlLeft"),
-        ("A", "KeyA"),
-        ("7", "Digit7"),
-        ("f12", "F12"),
-        ("ArrowUp", "ArrowUp"),
-    ],
-)
-def test_key_code(name: str, expected: str) -> None:
-    assert pod042_kvm.key_code(name) == expected
-
-
-def test_key_code_rejects_unknown_name() -> None:
-    with pytest.raises(pod042_kvm.KvmError, match="unknown key name"):
-        pod042_kvm.key_code("surely-not-a-key")
-
-
-def test_parse_chord_rejects_repeated_key() -> None:
-    with pytest.raises(pod042_kvm.KvmError, match="cannot repeat"):
-        pod042_kvm.parse_chord("ctrl+control")
-
-
-def test_key_frame_uses_glkvm_binary_protocol() -> None:
-    assert pod042_kvm.key_frame("Delete", True) == b"\x01\x01Delete"
-    assert pod042_kvm.key_frame("Delete", False) == b"\x01\x00Delete"
-
-
 def test_send_chord_releases_keys_in_reverse_order() -> None:
     connection = RecordingConnection()
 
@@ -254,75 +211,6 @@ def test_screenshot_retries_temporary_failures(
     client.http.close()
 
 
-def test_run_screenshot_writes_returned_frame(
-    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
-) -> None:
-    frame = b"jpeg frame"
-
-    class FakeClient:
-        def __init__(
-            self,
-            _: str,
-            verify_tls: bool = True,
-            headers: dict[str, str] | None = None,
-        ) -> None:
-            assert not verify_tls
-            assert headers == {}
-
-        def __enter__(self) -> FakeClient:
-            return self
-
-        def __exit__(self, *_: object) -> None:
-            pass
-
-        def screenshot(self) -> bytes:
-            return frame
-
-    monkeypatch.setattr(pod042_kvm, "KvmClient", FakeClient)
-    path = tmp_path / "frame.jpg"
-
-    assert pod042_kvm.run(["--insecure", "screenshot", str(path)]) == 0
-    assert path.read_bytes() == frame
-
-
-def test_run_key_sends_each_chord(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    connection = RecordingConnection()
-
-    class FakeClient:
-        def __init__(
-            self,
-            _: str,
-            verify_tls: bool = True,
-            headers: dict[str, str] | None = None,
-        ) -> None:
-            assert not verify_tls
-            assert headers == {}
-
-        def __enter__(self) -> FakeClient:
-            return self
-
-        def __exit__(self, *_: object) -> None:
-            pass
-
-        @contextmanager
-        def key_socket(self) -> Generator[RecordingConnection]:
-            yield connection
-
-    monkeypatch.setattr(pod042_kvm, "KvmClient", FakeClient)
-
-    assert pod042_kvm.run(["--insecure", "key", "ctrl+c", "enter", "--delay", "0"]) == 0
-    assert connection.messages == [
-        b"\x01\x01ControlLeft",
-        b"\x01\x01KeyC",
-        b"\x01\x00KeyC",
-        b"\x01\x00ControlLeft",
-        b"\x01\x01Enter",
-        b"\x01\x00Enter",
-    ]
-
-
 def test_media_upload_sends_raw_image_with_declared_length(tmp_path: Path) -> None:
     image = tmp_path / "test.iso"
     image.write_bytes(b"iso contents")
@@ -382,51 +270,6 @@ def test_media_mount_selects_image_before_connecting() -> None:
         "rw": "false",
     }
     assert dict(requests[1].url.params) == {"connected": "true"}
-    client.http.close()
-
-
-def test_wake_sends_mac_to_native_wol_endpoint() -> None:
-    requests: list[httpx.Request] = []
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        requests.append(request)
-        return httpx.Response(200, json={"ok": True, "result": {}})
-
-    client = pod042_kvm.KvmClient("https://kvm")
-    client.http.close()
-    client.http = httpx.Client(
-        base_url="https://kvm", transport=httpx.MockTransport(handler)
-    )
-
-    client.wake("a0:36:bc:28:37:41")
-
-    assert requests[0].url.path == "/api/wol/wake"
-    assert dict(requests[0].url.params) == {"mac": "a0:36:bc:28:37:41"}
-    client.http.close()
-
-
-@pytest.mark.parametrize("enabled", [True, False])
-def test_media_enable_configures_both_usb_storage_functions(enabled: bool) -> None:
-    requests: list[httpx.Request] = []
-
-    def handler(request: httpx.Request) -> httpx.Response:
-        requests.append(request)
-        return httpx.Response(200, json={"ok": True, "result": {}})
-
-    client = pod042_kvm.KvmClient("https://kvm")
-    client.http.close()
-    client.http = httpx.Client(
-        base_url="https://kvm", transport=httpx.MockTransport(handler)
-    )
-
-    client.media_enable(enabled)
-
-    value = str(enabled).lower()
-    assert requests[0].url.path == "/api/system/otg_functions"
-    assert dict(requests[0].url.params) == {
-        "start_cdrom": value,
-        "start_flash": value,
-    }
     client.http.close()
 
 

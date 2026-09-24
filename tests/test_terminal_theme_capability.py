@@ -119,9 +119,6 @@ def test_macos_private_resources_are_host_local_and_watcher_is_shared() -> None:
                 "group": "staff",
                 "mode": "0644",
             },
-            f"{home}/Library/LaunchAgents/house.thurstons.terminal-theme-watch.plist": {
-                "state": "absent"
-            },
         }
 
     agent = shared["bootstrap"]["macos"]["launchd"]["agents"][
@@ -133,64 +130,6 @@ def test_macos_private_resources_are_host_local_and_watcher_is_shared() -> None:
     assert "terminal_theme_home" not in runtime_hash
     assert "hunk-gruvbox-light.toml" in runtime_hash
     assert "hunk-gruvbox-dark.toml" in runtime_hash
-
-
-def test_legacy_watcher_is_unloaded_by_native_hook_once(tmp_path: Path) -> None:
-    config = tomllib.loads((CAPABILITY / "mise.macos.toml").read_text())
-    bootstrap = config["bootstrap"]
-    retirement = tomllib.loads(
-        (
-            ROOT
-            / "bootstrap/targets/Thurstons-MacBook-Pro/mise.terminal-theme-files.toml"
-        ).read_text()
-    )["bootstrap"]
-    assert retirement["files"][
-        "/Users/thurstonsand/Library/LaunchAgents/house.thurstons.terminal-theme-watch.plist"
-    ] == {"state": "absent"}
-    loaded = tmp_path / "loaded"
-    calls = tmp_path / "calls"
-    launchctl = tmp_path / "launchctl"
-    launchctl.write_text(
-        "#!/bin/sh\n"
-        'printf "%s\\n" "$*" >> "$CALLS"\n'
-        'case "$1" in\n'
-        'print) test -e "$LOADED" ;;\n'
-        'bootout) rm "$LOADED" ;;\n'
-        "*) exit 99 ;;\n"
-        "esac\n"
-    )
-    launchctl.chmod(0o755)
-    loaded.touch()
-    home = tmp_path / "home"
-    target = tmp_path / "config"
-    home.mkdir()
-    target.mkdir()
-    hook = bootstrap["hooks"]["post-dotfiles"]["run"]
-    (target / "mise.toml").write_text(
-        "[bootstrap.hooks.post-dotfiles]\nrun = '''\n" + hook + "'''\n"
-    )
-    env = {
-        **isolated_mise_env(home, target),
-        "PATH": f"{tmp_path}:{os.environ['PATH']}",
-        "CALLS": str(calls),
-        "LOADED": str(loaded),
-    }
-    command = ["mise", "-C", str(target), "bootstrap", "--only", "dotfiles"]
-    preview = subprocess.run(
-        [*command, "--dry-run"], env=env, check=True, capture_output=True, text=True
-    )
-    assert "post-dotfiles" in preview.stdout + preview.stderr
-    assert loaded.exists()
-    assert not calls.exists()
-    subprocess.run(command, env=env, check=True)
-    assert not loaded.exists()
-    subprocess.run(command, env=env, check=True)
-    service = f"gui/{os.getuid()}/house.thurstons.terminal-theme-watch"
-    assert calls.read_text().splitlines() == [
-        f"print {service}",
-        f"bootout {service}",
-        f"print {service}",
-    ]
 
 
 def test_helper_source_modes() -> None:

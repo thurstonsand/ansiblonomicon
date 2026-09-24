@@ -2,7 +2,6 @@
 # ================================
 # Single source of truth for all model definitions across:
 # - Native agent-harness and editor-config renderers
-# - Ansible on the work laptop (agent harness), loaded by work.yml vars_files
 #
 # Update model versions here; all consumers reference this file.
 ---

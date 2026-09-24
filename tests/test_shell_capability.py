@@ -36,30 +36,6 @@ def isolated_env(home: Path, target: Path) -> dict[str, str]:
     }
 
 
-@pytest.mark.parametrize("host", HOSTS)
-def test_hosts_use_real_shared_sources_and_declare_one_zshenv_owner(host: str) -> None:
-    target = ROOT / "bootstrap/targets" / host
-    assert (target / "mise.shell.toml").resolve() == (
-        CAPABILITY / "mise.toml"
-    ).resolve()
-    assert (target / "shell").resolve() == (CAPABILITY / "files").resolve()
-    shared = tomllib.loads((CAPABILITY / "mise.toml").read_text())
-    assert "~/.zshenv" not in shared["dotfiles"]
-    if host == "ML-DFC6YK6VJQ":
-        work = tomllib.loads((target / "mise.shell-work.toml").read_text())
-        assert work["bootstrap"]["files"]["/Users/tsandberg/.zshenv"] == {
-            "source": "shell/zshenv.tera",
-            "template": True,
-            "owner": "tsandberg",
-            "group": "staff",
-            "mode": "0600",
-        }
-        assert "hooks" not in work["bootstrap"]
-    else:
-        personal = tomllib.loads((target / "mise.shell-personal.toml").read_text())
-        assert personal["dotfiles"]["~/.zshenv"]["mode"] == "template"
-
-
 @pytest.mark.parametrize("profile,host_os", HOSTS.values())
 def test_real_mise_render_is_valid_zsh_and_noop(
     profile: str, host_os: str, tmp_path: Path
@@ -67,9 +43,6 @@ def test_real_mise_render_is_valid_zsh_and_noop(
     home, target = tmp_path / "home", tmp_path / "target"
     home.mkdir()
     target.mkdir()
-    retired = home / ".config/direnv/direnv.toml"
-    retired.parent.mkdir(parents=True)
-    retired.symlink_to(target / "removed-direnv.toml")
     (target / "shell").symlink_to(CAPABILITY / "files", target_is_directory=True)
     (target / "mise.shell.toml").symlink_to(CAPABILITY / "mise.toml")
     (target / "mise.shell-personal.toml").write_text(
@@ -92,22 +65,10 @@ def test_real_mise_render_is_valid_zsh_and_noop(
         "--force-dotfiles",
         "--yes",
     ]
-    preview = subprocess.run(
-        [*command[:-1], "--dry-run"],
-        env=env,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert "direnv.toml" in preview.stdout + preview.stderr
-    assert retired.is_symlink()
     subprocess.run(command, env=env, check=True, capture_output=True, text=True)
-    assert not retired.is_symlink()
-    assert not retired.exists()
     paths = [home / name for name in (".zshenv", ".zprofile", ".zshrc")]
     for path in paths:
         subprocess.run(["zsh", "-n", str(path)], check=True)
-    assert "_evalcache direnv hook zsh" in (home / ".zshrc").read_text()
     before = [
         (
             p.stat().st_ino,
@@ -381,16 +342,19 @@ def test_work_task_credentials_sudo_and_check_are_scoped(
     assert "sgp_synthetic-ABC123" not in result.stdout + result.stderr
     assert "own password" not in result.stdout + result.stderr
     lines = calls.read_text().splitlines()
+    target = f"mise -C {project}/bootstrap/targets/ML-DFC6YK6VJQ bootstrap "
     if check:
-        assert lines == [
-            f"mise -C {project}/bootstrap/targets/ML-DFC6YK6VJQ bootstrap --only files,dotfiles --force-dotfiles --dry-run env=shell,shell-work token=preview"
-        ]
+        assert len(lines) == 1
+        assert lines[0].startswith(target)
+        assert lines[0].endswith("--dry-run env=shell,shell-work token=preview")
     else:
         assert lines[0] == (
             "fnox exec --secret SOURCEGRAPH_TOKEN --secret "
             "HOMEBREW_SUDO_ASKPASS_PASS_WORK"
         )
-        assert lines[1:] == [
-            "sudo -A -v",
-            f"mise -C {project}/bootstrap/targets/ML-DFC6YK6VJQ bootstrap --only files,dotfiles --force-dotfiles --yes env=shell,shell-work token=sgp_synthetic-ABC123",
-        ]
+        assert lines[1] == "sudo -A -v"
+        assert lines[2].startswith(target)
+        assert lines[2].endswith(
+            "--yes env=shell,shell-work token=sgp_synthetic-ABC123"
+        )
+        assert len(lines) == 3

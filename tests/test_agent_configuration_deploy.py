@@ -21,35 +21,6 @@ deploy: Any = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(deploy)
 
 
-@pytest.mark.parametrize(
-    ("hostname", "expected"),
-    [
-        ("Thurstons-MacBook-Pro", "Develop"),
-        (deploy.WORK_HOST, "code"),
-        ("pod042", "code"),
-    ],
-)
-def test_load_data_uses_host_develop_directory(
-    tmp_path: Path, hostname: str, expected: str
-) -> None:
-    repo = tmp_path / "repo"
-    capability = repo / "bootstrap/capabilities/agent-harness"
-    capability.mkdir(parents=True)
-    shutil.copy(
-        ROOT / "bootstrap/capabilities/agent-harness/models.yml",
-        capability / "models.yml",
-    )
-    if hostname == deploy.WORK_HOST:
-        local = repo / "bootstrap/capabilities/agent-harness/local" / hostname
-        local.mkdir(parents=True)
-        (local / "data.toml").write_text("[work_gateway]\n[work_models]\n")
-
-    data = deploy.load_data(repo, hostname, tmp_path / "home")
-
-    assert data["developDir"] == expected
-    assert "host_defaults" not in data
-
-
 def test_load_data_local_overlay_overrides_host_default(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     capability = repo / "bootstrap/capabilities/agent-harness"
@@ -304,76 +275,6 @@ def test_lockless_package_install_is_stable_on_immediate_repeat(
     assert after == before
 
 
-def test_package_replaces_legacy_tree_without_sudo_and_resolves_from_deployed_path(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    home = tmp_path / "home"
-    home.mkdir()
-    extension = tmp_path / "runtime-test.ts"
-    extension.write_text('import jiti from "jiti"; export default typeof jiti;\n')
-    destination = ".pi/agent/extensions/node_modules"
-    legacy = home / destination
-    legacy.mkdir(parents=True)
-    (legacy / "generated-package").mkdir()
-    (legacy / "generated-package/package.json").write_text('{"generated":true}\n')
-    sibling = legacy.parent / "foreign.ts"
-    sibling.write_text("keep\n")
-    sudo_called = tmp_path / "sudo-called"
-    binary = tmp_path / "bin"
-    binary.mkdir()
-    sudo = binary / "sudo"
-    sudo.write_text(f"#!/bin/sh\nprintf '%s\\n' \"$*\" > {sudo_called}\nexit 97\n")
-    sudo.chmod(0o755)
-    monkeypatch.setenv("PATH", f"{binary}:{os.environ['PATH']}")
-    source = PATH.parent / "assets/pi/extensions"
-    monkeypatch.setattr(deploy, "load_data", lambda *_: {"mcp_servers": []})
-    monkeypatch.setattr(deploy, "render_all", lambda *_: {})
-    monkeypatch.setattr(
-        deploy,
-        "_assets",
-        lambda *_: (
-            [(extension, ".pi/agent/extensions/runtime-test.ts")],
-            [
-                {
-                    "source": "assets/pi/extensions",
-                    "destination": destination,
-                    "hosts": ["pod042"],
-                }
-            ],
-            [],
-        ),
-    )
-
-    deploy.reconcile(
-        repo=ROOT,
-        home=home,
-        hostname="Thurstons-MacBook-Pro",
-        secrets={},
-        check=False,
-    )
-
-    assert legacy.is_symlink()
-    assert legacy.resolve() == source / "node_modules"
-    assert sibling.read_text() == "keep\n"
-    assert not sudo_called.exists()
-    assert not (
-        home / ".cache/ansiblonomicon-harness/configuration/native-transition"
-    ).exists()
-    jiti_module = source / "node_modules/jiti/lib/jiti.mjs"
-    script = (
-        f"import {{ createJiti }} from {json.dumps(jiti_module.as_uri())};"
-        f"const load=createJiti({json.dumps(str(home / '.pi/agent/extensions/loader.mjs'))});"
-        f"console.log((await load.import({json.dumps(str(home / '.pi/agent/extensions/runtime-test.ts'))})).default);"
-    )
-    result = subprocess.run(
-        ["node", "--input-type=module", "--eval", script],
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert result.stdout.strip() == "function"
-
-
 def test_changed_owned_output_is_not_removed(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -459,6 +360,7 @@ def test_mcp_converts_claude_schema_preserves_foreign_and_rejects_transport(
     assert json.loads(rendered)["mcpServers"] == {
         "foreign": {"command": "keep"},
         "owned": {
+            "type": "stdio",
             "command": "x",
             "args": ["--flag"],
             "env": {"TOKEN": "value"},
@@ -498,7 +400,8 @@ def test_native_mcp_nonempty_to_empty_preserves_app_owned_file(
 
     deploy.reconcile(repo=ROOT, home=home, hostname="pod042", secrets={}, check=False)
     assert json.loads(target.read_text())["mcpServers"]["owned"] == {
-        "command": "managed"
+        "type": "stdio",
+        "command": "managed",
     }
 
     data["mcp_servers"] = []

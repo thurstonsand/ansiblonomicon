@@ -78,17 +78,8 @@ def good_state() -> tuple[
     )
 
 
-def test_network_declaration_owns_physical_contract_and_retirement() -> None:
-    config = tomllib.loads((TARGET / "mise.network.toml").read_text())
-    bootstrap = config["bootstrap"]
-    interfaces = bootstrap["files"]["/etc/network/interfaces"]["content"]
-    assert "auto enp5s0" in interfaces
-    assert "allow-hotplug enp5s0" not in interfaces
-    assert "iface enp5s0 inet dhcp" in interfaces
-    assert "mtu 1500" in interfaces
-    assert "ethtool -s enp5s0 wol g" in interfaces
-    assert "ethtool -G enp5s0 rx 4096" in interfaces
-    assert "wlo1" not in interfaces
+def test_container_forwarding_is_paired_with_a_drop_policy() -> None:
+    bootstrap = tomllib.loads((TARGET / "mise.network.toml").read_text())["bootstrap"]
     sysctl = bootstrap["files"]["/etc/sysctl.d/90-pod042-network.conf"]["content"]
     assert "net.ipv4.ip_forward = 1" in sysctl
     assert "net.ipv6.conf.all.forwarding = 0" in sysctl
@@ -100,24 +91,6 @@ def test_network_declaration_owns_physical_contract_and_retirement() -> None:
     unit = (TARGET / "network/forward-policy.service").read_text()
     assert "--policy FORWARD DROP" in unit
     assert "ip6tables --policy FORWARD DROP" in unit
-    retired = {
-        path
-        for path, declaration in bootstrap["files"].items()
-        if declaration.get("state") == "absent"
-    }
-    assert retired == {
-        "/etc/systemd/network/10-br0.netdev",
-        "/etc/systemd/network/10-br0.network",
-        "/etc/systemd/network/11-nic.network",
-        "/etc/systemd/network/21-br0.1.netdev",
-        "/etc/systemd/network/21-br0.1.network",
-        "/etc/systemd/network/22-br0.2.netdev",
-        "/etc/systemd/network/22-br0.2.network",
-        "/etc/systemd/network/23-br0.3.netdev",
-        "/etc/systemd/network/23-br0.3.network",
-        "/etc/systemd/network/24-br0.4.netdev",
-        "/etc/systemd/network/24-br0.4.network",
-    }
 
 
 def test_live_network_contract_accepts_expected_state() -> None:
@@ -200,7 +173,7 @@ def test_live_network_contract_reports_boundary_drift() -> None:
     )
     assert errors == [
         "enp5s0 must not be enslaved to a host bridge",
-        "retired host bridge br0 still exists",
+        "host bridge br0 exists; containers must attach to the physical NIC",
         "enp5s0 does not have sole IPv4 address 10.10.10.42",
         "wlo1 must not have an address",
         "default route must use 10.10.10.1 through enp5s0",
@@ -240,8 +213,6 @@ def probe_state() -> tuple[
 
 
 def test_probe_namespace_terminates_every_client_vlan() -> None:
-    assert probe.NAMESPACE == "probe"
-    assert [leg.vlan for leg in probe.LEGS] == [20, 30, 40, 50]
     assert network_check.verify_probe(*probe_state()) == []
 
 
@@ -278,19 +249,3 @@ def test_probe_namespace_contract_reports_drift() -> None:
     assert network_check.verify_probe(legs, routes, forwarding, host_address) == [
         "enp5s0 holds client VLAN address 10.10.40.251 in root"
     ]
-
-
-def test_network_declaration_owns_the_probe_namespace() -> None:
-    bootstrap = tomllib.loads((TARGET / "mise.network.toml").read_text())["bootstrap"]
-    files = bootstrap["files"]
-    assert files["/etc/ansiblonomicon/network/probe.py"]["source"] == "network/probe.py"
-    assert files["/etc/ansiblonomicon/network/probe.py"]["notify"] == ["probe"]
-    assert files["/usr/local/bin/net-probe"]["mode"] == "0755"
-    assert bootstrap["services"]["probe"] == {
-        "state": "running",
-        "enabled": True,
-        "on_change": "restart",
-    }
-    assert {"apt:tcpdump", "apt:nmap", "apt:arp-scan"} <= set(bootstrap["packages"])
-    # avahi-utils needs a daemon and D-Bus the namespace does not have.
-    assert "apt:avahi-utils" not in bootstrap["packages"]

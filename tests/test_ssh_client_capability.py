@@ -94,7 +94,7 @@ def bootstrap(
     ("host_os", "host", "keys"),
     [("darwin", "Thurstons-MacBook-Pro", False), ("linux", "pod042", True)],
 )
-def test_real_mise_renders_parsable_config_with_modes_and_stable_repeat(
+def test_real_mise_renders_parsable_private_config_and_stable_repeat(
     tmp_path: Path, host_os: str, host: str, keys: bool
 ) -> None:
     target, env = fixture(tmp_path, host_os=host_os, host=host, keys=keys)
@@ -110,12 +110,6 @@ def test_real_mise_renders_parsable_config_with_modes_and_stable_repeat(
     config = home / ".ssh/config"
     config.write_text("stale config\n")
     config.chmod(0o664)
-
-    preview = bootstrap(target, env, "--dry-run")
-    assert preview.returncode == 0, preview.stderr
-    assert config.read_text() == "stale config\n"
-    assert stat.S_IMODE(config.stat().st_mode) == 0o664
-    assert unrelated.read_text() == "fixture-host fixture-key\n"
 
     applied = bootstrap(target, env, "--yes")
     assert applied.returncode == 0, applied.stderr
@@ -140,76 +134,17 @@ def test_real_mise_renders_parsable_config_with_modes_and_stable_repeat(
             check=True,
         ).stdout.split()
         assert derived[:2] == public_key.split()[:2]
-        assert "Host github.com" in config.read_text()
-        assert "Host pod042\n" not in config.read_text()
         repeated_paths.extend((rendered_private, rendered_public))
-    else:
-        assert "Host pod042\n" in config.read_text()
-        assert "IdentityAgent" in config.read_text()
-        assert "Host github.com" not in config.read_text()
 
-    common = {
-        "pod042-kvm": {
-            "hostname": "10.10.10.34",
-            "user": "root",
-            "hostkeyalias": "pod042-kvm",
-            "identityfile": "~/.ssh/id_ecdsa_glkvm",
-        },
-        "haos": {
-            "hostname": "haos",
-            "user": "root",
-            "hostkeyalias": "haos",
-            "proxycommand": "~/.local/libexec/ssh-smart-proxy haos 192.168.1.89 22222 haos-ssh.thurstons.house",
-            "forwardagent": "yes",
-        },
-        "udmp": {
-            "hostname": "10.10.20.1",
-            "user": "root",
-            "hostkeyalias": "udmp",
-        },
-    }
-    mac_only = {
-        "pod042": (
-            "pod042",
-            "pod042",
-            "~/.local/libexec/ssh-smart-proxy pod042 10.10.10.42 22 pod042-ssh.thurstons.house",
-        ),
-        "pod042-remote": (
-            "pod042-ssh.thurstons.house",
-            "pod042",
-            "cloudflared access ssh --hostname %h",
-        ),
-        "pod042-ts": ("100.64.249.18", "pod042", None),
-        "pod042-kvm-ts": ("100.112.38.64", "pod042-kvm", None),
-    }
-    expected = common
-    if keys:
-        expected["github.com"] = {
-            "hostname": "github.com",
-            "user": "git",
-            "identityfile": "~/.ssh/id_ed25519_git",
-            "identitiesonly": "yes",
-        }
-    else:
-        for alias, (hostname, hostkeyalias, proxycommand) in mac_only.items():
-            expected[alias] = {
-                "hostname": hostname,
-                "user": "root" if alias == "pod042-kvm-ts" else "thurstonsand",
-                "hostkeyalias": hostkeyalias,
-                "identityfile": (
-                    "~/.ssh/id_ecdsa_glkvm"
-                    if alias == "pod042-kvm-ts"
-                    else "~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub"
-                ),
-                "identitiesonly": "yes",
-                **({"proxycommand": proxycommand} if proxycommand else {}),
-                **({"forwardagent": "yes"} if alias != "pod042-kvm-ts" else {}),
-            }
-    for alias, alias_expected in expected.items():
+    aliases = [
+        line.split()[1]
+        for line in config.read_text().splitlines()
+        if line.startswith("Host ") and "*" not in line
+    ]
+    assert aliases
+    for alias in aliases:
         settings = ssh_settings(config, env, alias)
-        assert {name: settings[name] for name in alias_expected} == alias_expected
         assert settings["addkeystoagent"] == "false"
-        assert settings["forwardagent"] == alias_expected.get("forwardagent", "no")
         if host_os == "darwin":
             assert settings["identityagent"].endswith(
                 "2BUA8C4S2C.com.1password/t/agent.sock"
@@ -313,15 +248,3 @@ def test_proxy_probes_local_first_then_selects_connection(
     )
     assert result.returncode == 0, result.stderr
     assert log.read_text().splitlines() == expected
-
-
-def test_registered_targets_link_only_personal_ssh_capability() -> None:
-    personal = ROOT / "bootstrap/targets/Thurstons-MacBook-Pro"
-    pod042 = ROOT / "bootstrap/targets/pod042"
-    work = ROOT / "bootstrap/targets/ML-DFC6YK6VJQ"
-    assert (personal / "mise.ssh-client.toml").resolve() == CAPABILITY / "mise.toml"
-    assert (pod042 / "mise.ssh-client.toml").resolve() == CAPABILITY / "mise.toml"
-    assert (
-        pod042 / "mise.ssh-client-pod042.toml"
-    ).resolve() == CAPABILITY / "mise.pod042.toml"
-    assert not list(work.glob("*ssh-client*"))

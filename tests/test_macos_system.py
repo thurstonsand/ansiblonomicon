@@ -4,11 +4,9 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-import tomllib
-from typing import Any, cast
+from typing import cast
 
 import pytest
-import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPABILITY = ROOT / "bootstrap/capabilities/macos-system"
@@ -31,37 +29,6 @@ def without_sudo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     sudo.chmod(0o755)
     monkeypatch.setenv("PATH", f"{binary}:{os.environ['PATH']}")
     monkeypatch.setenv("SUDO_ASKPASS", "/bin/false")
-
-
-def declared_defaults() -> dict[tuple[str, str], object]:
-    result: dict[tuple[str, str], object] = {}
-    for path in CAPABILITY.glob("mise.*.toml"):
-        data = tomllib.loads(path.read_text())
-        for domain, values in (
-            data.get("bootstrap", {}).get("macos", {}).get("defaults", {}).items()
-        ):
-            result.update({(domain, key): value for key, value in values.items()})
-    return result
-
-
-def test_native_defaults_exactly_match_retained_legacy_role() -> None:
-    legacy: dict[tuple[str, str], object] = {}
-    tasks = ROOT / "ansible/roles/macos_defaults/tasks"
-    for path in tasks.glob("*.yml"):
-        loaded = cast(list[dict[str, Any]] | None, yaml.safe_load(path.read_text()))
-        for task in loaded or []:
-            setting = task.get("community.general.osx_defaults")
-            if setting:
-                value = setting["value"]
-                expected_type = {"bool": bool, "string": str}[setting["type"]]
-                assert type(value) is expected_type
-                legacy[(setting["domain"], setting["key"])] = value
-    native = declared_defaults()
-    assert native.keys() == legacy.keys()
-    assert all(
-        type(native[key]) is type(value) and native[key] == value
-        for key, value in legacy.items()
-    )
 
 
 def test_personal_pam_canonicalizes_owned_lines_and_preserves_unknown_whitespace() -> (
@@ -115,12 +82,6 @@ def test_native_file_path_applies_checks_and_repeats_without_losing_lines(
     tmp_path: Path,
     without_sudo: None,
 ) -> None:
-    declaration = tomllib.loads((CAPABILITY / "mise.permissions.toml").read_text())[
-        "bootstrap"
-    ]["files"]["/etc/pam.d/sudo_local"]
-    assert declaration["owner"] == "root"
-    assert declaration["group"] == "wheel"
-    assert declaration["mode"] == "0444"
     destination = tmp_path / "sudo_local"
     destination.write_text(
         "\n# __PAM_EOF__\n\nauth optional /old/pam_reattach.so\n  unknown \t\n"

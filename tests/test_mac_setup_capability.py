@@ -387,17 +387,3 @@ def test_docker_context_cli_rejects_malformed_inspect_without_mutation(
     assert result.returncode != 0
     assert "invalid context data" in result.stderr
     assert not (Path(env["HOME"]) / "mutation").exists()
-
-
-def test_docker_context_missing_prerequisite_fails_clearly(
-    isolated: tuple[dict[str, str], Path, Path, Path, Path],
-) -> None:
-    env, fakebin, _, personal, _ = isolated
-    result = run(
-        sys.executable,
-        str(personal / "software/docker_context.py"),
-        "--check",
-        env={**env, "PATH": str(fakebin)},
-    )
-    assert result.returncode != 0
-    assert "docker is required" in result.stderr

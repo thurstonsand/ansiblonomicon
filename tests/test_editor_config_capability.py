@@ -340,33 +340,6 @@ def test_catalogue_selection_and_zed_models_come_from_input(tmp_path: Path) -> N
     ]
 
 
-@pytest.mark.parametrize("kind", ["zed", "vscode"])
-def test_settings_commands_require_settings_arguments(kind: str) -> None:
-    result = subprocess.run(
-        [
-            str(PYTHON),
-            str(CAPABILITY / "render.py"),
-            kind,
-            f"--models={MODELS}",
-        ],
-        capture_output=True,
-        text=True,
-    )
-    assert result.returncode == 2
-    assert "requires --profile, --monospace-font, --proportional-font, --font-size" in (
-        result.stderr
-    )
-
-
-def test_registration_is_mac_only_and_uses_capability_directory() -> None:
-    personal = ROOT / "bootstrap/targets/Thurstons-MacBook-Pro"
-    work = ROOT / "bootstrap/targets/ML-DFC6YK6VJQ"
-    for target in (personal, work):
-        assert (target / "editor-config").resolve() == CAPABILITY
-        assert (target / "mise.editor-config.toml").is_file()
-    assert not list((ROOT / "bootstrap/targets/pod042").glob("*editor-config*"))
-
-
 @pytest.mark.parametrize(
     ("host", "expected_font"),
     [

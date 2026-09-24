@@ -46,7 +46,9 @@ def verify(
     if physical.get("master") is not None:
         errors.append(f"{INTERFACE} must not be enslaved to a host bridge")
     if "br0" in links_by_name:
-        errors.append("retired host bridge br0 still exists")
+        errors.append(
+            "host bridge br0 exists; containers must attach to the physical NIC"
+        )
 
     addresses_by_name = {str(interface["ifname"]): interface for interface in addresses}
     physical_addresses = cast(

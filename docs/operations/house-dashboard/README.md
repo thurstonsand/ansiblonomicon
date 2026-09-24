@@ -1,6 +1,6 @@
 # House dashboard
 
-Versioned copies of Loch Highland's shipped Home Assistant dashboard, verified against the live instance on 2026-09-16. HA remains managed through HA-MCP; these files are not consumed by Ansible, mise reconciliation, or a push-triggered deployment.
+Versioned copies of Loch Highland's shipped Home Assistant dashboard, verified against the live instance on 2026-09-16. HA remains managed through HA-MCP; these files are not consumed by mise reconciliation or a push-triggered deployment.
 
 ## Files and live locations
 

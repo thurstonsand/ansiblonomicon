@@ -103,7 +103,12 @@ def isolated(tmp_path: Path) -> tuple[dict[str, str], Path, Path, Path, Path]:
 
 def git(cwd: Path, *args: str) -> str:
     return subprocess.run(
-        ["git", *args], cwd=cwd, check=True, text=True, capture_output=True
+        ["git", *args],
+        cwd=cwd,
+        env={**os.environ, "GIT_CONFIG_GLOBAL": os.devnull, "GIT_CONFIG_NOSYSTEM": "1"},
+        check=True,
+        text=True,
+        capture_output=True,
     ).stdout.strip()
 
 
@@ -390,48 +395,6 @@ def test_uvc_check_previews_missing_overlays_after_interrupted_clone(
     assert file_snapshot(checkout) == before
 
 
-def test_official_tasks_pass_only_supported_installer_arguments(
-    isolated: tuple[dict[str, str], Path, Path, Path, Path],
-) -> None:
-    env, fakebin, _, personal, _ = isolated
-    executable(
-        fakebin / "curl",
-        """url=$2
-output=$4
-case "$url" in
-  https://claude.ai/install.sh)
-    cat > "$output" <<'EOF'
-#!/bin/sh
-[ "$#" -eq 0 ] || { echo unexpected-claude-args >&2; exit 64; }
-echo "$#:$*" > "$HOME/claude-argv"
-mkdir -p "$HOME/.local/bin"
-printf '#!/bin/sh\n' > "$HOME/.local/bin/claude"
-chmod +x "$HOME/.local/bin/claude"
-EOF
-    ;;
-  https://opencode.ai/install)
-    cat > "$output" <<'EOF'
-#!/bin/sh
-[ "$#" -eq 1 ] && [ "$1" = --no-modify-path ] || { echo unexpected-opencode-args >&2; exit 65; }
-echo "$#:$*" > "$HOME/opencode-argv"
-mkdir -p "$HOME/.opencode/bin"
-printf '#!/bin/sh\n' > "$HOME/.opencode/bin/opencode"
-chmod +x "$HOME/.opencode/bin/opencode"
-EOF
-    ;;
-  *) exit 66 ;;
-esac""",
-    )
-    reconcile = personal / "software/reconcile"
-    claude = run(str(reconcile), "claude-code", str(personal), "apply", env=env)
-    opencode = run(str(reconcile), "opencode", str(personal), "apply", env=env)
-    assert claude.returncode == 0, claude.stderr
-    assert opencode.returncode == 0, opencode.stderr
-    home = Path(env["HOME"])
-    assert (home / "claude-argv").read_text() == "0:\n"
-    assert (home / "opencode-argv").read_text() == "1:--no-modify-path\n"
-
-
 def test_official_failure_cleanup_existing_noop_and_check_no_download(
     isolated: tuple[dict[str, str], Path, Path, Path, Path],
 ) -> None:
@@ -594,37 +557,6 @@ def test_pi_native_failure_does_not_relink_and_upgrade_keeps_sidecars(
     assert "upgrade --yes --no-prune github:earendil-works/pi@latest" in calls
     assert (home / "release/pi/LICENSE").read_text() == "sidecar"
     assert link.resolve() == home / "release/pi/pi"
-
-
-@pytest.mark.parametrize("check,mode", [(False, "apply"), (True, "check")])
-def test_root_uvc_dispatch_passes_explicit_mode_before_origin(
-    isolated: tuple[dict[str, str], Path, Path, Path, Path], check: bool, mode: str
-) -> None:
-    env, fakebin, project, _, _ = isolated
-    executable(fakebin / "hostname", "printf Thurstons-MacBook-Pro")
-    capture = project / "bootstrap/capabilities/software/reconcile"
-    executable(capture, 'printf "%s\\n" "$@" > "$HOME/dispatch-argv"')
-    body = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"][
-        "software:dispatch"
-    ]["run"]
-    result = run(
-        "/bin/sh",
-        "-c",
-        body,
-        env={
-            **env,
-            "usage_capability": "uvc-util",
-            "usage_check": "true" if check else "",
-        },
-        cwd=project,
-    )
-    assert result.returncode == 0, result.stderr
-    assert (Path(env["HOME"]) / "dispatch-argv").read_text().splitlines() == [
-        "uvc-util",
-        str(project / "bootstrap/targets/Thurstons-MacBook-Pro"),
-        mode,
-        "https://github.com/thurstonsand/uvc-util.git",
-    ]
 
 
 def test_root_dispatch_retains_host_registration_limit(

@@ -6,4 +6,4 @@ Run `mise run shell` (or `mise run shell --check`) on a registered host. Check m
 
 Shell software remains owned by the existing Brewfile/base/operator capabilities. This capability only renders configuration.
 
-This repo's environment uses mise. Direnv remains installed and its shell hook activates environments for external projects that use it. Reconciliation removes the retired `~/.config/direnv/direnv.toml`. The tmux wrapper clears both mise and direnv project environments before starting tmux.
+This repo's environment uses mise. Direnv remains installed and its shell hook activates environments for external projects that use it. The tmux wrapper clears both mise and direnv project environments before starting tmux.

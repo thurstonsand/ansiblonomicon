@@ -190,135 +190,7 @@ def test_cross_native_absence_listed_first_rejects_present_collision(
     assert not manifest_path.exists()
 
 
-def test_legacy_flat_manifest_refresh_retires_removed_skill_and_keeps_sibling(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    home = tmp_path / "home"
-    home.mkdir()
-    repo, cache = fixture_repo(tmp_path, home)
-    source = cache / "example--catalogue"
-    initial = run_fixture(tmp_path, home, repo, cache, enabled=["claude"])
-    assert initial.returncode == 0, initial.stderr
-    deployed = home / ".claude/skills/demo/SKILL.md"
-    sibling = deployed.parent / "unrelated.txt"
-    sibling.write_text("keep literal\n")
-    manifest_path = cache / "macos-managed-files.json"
-    old_paths = next(iter(manifest(cache).values()))
-    manifest_path.write_text(json.dumps(old_paths))
-
-    def refresh(*_args: object, **_kwargs: object) -> None:
-        (source / "demo/SKILL.md").unlink()
-
-    monkeypatch.setattr(harness, "sync_sources", refresh)
-    harness.reconcile(
-        repo,
-        home,
-        cache,
-        "personal",
-        "ownership-fixture",
-        check=False,
-        cached=False,
-        manifest_name="macos-managed-files.json",
-        enabled_harnesses=["claude"],
-        explicit_only=[],
-        trim_blocks=True,
-    )
-
-    assert not deployed.exists() and not deployed.is_symlink()
-    assert sibling.read_text() == "keep literal\n"
-    assert ".claude/skills/demo/SKILL.md" not in json.dumps(manifest(cache))
-
-
-def test_v2_inventory_seeds_named_selection_proof_before_refresh(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    home = tmp_path / "home"
-    home.mkdir()
-    repo, cache = fixture_repo(tmp_path, home)
-    catalogue(repo).write_text(
-        '[[sources]]\nrepo = "example/catalogue"\n[[sources.plugins]]\n'
-        'name = "fixture"\nskills = { demo = "demo" }\n'
-    )
-    first = run_fixture(tmp_path, home, repo, cache, enabled=["claude"])
-    assert first.returncode == 0, first.stderr
-    manifest_path = cache / "macos-managed-files.json"
-    old = json.loads(manifest_path.read_text())
-    manifest_path.write_text(json.dumps({"version": 2, "plugins": old["plugins"]}))
-    selected = cache / "example--catalogue/demo"
-
-    def refresh(*_args: object, **_kwargs: object) -> None:
-        shutil.rmtree(selected)
-        seeded = json.loads(manifest_path.read_text())
-        assert seeded["version"] == 3
-        assert seeded["selection_proofs"]
-
-    monkeypatch.setattr(harness, "sync_sources", refresh)
-    harness.reconcile(
-        repo,
-        home,
-        cache,
-        "personal",
-        "ownership-fixture",
-        check=False,
-        cached=False,
-        manifest_name="macos-managed-files.json",
-        enabled_harnesses=["claude"],
-        explicit_only=[],
-        trim_blocks=True,
-    )
-
-    assert not (home / ".claude/skills/demo/SKILL.md").exists()
-    assert next(iter(manifest(cache).values())) == []
-
-
-def test_v2_baseline_ignores_new_uncached_git_source_until_refresh(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    home, repo, cache, source = local_fixture(tmp_path)
-    first = run_fixture(tmp_path, home, repo, cache, enabled=["claude"])
-    assert first.returncode == 0, first.stderr
-    manifest_path = cache / "macos-managed-files.json"
-    document = json.loads(manifest_path.read_text())
-    manifest_path.write_text(json.dumps({"version": 2, "plugins": document["plugins"]}))
-    catalogue(repo).write_text(
-        '[[sources]]\nlocal = "local-assets"\n'
-        '[[sources.plugins]]\nname = "local-one"\nskills = { demo = "demo" }\n'
-        '[[sources]]\nrepo = "example/new-source"\n'
-        '[[sources.plugins]]\nname = "git-two"\nskills = { second = "second" }\n'
-    )
-    git_checkout = cache / "example--new-source"
-    local_owner = f"{source}\0local-one"
-
-    def refresh(*_args: object, **_kwargs: object) -> None:
-        seeded = json.loads(manifest_path.read_text())
-        assert seeded["selection_proofs"][local_owner]
-        (git_checkout / ".git").mkdir(parents=True)
-        second = git_checkout / "second"
-        second.mkdir()
-        (second / "SKILL.md").write_text("---\nname: second\n---\ngit literal\n")
-
-    monkeypatch.setattr(harness, "sync_sources", refresh)
-    harness.reconcile(
-        repo,
-        home,
-        cache,
-        "personal",
-        "ownership-fixture",
-        check=False,
-        cached=False,
-        manifest_name="macos-managed-files.json",
-        enabled_harnesses=["claude"],
-        explicit_only=[],
-        trim_blocks=True,
-    )
-
-    assert (home / ".claude/skills/demo/SKILL.md").exists()
-    deployed = home / ".claude/skills/second/SKILL.md"
-    assert deployed.read_text() == "---\nname: second\n---\ngit literal\n"
-    assert "example/new-source\0git-two" in manifest(cache)
-
-
-def test_v2_migration_allows_proved_missing_owner_while_new_owner_is_validated(
+def test_proved_missing_owner_is_allowed_while_new_owner_is_validated(
     tmp_path: Path,
 ) -> None:
     home, repo, cache, source = local_fixture(tmp_path)
@@ -333,87 +205,12 @@ def test_v2_migration_allows_proved_missing_owner_while_new_owner_is_validated(
         '[[sources.plugins]]\nname = "local-one"\nskills = { demo = "demo" }\n'
         '[[sources.plugins]]\nname = "local-two"\nskills = { second = "second" }\n'
     )
-    document = json.loads((cache / "macos-managed-files.json").read_text())
-    document["plugins"][f"{source}\0local-two"] = []
-    document["selection_proofs"].pop(f"{source}\0local-two", None)
-    (cache / "macos-managed-files.json").write_text(json.dumps(document))
 
     result = run_fixture(tmp_path, home, repo, cache, enabled=["claude"])
 
     assert result.returncode == 0, result.stderr
     assert (home / ".claude/skills/second/SKILL.md").exists()
     assert not (home / ".claude/skills/demo/SKILL.md").exists()
-
-
-def test_equivalent_adoption_persists_selection_proof_before_refresh(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    home, repo, cache, source = local_fixture(tmp_path)
-    deployed = home / ".claude/skills/demo"
-    deployed.mkdir(parents=True)
-    for name in ("SKILL.md", "asset.txt"):
-        (deployed / name).symlink_to(source / "demo" / name)
-    manifest_path = cache / "macos-managed-files.json"
-
-    def refresh(*_args: object, **_kwargs: object) -> None:
-        document = json.loads(manifest_path.read_text())
-        assert document["selection_proofs"][f"{source}\0local-one"]
-
-    monkeypatch.setattr(harness, "sync_sources", refresh)
-    harness.reconcile(
-        repo,
-        home,
-        cache,
-        "personal",
-        "ownership-fixture",
-        check=False,
-        cached=False,
-        manifest_name="macos-managed-files.json",
-        enabled_harnesses=["claude"],
-        explicit_only=[],
-        trim_blocks=True,
-    )
-
-    assert manifest_path.exists()
-
-
-def test_symlink_parent_adoption_is_rejected_before_manifest_write(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    home, repo, cache, source = local_fixture(tmp_path)
-    outside = tmp_path / "outside"
-    deployed = outside / "skills/demo"
-    deployed.mkdir(parents=True)
-    for name in ("SKILL.md", "asset.txt"):
-        (deployed / name).symlink_to(source / "demo" / name)
-    (home / ".claude").symlink_to(outside, target_is_directory=True)
-    manifest_path = cache / "macos-managed-files.json"
-
-    def no_refresh(*_args: object, **_kwargs: object) -> None:
-        pytest.fail("Invalid adoption must fail before source refresh")
-
-    monkeypatch.setattr(harness, "sync_sources", no_refresh)
-
-    with pytest.raises(ValueError, match="Managed path has a symlink ancestor"):
-        harness.reconcile(
-            repo,
-            home,
-            cache,
-            "personal",
-            "ownership-fixture",
-            check=False,
-            cached=False,
-            manifest_name="macos-managed-files.json",
-            enabled_harnesses=["claude"],
-            explicit_only=[],
-            trim_blocks=True,
-        )
-
-    assert not manifest_path.exists()
-    assert (deployed / "SKILL.md").is_symlink()
-    assert (
-        deployed / "SKILL.md"
-    ).read_text() == "---\nname: demo\n---\nlocal literal\n"
 
 
 def test_local_assets_are_symlinks_and_deleted_asset_unlinks_without_siblings(
@@ -780,11 +577,12 @@ def test_malformed_cross_owner_inventory_is_rejected_without_mutation(
     owned.parent.mkdir(parents=True)
     owned.write_text("foreign literal\n")
     data = {
-        "version": 2,
+        "version": 3,
         "plugins": {
             "owner-a": [str(owned.relative_to(home))],
             "owner-b": [str(owned.relative_to(home))],
         },
+        "selection_proofs": {},
     }
     manifest_path = cache / "macos-managed-files.json"
     manifest_path.write_text(json.dumps(data))
@@ -796,6 +594,14 @@ def test_malformed_cross_owner_inventory_is_rejected_without_mutation(
     assert "owner-a" in result.stderr and "owner-b" in result.stderr
     assert owned.read_text() == "foreign literal\n"
     assert manifest_path.read_text() == before
+
+
+def test_non_v3_inventory_is_rejected(tmp_path: Path) -> None:
+    manifest_path = tmp_path / "macos-managed-files.json"
+    manifest_path.write_text(json.dumps({"version": 2, "plugins": {}}))
+
+    with pytest.raises(ValueError, match="Malformed harness ownership manifest"):
+        harness.load_inventory(manifest_path)
 
 
 def test_in_home_parent_symlink_is_rejected_and_external_target_unchanged(

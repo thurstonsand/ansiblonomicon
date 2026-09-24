@@ -71,7 +71,7 @@ def test_actual_mise_renders_host_identity_and_signing_behavior(
     assert ("backends" in config["signing"]) is (profile != "pod")
 
 
-def test_fragment_preserves_old_file_and_unknown_same_section_field(
+def test_fragment_preserves_user_config_and_unknown_same_section_field(
     tmp_path: Path,
 ) -> None:
     home, target, env = fixture(tmp_path, "personal")
@@ -91,9 +91,9 @@ def test_fragment_preserves_old_file_and_unknown_same_section_field(
 
     # Each file must be valid TOML independently; JJ overlays tables rather than
     # concatenating them, so repeated [ui] tables across files are valid.
-    legacy = tomllib.loads(path.read_text())
+    user = tomllib.loads(path.read_text())
     managed = tomllib.loads(fragment.read_text())
-    assert legacy["ui"]["color"] == "always"
+    assert user["ui"]["color"] == "always"
     assert managed["ui"]["editor"] == "nvim"
     assert managed["user"]["email"] == "personal@test"
     after = path.stat()
@@ -168,50 +168,3 @@ def test_invalid_personal_identity_fails_before_writing(tmp_path: Path) -> None:
     assert result.returncode != 0
     assert "contains characters unsafe for JJ config" in result.stderr
     assert not (home / ".config/jj").exists()
-
-
-def test_shared_identity_is_declared_outside_consumers() -> None:
-    assert (
-        tomllib.loads(IDENTITY.read_text())["vars"]["vcs_personal_email"]
-        == "thurstonsand@gmail.com"
-    )
-    assert "[vars]" not in (JJ / "mise.toml").read_text()
-
-
-@pytest.mark.parametrize("host", ["Thurstons-MacBook-Pro", "pod042"])
-def test_real_personal_target_dry_run_resolves_jj_assets(
-    tmp_path: Path, host: str
-) -> None:
-    target = ROOT / "bootstrap/targets" / host
-    home = tmp_path / "home"
-    home.mkdir()
-    env = {
-        "PATH": os.environ["PATH"],
-        "HOME": str(home),
-        "XDG_CONFIG_HOME": str(home / ".config"),
-        "MISE_CACHE_DIR": str(home / ".cache/mise"),
-        "MISE_CONFIG_DIR": str(home / ".config/mise"),
-        "MISE_DATA_DIR": str(home / ".local/share/mise"),
-        "MISE_STATE_DIR": str(home / ".local/state/mise"),
-        "MISE_SYSTEM_CONFIG_FILE": str(tmp_path / "absent-system.toml"),
-        "MISE_GLOBAL_CONFIG_FILE": str(tmp_path / "absent-global.toml"),
-        "MISE_CEILING_PATHS": str(target.parent),
-        "MISE_TRUSTED_CONFIG_PATHS": str(target),
-        "MISE_ENV": "vcs-identity,jj-client",
-    }
-    subprocess.run(
-        [
-            "mise",
-            "-C",
-            str(target),
-            "bootstrap",
-            "--only",
-            "dotfiles",
-            "--dry-run",
-        ],
-        env=env,
-        cwd=tmp_path,
-        check=True,
-        capture_output=True,
-        text=True,
-    )

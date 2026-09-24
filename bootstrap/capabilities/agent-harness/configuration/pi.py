@@ -1,4 +1,4 @@
-"""Render Pi's host-specific configuration without invoking chezmoi."""
+"""Render Pi's host-specific configuration."""
 
 from collections.abc import Mapping
 import json
@@ -184,10 +184,7 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
                     "supportsStrictMode": True,
                     "supportsOpenAIGrammarTools": True,
                 },
-                "models": [
-                    model(n, anthropic=False)
-                    for n in ("gpt_sol", "gpt_luna")
-                ],
+                "models": [model(n, anthropic=False) for n in ("gpt_sol", "gpt_luna")],
             },
         }
     }
@@ -329,7 +326,9 @@ def _settings(
         "treeFilterMode": "default",
         "autocompleteMaxVisible": 7,
     }
-    if hostname != WORK_HOST:
+    if hostname == WORK_HOST:
+        settings["npmCommand"] = ["node", f"{home}/.pi/agent/npm-mirror-shim.mjs"]
+    else:
         settings["doppelclaude"] = {
             "debug": {"enabled": True},
             "provider": {

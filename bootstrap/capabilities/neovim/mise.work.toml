@@ -1,4 +1,6 @@
 [dotfiles]
+# Amp is not available on the work host.
+"~/.config/nvim" = { source = "neovim/nvim", mode = "symlink-each", exclude = ["lua/plugins/amp.lua"] }
 "~/.config/nvim/lazy-lock.json" = { source = "neovim/lazy-lock.work.json", mode = "copy" }
 "~/.config/nvim/lua/plugins/gitbrowse.work.lua" = { source = "neovim/gitbrowse.lua.tera", mode = "template" }
 

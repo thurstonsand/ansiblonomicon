@@ -82,7 +82,7 @@ skills = { not-work = "not-work" }
         skill = plugins / name
         skill.mkdir()
         (skill / "SKILL.md.j2").write_text(
-            "---\nname: " + name + "\n---\n{{ ansible_hostname }} "
+            "---\nname: " + name + "\n---\n{{ hostname }} "
             "{{ lookup('file', agent_harness_root + '/template.txt') }}\n"
         )
     script = plugins / "common/run.sh"
@@ -184,7 +184,7 @@ def test_render_files_applies_explicit_trim_policy_to_host_conditionals(
     asymmetric_catalogue(repo)
     template = repo / "plugins/common/conditional.txt.j2"
     template.write_text(
-        "before\n{% if ansible_hostname == 'personal-mac' %}\nmac-only\n{% endif %}\nafter\n"
+        "before\n{% if hostname == 'personal-mac' %}\nmac-only\n{% endif %}\nafter\n"
     )
     home = tmp_path / "destination"
     cache = tmp_path / "cache"
@@ -327,16 +327,23 @@ def test_pod042_adapter_uses_common_deployment_engine() -> None:
 def test_refuse_manifest_escape(tmp_path: Path) -> None:
     cache = tmp_path / ".cache/ansiblonomicon-harness"
     cache.mkdir(parents=True)
-    (cache / "pod042-managed-files.json").write_text(json.dumps(["../outside"]))
-    inventory, proofs, legacy = harness.engine.load_inventory(
+    (cache / "pod042-managed-files.json").write_text(
+        json.dumps(
+            {
+                "version": 3,
+                "plugins": {"owner": ["../outside"]},
+                "selection_proofs": {},
+            }
+        )
+    )
+    inventory, proofs = harness.engine.load_inventory(
         cache / "pod042-managed-files.json"
     )
-    assert legacy is True
     assert proofs == {}
     roots = (tmp_path / ".codex/skills",)
     with pytest.raises(ValueError, match=r"outside|escapes"):
         harness.engine.validate_destination(
-            tmp_path / inventory["legacy"][0], tmp_path, roots
+            tmp_path / inventory["owner"][0], tmp_path, roots
         )
 
 
@@ -346,7 +353,5 @@ def test_native_hook_operator_ownership() -> None:
     assert "HOME=/home/thurstonsand" in config
     assert "uv run --script" in config
     assert "run //:agent-config" in config
-    assert "chezmoi" not in config
-    assert "ansible-playbook" not in config
     assert "os.getuid() != 1000" in SCRIPT.read_text()
     assert "os.getgid() != 1000" in SCRIPT.read_text()

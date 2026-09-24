@@ -7,4 +7,3 @@ ignores:
   - "**/.git/**"
   - "**/.terraform/**"
   - "**/.venv/**"
-  - "ansible/.ansible/**"

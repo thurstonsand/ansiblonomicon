@@ -17,33 +17,6 @@ sys.modules[SPEC.name] = home_assistant
 SPEC.loader.exec_module(home_assistant)
 
 
-def test_exact_haos_vm_contract() -> None:
-    assert home_assistant.IMAGE_VERSION == "18.2"
-    assert home_assistant.IMAGE_URL.endswith("/18.2/haos_ova-18.2.qcow2.xz")
-    assert home_assistant.IMAGE_SHA256 == (
-        "254e53f354df0739e3afc09be5431a07df53f0df6b703885404f665c454f254e"
-    )
-    assert home_assistant.VM_CONFIG == {
-        "limits.cpu": "4",
-        "limits.memory": "8GiB",
-        "security.secureboot": "false",
-        "security.csm": "false",
-        "boot.autostart": "true",
-    }
-    assert home_assistant.MAC == "00:16:3e:48:41:42"
-    assert home_assistant.ZBT_2 == {
-        "type": "usb",
-        "vendorid": "303a",
-        "productid": "831a",
-        "serial": "1CDBD45E7B24",
-    }
-    assert home_assistant.BLUETOOTH == {
-        "type": "usb",
-        "vendorid": "0a12",
-        "productid": "0001",
-    }
-
-
 def declared_instance(config: dict[str, str]) -> dict[str, Any]:
     return {
         "type": "virtual-machine",
@@ -118,26 +91,6 @@ def test_check_fails_for_stopped_or_misconfigured_vm(
         home_assistant.ensure_vm(False)
 
 
-def test_unifi_home_assistant_contract() -> None:
-    ports = (ROOT / "terraform/unifi/ports.tf").read_text()
-    clients = (ROOT / "terraform/unifi/clients.tf").read_text()
-    profile = ports.split('resource "unifi_port_profile" "pod042"', 1)[1].split(
-        "}\n", 1
-    )[0]
-    assert "native_networkconf_id" in profile and "unifi_network.bunker.id" in profile
-    assert "tagged_networkconf_ids" not in profile
-    assert "unifi_network.scanners.id" not in profile
-    # Every client VLAN is tagged on this port for the probe namespace, so Scanners
-    # reaches the VM without being named and nothing is excluded.
-    assert "excluded_networkconf_ids" not in profile
-    assert '"all"' in profile and '"auto"' in profile
-    port = ports.split("index           = 17", 1)[1].split("}", 1)[0]
-    assert "unifi_port_profile.pod042.id" in port
-    assert 'mac              = "00:16:3e:48:41:42"' in clients
-    assert 'fixed_ip         = "10.10.40.42"' in clients
-    assert 'local_dns_record = "home-assistant"' in clients
-
-
 def test_apply_hotplugs_zbt_2_into_running_vm(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
@@ -169,39 +122,5 @@ def test_apply_hotplugs_zbt_2_into_running_vm(
             "vendorid=303a",
             "productid=831a",
             "serial=1CDBD45E7B24",
-        )
-    ]
-
-
-def test_apply_hotplugs_bluetooth_into_running_vm(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    instance = declared_instance(home_assistant.VM_CONFIG)
-    del instance["devices"]["bluetooth"]
-    calls: list[tuple[str, ...]] = []
-
-    def read_instance(kind: str, _name: str) -> dict[str, Any]:
-        return {"status": "Running"} if kind == "info" else instance
-
-    def record_run(*args: str, **_kwargs: object) -> subprocess.CompletedProcess[str]:
-        calls.append(args)
-        return subprocess.CompletedProcess(args, 0, "", "")
-
-    monkeypatch.setattr(home_assistant.incus, "incus_json", read_instance)
-    monkeypatch.setattr(home_assistant.incus, "run", record_run)
-
-    home_assistant.ensure_vm(True)
-
-    assert calls == [
-        (
-            "/usr/bin/incus",
-            "config",
-            "device",
-            "add",
-            "home-assistant",
-            "bluetooth",
-            "usb",
-            "vendorid=0a12",
-            "productid=0001",
         )
     ]

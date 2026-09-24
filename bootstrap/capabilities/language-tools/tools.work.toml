@@ -1,5 +1,5 @@
-# The tracked work profile intentionally replaces the shared public package
-# lists, matching the former work.config.yml base declarations.
+# The mirror carries only part of the shared public package lists, so work
+# replaces them rather than extending them.
 [inventory]
 replace_shared = true
 
@@ -23,3 +23,8 @@ packages = []
 [uv]
 packages = ["basedpyright"]
 retired = []
+
+# The registry lacks glimpseui, so the interview tool resolves Pi's git clone
+# through the global npm root. Relinked after each Node change.
+[npm.links]
+glimpseui = ".pi/agent/git/github.com/hazat/glimpse"

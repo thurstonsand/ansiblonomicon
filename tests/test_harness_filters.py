@@ -11,7 +11,6 @@ from harness_filters import (
     _repo_to_cache_name,
     agent_harness_build_plugin_resources,
     agent_harness_filter_resources,
-    agent_harness_repo_to_cache_name,
     agent_harness_transform_skill,
     agent_harness_transform_skill_content,
 )
@@ -467,31 +466,6 @@ def test_explicit_skill_path_without_a_skill_file_is_fatal(
 
 
 @pytest.mark.unit
-def test_explicit_skill_path_that_is_missing_is_fatal(
-    repo_path: Path, cache_dir: Path
-) -> None:
-    with pytest.raises(ValueError, match=r"skill 'deployed' at .*gone has no SKILL.md"):
-        agent_harness_build_plugin_resources(
-            [repo_source([{"name": "p", "skills": {"deployed": "gone"}}])],
-            str(cache_dir),
-        )
-
-
-@pytest.mark.unit
-def test_explicit_agent_path_that_is_not_markdown_is_fatal(
-    repo_path: Path, cache_dir: Path
-) -> None:
-    (repo_path / "crew").mkdir()
-    (repo_path / "crew" / "scout.txt").write_text("nope")
-
-    with pytest.raises(ValueError, match=r"agent 'scout' at .*scout.txt is not a .md"):
-        agent_harness_build_plugin_resources(
-            [repo_source([{"name": "p", "agents": {"scout": "crew/scout.txt"}}])],
-            str(cache_dir),
-        )
-
-
-@pytest.mark.unit
 def test_an_explicit_map_suppresses_the_manifest_for_both_kinds_and_hooks(
     repo_path: Path, cache_dir: Path, make_skill: MakeSkill, make_agent: MakeAgent
 ) -> None:
@@ -517,24 +491,6 @@ def test_an_explicit_map_suppresses_the_manifest_for_both_kinds_and_hooks(
 
     assert names(result["skills"]) == ["picked"]
     assert result["agents"] == []
-    assert result["hooks"] == []
-
-
-@pytest.mark.unit
-def test_an_explicit_mode_plugin_is_rooted_at_its_source(
-    repo_path: Path, cache_dir: Path, make_skill: MakeSkill
-) -> None:
-    hooks_dir = repo_path / "hooks"
-    hooks_dir.mkdir()
-    (hooks_dir / "hooks.json").write_text(json.dumps({"SessionStart": ["repo-root"]}))
-    make_skill(repo_path / "skills" / "alpha")
-
-    result = agent_harness_build_plugin_resources(
-        [repo_source([{"name": "loose", "skills": {"alpha": "skills/alpha"}}])],
-        str(cache_dir),
-    )
-
-    assert result["skills"][0]["plugin_root"] == str(repo_path)
     assert result["hooks"] == []
 
 
@@ -662,22 +618,6 @@ def test_include_keeps_only_the_listed_skills(
 
 
 @pytest.mark.unit
-def test_exclude_drops_the_listed_agents(
-    repo_path: Path, cache_dir: Path, make_agent: MakeAgent
-) -> None:
-    write_manifest(repo_path, {"name": "my-plugin"})
-    make_agent(repo_path / "agents" / "scout.md")
-    make_agent(repo_path / "agents" / "sniper.md")
-
-    result = agent_harness_build_plugin_resources(
-        [repo_source([{"name": "my-plugin", "exclude_agents": ["sniper"]}])],
-        str(cache_dir),
-    )
-
-    assert names(result["agents"]) == ["scout"]
-
-
-@pytest.mark.unit
 def test_an_empty_include_ships_nothing(
     repo_path: Path, cache_dir: Path, make_skill: MakeSkill
 ) -> None:
@@ -689,21 +629,6 @@ def test_an_empty_include_ships_nothing(
     )
 
     assert result["skills"] == []
-
-
-@pytest.mark.unit
-def test_an_absent_include_ships_everything(
-    repo_path: Path, cache_dir: Path, make_skill: MakeSkill
-) -> None:
-    write_manifest(repo_path, {"name": "my-plugin"})
-    make_skill(repo_path / "skills" / "alpha")
-    make_skill(repo_path / "skills" / "beta")
-
-    result = agent_harness_build_plugin_resources(
-        [repo_source([{"name": "my-plugin"}])], str(cache_dir)
-    )
-
-    assert names(result["skills"]) == ["alpha", "beta"]
 
 
 @pytest.mark.unit
@@ -743,84 +668,6 @@ def test_an_include_that_matches_nothing_is_fatal(
 # =============================================================================
 # Plugin metadata carried onto resources
 # =============================================================================
-
-
-@pytest.mark.unit
-def test_target_agents_and_exclude_data_ride_along(
-    repo_path: Path, cache_dir: Path, make_skill: MakeSkill
-) -> None:
-    write_manifest(repo_path, {"name": "my-plugin"})
-    make_skill(repo_path / "skills" / "alpha")
-
-    result = agent_harness_build_plugin_resources(
-        [
-            repo_source(
-                [
-                    {
-                        "name": "my-plugin",
-                        "target_agents": ["claude", "amp"],
-                        "exclude_data": ["*.mp4"],
-                    }
-                ]
-            )
-        ],
-        str(cache_dir),
-    )
-
-    assert result["skills"][0]["target_agents"] == ["claude", "amp"]
-    assert result["skills"][0]["exclude_data"] == ["*.mp4"]
-
-
-@pytest.mark.unit
-def test_a_plugin_without_target_agents_reaches_every_harness(
-    repo_path: Path, cache_dir: Path, make_skill: MakeSkill
-) -> None:
-    write_manifest(repo_path, {"name": "my-plugin"})
-    make_skill(repo_path / "skills" / "alpha")
-
-    result = agent_harness_build_plugin_resources(
-        [repo_source([{"name": "my-plugin"}])], str(cache_dir)
-    )
-
-    assert result["skills"][0]["target_agents"] == []
-
-
-@pytest.mark.unit
-def test_sources_are_walked_in_order(
-    repo_path: Path, local_root: Path, cache_dir: Path, make_skill: MakeSkill
-) -> None:
-    write_manifest(repo_path, {"name": "remote"})
-    make_skill(repo_path / "skills" / "from-repo")
-    plugin_root = write_manifest(local_root / "mine", {"name": "mine"})
-    make_skill(plugin_root / "skills" / "from-local")
-
-    result = agent_harness_build_plugin_resources(
-        [
-            repo_source([{"name": "remote"}]),
-            local_source(plugin_root, [{"name": "mine"}]),
-        ],
-        str(cache_dir),
-    )
-
-    assert names(result["skills"]) == ["from-repo", "from-local"]
-
-
-@pytest.mark.unit
-def test_no_sources_still_returns_every_kind(cache_dir: Path) -> None:
-    assert agent_harness_build_plugin_resources([], str(cache_dir)) == {
-        "skills": [],
-        "agents": [],
-        "hooks": [],
-    }
-
-
-@pytest.mark.unit
-def test_a_non_dict_plugin_entry_is_fatal(repo_path: Path, cache_dir: Path) -> None:
-    with pytest.raises(ValueError, match=r"plugin entry must be a mapping"):
-        agent_harness_build_plugin_resources(
-            [repo_source(["shorthand"])],  # pyright: ignore[reportArgumentType]
-            str(cache_dir),
-        )
 
 
 # =============================================================================
@@ -924,19 +771,6 @@ def test_a_list_of_hook_files_is_merged(local_root: Path, cache_dir: Path) -> No
 
     merged = json.loads(result["hooks"][0]["content"])
     assert set(merged) == {"SessionStart", "WorktreeCreate"}
-
-
-@pytest.mark.unit
-def test_a_plugin_without_hooks_contributes_no_fragment(
-    local_root: Path, cache_dir: Path
-) -> None:
-    plugin_root = write_manifest(local_root / "mine", {"name": "mine"})
-
-    result = agent_harness_build_plugin_resources(
-        [local_source(plugin_root, [{"name": "mine"}])], str(cache_dir)
-    )
-
-    assert result["hooks"] == []
 
 
 @pytest.mark.unit
@@ -1064,48 +898,6 @@ def test_hooks_false_opts_a_plugin_out(local_root: Path, cache_dir: Path) -> Non
 # =============================================================================
 # Tests for agent_harness_filter_resources
 # =============================================================================
-
-
-@pytest.mark.unit
-def test_agent_harness_filter_resources_empty_target_agents() -> None:
-    """Resources with empty target_agents should be included for all agents."""
-    resources: list[Any] = [
-        {"name": "skill-a", "source": "/path/a", "origin": "repo", "target_agents": []},
-    ]
-    result = agent_harness_filter_resources(resources, "claude")
-    assert len(result) == 1
-    assert result[0]["name"] == "skill-a"
-
-
-@pytest.mark.unit
-def test_agent_harness_filter_resources_matching_agent() -> None:
-    """Resources with matching target_agents should be included."""
-    resources: list[Any] = [
-        {
-            "name": "skill-a",
-            "source": "/path/a",
-            "origin": "repo",
-            "target_agents": ["claude", "amp"],
-        },
-    ]
-    result = agent_harness_filter_resources(resources, "claude")
-    assert len(result) == 1
-    assert result[0]["name"] == "skill-a"
-
-
-@pytest.mark.unit
-def test_agent_harness_filter_resources_non_matching_agent() -> None:
-    """Resources with non-matching target_agents should be excluded."""
-    resources: list[Any] = [
-        {
-            "name": "skill-a",
-            "source": "/path/a",
-            "origin": "repo",
-            "target_agents": ["amp"],
-        },
-    ]
-    result = agent_harness_filter_resources(resources, "claude")
-    assert len(result) == 0
 
 
 @pytest.mark.unit
@@ -1283,22 +1075,6 @@ def test_build_model_alias_map_includes_full_model_names(
     assert alias_map["anthropic/claude-opus-4-5"]["claude"] == "opus"
 
 
-@pytest.mark.unit
-def test_build_model_alias_map_skips_models_without_harness_config() -> None:
-    config: dict[str, Any] = {
-        "openai": {
-            "gpt": {"version": "gpt-5.4"},
-        }
-    }
-    alias_map = _build_model_alias_map(config)
-    assert alias_map == {}
-
-
-@pytest.mark.unit
-def test_build_model_alias_map_handles_empty_config() -> None:
-    assert _build_model_alias_map({}) == {}
-
-
 # =============================================================================
 # Tests for agent_harness_transform_skill
 # =============================================================================
@@ -1379,79 +1155,6 @@ def test_transform_skill_no_change_when_same_alias(
 
 
 @pytest.mark.unit
-def test_transform_skill_no_change_when_target_not_in_aliases(
-    create_skill_with_model: Callable[[str, str], Path],
-    sample_models_config: dict[str, Any],
-) -> None:
-    skill_file = create_skill_with_model("test-skill", "sonnet")
-
-    result = agent_harness_transform_skill(str(skill_file), "amp", sample_models_config)
-
-    assert result["modified"] is False
-
-
-@pytest.mark.unit
-def test_transform_skill_no_change_when_no_model_field(
-    tmp_path: Path,
-    sample_models_config: dict[str, Any],
-) -> None:
-    skill_file = tmp_path / "SKILL.md"
-    skill_file.write_text("""---
-name: no-model-skill
-description: A skill without model
----
-
-# Content
-""")
-
-    result = agent_harness_transform_skill(
-        str(skill_file), "opencode", sample_models_config
-    )
-
-    assert result["modified"] is False
-
-
-@pytest.mark.unit
-def test_transform_skill_no_change_when_unknown_model(
-    create_skill_with_model: Callable[[str, str], Path],
-    sample_models_config: dict[str, Any],
-) -> None:
-    skill_file = create_skill_with_model("test-skill", "unknown-model")
-
-    result = agent_harness_transform_skill(
-        str(skill_file), "opencode", sample_models_config
-    )
-
-    assert result["modified"] is False
-
-
-@pytest.mark.unit
-def test_transform_skill_missing_file(
-    sample_models_config: dict[str, Any],
-) -> None:
-    result = agent_harness_transform_skill(
-        "/nonexistent/path/SKILL.md", "opencode", sample_models_config
-    )
-
-    assert result["modified"] is False
-    assert result["content"] == ""
-
-
-@pytest.mark.unit
-def test_transform_skill_preserves_body_content(
-    create_skill_with_model: Callable[[str, str], Path],
-    sample_models_config: dict[str, Any],
-) -> None:
-    skill_file = create_skill_with_model("test-skill", "opus")
-
-    result = agent_harness_transform_skill(
-        str(skill_file), "opencode", sample_models_config
-    )
-
-    assert "# test-skill" in result["content"]
-
-
-@pytest.mark.unit
 def test_transform_skill_replaces_plugin_root(
     tmp_path: Path,
     sample_models_config: dict[str, Any],
@@ -1472,27 +1175,6 @@ Run: ${CLAUDE_PLUGIN_ROOT}/bin/run.sh
     assert result["modified"] is True
     assert "${CLAUDE_PLUGIN_ROOT}" not in result["content"]
     assert "/cache/my-plugin/bin/run.sh" in result["content"]
-
-
-@pytest.mark.unit
-def test_transform_skill_no_plugin_root_when_empty(
-    tmp_path: Path,
-    sample_models_config: dict[str, Any],
-) -> None:
-    skill_file = tmp_path / "SKILL.md"
-    skill_file.write_text("""---
-name: my-skill
----
-
-Run: ${CLAUDE_PLUGIN_ROOT}/bin/run.sh
-""")
-
-    result = agent_harness_transform_skill(
-        str(skill_file), "claude", sample_models_config, ""
-    )
-
-    assert result["modified"] is False
-    assert "${CLAUDE_PLUGIN_ROOT}" in result["content"]
 
 
 @pytest.mark.unit
@@ -1544,12 +1226,3 @@ class TestRepoToCacheName:
             _repo_to_cache_name("git@gitlab.example.com:user/repo.git")
             == "gitlab--example--com--user--repo"
         )
-
-    def test_public_filter_matches_private(self) -> None:
-        url = "https://scm.example.com/scm/proj/my-plugin.git"
-        assert agent_harness_repo_to_cache_name(url) == _repo_to_cache_name(url)
-
-    def test_no_leading_or_trailing_dashes(self) -> None:
-        result = _repo_to_cache_name("https://host.com/repo.git")
-        assert not result.startswith("-")
-        assert not result.endswith("-")

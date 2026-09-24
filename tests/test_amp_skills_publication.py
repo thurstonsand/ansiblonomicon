@@ -1,4 +1,4 @@
-"""The Amp User Skills render is pure, Ansible-free, and mirrors host deployment."""
+"""The Amp User Skills render is pure and mirrors host deployment."""
 
 import importlib.util
 import os
@@ -38,6 +38,8 @@ def git(*args: str, cwd: Path) -> None:
         capture_output=True,
         env={
             **os.environ,
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
             "GIT_AUTHOR_NAME": "Fixture",
             "GIT_AUTHOR_EMAIL": "fixture@example.test",
             "GIT_COMMITTER_NAME": "Fixture",
@@ -47,7 +49,7 @@ def git(*args: str, cwd: Path) -> None:
 
 
 def fixture_repo(root: Path) -> tuple[Path, Path]:
-    """A checkout with the native capability only: no ansible/ tree at all."""
+    """A checkout holding only the agent-harness capability."""
     repo = root / "repo"
     capability = repo / CAPABILITY
     (capability / "harnesses/amp").mkdir(parents=True)
@@ -98,16 +100,14 @@ hooks = true
         skill.mkdir(parents=True)
         (skill / "SKILL.md.j2").write_text(
             f"---\nname: {name}\n---\n"
-            "{% if ansible_hostname is match('ML-') %}\nwork\n{% else %}\npersonal\n{% endif %}\n"
+            "{% if hostname == 'ML-DFC6YK6VJQ' %}\nwork\n{% else %}\npersonal\n{% endif %}\n"
             "{{ lookup('file', agent_harness_root ~ '/session-title-prompt.txt') }}\n"
         )
     templated = plugin / "skills/templated"
     (templated / "scripts").mkdir()
     (templated / "scripts/run.sh").write_bytes(b"#!/bin/sh\necho fixture\n")
     (templated / "scripts/run.sh").chmod(0o755)
-    (templated / "scripts/config.toml.j2").write_text(
-        'home = "{{ ansible_facts.env.HOME }}"\n'
-    )
+    (templated / "scripts/config.toml.j2").write_text('home = "{{ home }}"\n')
     (templated / "scripts/stale.pyc").write_bytes(b"ignored")
 
     upstream = root / "upstream"
@@ -125,9 +125,8 @@ hooks = true
     return repo, upstream
 
 
-def test_render_uses_only_the_native_capability(tmp_path: Path) -> None:
+def test_render_resolves_templates_modes_selection_and_aliases(tmp_path: Path) -> None:
     repo, upstream = fixture_repo(tmp_path)
-    assert not (repo / "ansible").exists()
     cache = tmp_path / "cache"
     checkout = cache / "sources/example--upstream"
     checkout.parent.mkdir(parents=True)
@@ -160,10 +159,9 @@ def test_render_uses_only_the_native_capability(tmp_path: Path) -> None:
         files[Path("kept/SKILL.md")][0]
         == b"---\nname: kept\nmodel: amp-sonnet\n---\nBody\n"
     )
-    assert not (repo / "ansible").exists()
 
 
-def test_cli_writes_the_tree_without_importing_ansible(tmp_path: Path) -> None:
+def test_cli_writes_the_tree(tmp_path: Path) -> None:
     repo, upstream = fixture_repo(tmp_path)
     cache = tmp_path / "cache"
     checkout = cache / "sources/example--upstream"
@@ -174,17 +172,9 @@ def test_cli_writes_the_tree_without_importing_ansible(tmp_path: Path) -> None:
         capture_output=True,
     )
     output = tmp_path / "render"
-    probe = (
-        "import runpy, sys\n"
-        "sys.argv = sys.argv[1:]\n"
-        "runpy.run_path(sys.argv[0], run_name='__main__')\n"
-        "assert not [m for m in sys.modules if m.split('.')[0] == 'ansible'], 'ansible imported'\n"
-    )
     subprocess.run(
         [
             sys.executable,
-            "-c",
-            probe,
             str(repo / CAPABILITY / "publish_amp_skills.py"),
             "--repo",
             str(repo),

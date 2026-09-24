@@ -100,19 +100,6 @@ def test_existing_home_trust_is_preserved(tmp_path: Path) -> None:
     assert parsed["projects"][str(home)]["trust_level"] == "untrusted"
 
 
-def test_work_host_preserves_old_exclusion(tmp_path: Path) -> None:
-    assert (
-        _module().render(
-            repo=tmp_path,
-            home=tmp_path / "home",
-            hostname="ML-DFC6YK6VJQ",
-            data=_data(),
-            secrets={"ANTHROPIC_AUTH_TOKEN": "only-work-secret"},
-        )
-        == {}
-    )
-
-
 def test_absolute_develop_directory_is_not_prefixed_with_home(tmp_path: Path) -> None:
     module = _module()
     values = _data()

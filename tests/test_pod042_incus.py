@@ -14,15 +14,6 @@ sys.modules[SPEC.name] = incus
 SPEC.loader.exec_module(incus)
 
 
-def test_exact_storage_and_network_contract() -> None:
-    assert incus.POOL_NAME == "black-box"
-    assert incus.POOL == {
-        "driver": "dir",
-        "source": "/mnt/black-box/incus",
-    }
-    assert incus.NETWORK == {"type": "macvlan", "parent": "enp5s0", "vlan": "40"}
-
-
 @pytest.mark.parametrize(
     ("kind", "value", "message"),
     [

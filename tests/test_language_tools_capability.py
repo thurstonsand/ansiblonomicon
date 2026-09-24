@@ -44,8 +44,11 @@ def fixture(
     fake = tmp_path / "fake-bin"
     old = tmp_path / "old-node/bin"
     new = tmp_path / "new-node/bin"
-    for directory in (fake, old, new):
+    # Homebrew's node precedes mise's in the inherited PATH on the work Mac.
+    shadow = tmp_path / "shadow-node/bin"
+    for directory in (fake, old, new, shadow):
         directory.mkdir(parents=True)
+    executable(shadow / "npm", 'echo "npm[shadow] $*" >> "$CALLS"; exit 97\n')
     (fake / "python3").symlink_to(sys.executable)
     calls = tmp_path / "calls"
     packages = tmp_path / "npm-packages"
@@ -58,6 +61,7 @@ def fixture(
     )
     npm_body = r"""echo "npm[$NPM_ID] $*" >> "$CALLS"
 if [ "$1 $2" = "prefix -g" ]; then dirname "$(dirname "$0")"; exit 0; fi
+if [ "$1 $2" = "root -g" ]; then printf '%s/lib/node_modules\n' "$(dirname "$(dirname "$0")")"; exit 0; fi
 if [ "$1" = list ] && printf '%s\n' "$*" | grep -q -- '--json'; then
   printf '{"dependencies":{'; sep=
   while IFS= read -r package; do
@@ -103,7 +107,8 @@ fi
         '[ "$1" != install ] || [ "${FAIL:-}" != install ] || exit 17\n'
         '[ "$1" != upgrade ] || [ "${FAIL:-}" != upgrade ] || exit 18\n'
         'if [ "$1 ${2:-} ${3:-} ${4:-}" = "ls --current --json node" ]; then printf \'[{"version":"20.0.0","install_path":"%s","installed":true,"active":true}]\\n\' "$OLD_PREFIX"; fi\n'
-        'if [ "$1 $2" = "env --json" ]; then printf \'{"PATH":"%s:%s:/usr/bin:/bin"}\\n\' "$NEW_BIN" "$FAKE_BIN"; fi\n',
+        'if [ "$1 $2" = "env --json" ]; then printf \'{"PATH":"%s:%s:/usr/bin:/bin"}\\n\' "$SHADOW_BIN" "$FAKE_BIN"; fi\n'
+        'if [ "$1 $2" = "which npm" ]; then printf \'%s/npm\\n\' "$NEW_BIN"; fi\n',
     )
     executable(
         fake / "uv",
@@ -118,6 +123,7 @@ fi
             "MISE_BIN": str(fake / "mise"),
             "REAL_MISE": subprocess.check_output(["which", "mise"], text=True).strip(),
             "NEW_BIN": str(new),
+            "SHADOW_BIN": str(shadow),
             "FAKE_BIN": str(fake),
             "UV_DIR": str(tmp_path / "uv-tools"),
             "CALLS": str(calls),
@@ -146,7 +152,9 @@ def run_reconcile(
     )
 
 
-def test_config_commands_selected_environment_and_stateful_npm(tmp_path: Path) -> None:
+def test_node_upgrade_carries_user_globals_and_preserves_foreign_config(
+    tmp_path: Path,
+) -> None:
     env, calls = fixture(tmp_path)
     run_reconcile(env)
     config = tomllib.loads((Path(env["HOME"]) / ".config/mise/config.toml").read_text())
@@ -154,18 +162,14 @@ def test_config_commands_selected_environment_and_stateful_npm(tmp_path: Path) -
     assert config["tools"]["node"]["options"] == {"compile": True}
     assert config["tools"]["python"] == {"version": "3.13"}
     output = calls.read_text()
-    assert "mise install --yes node npm golangci-lint fnox pnpm" in output
-    assert "mise upgrade --yes --no-prune node npm golangci-lint fnox pnpm" in output
     assert "mise exec" not in output
-    assert "npm[new] install -g --allow-scripts=agent-browser,glimpseui" in output
-    assert output.count("npm[new] install -g") == 2
-    assert "npm[new] install -g --prefix" in output
+    assert "npm[old] install" not in output
+    # Globals the user installed by hand follow node across the upgrade; the ones
+    # node bundles itself must not be pinned back to the old node's versions.
     assert "unmanaged-extra@1.2.3" in output
     assert "npm@11.0.0" not in output
     assert "corepack@0.30.0" not in output
     assert "keep-this-secret" in Path(env["NPMRC"]).read_text()
-    assert Path(env["NPM_PACKAGES"]).read_text().splitlines()[0] == "unmanaged-extra"
-    assert "openclaw" in Path(env["NPM_PACKAGES"]).read_text().splitlines()
 
 
 def test_postinstall_uses_new_nodes_bundled_npm_despite_old_initial_path(
@@ -213,34 +217,6 @@ def test_npm_helper_retains_interpreter_when_global_path_changes(
     assert (Path(env["HOME"]) / ".cache/ansiblonomicon/language-tools.stamp").exists()
 
 
-def test_npm_globals_cli_requires_inventory_and_accepts_valid_fixture(
-    tmp_path: Path,
-) -> None:
-    env, calls = fixture(tmp_path)
-    npm = str(Path(env["NEW_BIN"]) / "npm")
-    missing = subprocess.run(
-        ["python3", str(NPM_GLOBALS), "--present", npm],
-        env=env,
-        text=True,
-        capture_output=True,
-    )
-    assert missing.returncode != 0
-    assert "inventories" in missing.stderr
-    subprocess.run(
-        [
-            "python3",
-            str(NPM_GLOBALS),
-            "--present",
-            npm,
-            str(ROOT / "bootstrap/capabilities/language-tools/tools.toml"),
-            str(ROOT / "bootstrap/capabilities/language-tools/tools.personal.toml"),
-        ],
-        env=env,
-        check=True,
-    )
-    assert "npm[new] install -g" in calls.read_text()
-
-
 def test_real_mise_parser_adopts_scalar_and_preserves_other_tools(
     tmp_path: Path,
 ) -> None:
@@ -258,10 +234,7 @@ def test_check_is_read_only_and_environment_is_clean(tmp_path: Path) -> None:
     result = run_reconcile(env, "--check")
     assert not calls.exists()
     assert (Path(env["HOME"]) / ".config/mise/config.toml").read_bytes() == before
-    assert (
-        "ensure installed node@lts, npm@latest, golangci-lint@latest, fnox@latest, pnpm@latest"
-        in result.stdout
-    )
+    assert "ensure installed node@lts" in result.stdout
 
 
 def test_typed_invalid_inventory_writes_neither_config_nor_stamp(
@@ -395,6 +368,57 @@ def test_unsupported_npm_source_fails_before_config_or_runtime_writes(
     assert "mise config" not in output
     assert "mise install" not in output
     assert "mise upgrade" not in output
+
+
+def test_linked_npm_global_is_preserved_and_relinked_into_new_node(
+    tmp_path: Path,
+) -> None:
+    env, calls = fixture(tmp_path)
+    Path(env["NPM_PACKAGES_OLD"]).write_text("LINK:linked-tool\n")
+    clone = Path(env["HOME"]) / "clones/linked-tool"
+    clone.mkdir(parents=True)
+    extension = tmp_path / "links.toml"
+    extension.write_text('[npm.links]\nlinked-tool = "clones/linked-tool"\n')
+    run_reconcile(env, "--extension", str(extension))
+    link = Path(env["NEW_PREFIX"]) / "lib/node_modules/linked-tool"
+    assert link.readlink() == clone
+    assert "linked-tool" not in calls.read_text()
+    before = link.lstat()
+    run_reconcile(env, "--extension", str(extension))
+    after = link.lstat()
+    assert (before.st_ino, before.st_mtime_ns) == (after.st_ino, after.st_mtime_ns)
+
+
+def test_npm_link_waits_for_absent_target_and_refuses_installed_package(
+    tmp_path: Path,
+) -> None:
+    env, _ = fixture(tmp_path)
+    extension = tmp_path / "links.toml"
+    extension.write_text('[npm.links]\nlinked-tool = "clones/linked-tool"\n')
+    result = run_reconcile(env, "--extension", str(extension))
+    link = Path(env["NEW_PREFIX"]) / "lib/node_modules/linked-tool"
+    assert not link.exists() and not link.is_symlink()
+    assert "stays unlinked" in result.stderr
+    (Path(env["HOME"]) / "clones/linked-tool").mkdir(parents=True)
+    link.mkdir(parents=True)
+    result = run_reconcile(env, "--extension", str(extension), check=False)
+    assert result.returncode != 0
+    assert "refusing to replace installed npm package" in result.stderr
+
+
+def test_npm_links_reject_unsafe_targets(tmp_path: Path) -> None:
+    env, calls = fixture(tmp_path)
+    extension = tmp_path / "links.toml"
+    for body in (
+        '[npm.links]\ntool = "/abs/path"\n',
+        '[npm.links]\ntool = "../escape"\n',
+        '[npm.links]\n"bad/name" = "clone"\n',
+    ):
+        extension.write_text(body)
+        result = run_reconcile(env, "--extension", str(extension), check=False)
+        assert result.returncode != 0
+        assert "npm.links must map package names" in result.stderr
+    assert not calls.exists()
 
 
 def test_npm_failure_preserves_existing_stamp(tmp_path: Path) -> None:

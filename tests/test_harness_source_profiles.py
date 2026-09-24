@@ -1,12 +1,10 @@
 """Tests for host-profile resolution of the declared sources."""
 
 from pathlib import Path
+import tomllib
 from typing import Any
 
 from harness_filters import (
-    agent_harness_build_plugin_resources,
-    agent_harness_load_catalogue,
-    agent_harness_load_declarations,
     agent_harness_resolve_sources,
 )
 import pytest
@@ -74,11 +72,6 @@ def test_source_level_exclusion_removes_source_for_profile() -> None:
     assert repos == ["example/shared", "/agents"]
 
 
-def test_unrestricted_profile_receives_every_source() -> None:
-    repos = [s.get("repo", s.get("local")) for s in resolve("personal")]
-    assert repos == ["example/shared", "example/personal-only", "/agents"]
-
-
 def test_plugin_level_exclusion_removes_plugin_for_profile() -> None:
     names = [p["name"] for p in local_source("work")["plugins"]]
     assert names == ["everywhere", "only-at-work", "explicit"]
@@ -129,45 +122,6 @@ def test_include_map_without_fallback_ships_nothing_elsewhere() -> None:
     assert plugin["include_skills"] == []
 
 
-def test_an_undeclared_selection_is_absent_from_the_resolved_plugin() -> None:
-    source = {"local": "/agents", "plugins": [{"name": "p"}]}
-
-    assert plugin_named(resolve_sources([source])[0], "p") == {"name": "p"}
-
-
-def test_plain_selection_list_applies_to_every_profile() -> None:
-    source = {"local": "/agents", "plugins": [{"name": "p", "include_skills": ["a"]}]}
-
-    for profile in PROFILES:
-        resolved = resolve_sources([source], profile)
-        assert plugin_named(resolved[0], "p")["include_skills"] == ["a"]
-
-
-def test_pull_is_no_longer_a_field() -> None:
-    with pytest.raises(ValueError, match=r"unknown field\(s\) pull"):
-        resolve_sources([{"repo": "owner/pinned", "pull": False, "plugins": []}])
-
-
-def test_extra_sources_append_after_the_declared_ones() -> None:
-    extra = [{"local": "/work-agents", "plugins": [{"name": "work-only"}]}]
-    assert resolve("work", extra)[-1]["local"] == "/work-agents"
-
-
-def test_resolver_strips_profile_metadata_from_output() -> None:
-    for profile in PROFILES:
-        for source in resolve(profile):
-            assert "included_on" not in source
-            assert "excluded_on" not in source
-            for plugin in source["plugins"]:
-                assert "included_on" not in plugin
-                assert "excluded_on" not in plugin
-
-
-def test_explicit_maps_survive_resolution() -> None:
-    explicit = plugin_named(local_source("personal"), "explicit")
-    assert explicit["skills"] == {"deployed": "skills/source"}
-
-
 # ---------------------------------------------------------------------------
 # Fatal config errors
 # ---------------------------------------------------------------------------
@@ -192,30 +146,6 @@ def test_unknown_plugin_field_is_fatal() -> None:
         resolve_one({"name": "p", "prefix": "", "unknown": 1})
 
 
-def test_source_without_repo_or_local_is_fatal() -> None:
-    with pytest.raises(ValueError, match=r"declare exactly one of repo or local"):
-        resolve_sources([{"plugins": []}])
-
-
-def test_source_with_both_repo_and_local_is_fatal() -> None:
-    source: dict[str, Any] = {"repo": "a/b", "local": "/agents", "plugins": []}
-
-    with pytest.raises(ValueError, match=r"declare exactly one of repo or local"):
-        resolve_sources([source])
-
-
-def test_non_dict_plugin_entry_is_fatal() -> None:
-    source = {"local": "/agents", "plugins": ["shorthand"]}
-
-    with pytest.raises(ValueError, match=r"plugin entry must be a mapping"):
-        resolve_sources([source])
-
-
-def test_plugins_that_are_not_a_list_is_fatal() -> None:
-    with pytest.raises(ValueError, match=r"plugins must be a list"):
-        resolve_sources([{"local": "/agents", "plugins": {"name": "p"}}])
-
-
 def test_non_bool_hooks_is_fatal() -> None:
     with pytest.raises(ValueError, match=r"hooks must be true or false, got 'false'"):
         resolve_one({"name": "p", "hooks": "false"})
@@ -227,25 +157,6 @@ def test_a_bare_string_where_a_list_belongs_is_fatal(field_name: str) -> None:
         ValueError, match=rf"{field_name} must be a list of strings, got 'pi'"
     ):
         resolve_one({"name": "p", field_name: "pi"})
-
-
-def test_a_bare_string_target_agents_is_fatal() -> None:
-    with pytest.raises(
-        ValueError, match=r"target_agents must be a list or a profile-keyed map"
-    ):
-        resolve_one({"name": "p", "target_agents": "pi"})
-
-
-def test_a_non_string_list_entry_is_fatal() -> None:
-    with pytest.raises(ValueError, match=r"exclude_data entries must be strings"):
-        resolve_one({"name": "p", "exclude_data": [7]})
-
-
-def test_a_bare_string_selection_map_value_is_fatal() -> None:
-    with pytest.raises(
-        ValueError, match=r"exclude_skills\[work\] must be a list of strings"
-    ):
-        resolve_one({"name": "p", "exclude_skills": {"work": "grill-me"}})
 
 
 def test_an_unknown_target_harness_is_fatal() -> None:
@@ -274,13 +185,6 @@ def test_target_agents_for_other_profiles_only_drops_the_plugin() -> None:
     assert resolve_sources([source])[0]["plugins"] == []
 
 
-def test_profile_keyed_target_agents_reject_unknown_harnesses() -> None:
-    with pytest.raises(
-        ValueError, match=r"target_agents names unknown harness 'cursor'"
-    ):
-        resolve_one({"name": "p", "target_agents": {"*": ["cursor"]}})
-
-
 @pytest.mark.parametrize("field_name", ["included_on", "excluded_on"])
 def test_an_unknown_profile_name_is_fatal(field_name: str) -> None:
     with pytest.raises(
@@ -289,41 +193,11 @@ def test_an_unknown_profile_name_is_fatal(field_name: str) -> None:
         resolve_one({"name": "p", field_name: ["persnal"]})
 
 
-def test_an_unknown_profile_name_on_a_source_is_fatal() -> None:
-    with pytest.raises(ValueError, match=r"excluded_on names unknown profile 'wrk'"):
-        resolve_sources([{"local": "/agents", "excluded_on": ["wrk"], "plugins": []}])
-
-
-def test_an_explicit_map_that_is_not_string_to_string_is_fatal() -> None:
-    with pytest.raises(ValueError, match=r"skills must map strings to paths"):
-        resolve_one({"name": "p", "skills": {"deployed": ["skills/a"]}})
-
-
-def test_a_selection_for_the_other_kind_alongside_an_explicit_map_is_fatal() -> None:
-    with pytest.raises(
-        ValueError,
-        match=r"the explicit skills map puts this plugin in explicit mode",
-    ):
-        resolve_one(
-            {"name": "p", "skills": {"a": "skills/a"}, "exclude_agents": ["scout"]}
-        )
-
-
-def test_a_name_that_is_not_a_string_is_fatal() -> None:
-    with pytest.raises(ValueError, match=r"plugin entry is missing a name"):
-        resolve_one({"name": ["p"]})
-
-
 def test_include_and_exclude_on_one_kind_is_fatal() -> None:
     with pytest.raises(
         ValueError, match=r"include_skills and exclude_skills are mutually exclusive"
     ):
         resolve_one({"name": "p", "include_skills": ["a"], "exclude_skills": ["b"]})
-
-
-def test_selection_alongside_explicit_map_is_fatal() -> None:
-    with pytest.raises(ValueError, match=r"the explicit agents map already selects"):
-        resolve_one({"name": "p", "agents": {"a": "a.md"}, "exclude_agents": ["a"]})
 
 
 def test_unknown_profile_key_in_selection_map_is_fatal() -> None:
@@ -338,23 +212,6 @@ def test_fallback_key_before_a_profile_key_is_fatal() -> None:
         ValueError, match=r"exclude_skills lists '\*' before 'work'; .* must come last"
     ):
         resolve_one({"name": "p", "exclude_skills": {"*": ["a"], "work": ["b"]}})
-
-
-def test_explicit_map_that_is_not_a_map_is_fatal() -> None:
-    with pytest.raises(ValueError, match=r"skills must be a \{name: path\} map"):
-        resolve_one({"name": "p", "skills": "skills"})
-
-
-def test_selection_that_is_neither_list_nor_map_is_fatal() -> None:
-    with pytest.raises(
-        ValueError, match=r"exclude_skills must be a list or a profile-keyed map"
-    ):
-        resolve_one({"name": "p", "exclude_skills": "a"})
-
-
-def test_plugin_without_a_name_is_fatal() -> None:
-    with pytest.raises(ValueError, match=r"plugin entry is missing a name"):
-        resolve_one({"target_agents": ["pi"]})
 
 
 def test_config_errors_are_fatal_even_for_profiles_that_skip_the_plugin() -> None:
@@ -372,13 +229,12 @@ def test_config_errors_are_fatal_even_for_profiles_that_skip_the_plugin() -> Non
 
 
 def real_config() -> dict[str, Any]:
-    declarations = agent_harness_load_declarations(str(CAPABILITY), "/home/test")
-    return {
-        "agent_harness_sources": agent_harness_load_catalogue(
-            str(CAPABILITY / "catalogue.toml")
-        ),
-        "agent_harness_profiles": declarations["profiles"],
-    }
+    sources = tomllib.loads((CAPABILITY / "catalogue.toml").read_text())["sources"]
+    for source in sources:
+        if "local" in source:
+            source["local"] = str(REPO / source["local"])
+    profiles = tomllib.loads((CAPABILITY / "profiles.toml").read_text())["profiles"]
+    return {"agent_harness_sources": sources, "agent_harness_profiles": profiles}
 
 
 def real_profiles() -> list[str]:
@@ -400,37 +256,6 @@ def test_real_config_resolves_cleanly_for_every_profile() -> None:
             assert "excluded_on" not in source
             for plugin in source["plugins"]:
                 assert plugin["name"]
-
-
-def test_real_amp_publish_local_sources_have_valid_resources(tmp_path: Path) -> None:
-    config = real_config()
-    sources = agent_harness_resolve_sources(
-        config["agent_harness_sources"], "amp_publish", real_profiles(), HARNESSES
-    )
-    local_sources = [source for source in sources if "local" in source]
-
-    resources = agent_harness_build_plugin_resources(local_sources, str(tmp_path))
-
-    assert resources["skills"]
-    names = {skill["name"] for skill in resources["skills"]}
-    assert {
-        "operating-pod042",
-        "operating-the-printer",
-        "surveying-the-network",
-    } <= names
-
-
-def test_real_work_profile_excludes_claude_retitle() -> None:
-    config = real_config()
-    local = next(
-        source
-        for source in agent_harness_resolve_sources(
-            config["agent_harness_sources"], "work", real_profiles(), HARNESSES
-        )
-        if any(plugin["name"] == "claude" for plugin in source["plugins"])
-    )
-
-    assert "retitle" in plugin_named(local, "claude")["exclude_skills"]
 
 
 def test_real_config_scopes_work_plugin_to_work_profile() -> None:

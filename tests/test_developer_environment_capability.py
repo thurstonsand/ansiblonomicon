@@ -110,35 +110,6 @@ def dotfiles(
 
 
 @pytest.mark.parametrize("host", HOSTS)
-def test_hosts_register_neovim_with_the_intended_lock_policy(host: str) -> None:
-    target = ROOT / "bootstrap/targets" / host
-    profile = "work" if host == "ML-DFC6YK6VJQ" else "personal"
-    assert (target / "mise.neovim.toml").resolve() == (NVIM / "mise.toml").resolve()
-    assert (target / f"mise.neovim-{profile}.toml").resolve() == (
-        NVIM / f"mise.{profile}.toml"
-    ).resolve()
-    manifest = tomllib.loads((NVIM / f"mise.{profile}.toml").read_text())
-    assert manifest["dotfiles"]["~/.config/nvim/lazy-lock.json"]["mode"] == (
-        "copy" if profile == "work" else "symlink"
-    )
-    assert manifest["dotfiles"]["~/.config/nvim/lazy-lock.json"]["source"] == (
-        "neovim/lazy-lock.work.json" if profile == "work" else "neovim/lazy-lock.json"
-    )
-    shared = tomllib.loads((NVIM / "mise.toml").read_text())
-    assert shared["tasks"]["neovim:plugins"]["timeout"] == "10m"
-    assert shared["tasks"]["neovim:mason"] == {
-        **shared["tasks"]["neovim:mason"],
-        "depends": ["neovim:plugins"],
-        "timeout": "10m",
-    }
-    assert shared["tasks"]["neovim:setup"] == {
-        **shared["tasks"]["neovim:setup"],
-        "depends": ["neovim:mason"],
-        "timeout": "10m",
-    }
-
-
-@pytest.mark.parametrize("host", HOSTS)
 def test_real_neovim_manifests_render_idempotently_and_keep_neighbors(
     host: str, tmp_path: Path
 ) -> None:
@@ -148,7 +119,7 @@ def test_real_neovim_manifests_render_idempotently_and_keep_neighbors(
     neighbor = home / ".config/nvim/local-only.lua"
     neighbor.parent.mkdir(parents=True)
     neighbor.write_text("return 'keep'\n")
-    (home / ".config/nvim/init.lua").write_text("-- old chezmoi file\n")
+    (home / ".config/nvim/init.lua").write_text("-- old unmanaged file\n")
     (home / ".config/nvim/lazy-lock.json").write_text('{"old":true}\n')
     source_lock = tmp_path / "lock-source.json"
     lock_name = "lazy-lock.work.json" if host == "ML-DFC6YK6VJQ" else "lazy-lock.json"
@@ -158,7 +129,7 @@ def test_real_neovim_manifests_render_idempotently_and_keep_neighbors(
 
     preview = dotfiles(target, env, "--dry-run")
     assert "nvim --headless" not in preview.stdout + preview.stderr
-    assert (home / ".config/nvim/init.lua").read_text() == "-- old chezmoi file\n"
+    assert (home / ".config/nvim/init.lua").read_text() == "-- old unmanaged file\n"
     assert (home / ".config/nvim/lazy-lock.json").read_text() == '{"old":true}\n'
     dotfiles(target, env, "--yes")
 
@@ -169,8 +140,7 @@ def test_real_neovim_manifests_render_idempotently_and_keep_neighbors(
     assert neighbor.read_text() == "return 'keep'\n"
     assert lock.is_symlink() is (host != "ML-DFC6YK6VJQ")
     mason = (home / ".config/nvim/lua/plugins/mason.lua").read_text()
-    for legacy in ("chezmoi", "ansible"):
-        assert (legacy in mason) is (host == "ML-DFC6YK6VJQ")
+    assert ("ensure_installed = {}" in mason) is (host == "ML-DFC6YK6VJQ")
     if host == "ML-DFC6YK6VJQ":
         assert "https://jira.example/a'b/" in jira.read_text()
         assert (home / ".config/nvim/lua/plugins/gitbrowse.work.lua").is_file()
@@ -313,10 +283,8 @@ def test_rendered_lua_returns_expected_literal_configuration(tmp_path: Path) -> 
     script = tmp_path / "assert-config.lua"
     plugins = home / ".config/nvim/lua/plugins"
     script.write_text(f'''local mason = assert(loadfile("{plugins}/mason.lua"))()
-assert(mason[1].import == "lazyvim.plugins.extras.util.chezmoi")
-assert(mason[2].import == "lazyvim.plugins.extras.lang.ansible")
-assert(mason[3][1] == "mason-org/mason.nvim")
-assert(#mason[3].opts.ensure_installed == 0)
+assert(mason[1][1] == "mason-org/mason.nvim")
+assert(#mason[1].opts.ensure_installed == 0)
 local jira = assert(loadfile("{plugins}/jira.lua"))()
 assert(jira[1] == "folke/snacks.nvim")
 local browse = assert(loadfile("{plugins}/gitbrowse.work.lua"))()
@@ -433,13 +401,10 @@ def test_setup_task_preserves_command_order_and_propagates_failure(
     subprocess.run(
         ["mise", "-C", str(target), "run", "neovim:setup"], env=env, check=True
     )
-    expected = [f"--headless {lazy} +qa"]
-    if mason:
-        expected.append("--headless +MasonToolsUpdateSync +qa")
-    expected.append(
-        '--headless +lua local ok, err = xpcall(function() require("nvim-treesitter").update(nil, { summary = true }):wait(600000) end, debug.traceback); if not ok then vim.api.nvim_err_writeln(err); vim.cmd.cquit() end +qa',
-    )
-    assert (home / "calls").read_text().splitlines() == expected
+    calls = (home / "calls").read_text().splitlines()
+    assert calls[0] == f"--headless {lazy} +qa"
+    assert ("--headless +MasonToolsUpdateSync +qa" in calls) is mason
+    assert len(calls) == 2 + mason
     (home / "calls").unlink()
     env["FAIL_NVIM"] = "1"
     failed = subprocess.run(

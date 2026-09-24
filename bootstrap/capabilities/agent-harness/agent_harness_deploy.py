@@ -20,12 +20,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import catalogue
 from catalogue import FileMetadata, NativeResource, SourceConfig
 
-LEGACY_MANIFESTS = {
-    "personal": "macos-managed-files.json",
-    "pod042": "pod042-managed-files.json",
-}
-MANIFEST = LEGACY_MANIFESTS["personal"]
-
 
 def checkout_for(source: SourceConfig, cache: Path) -> Path:
     return cache / catalogue.filters.agent_harness_repo_to_cache_name(source["repo"])
@@ -204,27 +198,19 @@ def validate_native_destinations(
         destinations.add(path)
 
 
-def load_inventory(
-    path: Path,
-) -> tuple[dict[str, list[str]], dict[str, str], bool]:
+def load_inventory(path: Path) -> tuple[dict[str, list[str]], dict[str, str]]:
     if path.is_symlink():
         raise ValueError(f"Harness ownership manifest must not be a symlink: {path}")
     if not path.exists():
-        return {}, {}, False
+        return {}, {}
     try:
         value = cast(object, json.loads(path.read_text()))
     except json.JSONDecodeError as error:
         raise ValueError(f"Malformed harness ownership manifest: {path}") from error
-    if isinstance(value, list):
-        legacy = cast(list[object], value)
-        if not all(isinstance(item, str) for item in legacy):
-            raise ValueError(f"Malformed harness ownership manifest: {path}")
-        return {"legacy": cast(list[str], legacy)}, {}, True
     if not isinstance(value, dict):
         raise ValueError(f"Malformed harness ownership manifest: {path}")
     document = cast(dict[object, object], value)
-    version = document.get("version")
-    if version not in (2, 3):
+    if document.get("version") != 3:
         raise ValueError(f"Malformed harness ownership manifest: {path}")
     plugins = document.get("plugins")
     if not isinstance(plugins, dict):
@@ -236,19 +222,16 @@ def load_inventory(
         entries = cast(list[object], paths)
         if not all(isinstance(entry, str) for entry in entries):
             raise ValueError(f"Malformed harness ownership manifest: {path}")
-    proofs: dict[str, str] = {}
-    if version == 3:
-        raw_proofs = document.get("selection_proofs")
-        if not isinstance(raw_proofs, dict):
-            raise ValueError(f"Malformed harness ownership manifest: {path}")
-        proof_map = cast(dict[object, object], raw_proofs)
-        if not all(
-            isinstance(key, str) and isinstance(value, str)
-            for key, value in proof_map.items()
-        ):
-            raise ValueError(f"Malformed harness ownership manifest: {path}")
-        proofs = cast(dict[str, str], proof_map)
-    return cast(dict[str, list[str]], plugin_map), proofs, False
+    raw_proofs = document.get("selection_proofs")
+    if not isinstance(raw_proofs, dict):
+        raise ValueError(f"Malformed harness ownership manifest: {path}")
+    proof_map = cast(dict[object, object], raw_proofs)
+    if not all(
+        isinstance(key, str) and isinstance(value, str)
+        for key, value in proof_map.items()
+    ):
+        raise ValueError(f"Malformed harness ownership manifest: {path}")
+    return cast(dict[str, list[str]], plugin_map), cast(dict[str, str], proof_map)
 
 
 def write_inventory(
@@ -379,8 +362,8 @@ def reconcile(
     *,
     check: bool,
     cached: bool,
+    manifest_name: str,
     update: str = "86400s",
-    manifest_name: str | None = None,
     enabled_harnesses: list[str] | None = None,
     explicit_only: list[str] | None = None,
     trim_blocks: bool | None = None,
@@ -398,10 +381,8 @@ def reconcile(
     )
     native = catalogue.native_resources(repo, home, selected_harnesses)
     enabled, removed = declared_owners(sources)
-    manifest = cache / (
-        manifest_name or LEGACY_MANIFESTS.get(profile, f"{profile}-managed-files.json")
-    )
-    inventory, selection_proofs, _legacy = load_inventory(manifest)
+    manifest = cache / manifest_name
+    inventory, selection_proofs = load_inventory(manifest)
     fingerprints = catalogue.selection_fingerprints(sources)
     roots = roots_for(repo, home, cache, profile, hostname)
     validate_native_destinations(native, home, roots)
@@ -414,42 +395,6 @@ def reconcile(
         if owner.startswith("native:")
         for path in paths
     }
-    # A real pre-v2 manifest is an unowned list. Adopt paths that are still
-    # declared before enforcing exclusive ownership, and preserve the rest.
-    native_owner = {
-        item["destination"]: item["owner"]
-        for item in native
-        if item["declaration"].get("state", "present") != "absent"
-    }
-    if "legacy" in previous_paths:
-        legacy_paths = previous_paths.pop("legacy")
-        cached_checkouts_complete = all(
-            "repo" not in source
-            or not any(not p.get("remove", False) for p in source.get("plugins", []))
-            or (checkout_for(source, cache) / ".git").is_dir()
-            for source in sources
-        )
-        if not cached_checkouts_complete:
-            raise ValueError(
-                "Cannot migrate legacy harness ownership without cached sources"
-            )
-        legacy_metadata: dict[Path, FileMetadata] = {}
-        catalogue.render_files(
-            repo,
-            home,
-            cache,
-            profile,
-            hostname,
-            trim_blocks=(profile == "personal") if trim_blocks is None else trim_blocks,
-            metadata=legacy_metadata,
-            enabled_harnesses=enabled_harnesses,
-            explicit_only=explicit_only,
-        )
-        old_owner = {path: detail["owner"] for path, detail in legacy_metadata.items()}
-        for path in legacy_paths:
-            previous_paths.setdefault(
-                native_owner.get(path, old_owner.get(path, "legacy-unmapped")), []
-            ).append(path)
     retained_owner: dict[Path, str] = {}
     for owner, paths in previous_paths.items():
         for path in paths:
@@ -465,106 +410,9 @@ def reconcile(
                 raise ValueError(
                     f"Manifest-owned file was replaced by a directory: {path}"
                 )
-    if _legacy and not check:
-        write_inventory(
-            manifest,
-            {
-                owner: [str(path.relative_to(home)) for path in paths]
-                for owner, paths in previous_paths.items()
-            },
-            selection_proofs,
-        )
-    unproved_retained = (enabled & previous_paths.keys()) - selection_proofs.keys()
-    if unproved_retained:
-        # A v2 inventory proves ownership only.  Validate its still-cached
-        # declarations before Git can remove a named selection, then persist
-        # that proof as the migration baseline.
-        baseline_sources: list[SourceConfig] = []
-        for source in sources:
-            baseline_plugins = [
-                plugin
-                for plugin in source.get("plugins", [])
-                if source_owner(source, cast(dict[str, Any], plugin))
-                in unproved_retained
-            ]
-            if baseline_plugins:
-                baseline_source = copy.copy(source)
-                baseline_source["plugins"] = baseline_plugins
-                baseline_sources.append(baseline_source)
-        catalogue.filters.agent_harness_build_plugin_resources(
-            baseline_sources, str(cache)
-        )
-        selection_proofs.update(
-            {owner: fingerprints[owner] for owner in unproved_retained}
-        )
-        if not check:
-            write_inventory(
-                manifest,
-                {
-                    owner: [str(path.relative_to(home)) for path in paths]
-                    for owner, paths in previous_paths.items()
-                },
-                selection_proofs,
-            )
     if check or cached:
         require_cached_sources(sources, cache)
     else:
-        cached_checkouts_complete = all(
-            "repo" not in source
-            or not any(not p.get("remove", False) for p in source.get("plugins", []))
-            or (checkout_for(source, cache) / ".git").is_dir()
-            for source in sources
-        )
-        if not manifest.exists() and cached_checkouts_complete:
-            old_metadata: dict[Path, FileMetadata] = {}
-            old_files = catalogue.render_files(
-                repo,
-                home,
-                cache,
-                profile,
-                hostname,
-                trim_blocks=(profile == "personal")
-                if trim_blocks is None
-                else trim_blocks,
-                metadata=old_metadata,
-                enabled_harnesses=enabled_harnesses,
-                explicit_only=explicit_only,
-            )
-            adopted: dict[str, list[str]] = {}
-            for path, (content, mode) in old_files.items():
-                equivalent = (
-                    path.is_file()
-                    and not path.is_symlink()
-                    and path.read_bytes() == content
-                    and path.stat().st_mode & 0o777 == mode
-                )
-                correct_link = (
-                    path.is_symlink()
-                    and old_metadata[path]["mode"] == "symlink"
-                    and path.resolve()
-                    == Path(cast(str, old_metadata[path]["source"])).resolve()
-                )
-                if equivalent or correct_link:
-                    validate_destination(path, home, roots)
-                    adopted.setdefault(old_metadata[path]["owner"], []).append(
-                        str(path.relative_to(home))
-                    )
-            if adopted:
-                adopted_proofs = dict(selection_proofs)
-                adopted_proofs.update(
-                    {
-                        owner: fingerprints[owner]
-                        for owner in adopted
-                        if owner in fingerprints
-                    }
-                )
-                write_inventory(manifest, adopted, adopted_proofs)
-                selection_proofs = adopted_proofs
-                inventory = adopted
-                previous_paths = {
-                    owner: [home / item for item in paths]
-                    for owner, paths in inventory.items()
-                }
         sync_sources(sources, cache, time.time(), update)
     allowed_missing = {
         owner
@@ -680,12 +528,6 @@ def reconcile(
             raise ValueError(
                 f"Conflicting ownership for destination {path}: {prior!r} and {detail['owner']!r}"
             )
-    for path in list(previous_paths.get("legacy-unmapped", [])):
-        owner = destination_owners.get(path)
-        if owner:
-            previous_paths["legacy-unmapped"].remove(path)
-            previous_paths.setdefault(owner, []).append(path)
-            retained_owner[path] = owner
     for path, detail in metadata.items():
         retained = retained_owner.get(path)
         if retained is not None and retained != detail["owner"]:
@@ -757,7 +599,6 @@ def reconcile(
             }
         )
         for owner in set(previous_paths) | set(serialized)
-        if owner != "legacy"
     }
     if check:
         for path, (_, mode) in files.items():

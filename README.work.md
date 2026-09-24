@@ -1,33 +1,69 @@
 # Work Mac: Out-of-Git Files
 
-This documents private files that live **only** on the work Mac, plus their tracked consumers. Private files are maintained manually. Work is the only host that still runs Ansible and chezmoi: its plugin catalogue, private dotfiles, and local tasks remain pending cutover.
+This documents private files that live **only** on the work Mac, plus their tracked consumers. Private files are maintained manually. Work reconciles through native mise alone, like every other host.
 
-## Native Mise Configuration
+Every private input is gitignored before it holds corporate values. `*.local.toml` files and `bootstrap/targets/*/local/` directories are ignored repo-wide; `.fdignore` unhides them for `fd` and the editor file picker.
 
-Git/Jujutsu identity, corporate Git URL rewrites, Neovim private values, and Python indexes belong in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`. See the Git, Neovim, and Python-index capability instructions. Work cutover is pending; copy the values described below before applying either new capability.
+## Target Variables
 
-macOS preferences and sudo Touch ID are now native. Review private `configure_macos_defaults` and `configure_pam_reattach` overrides before work cutover; native reconciliation does not read them. The tracked profile manages all 27 preferences and `pam_tid`, leaves hostname unmanaged, and neither adds nor removes existing `pam_reattach` lines.
+Git/Jujutsu identity, corporate Git URL rewrites, LazyGit services, Go editor settings, Neovim private values, and Python indexes belong in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`. Mise loads it for every capability environment of the target.
 
 ## Agent Configuration
 
-Before the first native apply, copy these values from `chezmoi/.chezmoidata/local.toml` into the untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/data.toml`:
+The untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/` holds the work agent inputs:
 
-| Field                                | Consumed by                                              |
-| ------------------------------------ | -------------------------------------------------------- |
-| `goLocalImports` / `goplsBuildFlags` | No agent consumer; leave with their remaining owner      |
-| `[work_models]`                      | pi models/settings, Claude Code overlay                  |
-| `[work_gateway]`                     | pi model templates (endpoint and provider names)         |
-| `inferenceBudgetUrl`                 | Native Pi renderer (`powerlineCustom.budget.url`)        |
-| `costsDashboardUrl`                  | Native Pi renderer (`powerlineCustom.budget.costsUrl`)   |
-| `jiraBrowseUrl`                      | Pi footer settings (Neovim now uses native private data) |
-| `[[mcp_servers]]`                    | Claude MCP registration                                  |
-| `pi_mcp_json`                        | Native Pi renderer (`~/.pi/agent/mcp.json`)              |
+| File                           | Consumed by                                                           |
+| ------------------------------ | --------------------------------------------------------------------- |
+| `data.toml`                    | Native agent configuration (models, gateway, footer, MCP)             |
+| `catalogue.toml`               | Native agent catalogue: private sources appended after the shared one |
+| `claude-settings-overlay.json` | Claude settings overlay                                               |
+| `statusline-usage.sh`          | Claude statusline usage section                                       |
+| `assets.toml` and its sources  | Work-only linked assets such as Claude hooks                          |
 
-Keep credentials out of this file. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml` and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` first, then `mise agent-config --check --real-secrets` to prove credential access without writing. The personal Mac and pod042 have passed live apply and repeat verification; work remains fixture-only, with its private inputs and credential access unverified. Preserve the old chezmoi data and templates until before/after output parity is established on the work Mac.
+`data.toml` fields:
+
+| Field                | Consumed by                                            |
+| -------------------- | ------------------------------------------------------ |
+| `[work_models]`      | Pi models/settings, Claude Code overlay                |
+| `[work_gateway]`     | Pi providers (endpoint and provider names)             |
+| `inferenceBudgetUrl` | Native Pi renderer (`powerlineCustom.budget.url`)      |
+| `costsDashboardUrl`  | Native Pi renderer (`powerlineCustom.budget.costsUrl`) |
+| `jiraBrowseUrl`      | Pi footer settings                                     |
+| `piWorkPackages`     | Pi packages prepended to the work set                  |
+| `[[mcp_servers]]`    | Claude MCP registration                                |
+| `pi_mcp_json`        | Native Pi renderer (`~/.pi/agent/mcp.json`)            |
+
+Keep credentials out of these files. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml`, and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` first, then `mise agent-config --check --real-secrets` to prove credential access without writing.
+
+`catalogue.toml` uses the shared catalogue's `[[sources]]` schema. Sources are appended after the tracked catalogue and resolved for the `work` profile:
+
+```toml
+[[sources]]
+repo = "https://scm.example/scm/ai/plugin.git"
+
+[[sources.plugins]]
+name = "my-plugin"
+include_skills = []
+
+[[sources]]
+local = "/Users/me/code/local-plugin"
+
+[[sources.plugins]]
+name = "another-plugin"
+
+[sources.plugins.skills]
+deployed-name = "skills/some-skill"
+```
+
+The work host declaration is `bootstrap/targets/ML-DFC6YK6VJQ/mise.agent-harness.toml`; it enables Claude and Pi only and records ownership in `~/.cache/ansiblonomicon-harness/work-managed-files.json`.
 
 ## Shell Extras
 
-The shared startup files are owned by the native mise shell capability. It continues to source `~/.zshenv.local` and `~/.zshrc.local`, which are generated by the gitignored `chezmoi/private_dot_zshenv.local.tmpl` and `chezmoi/dot_zshrc.local.tmpl` on the work Mac. Those private templates remain deferred until work migration is verified; the cleanup ledger records their retirement condition. `SOURCEGRAPH_TOKEN` is the shell-wide exception because its plugin requires inheritance and Pi may launch non-interactively. The shell task resolves that value and its scoped sudo credential through `fnox-host` before rendering the private mode-0600 `.zshenv`; it does not perform a startup-time network read. Command-specific credentials continue to use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND`. Do not restore broad provider-token exports or global agent launch wrappers.
+The shared startup files are owned by the native mise shell capability. They source `~/.zshenv.local` and `~/.zshrc.local`, which the ignored `bootstrap/targets/ML-DFC6YK6VJQ/mise.shell-work.local.toml` declares from `bootstrap/targets/ML-DFC6YK6VJQ/local/shell/`: the environment file is copied privately at mode 0600, the interactive file is linked. `SOURCEGRAPH_TOKEN` is the shell-wide exception because its plugin requires inheritance and Pi may launch non-interactively. The shell task resolves that value and its scoped sudo credential through `fnox-host` before rendering the private mode-0600 `.zshenv`; it does not perform a startup-time network read. Command-specific credentials continue to use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND`. Do not restore broad provider-token exports or global agent launch wrappers.
+
+## Work-Local Machine Tasks
+
+`mise work-local` applies the ignored `bootstrap/targets/ML-DFC6YK6VJQ/mise.work-local.local.toml`, with sources in `bootstrap/targets/ML-DFC6YK6VJQ/local/work-local/`. Full laptop reconciliation runs it after the other configuration capabilities. It holds machine automation that must not live in git, such as privileged LaunchDaemons and user LaunchAgents mise cannot declare natively. Its final hook reloads each job only when the job is missing or its plist digest changed.
 
 ## Claude Code
 
@@ -36,13 +72,6 @@ The shared startup files are owned by the native mise shell capability. It conti
 - `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/assets.toml`
   declares work-only assets. Sources are relative to that same host-local directory;
   destinations are HOME-relative and `mode` must be `symlink`:
-
-  ```toml
-  [[files]]
-  source = "claude/hooks/local/private-hook.py"
-  destination = ".claude/hooks/local/private-hook.py"
-  mode = "symlink"
-  ```
 
 ### Merge Semantics
 
@@ -69,24 +98,21 @@ These should be used instead of hard-coding model values.
 
 ## Homebrew
 
-| File                                            | Purpose                                                  |
-| ----------------------------------------------- | -------------------------------------------------------- |
-| `bootstrap/capabilities/mac-apps/Brewfile.work` | Work-specific brews, casks, and taps (committed to git)  |
-| `ansible/Brewfile.work.local`                   | Machine-local additions not committed to git (if needed) |
+| File                                                  | Purpose                                                 |
+| ----------------------------------------------------- | ------------------------------------------------------- |
+| `bootstrap/capabilities/mac-apps/Brewfile.work`       | Work-specific brews, casks, and taps (committed to git) |
+| `bootstrap/capabilities/mac-apps/Brewfile.work.local` | Machine-local additions not committed to git            |
 
-`Brewfile.work` **is** committed. It still includes private `ansible/Brewfile.work.*` files from their existing location; the `.local` variant is for tools that are not publicly available. Native Mac-app reconciliation consumes both, and the work Brewfile retains chezmoi.
+`Brewfile.work` includes every sibling `Brewfile.work.*`; the `.local` variant is for corporate taps and tools that are not publicly available.
 
 ## Work-Local Config
 
-| File                                                        | Purpose                                                         |
-| ----------------------------------------------------------- | --------------------------------------------------------------- |
-| `ansible/work.config.local.yml`                             | Uncommitted extras for remaining Ansible consumers (gitignored) |
-| `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml` | Native private language-tool additions (gitignored)             |
-| `mise.local.toml`                                           | Work-only exclusions for project tools supplied by Homebrew     |
+| File                                                        | Purpose                                                     |
+| ----------------------------------------------------------- | ----------------------------------------------------------- |
+| `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml` | Native private language-tool additions                      |
+| `mise.local.toml`                                           | Work-only exclusions for project tools supplied by Homebrew |
 
-`mise.local.toml` disables `markdownlint-cli2` and `npm:mcp-remote`; Homebrew supplies both because Artifactory lacks the required npm releases. The work playbook conditionally includes `work.config.local.yml` for unmigrated consumers. Native language-tool extras belong in `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml`. This file is required before `language-tools` runs; an empty file explicitly confirms there are no private extras. Map `mise_global_tools_extra` and `mise_tool_config` to `[tools.<tool>]` tables with a `version`, and map the npm, uv, Bun, Go, Cargo, and gem `_extra` lists to their corresponding `packages` arrays. `npm_allow_scripts_extra` belongs in `npm.allow_scripts`. The native task validates this inventory and applies the private Python-index configuration before running package managers. Keep the old YAML values until live work verification confirms the mapping; other Ansible consumers may still need them.
-
-Native private inventory example:
+`mise.local.toml` disables `markdownlint-cli2` and `npm:mcp-remote`; Homebrew supplies both because Artifactory lacks the required npm releases. `language-tools.local.toml` is required before `language-tools` runs; an empty file explicitly confirms there are no private extras. The native task validates this inventory and applies the private Python-index configuration before running package managers.
 
 ```toml
 [tools.ruby]
@@ -103,35 +129,7 @@ packages = ["some-private-tool"]
 packages = ["gitlab.internal/org/tool"]
 ```
 
-Structure:
-
-```yaml
----
-uv_global_tools_extra:
-  - some-private-tool
-
-go_tools_extra:
-  - gitlab.internal/org/tool
-
-agent_harness_sources_extra:
-  - repo: https://scm.internal/scm/proj/plugin-marketplace.git
-    plugins:
-      - name: my-plugin
-        include_skills: []
-      - name: another-plugin
-        skills:
-          deployed-name: skills/some-skill
-```
-
-LazyGit's old `[[scm]]` entries map to native LazyGit YAML in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`. The value is the indented body of LazyGit's `services` mapping; preserve the two-space indentation inside the TOML multiline literal exactly:
-
-```toml
-[vars]
-lazygit_services = '''
-  "scm.example": "gitlab:scm.example"
-  "another.example:7999/projects/tools": "bitbucketServer:another.example:7999/projects/tools"
-'''
-```
+The tracked `tools.work.toml` links Pi's Glimpse clone into the global npm root through `[npm.links]`, because the registry lacks `glimpseui`. The link is restored after every Node change.
 
 ## Agent Harness Local Plugin
 
@@ -139,7 +137,7 @@ lazygit_services = '''
 | -------------- | ------------------------------------------------- |
 | `agents/work/` | Gitignored local plugin with work-specific skills |
 
-Declared for the `work` profile in `bootstrap/capabilities/agent-harness/catalogue.toml`. Work's Ansible adapter loads the native catalogue and resolver; private `agent_harness_sources_extra` remains in `ansible/work.config.local.yml`.
+Declared for the `work` profile in `bootstrap/capabilities/agent-harness/catalogue.toml`.
 
 ## Local Agent Instructions
 
@@ -149,43 +147,16 @@ Declared for the `work` profile in `bootstrap/capabilities/agent-harness/catalog
 
 ## MCP Servers
 
-| File                                                                 | Purpose                                                   |
-| -------------------------------------------------------------------- | --------------------------------------------------------- |
-| `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/data.toml` | `[[mcp_servers]]` entries for user-scope MCP registration |
-
-Native agent configuration reads `[[mcp_servers]]` from the host-local data and registers Claude user-scope servers. Transfer the old chezmoi entries before applying it. Repo-local skills can only launch subprocess MCP servers, so the Cloudflare skill uses Homebrew's `mcp-remote` to translate stdio MCP traffic to Cloudflare's authenticated HTTP endpoint. Pi and Claude's static project config support HTTP directly and bypass the adapter.
+Native agent configuration reads `[[mcp_servers]]` from the host-local `data.toml` and registers Claude user-scope servers. Repo-local skills can only launch subprocess MCP servers, so the Cloudflare skill uses Homebrew's `mcp-remote` to translate stdio MCP traffic to Cloudflare's authenticated HTTP endpoint. Pi and Claude's static project config support HTTP directly and bypass the adapter.
 
 ## Python Package Indexes (uv + pip)
 
 | File                     | Purpose                                                              |
 | ------------------------ | -------------------------------------------------------------------- |
-| Target `mise.local.toml` | Native system-level uv and pip indexes                               |
+| Target `mise.local.toml` | Native system-level uv and pip indexes (`python_index_config`)       |
 | `./uv.toml`              | Project-level override for this repo (gitignored, non-CICD endpoint) |
 
-Both files are now rendered natively from ordinary uv TOML stored in the scalar `python_index_config` in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml` (mise variables cannot hold structured values). Copy the current uv configuration unchanged, including `index-strategy` and each ordered `[[index]]`; `default` and `name` remain optional. The same validated TOML is copied directly to uv and parsed to derive pip: the optional default becomes `index-url`, and every non-default URL is retained in one multiline `extra-index-url`. Work reconciliation and focused checks fail before writing either target when this required value is absent or invalid. Personal and pod042 hosts intentionally leave both files absent. Do not delete the old chezmoi values until other private consumers have been checked.
-
-Neovim's old `jiraBrowseUrl` maps exactly to `neovim_jira_browse_url`. Copy each old `gitbrowse.remote` pair as a Lua row into `neovim_scm_remote_patterns`. Copy each old host (with Lua dots escaped) and every key/value under `gitbrowse.url` as a Lua table into `neovim_scm_url_patterns`. Preserve Lua patterns and escaping exactly. These required fragments have no tracked internal defaults and are parsed by Neovim during fixture validation.
-
-```toml
-[vars]
-python_index_config = '''index-strategy = "unsafe-best-match"
-
-[[index]]
-url = "https://index.example/simple"
-default = true
-name = "default"
-
-[[index]]
-url = "https://extra.example/simple"
-name = "extra"
-'''
-neovim_jira_browse_url = "https://jira.example/browse/"
-neovim_scm_remote_patterns = '''        { "pattern", "replacement" },'''
-neovim_scm_url_patterns = '''        ["scm%.example"] = {
-          branch = "...",
-          file = "...",
-        },'''
-```
+Work reconciliation and focused checks fail before writing either target when `python_index_config` is absent or invalid. Personal and pod042 hosts intentionally leave both files absent.
 
 ### uv.lock handling
 
@@ -203,107 +174,24 @@ This only bites when the lock targets a single platform — with the canonical m
 
 The mechanism is generic (no per-package pins, no version numbers anywhere) and self-heals: once the mirror carries the macOS-arm64 wheel, the work lock picks up the newer version automatically. A personal machine resolves the same `pyproject.toml` against `pypi.org`, where the wheel exists, so it floats to the latest. "Latest" thus differs per machine by what each index actually serves.
 
+The restriction also pins `python_version` to the interpreter running the pull. Without it, the open `requires-python = ">=3.14"` makes uv resolve a Python 3.15+ split as well, and the mirror serves no wheels for that yet, so every compiled dependency (`markupsafe`, `pyyaml`) fails the wheel-only resolve.
+
 ### pi extension package-lock.json handling
 
 The pi extensions `package-lock.json` (`bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/`) has the same mirror-URL problem: `npm install` on work rewrites it with Artifactory URLs. `mise run bootstrap` sets `skip-worktree` on it (gated by hostname) so the rewrite never reaches git, and `mise run pull` lifts/re-applies the mask around the rebase (see above). Dependency/lock bumps for pi extensions must be committed from a personal machine, where it resolves against the public npm registry.
-
-## Ansible Local Tasks
-
-| File                           | Purpose                                                                                              |
-| ------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `ansible/tasks/work.local.yml` | Machine-local Ansible tasks included by `work.yml` (gitignored, runs via `mise laptop --tags local`) |
-
-The work playbook conditionally includes this file if it exists. Place any work-specific automation here that shouldn't live in git.
-
-Currently deploys a LaunchAgent to manage claude model versions.
-
-## fd / File Picker Visibility
-
-`.fdignore` at repo root uses negation patterns (`!path`) to unhide work-only files from `fd` (and LazyVim's file picker) despite them being in `.gitignore`. When adding a new gitignored work file, add a corresponding `!` entry to `.fdignore`.
-
-## Prettier Formatting
-
-Prettier skips gitignored paths by default. The project-local `.nvim.lua` (`exrc`) tells conform to pass `--ignore-path .prettierignore` to prettier, making it read _only_ that file instead of `.gitignore`. This means all files — including gitignored work-only paths — get formatted on save.
-
-`.prettierignore` exists as an empty file to satisfy the `--ignore-path` flag. Add explicit exclusions there only if a file should never be formatted.
-
-## One-Time Native Cutover
-
-Perform this migration on the work laptop with an employer-approved LLM or manually. Amp and an Amp runner are not permitted there; no remote access or participation from the personal-machine agent is required. The goal is to preserve work behavior while removing every runtime dependency on Ansible and chezmoi. This is an implementation and verification task, not just a sequence of existing commands: the tracked work route still deliberately invokes both legacy tools.
-
-### 1. Preserve the Work State
-
-- Read this README, `AGENTS.md`, `DEV.md`, and `docs/operations/mise-migration-cleanup.md`. Inspect the actual hostname and target before applying anything; the current registered work target is `ML-DFC6YK6VJQ`, with home `/Users/tsandberg`.
-- Record the revision, dirty/staged files, stashes, and lockfile `skip-worktree` flags. Preserve all existing local work. Use the documented `mise run pull` workflow for synchronization only after protecting it; a clean `git status` does not expose masked lockfile changes.
-- Back up every private input in the Setup Checklist below, any additional ignored/untracked files discovered locally, and the deployed files they own. Include chezmoi config/state, harness caches and ownership manifests, Neovim's work lockfile, and local LaunchAgents. Keep backups outside directories scheduled for retirement, restrict backup/log permissions, and test restoration without overwriting live files. Do not change the process-wide umask for installers merely to protect logs.
-- Inventory the real remaining consumers: `ansible/work.config.local.yml`, `ansible/tasks/work.local.yml`, `ansible/Brewfile.work.*`, `agents/work/`, and all private chezmoi templates, data, scripts, and hooks. Trace role includes and template reads, not just the tracked playbook. Record each input's destinations, existing owner, native replacement, and verification check. Do not assume the Setup Checklist exhausts private state.
-
-Keep corporate URLs, credentials, private package names, rendered settings, and backups on the work laptop. Only sanitized implementation changes and results should leave it.
-
-### 2. Implement the Remaining Native Owners
-
-Use the mappings earlier in this README for target variables, language tools, agent data/assets, Python indexes, Git/Jujutsu, and Neovim. Preserve local override precedence and the current effective values. Extend the capability that owns each resource; do not create a second owner or a compatibility wrapper around Ansible/chezmoi.
-
-- **Agent catalogue:** `mise agent-harness` currently skips catalogue deployment on work and only runs `agent-config`. `mise laptop -t agent-harness` still invokes the Ansible adapter first. Add a work host declaration for the native engine, using the personal host declaration as a structural example, with the work profile and only work-approved harnesses. Implement an ignored native input for `agent_harness_sources_extra` and any other effective private role overrides; copying them into agent `data.toml` alone does not make the catalogue consume them. Preserve `agents/work/`, source/plugin identity, skill selectors and removals, hooks, update policy, and the work Glimpse link. Prove that existing caches/manifests can be adopted without pruning private or unowned files before switching the public route.
-- **Private shell and dotfiles:** move the effective outputs of `private_dot_zshenv.local.tmpl`, `dot_zshrc.local.tmpl`, and every other remaining private chezmoi consumer to their native owners. Retain `.zshenv.local`/`.zshrc.local` sourcing and scoped credential behavior. Inspect scripts and hooks as well as files; a rendered-file comparison cannot prove their side effects are preserved. Keep the unconditional ownership exclusions in `.chezmoiignore` until the legacy route is disabled.
-- **Local tasks and fallback roles:** migrate `ansible/tasks/work.local.yml`, including its model-version LaunchAgent, and any private callers of retained Homebrew, mise, language-tool, macOS-defaults, or small-software roles. Decide explicitly whether each override remains needed. Do not infer that a role is unused from the tracked playbook alone.
-- **Private Brewfiles:** native Mac-apps already reads `ansible/Brewfile.work.*`. Relocate those private inputs to an ignored native-owned location and update the tracked include, `.gitignore`, `.fdignore`, and documentation together. Verify the same effective package declarations before deleting the old files. Daily maintenance includes bounded cleanup and a global unpinned formula upgrade; review the proposed removals and expect updates beyond directly declared formulae. Casks retain Bundle's existing policy.
-- **Public routing:** once the replacements are verified individually, change work's `reconcile:laptop` and `agent-harness` routes in root `mise.toml`, plus `scripts/list-tags.sh`, to use native owners only. Preserve ordering: catalogue before agent settings/hooks; private Python-index configuration before package managers; retirement last. Preserve work restrictions on SSH, Docker context, hostname, and unapproved software. Unknown/obsolete tags must fail before side effects rather than fall through to a legacy playbook.
-
-Treat missing native support as work to implement and test, not as permission to discard a private setting. All new private-input locations must be ignored before writing corporate values to them. Keep secrets as SecretRefs; do not embed resolved credentials in source or TOML overlays.
-
-### 3. Prove Parity and Convergence
-
-Start with focused checks for the owners being migrated, then apply and repeat each one. Use the public entry points so task routing is tested, not just helper scripts. Existing examples, run from the repository root:
-
-```sh
-mise python-index --check
-mise language-tools --check
-mise agent-config --check
-mise agent-config --check --real-secrets
-mise neovim --check
-mise laptop --check
-```
-
-Before the routing change, the last command still exercises the remaining work playbook; it is not proof of native-only operation. The placeholder-secret agent check can exit 2 when private content is unresolved; the real-secret check must then establish parity. Native catalogue checks require populated source caches. Inspect each exit status and diagnostic; do not suppress failures or treat missing cache/credentials as success.
-
-After implementing native work routing, run the full `mise laptop --check`, `mise laptop`, a second `mise laptop`, and final `mise laptop --check`. Use `mise agent-config --check --real-secrets` to verify secret-backed outputs. Record before/after file content, permissions, symlink targets, ownership manifests, service state, and exit statuses. Separate app-written history/cache changes from deployment writes. The second apply must perform no unexplained installs, upgrades, rewrites, or privileged work; final checks must show no unexplained drift. Do not delete daily stamps merely to force maintenance.
-
-Smoke-test a new shell, corporate Git access and URL rewrites, uv/pip against the corporate indexes, approved Claude/Pi models, MCP servers, private skills/hooks, Neovim's work settings, and the migrated LaunchAgent. Preserve mirror-compatible package versions and the separate work Neovim lock; do not run personal-host plugin or Mason upgrades blindly. Verify that no public route invokes `ansible-playbook` or `chezmoi`, preferably with temporary fail-fast command shims during the final repeat after dependency bootstrap has been updated.
-
-Run the relevant fixture tests, including laptop routing, agent catalogue/configuration, Mac apps, language tools, Python indexes, and Neovim, plus the repository's applicable lint/type checks. Add coverage for private-input loading and precedence using synthetic data, with no corporate values in fixtures. Mirror-derived lockfile changes stay local; dependency and canonical lockfile changes are resolved on a personal machine.
-
-### 4. Retire Only After Verification
-
-Do not run the personal `retirements` capability on work unchanged. Audit `.ansibleremove`, `chezmoi/.chezmoiremove`, and `bootstrap/capabilities/retirements/paths.toml` against actual work ownership; declare approved native absences and any required LaunchAgent unloads, with cleanup running last. Back up remaining chezmoi state before removal. Never recursively remove `ansible/` or `chezmoi/` while private inputs still live there.
-
-Once no consumer needs them, remove work's legacy package declarations and bootstrap/dependency routes: the Brewfile's chezmoi and Ansible language server, the optional Python `work` dependencies, work-group invocations in bootstrap/pull/check tasks, legacy lint tasks, and editor plugins/Mason packages retained for this migration. Audit installed Homebrew, uv-tool, mise, project-venv, and editor copies rather than relying only on `PATH`. Do not remove Ansible tooling required by unrelated work projects. After changing bootstrap dependencies, reconcile the environment and prove a fresh bootstrap/reconcile path no longer reinstalls legacy tools.
-
-Keep the recovery backup until the cutover is accepted. Shared legacy tree deletion can follow after the sanitized report below is reviewed; retaining dormant source temporarily is safer than deleting evidence before live parity is known.
-
-### 5. Report Back
-
-Provide the user with the tested revision or sanitized patch, the native private-input paths (without their contents), the input-to-owner migration inventory, and any unresolved consumers. Include check/apply/repeat/final-check commands and exit statuses, smoke-test results, package/state retirements, lockfile changes, and whether the worktree is clean, committed, or pushed. State explicitly whether work is now native-only and whether any Ansible/chezmoi installation remains for unrelated work. Do not publish private inputs, logs, or mirror lockfiles.
-
-The user can bring that report and approved source changes back to the personal-machine session. That evidence is the gate for removing the shared legacy support; no Amp connection to the work laptop is needed.
 
 ## Setup Checklist
 
 When setting up a new work Mac, copy these files from the old machine:
 
 - `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`
+- `bootstrap/targets/ML-DFC6YK6VJQ/mise.*.local.toml` and `bootstrap/targets/ML-DFC6YK6VJQ/local/`
 - `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml`
-- `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/` (data, overlay, and private assets)
-- `ansible/Brewfile.work.*` (private Homebrew additions)
-- `chezmoi/.chezmoidata/local.toml` (then map its Neovim/Python values into the target-local file above)
-- `chezmoi/.chezmoitemplates/local/claude-settings-overlay.json`
-- `chezmoi/dot_zshrc.local.tmpl`
-- `chezmoi/private_dot_zshenv.local.tmpl`
-- `ansible/work.config.local.yml`
-- `ansible/tasks/work.local.yml`
+- `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/`
+- `bootstrap/capabilities/mac-apps/Brewfile.work.local`
 - `mise.local.toml`
 - `agents/work/`
 - `./AGENTS.local.md`
 - `./uv.toml`
 
-If native private inputs do not yet exist, create them from the legacy values using the mappings above before reconciliation. Preserve legacy inputs until live work parity is established. Run `mise laptop --check` before `mise laptop`; the work playbook applies its remaining chezmoi state. Work retains `.ansibleremove` and `chezmoi/.chezmoiremove` consumers and does not run personal native retirements.
+Run `mise laptop --check` before `mise laptop`.

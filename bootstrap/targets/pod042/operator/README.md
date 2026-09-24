@@ -7,7 +7,7 @@ Base owns the zsh package and the operator's `/usr/bin/zsh` login shell; the dri
 The remaining installation steps are named mise tasks, ordered through dependencies:
 
 1. `operator:tools`: install and update the inventory, reconcile npm globals beside Node, install T3's CLI into its own prefix, and refresh shims.
-2. `operator:agents`: install missing vendor-native agent CLIs, then retire their old mise-managed installations without removing authentication directories.
+2. `operator:agents`: install missing vendor-native agent CLIs.
 3. `operator:sessions`: build the sessions CLI from `bootstrap/capabilities/software/sources/sessions/` when its Go sources change.
 
 Terminal configuration, TPM, and plugins are owned by the `terminal-tools` capability, which runs after the prerequisite bootstrap during a full reconciliation.
@@ -16,6 +16,6 @@ Agent installation follows the official installers: [Amp](https://ampcode.com/in
 
 The final hook runs those tasks as `thurstonsand` with an isolated environment. It does not load the project's credential hook or replace the base bootstrap task.
 
-Bootstrap owns software installation and service lifecycle. The shared native `shell`, `terminal-theme`, `terminal-tools`, `git-client`, `jj-client`, `neovim`, and `agent-harness`/`agent-config` capabilities own shell, terminal, VCS, Neovim, and agent configuration on pod042 and laptops; full reconciliation applies them after operator prerequisites. Focused VCS reconciliation loads shared identity facts and changes only the selected client's configuration. Chezmoi is retired; native capabilities manage all operator and application configuration.
+Bootstrap owns software installation and service lifecycle. The shared native `shell`, `terminal-theme`, `terminal-tools`, `git-client`, `jj-client`, `neovim`, and `agent-harness`/`agent-config` capabilities own shell, terminal, VCS, Neovim, and agent configuration on pod042 and laptops; full reconciliation applies them after operator prerequisites. Focused VCS reconciliation loads shared identity facts and changes only the selected client's configuration.
 
 T3 and Amp enrollment and persistence belong to `remote-development`, not this capability. T3 serves multiple projects from the operator's home; Amp's runner belongs to this checkout.

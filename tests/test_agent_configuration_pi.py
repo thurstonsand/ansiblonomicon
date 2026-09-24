@@ -47,40 +47,6 @@ def rendered(tmp_path: Path, hostname: str, values: dict[str, Any] | None = None
     )
 
 
-def test_personal_mac_uses_local_packages_and_canonical_aliases(tmp_path: Path) -> None:
-    result = rendered(tmp_path, "personal-mac")
-    settings = json.loads(result[".pi/agent/settings.json"])
-
-    assert settings["defaultModel"] == "opus-version"
-    assert settings["enabledModels"] == [
-        "doppel/opus:medium",
-        "doppel/fable:medium",
-        "codex/astra:medium",
-        "codex/sol:medium",
-    ]
-    assert str(tmp_path / "Develop/pi-permissions") in settings["packages"]
-    assert (
-        settings["sessions"]["autoTitle"]["prompt"]
-        == (
-            ROOT / "bootstrap/capabilities/agent-harness/session-title-prompt.txt"
-        ).read_text()
-    )
-    assert ".pi/agent/mcp.json" not in result
-    assert (
-        result[".pi/agent/extensions/glimpse-companion/companion/font-family.txt"]
-        == "Test Mono\n"
-    )
-
-
-def test_pod042_uses_npm_packages_and_disables_companion(tmp_path: Path) -> None:
-    result = rendered(tmp_path, "pod042")
-    settings = json.loads(result[".pi/agent/settings.json"])
-    assert "npm:pi-permissions" in settings["packages"]
-    assert not any(str(item).startswith("/Users/") for item in settings["packages"])
-    assert settings["glimpse"]["companion"]["enabled"] is False
-    assert ".pi/agent/mcp.json" not in result
-
-
 def test_work_gateway_models_packages_and_runtime(tmp_path: Path) -> None:
     values = data()
     values.update(

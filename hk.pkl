@@ -2,17 +2,6 @@ amends "package://github.com/jdx/hk/releases/download/v1.56.1/hk@1.56.1#/Config.
 
 import "package://github.com/jdx/hk/releases/download/v1.56.1/hk@1.56.1#/Builtins.pkl"
 
-// The normalizer's whole job is a path transformation, so its tests assert on the
-// paths it would hand ansible-lint rather than on a verdict that costs 1.4s a row.
-// No tmpdir: a dry run writes nothing worth isolating, and a sandbox cwd would put
-// the test somewhere ./scripts does not resolve from.
-local function normalizes(paths: List<String>, lintables: String): StepTest = new StepTest {
-  files = paths
-  env { ["ANSIBLE_LINT_STAGED_DRY_RUN"] = "1" }
-  tmpdir = false
-  expect { stdout = lintables }
-}
-
 // Unlike wt and ghosttykit, no step here dispatches into `mise run check`. A step
 // with no glob always runs, and this repo's full graph is 27.3s, so the sibling
 // shape would have doubled the commit cost instead of cutting it. Every step below
@@ -20,50 +9,6 @@ local function normalizes(paths: List<String>, lintables: String): StepTest = ne
 // with a `fix` leaves `stage` unset, which hk reads as that step's own glob; naming
 // the same paths twice only invites the two to drift apart.
 local linters = new Mapping<String, Step> {
-  ["ansible"] {
-    glob = List("ansible/**/*.yml", "ansible/**/*.yaml")
-    // Structured argv rather than a shell string: role directories can contain
-    // spaces, and hk expands an exact `{{files}}` to one argument per file.
-    check = new Command {
-      argv = List("./scripts/ansible-lint-staged.sh", "{{files}}")
-    }
-    tests {
-      ["role task file collapses to the role"] =
-        normalizes(List("ansible/roles/foo/tasks/main.yml"), "roles/foo\n")
-      ["role meta file collapses to the role"] =
-        normalizes(List("ansible/roles/foo/meta/main.yml"), "roles/foo\n")
-      ["playbook passes through"] =
-        normalizes(List("ansible/playbooks/truenas.yml"), "playbooks/truenas.yml\n")
-      ["group_vars passes through"] =
-        normalizes(
-          List("ansible/inventory/control/group_vars/all.yml"),
-          "inventory/control/group_vars/all.yml\n"
-        )
-      // The playbook line following immediately is what proves the role appears
-      // once: a substring assertion cannot count on its own.
-      ["two files in one role dedupe"] =
-        normalizes(
-          List(
-            "ansible/roles/foo/tasks/main.yml",
-            "ansible/roles/foo/meta/main.yml",
-            "ansible/playbooks/truenas.yml"
-          ),
-          "roles/foo\nplaybooks/truenas.yml\n"
-        )
-      ["a role name with a space survives"] =
-        normalizes(List("ansible/roles/my role/tasks/main.yml"), "roles/my role\n")
-      ["a path outside ansible/ is refused"] {
-        files = List("pyproject.toml")
-        env { ["ANSIBLE_LINT_STAGED_DRY_RUN"] = "1" }
-        tmpdir = false
-        expect {
-          code = 2
-          stderr = "is not under ansible/"
-        }
-      }
-    }
-  }
-
   // `ruff check --force-exclude {{files}}`, then `--fix` only if that fails.
   // `--unsafe-fixes` stays in the manual `fix` task, where a human reads the diff.
   ["ruff-check"] = (Builtins.ruff) {}

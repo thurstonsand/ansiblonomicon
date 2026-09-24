@@ -1,7 +1,4 @@
 {
-  "permissions": {
-    "allow": ["Bash(ansible-lint:*)", "Bash(chezmoi execute-template:*)"]
-  },
   "sandbox": {
     "excludedCommands": ["mise:*"]
   }

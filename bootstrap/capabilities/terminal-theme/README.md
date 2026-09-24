@@ -9,10 +9,10 @@ mise terminal-theme
 mise terminal-theme --check
 ```
 
-`--check` uses mise's dry run to preview files, dotfiles, and the LaunchAgent; it does not initialize state, execute the theme runtime, fetch from the network, or update mise. Regular host reconciliation also includes this capability. The macOS target requires mise 2026.9.6; normal reconciliation runs mise maintenance before invoking this capability. Work-host live application is intentionally deferred until that laptop is available.
+`--check` uses mise's dry run to preview files, dotfiles, and the LaunchAgent; it does not initialize state, execute the theme runtime, fetch from the network, or update mise. Regular host reconciliation also includes this capability. The macOS target requires mise 2026.9.6; normal reconciliation runs mise maintenance before invoking this capability.
 
 Shared declarations and assets are linked into each host target. The Macs keep only absolute private-file destinations and ownership in `mise.terminal-theme-files.toml`: mise does not template those keys. macOS apply resolves the host's scoped sudo credential before invoking askpass, then executes native mise in the authenticated process; no terminal is required.
 
-The watcher plist contains a hash of its repository runtime inputs. Native LaunchAgent apply therefore reloads it when those inputs or the plist declaration change, while a no-op reconcile leaves the running watcher untouched. Mise prefixes the label with `dev.mise.`; migration unloads the legacy `house.thurstons.terminal-theme-watch` job in the post-dotfiles hook before loading the replacement, and declares the old plist absent.
+The watcher plist contains a hash of its repository runtime inputs. Native LaunchAgent apply therefore reloads it when those inputs or the plist declaration change, while a no-op reconcile leaves the running watcher untouched. Mise prefixes the label with `dev.mise.`.
 
-Laptop reconciliation calls this capability directly after the remaining Ansible work. `mise laptop -t terminal-theme` and `mise reconcile -t terminal-theme` skip Ansible entirely; mixed tag selections pass only non-theme tags to Ansible. Check mode follows the same routing without updates or native writes. The legacy watcher cleanup remains until both Macs have migrated.
+Laptop reconciliation calls this capability after the agent harness and before the other configuration capabilities. `mise laptop -t terminal-theme` and `mise reconcile -t terminal-theme` run it alone. Check mode follows the same routing without updates or native writes.

@@ -18,6 +18,14 @@ SPEC = importlib.util.spec_from_file_location(
 assert SPEC and SPEC.loader
 harness = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(harness)
+MANIFEST = "macos-managed-files.json"
+OWNER = "example/catalogue\0fixture"
+
+
+def write_manifest(path: Path, paths: list[str]) -> None:
+    path.write_text(
+        json.dumps({"version": 3, "plugins": {OWNER: paths}, "selection_proofs": {}})
+    )
 
 
 def git(*args: str, cwd: Path) -> None:
@@ -32,6 +40,8 @@ def git(*args: str, cwd: Path) -> None:
             "GIT_AUTHOR_EMAIL": "fixture@example.test",
             "GIT_COMMITTER_NAME": "Fixture",
             "GIT_COMMITTER_EMAIL": "fixture@example.test",
+            "GIT_CONFIG_GLOBAL": os.devnull,
+            "GIT_CONFIG_NOSYSTEM": "1",
         },
     )
 
@@ -185,8 +195,8 @@ state = "absent"
     stale = home / ".claude/skills/stale/SKILL.md"
     stale.parent.mkdir(parents=True)
     stale.write_text("old")
-    manifest = cache / harness.MANIFEST
-    manifest.write_text(json.dumps([str(stale.relative_to(home))]))
+    manifest = cache / MANIFEST
+    write_manifest(manifest, [str(stale.relative_to(home))])
 
     check = run_fixture(tmp_path, home, repo, cache, check=True)
     assert check.returncode == 0, check.stderr
@@ -213,9 +223,7 @@ state = "absent"
         0o644,
         0o644,
     ]
-    # The old flat manifest cannot prove which plugin owns this path, so the
-    # migration deliberately preserves it rather than guessing.
-    assert stale.read_text() == "old"
+    assert not stale.exists()
     assert unrelated.read_text() == "independently installed"
     assert foreign_git.is_dir()
     assert synced.is_dir()
@@ -231,25 +239,6 @@ state = "absent"
     assert repeat.returncode == 0, repeat.stderr
     assert script.stat().st_mode & 0o777 == 0o755
     assert {path: path.stat().st_mtime_ns for path in mtimes} == mtimes
-
-
-def test_real_legacy_list_adopts_declared_path_before_owner_validation(
-    tmp_path: Path,
-) -> None:
-    home = tmp_path / "home"
-    home.mkdir()
-    repo, cache = fixture_repo(tmp_path, home)
-    skill = home / ".claude/skills/demo/SKILL.md"
-    skill.parent.mkdir(parents=True)
-    skill.write_text("---\nname: demo\n---\nliteral skill\n")
-    manifest = cache / harness.MANIFEST
-    original = json.dumps([str(skill.relative_to(home))])
-    manifest.write_text(original)
-
-    result = run_fixture(tmp_path, home, repo, cache, check=True)
-
-    assert result.returncode == 0, result.stderr
-    assert manifest.read_text() == original
 
 
 @pytest.mark.parametrize(
@@ -268,8 +257,8 @@ def test_manifest_escape_and_symlink_escape_fail_before_mutation(
         (home / ".claude/skills").mkdir(parents=True)
         (home / ".claude/skills/escape").symlink_to(outside, target_is_directory=True)
         (outside / "file").write_text("safe")
-    manifest = cache / harness.MANIFEST
-    manifest.write_text(json.dumps([relative]))
+    manifest = cache / MANIFEST
+    write_manifest(manifest, [relative])
     before = manifest.read_bytes()
 
     result = run_fixture(tmp_path, home, repo, cache)
@@ -287,7 +276,7 @@ def test_manifest_itself_must_not_be_a_symlink(tmp_path: Path) -> None:
     repo, cache = fixture_repo(tmp_path, home)
     outside = tmp_path / "outside-manifest.json"
     outside.write_text("[]")
-    (cache / harness.MANIFEST).symlink_to(outside)
+    (cache / MANIFEST).symlink_to(outside)
 
     result = run_fixture(tmp_path, home, repo, cache)
 
@@ -303,8 +292,8 @@ def test_failed_native_apply_retains_union_for_recovery(tmp_path: Path) -> None:
     stale = home / ".claude/skills/stale/SKILL.md"
     stale.parent.mkdir(parents=True)
     stale.write_text("old")
-    manifest = cache / harness.MANIFEST
-    manifest.write_text(json.dumps([str(stale.relative_to(home))]))
+    manifest = cache / MANIFEST
+    write_manifest(manifest, [str(stale.relative_to(home))])
     binary = tmp_path / "bin"
     binary.mkdir()
     fake = binary / "mise"
@@ -395,120 +384,6 @@ def test_clone_failure_leaves_no_poisoned_checkout_and_retry_succeeds(
     assert (checkout / "asset").read_text() == "ready"
 
 
-def test_first_adoption_retires_asset_removed_by_source_refresh(tmp_path: Path) -> None:
-    home = tmp_path / "home"
-    home.mkdir()
-    repo, cache = fixture_repo(tmp_path, home)
-    original_checkout = cache / "example--catalogue"
-    origin = tmp_path / "origin"
-    shutil.move(original_checkout, origin)
-    git("init", "-q", cwd=origin)
-    git("add", ".", cwd=origin)
-    git("commit", "-qm", "old catalogue", cwd=origin)
-    source: Any = {"repo": origin.as_uri(), "plugins": [{"name": "fixture"}]}
-    checkout = harness.checkout_for(source, cache)
-    git("clone", "-q", origin.as_uri(), str(checkout), cwd=tmp_path)
-    (repo / "bootstrap/capabilities/agent-harness/catalogue.toml").write_text(
-        f'[[sources]]\nrepo = "{origin.as_uri()}"\n'
-        '[[sources.plugins]]\nname = "fixture"\n'
-    )
-    retired = home / ".claude/skills/demo/run.sh"
-    retired.parent.mkdir(parents=True)
-    retired.write_text("#!/bin/sh\necho literal\n")
-    retired.chmod(0o755)
-    (origin / "demo/run.sh").unlink()
-    git("add", "-u", cwd=origin)
-    git("commit", "-qm", "remove old asset", cwd=origin)
-
-    result = run_fixture(tmp_path, home, repo, cache, cached=False)
-
-    assert result.returncode == 0, result.stderr
-    assert not retired.exists()
-    assert ".claude/skills/demo/run.sh" not in json.loads(
-        (cache / harness.MANIFEST).read_text()
-    )
-
-
-def test_first_adoption_survives_partial_refresh_failure(tmp_path: Path) -> None:
-    home = tmp_path / "home"
-    home.mkdir()
-    repo, cache = fixture_repo(tmp_path, home)
-    first_origin = tmp_path / "first-origin"
-    shutil.move(cache / "example--catalogue", first_origin)
-    git("init", "-q", cwd=first_origin)
-    git("add", ".", cwd=first_origin)
-    git("commit", "-qm", "old first catalogue", cwd=first_origin)
-    first: Any = {
-        "repo": first_origin.as_uri(),
-        "plugins": [{"name": "fixture"}],
-    }
-    git(
-        "clone",
-        "-q",
-        first_origin.as_uri(),
-        str(harness.checkout_for(first, cache)),
-        cwd=tmp_path,
-    )
-
-    second_origin = tmp_path / "second-origin"
-    shutil.copytree(first_origin, second_origin)
-    second_plugin = second_origin / ".claude-plugin/plugin.json"
-    second_plugin.write_text(
-        second_plugin.read_text()
-        .replace('"fixture"', '"second"')
-        .replace('"demo"', '"second-demo"')
-        .replace('"agents"', '"second-agents"')
-    )
-    (second_origin / "demo").rename(second_origin / "second-demo")
-    (second_origin / "agents").rename(second_origin / "second-agents")
-    git("add", ".", cwd=second_origin)
-    git("commit", "-qm", "second catalogue", cwd=second_origin)
-    second: Any = {
-        "repo": second_origin.as_uri(),
-        "plugins": [{"name": "second"}],
-    }
-    git(
-        "clone",
-        "-q",
-        second_origin.as_uri(),
-        str(harness.checkout_for(second, cache)),
-        cwd=tmp_path,
-    )
-    (repo / "bootstrap/capabilities/agent-harness/catalogue.toml").write_text(
-        f'[[sources]]\nrepo = "{first_origin.as_uri()}"\n'
-        '[[sources.plugins]]\nname = "fixture"\n'
-        f'[[sources]]\nrepo = "{second_origin.as_uri()}"\n'
-        '[[sources.plugins]]\nname = "second"\n'
-    )
-    retired = home / ".claude/skills/demo/run.sh"
-    retired.parent.mkdir(parents=True)
-    retired.write_text("#!/bin/sh\necho literal\n")
-    retired.chmod(0o755)
-    foreign = home / ".claude/skills/demo/foreign.txt"
-    foreign.write_text("foreign")
-    (first_origin / "demo/run.sh").unlink()
-    git("add", "-u", cwd=first_origin)
-    git("commit", "-qm", "remove old asset", cwd=first_origin)
-    unavailable = tmp_path / "second-origin-unavailable"
-    second_origin.rename(unavailable)
-
-    failed = run_fixture(tmp_path, home, repo, cache, cached=False)
-
-    assert failed.returncode == 1
-    assert not (harness.checkout_for(first, cache) / "demo/run.sh").exists()
-    failed_inventory = json.loads((cache / harness.MANIFEST).read_text())["plugins"]
-    assert ".claude/skills/demo/run.sh" in {
-        path for paths in failed_inventory.values() for path in paths
-    }
-    unavailable.rename(second_origin)
-
-    retry = run_fixture(tmp_path, home, repo, cache, cached=False)
-
-    assert retry.returncode == 0, retry.stderr
-    assert not retired.exists()
-    assert foreign.read_text() == "foreign"
-
-
 def test_manifest_owned_file_replaced_by_directory_is_preserved(tmp_path: Path) -> None:
     home = tmp_path / "home"
     home.mkdir()
@@ -517,15 +392,17 @@ def test_manifest_owned_file_replaced_by_directory_is_preserved(tmp_path: Path) 
     owned.mkdir(parents=True)
     child = owned / "foreign.txt"
     child.write_text("preserve me")
-    manifest = cache / harness.MANIFEST
-    manifest.write_text(json.dumps([str(owned.relative_to(home))]))
+    manifest = cache / MANIFEST
+    write_manifest(manifest, [str(owned.relative_to(home))])
 
     result = run_fixture(tmp_path, home, repo, cache)
 
     assert result.returncode == 1
     assert "Manifest-owned file was replaced by a directory" in result.stderr
     assert child.read_text() == "preserve me"
-    assert json.loads(manifest.read_text()) == [".claude/skills/retired/SKILL.md"]
+    assert json.loads(manifest.read_text())["plugins"] == {
+        OWNER: [".claude/skills/retired/SKILL.md"]
+    }
 
 
 def test_omitted_plugin_retains_provenance_and_offline_remove_retires_it(
@@ -544,7 +421,7 @@ def test_omitted_plugin_retains_provenance_and_offline_remove_retires_it(
     omitted = run_fixture(tmp_path, home, repo, cache)
     assert omitted.returncode == 0, omitted.stderr
     assert skill.exists()
-    retained = json.loads((cache / harness.MANIFEST).read_text())["plugins"]
+    retained = json.loads((cache / MANIFEST).read_text())["plugins"]
     assert any(".claude/skills/demo/SKILL.md" in paths for paths in retained.values())
 
     config.write_text(
@@ -559,11 +436,10 @@ remove = true
     removed = run_fixture(tmp_path, home, repo, cache)
     assert removed.returncode == 0, removed.stderr
     assert not skill.exists()
-    final = json.loads((cache / harness.MANIFEST).read_text())["plugins"]
+    final = json.loads((cache / MANIFEST).read_text())["plugins"]
     assert not any(".claude/skills/demo/SKILL.md" in paths for paths in final.values())
-    owner = "example/catalogue\0fixture"
-    assert final[owner] == []
+    assert final[OWNER] == []
 
     repeated = run_fixture(tmp_path, home, repo, cache)
     assert repeated.returncode == 0, repeated.stderr
-    assert json.loads((cache / harness.MANIFEST).read_text())["plugins"][owner] == []
+    assert json.loads((cache / MANIFEST).read_text())["plugins"][OWNER] == []

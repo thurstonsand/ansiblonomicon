@@ -45,9 +45,6 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
 
-[bootstrap.files."/home/thurstonsand/.config/eightctl/config.yaml"]
-state = "absent"
-
 [dotfiles]
 "/home/thurstonsand/.config/mise/config.toml" = { source = "operator/mise.toml", mode = "symlink" }
 
@@ -72,7 +69,6 @@ dir = "/home/thurstonsand"
 run = [
   "mise install --yes",
   "mise upgrade --yes",
-  "mise --no-config --no-env uninstall --all chezmoi",
   '''
 node_bin=$(dirname "$(mise which node)")
 python3 /home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042/operator/node_packages.py "$node_bin/npm"
@@ -105,7 +101,6 @@ test -x "$HOME/.amp/bin/amp"
 test -x "$HOME/.local/bin/claude"
 test -x "$HOME/.local/bin/codex"
 test -x "$HOME/.opencode/bin/opencode"
-mise --no-config --no-env uninstall --all amp codex claude opencode npm:t3
 '''
 
 [tasks."operator:sessions"]

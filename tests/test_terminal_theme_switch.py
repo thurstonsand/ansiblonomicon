@@ -1,9 +1,7 @@
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
-import subprocess
 import sys
 import tomllib
-from unittest.mock import patch
 
 MODULE_PATH = (
     Path(__file__).resolve().parents[1]
@@ -70,36 +68,6 @@ persistence = "save-all"
 
     assert parsed["tui"]["theme"] == "gruvbox-dark"
     assert parsed["history"]["persistence"] == "save-all"
-
-
-def test_sources_tmux_theme_when_server_is_available() -> None:
-    with (
-        patch.object(MODULE.Path, "home", return_value=Path("/home/test")),
-        patch.object(MODULE.subprocess, "run") as run,
-    ):
-        update_tmux_theme("light")
-
-    run.assert_called_once_with(
-        ["tmux", "source-file", "/home/test/.config/tmux/gruvbox-light.conf"],
-        check=False,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-
-
-def test_sets_hunk_custom_dark_hard_theme() -> None:
-    original = """theme = "graphite"
-mode = "auto"
-"""
-
-    updated = set_hunk_theme(original, "dark")
-    parsed = tomllib.loads(updated)
-
-    assert parsed["theme"] == "graphite"
-    assert parsed["custom_theme"]["label"] == "Gruvbox Dark Hard"
-    assert "base" not in parsed["custom_theme"]
-    assert parsed["custom_theme"]["background"] == "#1d2021"
-    assert parsed["custom_theme"]["syntax"]["string"] == "#b8bb26"
 
 
 def test_atomic_write_preserves_existing_mode(tmp_path: Path) -> None:

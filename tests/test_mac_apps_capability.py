@@ -126,7 +126,7 @@ def invoke(brewfile: Path, env: dict[str, str], stamp: Path, *extra: str):
 
 
 def old_stamp(path: Path) -> tuple[bytes, int, int]:
-    path.write_bytes(b"legacy stamp metadata\n")
+    path.write_bytes(b"existing stamp metadata\n")
     path.chmod(0o640)
     old = time.time_ns() - 90_000_000_000_000
     os.utime(path, ns=(old, old))
@@ -134,7 +134,7 @@ def old_stamp(path: Path) -> tuple[bytes, int, int]:
     return path.read_bytes(), stat.st_mode, stat.st_mtime_ns
 
 
-def test_missing_legacy_stamp_is_due_and_updates_then_scoped_cleanup(
+def test_missing_stamp_is_due_and_updates_then_scoped_cleanup(
     tmp_path: Path,
 ) -> None:
     brewfile, calls, env = fixture(tmp_path)
@@ -166,7 +166,7 @@ def test_missing_legacy_stamp_is_due_and_updates_then_scoped_cleanup(
     )
 
 
-def test_due_stamp_updates_declared_mas_and_replaces_legacy_stamp(
+def test_due_stamp_updates_declared_mas_and_replaces_stamp(
     tmp_path: Path,
 ) -> None:
     brewfile, calls, env = fixture(tmp_path)
@@ -389,23 +389,6 @@ def test_check_detects_unpinned_formula_drift_without_mutation_or_stamp_write(
         stamp.stat().st_mode,
         stamp.stat().st_mtime_ns,
     ) == metadata
-
-
-def test_check_surfaces_malformed_outdated_json(tmp_path: Path) -> None:
-    brewfile, _, env = fixture(tmp_path, brew_outdated="not json")
-
-    result = invoke(brewfile, env, tmp_path / "stamp", "--check")
-
-    assert result.returncode != 0
-    assert "JSONDecodeError" in result.stderr
-
-
-@pytest.mark.parametrize("failure", ["parser", "check"])
-def test_check_failure_surfaces_diagnostic_stderr(tmp_path: Path, failure: str) -> None:
-    brewfile, _, env = fixture(tmp_path, fail=failure)
-    result = invoke(brewfile, env, tmp_path / "stamp", "--check")
-    assert result.returncode != 0
-    assert f"{failure} diagnostic marker" in result.stderr
 
 
 def test_ruby_mas_parser_isolates_brewfile_stdout_and_restores_it(

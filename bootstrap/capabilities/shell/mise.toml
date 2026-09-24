@@ -3,5 +3,3 @@
 "~/.zshrc" = { source = "shell/zshrc.tera", mode = "template" }
 "~/.config/starship.toml" = { source = "shell/starship.toml", mode = "symlink" }
 
-[bootstrap.files."~/.config/direnv/direnv.toml"]
-state = "absent"

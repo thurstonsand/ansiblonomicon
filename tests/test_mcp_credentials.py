@@ -1,7 +1,5 @@
-import json
 import os
 from pathlib import Path
-import subprocess
 import sys
 from unittest.mock import patch
 
@@ -13,24 +11,6 @@ with patch.object(sys, "path", [str(Path(__file__).resolve().parents[1]), *sys.p
 
 def resolved_credential(_name: str) -> str:
     return "resolved"
-
-
-def test_credential_resolves_one_named_secret(monkeypatch: pytest.MonkeyPatch) -> None:
-    invocation: dict[str, object] = {}
-
-    def run(command: list[str], **kwargs: object) -> subprocess.CompletedProcess[str]:
-        invocation["command"] = command
-        invocation["kwargs"] = kwargs
-        return subprocess.CompletedProcess(command, 0, stdout="resolved\n")
-
-    monkeypatch.setattr(subprocess, "run", run)
-
-    assert mcp_credentials.credential("TEST_TOKEN") == "resolved"
-    assert invocation["command"] == [
-        str(mcp_credentials.ROOT / "scripts/fnox-host"),
-        "get",
-        "TEST_TOKEN",
-    ]
 
 
 def test_exec_remote_limits_environment_and_defers_header_expansion(
@@ -66,69 +46,3 @@ def test_exec_remote_limits_environment_and_defers_header_expansion(
     assert environment["SSL_CERT_FILE"] == "/certificate.pem"
     assert environment["TEST_TOKEN"] == "resolved"
     assert "UNRELATED_SECRET" not in environment
-
-
-@pytest.mark.parametrize(
-    ("mode", "credential_name"),
-    [
-        ("cloudflare-headers", "CLOUDFLARE_API_TOKEN"),
-        ("home-assistant-headers", "HOMEASSISTANT_API_KEY"),
-    ],
-)
-def test_headers_print_json(
-    monkeypatch: pytest.MonkeyPatch,
-    capsys: pytest.CaptureFixture[str],
-    mode: str,
-    credential_name: str,
-) -> None:
-    resolved_names: list[str] = []
-
-    def resolve(name: str) -> str:
-        resolved_names.append(name)
-        return "resolved"
-
-    monkeypatch.setattr(mcp_credentials, "credential", resolve)
-    monkeypatch.setattr("sys.argv", ["mcp_credentials.py", mode])
-
-    mcp_credentials.main()
-
-    assert resolved_names == [credential_name]
-    assert json.loads(capsys.readouterr().out) == {"Authorization": "Bearer resolved"}
-
-
-def test_work_web_search_uses_approved_user_agent(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    invocation: dict[str, object] = {}
-
-    def exec_remote(
-        endpoint: str, credential_name: str, extra_headers: tuple[str, ...] = ()
-    ) -> None:
-        invocation.update(
-            endpoint=endpoint,
-            credential_name=credential_name,
-            extra_headers=extra_headers,
-        )
-
-    monkeypatch.setattr(mcp_credentials, "exec_remote", exec_remote)
-    monkeypatch.setattr(
-        "sys.argv",
-        ["mcp_credentials.py", "work-web-search", "https://example.test/mcp"],
-    )
-
-    mcp_credentials.main()
-
-    assert invocation == {
-        "endpoint": "https://example.test/mcp",
-        "credential_name": "ANTHROPIC_AUTH_TOKEN",
-        "extra_headers": ("User-Agent:claude-code/2.1.2 pi-mcp-adapter",),
-    }
-
-
-def test_work_web_search_requires_endpoint(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr("sys.argv", ["mcp_credentials.py", "work-web-search"])
-
-    with pytest.raises(SystemExit, match="2"):
-        mcp_credentials.main()

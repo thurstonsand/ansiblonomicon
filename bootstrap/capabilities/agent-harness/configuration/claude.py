@@ -1,4 +1,4 @@
-"""Render Claude's host-specific configuration without a chezmoi runtime."""
+"""Render Claude's host-specific configuration."""
 
 from __future__ import annotations
 

@@ -153,7 +153,9 @@ def test_exact_host_selection(hostname: str, profile: str) -> None:
     assert fnox_host.select_profile(hostname, orb=False) == profile
 
 
-@pytest.mark.parametrize("hostname", ["omarchy", "ML-other", "POD042", "runner-123"])
+@pytest.mark.parametrize(
+    "hostname", ["omarchy", "ml-dfc6yk6vjq", "POD042", "runner-123"]
+)
 def test_unknown_hosts_do_not_default_to_macos(hostname: str) -> None:
     with pytest.raises(fnox_host.ConfigurationError, match="unregistered host"):
         fnox_host.select_profile(hostname, orb=False)

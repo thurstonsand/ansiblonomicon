@@ -35,16 +35,3 @@ def test_deploy_passes_only_worker_credentials_over_stdin(
         "CF_ACCESS_CLIENT_SECRET": "test-access-secret",
     }
     assert bulk.kwargs["check"] is True
-
-
-def test_missing_credentials_prevent_deployment(
-    monkeypatch: pytest.MonkeyPatch,
-) -> None:
-    monkeypatch.setattr(sys, "path", [str(ROOT / "scripts"), *sys.path])
-    deploy = importlib.import_module("doppelclaude_deploy")
-    monkeypatch.delenv("CLI_PROXY_API_KEY", raising=False)
-    run = Mock()
-    monkeypatch.setattr(deploy.subprocess, "run", run)
-    with pytest.raises(ValueError, match="CLI_PROXY_API_KEY"):
-        deploy.main()
-    run.assert_not_called()

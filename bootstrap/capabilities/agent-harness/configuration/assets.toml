@@ -808,3 +808,9 @@ source = 'assets/shared/session-recovery'
 destination = '.local/lib/session-recovery/node_modules'
 hosts = ['Thurstons-MacBook-Pro', 'pod042', 'ML-DFC6YK6VJQ']
 work_omit_dev = true
+
+[[files]]
+source = 'assets/pi/npm-mirror-shim.mjs'
+destination = '.pi/agent/npm-mirror-shim.mjs'
+hosts = ['ML-DFC6YK6VJQ']
+mode = 'symlink'

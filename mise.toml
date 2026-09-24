@@ -26,7 +26,7 @@ _.python.venv = { path = ".venv", create = true }
 # Pin uv to mise's interpreter. Left unpinned, uv downloads a Python of its own
 # and silently rebuilds .venv underneath mise; pointed at a path, it errors
 # instead of falling back to Homebrew's python, whose relinking on
-# `brew upgrade` breaks ansible-core's module loader mid-run.
+# `brew upgrade` breaks the venv's interpreter mid-run.
 # Ask mise for the path it resolved rather than rebuilding it from xdg_data_home
 # and the version spec: that spelling ignores MISE_DATA_DIR and names the `3.14`
 # alias directory instead of the concrete install pyvenv.cfg records.
@@ -42,13 +42,7 @@ depends = ["bootstrap:*"]
 
 [tasks."bootstrap:deps"]
 description = "Sync Python dependencies into .venv"
-run = '''
-if [ "$(hostname -s)" = ML-DFC6YK6VJQ ]; then
-  uv sync --dev --group work
-else
-  uv sync --dev
-fi
-'''
+run = "uv sync --dev"
 # pyvenv.cfg is a source so that deleting .venv resyncs it: mise recreates the
 # venv during env resolution, and the fresh mtime invalidates the cache.
 sources = ["pyproject.toml", "uv.lock", ".venv/pyvenv.cfg"]
@@ -203,7 +197,7 @@ description = "Reconcile native macOS preferences, sudo Touch ID, and personal h
 alias = "macos-system"
 usage = '''
 flag "-c --check" help="Report drift without writes, sudo, credentials, or app restarts"
-option "--sections <sections>" help="Comma-separated legacy sections"
+flag "--sections <sections>" help="Comma-separated sysconfig sections"
 '''
 run = '''
 host=$(hostname -s)
@@ -291,7 +285,7 @@ else
   parts=files,dotfiles,macos-launchd-agents
 fi
 if [ -n "${usage_check:-}" ]; then
-  exec mise -C "$target" bootstrap --only "$parts" --force-dotfiles --dry-run
+  exec mise -C "$target" bootstrap --only "$parts" --dry-run
 fi
 if [ "$host" != pod042 ]; then
   case "$host" in
@@ -300,10 +294,10 @@ if [ "$host" != pod042 ]; then
   esac
   export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
   exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret "$sudo_secret" -- \
-    sh -ec 'sudo -A -v; exec mise -C "$1" bootstrap --only "$2" --force-dotfiles --yes' \
+    sh -ec 'sudo -A -v; exec mise -C "$1" bootstrap --only "$2" --yes' \
     terminal-theme "$target" "$parts"
 fi
-exec mise -C "$target" bootstrap --only "$parts" --force-dotfiles --yes
+exec mise -C "$target" bootstrap --only "$parts" --yes
 '''
 
 [tasks."git-client"]
@@ -328,9 +322,9 @@ else
   export GIT_CLIENT_DELTA=false
 fi
 if [ -n "${usage_check:-}" ]; then
-  exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --dry-run
+  exec mise -C "$target" bootstrap --only dotfiles --dry-run
 fi
-exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes
+exec mise -C "$target" bootstrap --only dotfiles --yes
 '''
 
 [tasks."jj-client"]
@@ -349,9 +343,9 @@ export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV=vcs-identity,jj-client
 if [ -n "${usage_check:-}" ]; then
-  exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --dry-run
+  exec mise -C "$target" bootstrap --only dotfiles --dry-run
 fi
-exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes
+exec mise -C "$target" bootstrap --only dotfiles --yes
 '''
 
 [tasks."ssh-client"]
@@ -368,7 +362,7 @@ case "$host" in
   *) echo "Unregistered ssh-client host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
-run_ssh_client='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles --force-dotfiles "$4"'
+run_ssh_client='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles "$4"'
 if [ -n "${usage_check:-}" ]; then
   export POD042_GIT_SSH_PRIVATE_KEY=preview-private-key POD042_GIT_SSH_PUBLIC_KEY=preview-public-key
   exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" --dry-run
@@ -399,9 +393,9 @@ export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV="$environments"
 if [ -n "${usage_check:-}" ]; then
-  exec mise -C "$target" bootstrap dotfiles apply --force --dry-run
+  exec mise -C "$target" bootstrap dotfiles apply --dry-run
 fi
-mise -C "$target" bootstrap dotfiles apply --force --yes || exit "$?"
+mise -C "$target" bootstrap dotfiles apply --yes || exit "$?"
 exec mise -C "$target" run neovim:setup
 '''
 
@@ -423,6 +417,27 @@ fi
 exec mise -C "$target" run python-index:apply
 '''
 
+[tasks."work-local"]
+description = "Reconcile the work host's private machine tasks"
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+'''
+run = '''
+host=$(hostname -s)
+[ "$host" = ML-DFC6YK6VJQ ] || { echo "work-local is registered only on the work host" >&2; exit 1; }
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+[ -f "$target/mise.work-local.local.toml" ] || { echo "work-local requires $target/mise.work-local.local.toml" >&2; exit 1; }
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+export MISE_ENV=work-local
+if [ -n "${usage_check:-}" ]; then
+  exec mise -C "$target" bootstrap --only files --dry-run
+fi
+export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
+exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret HOMEBREW_SUDO_ASKPASS_PASS_WORK -- \
+  sh -ec 'sudo -A -v; exec mise -C "$1" bootstrap --only files,final-hook --yes' work-local "$target"
+'''
+
 [tasks.shell]
 description = "Reconcile shared shell configuration on this registered host"
 usage = '''
@@ -442,7 +457,7 @@ if [ "$6" = true ] && [ -z "${SOURCEGRAPH_TOKEN:-}" ]; then
   exit 1
 fi
 export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"
-exec mise -C "$2" bootstrap --only "$4" --force-dotfiles "$5"'
+exec mise -C "$2" bootstrap --only "$4" "$5"'
 if [ -n "${usage_check:-}" ]; then
   if [ "$work" = true ]; then export SOURCEGRAPH_TOKEN=preview; fi
   exec sh -c "$run_shell" shell "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts" --dry-run false
@@ -476,9 +491,9 @@ export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV="$environments"
 if [ -n "${usage_check:-}" ]; then
-  exec mise -C "$target" bootstrap --only "$parts" --force-dotfiles --dry-run
+  exec mise -C "$target" bootstrap --only "$parts" --dry-run
 fi
-exec mise -C "$target" bootstrap --only "$parts" --force-dotfiles --yes ${update:-}
+exec mise -C "$target" bootstrap --only "$parts" --yes ${update:-}
 '''
 
 [tasks."user-tools"]
@@ -498,9 +513,9 @@ export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV="$environments"
 if [ -n "${usage_check:-}" ]; then
-  exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --dry-run
+  exec mise -C "$target" bootstrap --only dotfiles --dry-run
 fi
-exec mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes
+exec mise -C "$target" bootstrap --only dotfiles --yes
 '''
 
 [tasks."desktop-tools"]
@@ -516,7 +531,7 @@ case "$host" in
   *) echo "desktop-tools is registered only on the two Macs" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
-run_desktop_tools='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles --force-dotfiles "$4"'
+run_desktop_tools='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles "$4"'
 if [ -n "${usage_check:-}" ]; then
   exec sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --dry-run
 fi
@@ -541,7 +556,7 @@ export MISE_TRUSTED_CONFIG_PATHS="$MISE_PROJECT_ROOT"
 export EDITOR_CONFIG_PYTHON="$MISE_PROJECT_ROOT/.venv/bin/python"
 export EDITOR_CONFIG_RENDERER="$MISE_PROJECT_ROOT/bootstrap/capabilities/editor-config/render.py"
 export EDITOR_CONFIG_MODELS="$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/models.yml"
-run_editor_config='exec mise -E editor-config -C "$1" bootstrap --only files,dotfiles --force-dotfiles "$2"'
+run_editor_config='exec mise -E editor-config -C "$1" bootstrap --only files,dotfiles "$2"'
 if [ -n "${usage_check:-}" ]; then
   export CLI_PROXY_API_KEY=preview CF_ACCESS_CLIENT_ID=preview CF_ACCESS_CLIENT_SECRET=preview
   exec sh -c "$run_editor_config" editor-config "$target" --dry-run
@@ -577,19 +592,18 @@ flag "--cached" help="Apply cached sources without fetching"
 run = '''
 set -e
 case "$(hostname -s)" in
-  Thurstons-MacBook-Pro)
+  Thurstons-MacBook-Pro|ML-DFC6YK6VJQ)
     "$MISE_PROJECT_ROOT/.venv/bin/python" \
       "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/agent_harness_deploy.py" \
       --repo "$MISE_PROJECT_ROOT" --home "$HOME" \
       --cache "$HOME/.cache/ansiblonomicon-harness" \
-      --host-config "$MISE_PROJECT_ROOT/bootstrap/targets/Thurstons-MacBook-Pro/mise.agent-harness.toml" \
+      --host-config "$MISE_PROJECT_ROOT/bootstrap/targets/$(hostname -s)/mise.agent-harness.toml" \
       ${usage_check:+--check} ${usage_cached:+--cached}
     ;;
   pod042)
     uv run --script "$MISE_PROJECT_ROOT/bootstrap/targets/pod042/agent-harness/reconcile.py" \
       ${usage_check:+--check} ${usage_cached:+--cached}
     ;;
-  ML-DFC6YK6VJQ) ;; # The existing Ansible role continues to own the work catalogue.
   *) echo "Native agent-harness is available only on registered systems" >&2; exit 1 ;;
 esac
 exec mise run //:agent-config ${usage_check:+--check}
@@ -633,50 +647,43 @@ flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 run = '''
 set -e
 case "$(hostname -s)" in
-  ML-DFC6YK6VJQ)
-    playbook=work.yml
-    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS_WORK
-    consumer_secret=ANTHROPIC_AUTH_TOKEN
-    ;;
-  Thurstons-MacBook-Pro)
-    playbook=macos.yml
-    sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS
-    consumer_secret=
-    ;;
+  ML-DFC6YK6VJQ) profile=work ;;
+  Thurstons-MacBook-Pro) profile=personal ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
 software_capabilities="mac-apps language-tools berkeley-mono"
-case "$playbook" in
-  macos.yml) software_capabilities="$software_capabilities claude-code opencode sessions shp uvc-util docker-context" ;;
-  work.yml) software_capabilities="$software_capabilities pi sessions uvc-util" ;;
-esac
 config_capabilities="sysconfig terminal-theme git-client jj-client shell terminal-tools user-tools desktop-tools editor-config neovim"
-[ "$playbook" = work.yml ] || config_capabilities="$config_capabilities ssh-client"
-[ "$playbook" != work.yml ] || config_capabilities="$config_capabilities python-index"
+sysconfig_sections="dock finder nsglobaldomain menubar desktop-services permissions"
+case "$profile" in
+  personal)
+    software_capabilities="$software_capabilities claude-code opencode sessions shp uvc-util docker-context"
+    config_capabilities="$config_capabilities ssh-client"
+    sysconfig_sections="$sysconfig_sections hostname"
+    ;;
+  work)
+    software_capabilities="$software_capabilities pi sessions uvc-util"
+    config_capabilities="$config_capabilities python-index work-local"
+    ;;
+esac
 normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^homebrew$/mac-apps/; s/^mas$/mac-apps/; s/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | awk '!seen[$0]++' | paste -sd, -)
-case "$playbook:${usage_tags:-}" in
-  work.yml:ssh-client|work.yml:*,ssh-client|work.yml:ssh-client,*|work.yml:*,ssh-client,*)
-    echo "ssh-client is intentionally unavailable on the work host" >&2
-    exit 1
-    ;;
-  work.yml:docker-context|work.yml:*,docker-context|work.yml:docker-context,*|work.yml:*,docker-context,*)
-    echo "docker-context is intentionally unavailable on the work host" >&2
-    exit 1
-    ;;
-esac
-case "$playbook:${usage_tags:-}" in
-  work.yml:hostname|work.yml:*,hostname|work.yml:hostname,*|work.yml:*,hostname,*)
-    echo "hostname is intentionally unmanaged on the work host" >&2
-    exit 1
-    ;;
-esac
-ansible_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | grep -Ev '^(mise|mac-apps|homebrew|mas|language-tools|berkeley-mono|docker-context|claude-code|opencode|pi|sessions|shp|uvc-util|sysconfig|dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname|terminal-theme|git-client|jj-client|ssh-client|shell|terminal-tools|tmux|user-tools|desktop-tools|editor-config|neovim|nvim-deps|python-index|agent-config)$' | paste -sd, -)
-if [ "$playbook" = macos.yml ]; then
-  ansible_tags=$(printf '%s' "$ansible_tags" | tr ',' '\n' | grep -Ev '^(agent-harness|retirements)$' | paste -sd, -)
-  if [ -n "$ansible_tags" ] && [ "$ansible_tags" != all ]; then
-    echo "Unsupported personal-host tags: $ansible_tags" >&2
-    exit 1
-  fi
+if [ "$profile" = work ]; then
+  case ",$normalized_tags," in
+    *,ssh-client,*) echo "ssh-client is intentionally unavailable on the work host" >&2; exit 1 ;;
+    *,docker-context,*) echo "docker-context is intentionally unavailable on the work host" >&2; exit 1 ;;
+    *,hostname,*) echo "hostname is intentionally unmanaged on the work host" >&2; exit 1 ;;
+  esac
+fi
+supported=" all mise agent-harness agent-config $software_capabilities $config_capabilities $sysconfig_sections "
+unsupported=
+for tag in $(printf '%s' "$normalized_tags" | tr ',' ' '); do
+  case "$supported" in
+    *" $tag "*) ;;
+    *) unsupported="${unsupported:+$unsupported,}$tag" ;;
+  esac
+done
+if [ -n "$unsupported" ]; then
+  echo "Unsupported $profile-host tags: $unsupported" >&2
+  exit 1
 fi
 case ",${normalized_tags}," in
   ,,|*,all,*|*,mise,*|*,mac-apps,*) mise run //:mise:install ${usage_check:+--check} || exit "$?" ;;
@@ -692,31 +699,13 @@ for native_capability in $software_capabilities; do
     ,,|*,all,*|*,"$native_capability",*) mise run "//:$native_capability" ${usage_check:+--check} || exit "$?" ;;
   esac
 done
-sysconfig_sections=$(printf '%s' "$normalized_tags" | tr ',' '\n' | grep -E '^(dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname)$' | paste -sd, -)
+selected_sections=$(printf '%s' "$normalized_tags" | tr ',' '\n' | grep -E '^(dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname)$' | paste -sd, -)
 case ",$normalized_tags," in
   ,,|*,all,*|*,sysconfig,*) mise run //:sysconfig ${usage_check:+--check} || exit "$?" ;;
-  *) [ -z "$sysconfig_sections" ] || mise run //:sysconfig --sections "$sysconfig_sections" ${usage_check:+--check} || exit "$?" ;;
+  *) [ -z "$selected_sections" ] || mise run //:sysconfig --sections "$selected_sections" ${usage_check:+--check} || exit "$?" ;;
 esac
-if [ "$playbook" = macos.yml ]; then
-  case ",$normalized_tags," in
-    ,,|*,all,*|*,agent-harness,*) mise run //:agent-harness ${usage_check:+--check} || exit "$?" ;;
-  esac
-fi
-if [ "$playbook" = work.yml ] && { [ -n "$full" ] || [ -n "$ansible_tags" ]; }; then
-  [ -z "$full" ] || ansible_tags=
-  set -- --secret "$sudo_secret"
-  [ -z "$consumer_secret" ] || set -- "$@" --secret "$consumer_secret"
-  ANSIBLE_CONFIG="$MISE_PROJECT_ROOT/ansible/ansible.cfg" ANSIBLE_CACHE_PLUGIN=memory \
-    "$MISE_PROJECT_ROOT/scripts/fnox-host" exec "$@" -- \
-    uv run --group work ansible-playbook -i "$MISE_PROJECT_ROOT/ansible/inventory/control/macos.ini" "$MISE_PROJECT_ROOT/ansible/playbooks/work.yml" ${usage_check:+--check} ${ansible_tags:+--tags "$ansible_tags"} || exit "$?"
-fi
-if [ "$playbook" = work.yml ]; then
-  case ",$normalized_tags," in
-    ,,|*,all,*|*,agent-harness,*) mise run //:agent-config ${usage_check:+--check} || exit "$?" ;;
-  esac
-fi
 case ",$normalized_tags," in
-  *,agent-harness,*) ;;
+  ,,|*,all,*|*,agent-harness,*) mise run //:agent-harness ${usage_check:+--check} || exit "$?" ;;
   *,agent-config,*) mise run //:agent-config ${usage_check:+--check} || exit "$?" ;;
 esac
 for native_capability in $config_capabilities; do
@@ -729,17 +718,7 @@ for native_capability in $config_capabilities; do
   esac
   mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
 done
-if [ "$playbook" = macos.yml ]; then
-  case ",$normalized_tags," in
-    ,,|*,all,*|*,retirements,*) mise run //:retirements ${usage_check:+--check} || exit "$?" ;;
-  esac
-fi
 '''
-
-[tasks.retirements]
-description = "Retire legacy personal-host files through native mise"
-usage = 'flag "-c --check" help="Preview retired paths without removing them"'
-run = '"$MISE_PROJECT_ROOT/.venv/bin/python" "$MISE_PROJECT_ROOT/bootstrap/capabilities/retirements/reconcile.py" ${usage_check:+--check}'
 
 [tasks."reconcile:udmp"]
 description = "Reconcile the UDM Pro router"
@@ -771,9 +750,9 @@ python3 scripts/pod042_reconcile.py \
 '''
 
 [tasks."reconcile:tags"]
-description = "List the --tags a playbook offers (defaults to this machine's own)"
+description = "List the --tags a host offers (defaults to this machine's own)"
 usage = '''
-arg "[playbook]" help="Playbook to inspect: macos, work, truenas, pod042"
+arg "[playbook]" help="Host to inspect: macos, work, pod042"
 '''
 run = "./scripts/list-tags.sh ${usage_playbook:-}"
 
@@ -902,11 +881,6 @@ run = "markdownlint-cli2"
 description = "Autofix Markdown lint findings"
 run = "markdownlint-cli2 --fix"
 
-[tasks."ansible:lint"]
-description = "Lint and type-check retained work-laptop Ansible configuration"
-dir = "ansible"
-run = ["uv run --group work ansible-lint", "uv run --group work basedpyright callback_plugins"]
-
 [tasks."python:lint"]
 description = "Report ruff lint findings"
 run = "ruff check ."
@@ -1034,28 +1008,7 @@ git pull --rebase
 uv run --no-project --with tomlkit python scripts/work_lock_environment.py pyproject.toml
 uv lock --no-build --upgrade
 cp -f "$pyproject_bak" pyproject.toml
-uv sync --dev --group work
-'''
-
-[tasks."chezmoi:diff"]
-description = "Show what chezmoi would change (source -> home), excluding lockfiles"
-# Without raw, mise captures stdout to apply redactions, the script sees a pipe
-# instead of a terminal, and the delta pager branch never fires.
-raw = true
-run = "./scripts/chezmoi-diff.sh"
-
-[tasks."chezmoi:re-add"]
-description = "Update the chezmoi source from local changes (dry-run unless --apply)"
-usage = '''
-flag "-a --apply" help="Actually apply changes (default: dry-run)"
-'''
-run = '''
-[ "$(hostname -s)" = ML-DFC6YK6VJQ ] || { echo 'chezmoi is retained only for work' >&2; exit 1; }
-if [ -n "${usage_apply:-}" ]; then
-  chezmoi re-add
-else
-  chezmoi re-add --dry-run
-fi
+uv sync --dev
 '''
 
 [tasks."edge:dev:aig"]

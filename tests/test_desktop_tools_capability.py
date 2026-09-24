@@ -57,40 +57,22 @@ def fingerprint(paths: list[Path]) -> list[tuple[str, int, int, int]]:
     ]
 
 
-def test_personal_apply_transitions_to_links_and_is_repeatable(tmp_path: Path) -> None:
+def test_personal_apply_links_into_the_checkout_and_is_repeatable(
+    tmp_path: Path,
+) -> None:
     home, env, command = fixture(tmp_path, personal=True)
     preserved = [
         home / ".config/linearmouse/keep",
-        home / ".config/eightctl/keep",
-        home / "go/bin/keep",
         home / ".mactop/keep",
         home / ".local/state/herdr/client/keep",
     ]
     for child in preserved:
         child.parent.mkdir(parents=True, exist_ok=True)
         child.write_text("keep\n")
-    legacy = home / ".config/linearmouse/linearmouse.json"
-    legacy.write_text("legacy regular file\n")
-    retired = home / ".config/eightctl/config.yaml"
-    retired.write_text("retired\n")
-    retired_binary = home / "go/bin/eightctl"
-    retired_binary.write_text("retired binary\n")
-    subprocess.run(
-        [*command[:-1], "--dry-run"],
-        env=env,
-        check=True,
-        capture_output=True,
-        text=True,
-    )
-    assert legacy.read_text() == "legacy regular file\n"
-    assert not legacy.is_symlink()
-    assert retired.exists()
-    assert retired_binary.exists()
-    assert not (home / "Library/Application Support/go/telemetry/mode").exists()
+    unmanaged = home / ".config/linearmouse/linearmouse.json"
+    unmanaged.write_text("regular file\n")
 
     subprocess.run(command, env=env, check=True, capture_output=True, text=True)
-    assert not retired.exists()
-    assert not retired_binary.exists()
     source_root = command[2] + "/desktop-tools"
     expected = {
         home / ".config/linearmouse/linearmouse.json": "linearmouse.json",
@@ -105,6 +87,7 @@ def test_personal_apply_transitions_to_links_and_is_repeatable(tmp_path: Path) -
     for child in preserved:
         assert child.read_text() == "keep\n"
 
+    # Applications write their settings back through the link into the checkout.
     edited = home / ".mactop/config.json"
     edited.write_text('{"application": "edit"}\n')
     assert (Path(source_root) / "mactop.json").read_text() == (
@@ -114,52 +97,3 @@ def test_personal_apply_transitions_to_links_and_is_repeatable(tmp_path: Path) -
     before = fingerprint(paths)
     subprocess.run(command, env=env, check=True, capture_output=True, text=True)
     assert fingerprint(paths) == before
-    assert not retired.exists()
-    assert not retired_binary.exists()
-    assert (home / "go/bin/keep").read_text() == "keep\n"
-
-
-def test_work_common_only_preserves_personal_paths_without_secrets(
-    tmp_path: Path,
-) -> None:
-    home, env, command = fixture(tmp_path, personal=False)
-    personal = home / ".config/linearmouse/linearmouse.json"
-    personal.parent.mkdir(parents=True)
-    personal.write_text("seeded personal config\n")
-    retired = home / ".config/eightctl/config.yaml"
-    retired.parent.mkdir(parents=True)
-    retired.write_text("retired\n")
-    retired_binary = home / "go/bin/eightctl"
-    retired_binary.parent.mkdir(parents=True)
-    retired_binary.write_text("retired binary\n")
-    sibling = home / "go/bin/keep"
-    sibling.write_text("keep\n")
-    unrelated = home / "Library/Application Support/go/keep"
-    unrelated.parent.mkdir(parents=True)
-    unrelated.write_text("keep\n")
-    subprocess.run(command, env=env, check=True, capture_output=True, text=True)
-    assert personal.read_text() == "seeded personal config\n"
-    assert not retired.exists()
-    assert not retired_binary.exists()
-    assert sibling.read_text() == "keep\n"
-    assert unrelated.read_text() == "keep\n"
-    assert (home / "Library/Application Support/go/telemetry/mode").read_text() == (
-        "local 1970-01-01\n"
-    )
-
-
-def test_registered_targets_are_mac_only_and_sources_are_explicitly_readable() -> None:
-    personal = ROOT / "bootstrap/targets/Thurstons-MacBook-Pro"
-    work = ROOT / "bootstrap/targets/ML-DFC6YK6VJQ"
-    pod = ROOT / "bootstrap/targets/pod042"
-    assert (personal / "mise.desktop-tools-personal.toml").resolve() == (
-        CAPABILITY / "mise.personal.toml"
-    )
-    assert (personal / "mise.desktop-tools.toml").resolve() == CAPABILITY / "mise.toml"
-    assert (work / "mise.desktop-tools.toml").resolve() == CAPABILITY / "mise.toml"
-    assert not (work / "mise.desktop-tools-personal.toml").exists()
-    assert not list(pod.glob("*desktop-tools*"))
-    assert all(
-        stat.S_IMODE(path.stat().st_mode) == 0o644
-        for path in (CAPABILITY / "files").iterdir()
-    )

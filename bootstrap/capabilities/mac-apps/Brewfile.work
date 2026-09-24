@@ -2,7 +2,7 @@
 # Run with: brew bundle --file=Brewfile.work
 
 # Local overrides (corporate taps, gitignored)
-Dir.glob(File.join(__dir__, "../../../ansible/Brewfile.work.*")).sort.each do |f|
+Dir.glob(File.join(__dir__, "Brewfile.work.*")).sort.each do |f|
   instance_eval(File.read(f))
 end
 
@@ -30,9 +30,6 @@ brew "zsh-syntax-highlighting"
 # =============================================================================
 # Software Engineering
 # =============================================================================
-# Agent tools
-brew "asheshgoplani/tap/agent-deck"
-
 # Git
 brew "gh"
 brew "git"
@@ -56,7 +53,6 @@ brew "golang-migrate"
 brew "gopls"
 
 # LSP / Formatters
-brew "ansible-language-server"
 brew "biome"
 brew "prettier"
 brew "vtsls"
@@ -86,7 +82,6 @@ brew "kubectx"
 brew "stern"
 
 # Infra
-brew "chezmoi"
 brew "cormacrelf/tap/dark-notify", trusted: true
 brew "openssh"
 

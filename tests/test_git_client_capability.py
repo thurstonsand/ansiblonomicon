@@ -7,7 +7,6 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 CAPABILITY = ROOT / "bootstrap/capabilities/git-client"
-IDENTITY = ROOT / "bootstrap/capabilities/vcs-identity/mise.toml"
 PUBLIC_KEY = "ssh-ed25519 AAAATEST personal@test"
 SIGNING_PROGRAM = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
 BASE_ENV = {
@@ -95,42 +94,6 @@ def git(home: Path, *args: str, cwd: Path | None = None) -> str:
     return result.stdout.strip()
 
 
-def test_hosts_use_shared_personal_identity_defaults() -> None:
-    shared = tomllib.loads(IDENTITY.read_text())["vars"]
-    assert shared == {
-        "vcs_personal_email": "thurstonsand@gmail.com",
-        "vcs_personal_public_signing_key": (
-            "ssh-ed25519 "
-            "AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
-        ),
-    }
-    for host in ("ML-DFC6YK6VJQ", "Thurstons-MacBook-Pro", "pod042"):
-        host_vars = tomllib.loads(
-            (ROOT / "bootstrap/targets" / host / "mise.toml").read_text()
-        )["vars"]
-        assert host_vars["host_profile"] == (
-            "work" if host == "ML-DFC6YK6VJQ" else "personal"
-        )
-        assert "git_client_profile" not in host_vars
-        assert "vcs_personal_email" not in host_vars
-        assert "vcs_personal_public_signing_key" not in host_vars
-    assert (
-        "git_personal_signing_key"
-        not in tomllib.loads(
-            (ROOT / "bootstrap/targets/ML-DFC6YK6VJQ/mise.toml").read_text()
-        )["vars"]
-    )
-    assert (
-        "git_personal_signing_key"
-        not in tomllib.loads(
-            (ROOT / "bootstrap/targets/Thurstons-MacBook-Pro/mise.toml").read_text()
-        )["vars"]
-    )
-    assert tomllib.loads((ROOT / "bootstrap/targets/pod042/mise.toml").read_text())[
-        "vars"
-    ]["git_personal_signing_key"] == ("/home/thurstonsand/.ssh/id_ed25519_git")
-
-
 @pytest.mark.parametrize("profile", ["pod", "personal", "work"])
 def test_actual_mise_produces_literal_effective_git_settings(
     tmp_path: Path, profile: str
@@ -183,41 +146,21 @@ def test_actual_mise_produces_literal_effective_git_settings(
         assert "url.ssh://git@forge.test.insteadof https://forge.test/" in rewrites
 
 
-def test_adoption_preserves_unknown_repeated_values_and_is_metadata_idempotent(
+def test_managed_block_preserves_app_keys_and_is_metadata_idempotent(
     tmp_path: Path,
 ) -> None:
     home, target, env = fixture(tmp_path, "work")
+    command = ["mise", "-C", str(target), "bootstrap", "--only", "dotfiles", "--yes"]
+    subprocess.run(command, env=env, check=True, capture_output=True, text=True)
     config = home / ".config/git/config"
-    config.parent.mkdir(parents=True)
     config.write_text(
-        "[user]\nemail = old@test\n"
-        '[url "ssh://git@Git.Corp.test:2222/Team"]\ninsteadOf = https://git.corp.test/scm/\n'
-        '[url "ssh://git@git.corp.test:2222/Team"]\ninsteadOf = https://unmanaged.test/\n'
-        '[includeIf "gitdir:~/code/personal/"]\npath = personal.inc\n'
-        '[includeIf "gitdir:~/Code/Personal/"]\npath = unmanaged.inc\n'
-        '[credential "https://ampcode.com"]\nhelper = amp\n[safe]\ndirectory = /one\ndirectory = /two\n'
+        config.read_text()
+        + '[credential "https://ampcode.com"]\nhelper = amp\n'
+        + "[safe]\ndirectory = /one\ndirectory = /two\n"
     )
     config.chmod(0o640)
-    (home / ".gitconfig").write_text(
-        '[includeIf "gitdir:~/code/personal/"]\npath = ~/.config/git/personal.inc\n'
-        "[credential]\nhelper = osxkeychain\n"
-    )
-    (config.parent / "attributes").write_text("*.lockb binary diff=lockb\n")
-    (config.parent / "ignore").write_text(".DS_Store\n.cache\n.nix\n")
-    command = [
-        "mise",
-        "-C",
-        str(target),
-        "bootstrap",
-        "--only",
-        "dotfiles",
-        "--force-dotfiles",
-        "--yes",
-    ]
     subprocess.run(command, env=env, check=True, capture_output=True, text=True)
     assert config.stat().st_mode & 0o777 == 0o640
-    assert (config.parent / "attributes").is_symlink()
-    assert (config.parent / "ignore").is_symlink()
     assert (
         git(home, "config", "--get", "credential.https://ampcode.com.helper") == "amp"
     )
@@ -226,52 +169,9 @@ def test_adoption_preserves_unknown_repeated_values_and_is_metadata_idempotent(
         "/two",
     ]
     assert git(home, "config", "--get-all", "user.email") == "work@test"
-    assert (
-        git(
-            home,
-            "config",
-            "--global",
-            "--get-all",
-            "url.ssh://git@git.corp.test:2222/Team.insteadOf",
-        )
-        == "https://unmanaged.test/"
-    )
-    assert (
-        git(
-            home,
-            "config",
-            "--global",
-            "--get",
-            "includeIf.gitdir:~/Code/Personal/.path",
-        )
-        == "unmanaged.inc"
-    )
-    assert (
-        git(home, "config", "--file", str(home / ".gitconfig"), "credential.helper")
-        == "osxkeychain"
-    )
-    legacy_include = subprocess.run(
-        [
-            "git",
-            "config",
-            "--file",
-            str(home / ".gitconfig"),
-            "--get-all",
-            "includeIf.gitdir:~/code/personal/.path",
-        ],
-        check=False,
-        capture_output=True,
-        text=True,
-    )
-    assert legacy_include.returncode == 1
     first = config.stat().st_mtime_ns
     subprocess.run(command, env=env, check=True, capture_output=True, text=True)
     assert config.stat().st_mtime_ns == first
-    config.write_text(
-        config.read_text() + '[credential "https://new.test"]\nhelper = new\n'
-    )
-    subprocess.run(command, env=env, check=True, capture_output=True, text=True)
-    assert git(home, "config", "--get", "credential.https://new.test.helper") == "new"
 
 
 def test_check_and_missing_work_facts_do_not_write(tmp_path: Path) -> None:
@@ -306,19 +206,8 @@ def test_check_and_missing_work_facts_do_not_write(tmp_path: Path) -> None:
 
 
 def test_delta_settings_are_absent_when_tool_detection_is_false(tmp_path: Path) -> None:
-    home, target, env = fixture(tmp_path, "personal")
+    _, target, env = fixture(tmp_path, "personal")
     env["GIT_CLIENT_DELTA"] = "false"
-    config = home / ".config/git/config"
-    config.parent.mkdir(parents=True)
-    config.write_text(
-        "[core]\npager = delta\n[interactive]\ndiffFilter = delta --color-only\n"
-        "[delta]\nnavigate = true\nside-by-side = true\nline-numbers = true\n"
-        "hyperlinks = true\nfeatures = decorations\n"
-    )
-    legacy_global = home / ".gitconfig"
-    legacy_global.write_text(
-        '[includeIf "gitdir:~/code/personal/"]\npath = ~/.config/git/personal.inc\n'
-    )
     subprocess.run(
         ["mise", "-C", str(target), "bootstrap", "--only", "dotfiles", "--yes"],
         env=env,
@@ -334,8 +223,6 @@ def test_delta_settings_are_absent_when_tool_detection_is_false(tmp_path: Path) 
         text=True,
     )
     assert result.returncode == 1
-    assert git(home, "config", "--global", "delta.features") == "decorations"
-    assert "personal.inc" in legacy_global.read_text()
 
 
 def test_work_profile_allows_omitted_scm_config(tmp_path: Path) -> None:
