@@ -59,8 +59,10 @@ def fixture(
     ;;
 esac
 case "$*" in
-  "bundle check "*) {'case "$*" in *--no-upgrade*) exit 0;; *) exit 1;; esac' if mas_outdated_check else f"exit {check_rc}"} ;;
-  "outdated") {"printf 'outdated diagnostic marker\\n' >&2; exit 29" if fail == "outdated" else f'printf "{brew_outdated}"'} ;;
+  "bundle check "*)
+    [ "{fail}" != check ] || {{ printf 'check diagnostic marker\\n' >&2; exit 29; }}
+    {'case "$*" in *--no-upgrade*) exit 0;; *) exit 1;; esac' if mas_outdated_check else f"exit {check_rc}"} ;;
+  "outdated") printf "{brew_outdated}" ;;
   "install mas") [ "{fail}" = "mas" ] && exit 23 || exit 0 ;;
   "bundle install "*) [ "{fail}" = "install" ] && exit 23 || exit 0 ;;
   "bundle cleanup "*)
@@ -240,13 +242,13 @@ def test_check_parses_before_treating_rc1_as_drift(tmp_path: Path) -> None:
     drift.mkdir()
     brewfile, calls, env = fixture(drift, check_rc=1)
     result = invoke(brewfile, env, drift / "stamp", "--check")
-    assert result.returncode == 0, result.stderr
+    assert result.returncode == 1, result.stderr
     lines = calls.read_text().splitlines()
     assert next(
         i for i, line in enumerate(lines) if line.startswith("brew ruby -e ")
     ) < next(i for i, line in enumerate(lines) if "brew bundle check" in line)
     assert result.stdout.strip() == "mac-apps: drift"
-    assert "brew outdated" in calls.read_text()
+    assert "brew outdated" not in calls.read_text()
     assert "mas list" not in calls.read_text()
     assert not (drift / "stamp").exists()
     assert (
@@ -263,11 +265,12 @@ def test_check_parses_before_treating_rc1_as_drift(tmp_path: Path) -> None:
     assert "bundle check" not in calls2.read_text()
 
 
-def test_check_reports_outdated_formula_output_as_drift(tmp_path: Path) -> None:
-    brewfile, _, env = fixture(tmp_path, check_rc=0, brew_outdated="wget\n")
+def test_check_ignores_outdated_undeclared_formulae(tmp_path: Path) -> None:
+    brewfile, calls, env = fixture(tmp_path, check_rc=0, brew_outdated="wget\n")
     result = invoke(brewfile, env, tmp_path / "stamp", "--check")
     assert result.returncode == 0, result.stderr
-    assert result.stdout == "wget\nmac-apps: drift\n"
+    assert result.stdout == "mac-apps: current\n"
+    assert "brew outdated" not in calls.read_text()
 
 
 def test_check_detects_installed_outdated_declared_mas_without_no_upgrade(
@@ -281,7 +284,7 @@ def test_check_detects_installed_outdated_declared_mas_without_no_upgrade(
         mas_outdated_check=True,
     )
     result = invoke(brewfile, env, tmp_path / "stamp", "--check")
-    assert result.returncode == 0, result.stderr
+    assert result.returncode == 1, result.stderr
     assert result.stdout == "mac-apps: drift\n"
     check = next(
         line for line in calls.read_text().splitlines() if "bundle check" in line
@@ -289,7 +292,7 @@ def test_check_detects_installed_outdated_declared_mas_without_no_upgrade(
     assert "--no-upgrade" not in check
 
 
-@pytest.mark.parametrize("failure", ["parser", "outdated"])
+@pytest.mark.parametrize("failure", ["parser", "check"])
 def test_check_failure_surfaces_diagnostic_stderr(tmp_path: Path, failure: str) -> None:
     brewfile, _, env = fixture(tmp_path, fail=failure)
     result = invoke(brewfile, env, tmp_path / "stamp", "--check")

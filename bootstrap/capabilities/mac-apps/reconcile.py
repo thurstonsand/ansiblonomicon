@@ -90,12 +90,8 @@ def main() -> None:
         )
         if check.returncode not in (0, 1):
             raise subprocess.CalledProcessError(check.returncode, check.args)
-        outdated = run(["brew", "outdated"], env, capture=True)
-        if outdated:
-            print(outdated, end="")
-        drift = check.returncode == 1 or bool(outdated.strip())
-        print("mac-apps: drift" if drift else "mac-apps: current")
-        return
+        print("mac-apps: drift" if check.returncode else "mac-apps: current")
+        raise SystemExit(check.returncode)
 
     if declared:
         # MAS must be available before Bundle because privileged app operations
