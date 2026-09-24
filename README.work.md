@@ -227,6 +227,66 @@ Prettier skips gitignored paths by default. The project-local `.nvim.lua` (`exrc
 
 `.prettierignore` exists as an empty file to satisfy the `--ignore-path` flag. Add explicit exclusions there only if a file should never be formatted.
 
+## One-Time Native Cutover
+
+Perform this migration on the work laptop with an employer-approved LLM or manually. Amp and an Amp runner are not permitted there; no remote access or participation from the personal-machine agent is required. The goal is to preserve work behavior while removing every runtime dependency on Ansible and chezmoi. This is an implementation and verification task, not just a sequence of existing commands: the tracked work route still deliberately invokes both legacy tools.
+
+### 1. Preserve the Work State
+
+- Read this README, `AGENTS.md`, `DEV.md`, and `docs/operations/mise-migration-cleanup.md`. Inspect the actual hostname and target before applying anything; the current registered work target is `ML-DFC6YK6VJQ`, with home `/Users/tsandberg`.
+- Record the revision, dirty/staged files, stashes, and lockfile `skip-worktree` flags. Preserve all existing local work. Use the documented `mise run pull` workflow for synchronization only after protecting it; a clean `git status` does not expose masked lockfile changes.
+- Back up every private input in the Setup Checklist below, any additional ignored/untracked files discovered locally, and the deployed files they own. Include chezmoi config/state, harness caches and ownership manifests, Neovim's work lockfile, and local LaunchAgents. Keep backups outside directories scheduled for retirement, restrict backup/log permissions, and test restoration without overwriting live files. Do not change the process-wide umask for installers merely to protect logs.
+- Inventory the real remaining consumers: `ansible/work.config.local.yml`, `ansible/tasks/work.local.yml`, `ansible/Brewfile.work.*`, `agents/work/`, and all private chezmoi templates, data, scripts, and hooks. Trace role includes and template reads, not just the tracked playbook. Record each input's destinations, existing owner, native replacement, and verification check. Do not assume the Setup Checklist exhausts private state.
+
+Keep corporate URLs, credentials, private package names, rendered settings, and backups on the work laptop. Only sanitized implementation changes and results should leave it.
+
+### 2. Implement the Remaining Native Owners
+
+Use the mappings earlier in this README for target variables, language tools, agent data/assets, Python indexes, Git/Jujutsu, and Neovim. Preserve local override precedence and the current effective values. Extend the capability that owns each resource; do not create a second owner or a compatibility wrapper around Ansible/chezmoi.
+
+- **Agent catalogue:** `mise agent-harness` currently skips catalogue deployment on work and only runs `agent-config`. `mise laptop -t agent-harness` still invokes the Ansible adapter first. Add a work host declaration for the native engine, using the personal host declaration as a structural example, with the work profile and only work-approved harnesses. Implement an ignored native input for `agent_harness_sources_extra` and any other effective private role overrides; copying them into agent `data.toml` alone does not make the catalogue consume them. Preserve `agents/work/`, source/plugin identity, skill selectors and removals, hooks, update policy, and the work Glimpse link. Prove that existing caches/manifests can be adopted without pruning private or unowned files before switching the public route.
+- **Private shell and dotfiles:** move the effective outputs of `private_dot_zshenv.local.tmpl`, `dot_zshrc.local.tmpl`, and every other remaining private chezmoi consumer to their native owners. Retain `.zshenv.local`/`.zshrc.local` sourcing and scoped credential behavior. Inspect scripts and hooks as well as files; a rendered-file comparison cannot prove their side effects are preserved. Keep the unconditional ownership exclusions in `.chezmoiignore` until the legacy route is disabled.
+- **Local tasks and fallback roles:** migrate `ansible/tasks/work.local.yml`, including its model-version LaunchAgent, and any private callers of retained Homebrew, mise, language-tool, macOS-defaults, or small-software roles. Decide explicitly whether each override remains needed. Do not infer that a role is unused from the tracked playbook alone.
+- **Private Brewfiles:** native Mac-apps already reads `ansible/Brewfile.work.*`. Relocate those private inputs to an ignored native-owned location and update the tracked include, `.gitignore`, `.fdignore`, and documentation together. Verify the same effective package declarations before deleting the old files. Daily maintenance includes bounded cleanup and a global unpinned formula upgrade; review the proposed removals and expect updates beyond directly declared formulae. Casks retain Bundle's existing policy.
+- **Public routing:** once the replacements are verified individually, change work's `reconcile:laptop` and `agent-harness` routes in root `mise.toml`, plus `scripts/list-tags.sh`, to use native owners only. Preserve ordering: catalogue before agent settings/hooks; private Python-index configuration before package managers; retirement last. Preserve work restrictions on SSH, Docker context, hostname, and unapproved software. Unknown/obsolete tags must fail before side effects rather than fall through to a legacy playbook.
+
+Treat missing native support as work to implement and test, not as permission to discard a private setting. All new private-input locations must be ignored before writing corporate values to them. Keep secrets as SecretRefs; do not embed resolved credentials in source or TOML overlays.
+
+### 3. Prove Parity and Convergence
+
+Start with focused checks for the owners being migrated, then apply and repeat each one. Use the public entry points so task routing is tested, not just helper scripts. Existing examples, run from the repository root:
+
+```sh
+mise python-index --check
+mise language-tools --check
+mise agent-config --check
+mise agent-config --check --real-secrets
+mise neovim --check
+mise laptop --check
+```
+
+Before the routing change, the last command still exercises the remaining work playbook; it is not proof of native-only operation. The placeholder-secret agent check can exit 2 when private content is unresolved; the real-secret check must then establish parity. Native catalogue checks require populated source caches. Inspect each exit status and diagnostic; do not suppress failures or treat missing cache/credentials as success.
+
+After implementing native work routing, run the full `mise laptop --check`, `mise laptop`, a second `mise laptop`, and final `mise laptop --check`. Use `mise agent-config --check --real-secrets` to verify secret-backed outputs. Record before/after file content, permissions, symlink targets, ownership manifests, service state, and exit statuses. Separate app-written history/cache changes from deployment writes. The second apply must perform no unexplained installs, upgrades, rewrites, or privileged work; final checks must show no unexplained drift. Do not delete daily stamps merely to force maintenance.
+
+Smoke-test a new shell, corporate Git access and URL rewrites, uv/pip against the corporate indexes, approved Claude/Pi models, MCP servers, private skills/hooks, Neovim's work settings, and the migrated LaunchAgent. Preserve mirror-compatible package versions and the separate work Neovim lock; do not run personal-host plugin or Mason upgrades blindly. Verify that no public route invokes `ansible-playbook` or `chezmoi`, preferably with temporary fail-fast command shims during the final repeat after dependency bootstrap has been updated.
+
+Run the relevant fixture tests, including laptop routing, agent catalogue/configuration, Mac apps, language tools, Python indexes, and Neovim, plus the repository's applicable lint/type checks. Add coverage for private-input loading and precedence using synthetic data, with no corporate values in fixtures. Mirror-derived lockfile changes stay local; dependency and canonical lockfile changes are resolved on a personal machine.
+
+### 4. Retire Only After Verification
+
+Do not run the personal `retirements` capability on work unchanged. Audit `.ansibleremove`, `chezmoi/.chezmoiremove`, and `bootstrap/capabilities/retirements/paths.toml` against actual work ownership; declare approved native absences and any required LaunchAgent unloads, with cleanup running last. Back up remaining chezmoi state before removal. Never recursively remove `ansible/` or `chezmoi/` while private inputs still live there.
+
+Once no consumer needs them, remove work's legacy package declarations and bootstrap/dependency routes: the Brewfile's chezmoi and Ansible language server, the optional Python `work` dependencies, work-group invocations in bootstrap/pull/check tasks, legacy lint tasks, and editor plugins/Mason packages retained for this migration. Audit installed Homebrew, uv-tool, mise, project-venv, and editor copies rather than relying only on `PATH`. Do not remove Ansible tooling required by unrelated work projects. After changing bootstrap dependencies, reconcile the environment and prove a fresh bootstrap/reconcile path no longer reinstalls legacy tools.
+
+Keep the recovery backup until the cutover is accepted. Shared legacy tree deletion can follow after the sanitized report below is reviewed; retaining dormant source temporarily is safer than deleting evidence before live parity is known.
+
+### 5. Report Back
+
+Provide the user with the tested revision or sanitized patch, the native private-input paths (without their contents), the input-to-owner migration inventory, and any unresolved consumers. Include check/apply/repeat/final-check commands and exit statuses, smoke-test results, package/state retirements, lockfile changes, and whether the worktree is clean, committed, or pushed. State explicitly whether work is now native-only and whether any Ansible/chezmoi installation remains for unrelated work. Do not publish private inputs, logs, or mirror lockfiles.
+
+The user can bring that report and approved source changes back to the personal-machine session. That evidence is the gate for removing the shared legacy support; no Amp connection to the work laptop is needed.
+
 ## Setup Checklist
 
 When setting up a new work Mac, copy these files from the old machine:
