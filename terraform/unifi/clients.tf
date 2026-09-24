@@ -161,6 +161,12 @@ resource "unifi_client" "breville_oracle_dual_boiler" {
   allow_existing = true
 }
 
+resource "unifi_client" "trmnl_x" {
+  mac            = "3c:0f:02:cd:39:e4"
+  name           = "TRMNL X"
+  allow_existing = true
+}
+
 resource "unifi_client" "pod042_kvm" {
   mac              = "94:83:c4:c0:d7:7b"
   name             = "pod042-kvm"
