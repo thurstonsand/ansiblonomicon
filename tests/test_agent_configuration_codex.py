@@ -53,7 +53,7 @@ def test_render_is_additive_and_preserves_live_model_comments_and_app_tables(
     assert parsed["model"] == "live-selection"
     assert parsed["foreign"] == "state"
     assert parsed["features"]["custom_future_flag"] is True
-    assert parsed["features"]["unified_exec"] is True
+    assert parsed["features"]["memories"] is True
     assert parsed["apps"]["generated"]["marketplace_timestamp"] == 42
     assert parsed["tui"]["theme"] == "gruvbox-light"
     assert str(home / "Code Garden/ansiblonomicon") in parsed["projects"]

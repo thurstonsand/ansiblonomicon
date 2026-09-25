@@ -6,7 +6,7 @@
 ./scripts/bootstrap.sh                  # new Mac: Xcode CLI, Homebrew, mise, fnox, uv, 1Password CLI
 ```
 
-`mise trust` does the rest — `uv sync --dev`, venv activation, `SUDO_ASKPASS`, the commit hook, Pi extension deps. The shared askpass helper is `scripts/sudo-askpass.sh`. Consumers resolve only their required credentials through fnox; laptop reconciliation has no enclosing fnox invocation.
+`mise trust` does the rest — `uv sync --dev`, venv activation, `SUDO_ASKPASS`, the commit hook, Pi extension deps. The shared askpass helper is `scripts/sudo-askpass.sh`. Tasks whose nested `mise bootstrap` elevates put `scripts/askpass-sudo` first on `PATH`, so every sudo call authenticates through askpass; the work Mac's BeyondTrust sudo keeps no timestamp for a `sudo -A -v` to prime. Consumers resolve only their required credentials through fnox; laptop reconciliation has no enclosing fnox invocation.
 
 ## Working here
 
@@ -93,7 +93,7 @@ Spans every host and every harness. `bootstrap/capabilities/agent-harness/` is c
 - **Plugins** at `agents/<plugin>/skills/`, listed in `.claude-plugin/marketplace.json`. A skill may be a plain `SKILL.md` or a `SKILL.md.j2` templated at deploy time, and this applies to any other `.j2` file in the skill dir. Repo-local skills live at `.agents/skills/`, symlinked into `.claude/skills/`. The `.j2` skills mean a plugin is not installable through Claude's own plugin mechanism, which does no templating — deployment goes through `agent_harness` instead. see `agents/README.md` for more.
 - **User-level instructions** render from `configuration/templates/`; Amp's hosted instructions remain updated by hand.
 - **Models** at `bootstrap/capabilities/agent-harness/models.yml` are the single source for versions, aliases, and per-editor config. Native renderers merge them with `configuration/data.toml` and the host overlay.
-- **Assets** under `configuration/assets/` are first-party source. `assets.toml` declares assets, package dependencies, and explicit retirements; native configuration symlinks unchanged files into `$HOME` and renders host-dependent or secret-bearing files as regular files. Never put credentials in templates, assets, or host overlays: declare SecretRefs in fnox and let `agent-config` resolve only the keys required by that host. Private outputs use mode `0600`.
+- **Assets** under `configuration/assets/` are first-party source. `assets.toml` declares assets, package dependencies, and explicit retirements; an asset naming a `harness` deploys only where `profiles.toml` targets it, and `hosts` narrows host-specific content; native configuration symlinks unchanged files into `$HOME` and renders host-dependent or secret-bearing files as regular files. Never put credentials in templates, assets, or host overlays: declare SecretRefs in fnox and let `agent-config` resolve only the keys required by that host. Private outputs use mode `0600`.
 - **Amp User Skills** are rendered natively by `publish_amp_skills.py` using the `amp_publish` profile. `scripts/publish-amp-skills.sh` is the CI entry point, triggered on relevant main-branch pushes and a daily schedule. Overrideable by explicitly specifying `amp` as a target of a skill.
 - **Session recovery** lives under `configuration/assets/shared/session-recovery/`, with consumers under the Pi and Claude asset trees. Lint it through `mise run session-recovery:check` rather than from inside a consumer.
 

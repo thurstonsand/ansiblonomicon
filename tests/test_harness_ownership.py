@@ -19,12 +19,13 @@ def run_fixture(
 ) -> subprocess.CompletedProcess[str]:
     host = root / "ownership-host.toml"
     enabled_toml = ", ".join(json.dumps(item) for item in (enabled or []))
+    (repo / "bootstrap/capabilities/agent-harness/profiles.toml").write_text(
+        f"[profiles.personal]\ntarget_agents = [{enabled_toml}]\nexplicit_only = []\n"
+    )
     host.write_text(
-        f"""[agent_harness]
+        """[agent_harness]
 profile = "personal"
 hostname = "ownership-fixture"
-enabled = [{enabled_toml}]
-explicit_only = []
 trim_blocks = true
 update = "86400s"
 manifest = "macos-managed-files.json"
@@ -320,8 +321,6 @@ def test_apply_failure_keeps_validated_proof_for_retry_after_upstream_removal(
             check=False,
             cached=True,
             manifest_name="macos-managed-files.json",
-            enabled_harnesses=["claude"],
-            explicit_only=[],
             trim_blocks=True,
         )
     owner = f"{source}\0local-one"
@@ -342,8 +341,6 @@ def test_apply_failure_keeps_validated_proof_for_retry_after_upstream_removal(
         check=False,
         cached=True,
         manifest_name="macos-managed-files.json",
-        enabled_harnesses=["claude"],
-        explicit_only=[],
         trim_blocks=True,
     )
 

@@ -55,6 +55,7 @@ def test_real_mise_render_is_valid_zsh_and_noop(
     env["MISE_ENV"] = "shell,shell-personal"
     if profile == "work":
         env["SOURCEGRAPH_TOKEN"] = "sgp_synthetic-ABC123456789"
+        env["ANTHROPIC_AUTH_TOKEN"] = "genaihub-synthetic"
     command = [
         "mise",
         "-C",
@@ -261,7 +262,13 @@ def test_work_private_file_renders_token_atomically_and_is_noop(tmp_path: Path) 
     )
     token = "sgp_synthetic-ABC123456789"
     env = isolated_env(home, target)
-    env.update({"MISE_ENV": "shell-work", "SOURCEGRAPH_TOKEN": token})
+    env.update(
+        {
+            "MISE_ENV": "shell-work",
+            "SOURCEGRAPH_TOKEN": token,
+            "ANTHROPIC_AUTH_TOKEN": "genaihub-synthetic",
+        }
+    )
     command = [
         "mise",
         "-C",
@@ -290,7 +297,7 @@ def test_work_private_file_renders_token_atomically_and_is_noop(tmp_path: Path) 
             "zsh",
             "-f",
             "-c",
-            'source "$1"; print -rn -- "$SOURCEGRAPH_TOKEN"',
+            'source "$1"; print -rn -- "$SOURCEGRAPH_TOKEN $GENAIHUB_API_KEY"',
             "zsh",
             str(destination),
         ],
@@ -298,7 +305,7 @@ def test_work_private_file_renders_token_atomically_and_is_noop(tmp_path: Path) 
         capture_output=True,
         text=True,
     )
-    assert result.stdout == token
+    assert result.stdout == f"{token} genaihub-synthetic"
 
 
 @pytest.mark.parametrize("check", [False, True])
@@ -311,8 +318,9 @@ def test_work_task_credentials_sudo_and_check_are_scoped(
     fnox = project / "scripts/fnox-host"
     fnox.write_text(
         "#!/bin/sh\n"
-        'printf "fnox %s %s %s %s %s\\n" "$1" "$2" "$3" "$4" "$5" >> "$CALLS"\n'
+        'printf "fnox %s %s %s %s %s %s %s\\n" "$1" "$2" "$3" "$4" "$5" "$6" "$7" >> "$CALLS"\n'
         'export SOURCEGRAPH_TOKEN="$SYNTHETIC_TOKEN"\n'
+        'export ANTHROPIC_AUTH_TOKEN="$SYNTHETIC_TOKEN"\n'
         'export HOMEBREW_SUDO_ASKPASS_PASS_WORK="$SYNTHETIC_PASSWORD"\n'
         'while [ "$1" != -- ]; do shift; done; shift\nexec "$@"\n'
     )
@@ -320,7 +328,7 @@ def test_work_task_credentials_sudo_and_check_are_scoped(
     for name, body in {
         "hostname": "echo ML-DFC6YK6VJQ",
         "sudo": 'printf "sudo %s\\n" "$*" >> "$CALLS"',
-        "mise": 'printf "mise %s env=%s token=%s\\n" "$*" "$MISE_ENV" "$SOURCEGRAPH_TOKEN" >> "$CALLS"',
+        "mise": 'printf "mise %s env=%s token=%s path=%s\\n" "$*" "$MISE_ENV" "$SOURCEGRAPH_TOKEN" "${PATH%%:*}" >> "$CALLS"',
     }.items():
         path = tmp_path / name
         path.write_text(f"#!/bin/sh\n{body}\n")
@@ -346,15 +354,17 @@ def test_work_task_credentials_sudo_and_check_are_scoped(
     if check:
         assert len(lines) == 1
         assert lines[0].startswith(target)
-        assert lines[0].endswith("--dry-run env=shell,shell-work token=preview")
+        assert lines[0].endswith(
+            f"--dry-run env=shell,shell-work token=preview path={tmp_path}"
+        )
     else:
         assert lines[0] == (
-            "fnox exec --secret SOURCEGRAPH_TOKEN --secret "
-            "HOMEBREW_SUDO_ASKPASS_PASS_WORK"
+            "fnox exec --secret SOURCEGRAPH_TOKEN --secret ANTHROPIC_AUTH_TOKEN "
+            "--secret HOMEBREW_SUDO_ASKPASS_PASS_WORK"
         )
-        assert lines[1] == "sudo -A -v"
-        assert lines[2].startswith(target)
-        assert lines[2].endswith(
-            "--yes env=shell,shell-work token=sgp_synthetic-ABC123"
+        assert lines[1].startswith(target)
+        assert lines[1].endswith(
+            "--yes env=shell,shell-work token=sgp_synthetic-ABC123 "
+            f"path={project}/scripts/askpass-sudo"
         )
-        assert len(lines) == 3
+        assert len(lines) == 2

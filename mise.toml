@@ -293,9 +293,9 @@ if [ "$host" != pod042 ]; then
     *) sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS ;;
   esac
   export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
+  export PATH="$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH"
   exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret "$sudo_secret" -- \
-    sh -ec 'sudo -A -v; exec mise -C "$1" bootstrap --only "$2" --yes' \
-    terminal-theme "$target" "$parts"
+    mise -C "$target" bootstrap --only "$parts" --yes
 fi
 exec mise -C "$target" bootstrap --only "$parts" --yes
 '''
@@ -434,8 +434,9 @@ if [ -n "${usage_check:-}" ]; then
   exec mise -C "$target" bootstrap --only files --dry-run
 fi
 export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
+export PATH="$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH"
 exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret HOMEBREW_SUDO_ASKPASS_PASS_WORK -- \
-  sh -ec 'sudo -A -v; exec mise -C "$1" bootstrap --only files,final-hook --yes' work-local "$target"
+  mise -C "$target" bootstrap --only files,final-hook --yes
 '''
 
 [tasks.shell]
@@ -452,22 +453,22 @@ case "$host" in
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 run_shell='set -e
-if [ "$6" = true ] && [ -z "${SOURCEGRAPH_TOKEN:-}" ]; then
-  echo "SOURCEGRAPH_TOKEN is required for work shell apply" >&2
+if [ "$6" = true ] && { [ -z "${SOURCEGRAPH_TOKEN:-}" ] || [ -z "${ANTHROPIC_AUTH_TOKEN:-}" ]; }; then
+  echo "SOURCEGRAPH_TOKEN and ANTHROPIC_AUTH_TOKEN are required for work shell apply" >&2
   exit 1
 fi
 export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"
 exec mise -C "$2" bootstrap --only "$4" "$5"'
 if [ -n "${usage_check:-}" ]; then
-  if [ "$work" = true ]; then export SOURCEGRAPH_TOKEN=preview; fi
+  if [ "$work" = true ]; then export SOURCEGRAPH_TOKEN=preview ANTHROPIC_AUTH_TOKEN=preview; fi
   exec sh -c "$run_shell" shell "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts" --dry-run false
 fi
 if [ "$work" = true ]; then
   export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
+  export PATH="$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH"
   exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec \
-    --secret SOURCEGRAPH_TOKEN --secret HOMEBREW_SUDO_ASKPASS_PASS_WORK -- \
-    sh -ec ': "${SOURCEGRAPH_TOKEN:?SOURCEGRAPH_TOKEN is required for work shell apply}"; sudo -A -v; exec sh -c "$1" shell "$2" "$3" "$4" "$5" --yes true' \
-    shell "$run_shell" "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts"
+    --secret SOURCEGRAPH_TOKEN --secret ANTHROPIC_AUTH_TOKEN --secret HOMEBREW_SUDO_ASKPASS_PASS_WORK -- \
+    sh -c "$run_shell" shell "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts" --yes true
 fi
 exec sh -c "$run_shell" shell "$MISE_PROJECT_ROOT" "$target" "$environments" "$parts" --yes
 '''

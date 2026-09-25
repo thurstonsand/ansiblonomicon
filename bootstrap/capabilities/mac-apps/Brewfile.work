@@ -119,6 +119,7 @@ cask "monitorcontrol"
 # Possibly corporate-managed (uncomment if not provided by IT)
 # =============================================================================
 cask "1password-cli"
+cask "codex"
 cask "google-chrome"
 cask "google-drive"
 # cask "iterm2"

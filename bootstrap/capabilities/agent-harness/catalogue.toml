@@ -60,6 +60,7 @@ exclude_skills = { "work" = ["retitle"] }
 
 [[sources]]
 local = "agents/codex"
+excluded_on = ["work"]
 [[sources.plugins]]
 name = "codex"
 target_agents = ["codex"]

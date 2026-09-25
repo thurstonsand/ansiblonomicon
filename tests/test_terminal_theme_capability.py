@@ -36,7 +36,8 @@ def test_macos_task_authenticates_only_on_apply(
     commands = {
         "hostname": f"echo {host}",
         "sudo": 'printf "sudo %s %s\\n" "$*" "$SUDO_ASKPASS" >> "$CALLS"',
-        "mise": 'printf "mise %s %s\\n" "$*" "$MISE_ENV" >> "$CALLS"',
+        "mise": 'printf "mise %s %s\\n" "$*" "$MISE_ENV" >> "$CALLS"\n'
+        'printf "path %s\\n" "${PATH%%:*}" >> "$CALLS"',
     }
     for name, body in commands.items():
         path = tmp_path / name
@@ -60,7 +61,9 @@ def test_macos_task_authenticates_only_on_apply(
         if host == "ML-DFC6YK6VJQ":
             secret += "_WORK"
         assert lines.pop(0) == f"resolve {secret}"
-        assert lines.pop(0) == f"sudo -A -v {project}/scripts/sudo-askpass.sh"
+        assert lines.pop() == f"path {project}/scripts/askpass-sudo"
+    else:
+        assert lines.pop() == f"path {tmp_path}"
     assert len(lines) == 1
     assert "--dry-run" in lines[0] if check else "--yes" in lines[0]
     assert lines[0].endswith("terminal-theme,terminal-theme-macos,terminal-theme-files")

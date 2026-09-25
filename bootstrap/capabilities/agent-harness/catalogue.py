@@ -90,6 +90,21 @@ def environment(repo: Path, home: Path, hostname: str) -> jinja2.Environment:
     return env
 
 
+def load_profile(repo: Path, profile: str) -> Profile:
+    profiles = mapping(
+        mapping(tomllib.loads((repo / CAPABILITY / "profiles.toml").read_text()))[
+            "profiles"
+        ]
+    )
+    if profile not in profiles:
+        raise ValueError(f"Unknown harness profile: {profile}")
+    raw_profile = mapping(profiles[profile])
+    return {
+        "target_agents": strings(raw_profile["target_agents"]),
+        "explicit_only": strings(raw_profile.get("explicit_only", [])),
+    }
+
+
 def declarations(
     repo: Path, home: Path, profile: str, hostname: str
 ) -> tuple[jinja2.Environment, Profile, dict[str, Layout], list[SourceConfig]]:
@@ -138,13 +153,10 @@ def declarations(
             "name_transform": transform,
         }
     profiles = mapping(config["agent_harness_profiles"])
-    if profile not in profiles:
-        raise ValueError(f"Unknown harness profile: {profile}")
-    raw_profile = mapping(profiles[profile])
-    selected_profile: Profile = {
-        "target_agents": strings(raw_profile["target_agents"]),
-        "explicit_only": strings(raw_profile.get("explicit_only", [])),
-    }
+    selected_profile = load_profile(repo, profile)
+    unknown = sorted(set(selected_profile["target_agents"]) - set(layouts))
+    if unknown:
+        raise ValueError(f"Unknown target harness(es): {', '.join(unknown)}")
     raw_sources = config["agent_harness_sources"]
     if not isinstance(raw_sources, list):
         raise ValueError("Expected harness source list")
@@ -226,8 +238,6 @@ def render_files(
     *,
     trim_blocks: bool,
     metadata: dict[Path, FileMetadata] | None = None,
-    enabled_harnesses: list[str] | None = None,
-    explicit_only: list[str] | None = None,
     sources_override: list[SourceConfig] | None = None,
     allow_missing_selections: set[str] | None = None,
 ) -> dict[Path, tuple[bytes, int]]:
@@ -235,13 +245,6 @@ def render_files(
         repo, home, profile, hostname
     )
     env.trim_blocks = trim_blocks
-    if enabled_harnesses is not None:
-        unknown = sorted(set(enabled_harnesses) - set(layouts))
-        if unknown:
-            raise ValueError(f"Unknown enabled harness(es): {', '.join(unknown)}")
-        selected_profile["target_agents"] = enabled_harnesses
-    if explicit_only is not None:
-        selected_profile["explicit_only"] = explicit_only
     if sources_override is not None:
         sources = sources_override
     resources = filters.agent_harness_build_plugin_resources(

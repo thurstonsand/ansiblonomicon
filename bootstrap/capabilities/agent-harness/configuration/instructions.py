@@ -23,8 +23,9 @@ def render(
     hostname: str,
     data: dict[str, Any],
     secrets: dict[str, str],
+    harnesses: list[str],
 ) -> dict[str, str]:
-    """Return HOME-relative instruction files without changing the filesystem."""
+    """Return HOME-relative instruction files for the targeted harnesses."""
     del repo, secrets
     environment = Environment(
         loader=FileSystemLoader(TEMPLATES),
@@ -36,18 +37,12 @@ def render(
         bool(data.get("has_local_instructions", False))
         or (home / ".agents/local.md").is_file()
     )
-    destinations = DESTINATIONS.items()
-    if hostname == WORK_HOSTNAME:
-        destinations = (
-            (agent, destination)
-            for agent, destination in destinations
-            if agent in {"claude", "pi"}
-        )
     return {
         destination: template.render(
             agent=agent,
             is_work=hostname == WORK_HOSTNAME,
             has_local_instructions=has_local,
         )
-        for agent, destination in destinations
+        for agent, destination in DESTINATIONS.items()
+        if agent in harnesses
     }

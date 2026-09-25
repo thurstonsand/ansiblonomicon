@@ -22,9 +22,19 @@ from typing import Any, cast
 import tomlkit
 import yaml
 
-HOSTS = {"Thurstons-MacBook-Pro", "pod042", "ML-DFC6YK6VJQ"}
+HOST_CONFIGS = {
+    "Thurstons-MacBook-Pro": "bootstrap/targets/Thurstons-MacBook-Pro/mise.agent-harness.toml",
+    "pod042": "bootstrap/targets/pod042/agent-harness/host.toml",
+    "ML-DFC6YK6VJQ": "bootstrap/targets/ML-DFC6YK6VJQ/mise.agent-harness.toml",
+}
 WORK_HOST = "ML-DFC6YK6VJQ"
-RENDERERS = ("claude", "codex", "pi", "other", "instructions")
+RENDERERS = {
+    "amp": "amp",
+    "claude": "claude",
+    "codex": "codex",
+    "opencode": "opencode",
+    "pi": "pi",
+}
 SECRET_KEYS = {
     WORK_HOST: {"ANTHROPIC_AUTH_TOKEN"},
     "Thurstons-MacBook-Pro": {"CLI_PROXY_API_KEY", "PARALLEL_API_KEY"},
@@ -114,13 +124,34 @@ def _safe_target(home: Path, relative: str) -> Path:
     return target
 
 
+def target_harnesses(repo: Path, hostname: str) -> list[str]:
+    capability = Path(__file__).parent.parent
+    host = _load_module(capability, "agent_harness_deploy").load_host(
+        repo / HOST_CONFIGS[hostname]
+    )
+    profile = _load_module(capability, "catalogue").load_profile(repo, host.profile)
+    return profile["target_agents"]
+
+
 def render_all(
-    repo: Path, home: Path, hostname: str, data: dict[str, Any], secrets: dict[str, str]
+    repo: Path,
+    home: Path,
+    hostname: str,
+    data: dict[str, Any],
+    secrets: dict[str, str],
+    harnesses: list[str],
 ) -> dict[str, str]:
     directory = Path(__file__).parent
-    result: dict[str, str] = {}
-    for name in RENDERERS:
-        outputs = _load_module(directory, name).render(
+    result = _load_module(directory, "instructions").render(
+        repo=repo,
+        home=home,
+        hostname=hostname,
+        data=data,
+        secrets=secrets,
+        harnesses=harnesses,
+    )
+    for harness in harnesses:
+        outputs = _load_module(directory, RENDERERS[harness]).render(
             repo=repo, home=home, hostname=hostname, data=data, secrets=secrets
         )
         overlap = result.keys() & outputs.keys()
@@ -130,20 +161,27 @@ def render_all(
     return result
 
 
-def _mcp_output(
-    home: Path, data: dict[str, Any], previously_owned: set[str] | None = None
-) -> tuple[str, str] | None:
+def _declared_mcp(data: dict[str, Any]) -> list[dict[str, Any]]:
     declared = data.get("mcp_servers", [])
-    previously_owned = previously_owned or set()
-    if not declared and not previously_owned:
-        return None
-    desired: dict[str, Any] = {}
     for item in declared:
         if not isinstance(item, dict) or not isinstance(item.get("name"), str):
             raise ValueError("each mcp_servers entry requires a string name")
         transport = item.get("transport", "stdio")
         if transport not in {"stdio", "sse", "http"}:
             raise ValueError(f"unsupported MCP transport: {transport}")
+    return declared
+
+
+def _claude_mcp_output(
+    home: Path, data: dict[str, Any], previously_owned: set[str] | None = None
+) -> tuple[str, str] | None:
+    declared = _declared_mcp(data)
+    previously_owned = previously_owned or set()
+    if not declared and not previously_owned:
+        return None
+    desired: dict[str, Any] = {}
+    for item in declared:
+        transport = item.get("transport", "stdio")
         if transport == "stdio":
             server = {
                 "type": "stdio",
@@ -175,14 +213,51 @@ def _mcp_output(
     return ".claude.json", json.dumps(existing, indent=2) + "\n"
 
 
+def _codex_mcp_config(
+    config: str, data: dict[str, Any], previously_owned: set[str]
+) -> str:
+    desired: dict[str, Any] = {}
+    for item in _declared_mcp(data):
+        transport = item.get("transport", "stdio")
+        if transport == "sse":
+            raise ValueError(f"Codex does not support SSE MCP server {item['name']}")
+        if transport == "stdio":
+            server = {
+                key: item[key] for key in ("command", "args", "env") if key in item
+            }
+        else:
+            server = {"url": item.get("url")}
+            if "headers" in item:
+                server["http_headers"] = item["headers"]
+        desired[item["name"]] = server
+    document = tomlkit.parse(config)
+    if not desired and "mcp_servers" not in document:
+        return config
+    servers = document.setdefault("mcp_servers", tomlkit.table())
+    for name in previously_owned - desired.keys():
+        servers.pop(name, None)
+    servers.update(desired)
+    return tomlkit.dumps(document)
+
+
+def _selected(item: dict[str, Any], hostname: str, harnesses: list[str]) -> bool:
+    harness = item.get("harness")
+    if harness is not None and harness not in RENDERERS:
+        raise ValueError(f"unknown asset harness: {item}")
+    hosts = item.get("hosts")
+    return (harness is None or harness in harnesses) and (
+        hosts is None or hostname in hosts
+    )
+
+
 def _assets(
-    repo: Path, hostname: str
+    repo: Path, hostname: str, harnesses: list[str]
 ) -> tuple[list[tuple[Path, str]], list[dict[str, Any]], list[str]]:
     manifest = Path(__file__).parent / "assets.toml"
     raw = tomllib.loads(manifest.read_text()) if manifest.exists() else {}
     links: list[tuple[Path, str]] = []
     for item in raw.get("files", []):
-        if hostname in item.get("hosts", []):
+        if _selected(item, hostname, harnesses):
             source = Path(__file__).parent / item["source"]
             if not source.is_file() or item.get("mode") != "symlink":
                 raise ValueError(f"invalid static asset declaration: {item}")
@@ -197,6 +272,8 @@ def _assets(
     for item in local_raw.get("files", []):
         if not isinstance(item, dict):
             raise ValueError(f"invalid local asset declaration: {item}")
+        if not _selected(item, hostname, harnesses):
+            continue
         source_value = item.get("source")
         destination = item.get("destination")
         if not isinstance(source_value, str) or not isinstance(destination, str):
@@ -214,12 +291,8 @@ def _assets(
         # Validate here so a malformed local manifest is rejected before staging.
         _safe_target(Path("/home"), destination)
         links.append((source, destination))
-    packages = [p for p in raw.get("packages", []) if hostname in p.get("hosts", [])]
-    absent = [
-        p["destination"]
-        for p in raw.get("absent", [])
-        if hostname in p.get("hosts", [])
-    ]
+    packages = [p for p in raw.get("packages", []) if _selected(p, hostname, harnesses)]
+    absent = [p["destination"] for p in raw.get("absent", [])]
     return links, packages, absent
 
 
@@ -380,17 +453,23 @@ def _read_owned_names(path: Path) -> set[str]:
 def reconcile(
     *, repo: Path, home: Path, hostname: str, secrets: dict[str, str], check: bool
 ) -> int:
-    if hostname not in HOSTS:
+    if hostname not in HOST_CONFIGS:
         raise ValueError(f"unsupported agent configuration host: {hostname}")
     data = load_data(repo, hostname, home)
-    outputs = render_all(repo, home, hostname, data, secrets)
+    harnesses = target_harnesses(repo, hostname)
+    outputs = render_all(repo, home, hostname, data, secrets, harnesses)
     state_dir = home / ".cache/ansiblonomicon-harness/configuration"
     mcp_ownership = state_dir / "mcp-owned.json"
     previously_owned_mcp = _read_owned_names(mcp_ownership)
-    mcp = _mcp_output(home, data, previously_owned_mcp)
-    if mcp:
-        outputs[mcp[0]] = mcp[1]
-    links, packages, absent = _assets(repo, hostname)
+    if "claude" in harnesses:
+        mcp = _claude_mcp_output(home, data, previously_owned_mcp)
+        if mcp:
+            outputs[mcp[0]] = mcp[1]
+    if ".codex/config.toml" in outputs:
+        outputs[".codex/config.toml"] = _codex_mcp_config(
+            outputs[".codex/config.toml"], data, previously_owned_mcp
+        )
+    links, packages, absent = _assets(repo, hostname, harnesses)
     package_states: list[tuple[Path, list[str], str, Path, Path | None]] = []
     for package in packages:
         source = Path(__file__).parent / package["source"]

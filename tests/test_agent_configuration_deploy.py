@@ -9,6 +9,7 @@ from pathlib import Path
 import shutil
 import stat
 import subprocess
+import tomllib
 from typing import Any, cast
 
 import pytest
@@ -74,12 +75,22 @@ def test_render_all_work_uses_exact_declared_secret_scope(tmp_path: Path) -> Non
     data = deploy.load_data(repo, deploy.WORK_HOST, home)
     secrets = {key: f"synthetic-{key}" for key in deploy.SECRET_KEYS[deploy.WORK_HOST]}
 
-    rendered = deploy.render_all(repo, home, deploy.WORK_HOST, data, secrets)
+    rendered = deploy.render_all(
+        repo, home, deploy.WORK_HOST, data, secrets, ["claude", "codex", "pi"]
+    )
 
     assert deploy.SECRET_KEYS[deploy.WORK_HOST] == {"ANTHROPIC_AUTH_TOKEN"}
     assert ".claude/settings.json" in rendered
     assert ".claude/hooks/_config.py" not in rendered
-    assert not any(path.startswith(".codex/") for path in rendered)
+    assert ".codex/AGENTS.md" in rendered
+    assert ".config/opencode/opencode.jsonc" not in rendered
+    codex = tomllib.loads(rendered[".codex/config.toml"])
+    assert codex["model_reasoning_effort"] == "medium"
+    assert codex["features"]["artifact"] is False
+    assert codex["features"]["chronicle"] is False
+    assert {"model", "sandbox_mode", "web_search", "projects", "plugins"}.isdisjoint(
+        codex
+    )
 
 
 def test_native_reconcile_writes_modes_links_removes_owned_and_is_repeatable(
@@ -176,6 +187,7 @@ def test_check_omits_only_missing_package_link_from_native_plan(
     home.mkdir()
     monkeypatch.setattr(deploy, "__file__", str(configuration / "deploy.py"))
     monkeypatch.setattr(deploy, "load_data", lambda *_: {"mcp_servers": []})
+    monkeypatch.setattr(deploy, "target_harnesses", lambda *_: [])
     monkeypatch.setattr(deploy, "render_all", lambda *_: {".rendered": "value\n"})
     monkeypatch.setattr(
         deploy,
@@ -222,6 +234,7 @@ def test_lockless_package_install_is_stable_on_immediate_repeat(
     home.mkdir()
     monkeypatch.setattr(deploy, "__file__", str(configuration / "deploy.py"))
     monkeypatch.setattr(deploy, "load_data", lambda *_: {"mcp_servers": []})
+    monkeypatch.setattr(deploy, "target_harnesses", lambda *_: [])
     monkeypatch.setattr(deploy, "render_all", lambda *_: {})
     monkeypatch.setattr(
         deploy,
@@ -337,7 +350,7 @@ def test_mcp_converts_claude_schema_preserves_foreign_and_rejects_transport(
     (tmp_path / ".claude.json").write_text(
         json.dumps({"mcpServers": {"foreign": {"command": "keep"}}})
     )
-    _, rendered = deploy._mcp_output(
+    _, rendered = deploy._claude_mcp_output(
         tmp_path,
         {
             "mcp_servers": [
@@ -372,8 +385,50 @@ def test_mcp_converts_claude_schema_preserves_foreign_and_rejects_transport(
         },
     }
     with pytest.raises(ValueError, match="transport"):
-        deploy._mcp_output(
+        deploy._claude_mcp_output(
             tmp_path, {"mcp_servers": [{"name": "bad", "transport": "socket"}]}
+        )
+
+
+def test_codex_mcp_replaces_owned_servers_and_preserves_foreign() -> None:
+    config = (
+        'model = "live"\n\n[mcp_servers.foreign]\ncommand = "keep"\n\n'
+        '[mcp_servers.retired]\ncommand = "old"\n'
+    )
+    rendered = deploy._codex_mcp_config(
+        config,
+        {
+            "mcp_servers": [
+                {
+                    "name": "owned",
+                    "transport": "stdio",
+                    "command": "x",
+                    "args": ["--flag"],
+                    "env": {"TOKEN": "value"},
+                },
+                {
+                    "name": "remote",
+                    "transport": "http",
+                    "url": "https://example.test/mcp",
+                    "headers": {"Authorization": "Bearer value"},
+                },
+            ]
+        },
+        {"retired"},
+    )
+    parsed = tomllib.loads(rendered)
+    assert parsed["model"] == "live"
+    assert parsed["mcp_servers"] == {
+        "foreign": {"command": "keep"},
+        "owned": {"command": "x", "args": ["--flag"], "env": {"TOKEN": "value"}},
+        "remote": {
+            "url": "https://example.test/mcp",
+            "http_headers": {"Authorization": "Bearer value"},
+        },
+    }
+    with pytest.raises(ValueError, match="SSE"):
+        deploy._codex_mcp_config(
+            "", {"mcp_servers": [{"name": "old", "transport": "sse"}]}, set()
         )
 
 
@@ -432,13 +487,14 @@ destination = ".claude/hooks/local/private-hook.py"
 mode = "symlink"
 """
     )
-    all_links, _, _ = deploy._assets(repo, "ML-DFC6YK6VJQ")
+    all_links, _, _ = deploy._assets(repo, "ML-DFC6YK6VJQ", ["claude", "codex", "pi"])
     links = [item for item in all_links if item[0] == hook]
     home = tmp_path / "home"
     foreign = home / ".claude/hooks/local/foreign.py"
     foreign.parent.mkdir(parents=True)
     foreign.write_text("keep\n")
     monkeypatch.setattr(deploy, "load_data", lambda *_: {"mcp_servers": []})
+    monkeypatch.setattr(deploy, "target_harnesses", lambda *_: [])
     monkeypatch.setattr(deploy, "render_all", lambda *_: {})
     monkeypatch.setattr(deploy, "_assets", lambda *_: (links, [], []))
 
@@ -472,7 +528,7 @@ def test_host_local_asset_rejects_unsafe_fields_before_writes(
         f'[[files]]\nsource = "{source}"\ndestination = "{destination}"\nmode = "symlink"\n'
     )
     with pytest.raises(ValueError, match="unsafe"):
-        deploy._assets(repo, "pod042")
+        deploy._assets(repo, "pod042", ["claude", "pi"])
 
 
 def test_inventory_paths_are_validated_before_target_access(

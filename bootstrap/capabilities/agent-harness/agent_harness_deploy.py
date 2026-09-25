@@ -99,8 +99,6 @@ def require_cached_sources(sources: list[SourceConfig], cache: Path) -> None:
 class HostConfig:
     profile: str
     hostname: str
-    enabled: list[str]
-    explicit_only: list[str]
     trim_blocks: bool
     update: str
     manifest: str
@@ -114,8 +112,6 @@ def load_host(path: Path) -> HostConfig:
     required = {
         "profile": str,
         "hostname": str,
-        "enabled": list,
-        "explicit_only": list,
         "trim_blocks": bool,
         "update": str,
         "manifest": str,
@@ -123,17 +119,9 @@ def load_host(path: Path) -> HostConfig:
     for key, expected in required.items():
         if not isinstance(values.get(key), expected):
             raise ValueError(f"Invalid agent_harness.{key} in {path}")
-    enabled = cast(list[object], values["enabled"])
-    explicit = cast(list[object], values["explicit_only"])
-    if not all(isinstance(item, str) for item in enabled) or not all(
-        isinstance(item, str) for item in explicit
-    ):
-        raise ValueError(f"Invalid agent_harness harness lists in {path}")
     return HostConfig(
         profile=cast(str, values["profile"]),
         hostname=cast(str, values["hostname"]),
-        enabled=cast(list[str], enabled),
-        explicit_only=cast(list[str], explicit),
         trim_blocks=cast(bool, values["trim_blocks"]),
         update=cast(str, values["update"]),
         manifest=cast(str, values["manifest"]),
@@ -364,8 +352,6 @@ def reconcile(
     cached: bool,
     manifest_name: str,
     update: str = "86400s",
-    enabled_harnesses: list[str] | None = None,
-    explicit_only: list[str] | None = None,
     trim_blocks: bool | None = None,
 ) -> None:
     repo, home, cache = map(Path.resolve, (repo, home, cache))
@@ -374,11 +360,7 @@ def reconcile(
     _, selected_profile, _, sources = catalogue.declarations(
         repo, home, profile, hostname
     )
-    selected_harnesses = (
-        selected_profile["target_agents"]
-        if enabled_harnesses is None
-        else enabled_harnesses
-    )
+    selected_harnesses = selected_profile["target_agents"]
     native = catalogue.native_resources(repo, home, selected_harnesses)
     enabled, removed = declared_owners(sources)
     manifest = cache / manifest_name
@@ -428,8 +410,6 @@ def reconcile(
         hostname,
         trim_blocks=(profile == "personal") if trim_blocks is None else trim_blocks,
         metadata=metadata,
-        enabled_harnesses=enabled_harnesses,
-        explicit_only=explicit_only,
         allow_missing_selections=allowed_missing,
     )
     for resource in native:
@@ -500,8 +480,6 @@ def reconcile(
             hostname,
             trim_blocks=(profile == "personal") if trim_blocks is None else trim_blocks,
             metadata=remove_metadata,
-            enabled_harnesses=enabled_harnesses,
-            explicit_only=explicit_only,
             sources_override=[unresolved_source],
         )
         for path, detail in remove_metadata.items():
@@ -653,8 +631,6 @@ def main() -> None:
         cached=args.cached,
         update=host.update,
         manifest_name=host.manifest,
-        enabled_harnesses=host.enabled,
-        explicit_only=host.explicit_only,
         trim_blocks=host.trim_blocks,
     )
 

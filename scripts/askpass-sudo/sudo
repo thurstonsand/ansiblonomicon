@@ -1,0 +1,6 @@
+#!/bin/sh
+# Put first on PATH for commands whose nested sudo calls must authenticate
+# through SUDO_ASKPASS. The work Mac's BeyondTrust policy keeps no sudo
+# timestamp, so priming with `sudo -A -v` never satisfies mise's `sudo -n`
+# preflight; `-A` also satisfies `-n`, so every call authenticates itself.
+exec /usr/bin/sudo -A "$@"

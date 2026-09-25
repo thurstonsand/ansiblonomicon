@@ -30,7 +30,7 @@ The untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/` holds 
 | `costsDashboardUrl`  | Native Pi renderer (`powerlineCustom.budget.costsUrl`) |
 | `jiraBrowseUrl`      | Pi footer settings                                     |
 | `piWorkPackages`     | Pi packages prepended to the work set                  |
-| `[[mcp_servers]]`    | Claude MCP registration                                |
+| `[[mcp_servers]]`    | Claude and Codex MCP registration                      |
 | `pi_mcp_json`        | Native Pi renderer (`~/.pi/agent/mcp.json`)            |
 
 Keep credentials out of these files. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml`, and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` first, then `mise agent-config --check --real-secrets` to prove credential access without writing.
@@ -55,11 +55,11 @@ name = "another-plugin"
 deployed-name = "skills/some-skill"
 ```
 
-The work host declaration is `bootstrap/targets/ML-DFC6YK6VJQ/mise.agent-harness.toml`; it enables Claude and Pi only and records ownership in `~/.cache/ansiblonomicon-harness/work-managed-files.json`.
+The work host declaration is `bootstrap/targets/ML-DFC6YK6VJQ/mise.agent-harness.toml`; its `work` profile in `bootstrap/capabilities/agent-harness/profiles.toml` targets Claude, Codex, and Pi, and it records ownership in `~/.cache/ansiblonomicon-harness/work-managed-files.json`.
 
 ## Shell Extras
 
-The shared startup files are owned by the native mise shell capability. They source `~/.zshenv.local` and `~/.zshrc.local`, which the ignored `bootstrap/targets/ML-DFC6YK6VJQ/mise.shell-work.local.toml` declares from `bootstrap/targets/ML-DFC6YK6VJQ/local/shell/`: the environment file is copied privately at mode 0600, the interactive file is linked. `SOURCEGRAPH_TOKEN` is the shell-wide exception because its plugin requires inheritance and Pi may launch non-interactively. The shell task resolves that value and its scoped sudo credential through `fnox-host` before rendering the private mode-0600 `.zshenv`; it does not perform a startup-time network read. Command-specific credentials continue to use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND`. Do not restore broad provider-token exports or global agent launch wrappers.
+The shared startup files are owned by the native mise shell capability. They source `~/.zshenv.local` and `~/.zshrc.local`, which the ignored `bootstrap/targets/ML-DFC6YK6VJQ/mise.shell-work.local.toml` declares from `bootstrap/targets/ML-DFC6YK6VJQ/local/shell/`: the environment file is copied privately at mode 0600, the interactive file is linked. `SOURCEGRAPH_TOKEN` and `GENAIHUB_API_KEY` are the shell-wide exceptions: the Sourcegraph plugin requires inheritance and Pi may launch non-interactively, and the IT-managed Codex provider reads its gateway token only from the environment. `GENAIHUB_API_KEY` carries the `ANTHROPIC_AUTH_TOKEN` SecretRef. The shell task resolves those values and its scoped sudo credential through `fnox-host` before rendering the private mode-0600 `.zshenv`; it does not perform a startup-time network read. Command-specific credentials continue to use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND`. Do not restore broad provider-token exports or global agent launch wrappers.
 
 ## Work-Local Machine Tasks
 
@@ -95,6 +95,10 @@ The native host-local `data.toml` defines models under `[work_models]`, one entr
 `[work_gateway]` holds the endpoint and the two pi provider names. One gateway fronts two wire protocols — Anthropic Messages and OpenAI Responses (at `{base_url}/v1`) — so Pi needs a provider per protocol. Both authenticate with `ANTHROPIC_AUTH_TOKEN`, resolved through fnox by the native agent configuration renderer or supplied to the agent by `scripts/fnox-host exec --secret ANTHROPIC_AUTH_TOKEN -- COMMAND`.
 
 These should be used instead of hard-coding model values.
+
+## Codex
+
+IT treats Codex as an appliance. Self Service installs the `codex` cask, which `Brewfile.work` also declares so daily `brew bundle cleanup` keeps it, and Jamf deploys `/etc/codex/managed_config.toml` (the genaihub provider, model catalog, permissions profile, telemetry) and `/etc/codex/requirements.toml` (allowed approval policies and permission profiles, no web search, command rules). The shared renderer writes only preferences those layers leave open: reasoning effort and summary, feature flags that default off, TUI, desktop appearance, and MCP servers. `codex doctor` reports the effective layering.
 
 ## Homebrew
 
@@ -147,7 +151,7 @@ Declared for the `work` profile in `bootstrap/capabilities/agent-harness/catalog
 
 ## MCP Servers
 
-Native agent configuration reads `[[mcp_servers]]` from the host-local `data.toml` and registers Claude user-scope servers. Repo-local skills can only launch subprocess MCP servers, so the Cloudflare skill uses Homebrew's `mcp-remote` to translate stdio MCP traffic to Cloudflare's authenticated HTTP endpoint. Pi and Claude's static project config support HTTP directly and bypass the adapter.
+Native agent configuration reads `[[mcp_servers]]` from the host-local `data.toml` and registers Claude user-scope servers and Codex `[mcp_servers]` tables. Repo-local skills can only launch subprocess MCP servers, so the Cloudflare skill uses Homebrew's `mcp-remote` to translate stdio MCP traffic to Cloudflare's authenticated HTTP endpoint. Pi and Claude's static project config support HTTP directly and bypass the adapter.
 
 ## Python Package Indexes (uv + pip)
 

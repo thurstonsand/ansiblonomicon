@@ -1,7 +1,5 @@
 [agent_harness]
 profile = "work"
-enabled = ["claude", "pi"]
-explicit_only = []
 hostname = "ML-DFC6YK6VJQ"
 trim_blocks = true
 update = "86400s"

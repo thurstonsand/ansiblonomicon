@@ -20,14 +20,14 @@ def load(name: str) -> ModuleType:
 
 
 def test_strict_json_preserves_urls_and_rejects_jsonc(tmp_path: Path) -> None:
-    other = load("other")
+    amp = load("amp")
     source = tmp_path / "settings.json"
     source.write_text('{"url":"https://example.test/path"}')
-    assert json.loads(other._strict_json(source))["url"] == "https://example.test/path"
+    assert json.loads(amp._strict_json(source))["url"] == "https://example.test/path"
 
     source.write_text('{"url":"https://example.test/path", // comment\n}')
     with pytest.raises(json.JSONDecodeError):
-        other._strict_json(source)
+        amp._strict_json(source)
 
 
 def test_instructions_detect_deployed_local_file(tmp_path: Path) -> None:
@@ -41,6 +41,7 @@ def test_instructions_detect_deployed_local_file(tmp_path: Path) -> None:
         hostname="personal",
         data={},
         secrets={},
+        harnesses=["claude"],
     )
     assert "@~/.agents/local.md" in rendered[".claude/CLAUDE.md"]
 
@@ -55,6 +56,7 @@ def test_work_instructions_carry_no_personal_content(tmp_path: Path) -> None:
             hostname="ML-DFC6YK6VJQ",
             data={},
             secrets={},
+            harnesses=["claude", "pi"],
         ),
     )
 

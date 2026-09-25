@@ -40,8 +40,6 @@ def main() -> None:
         cached=args.cached,
         update=host.update,
         manifest_name=host.manifest,
-        enabled_harnesses=host.enabled,
-        explicit_only=host.explicit_only,
         trim_blocks=host.trim_blocks,
     )
 

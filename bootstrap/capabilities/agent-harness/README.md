@@ -2,7 +2,7 @@
 
 `catalogue.toml` is the single checked-in plugin catalogue. `harness_filters.py` beside it performs manifest discovery, selector handling, and the per-harness SKILL.md transforms; `models.yml` and `session-title-prompt.txt` are the canonical model catalogue and session-title prompt that those transforms, the configuration renderers, and skill templates read. Skill templates reach files in this directory through the `agent_harness_root` Jinja global. Templates also see `hostname` and `home`, and `lookup('file', path)` reads a file inside the checkout. A host's private plugin sources belong in the ignored `local/<hostname>/catalogue.toml`, a bare `[[sources]]` array appended to the shared catalogue.
 
-Each `harnesses/<name>/mise.toml` is a native mise project fragment. Its `[harness]` table declares destination roots and the name transform; it may also compose ordinary `[vars]`, `[dotfiles]`, and `[bootstrap.files]` resources owned by that harness. Only enabled harness fragments are applied. For example, a template stored beside the declaration can become a native dotfile:
+Each `harnesses/<name>/mise.toml` is a native mise project fragment. Its `[harness]` table declares destination roots and the name transform; it may also compose ordinary `[vars]`, `[dotfiles]`, and `[bootstrap.files]` resources owned by that harness. Only fragments for harnesses the selected profile targets are applied. For example, a template stored beside the declaration can become a native dotfile:
 
 ```toml
 [vars]
@@ -18,7 +18,7 @@ template = true
 mode = "0600"
 ```
 
-A native host declaration selects a profile, enabled harnesses, explicit-only harnesses, template hostname, Jinja block policy, source update policy, and ownership manifest. The personal Mac declaration is `bootstrap/targets/Thurstons-MacBook-Pro/mise.agent-harness.toml`; pod042's is `bootstrap/targets/pod042/agent-harness/host.toml`.
+`profiles.toml` is the single declaration of which harnesses a host targets: each profile lists its `target_agents` and `explicit_only` harnesses. The catalogue engine deploys skills and agents only to those harnesses, and native `agent-config` runs only their renderers (`configuration/<harness>.py`), instruction files, and `configuration/assets.toml` entries naming them. A native host declaration selects a profile, template hostname, Jinja block policy, source update policy, and ownership manifest. The personal Mac declaration is `bootstrap/targets/Thurstons-MacBook-Pro/mise.agent-harness.toml`, the work Mac's is `bootstrap/targets/ML-DFC6YK6VJQ/mise.agent-harness.toml`, and pod042's is `bootstrap/targets/pod042/agent-harness/host.toml`; `configuration/deploy.py` maps each hostname to its declaration.
 
 `agent_harness_deploy.py` is the common deployment engine. It renders through `catalogue.py`, aggregates repeated selector rows by stable `source + plugin` identity, and records an exact per-plugin inventory. Omitting a previously deployed plugin is a no-op: all of its recorded paths and its source-plus-plugin provenance remain available for a later explicit retirement. Add that same identity with `remove = true` to retire it, including while its checkout is unavailable:
 

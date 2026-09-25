@@ -112,8 +112,6 @@ def run_fixture(
         """[agent_harness]
 profile = "personal"
 hostname = "fixture-mac"
-enabled = ["claude"]
-explicit_only = []
 trim_blocks = true
 update = "86400s"
 manifest = "macos-managed-files.json"

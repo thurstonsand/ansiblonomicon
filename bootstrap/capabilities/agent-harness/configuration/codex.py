@@ -18,6 +18,7 @@ _ENV = Environment(
     comment_start_string="{##",
     comment_end_string="##}",
 )
+WORK_HOST = "ML-DFC6YK6VJQ"
 type Container = MutableMapping[str, object]
 
 
@@ -40,8 +41,6 @@ def render(
 ) -> dict[str, str]:
     """Return HOME-relative Codex files; malformed live TOML is refused."""
     del repo, secrets
-    if hostname == "ML-DFC6YK6VJQ":
-        return {}
     models = data.get("models")
     if not isinstance(models, dict):
         raise ValueError("data.models must contain the canonical model mapping")
@@ -55,7 +54,7 @@ def render(
         model=models["openai"]["gpt_astra"]["version"],
         home=str(home),
         projects_root=str(projects_root),
-        hostname=hostname,
+        is_work=hostname == WORK_HOST,
         terminal_background=background,
     )
     overlay = cast(Container, tomlkit.parse(declared))
