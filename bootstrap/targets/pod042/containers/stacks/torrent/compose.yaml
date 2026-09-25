@@ -12,6 +12,9 @@ services:
       SERVER_CITIES: Atlanta GA
       # Work around gluetun's PMTUD minMTU/maxMTU panic. Retest after an update.
       WIREGUARD_MTU: "1320"
+      # Mullvad's in-tunnel resolver
+      DNS_UPSTREAM_RESOLVER_TYPE: plain
+      DNS_UPSTREAM_PLAIN_ADDRESSES: "10.64.0.1:53"
       FIREWALL_INPUT_PORTS: "80,8000"
       UPDATER_PERIOD: 24h
       PUID: "1000"
