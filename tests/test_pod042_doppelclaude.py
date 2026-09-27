@@ -24,6 +24,7 @@ def test_runtime_is_private_and_bills_the_subscription() -> None:
             "DOPPELCLAUDE_IMAGE": "example.com/doppelclaude:latest",
             "DOPPELCLAUDE_HTTP_API_KEY": "test-client-key",
             "CLAUDE_CODE_OAUTH_TOKEN": "test-subscription-token",
+            "DOPPELCLAUDE_HTTP_OPENCODE_ENVIRONMENT_HEADING": "test-heading",
         },
         capture_output=True,
         text=True,

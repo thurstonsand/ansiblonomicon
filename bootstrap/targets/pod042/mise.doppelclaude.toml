@@ -4,6 +4,7 @@ doppelclaude_image = "ghcr.io/thurstonsand/http-doppelclaude:latest"
 [bootstrap.secrets]
 doppelclaude_api_key = "CLI_PROXY_API_KEY"
 doppelclaude_oauth_token = "CLAUDE_CODE_OAUTH_TOKEN"
+doppelclaude_opencode_environment_heading = "DOPPELCLAUDE_OPENCODE_ENVIRONMENT_HEADING"
 
 [bootstrap.groups.doppelclaude]
 gid = 3456
@@ -36,6 +37,7 @@ content = '''
 DOPPELCLAUDE_IMAGE={{ vars.doppelclaude_image }}
 DOPPELCLAUDE_HTTP_API_KEY='{{ secret(name="doppelclaude_api_key") }}'
 CLAUDE_CODE_OAUTH_TOKEN='{{ secret(name="doppelclaude_oauth_token") }}'
+DOPPELCLAUDE_HTTP_OPENCODE_ENVIRONMENT_HEADING='{{ secret(name="doppelclaude_opencode_environment_heading") }}'
 '''
 template = true
 owner = "root"

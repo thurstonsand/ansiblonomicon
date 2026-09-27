@@ -68,6 +68,7 @@ def test_capability_environments_are_explicit_and_disjoint() -> None:
     environment_files = {
         path.stem.removeprefix("mise."): tomllib.loads(path.read_text())
         for path in target_root.glob("mise.*.toml")
+        if not path.name.endswith(".local.toml")
     }
     assert set(environment_files) == set(pod042_reconcile.FULL_CAPABILITIES)
     assert "vcs-identity" not in pod042_reconcile.CAPABILITIES
@@ -420,6 +421,7 @@ def test_doppelclaude_is_isolated_and_checks_prerequisites(
     assert [plan[index + 1] for index, arg in enumerate(plan) if arg == "--secret"] == [
         "CLI_PROXY_API_KEY",
         "CLAUDE_CODE_OAUTH_TOKEN",
+        "DOPPELCLAUDE_OPENCODE_ENVIRONMENT_HEADING",
     ]
 
 
