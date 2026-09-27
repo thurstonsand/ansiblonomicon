@@ -150,7 +150,11 @@
                   "lines": [
                     "Screened Porch"
                   ],
-                  "outdoor": true
+                  "outdoor": true,
+                  "lights": [
+                    "light.screened_porch_string_lights"
+                  ],
+                  "hueScenes": true
                 },
                 {
                   "id": "wood_deck",
