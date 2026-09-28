@@ -1,4 +1,5 @@
 from collections.abc import Sequence
+import getpass
 from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import shutil
@@ -120,7 +121,9 @@ def test_production_operator_and_remote_dotfiles_apply_and_repeat(
     for capability in ("operator", "remote-development"):
         shutil.copytree(production / capability, target / capability)
         source = (production / f"mise.{capability}.toml").read_text()
-        rebased = source.replace("/home/thurstonsand", str(home))
+        rebased = source.replace("/home/thurstonsand", str(home)).replace(
+            '"thurstonsand"', f'"{getpass.getuser()}"'
+        )
         (target / f"mise.{capability}.toml").write_text(rebased)
     (target / "mise.toml").write_text('min_version = "2026.9.11"\n')
     env = isolated_env(home, target, "/usr/bin:/bin")

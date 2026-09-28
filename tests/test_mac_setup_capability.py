@@ -22,6 +22,7 @@ FONT_NAMES = (
     "BerkeleyMonoNerdFontMono-Oblique.otf",
     "BerkeleyMonoNerdFontMono-BoldOblique.otf",
 )
+FONT_DIR = "Library/Fonts" if sys.platform == "darwin" else ".local/share/fonts"
 
 
 @pytest.mark.parametrize("helper", ["berkeley_mono.py", "docker_context.py"])
@@ -46,7 +47,7 @@ def test_berkeley_mono_public_task_check_apply_partial_and_repeat(
         fakebin / "op",
         'echo "${OP_SERVICE_ACCOUNT_TOKEN-unset}:${OP_CONNECT_HOST-unset}:${OP_CONNECT_TOKEN-unset}:$*" >> "$HOME/op-calls"\ncat "$FONT_ARCHIVE"',
     )
-    fonts = Path(env["HOME"]) / "Library/Fonts"
+    fonts = Path(env["HOME"]) / FONT_DIR
     fonts.mkdir(parents=True)
     preserved = fonts / FONT_NAMES[0]
     preserved.write_bytes(b"custom")
@@ -124,14 +125,14 @@ def test_berkeley_mono_bad_archive_or_provider_failure_touches_no_fonts(
         env={**env, "FONT_ARCHIVE": str(archive)},
     )
     assert result.returncode != 0
-    assert not (Path(env["HOME"]) / "Library/Fonts").exists()
+    assert not (Path(env["HOME"]) / FONT_DIR).exists()
 
 
 def test_berkeley_mono_rejects_directory_destination_before_provider(
     isolated: tuple[dict[str, str], Path, Path, Path, Path],
 ) -> None:
     env, fakebin, _, personal, _ = isolated
-    conflict = Path(env["HOME"]) / "Library/Fonts" / FONT_NAMES[0]
+    conflict = Path(env["HOME"]) / FONT_DIR / FONT_NAMES[0]
     conflict.mkdir(parents=True)
     executable(fakebin / "op", 'touch "$HOME/op-called"')
 
@@ -169,7 +170,7 @@ def test_berkeley_mono_rejects_nonempty_malformed_font_payloads(
 
     assert result.returncode != 0
     assert "invalid expected OpenType font" in result.stderr
-    assert not (Path(env["HOME"]) / "Library/Fonts").exists()
+    assert not (Path(env["HOME"]) / FONT_DIR).exists()
 
 
 def test_berkeley_mono_atomic_create_preserves_concurrent_regular_file(
@@ -205,7 +206,7 @@ def test_berkeley_mono_atomic_create_preserves_concurrent_regular_file(
     monkeypatch.setattr(module.os, "link", racing_link)
 
     assert module.main() == 0
-    fonts = tmp_path / "Library/Fonts"
+    fonts = tmp_path / FONT_DIR
     assert (fonts / FONT_NAMES[0]).read_bytes() == b"concurrent winner"
     assert not list(fonts.glob(".*"))
 

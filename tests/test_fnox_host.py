@@ -582,11 +582,12 @@ def test_launcher_preserves_graceful_child_shutdown(
     binary_dir = Path(environment["PATH"].split(":")[0])
     (binary_dir / "fnox").symlink_to(fnox_binary)
     environment["OP_SERVICE_ACCOUNT_TOKEN"] = "sentinel-token"
-    child = """import signal, sys, time
+    child = """import os, signal, sys, time
 
 def stop(signum, frame):
     time.sleep(0.4)
-    print("finished", flush=True)
+    # The signal can land inside print("ready"); print here would be a reentrant call.
+    os.write(1, b"finished\\n")
     sys.exit(7)
 
 signal.signal(signal.SIGINT, stop)

@@ -8,6 +8,10 @@ step() {
   printf '\n==> %s\n' "$1"
 }
 
+step "Install system packages"
+sudo apt-get update -qq
+sudo apt-get install -y -qq zsh docker-compose-plugin ruby
+
 step "Install mise"
 if ! command -v mise >/dev/null 2>&1; then
   curl -fsSL https://mise.run | sh
@@ -33,6 +37,7 @@ mise --no-env use --global --yes \
   1password-cli@latest \
   fnox@latest \
   hk@latest \
+  neovim@latest \
   opentofu@latest \
   stylua@latest \
   uv@latest
