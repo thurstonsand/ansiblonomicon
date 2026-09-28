@@ -1,0 +1,21 @@
+[Unit]
+Description=Amp runner for type-a-no2
+AssertPathExists=%h/.local/share/amp/secrets.json
+AssertPathIsDirectory=%h/code
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+WorkingDirectory=/home/thurstonsand/code
+Environment=HOME=/home/thurstonsand
+Environment=PATH=/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin
+ExecStart=/home/thurstonsand/.amp/bin/amp --no-tui --remote-control-terminal --discover-dirs --runner-id type-a-no2
+Restart=always
+RestartSec=10
+StandardInput=null
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=default.target

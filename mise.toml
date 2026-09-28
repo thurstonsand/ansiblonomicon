@@ -620,6 +620,17 @@ esac
 exec mise run //:agent-config ${usage_check:+--check}
 '''
 
+[tasks."amp-cli"]
+description = "Install Amp and reconcile its runner on the Omarchy laptop"
+usage = 'flag "-c --check" help="Show Amp CLI and runner reconciliation changes"'
+run = '''
+[ "$(hostname -s)" = type-a-no2 ] || { echo "Amp CLI capability requires type-a-no2" >&2; exit 1; }
+target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
+MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
+  MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=amp-cli \
+  exec mise -C "$target" run amp-cli ${usage_check:+--check}
+'''
+
 [tasks."reconcile:omarchy"]
 description = "Reconcile this Omarchy laptop's tools, font, and agent configuration"
 alias = "omarchy"
@@ -642,6 +653,7 @@ else
   mise -C "$HOME" bootstrap --only tools --yes || exit "$?"
 fi
 mise run //:berkeley-mono ${usage_check:+--check} || exit "$?"
+mise run //:amp-cli ${usage_check:+--check} || exit "$?"
 mise run //:agent-harness ${usage_check:+--check}
 '''
 

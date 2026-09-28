@@ -1,0 +1,68 @@
+# Amp's AUR package puts a root-owned binary in /usr/bin that Amp's self-update
+# cannot replace, so the CLI comes from Amp's own installer, as on pod042.
+[dotfiles]
+# Keep the user service runnable when this checkout is unavailable.
+"/home/thurstonsand/.config/systemd/user/amp-runner.service" = { source = "amp-cli/amp-runner.service", mode = "copy" }
+
+[tasks.amp-cli]
+usage = 'flag "-c --check" help="Show Amp CLI, runner unit, and service drift"'
+shell = "bash -c"
+run = '''
+set -euo pipefail
+export PATH="$HOME/.local/bin:$PATH"
+amp="$HOME/.amp/bin/amp"
+link="$HOME/.local/bin/amp"
+installer="$MISE_PROJECT_ROOT/../../capabilities/software/install-official"
+unit=amp-runner.service
+unit_source="$MISE_PROJECT_ROOT/amp-cli/$unit"
+unit_target="$HOME/.config/systemd/user/$unit"
+login="$HOME/.local/share/amp/secrets.json"
+code_dir="$HOME/code"
+state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/ansiblonomicon"
+activation_stamp="$state_dir/amp-runner.sha256"
+desired_hash="$(sha256sum "$unit_source" | awk '{print $1}')"
+deployed_changed=false
+activation_required=false
+cmp -s "$unit_source" "$unit_target" || deployed_changed=true
+[ "$(cat "$activation_stamp" 2>/dev/null || true)" = "$desired_hash" ] || activation_required=true
+$deployed_changed && activation_required=true
+
+if [ -n "${usage_check:-}" ]; then
+  [ -d "$code_dir" ] || echo "BLOCKED: Amp runner working directory is absent: $code_dir"
+  [ -f "$login" ] || echo "BLOCKED: Amp persisted login is absent: $login"
+  "$installer" "Amp CLI" "$amp" https://ampcode.com/install.sh --check
+  [ "$(readlink "$link" || true)" = "$amp" ] || echo "Amp CLI link would be updated at ~/.local/bin/amp"
+  if $deployed_changed; then
+    echo "Amp runner unit would be copied to ~/.config/systemd/user/$unit"
+  fi
+  if $activation_required; then
+    echo "Amp runner service would be daemon-reloaded and restarted"
+  fi
+  systemctl --user is-enabled --quiet "$unit" || echo "Amp runner service would be enabled"
+  systemctl --user is-active --quiet "$unit" || echo "Amp runner service would be started"
+  exit 0
+fi
+
+[ -d "$code_dir" ] || { echo "Amp runner working directory is absent: $code_dir" >&2; exit 1; }
+[ -f "$login" ] || { echo "Amp persisted login is absent: $login" >&2; exit 1; }
+
+"$installer" "Amp CLI" "$amp" https://ampcode.com/install.sh
+ln -sfn "$amp" "$link"
+
+mise bootstrap dotfiles apply --force --yes "$unit_target"
+if $activation_required; then
+  systemctl --user daemon-reload
+fi
+if ! systemctl --user is-enabled --quiet "$unit"; then
+  systemctl --user enable "$unit"
+fi
+if $activation_required; then
+  systemctl --user restart "$unit"
+  mkdir -p "$state_dir"
+  stamp_tmp="$(mktemp "$state_dir/.amp-runner.sha256.XXXXXX")"
+  printf '%s\n' "$desired_hash" >"$stamp_tmp"
+  mv -f "$stamp_tmp" "$activation_stamp"
+elif ! systemctl --user is-active --quiet "$unit"; then
+  systemctl --user start "$unit"
+fi
+'''
