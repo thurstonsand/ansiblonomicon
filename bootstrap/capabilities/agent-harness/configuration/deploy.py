@@ -144,14 +144,7 @@ def render_all(
     harnesses: list[str],
 ) -> dict[str, str]:
     directory = Path(__file__).parent
-    result = _load_module(directory, "instructions").render(
-        repo=repo,
-        home=home,
-        hostname=hostname,
-        data=data,
-        secrets=secrets,
-        harnesses=harnesses,
-    )
+    result: dict[str, str] = {}
     for harness in harnesses:
         outputs = _load_module(directory, RENDERERS[harness]).render(
             repo=repo, home=home, hostname=hostname, data=data, secrets=secrets

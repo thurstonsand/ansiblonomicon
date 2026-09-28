@@ -669,26 +669,30 @@ host=$(hostname -s)
 case "$host" in
   ML-DFC6YK6VJQ) set -- --secret ANTHROPIC_AUTH_TOKEN ;;
   Thurstons-MacBook-Pro|pod042) set -- --secret CLI_PROXY_API_KEY --secret PARALLEL_API_KEY ;;
-  type-a-no2)
-    exec "$MISE_PROJECT_ROOT/.venv/bin/python" \
-      "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
-      --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host" \
-      ${usage_check:+--check}
-    ;;
+  type-a-no2) set -- ;;
   *) echo "Native agent configuration is available only on registered systems" >&2; exit 1 ;;
 esac
-if [ -n "${usage_check:-}" ] && [ -z "${usage_real_secrets:-}" ]; then
-  exec "$MISE_PROJECT_ROOT/.venv/bin/python" \
-    "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
-    --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host" --check
-fi
-set -- "$@" -- \
+status=0
+if [ "$#" -eq 0 ] || { [ -n "${usage_check:-}" ] && [ -z "${usage_real_secrets:-}" ]; }; then
   "$MISE_PROJECT_ROOT/.venv/bin/python" \
-  "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
-  --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host"
-[ -z "${usage_check:-}" ] || set -- "$@" --check
-[ -z "${usage_real_secrets:-}" ] || set -- "$@" --real-secrets
-exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec "$@"
+    "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
+    --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host" ${usage_check:+--check} || status=$?
+  [ "$status" -eq 0 ] || { [ "$status" -eq 2 ] && [ -n "${usage_check:-}" ]; } || exit "$status"
+else
+  set -- "$@" -- \
+    "$MISE_PROJECT_ROOT/.venv/bin/python" \
+    "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
+    --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host"
+  [ -z "${usage_check:-}" ] || set -- "$@" --check
+  [ -z "${usage_real_secrets:-}" ] || set -- "$@" --real-secrets
+  "$MISE_PROJECT_ROOT/scripts/fnox-host" exec "$@"
+fi
+# deploy.py retires the instruction files it used to own, so mise renders them afterwards.
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$MISE_PROJECT_ROOT" MISE_ENV=agent-instructions
+mode=--yes
+[ -z "${usage_check:-}" ] || mode=--dry-run
+mise -C "$MISE_PROJECT_ROOT/bootstrap/targets/$host" bootstrap --only dotfiles "$mode"
+exit "$status"
 '''
 
 [tasks."reconcile:laptop"]
@@ -996,6 +1000,21 @@ run = "./scripts/amp-lint.sh --check"
 [tasks."amp:fix"]
 description = "Format and autofix the Amp plugins, then type-check and test"
 run = "./scripts/amp-lint.sh --format"
+
+[tasks."amp:guidance"]
+description = "Render Amp's hosted global guidance for an agent to apply"
+run = '''
+set -e
+home=$(mktemp -d)
+trap 'rm -rf "$home"' EXIT
+HOME="$home" AMP_GUIDANCE=1 MISE_ENV=agent-instructions \
+  MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$MISE_PROJECT_ROOT" \
+  mise -C "$MISE_PROJECT_ROOT/bootstrap/targets/Thurstons-MacBook-Pro" bootstrap --only dotfiles --yes >/dev/null
+guidance="$home/.codex/AGENTS.md"
+length=$(wc -m < "$guidance")
+[ "$length" -le 8000 ] || { echo "Amp guidance is $length characters; the limit is 8000" >&2; exit 1; }
+cat "$guidance"
+'''
 
 [tasks."session-recovery:check"]
 description = "Lint and type-check the session-recovery library and its Pi entry"

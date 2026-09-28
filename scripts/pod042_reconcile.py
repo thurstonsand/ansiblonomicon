@@ -75,6 +75,7 @@ FULL_CAPABILITIES = (
     "user-tools-personal",
     "neovim-personal",
     "ssh-client-pod042",
+    "agent-instructions",
 )
 
 
@@ -179,6 +180,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
     assert_hostname()
     selected = capabilities_for(capability)
     root_capabilities = {
+        "agent-instructions",
         "vcs-identity",
         "git-client",
         "jj-client",

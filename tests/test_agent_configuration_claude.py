@@ -86,7 +86,8 @@ def test_render_merges_overlay_hooks_and_preserves_live_model_and_order(
     )
     assert 'MODEL = "declared-sonnet"' in rendered[".claude/hooks/_config.py"]
     assert 'TOKEN = "secret-token"' in rendered[".claude/hooks/_config.py"]
-    assert rendered[".claude/output-styles/2b.md"].startswith("---\nname: 2B\n")
+    assert "outputStyle" not in settings
+    assert ".claude/output-styles/2b.md" not in rendered
     assert ".claude/CLAUDE.md" not in rendered
 
 

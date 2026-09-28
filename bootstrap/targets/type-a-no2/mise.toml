@@ -1,5 +1,8 @@
 min_version = "2026.8.12"
 
+[vars]
+host_profile = "omarchy"
+
 [dotfiles]
 "~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "symlink" }
 "~/.local/bin/fnox-host" = { source = "../../capabilities/user-tools/files/fnox-host", mode = "symlink" }

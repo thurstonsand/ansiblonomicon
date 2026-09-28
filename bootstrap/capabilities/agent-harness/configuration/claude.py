@@ -160,7 +160,6 @@ def _base_settings(
         "worktree": {"baseRef": "head"},
         "statusLine": {"type": "command", "command": "~/.claude/scripts/statusline.sh"},
         "model": models["anthropic"]["opus"]["agent_harness"]["aliases"]["claude"],
-        "outputStyle": "2B",
         "sandbox": {"excludedCommands": []},
         "alwaysThinkingEnabled": True,
         "autoDreamEnabled": True,
@@ -269,16 +268,9 @@ def render(
     statusline = _ENV.get_template("claude-statusline.sh.j2").render(
         statusline_usage=usage.read_text().rstrip() if usage.exists() else ""
     )
-    persona = _ENV.get_template("shared-persona.md.j2").render().rstrip()
-    style = (
-        "---\nname: 2B\ndescription: YoRHa No.2 Type B — stoic combat android with dry wit\nkeep-coding-instructions: true\n---\n\n# 2B\n\n"
-        + persona
-        + "\n"
-    )
     outputs = {
         ".claude/settings.json": json.dumps(settings, indent=2) + "\n",
         ".claude/scripts/statusline.sh": statusline,
-        ".claude/output-styles/2b.md": style,
     }
     if hostname == "ML-DFC6YK6VJQ":
         return outputs

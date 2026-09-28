@@ -72,7 +72,7 @@ def run_agent_config_task(
     *,
     check: bool = False,
     real_secrets: bool = False,
-) -> tuple[list[str] | None, list[str]]:
+) -> tuple[list[str] | None, list[str], list[str]]:
     project = tmp_path / "repo with spaces"
     home = tmp_path / "home with spaces"
     bin_dir = tmp_path / "stub bin"
@@ -98,6 +98,13 @@ separator = sys.argv.index("--")
 os.execv(sys.argv[separator + 1], sys.argv[separator + 1:])
 """
     )
+    (bin_dir / "mise").write_text(
+        """#!/usr/bin/env python3
+import json, os, sys
+with open(os.environ["CALLS"], "a") as stream:
+    stream.write(json.dumps(["mise", os.environ["MISE_ENV"], *sys.argv[1:]]) + "\\n")
+"""
+    )
     (project / ".venv/bin/python").write_text(
         """#!/usr/bin/env python3
 import json, os, sys
@@ -107,6 +114,7 @@ with open(os.environ["CALLS"], "a") as stream:
     )
     for executable in (
         bin_dir / "hostname",
+        bin_dir / "mise",
         project / "scripts/fnox-host",
         project / ".venv/bin/python",
     ):
@@ -127,7 +135,8 @@ with open(os.environ["CALLS"], "a") as stream:
     recorded = [json.loads(line) for line in calls.read_text().splitlines()]
     fnox = next((call for call in recorded if call[0] == "fnox"), None)
     python = next(call for call in recorded if call[0] == "python")
-    return fnox, python
+    assert recorded[-1][0] == "mise"
+    return fnox, python, recorded[-1]
 
 
 @pytest.mark.parametrize(
@@ -141,7 +150,7 @@ with open(os.environ["CALLS"], "a") as stream:
 def test_agent_config_task_scopes_secrets_and_preserves_argv(
     tmp_path: Path, host: str, expected_secrets: list[str]
 ) -> None:
-    fnox, python = run_agent_config_task(tmp_path, host)
+    fnox, python, mise = run_agent_config_task(tmp_path, host)
     assert fnox is not None
     assert fnox[1 : fnox.index("--")] == [
         "exec",
@@ -158,22 +167,44 @@ def test_agent_config_task_scopes_secrets_and_preserves_argv(
         "--hostname",
         host,
     ]
+    assert mise == [
+        "mise",
+        "agent-instructions",
+        "-C",
+        str(project / "bootstrap/targets" / host),
+        "bootstrap",
+        "--only",
+        "dotfiles",
+        "--yes",
+    ]
+
+
+def test_agent_config_without_secrets_bypasses_fnox(tmp_path: Path) -> None:
+    fnox, python, mise = run_agent_config_task(tmp_path, "type-a-no2")
+    assert fnox is None
+    assert python[-2:] == ["--hostname", "type-a-no2"]
+    assert mise[1] == "agent-instructions"
+    assert mise[-1] == "--yes"
 
 
 def test_agent_config_placeholder_check_bypasses_fnox(tmp_path: Path) -> None:
-    fnox, python = run_agent_config_task(tmp_path, "Thurstons-MacBook-Pro", check=True)
+    fnox, python, mise = run_agent_config_task(
+        tmp_path, "Thurstons-MacBook-Pro", check=True
+    )
     assert fnox is None
     assert python[-1] == "--check"
+    assert mise[-1] == "--dry-run"
 
 
 def test_agent_config_real_secret_check_uses_fnox_and_both_flags(
     tmp_path: Path,
 ) -> None:
-    fnox, python = run_agent_config_task(
+    fnox, python, mise = run_agent_config_task(
         tmp_path, "pod042", check=True, real_secrets=True
     )
     assert fnox is not None
     assert python[-2:] == ["--check", "--real-secrets"]
+    assert mise[-1] == "--dry-run"
 
 
 def test_each_capability_task_requests_only_its_own_secrets():

@@ -82,7 +82,7 @@ def test_render_all_work_uses_exact_declared_secret_scope(tmp_path: Path) -> Non
     assert deploy.SECRET_KEYS[deploy.WORK_HOST] == {"ANTHROPIC_AUTH_TOKEN"}
     assert ".claude/settings.json" in rendered
     assert ".claude/hooks/_config.py" not in rendered
-    assert ".codex/AGENTS.md" in rendered
+    assert ".codex/AGENTS.md" not in rendered
     assert ".config/opencode/opencode.jsonc" not in rendered
     codex = tomllib.loads(rendered[".codex/config.toml"])
     assert codex["model_reasoning_effort"] == "medium"

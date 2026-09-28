@@ -1,0 +1,2 @@
+[dotfiles]
+"~/.pi/agent/AGENTS.md" = { source = "agent-instructions/AGENTS.md.tera", mode = "template" }
