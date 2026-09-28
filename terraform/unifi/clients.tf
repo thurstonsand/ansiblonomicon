@@ -16,6 +16,12 @@ resource "unifi_client" "kitchen_homepod" {
   allow_existing = true
 }
 
+resource "unifi_client" "google_nest_hub" {
+  mac            = "1c:f2:9a:51:d5:b1"
+  name           = "Google Nest Hub"
+  allow_existing = true
+}
+
 resource "unifi_client" "thurston_mbp" {
   mac            = "0a:e0:d0:07:0a:37"
   name           = "Thurston's M4 Pro MBP"
