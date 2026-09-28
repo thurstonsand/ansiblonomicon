@@ -9,7 +9,6 @@
 - **Host tool**: A binary reconciliation installs onto a machine for its own sake. Declared in a native capability or a Brewfile under `bootstrap/capabilities/mac-apps/`. `mise` and `uv` are host tools that development also happens to need.
 - **Capability**: A unit of native host configuration, shared under `bootstrap/capabilities/` or owned by one target. It owns a thing that can be installed or configured, not a machine.
 - **Docker stack**: A Compose project under `bootstrap/targets/pod042/containers/stacks/`, reconciled by native mise Compose resources.
-- **TrueNAS**: Retired NAS platform; its apps and `local.truenas` collection appear only in migration history.
 - **UniFi provider fork**: `thurstonsand/terraform-provider-unifi` that supplies controller fields absent upstream. Its release branch stays rebased on upstream, publishes multi-platform GitHub Releases, and enters OpenTofu through ansiblonomicon's verified filesystem-mirror installer.
 - **SecretRef**: An `op://vault/item/field` pointer in `fnox.toml` or `fnox.<host>.toml`. Fnox resolves one host set for a consumer process.
 - **Agent harness**: A coding agent runtime — Pi, Claude Code, Amp, Codex, OpenCode, Gemini. The native `agent-harness` capability reconciles their plugin catalogue; `agent-config` renders settings, instructions, and source assets for each runtime.
@@ -17,10 +16,10 @@
 - **Amp**: My other favorite AI agent harness. Extends through TypeScript **plugins** (different from **Agent plugins**).
 - **Agent plugin**: A directory under `agents/` holding a themed set of skills, installable by any harness configured in this repo.
 - **Session recovery**: The shared library that lets an interrupted agent session be picked back up, with a common core and per-harness entry points.
-- **Work machine**: The corporate laptop. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions, and cannot easily be extended.
-- **pod042**: The NAS successor — plain Debian 13 on the old TrueNAS hardware.
-- **OpenClaw**: pod042's predecessor. Sunsetting; treat any remaining reference as legacy and removeable.
-- **Home Assistant**: An appliance managed outside the scope of this repo, aside from management of the VM itself via Incus. All other management is done through the `home-assistant` mcp.
+- **Work machine**: The corporate laptop. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions.
+- **pod042**: The NAS — plain Debian 13 server.
+- **type-a-no2**: The personal Omarchy laptop.
+- **Home Assistant**: An appliance managed outside the scope of this repo, aside from management of the VM itself via Incus on pod042. All other management is done through the `home-assistant` mcp.
 
 ## Unifi Networks
 

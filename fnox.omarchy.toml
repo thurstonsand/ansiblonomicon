@@ -1,0 +1,9 @@
+import = ["fnox.toml"]
+
+[providers.personal]
+type = "1password"
+account = "PQ7X5W7V6FDADHPFFEO62TLFEM"
+auth_command = ""
+
+[secrets]
+POD042_SERVICE_ACCOUNT_TOKEN = { provider = "personal", value = "op://agent/gvsmrehmd3icpq3c5uow7s6mh4/credential", env = false }

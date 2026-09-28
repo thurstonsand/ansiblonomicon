@@ -1,0 +1,6 @@
+[agent_harness]
+profile = "omarchy"
+hostname = "type-a-no2"
+trim_blocks = true
+update = "86400s"
+manifest = "omarchy-managed-files.json"

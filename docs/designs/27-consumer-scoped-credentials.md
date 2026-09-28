@@ -8,15 +8,15 @@ Every consumer requests only the credentials it needs. Agent-vault access uses t
 
 Sourcegraph is the work-host exception. Its plugin accepts only an inherited `SOURCEGRAPH_TOKEN`, and Pi must remain usable from non-interactive scripts, so chezmoi resolves the token during attended reconciliation and renders it into the work host's zsh environment.
 
-This supersedes design 26's whole-host execution rule. Its shared identity, provider isolation, six project exports and native mise cache remain unchanged.
+This supersedes design 26's whole-host execution rule. The shared identity and provider isolation remain unchanged. Project-wide exports were subsequently retired; entering the repo no longer reads secrets.
 
 ## Execution
 
 `fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND` requires at least one selected credential. There is no implicit whole-host execution or `--all` mode. The launcher validates every name against the current host declarations before resolving anything, fetches each selected value through native fnox `get`, and starts the child only after all reads succeed. Get-only `env = false` secrets and the hidden provider token cannot be selected for execution. The child receives only selected canonical credentials, with inherited canonical values and `OP_*`/`FNOX_*` authority removed.
 
-Nested launches carry `ANSIBLONOMICON_EXEC_PROFILE` and `ANSIBLONOMICON_EXEC_KEYS`, a JSON list of selected names. Missing selected values, malformed scope and profile mismatches fail. Only explicitly scoped values can be reused; extra canonical values, including exports added by mise, grant no trust. A declared but unselected `get NAME` resolves just that credential afresh. A narrower child drops the other inherited credentials.
+Nested launches carry `ANSIBLONOMICON_EXEC_PROFILE` and `ANSIBLONOMICON_EXEC_KEYS`, a JSON list of selected names. Missing selected values, malformed scope and profile mismatches fail. Only explicitly scoped values can be reused; extra inherited canonical values grant no trust. A declared but unselected `get NAME` resolves just that credential afresh. A narrower child drops the other inherited credentials.
 
-`fnox-host export` still uses the six `env = true` project credentials. Inside a partial scope it reuses selected values and resolves missing export keys individually. Mise retains its native encrypted environment cache; this decision adds no secret cache. `mise run secrets:check NAME` checks one credential through `get` without printing it.
+`mise run secrets:check NAME` checks one credential through `get` without printing it. No secret is exported by project activation.
 
 ## Consumers
 

@@ -1,0 +1,20 @@
+[bootstrap.repos]
+"/home/thurstonsand/.config/omarchy/plugins/omamail" = { url = "https://github.com/huacnlee/omamail.git" }
+
+[bootstrap.files."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock/manifest.json"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock/Service.qml"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock/LockView.qml"]
+state = "absent"
+
+[bootstrap.directories."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock"]
+state = "absent"
+
+[dotfiles]
+"~/.config/hypr/monitors.lua" = { source = "omarchy/hypr/monitors.lua", mode = "symlink" }
+"~/.config/hypr/input.lua" = { source = "omarchy/hypr/input.lua", mode = "symlink" }
+"~/.config/omarchy/shell.json" = { source = "omarchy/shell.json", mode = "symlink" }
+"~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }

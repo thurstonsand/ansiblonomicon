@@ -23,6 +23,7 @@ import tomlkit
 import yaml
 
 HOST_CONFIGS = {
+    "type-a-no2": "bootstrap/targets/type-a-no2/mise.agent-harness.toml",
     "Thurstons-MacBook-Pro": "bootstrap/targets/Thurstons-MacBook-Pro/mise.agent-harness.toml",
     "pod042": "bootstrap/targets/pod042/agent-harness/host.toml",
     "ML-DFC6YK6VJQ": "bootstrap/targets/ML-DFC6YK6VJQ/mise.agent-harness.toml",
@@ -36,6 +37,7 @@ RENDERERS = {
     "pi": "pi",
 }
 SECRET_KEYS = {
+    "type-a-no2": set(),
     WORK_HOST: {"ANTHROPIC_AUTH_TOKEN"},
     "Thurstons-MacBook-Pro": {"CLI_PROXY_API_KEY", "PARALLEL_API_KEY"},
     "pod042": {"CLI_PROXY_API_KEY", "PARALLEL_API_KEY"},

@@ -17,6 +17,6 @@ export default function agentsContext(pi: ExtensionAPI): void {
     const loaded = collectContextFiles(rootContextFiles, contextFiles, settings.maxDepth, ctx.ui);
     if (loaded.length === 0) return;
 
-    return { systemPrompt: event.systemPrompt + renderBlocks(loaded) };
+    event.systemPromptOptions.sections.agents_context = renderBlocks(loaded).trim();
   });
 }

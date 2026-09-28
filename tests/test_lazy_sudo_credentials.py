@@ -84,7 +84,7 @@ def test_brew_filtered_scoped_exec_askpass_uses_cached_password(
         'token = { secret = "FNOX_HOST_OP_TOKEN" }\nauth_command = ""\n'
         f'[secrets]\n{secret} = {{ provider = "agent", value = "op://test/password" }}\n'
     )
-    for profile in ("macos", "work", "pod042", "orb"):
+    for profile in ("macos", "omarchy", "work", "pod042", "orb"):
         (root / f"fnox.{profile}.toml").write_text('import = ["fnox.toml"]\n')
 
     home = tmp_path / "home"
@@ -189,7 +189,7 @@ def test_brew_filtered_invalid_scope_rejects_without_provider_or_secret_output(
         "[daemon]\nenabled = false\n[secrets]\n"
         'HOMEBREW_SUDO_ASKPASS_PASS = { provider = "agent", value = "op://test/password" }\n'
     )
-    for profile in ("macos", "work", "pod042", "orb"):
+    for profile in ("macos", "omarchy", "work", "pod042", "orb"):
         (root / f"fnox.{profile}.toml").write_text('import = ["fnox.toml"]\n')
     calls = tmp_path / "provider-called"
     binary = tmp_path / "bin"

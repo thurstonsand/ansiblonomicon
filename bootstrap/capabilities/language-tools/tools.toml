@@ -29,4 +29,3 @@ packages = [
 
 [uv]
 packages = []
-retired = ["claude-code-tools"]

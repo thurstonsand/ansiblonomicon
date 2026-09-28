@@ -46,7 +46,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    font_dir = Path.home() / "Library/Fonts"
+    font_dir = (
+        Path.home() / "Library/Fonts"
+        if sys.platform == "darwin"
+        else Path.home() / ".local/share/fonts"
+    )
     try:
         missing = validate_paths(font_dir)
     except ValueError as error:
@@ -110,6 +114,8 @@ def main() -> int:
         finally:
             if os.path.exists(temporary):
                 os.unlink(temporary)
+    if sys.platform == "linux":
+        subprocess.run(["fc-cache", "-f", str(font_dir)], check=True)
     return 0
 
 

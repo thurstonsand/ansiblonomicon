@@ -21,6 +21,10 @@ developDir = "code"
 [host_defaults.pod042]
 developDir = "code"
 
+[host_defaults.type-a-no2]
+developDir = "code"
+
+
 [fonts]
 mono = "BerkeleyMono Nerd Font Mono"
 propo = "BerkeleyMono Nerd Font Mono"

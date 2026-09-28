@@ -96,7 +96,7 @@ def _profile(
             ("luna", "openai", "gpt_luna"),
         )
     }
-    mac = hostname != "pod042"
+    mac = hostname not in {"pod042", "type-a-no2"}
     develop_dir = Path(str(data["developDir"]))
     projects_root = develop_dir if develop_dir.is_absolute() else home / develop_dir
     packages = [
@@ -318,7 +318,9 @@ def _settings(
         },
         "packages": profile["packages"],
         "hideThinkingBlock": True,
-        "theme": "gruvbox-light-hard/gruvbox-dark-hard",
+        "theme": "omarchy-system"
+        if hostname == "type-a-no2"
+        else "gruvbox-light-hard/gruvbox-dark-hard",
         "transport": "auto",
         "collapseChangelog": False,
         "quietStartup": True,
@@ -379,9 +381,15 @@ def render(
         {"anthropic"} if hostname == WORK_HOST else {"anthropic", "openai", "google"}
     )
     auth = {key: value for key, value in existing_auth.items() if key not in retired}
+    settings = _json(_settings(repo, home, hostname, data, models))
+    auth_content = _json(auth)
+    if hostname == "type-a-no2":
+        # Pi rewrites settings and auth without a final newline on this host.
+        settings = settings.rstrip("\n")
+        auth_content = auth_content.rstrip("\n")
     result = {
-        ".pi/agent/settings.json": _json(_settings(repo, home, hostname, data, models)),
-        ".pi/agent/auth.json": _json(auth),
+        ".pi/agent/settings.json": settings,
+        ".pi/agent/auth.json": auth_content,
         ".pi/agent/models.json": _json(
             _work_models(data, secrets["ANTHROPIC_AUTH_TOKEN"])
             if hostname == WORK_HOST
@@ -406,12 +414,13 @@ def render(
     result[".pi/agent/extensions/glimpse-companion/companion/font-family.txt"] = (
         f"{data['fonts']['mono']}\n"
     )
-    result[".local/bin/pi"] = _executable(home, hostname)
+    if hostname != "type-a-no2":
+        result[".local/bin/pi"] = _executable(home, hostname)
     if data.get("pi_mcp_json"):
         servers: dict[str, Any] = {}
         for raw in data["pi_mcp_json"]:
             _merge(servers, cast(dict[str, Any], json.loads(raw)))
-        result[".pi/agent/mcp.json"] = _json({"mcpServers": servers})
+        result[".pi/agent/mcp-adapter.json"] = _json({"mcpServers": servers})
     return result
 
 

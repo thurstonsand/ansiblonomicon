@@ -113,6 +113,14 @@ def test_personal_packages_follow_configured_absolute_develop_dir(
     assert "/srv/code/wt/plugins/pi" in settings["packages"]
 
 
+def test_omarchy_uses_npm_packages_and_keeps_system_theme(tmp_path: Path) -> None:
+    settings = json.loads(rendered(tmp_path, "type-a-no2")[".pi/agent/settings.json"])
+    assert settings["theme"] == "omarchy-system"
+    assert "npm:pi-permissions" in settings["packages"]
+    assert "npm:@thurstonsand/pi-wt" in settings["packages"]
+    assert ".local/bin/pi" not in rendered(tmp_path, "type-a-no2")
+
+
 def test_auth_preserves_foreign_entries_and_retires_only_managed(
     tmp_path: Path,
 ) -> None:
@@ -123,6 +131,17 @@ def test_auth_preserves_foreign_entries_and_retires_only_managed(
     )
     merged = json.loads(rendered(tmp_path, "personal-mac")[".pi/agent/auth.json"])
     assert merged == {"custom": {"future": True}}
+
+
+def test_omarchy_auth_preserves_pi_format(tmp_path: Path) -> None:
+    auth = tmp_path / ".pi/agent/auth.json"
+    auth.parent.mkdir(parents=True)
+    original = json.dumps(
+        {"openai-codex": {"type": "oauth", "refresh": "secret"}}, indent=2
+    )
+    auth.write_text(original)
+
+    assert rendered(tmp_path, "type-a-no2")[".pi/agent/auth.json"] == original
 
 
 def test_invalid_auth_refuses_to_render(tmp_path: Path) -> None:
@@ -143,7 +162,7 @@ def test_live_changelog_and_explicit_mcp_are_preserved(tmp_path: Path) -> None:
     assert (
         json.loads(result[".pi/agent/settings.json"])["lastChangelogVersion"] == "9.7.3"
     )
-    assert json.loads(result[".pi/agent/mcp.json"])["mcpServers"] == {
+    assert json.loads(result[".pi/agent/mcp-adapter.json"])["mcpServers"] == {
         "one": {"command": "one"},
         "two": {"command": "two"},
     }

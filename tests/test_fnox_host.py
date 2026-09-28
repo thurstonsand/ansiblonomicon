@@ -2,7 +2,6 @@ from importlib.util import module_from_spec, spec_from_file_location
 import json
 import os
 from pathlib import Path
-import shlex
 import shutil
 import signal
 import subprocess
@@ -372,7 +371,7 @@ def test_global_and_local_overrides_cannot_replace_remote_values(
 
 
 @pytest.mark.parametrize("sibling", ["config.macos.toml", "config.local.toml"])
-def test_real_global_identity_siblings_cannot_poison_get_exec_or_export(
+def test_real_global_identity_siblings_cannot_poison_get_or_exec(
     sibling: str,
     configuration: Path,
     environment: dict[str, str],
@@ -420,14 +419,6 @@ def test_real_global_identity_siblings_cannot_poison_get_exec_or_export(
     ]
     assert len(calls) == 2
     assert all(call["token"] == "sentinel-token" for call in calls)
-    capfd.readouterr()
-    assert (
-        run_fnox(
-            configuration, "macos", "export", [], environment, None, fnox=fnox_binary
-        )
-        == 0
-    )
-    assert capfd.readouterr().out == ""
 
 
 def test_child_exit_status_propagates(
@@ -482,7 +473,7 @@ def test_checked_in_declarations_match_launcher_policy() -> None:
     assert "FNOX_HOST_OP_TOKEN" not in keys
 
 
-@pytest.mark.parametrize("profile", ["macos", "work", "pod042", "orb"])
+@pytest.mark.parametrize("profile", ["macos", "omarchy", "work", "pod042", "orb"])
 def test_checked_in_host_sets_with_real_fnox(
     profile: str,
     environment: dict[str, str],
@@ -662,117 +653,6 @@ def test_legacy_injected_identity_needs_no_global_file_or_secret_declaration(
     ]
     assert len(calls) == 1
     assert calls[0]["token"] == "sentinel-token"
-
-
-def test_native_export_only_fetches_the_six_shell_keys(
-    environment: dict[str, str],
-    fnox_binary: str,
-    capfd: pytest.CaptureFixture[str],
-) -> None:
-    root = MODULE_PATH.parents[1]
-    declarations = tomllib.loads((root / "fnox.toml").read_text())["secrets"]
-    selected = {
-        key: entry for key, entry in declarations.items() if entry.get("env") is True
-    }
-    environment["FAKE_VALUES"] = json.dumps(
-        {entry["value"]: "sentinel-" + key for key, entry in selected.items()}
-    )
-    environment["FNOX_PROFILE"] = "work"
-    assert (
-        run_fnox(root, "macos", "export", [], environment, None, fnox=fnox_binary) == 0
-    )
-    output = capfd.readouterr().out
-    assert len(selected) == 6
-    assert all(f"export {key}=" in output for key in selected)
-    assert "CLI_PROXY_API_KEY" not in output
-    assert "PARALLEL_API_KEY" not in output
-    assert "HOMEBREW_SUDO_ASKPASS_PASS" not in output
-    calls = [
-        json.loads(line)
-        for line in Path(environment["OP_CALLS"]).read_text().splitlines()
-    ]
-    assert len(calls) == 1
-    assert calls[0]["token"] == "sentinel-token"
-    assert "--account" not in calls[0]["args"]
-
-
-def test_inherited_export_filters_and_shell_quotes_without_fetching(
-    configuration: Path,
-    tmp_path: Path,
-    monkeypatch: pytest.MonkeyPatch,
-    capfd: pytest.CaptureFixture[str],
-) -> None:
-    root_config = configuration / "fnox.toml"
-    root_config.write_text(
-        root_config.read_text().replace(
-            'value = "op://agent/shared/value" }',
-            'value = "op://agent/shared/value", env = true }',
-        )
-    )
-    (configuration / "fnox.macos.toml").write_text(
-        'import = ["fnox.toml"]\n[secrets]\nPRIVATE = { provider = "agent", value = "op://Private/value" }\n'
-    )
-    marker = tmp_path / "must-not-exist"
-    value = f'one\'$(touch {marker})\n"two"'
-    monkeypatch.setattr(fnox_host, "ROOT", configuration)
-    monkeypatch.setenv("SHARED", value)
-    monkeypatch.setenv("PRIVATE", "private-value")
-    monkeypatch.delenv("HOST_ONLY", raising=False)
-    monkeypatch.delenv("WORK_ONLY", raising=False)
-    monkeypatch.setenv(fnox_host.EXEC_PROFILE, "macos")
-    monkeypatch.setenv(fnox_host.EXEC_KEYS, '["SHARED", "PRIVATE"]')
-    monkeypatch.setattr(
-        fnox_host.socket, "gethostname", lambda: "Thurstons-MacBook-Pro"
-    )
-    monkeypatch.setattr(sys, "argv", ["fnox-host", "export"])
-
-    def find_fnox(*args: object, **kwargs: object) -> str:
-        return "fnox"
-
-    monkeypatch.setattr(fnox_host.subprocess, "check_output", find_fnox)
-    assert fnox_host.main() == 0
-    exported = capfd.readouterr().out
-    assert "PRIVATE" not in exported
-    script = (
-        exported
-        + "\n"
-        + shlex.join(
-            [
-                sys.executable,
-                "-c",
-                'import os,json; print(json.dumps([os.environ["SHARED"], os.environ.get("PRIVATE")]))',
-            ]
-        )
-    )
-    result = subprocess.run(
-        ["/bin/sh", "-c", script], env={}, capture_output=True, text=True, check=True
-    )
-    assert json.loads(result.stdout) == [value, None]
-    assert not marker.exists()
-
-
-def test_export_cannot_request_all_secrets(
-    configuration: Path, environment: dict[str, str]
-) -> None:
-    with pytest.raises(fnox_host.ConfigurationError, match="does not accept arguments"):
-        fnox_host.prepare_invocation(
-            configuration, "macos", "export", ["--all"], environment, None
-        )
-
-
-def test_checked_in_shell_exports_are_the_explicit_repo_subset() -> None:
-    root = MODULE_PATH.parents[1]
-    secrets = tomllib.loads((root / "fnox.toml").read_text())["secrets"]
-    assert {key for key, entry in secrets.items() if entry.get("env") is True} == {
-        "CLOUDFLARE_API_TOKEN",
-        "CLOUDFLARE_AI_GATEWAY_API_TOKEN",
-        "CF_ACCESS_CLIENT_ID",
-        "CF_ACCESS_CLIENT_SECRET",
-        "AWS_ACCESS_KEY_ID",
-        "AWS_SECRET_ACCESS_KEY",
-    }
-    assert secrets["CLI_PROXY_API_KEY"].get("env", "exec") == "exec"
-    assert secrets["PARALLEL_API_KEY"].get("env", "exec") == "exec"
 
 
 @pytest.mark.parametrize(
@@ -1056,84 +936,6 @@ def test_partial_resolution_failure_never_starts_child_or_prints_values(
     assert len(calls) == 2
 
 
-def test_partial_inherited_export_resolves_only_missing_shell_keys(
-    configuration: Path,
-    environment: dict[str, str],
-    fnox_binary: str,
-    monkeypatch: pytest.MonkeyPatch,
-    capfd: pytest.CaptureFixture[str],
-) -> None:
-    target = configuration / "fnox.toml"
-    target.write_text(
-        target.read_text().replace(
-            'value = "op://agent/shared/value" }',
-            'value = "op://agent/shared/value", env = true }',
-        )
-    )
-    target = configuration / "fnox.pod042.toml"
-    target.write_text(
-        target.read_text().replace(
-            'value = "op://agent/host/value" }',
-            'value = "op://agent/host/value", env = true }',
-        )
-    )
-    environment.update(
-        {
-            fnox_host.EXEC_PROFILE: "pod042",
-            fnox_host.EXEC_KEYS: '["SHARED"]',
-            "SHARED": "cached-shared",
-        }
-    )
-    monkeypatch.setattr(fnox_host, "ROOT", configuration)
-    monkeypatch.setattr(fnox_host.socket, "gethostname", lambda: "pod042")
-    monkeypatch.setattr(sys, "argv", ["fnox-host", "export"])
-    original_build = fnox_host.prepare_invocation
-
-    def build(*args: object, **kwargs: object) -> object:
-        kwargs["fnox"] = fnox_binary
-        return original_build(*args, **kwargs)
-
-    monkeypatch.setattr(fnox_host, "prepare_invocation", build)
-    with patch.dict(os.environ, environment, clear=True):
-        assert fnox_host.main() == 0
-    assert (
-        capfd.readouterr().out
-        == "export SHARED=cached-shared\nexport HOST_ONLY=sentinel-host\n"
-    )
-    calls = [
-        json.loads(line)
-        for line in Path(environment["OP_CALLS"]).read_text().splitlines()
-    ]
-    assert len(calls) == 1
-    assert calls[0]["args"][-1] == "op://agent/host/value"
-    environment["HOST_ONLY"] = "untrusted-exported-value"
-    assert fnox_host.resolve_values(
-        configuration,
-        "pod042",
-        ["SHARED", "HOST_ONLY"],
-        environment,
-        None,
-        fnox=fnox_binary,
-    ) == {"SHARED": "cached-shared", "HOST_ONLY": "sentinel-host"}
-    invocation = fnox_host.prepare_invocation(
-        configuration,
-        "pod042",
-        "exec",
-        ["true"],
-        environment,
-        None,
-        fnox=fnox_binary,
-        secrets=["SHARED"],
-    )
-    assert "HOST_ONLY" not in invocation.environment
-    calls = [
-        json.loads(line)
-        for line in Path(environment["OP_CALLS"]).read_text().splitlines()
-    ]
-    assert len(calls) == 2
-    assert all(call["args"][-1] == "op://agent/host/value" for call in calls)
-
-
 @pytest.mark.parametrize("operation", ["get", "exec"])
 def test_cached_main_needs_neither_token_file_nor_fnox(
     operation: str,
@@ -1174,7 +976,7 @@ def test_cached_main_needs_neither_token_file_nor_fnox(
     assert not Path(environment["OP_CALLS"]).exists()
 
 
-@pytest.mark.parametrize("operation", ["get", "export", "exec"])
+@pytest.mark.parametrize("operation", ["get", "exec"])
 def test_main_sanitizes_failed_provider_output(
     operation: str,
     configuration: Path,
@@ -1186,7 +988,6 @@ def test_main_sanitizes_failed_provider_output(
     monkeypatch.setattr(fnox_host.socket, "gethostname", lambda: "pod042")
     arguments = {
         "get": ["get", "SHARED"],
-        "export": ["export"],
         "exec": ["exec", "--secret", "SHARED", "--secret", "HOST_ONLY", "--", "true"],
     }[operation]
     monkeypatch.setattr(sys, "argv", ["fnox-host", *arguments])
@@ -1205,8 +1006,7 @@ def test_main_sanitizes_failed_provider_output(
     assert error.value.code == 1
     captured = capfd.readouterr()
     assert captured.out == ""
-    label = "" if operation == "export" else " for SHARED"
-    assert captured.err == f"fnox-host: secret resolution failed{label}\n"
+    assert captured.err == "fnox-host: secret resolution failed for SHARED\n"
 
 
 @pytest.mark.parametrize("inherited", [False, True])

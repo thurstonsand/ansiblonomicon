@@ -31,7 +31,7 @@ The untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/` holds 
 | `jiraBrowseUrl`      | Pi footer settings                                     |
 | `piWorkPackages`     | Pi packages prepended to the work set                  |
 | `[[mcp_servers]]`    | Claude and Codex MCP registration                      |
-| `pi_mcp_json`        | Native Pi renderer (`~/.pi/agent/mcp.json`)            |
+| `pi_mcp_json`        | Pi MCP config (`~/.pi/agent/mcp-adapter.json`)         |
 
 Keep credentials out of these files. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml`, and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` first, then `mise agent-config --check --real-secrets` to prove credential access without writing.
 

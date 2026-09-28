@@ -10,6 +10,10 @@ explicit_only = []
 target_agents = ["claude", "amp", "codex", "opencode", "pi"]
 explicit_only = ["amp"]
 
+[profiles.omarchy]
+target_agents = ["pi"]
+explicit_only = []
+
 [profiles.amp_publish]
 target_agents = ["amp"]
 explicit_only = []

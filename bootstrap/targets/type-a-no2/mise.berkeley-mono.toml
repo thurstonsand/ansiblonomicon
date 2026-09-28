@@ -1,0 +1,12 @@
+[tasks.berkeley-mono]
+run = '''
+set -eu
+/usr/bin/python3 "{{config_root}}/../../capabilities/software/berkeley_mono.py" ${SOFTWARE_CHECK:+--check}
+if [ "$(omarchy font current)" != 'BerkeleyMono Nerd Font Mono' ]; then
+  if [ -n "${SOFTWARE_CHECK:-}" ]; then
+    echo 'Omarchy font would be set to BerkeleyMono Nerd Font Mono'
+  else
+    omarchy font set 'BerkeleyMono Nerd Font Mono'
+  fi
+fi
+'''

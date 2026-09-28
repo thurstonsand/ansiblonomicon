@@ -53,6 +53,7 @@ PRIVATE = { provider = "personal", value = "op://Private/password/value" }
 [secrets]
 POD042_SERVICE_ACCOUNT_TOKEN = { provider = "personal", value = "op://agent/bootstrap/credential", env = false }
 """)
+    (root / "fnox.omarchy.toml").write_text((root / "fnox.macos.toml").read_text())
     binary = tmp_path / "bin"
     binary.mkdir()
     op = binary / "op"
@@ -154,6 +155,13 @@ def test_enrollment_probes_before_atomic_private_replacement(sandbox: Sandbox) -
     assert calls[1]["token"] == "shared-automation-token"
     assert all("shared-automation-token" not in str(call["args"]) for call in calls)
     assert sandbox.environment["OP_SERVICE_ACCOUNT_TOKEN"] == "poison"
+
+
+def test_omarchy_enrollment_uses_its_host_profile(sandbox: Sandbox) -> None:
+    path = identity.identity_path(sandbox.home)
+    identity.enroll(path, sandbox.root, sandbox.fnox, sandbox.environment, "omarchy")
+    assert identity.read_identity(path, os.getuid()) == "shared-automation-token"
+    assert len(call_records(sandbox)) == 2
 
 
 def test_first_enrollment_creates_a_private_native_directory(sandbox: Sandbox) -> None:

@@ -6,7 +6,6 @@ import json
 import os
 from pathlib import Path
 import pwd
-import shlex
 import shutil
 import socket
 import stat
@@ -24,11 +23,12 @@ from automation_identity import (
 
 ROOT = Path(__file__).resolve().parents[1]
 HOST_PROFILES = {
+    "type-a-no2": "omarchy",
     "Thurstons-MacBook-Pro": "macos",
     "ML-DFC6YK6VJQ": "work",
     "pod042": "pod042",
 }
-PROFILES = ("macos", "work", "pod042", "orb")
+PROFILES = ("macos", "work", "pod042", "omarchy", "orb")
 # Homebrew's `env -i` cask boundary retains HOMEBREW_* metadata only.
 EXEC_PROFILE = "HOMEBREW_ANSIBLONOMICON_EXEC_PROFILE"
 EXEC_KEYS = "HOMEBREW_ANSIBLONOMICON_EXEC_KEYS"
@@ -217,12 +217,8 @@ def prepare_invocation(
 ) -> FnoxCommand:
     if profile not in PROFILES:
         raise ConfigurationError(f"unsupported profile: {profile}")
-    if operation not in {"get", "exec", "export"} or (
-        operation != "export" and not arguments
-    ):
-        raise ConfigurationError("expected get NAME, exec COMMAND, or export")
-    if operation == "export" and arguments:
-        raise ConfigurationError("export does not accept arguments")
+    if operation not in {"get", "exec"} or not arguments:
+        raise ConfigurationError("expected get NAME or exec COMMAND")
     keys = declared_keys(root)
     declarations = host_declarations(root, profile)
     inherited_values(root, profile, inherited)
@@ -274,8 +270,6 @@ def prepare_invocation(
     ]
     if operation == "get":
         command.extend(["get", *arguments])
-    elif operation == "export":
-        command.extend(["export", "--format", "shell"])
     return FnoxCommand(command, environment)
 
 
@@ -395,7 +389,6 @@ def main() -> int:
     )
     commands = parser.add_subparsers(dest="operation", required=True)
     commands.add_parser("profile")
-    commands.add_parser("export")
     get = commands.add_parser("get")
     get.add_argument("name")
     execute = commands.add_parser("exec", allow_abbrev=False)
@@ -424,18 +417,9 @@ def main() -> int:
         validate_execution_names(arguments.secret, host_declarations(ROOT, profile))
     elif arguments.operation == "get":
         validate_names(command, host_declarations(ROOT, profile))
-    if not command and arguments.operation != "export":
+    if not command:
         parser.error("exec requires a command after --")
-    if arguments.operation == "exec":
-        names = arguments.secret
-    elif arguments.operation == "get":
-        names = command
-    else:
-        names = [
-            key
-            for key, declaration in host_declarations(ROOT, profile).items()
-            if declaration.get("env") is True
-        ]
+    names = arguments.secret if arguments.operation == "exec" else command
     token = None
     binary = "fnox"
     if context is None or set(names) - cached.keys():
@@ -447,23 +431,15 @@ def main() -> int:
                 token = os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
         if profile == "pod042":
             binary = "/usr/local/bin/fnox"
-        elif profile in {"macos", "work"}:
+        elif profile in {"macos", "work", "omarchy"}:
             binary = subprocess.check_output(
                 ["mise", "--no-env", "-C", str(ROOT), "which", "fnox"], text=True
             ).strip()
-    if arguments.operation == "get" or (
-        arguments.operation == "export" and context is not None
-    ):
-        values = (
-            resolve_values(ROOT, profile, names, dict(os.environ), token, fnox=binary)
-            if names
-            else {}
+    if arguments.operation == "get":
+        values = resolve_values(
+            ROOT, profile, names, dict(os.environ), token, fnox=binary
         )
-        if arguments.operation == "get":
-            print(values[command[0]])
-        else:
-            for key, value in values.items():
-                print(f"export {shlex.quote(key)}={shlex.quote(value)}")
+        print(values[command[0]])
         return 0
     invocation = prepare_invocation(
         ROOT,
@@ -475,9 +451,6 @@ def main() -> int:
         fnox=binary,
         secrets=arguments.secret if arguments.operation == "exec" else None,
     )
-    if arguments.operation == "export":
-        print(resolved_output(invocation), end="")
-        return 0
     os.execvpe(invocation.argv[0], invocation.argv, invocation.environment)
 
 

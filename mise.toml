@@ -8,6 +8,7 @@ config_roots = [
 
 [tools]
 python = "3.14"
+uv = "latest"
 node = "24"
 stylua = "2.5.2"
 opentofu = "1.12.6"
@@ -17,11 +18,7 @@ fnox = "latest"
 "npm:mcp-remote" = "latest"
 "npm:wrangler" = "latest"
 
-[settings]
-env_cache = true
-
 [env]
-_.source = { path = "scripts/project-secrets.sh", tools = true, redact = true }
 _.python.venv = { path = ".venv", create = true }
 # Pin uv to mise's interpreter. Left unpinned, uv downloads a Python of its own
 # and silently rebuilds .venv underneath mise; pointed at a path, it errors
@@ -34,10 +31,10 @@ UV_PYTHON = { value = "{{ tools.python.path }}/bin/python", tools = true }
 SUDO_ASKPASS = "{{config_root}}/scripts/sudo-askpass.sh"
 
 [hooks]
-enter = "mise run --quiet bootstrap"
+enter = "mise run --quiet bootstrap:git"
 
 [tasks.bootstrap]
-description = "Prepare the repo for a new shell"
+description = "Install repo dependencies and the commit hook"
 depends = ["bootstrap:*"]
 
 [tasks."bootstrap:deps"]
@@ -256,7 +253,16 @@ usage = 'flag "-c --check"'
 run = "mise run //:software:dispatch uvc-util ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks."berkeley-mono"]
-run = "mise run //:software:dispatch berkeley-mono ${usage_check:+--check}"
+run = '''
+if [ "$(hostname -s)" = type-a-no2 ]; then
+  target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
+  MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
+    MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=berkeley-mono \
+    SOFTWARE_CHECK="${usage_check:-}" mise -C "$target" run berkeley-mono
+else
+  mise run //:software:dispatch berkeley-mono ${usage_check:+--check}
+fi
+'''
 usage = 'flag "-c --check"'
 [tasks."docker-context"]
 run = "mise run //:software:dispatch docker-context ${usage_check:+--check}"
@@ -580,6 +586,10 @@ run = '''
 case "$(hostname -s)" in
   ML-DFC6YK6VJQ|Thurstons-MacBook-Pro) exec mise run //:reconcile:laptop ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   pod042) exec python3 "$MISE_PROJECT_ROOT/scripts/pod042_reconcile.py" ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
+  type-a-no2)
+    [ -z "${usage_tags:-}" ] || { echo "Omarchy host tags are not registered yet" >&2; exit 1; }
+    exec mise run //:reconcile:omarchy ${usage_check:+--check}
+    ;;
   *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
 esac
 '''
@@ -593,7 +603,7 @@ flag "--cached" help="Apply cached sources without fetching"
 run = '''
 set -e
 case "$(hostname -s)" in
-  Thurstons-MacBook-Pro|ML-DFC6YK6VJQ)
+  Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2)
     "$MISE_PROJECT_ROOT/.venv/bin/python" \
       "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/agent_harness_deploy.py" \
       --repo "$MISE_PROJECT_ROOT" --home "$HOME" \
@@ -610,6 +620,31 @@ esac
 exec mise run //:agent-config ${usage_check:+--check}
 '''
 
+[tasks."reconcile:omarchy"]
+description = "Reconcile this Omarchy laptop's tools, font, and agent configuration"
+alias = "omarchy"
+usage = 'flag "-c --check" help="Show agent configuration changes without applying them"'
+run = '''
+target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+if [ -n "${usage_check:-}" ]; then
+  mise -C "$target" bootstrap --only dotfiles --force-dotfiles --dry-run || exit "$?"
+  MISE_ENV=omarchy-config mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles --dry-run || exit "$?"
+  mise -C "$HOME" bootstrap --only tools --dry-run || exit "$?"
+else
+  hypr_before=$(sha256sum "$HOME/.config/hypr/monitors.lua" "$HOME/.config/hypr/input.lua" 2>/dev/null || true)
+  mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes || exit "$?"
+  MISE_ENV=omarchy-config mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles --yes || exit "$?"
+  hypr_after=$(sha256sum "$HOME/.config/hypr/monitors.lua" "$HOME/.config/hypr/input.lua")
+  [ "$hypr_before" = "$hypr_after" ] || hyprctl reload || exit "$?"
+  [ "$(hyprctl configerrors)" = "" ] || { hyprctl configerrors; exit 1; }
+  mise -C "$HOME" bootstrap --only tools --yes || exit "$?"
+fi
+mise run //:berkeley-mono ${usage_check:+--check} || exit "$?"
+mise run //:agent-harness ${usage_check:+--check}
+'''
+
 [tasks."agent-config"]
 description = "Reconcile native rendered agent configuration only"
 usage = '''
@@ -622,6 +657,12 @@ host=$(hostname -s)
 case "$host" in
   ML-DFC6YK6VJQ) set -- --secret ANTHROPIC_AUTH_TOKEN ;;
   Thurstons-MacBook-Pro|pod042) set -- --secret CLI_PROXY_API_KEY --secret PARALLEL_API_KEY ;;
+  type-a-no2)
+    exec "$MISE_PROJECT_ROOT/.venv/bin/python" \
+      "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
+      --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host" \
+      ${usage_check:+--check}
+    ;;
   *) echo "Native agent configuration is available only on registered systems" >&2; exit 1 ;;
 esac
 if [ -n "${usage_check:-}" ] && [ -z "${usage_real_secrets:-}" ]; then

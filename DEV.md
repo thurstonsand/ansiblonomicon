@@ -6,7 +6,7 @@
 ./scripts/bootstrap.sh                  # new Mac: Xcode CLI, Homebrew, mise, fnox, uv, 1Password CLI
 ```
 
-`mise trust` does the rest — `uv sync --dev`, venv activation, `SUDO_ASKPASS`, the commit hook, Pi extension deps. The shared askpass helper is `scripts/sudo-askpass.sh`. Tasks whose nested `mise bootstrap` elevates put `scripts/askpass-sudo` first on `PATH`, so every sudo call authenticates through askpass; the work Mac's BeyondTrust sudo keeps no timestamp for a `sudo -A -v` to prime. Consumers resolve only their required credentials through fnox; laptop reconciliation has no enclosing fnox invocation.
+`mise trust` activates the venv and installs the commit hook on shell entry. The shared askpass helper is `scripts/sudo-askpass.sh`. The work Mac's BeyondTrust sudo keeps no timestamp for a `sudo -A -v` to prime. Consumers resolve only their required credentials through fnox.
 
 ## Working here
 
@@ -69,6 +69,12 @@ The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json
 ## pod042
 
 The physical Debian NAS, declared in `bootstrap/targets/pod042/`.
+
+## Omarchy laptop
+
+`type-a-no2` is the personal laptop running Omarchy.
+
+Any customization on this laptop should build on top of and integrate with the native Omarchy methodology and style. Ideally, everything should be done Omarchy-native, then captured in the repo as is relevant.
 
 ## UDMP
 

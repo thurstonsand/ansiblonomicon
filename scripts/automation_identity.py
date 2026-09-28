@@ -5,6 +5,7 @@ from collections.abc import Callable
 import json
 import os
 from pathlib import Path
+import socket
 import stat
 import subprocess
 import tempfile
@@ -146,6 +147,7 @@ def enroll(
     root: Path,
     fnox: str,
     inherited: dict[str, str],
+    profile: str = "macos",
 ) -> None:
     previous = current_identity_revision(destination)
     environment = clean_environment(
@@ -156,9 +158,9 @@ def enroll(
         [
             fnox,
             "--config",
-            str(root / "fnox.macos.toml"),
+            str(root / f"fnox.{profile}.toml"),
             "--profile",
-            "macos",
+            profile,
             "--no-daemon",
             "--if-missing",
             "error",
@@ -218,7 +220,10 @@ def main() -> None:
     fnox = subprocess.check_output(
         ["mise", "--no-env", "-C", str(ROOT), "which", "fnox"], text=True
     ).strip()
-    enroll(destination, ROOT, fnox, dict(os.environ))
+    profile = (
+        "omarchy" if socket.gethostname().split(".", 1)[0] == "type-a-no2" else "macos"
+    )
+    enroll(destination, ROOT, fnox, dict(os.environ), profile)
     print("Automation identity enrolled; no provider token exported.")
 
 
