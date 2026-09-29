@@ -112,9 +112,8 @@ Deleting a source alone does not remove deployed state. Declare a `state = "abse
 - `mise run edge:deploy:doppelclaude` — Deploy the dedicated [Doppelclaude proxy](docs/doppelclaude.md)
 - `mise run check` — Every non-mutating check across the repo; `mise run fix` for the mutating half
 - `mise run pi:check` — Lint and type-check pi extension packages (`pi:fix` formats and autofixes first)
-- `mise run amp:check` — Lint, type-check, and test Amp plugin sources
 - `mise run deps:update` — Update every tracked lockfile (python + typescript)
-- `mise run deps:update:ts` — Update tracked TypeScript agent packages (Pi extension packages and Amp plugin sources)
+- `mise run deps:update:ts` — Update tracked TypeScript agent packages (Pi extension packages and session recovery)
 - `mise run deps:update:uv` — Upgrade `uv.lock` to the newest allowed releases and sync (personal machines only)
 - `mise tasks` — List every task; `--all` includes the Go subprojects
 

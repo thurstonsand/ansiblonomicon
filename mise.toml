@@ -59,7 +59,6 @@ if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
   scripts/ts-package-json-paths.sh \
     bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions \
     bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions \
-    bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins \
     bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery |
     while IFS= read -r package_json; do
       package_dir="$(dirname "$package_json")"
@@ -78,8 +77,6 @@ sources = [
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/*/package-lock.json",
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/package.json",
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/package-lock.json",
-  "bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins/package.json",
-  "bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins/package-lock.json",
   "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/package.json",
   "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/package-lock.json",
   "scripts/ts-package-json-paths.sh",
@@ -913,7 +910,6 @@ depends = [
   "nvim:fmt:check",
   "workers:typecheck",
   "pi:check",
-  "amp:check",
   "session-recovery:check",
   "//bootstrap/capabilities/software/sources/...:check",
 ]
@@ -926,7 +922,6 @@ depends = [
   "python:lint:fix",
   "nvim:fmt",
   "pi:fix",
-  "amp:fix",
   "session-recovery:fix",
   "//bootstrap/capabilities/software/sources/...:fmt",
 ]
@@ -992,14 +987,6 @@ run = "./scripts/pi-lint.sh"
 [tasks."pi:fix"]
 description = "Format and autofix the pi extensions, then type-check"
 run = "./scripts/pi-lint.sh --format"
-
-[tasks."amp:check"]
-description = "Lint, type-check, and test the Amp plugins"
-run = "./scripts/amp-lint.sh --check"
-
-[tasks."amp:fix"]
-description = "Format and autofix the Amp plugins, then type-check and test"
-run = "./scripts/amp-lint.sh --format"
 
 [tasks."amp:guidance"]
 description = "Render Amp's hosted global guidance for an agent to apply"

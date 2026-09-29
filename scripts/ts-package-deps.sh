@@ -5,7 +5,6 @@ PI_ROOT_DIRS=(
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions"
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions"
 )
-AMP_ROOT_DIR="bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins"
 SESSION_RECOVERY_DIR="bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery"
 
 find_pi_package_json() {
@@ -38,7 +37,7 @@ NODE
 }
 
 collect_package_dirs() {
-  find "${PI_ROOT_DIRS[@]}" "$AMP_ROOT_DIR" "$SESSION_RECOVERY_DIR" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort
+  find "${PI_ROOT_DIRS[@]}" "$SESSION_RECOVERY_DIR" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort
 }
 
 package_has_dependency() {
@@ -86,7 +85,7 @@ done
 PACKAGE_DIRS=("${FILTERED_DIRS[@]}")
 
 if [[ ${#PACKAGE_DIRS[@]} -eq 0 ]]; then
-  echo "No TypeScript package.json files found under ${PI_ROOT_DIRS[*]} or $AMP_ROOT_DIR"
+  echo "No TypeScript package.json files found under ${PI_ROOT_DIRS[*]} or $SESSION_RECOVERY_DIR"
   exit 0
 fi
 
@@ -110,9 +109,6 @@ for (const name of piNames) {
   if (pkg.dependencies?.[name] || pkg.devDependencies?.[name] || pkg.peerDependencies?.[name]) {
     console.log(`${name}@${process.env.PI_VERSION}`);
   }
-}
-if (pkg.dependencies?.["@ampcode/plugin"] || pkg.devDependencies?.["@ampcode/plugin"] || pkg.peerDependencies?.["@ampcode/plugin"]) {
-  console.log("@ampcode/plugin@latest");
 }
 NODE
 )
@@ -151,6 +147,6 @@ while IFS= read -r config; do
   echo "==> Migrating biome config in $config_dir"
   (cd "$config_dir" && npx --no-install biome migrate --write)
   MIGRATED=$((MIGRATED + 1))
-done < <(find "${PI_ROOT_DIRS[@]}" "$AMP_ROOT_DIR" "$SESSION_RECOVERY_DIR" -name biome.json -not -path '*/node_modules/*' | sort)
+done < <(find "${PI_ROOT_DIRS[@]}" "$SESSION_RECOVERY_DIR" -name biome.json -not -path '*/node_modules/*' | sort)
 
-echo "Updated $UPDATED TypeScript package(s) and $MIGRATED biome config(s). Pi harness deps pinned to pi ${PI_VERSION}, typebox to ${PI_TYPEBOX_VERSION}, @types/node to ${NODE_TYPES_VERSION}; Amp plugin deps updated to latest."
+echo "Updated $UPDATED TypeScript package(s) and $MIGRATED biome config(s). Pi harness deps pinned to pi ${PI_VERSION}, typebox to ${PI_TYPEBOX_VERSION}, @types/node to ${NODE_TYPES_VERSION}."

@@ -22,7 +22,7 @@ destination = '.pi/agent/extensions/pin-model'
 destination = '.codex/rules/10-command-gates.rules'
 
 [[absent]]
-destination = '.config/amp/plugins/permission-gate.ts'
+destination = '.config/amp/plugins'
 
 [[files]]
 source = 'assets/gemini/GEMINI.md'
@@ -45,96 +45,6 @@ mode = 'symlink'
 [[files]]
 source = 'assets/shared/session-recovery/config.json'
 destination = '.config/session-recovery/config.json'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/biome.json'
-destination = '.config/amp/plugins/biome.json'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/handoff/tool.ts'
-destination = '.config/amp/plugins/handoff/tool.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/handoff.ts'
-destination = '.config/amp/plugins/handoff.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/package-lock.json'
-destination = '.config/amp/plugins/package-lock.json'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/package.json'
-destination = '.config/amp/plugins/package.json'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/permission-gate/commands.ts'
-destination = '.config/amp/plugins/permission-gate/commands.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/permission-gate/hooks.ts'
-destination = '.config/amp/plugins/permission-gate/hooks.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/permission-gate/pending-approvals.ts'
-destination = '.config/amp/plugins/permission-gate/pending-approvals.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/permission-gate/presentation.ts'
-destination = '.config/amp/plugins/permission-gate/presentation.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/permission-gate/rules.test.ts'
-destination = '.config/amp/plugins/permission-gate/rules.test.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/permission-gate/rules.ts'
-destination = '.config/amp/plugins/permission-gate/rules.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/permission-gate/state.ts'
-destination = '.config/amp/plugins/permission-gate/state.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/permission-gate/status.ts'
-destination = '.config/amp/plugins/permission-gate/status.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/permission-gate/subjects.ts'
-destination = '.config/amp/plugins/permission-gate/subjects.ts'
-harness = 'amp'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/amp/plugins/tsconfig.json'
-destination = '.config/amp/plugins/tsconfig.json'
-harness = 'amp'
 mode = 'symlink'
 
 [[files]]
@@ -757,12 +667,6 @@ destination = '.pi/agent/npm-mirror-shim.mjs'
 harness = 'pi'
 hosts = ['ML-DFC6YK6VJQ']
 mode = 'symlink'
-
-[[packages]]
-source = 'assets/amp/plugins'
-destination = '.config/amp/plugins/node_modules'
-harness = 'amp'
-work_omit_dev = true
 
 [[packages]]
 source = 'assets/claude/scripts/session-recovery'
