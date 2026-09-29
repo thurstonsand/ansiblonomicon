@@ -11,15 +11,16 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 @pytest.mark.parametrize(
-    ("user", "secret"),
+    ("user", "secret", "profile"),
     [
-        ("thurstonsand", "HOMEBREW_SUDO_ASKPASS_PASS"),
-        ("tsandberg", "HOMEBREW_SUDO_ASKPASS_PASS_WORK"),
+        ("thurstonsand", "HOMEBREW_SUDO_ASKPASS_PASS", "macos"),
+        ("tsandberg", "HOMEBREW_SUDO_ASKPASS_PASS_WORK", "work"),
+        ("thurstonsand", "OMARCHY_SUDO_PASSWORD", "omarchy"),
     ],
 )
 @pytest.mark.parametrize("provider_status", [0, 23])
 def test_askpass_requests_only_selected_password(
-    tmp_path: Path, user: str, secret: str, provider_status: int
+    tmp_path: Path, user: str, secret: str, profile: str, provider_status: int
 ) -> None:
     root = tmp_path / "checkout with spaces"
     scripts = root / "scripts"
@@ -43,6 +44,7 @@ def test_askpass_requests_only_selected_password(
             "PATH": "/usr/bin:/bin",
             "USER": user,
             "PROVIDER_STATUS": str(provider_status),
+            "HOMEBREW_ANSIBLONOMICON_EXEC_PROFILE": profile,
             "HOMEBREW_SUDO_ASKPASS_PASS": "stale-personal-password",
             "HOMEBREW_SUDO_ASKPASS_PASS_WORK": "stale-work-password",
         },
@@ -60,14 +62,15 @@ def test_askpass_requests_only_selected_password(
 
 
 @pytest.mark.parametrize(
-    ("user", "secret"),
+    ("user", "secret", "profile"),
     [
-        ("thurstonsand", "HOMEBREW_SUDO_ASKPASS_PASS"),
-        ("tsandberg", "HOMEBREW_SUDO_ASKPASS_PASS_WORK"),
+        ("thurstonsand", "HOMEBREW_SUDO_ASKPASS_PASS", "orb"),
+        ("tsandberg", "HOMEBREW_SUDO_ASKPASS_PASS_WORK", "orb"),
+        ("thurstonsand", "OMARCHY_SUDO_PASSWORD", "omarchy"),
     ],
 )
-def test_brew_filtered_scoped_exec_askpass_uses_cached_password(
-    tmp_path: Path, user: str, secret: str
+def test_filtered_scoped_exec_askpass_uses_cached_password(
+    tmp_path: Path, user: str, secret: str, profile: str
 ) -> None:
     root = tmp_path / "checkout with spaces"
     scripts = root / "scripts"
@@ -84,8 +87,8 @@ def test_brew_filtered_scoped_exec_askpass_uses_cached_password(
         'token = { secret = "FNOX_HOST_OP_TOKEN" }\nauth_command = ""\n'
         f'[secrets]\n{secret} = {{ provider = "agent", value = "op://test/password" }}\n'
     )
-    for profile in ("macos", "omarchy", "work", "pod042", "orb"):
-        (root / f"fnox.{profile}.toml").write_text('import = ["fnox.toml"]\n')
+    for name in ("macos", "omarchy", "work", "pod042", "orb"):
+        (root / f"fnox.{name}.toml").write_text('import = ["fnox.toml"]\n')
 
     home = tmp_path / "home"
     identity = home / ".config/fnox/config.toml"
@@ -115,12 +118,15 @@ def test_brew_filtered_scoped_exec_askpass_uses_cached_password(
         or subprocess.check_output(["mise", "which", "fnox"], text=True).strip()
     )
     (binary / "fnox").symlink_to(fnox)
+    mise = binary / "mise"
+    mise.write_text(f"#!{sys.executable}\nprint({str(binary / 'fnox')!r})\n")
+    mise.chmod(0o755)
 
     result = subprocess.run(
         [
             sys.executable,
             str(scripts / "fnox-host"),
-            "--orb",
+            *(["--orb"] if profile == "orb" else []),
             "exec",
             "--secret",
             secret,

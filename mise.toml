@@ -617,6 +617,24 @@ esac
 exec mise run //:agent-config ${usage_check:+--check}
 '''
 
+[tasks."omarchy-loadout"]
+description = "Reconcile packages, themes, and plugins declared for the Omarchy laptop"
+usage = 'flag "-c --check" help="Show install changes and undeclared installs without applying them"'
+run = '''
+[ "$(hostname -s)" = type-a-no2 ] || { echo "Omarchy loadout requires type-a-no2" >&2; exit 1; }
+target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+export MISE_ENV=omarchy-loadout
+if [ -n "${usage_check:-}" ]; then
+  exec mise -C "$target" run omarchy-loadout --check
+fi
+export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
+export PATH="$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH"
+exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD -- \
+  mise -C "$target" run omarchy-loadout
+'''
+
 [tasks."amp-cli"]
 description = "Install Amp and reconcile its runner on the Omarchy laptop"
 usage = 'flag "-c --check" help="Show Amp CLI and runner reconciliation changes"'
@@ -629,22 +647,23 @@ MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
 '''
 
 [tasks."reconcile:omarchy"]
-description = "Reconcile this Omarchy laptop's tools, font, and agent configuration"
+description = "Reconcile this Omarchy laptop's installs, tools, font, and agent configuration"
 alias = "omarchy"
 usage = 'flag "-c --check" help="Show agent configuration changes without applying them"'
 run = '''
 target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
+mise run //:omarchy-loadout ${usage_check:+--check} || exit "$?"
 if [ -n "${usage_check:-}" ]; then
   mise -C "$target" bootstrap --only dotfiles --force-dotfiles --dry-run || exit "$?"
   MISE_ENV=omarchy-config mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles --dry-run || exit "$?"
   mise -C "$HOME" bootstrap --only tools --dry-run || exit "$?"
 else
-  hypr_before=$(sha256sum "$HOME/.config/hypr/monitors.lua" "$HOME/.config/hypr/input.lua" 2>/dev/null || true)
+  hypr_before=$(sha256sum "$HOME"/.config/hypr/*.lua 2>/dev/null || true)
   mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes || exit "$?"
   MISE_ENV=omarchy-config mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles --yes || exit "$?"
-  hypr_after=$(sha256sum "$HOME/.config/hypr/monitors.lua" "$HOME/.config/hypr/input.lua")
+  hypr_after=$(sha256sum "$HOME"/.config/hypr/*.lua)
   [ "$hypr_before" = "$hypr_after" ] || hyprctl reload || exit "$?"
   [ "$(hyprctl configerrors)" = "" ] || { hyprctl configerrors; exit 1; }
   mise -C "$HOME" bootstrap --only tools --yes || exit "$?"

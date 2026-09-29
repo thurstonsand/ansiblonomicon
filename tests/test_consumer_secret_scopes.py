@@ -32,11 +32,57 @@ def task_secrets(command: str) -> set[str]:
     }
 
 
+@pytest.mark.parametrize("check", [False, True])
+def test_omarchy_loadout_scopes_sudo_password_to_apply(
+    tmp_path: Path, check: bool
+) -> None:
+    project = tmp_path / "repo with spaces"
+    scripts = project / "scripts"
+    scripts.mkdir(parents=True)
+    binary = tmp_path / "bin"
+    binary.mkdir()
+    calls = tmp_path / "calls"
+    (binary / "hostname").write_text("#!/bin/sh\necho type-a-no2\n")
+    (binary / "mise").write_text(
+        '#!/bin/sh\nprintf "mise %s\\naskpass=%s\\npath=%s\\n" "$*" "${SUDO_ASKPASS-}" "$PATH" >> "$CALLS"\n'
+    )
+    (scripts / "fnox-host").write_text(
+        '#!/bin/sh\nprintf "fnox %s\\n" "$*" >> "$CALLS"\n'
+        'while [ "$1" != -- ]; do shift; done\nshift\nexec "$@"\n'
+    )
+    for path in (binary / "hostname", binary / "mise", scripts / "fnox-host"):
+        path.chmod(0o755)
+    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["omarchy-loadout"]
+    env = {
+        **os.environ,
+        "PATH": f"{binary}:{os.environ['PATH']}",
+        "MISE_PROJECT_ROOT": str(project),
+        "SUDO_ASKPASS": "",
+        "CALLS": str(calls),
+    }
+    if check:
+        env["usage_check"] = "1"
+    result = subprocess.run(
+        ["sh", "-c", task["run"]], env=env, capture_output=True, text=True
+    )
+    assert result.returncode == 0, result.stderr
+    output = calls.read_text()
+    if check:
+        assert not any(line.startswith("fnox ") for line in output.splitlines())
+        assert "--check" in output
+        assert "askpass=\n" in output
+    else:
+        assert "fnox exec --secret OMARCHY_SUDO_PASSWORD --" in output
+        assert f"askpass={project}/scripts/sudo-askpass.sh" in output
+        assert f"path={project}/scripts/askpass-sudo:" in output
+
+
 def test_current_scoped_tasks_only_request_agent_credentials():
     tasks = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]
     secrets = {
         **tomllib.loads((ROOT / "fnox.toml").read_text())["secrets"],
         **tomllib.loads((ROOT / "fnox.pod042.toml").read_text())["secrets"],
+        **tomllib.loads((ROOT / "fnox.omarchy.toml").read_text())["secrets"],
     }
     laptop_tasks = {
         "reconcile",
@@ -220,6 +266,7 @@ def test_each_capability_task_requests_only_its_own_secrets():
         "work-local": {"HOMEBREW_SUDO_ASKPASS_PASS_WORK"},
         "terminal-theme": {"$sudo_secret"},
         "mac-apps": {"$sudo_secret"},
+        "omarchy-loadout": {"OMARCHY_SUDO_PASSWORD"},
     }
     assert {name: task_secrets(tasks[name]["run"]) for name in expected} == expected
     # The umbrella task delegates, so it must never open one wide secret scope itself.

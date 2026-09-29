@@ -1,0 +1,5 @@
+[tasks.omarchy-loadout]
+usage = 'flag "-c --check" help="Show install changes and undeclared installs without applying them"'
+run = '''
+python3 "{{config_root}}/reconcile_loadout.py" "{{config_root}}/loadout.toml" ${usage_check:+--check}
+'''

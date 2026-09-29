@@ -6,7 +6,7 @@
 ./scripts/bootstrap.sh                  # new Mac: Xcode CLI, Homebrew, mise, fnox, uv, 1Password CLI
 ```
 
-`mise trust` activates the venv and installs the commit hook on shell entry. The shared askpass helper is `scripts/sudo-askpass.sh`. The work Mac's BeyondTrust sudo keeps no timestamp for a `sudo -A -v` to prime. Consumers resolve only their required credentials through fnox.
+`mise trust` activates the venv and installs the commit hook on shell entry. The shared askpass helper is `scripts/sudo-askpass.sh`: it resolves the host's sudo password through fnox, so reconciliation tasks gain root without anyone at the keyboard. The work Mac's BeyondTrust sudo keeps no timestamp for a `sudo -A -v` to prime. Consumers resolve only their required credentials through fnox.
 
 ## Working here
 
@@ -72,9 +72,11 @@ The physical Debian NAS, declared in `bootstrap/targets/pod042/`.
 
 ## Omarchy laptop
 
-`type-a-no2` is the personal laptop running Omarchy.
+`type-a-no2` is the personal laptop running Omarchy. Any customization on this laptop should build on top of and integrate with the native Omarchy methodology and style. Ideally, everything should be done Omarchy-native, then captured in the repo as is relevant. The `omarchy-loadout` capability reads packages, themes, and plugins from `bootstrap/targets/type-a-no2/loadout.toml` and reconciles them in a way native to Omarchy. Declare a theme or plugin by its Omarchy name or id with its git `source`, and mark a retired entry `absent` to remove it explicitly, then delete the line once applied. Upgrades are natively managed by `omarchy update`, `omarchy theme update`, and `omarchy plugin update`, not the reconciler.
 
-Any customization on this laptop should build on top of and integrate with the native Omarchy methodology and style. Ideally, everything should be done Omarchy-native, then captured in the repo as is relevant.
+Optional theme or plugin extras, such as `theme-set` hooks or files an author asks you to copy into another app, are ordinary `[dotfiles]` in `mise.omarchy-config.toml`, which runs after installs. Keep repo-owned extras under `omarchy/themes/<name>/`; a file copied from the install itself can use its `~/.config/omarchy/themes/<name>/` path as the source. Web apps follow the same rule: create one with `omarchy-webapp-install`, then move its `.desktop` file and icon under `omarchy/applications/` and `omarchy/icons/` and symlink them back.
+
+Software missing from Omarchy's repositories uses its vendor's installer instead of the AUR.
 
 ## UDMP
 

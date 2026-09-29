@@ -1,0 +1,23 @@
+[packages]
+1password = "present"
+1password-cli = "present"
+beeper-bin = "present"
+brave-origin-bin = "present"
+direnv = "present"
+ghostty = "present"
+github-cli = "present"
+omarchy-zsh = "present"
+openai-codex-desktop = "present"
+rust = "present"
+t3code-bin = "present"
+"webkitgtk-6.0" = "present"
+yaru-icon-theme = "present"
+
+[aur]
+openwhispr-bin = "present"
+
+[themes]
+sakura-mochi = { source = "https://github.com/OldJobobo/omarchy-sakura-mochi-theme.git" }
+
+[plugins]
+omamail = { source = "https://github.com/huacnlee/omamail.git" }

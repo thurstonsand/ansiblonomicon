@@ -1,6 +1,3 @@
-[bootstrap.repos]
-"/home/thurstonsand/.config/omarchy/plugins/omamail" = { url = "https://github.com/huacnlee/omamail.git" }
-
 [bootstrap.files."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock/manifest.json"]
 state = "absent"
 
