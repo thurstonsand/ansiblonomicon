@@ -3,8 +3,8 @@ version = "latest"
 postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"'
 
 [npm]
-packages = ["openclaw", "glimpseui"]
-allow_scripts = ["glimpseui"]
+packages = ["openclaw"]
+allow_scripts = []
 
 [uv]
 packages = ["nurb"]

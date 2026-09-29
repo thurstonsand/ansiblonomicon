@@ -3,7 +3,7 @@ import { connect, type Socket } from "node:net";
 import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { getCompanionSocketPath } from "../shared/socket-path.js";
-import { resolveNode } from "./glimpse-support.js";
+import { resolveGlimpseEntry, resolveNode } from "./glimpse-support.js";
 
 const SOCK = getCompanionSocketPath();
 const COMPANION_PATH = join(fileURLToPath(new URL("..", import.meta.url)), "companion.ts");
@@ -22,8 +22,9 @@ export class CompanionConnection {
     if (this.sock) return;
 
     const node = resolveNode();
-    if (!node) return;
-    const child = spawn(node, [COMPANION_PATH], {
+    const glimpseEntry = resolveGlimpseEntry();
+    if (!node || !glimpseEntry) return;
+    const child = spawn(node, [COMPANION_PATH, glimpseEntry], {
       detached: true,
       stdio: "ignore",
       windowsHide: process.platform === "win32",

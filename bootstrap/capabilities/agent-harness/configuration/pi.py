@@ -29,6 +29,8 @@ PERSONAL_PACKAGES = [
     ("sideshow", None),
     ("@thurstonsand/pi-paste", None),
 ]
+# Glimpse's Linux binary cannot resize windows until HazAT/glimpse merges this branch.
+GLIMPSE_LINUX_FORK = "git:github.com/thurstonsand/glimpse@fix/linux-resize"
 WORK_PACKAGES = [
     "git:github.com/nicobailon/pi-powerline-footer",
     "git:github.com/thurstonsand/pi-permissions@downgrade",
@@ -103,6 +105,8 @@ def _profile(
         str(projects_root / local) if mac and local else f"npm:{npm}"
         for npm, local in PERSONAL_PACKAGES
     ]
+    if hostname == "type-a-no2":
+        packages[packages.index("npm:glimpseui")] = GLIMPSE_LINUX_FORK
     return {
         "provider": "doppelclaude",
         "model": models["anthropic"]["opus"]["version"],

@@ -5,4 +5,5 @@ host_profile = "omarchy"
 
 [dotfiles]
 "~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "symlink" }
+"~/.cargo/config.toml" = { source = "cargo-config.toml", mode = "symlink" }
 "~/.local/bin/fnox-host" = { source = "../../capabilities/user-tools/files/fnox-host", mode = "symlink" }

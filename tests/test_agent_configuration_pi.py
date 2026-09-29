@@ -118,6 +118,10 @@ def test_omarchy_uses_npm_packages_and_keeps_system_theme(tmp_path: Path) -> Non
     assert settings["theme"] == "omarchy-system"
     assert "npm:pi-permissions" in settings["packages"]
     assert "npm:@thurstonsand/pi-wt" in settings["packages"]
+    assert (
+        "git:github.com/thurstonsand/glimpse@fix/linux-resize" in settings["packages"]
+    )
+    assert "npm:glimpseui" not in settings["packages"]
     assert ".local/bin/pi" not in rendered(tmp_path, "type-a-no2")
 
 

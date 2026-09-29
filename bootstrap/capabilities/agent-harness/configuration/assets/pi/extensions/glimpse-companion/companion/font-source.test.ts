@@ -22,8 +22,13 @@ export function open(html) { writeFileSync(process.env.COMPANION_TEST_OUTPUT, ht
 
   const result = spawnSync(
     process.execPath,
-    ["--import", "jiti/register", join(import.meta.dirname, "..", "companion.ts")],
-    { env: { ...process.env, HOME: home, GLIMPSE_DIR: glimpse, COMPANION_TEST_OUTPUT: output } },
+    [
+      "--import",
+      "jiti/register",
+      join(import.meta.dirname, "..", "companion.ts"),
+      join(glimpse, "src/glimpse.mjs"),
+    ],
+    { env: { ...process.env, HOME: home, COMPANION_TEST_OUTPUT: output } },
   );
 
   assert.equal(result.status, 0, result.stderr.toString());

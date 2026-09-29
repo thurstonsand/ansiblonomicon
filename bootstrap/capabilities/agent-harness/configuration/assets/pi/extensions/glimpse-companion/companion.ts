@@ -1,6 +1,4 @@
-import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync, unlinkSync } from "node:fs";
-import { createRequire } from "node:module";
+import { readFileSync, unlinkSync } from "node:fs";
 import { createServer, type Socket } from "node:net";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -10,23 +8,9 @@ import { createInterface } from "node:readline";
 import type { CompanionMessage, CompanionUpdateMessage } from "./shared/messages.ts";
 import { getCompanionSocketPath, usesNamedPipe } from "./shared/socket-path.ts";
 
-function resolveGlimpseEntry(): string | null {
-  const candidates: string[] = [];
-  const override = process.env.GLIMPSE_DIR;
-  if (override) candidates.push(join(override, "src", "glimpse.mjs"));
-  try {
-    candidates.push(createRequire(import.meta.url).resolve("glimpseui"));
-  } catch {}
-  try {
-    const root = execFileSync("npm", ["root", "-g"], { encoding: "utf-8" }).trim();
-    if (root) candidates.push(join(root, "glimpseui", "src", "glimpse.mjs"));
-  } catch {}
-  return candidates.find((c) => existsSync(c)) ?? null;
-}
-
-const glimpseEntry = resolveGlimpseEntry();
+const glimpseEntry = process.argv[2];
 if (!glimpseEntry) {
-  console.error("glimpse companion: glimpseui not found (set GLIMPSE_DIR to override)");
+  console.error("usage: companion.ts <path to glimpseui's glimpse.mjs>");
   process.exit(1);
 }
 // glimpseui has no published types and is resolved dynamically at runtime.
@@ -196,7 +180,8 @@ win = open(buildHTML(), {
   floating: true,
   transparent: true,
   clickThrough: true,
-  noDock: true,
+  // glimpseui forwards --no-dock to every native binary, but only macOS has a Dock to hide from.
+  noDock: process.platform === "darwin",
   followCursor: true,
   followMode: "spring",
   cursorAnchor: "top-right",

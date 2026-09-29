@@ -1,0 +1,4 @@
+# Cargo's built-in git reads SSH_AUTH_SOCK, not ssh_config's IdentityAgent, so
+# it cannot reach 1Password and fails on SSH submodules such as glimpseui's.
+[net]
+git-fetch-with-cli = true

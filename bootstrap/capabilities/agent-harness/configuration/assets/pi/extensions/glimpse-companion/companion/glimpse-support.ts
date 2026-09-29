@@ -1,30 +1,36 @@
-import { execFileSync } from "node:child_process";
-import { existsSync } from "node:fs";
-import { createRequire } from "node:module";
+import { existsSync, readFileSync } from "node:fs";
 import { basename, delimiter, join } from "node:path";
+import {
+  DefaultPackageManager,
+  getAgentDir,
+  SettingsManager,
+} from "@earendil-works/pi-coding-agent";
 
 export interface FollowCursorSupport {
   supported: boolean;
   reason?: string;
 }
 
-// glimpseui is installed as a global npm package, not under this extension's
-// node_modules, so a bare import would not resolve at runtime. Locate its entry
-// dynamically and import it lazily — this also keeps type-checking from
-// requiring the package to be installed on machines that never run the
-// companion (e.g. work hosts whose registry lacks glimpseui).
-function resolveGlimpseEntry(): string | null {
-  const candidates: string[] = [];
-  const override = process.env.GLIMPSE_DIR;
-  if (override) candidates.push(join(override, "src", "glimpse.mjs"));
-  try {
-    candidates.push(createRequire(import.meta.url).resolve("glimpseui"));
-  } catch {}
-  try {
-    const root = execFileSync("npm", ["root", "-g"], { encoding: "utf-8" }).trim();
-    if (root) candidates.push(join(root, "glimpseui", "src", "glimpse.mjs"));
-  } catch {}
-  return candidates.find((c) => existsSync(c)) ?? null;
+// glimpseui is a user-scope pi package: npm on personal hosts, a git clone on
+// work hosts whose registry lacks it. Pi's package manager is the one authority
+// on where either install lives.
+export function resolveGlimpseEntry(): string | null {
+  const agentDir = getAgentDir();
+  const cwd = process.cwd();
+  const packageManager = new DefaultPackageManager({
+    cwd,
+    agentDir,
+    settingsManager: SettingsManager.create(cwd, agentDir),
+  });
+  for (const { scope, installedPath } of packageManager.listConfiguredPackages()) {
+    if (scope !== "user" || !installedPath) continue;
+    const manifest = join(installedPath, "package.json");
+    if (!existsSync(manifest)) continue;
+    if (JSON.parse(readFileSync(manifest, "utf-8")).name === "glimpseui") {
+      return join(installedPath, "src", "glimpse.mjs");
+    }
+  }
+  return null;
 }
 
 // pi ships as a compiled binary, so process.execPath points at pi, not node.
@@ -47,7 +53,7 @@ export function resolveNode(): string | null {
 
 export async function loadFollowCursorSupport(): Promise<FollowCursorSupport> {
   const entry = resolveGlimpseEntry();
-  if (!entry) return { supported: false, reason: "glimpseui not found" };
+  if (!entry) return { supported: false, reason: "glimpseui is not an installed pi package" };
   try {
     const mod = (await import(entry)) as {
       getFollowCursorSupport?: () => FollowCursorSupport;
