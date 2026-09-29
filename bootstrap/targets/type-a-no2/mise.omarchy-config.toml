@@ -13,5 +13,17 @@ state = "absent"
 [dotfiles]
 "~/.config/hypr/monitors.lua" = { source = "omarchy/hypr/monitors.lua", mode = "symlink" }
 "~/.config/hypr/input.lua" = { source = "omarchy/hypr/input.lua", mode = "symlink" }
+"~/.config/hypr/hyprland.lua" = { source = "omarchy/hypr/hyprland.lua", mode = "symlink" }
+"~/.config/hypr/bindings.lua" = { source = "omarchy/hypr/bindings.lua", mode = "symlink" }
+"~/.config/hypr/looknfeel.lua" = { source = "omarchy/hypr/looknfeel.lua", mode = "symlink" }
+"~/.config/hypr/autostart.lua" = { source = "omarchy/hypr/autostart.lua", mode = "symlink" }
+"~/.config/hypr/hyprsunset.conf" = { source = "omarchy/hypr/hyprsunset.conf", mode = "symlink" }
+"~/.config/hypr/xdph.conf" = { source = "omarchy/hypr/xdph.conf", mode = "symlink" }
+"~/.config/hypr/.luarc.json" = { source = "omarchy/hypr/.luarc.json", mode = "symlink" }
 "~/.config/omarchy/shell.json" = { source = "omarchy/shell.json", mode = "symlink" }
+"~/.config/omarchy/extensions/omarchy-menu.jsonc" = { source = "omarchy/extensions/omarchy-menu.jsonc", mode = "symlink" }
+"~/.config/omarchy/branding/about.txt" = { source = "omarchy/branding/about.txt", mode = "symlink" }
+"~/.config/omarchy/branding/screensaver.txt" = { source = "omarchy/branding/screensaver.txt", mode = "symlink" }
 "~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }
+"~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }

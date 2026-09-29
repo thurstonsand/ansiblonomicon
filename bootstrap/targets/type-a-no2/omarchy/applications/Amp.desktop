@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=Amp
+Comment=Amp
+Exec=omarchy-launch-webapp "https://ampcode.com/"
+Terminal=false
+Type=Application
+Icon=amp
+StartupNotify=true
