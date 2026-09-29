@@ -245,7 +245,7 @@ def test_real_catalogue_publishes_the_amp_selection(
     files = publisher.render(ROOT, tmp_path / "cache", cached=True)
     skills = {path.parts[0] for path in files}
 
-    assert {"operating-pod042", "commit-msg", "wait-what", "tui-screenshot"} <= skills
+    assert {"operating-pod042", "commit-msg", "wayfinder", "tui-screenshot"} <= skills
     assert "notify" not in skills
     assert not any(skill in skills for skill in ("handoff", "retitle", "pi"))
     assert all(len(path.parts) >= 2 for path in files)

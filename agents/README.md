@@ -2,7 +2,7 @@
 
 Locally authored skill plugins deployed by the agent harness capability. Each directory here is one plugin, listed in `.claude-plugin/marketplace.json` and selected for deployment from `bootstrap/capabilities/agent-harness/catalogue.toml`.
 
-Most of what a harness ends up with is pulled verbatim from upstream repos and never lands in this tree. This file covers the exceptions: skills we fork rather than consume, and therefore have to re-sync by hand. Two upstreams so far, [mattpocock/skills](https://github.com/mattpocock/skills) and [cursor/plugins](https://github.com/cursor/plugins).
+Most of what a harness ends up with is pulled verbatim from upstream repos and never lands in this tree. This file covers the exceptions: skills we fork rather than consume, and therefore have to re-sync by hand. One upstream so far, [mattpocock/skills](https://github.com/mattpocock/skills); [cursor/plugins](https://github.com/cursor/plugins) lineage was retired on 2026-09-29.
 
 ## Ours outright
 
@@ -19,49 +19,42 @@ Repo-local skills at `.agents/skills/` (`cloudflare-ops`, `installing-software`)
 
 ## Adapted from mattpocock/skills
 
-None of these is on the `include_skills` list for the `mattpocock-skills` plugin, so ours wins: that plugin admits five upstream skills by name and nothing else. Upstream keeps moving, so each row records the upstream commit our copy was last reconciled against.
+None of these is on the `include_skills` list for the `mattpocock-skills` plugin, so ours wins: that plugin admits four upstream skills by name and nothing else. Upstream keeps moving, so each row records the upstream commit our copy was last reconciled against, and the import level (see [Running an import](#running-an-import)).
 
-| ours                                               | upstream                                                        | synced to            | divergence                                                                                                                                                                                                                                  |
-| -------------------------------------------------- | --------------------------------------------------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `project-management/grill-me`, `pi/grill-me`       | `productivity/grill-me` + `grilling`                            | `0ab1b63` 2026-08-20 | Upstream's `grill-me` is a shim over `grilling`; ours is the whole workflow in three gates, with context and design formats as local references. The pi variant asks rounds through pi's `interview` tool instead of the markdown template. |
-| `project-management/wayfinder`                     | `engineering/wayfinder`                                         | `0ab1b63` 2026-08-20 | Upstream abstracts the map behind an issue tracker. Ours stays markdown under `docs/wayfinding/`, computes the frontier with `scripts/frontier.py`, and carries a `prototype.md` reference adapted from `engineering/prototype`.            |
-| `project-management/improve-codebase-architecture` | `engineering/improve-codebase-architecture` + `codebase-design` | `0ab1b63` 2026-08-20 | Cross-skill calls collapsed into local `references/`, ADRs replaced by `docs/designs/`, `grilling` and `domain-modeling` replaced by `/grill-me` gates.                                                                                     |
-| `project-management/wait-what`                     | `productivity/wait-what`                                        | `0ab1b63` 2026-08-20 | One line, fully rewritten. Ours names the failure mode; upstream asks for Simplified Technical English.                                                                                                                                     |
-| `claude/handoff`                                   | `productivity/handoff`                                          | `0ab1b63` 2026-08-20 | Templated `.j2` rewrite, three times the length, so it cannot ship through Claude's own plugin mechanism.                                                                                                                                   |
+| ours | upstream | level | synced to | divergence |
+| --- | --- | --- | --- | --- |
+| `project-management/grill-me`, `pi/grill-me` | `productivity/grill-me` + `grilling` | adapted | `d81f3a1` 2026-09-29 | Upstream's `grill-me` is a shim over `grilling`; ours is the whole workflow in three gates, with context and design formats as local references. The pi variant asks rounds through pi's `interview` tool instead of the markdown template. |
+| `project-management/wayfinder` | `engineering/wayfinder` | adapted | `d81f3a1` 2026-09-29 | Upstream abstracts the map behind an issue tracker. Ours stays markdown under `docs/wayfinding/`, computes the frontier with `scripts/frontier.py`, and carries a `prototype.md` reference adapted from `engineering/prototype`. |
+| `project-management/improve-codebase-architecture` | `engineering/improve-codebase-architecture` + `codebase-design` | adapted | `d81f3a1` 2026-09-29 | Cross-skill calls collapsed into local `references/`, ADRs replaced by `docs/designs/`, `grilling` and `domain-modeling` replaced by `/grill-me` gates. |
+| `claude/handoff` | `productivity/handoff` | adapted | `d81f3a1` 2026-09-29 | Templated `.j2` rewrite, three times the length, so it cannot ship through Claude's own plugin mechanism. |
+| `project-management/implement` | `engineering/implement` + `tdd` | adapted | `d81f3a1` 2026-09-29 | Upstream's shape and wording, minus TDD and the commit. Keeps our plan-as-contract stop, predicate, verification ladder, and unstaged hand-back. The main agent writes the code. Inlines `tdd`'s implementation-coupled and tautological anti-patterns, plus three from pstack's Test Behavior, Not Implementation, so they load every run. |
+| `project-management/code-review` | `engineering/code-review` | adapted | `d81f3a1` 2026-09-29 | Upstream's two axes and smell baseline verbatim. Scope also covers uncommitted and staged changes; the spec is the agreed plan or design rather than an issue; standards come from `AGENTS.md`, `DEV.md`, and `CONTEXT.md`; the two test anti-patterns join the baseline. Reviewers are the Oracle where the harness has one, otherwise subagents. |
+| `project-management/gc` `references/pr-body.md` | `engineering/pr` | light edit | `d81f3a1` 2026-09-29 | Mermaid bullet removed, since Bitbucket Data Center does not render it (BSERV-12548), and `GLOSSARY.md` read as `CONTEXT.md`. `references/pr.md` wraps it in our gather, draft, approve, create loop. Upstream credits Dex Horthy's humanlayer `show-me` for the Summary visuals. |
+| `project-management/retro` | `engineering/retro` | light edit | `d81f3a1` 2026-09-29 | `CODING_STANDARDS.md` becomes `DEV.md`, with a `CONTEXT.md` line beside it, and the Claude-specific Skill tool call becomes a plain load. |
 
 The pattern: where upstream splits a workflow across skills that call each other, we collapse it into one skill with local reference files. That is why upstream's cross-skill churn mostly misses us.
-
-## Adapted from cursor/plugins
-
-Not installed as plugins, so nothing here is on an exclude list. These are copies that have to be re-synced by hand.
-
-| ours                             | upstream                                                                                   | synced to            | divergence                                                                                                                                                                                                                                                                                                                                     |
-| -------------------------------- | ------------------------------------------------------------------------------------------ | -------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `project-management/interrogate` | `pstack/interrogate`                                                                       | `71ed0d1` 2026-09-08 | Replaces our fork of `thermos/thermo-nuclear-code-quality-review`, which this is upstream's own refinement of. Carries over that fork's scope workflow (branch, uncommitted, staged, commit range), its change framing in place of PR framing, its 2B review tone, and its model invocability. Reviewers are named by family rather than slug. |
-| `project-management/implement`   | `pstack` Feature and Autonomous run playbooks, subagent rules, `blast-radius`, `architect` | `71ed0d1` 2026-09-08 | Assembled rather than forked; upstream has no single skill for this. Runs only on an approved plan, user-invoked so it cannot fire mid-discussion, never commits or stages, and hands back artifacts rather than prose. Unrelated to Matt Pocock's excluded `implement`.                                                                       |
-| `project-management/reflect`     | `pstack/reflect`                                                                           | `51a96e0` 2026-08-21 | Harness-agnostic transcript location and subagent spawning, models named by role rather than slug, `create-skill` becomes `writing-for-agents`, no backlog tracker, and edits route to the source skill in this repo rather than the deployed copy.                                                                                            |
-
-Upstream's pstack is built around a Cursor-only sticky mode skill, per-role model config in `~/.cursor/rules/`, Graphite stacks, and cloud workers. Its playbook layer does not port. Its lenses, rubrics, and principles do.
 
 ## Borrowed without a skill
 
 Ideas lifted into skills we already own, with no upstream file to track.
 
-| where                                               | from                                                                                                                                                                                                                                                                      |
-| --------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `grill-me/references/design-format.md`, call stacks | [dmmulroy/skills](https://github.com/dmmulroy/skills) `tech-spec` and humanlayer's [Why Software Factories Fail](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/wsff.md), which credits Dillon Mulroy for call graphs in planning |
+| where                                                 | from                                                                                                                                                                                                                                                                      |
+| ----------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `implement`, plan-as-contract and verification ladder | cursor/plugins [`pstack`](https://github.com/cursor/plugins) Feature and Autonomous run playbooks, forked here until 2026-09-29                                                                                                                                           |
+| `grill-me/references/design-format.md`, call stacks   | [dmmulroy/skills](https://github.com/dmmulroy/skills) `tech-spec` and humanlayer's [Why Software Factories Fail](https://github.com/humanlayer/advanced-context-engineering-for-coding-agents/blob/main/wsff.md), which credits Dillon Mulroy for call graphs in planning |
 
 ## Taken verbatim
 
-Not excluded, so they deploy straight from the upstream checkout and update on every reconcile: `resolving-merge-conflicts`, `wizard`, `writing-for-agents`, `teach`, `to-questionnaire`.
+Not excluded, so they deploy straight from the upstream checkout and update on every reconcile: `wizard`, `writing-for-agents`, `teach`, `to-questionnaire`.
 
 ## Left out
 
 Excluded with no local counterpart.
 
-- `ask-matt`, `code-review`, `diagnosing-bugs`, `domain-modeling`, `grill-with-docs`, `implement`, `research`, `tdd`, `to-spec`, `prototype`: workflow opinions we declined, or content already absorbed. `research` lives inside wayfinder's research ticket type; `prototype` inside its `references/prototype.md`.
+- `ask-matt`, `diagnosing-bugs`, `domain-modeling`, `grill-with-docs`, `implement-spec`, `research`, `tdd`, `to-spec`, `prototype`: workflow opinions we declined, or content already absorbed. `research` lives inside wayfinder's research ticket type; `prototype` inside its `references/prototype.md`; `tdd`'s test anti-patterns inside `implement` and `code-review`.
 - `to-tickets`: it is execution planning, which is `/grill-me` Gate 3. Wayfinder ends where Gate 3 begins, so it has no home here.
 - `triage`: a maintainer's inbox for inbound issues and external PRs. No repo here has one.
+- `wait-what`: no longer needed.
 - `setup-matt-pocock-skills`: provisions the issue tracker docs our wayfinder fork does not use.
 - `codebase-design`, `grilling`, `grill-me`: excluded because they were absorbed, not because they were rejected. `grilling` is the live sync channel: it is the primitive our `grill-me` inlines, so upstream edits to it are the ones that still reach us.
 
@@ -76,9 +69,27 @@ git clone https://github.com/mattpocock/skills.git /tmp/mp-skills
 cd /tmp/mp-skills && git diff <synced-to> main -- skills/<path>
 ```
 
-Read the commit subjects first. Treat prose, punctuation, and formatting passes as substantive. Start by copying upstream verbatim. Adapt only where its wording directly conflicts with this repo's structure, harness-neutral deployment, or a deliberate local workflow decision, and stay as close as possible when adapting. Then update the table and add a log entry below.
+Read the commit subjects first. Treat prose, punctuation, and formatting passes as substantive. Then pick the lightest level that works:
+
+1. **Verbatim**: the skill is self-contained and needs no change. Add it to `include_skills`.
+2. **Light edit**: copy upstream's text verbatim, then make the smallest edits that fit it here. A diff against upstream shows only those edits.
+3. **Adapted**: migrate concepts rather than text, where upstream's wording conflicts with this repo's structure, harness-neutral deployment, or a deliberate local workflow decision. Keep as much upstream wording as the intent allows.
+
+Then update the table and add a log entry below.
 
 ## Import log
+
+### 2026-09-29, upstream `d81f3a1`
+
+Release v1.3. Upstream deleted `resolving-merge-conflicts` (`daa01d8`) with no replacement, so it leaves `include_skills` here too; the stale name had failed the scheduled Amp publish. Deleted our `wait-what` fork, no longer needed. Deleted our `reflect` fork of `pstack/reflect`, since `retro` covers the same ground.
+
+Introduced the three import levels described under [Running an import](#running-an-import). Every light edit also gains an H1, which this repo's markdownlint requires and upstream omits.
+
+Light edit: `retro` (`a7d038f`), reframed onto the `AGENTS.md`, `CONTEXT.md`, `DEV.md` trio, with `DEV.md` in place of `CODING_STANDARDS.md`. `pr` (`d75dcf1` through `c55ee46`) as `gc/references/pr-body.md`, replacing our template, minus Mermaid. `gc/references/pr.md` keeps our gather, approve, and create steps and drops its `gh` recipe, since not every repo is on GitHub.
+
+Adapted: `implement` and `code-review` replace our pstack-derived `implement` and `interrogate`, retiring that lineage. `interrogate` is renamed to upstream's `code-review`. Its multi-model fan-out, lead-judgment buckets, correctness rubric, code-quality lens, and 2B tone give way to upstream's Standards and Spec axes. `implement` drops subagent delegation, model tiering, and the Attack the Premise principle. It keeps the plan-as-contract stop, the predicate, a compressed verification ladder, and the unstaged hand-back. It is now model-invocable. Declined `tdd` and the red-green loop. Took its implementation-coupled and tautological anti-patterns, inlined in both skills so they load every run, and dropped horizontal slicing, which only matters test-first. `implement` also keeps pstack's `undefined` check, its mock-or-absence, constant-pin, and fixture-asserts-fixture shapes, and its fix and keep rules in the same list.
+
+Declined: the `CONTEXT.md` to `GLOSSARY.md` rename (`e484a80`). `CONTEXT.md` is this repo's convention, and it is the only change upstream made to `improve-codebase-architecture` and `codebase-design`. `grill-me`, `grilling`, `wayfinder`, and `handoff` did not change.
 
 ### 2026-09-09, cursor/plugins pstack 0.15.0 `71ed0d1`
 

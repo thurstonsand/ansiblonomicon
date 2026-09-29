@@ -4,7 +4,7 @@
 repo = "mattpocock/skills"
 [[sources.plugins]]
 name = "mattpocock-skills"
-include_skills = ["resolving-merge-conflicts", "teach", "to-questionnaire", "wizard", "writing-for-agents"]
+include_skills = ["teach", "to-questionnaire", "wizard", "writing-for-agents"]
 
 [[sources]]
 repo = "vercel-labs/agent-browser"
