@@ -109,6 +109,10 @@ def test_capability_environments_are_explicit_and_disjoint() -> None:
     )
 
 
+@pytest.mark.skipif(
+    subprocess.run(["sudo", "-n", "true"], capture_output=True).returncode != 0,
+    reason="system-file apply requires passwordless sudo",
+)
 def test_production_operator_and_remote_dotfiles_apply_and_repeat(
     tmp_path: Path,
 ) -> None:
