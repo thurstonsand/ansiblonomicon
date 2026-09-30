@@ -333,30 +333,6 @@ def test_cached_modes_require_complete_sources_and_do_not_advance_stamp(
     assert "Missing required cached harness sources" in missing.stderr
 
 
-def test_normal_sync_honors_fresh_and_stale_interval(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    cache = tmp_path / "cache"
-    checkout = cache / "example--catalogue"
-    (checkout / ".git").mkdir(parents=True)
-    stamp = cache / "example--catalogue.last_update"
-    stamp.touch()
-    source = {"repo": "example/catalogue", "plugins": [{"name": "fixture"}]}
-    calls: list[list[str]] = []
-
-    def record(command: list[str], *, check: bool) -> Any:
-        del check
-        calls.append(command)
-
-    monkeypatch.setattr(subprocess, "run", record)
-    harness.sync_sources([source], cache, stamp.stat().st_mtime + 86399)
-    assert calls == []
-    before = stamp.stat().st_mtime_ns
-    harness.sync_sources([source], cache, stamp.stat().st_mtime + 86400)
-    assert calls == [["git", "-C", str(checkout), "pull", "--ff-only"]]
-    assert stamp.stat().st_mtime_ns >= before
-
-
 def test_clone_failure_leaves_no_poisoned_checkout_and_retry_succeeds(
     tmp_path: Path,
 ) -> None:

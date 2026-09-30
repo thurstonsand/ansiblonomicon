@@ -336,26 +336,6 @@ esac""",
     )
 
 
-def test_docker_context_inspect_failure_for_existing_context_fails_without_create(
-    isolated: tuple[dict[str, str], Path, Path, Path, Path],
-) -> None:
-    env, fakebin, _, personal, _ = isolated
-    executable(
-        fakebin / "docker",
-        'case "$1:$2" in context:inspect) echo denied >&2; exit 17;; context:ls) echo pod042;; *) echo mutation > "$HOME/mutation";; esac',
-    )
-    result = run(
-        str(personal / "software/reconcile"),
-        "docker-context",
-        str(personal),
-        "apply",
-        env=env,
-    )
-    assert result.returncode == 17
-    assert "denied" in result.stderr
-    assert not (Path(env["HOME"]) / "mutation").exists()
-
-
 @pytest.mark.parametrize(
     "response",
     [

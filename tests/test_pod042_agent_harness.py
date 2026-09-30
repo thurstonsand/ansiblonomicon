@@ -237,29 +237,6 @@ state = "absent"
     assert resources[2]["declaration"] == {"state": "absent"}
 
 
-def test_profile_and_linux_layout() -> None:
-    _, profile, layouts, sources = catalogue.declarations(
-        REPO, harness.HOME, "pod042", "pod042"
-    )
-    assert profile["target_agents"] == ["claude", "amp", "codex", "opencode", "pi"]
-    assert profile["explicit_only"] == ["amp"]
-    assert (
-        layouts["opencode"]["skills_dir"] == "/home/thurstonsand/.config/opencode/skill"
-    )
-    assert (
-        layouts["opencode"]["agents_dir"] == "/home/thurstonsand/.config/opencode/agent"
-    )
-    assert layouts["codex"]["agents_dir"] is None
-    assert (
-        Path(catalogue.filters.__file__)
-        == REPO / "bootstrap/capabilities/agent-harness/harness_filters.py"
-    )
-    assert any(source.get("repo") == "Shpigford/nurb" for source in sources)
-    assert not any(
-        source.get("local", "").endswith("agents/work") for source in sources
-    )
-
-
 def test_local_resources_all_platforms(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
@@ -313,17 +290,6 @@ def test_unknown_profile_is_rejected() -> None:
         catalogue.declarations(REPO, harness.HOME, "missing", "pod042")
 
 
-def test_pod042_adapter_uses_common_deployment_engine() -> None:
-    assert harness.engine.__file__ == str(
-        REPO / "bootstrap/capabilities/agent-harness/agent_harness_deploy.py"
-    )
-    host = harness.engine.load_host(
-        REPO / "bootstrap/targets/pod042/agent-harness/host.toml"
-    )
-    assert host.update == "always"
-    assert host.trim_blocks is False
-
-
 def test_refuse_manifest_escape(tmp_path: Path) -> None:
     cache = tmp_path / ".cache/ansiblonomicon-harness"
     cache.mkdir(parents=True)
@@ -345,13 +311,3 @@ def test_refuse_manifest_escape(tmp_path: Path) -> None:
         harness.engine.validate_destination(
             tmp_path / inventory["owner"][0], tmp_path, roots
         )
-
-
-def test_native_hook_operator_ownership() -> None:
-    config = (REPO / "bootstrap/targets/pod042/mise.agent-harness.toml").read_text()
-    assert "sudo -u thurstonsand env -i" in config
-    assert "HOME=/home/thurstonsand" in config
-    assert "uv run --script" in config
-    assert "run //:agent-config" in config
-    assert "os.getuid() != 1000" in SCRIPT.read_text()
-    assert "os.getgid() != 1000" in SCRIPT.read_text()

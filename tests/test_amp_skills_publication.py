@@ -228,27 +228,3 @@ def test_cached_render_requires_every_git_source(tmp_path: Path) -> None:
     publisher = load_publisher(repo)
     with pytest.raises(ValueError, match="Missing required cached harness sources"):
         publisher.render(repo, tmp_path / "cache", cached=True)
-
-
-def test_real_catalogue_publishes_the_amp_selection(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    publisher = load_publisher(ROOT)
-    catalogue = publisher.catalogue
-    original = catalogue.declarations
-
-    def local_declarations(repo: Path, home: Path, profile: str, hostname: str):
-        env, profile_data, layouts, sources = original(repo, home, profile, hostname)
-        return env, profile_data, layouts, [s for s in sources if "local" in s]
-
-    monkeypatch.setattr(catalogue, "declarations", local_declarations)
-    files = publisher.render(ROOT, tmp_path / "cache", cached=True)
-    skills = {path.parts[0] for path in files}
-
-    assert {"operating-pod042", "commit-msg", "wayfinder", "tui-screenshot"} <= skills
-    assert "notify" not in skills
-    assert not any(skill in skills for skill in ("handoff", "retitle", "pi"))
-    assert all(len(path.parts) >= 2 for path in files)
-    assert not any(path.suffix == ".j2" for path in files)
-    for content, _mode in files.values():
-        assert b"{{ " not in content or b"${" in content

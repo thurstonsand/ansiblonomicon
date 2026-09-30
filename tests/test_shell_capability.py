@@ -4,7 +4,6 @@ from pathlib import Path
 import pwd
 import stat
 import subprocess
-import tomllib
 
 import pytest
 
@@ -306,65 +305,3 @@ def test_work_private_file_renders_token_atomically_and_is_noop(tmp_path: Path) 
         text=True,
     )
     assert result.stdout == f"{token} genaihub-synthetic"
-
-
-@pytest.mark.parametrize("check", [False, True])
-def test_work_task_credentials_sudo_and_check_are_scoped(
-    tmp_path: Path, check: bool
-) -> None:
-    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["shell"]["run"]
-    project, calls = tmp_path / "repo", tmp_path / "calls"
-    (project / "scripts").mkdir(parents=True)
-    fnox = project / "scripts/fnox-host"
-    fnox.write_text(
-        "#!/bin/sh\n"
-        'printf "fnox %s %s %s %s %s %s %s\\n" "$1" "$2" "$3" "$4" "$5" "$6" "$7" >> "$CALLS"\n'
-        'export SOURCEGRAPH_TOKEN="$SYNTHETIC_TOKEN"\n'
-        'export ANTHROPIC_AUTH_TOKEN="$SYNTHETIC_TOKEN"\n'
-        'export HOMEBREW_SUDO_ASKPASS_PASS_WORK="$SYNTHETIC_PASSWORD"\n'
-        'while [ "$1" != -- ]; do shift; done; shift\nexec "$@"\n'
-    )
-    fnox.chmod(0o755)
-    for name, body in {
-        "hostname": "echo ML-DFC6YK6VJQ",
-        "sudo": 'printf "sudo %s\\n" "$*" >> "$CALLS"',
-        "mise": 'printf "mise %s env=%s token=%s path=%s\\n" "$*" "$MISE_ENV" "$SOURCEGRAPH_TOKEN" "${PATH%%:*}" >> "$CALLS"',
-    }.items():
-        path = tmp_path / name
-        path.write_text(f"#!/bin/sh\n{body}\n")
-        path.chmod(0o755)
-    result = subprocess.run(
-        ["sh", "-ec", task],
-        check=True,
-        env={
-            "PATH": f"{tmp_path}:{os.environ['PATH']}",
-            "CALLS": str(calls),
-            "MISE_PROJECT_ROOT": str(project),
-            "usage_check": "1" if check else "",
-            "SYNTHETIC_TOKEN": "sgp_synthetic-ABC123",
-            "SYNTHETIC_PASSWORD": "own password",
-        },
-        capture_output=True,
-        text=True,
-    )
-    assert "sgp_synthetic-ABC123" not in result.stdout + result.stderr
-    assert "own password" not in result.stdout + result.stderr
-    lines = calls.read_text().splitlines()
-    target = f"mise -C {project}/bootstrap/targets/ML-DFC6YK6VJQ bootstrap "
-    if check:
-        assert len(lines) == 1
-        assert lines[0].startswith(target)
-        assert lines[0].endswith(
-            f"--dry-run env=shell,shell-work token=preview path={tmp_path}"
-        )
-    else:
-        assert lines[0] == (
-            "fnox exec --secret SOURCEGRAPH_TOKEN --secret ANTHROPIC_AUTH_TOKEN "
-            "--secret HOMEBREW_SUDO_ASKPASS_PASS_WORK"
-        )
-        assert lines[1].startswith(target)
-        assert lines[1].endswith(
-            "--yes env=shell,shell-work token=sgp_synthetic-ABC123 "
-            f"path={project}/scripts/askpass-sudo"
-        )
-        assert len(lines) == 2

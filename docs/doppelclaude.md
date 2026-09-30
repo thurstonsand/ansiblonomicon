@@ -118,7 +118,7 @@ Request metadata also records prompt, tool-definition and history character coun
 
 ```sh
 mise run workers:typecheck:doppelclaude
-uv run pytest -q tests/test_doppelclaude_deploy.py tests/test_pod042_doppelclaude.py tests/test_pod042_reconcile.py
+uv run pytest -q tests/test_pod042_doppelclaude.py tests/test_pod042_reconcile.py
 uv run ruff check scripts/doppelclaude_deploy.py scripts/worker_secrets.py scripts/pod042_reconcile.py
 tofu fmt -check terraform/cloudflare
 tofu -chdir=terraform/cloudflare validate

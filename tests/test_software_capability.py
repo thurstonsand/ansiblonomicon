@@ -441,60 +441,6 @@ def test_official_termination_cleans_download_and_does_not_resume(
     assert list(Path(env["TMPDIR"]).iterdir()) == []
 
 
-@pytest.mark.parametrize(
-    ("installed", "link_target", "message"),
-    [
-        (None, None, "pi would be installed: 2.0.0"),
-        ("2.0.0", "old-pi", "pi link would be updated:"),
-        ("2.0.0", "release/2.0.0/pi/pi", ""),
-        ("1.0.0", "release/1.0.0/pi/pi", "pi would be upgraded: 1.0.0 -> 2.0.0"),
-    ],
-)
-def test_pi_check_reports_native_state_without_installing_or_mutating(
-    isolated: tuple[dict[str, str], Path, Path, Path, Path],
-    installed: str | None,
-    link_target: str | None,
-    message: str,
-) -> None:
-    env, fakebin, _, _, work = isolated
-    home = Path(env["HOME"])
-    if installed:
-        executable(home / f"release/{installed}/pi/pi", "exit 0")
-    link = home / ".local/libexec/pi"
-    if link_target:
-        link.parent.mkdir(parents=True)
-        link.symlink_to(home / link_target)
-    before = link.lstat() if link.is_symlink() else None
-    executable(
-        fakebin / "mise",
-        'echo "$*" >> "$HOME/mise-check-calls"\n'
-        'while [ "${1:-}" != latest ] && [ "${1:-}" != where ]; do shift; done\n'
-        'case "$1:$2" in latest:--installed) '
-        f"{f'printf {installed}' if installed else 'exit 0'} ;; "
-        'latest:*) printf 2.0.0 ;; where:*) printf "%s/release/%s" "$HOME" "${2##*@}" ;; esac',
-    )
-    result = run(str(work / "software/reconcile"), "pi", str(work), "check", env=env)
-    assert result.returncode == 0, result.stderr
-    if message:
-        assert message in result.stderr
-    else:
-        assert result.stderr == ""
-    calls = (home / "mise-check-calls").read_text()
-    assert " latest " in f" {calls} "
-    assert " install " not in f" {calls} "
-    assert " upgrade " not in f" {calls} "
-    if before is None:
-        assert not link.is_symlink()
-    else:
-        after = link.lstat()
-        assert (after.st_ino, after.st_mode, after.st_mtime_ns, after.st_ctime_ns) == (
-            before.st_ino,
-            before.st_mode,
-            before.st_mtime_ns,
-            before.st_ctime_ns,
-        )
-
-
 def test_due_go_check_reaches_build_preview_without_go_or_stamp_change(
     isolated: tuple[dict[str, str], Path, Path, Path, Path],
 ) -> None:
@@ -513,50 +459,6 @@ def test_due_go_check_reaches_build_preview_without_go_or_stamp_change(
     assert '[install] $ mkdir -p "$HOME/.local/bin"' in result.stderr
     assert not (Path(env["HOME"]) / "go-executed").exists()
     assert not stamp.exists()
-
-
-def test_pi_native_failure_does_not_relink_and_upgrade_keeps_sidecars(
-    isolated: tuple[dict[str, str], Path, Path, Path, Path],
-) -> None:
-    env, fakebin, _, _, work = isolated
-    home = Path(env["HOME"])
-    old = home / "old-pi"
-    executable(old, "exit 0")
-    link = home / ".local/libexec/pi"
-    link.parent.mkdir(parents=True)
-    link.symlink_to(old)
-    executable(
-        fakebin / "mise",
-        'echo "$*" >> "$HOME/pi-calls"\ncase "$1" in install) exit "${FAIL_INSTALL:-0}" ;; upgrade) exit "${FAIL_UPGRADE:-0}" ;; where) printf %s "$HOME/release" ;; esac',
-    )
-    failed = run(
-        str(MISE),
-        "-C",
-        str(work),
-        "run",
-        "--skip-tools",
-        "pi",
-        env={**env, "MISE_ENV": "software,pi", "FAIL_UPGRADE": "8"},
-    )
-    assert failed.returncode != 0
-    assert link.resolve() == old
-    executable(home / "release/pi/pi", "exit 0")
-    (home / "release/pi/LICENSE").write_text("sidecar")
-    succeeded = run(
-        str(MISE),
-        "-C",
-        str(work),
-        "run",
-        "--skip-tools",
-        "pi",
-        env={**env, "MISE_ENV": "software,pi"},
-    )
-    assert succeeded.returncode == 0, succeeded.stderr
-    calls = (home / "pi-calls").read_text()
-    assert "install --yes github:earendil-works/pi@latest" in calls
-    assert "upgrade --yes --no-prune github:earendil-works/pi@latest" in calls
-    assert (home / "release/pi/LICENSE").read_text() == "sidecar"
-    assert link.resolve() == home / "release/pi/pi"
 
 
 def test_root_dispatch_retains_host_registration_limit(

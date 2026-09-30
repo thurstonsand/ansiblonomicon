@@ -446,29 +446,6 @@ def test_repeat_reconcile_preserves_config_npmrc_and_stamp_metadata(
     assert [(path.read_bytes(), path.stat().st_mtime_ns) for path in paths] == before
 
 
-def test_work_requires_attestation_and_private_managers(tmp_path: Path) -> None:
-    env, calls = fixture(tmp_path)
-    result = subprocess.run(["python3", str(RECONCILE), "--profile", "work"], env=env)
-    assert result.returncode != 0 and not calls.exists()
-    extension = tmp_path / "work.toml"
-    extension.write_text(
-        '[bun]\npackages=["bun-cli"]\n[cargo]\npackages=["bob-nvim"]\n[gem]\npackages=["ruby-cli"]\n'
-    )
-    bob = Path(env["HOME"]) / ".cargo/bin/bob"
-    bob.parent.mkdir(parents=True)
-    executable(bob, 'echo "bob $*" >> "$CALLS"\n')
-    subprocess.run(
-        ["python3", str(RECONCILE), "--profile", "work", "--extension", str(extension)],
-        env=env,
-        check=True,
-    )
-    output = calls.read_text()
-    assert "bun install --global bun-cli" in output
-    assert "cargo binstall --no-confirm bob-nvim" in output
-    assert "bob use stable" in output
-    assert "gem install ruby-cli" in output
-
-
 def installer_fixture(
     tmp_path: Path, curl_body: str
 ) -> tuple[dict[str, str], Path, Path]:

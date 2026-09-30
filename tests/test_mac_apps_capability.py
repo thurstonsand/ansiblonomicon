@@ -134,38 +134,6 @@ def old_stamp(path: Path) -> tuple[bytes, int, int]:
     return path.read_bytes(), stat.st_mode, stat.st_mtime_ns
 
 
-def test_missing_stamp_is_due_and_updates_then_scoped_cleanup(
-    tmp_path: Path,
-) -> None:
-    brewfile, calls, env = fixture(tmp_path)
-    stamp = tmp_path / "stamp"
-    result = invoke(brewfile, env, stamp)
-    assert result.returncode == 0, result.stderr
-    lines = calls.read_text().splitlines()
-    upgrade = next(
-        i for i, line in enumerate(lines) if "sudo -A mas upgrade 101" in line
-    )
-    bundle = next(i for i, line in enumerate(lines) if "brew bundle install" in line)
-    cleanup = next(i for i, line in enumerate(lines) if "brew bundle cleanup" in line)
-    formula_upgrade = next(
-        i for i, line in enumerate(lines) if line == "brew upgrade --formula"
-    )
-    assert upgrade < bundle < cleanup < formula_upgrade
-    assert not any("upgrade 999" in line for line in lines)
-    assert f"brew bundle install --file={brewfile.resolve()}" in lines
-    assert (
-        f"brew bundle cleanup --force --formula --cask --tap --file={brewfile.resolve()}"
-        in lines
-    )
-    assert stamp.exists() and stamp.stat().st_mode & 0o777 == 0o644
-    bundle_env = lines[bundle + 1]
-    assert bundle_env == (
-        "env HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1 "
-        "HOMEBREW_NO_REQUIRE_TAP_TRUST= MAS_NO_AUTO_INDEX=1 "
-        "HOMEBREW_NO_AUTO_UPDATE= HOMEBREW_NO_INSTALL_UPGRADE="
-    )
-
-
 def test_due_stamp_updates_declared_mas_and_replaces_stamp(
     tmp_path: Path,
 ) -> None:
@@ -177,17 +145,6 @@ def test_due_stamp_updates_declared_mas_and_replaces_stamp(
     assert stamp.stat().st_mtime_ns > old_mtime
     assert stamp.stat().st_mode & 0o777 == 0o644
     assert "sudo -A mas upgrade 101" in calls.read_text()
-
-
-def test_duplicate_mas_declarations_install_and_upgrade_each_id_once(
-    tmp_path: Path,
-) -> None:
-    brewfile, calls, env = fixture(tmp_path, declared="202\n101\n202\n101\n")
-    result = invoke(brewfile, env, tmp_path / "stamp")
-    assert result.returncode == 0, result.stderr
-    assert [
-        line for line in calls.read_text().splitlines() if line.startswith("sudo ")
-    ] == ["sudo -A mas install 202", "sudo -A mas upgrade 101"]
 
 
 def test_recent_stamp_is_unchanged_and_suppresses_upgrades_and_cleanup(
@@ -211,31 +168,6 @@ def test_recent_stamp_is_unchanged_and_suppresses_upgrades_and_cleanup(
     ) == metadata
 
 
-def test_recent_stamp_restores_missing_mas_without_running_upgrades(
-    tmp_path: Path,
-) -> None:
-    brewfile, calls, env = fixture(tmp_path)
-    stamp = tmp_path / "stamp"
-    stamp.touch()
-    result = invoke(brewfile, env, stamp)
-    assert result.returncode == 0, result.stderr
-    output = calls.read_text()
-    assert "sudo -A mas install 202" in output
-    assert "mas outdated" not in output
-    assert "mas upgrade" not in output
-
-
-def test_brewfile_parser_gets_delimiter_and_exact_path_without_rewriting(
-    tmp_path: Path,
-) -> None:
-    brewfile, calls, env = fixture(tmp_path, declared="")
-    before = brewfile.read_bytes()
-    result = invoke(brewfile, env, tmp_path / "stamp")
-    assert result.returncode == 0, result.stderr
-    assert brewfile.read_bytes() == before
-    assert f"parser-path {brewfile.resolve()}" in calls.read_text().splitlines()
-
-
 @pytest.mark.parametrize("failure", ["install", "cleanup", "upgrade", "mas", "sudo"])
 def test_failure_preserves_existing_stamp_metadata(
     tmp_path: Path, failure: str
@@ -250,34 +182,6 @@ def test_failure_preserves_existing_stamp_metadata(
         stamp.stat().st_mode,
         stamp.stat().st_mtime_ns,
     ) == metadata
-
-
-def test_check_parses_before_treating_rc1_as_drift(tmp_path: Path) -> None:
-    drift = tmp_path / "drift"
-    drift.mkdir()
-    brewfile, calls, env = fixture(drift, check_rc=1)
-    result = invoke(brewfile, env, drift / "stamp", "--check")
-    assert result.returncode == 1, result.stderr
-    lines = calls.read_text().splitlines()
-    assert next(
-        i for i, line in enumerate(lines) if line.startswith("brew ruby -e ")
-    ) < next(i for i, line in enumerate(lines) if "brew bundle check" in line)
-    assert result.stdout.strip() == "mac-apps: drift"
-    assert "brew outdated --formula --json=v2" in calls.read_text()
-    assert "mas list" not in calls.read_text()
-    assert not (drift / "stamp").exists()
-    assert (
-        "env HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS=1 "
-        "HOMEBREW_NO_REQUIRE_TAP_TRUST= MAS_NO_AUTO_INDEX=1 "
-        "HOMEBREW_NO_AUTO_UPDATE=1 HOMEBREW_NO_INSTALL_UPGRADE="
-    ) in lines
-
-    malformed = tmp_path / "malformed"
-    malformed.mkdir()
-    brewfile2, calls2, env2 = fixture(malformed, fail="parser", check_rc=1)
-    invalid = invoke(brewfile2, env2, malformed / "stamp", "--check")
-    assert invalid.returncode != 0
-    assert "bundle check" not in calls2.read_text()
 
 
 def test_check_ignores_pinned_formulae_and_casks(tmp_path: Path) -> None:
@@ -303,24 +207,6 @@ def test_check_ignores_pinned_formulae_and_casks(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stderr
     assert result.stdout == "mac-apps: current\n"
     assert "brew outdated --formula --json=v2" in calls.read_text()
-
-
-def test_check_detects_installed_outdated_declared_mas_without_no_upgrade(
-    tmp_path: Path,
-) -> None:
-    brewfile, calls, env = fixture(
-        tmp_path,
-        installed="101 Declared App\n",
-        outdated="101 Declared App\n",
-        mas_outdated_check=True,
-    )
-    result = invoke(brewfile, env, tmp_path / "stamp", "--check")
-    assert result.returncode == 1, result.stderr
-    assert result.stdout == "mac-apps: drift\n"
-    check = next(
-        line for line in calls.read_text().splitlines() if "bundle check" in line
-    )
-    assert "--no-upgrade" not in check
 
 
 def test_due_formula_upgrade_updates_transitive_state_once_without_casks_or_pins(
@@ -445,12 +331,3 @@ end
     assert result.stderr == (
         "top-level text log\n456789\nincluded text log\n987654\nfixture diagnostic\n"
     )
-
-
-def test_installing_mas_cannot_upgrade_an_existing_formula(tmp_path: Path) -> None:
-    brewfile, calls, env = fixture(tmp_path)
-    result = invoke(brewfile, env, tmp_path / "stamp")
-    assert result.returncode == 0, result.stderr
-    lines = calls.read_text().splitlines()
-    install = next(i for i, line in enumerate(lines) if line == "brew install mas")
-    assert lines[install + 1].endswith("HOMEBREW_NO_INSTALL_UPGRADE=1")

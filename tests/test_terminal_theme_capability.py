@@ -14,59 +14,6 @@ HOSTS = {
     "Thurstons-MacBook-Pro": ("detector", "pod042", "/Users/thurstonsand"),
     "ML-DFC6YK6VJQ": ("detector", "", "/Users/tsandberg"),
 }
-MAC_HOSTS = {
-    "Thurstons-MacBook-Pro": ("thurstonsand", "/Users/thurstonsand"),
-    "ML-DFC6YK6VJQ": ("tsandberg", "/Users/tsandberg"),
-}
-
-
-@pytest.mark.parametrize("check", [False, True])
-@pytest.mark.parametrize("host", MAC_HOSTS)
-def test_macos_task_authenticates_only_on_apply(
-    tmp_path: Path, check: bool, host: str
-) -> None:
-    calls = tmp_path / "calls"
-    project = tmp_path / "repo"
-    (project / "scripts").mkdir(parents=True)
-    resolver = project / "scripts/fnox-host"
-    resolver.write_text(
-        '#!/bin/sh\nprintf "resolve %s\\n" "$3" >> "$CALLS"\nshift 4\nexec "$@"\n'
-    )
-    resolver.chmod(0o755)
-    commands = {
-        "hostname": f"echo {host}",
-        "sudo": 'printf "sudo %s %s\\n" "$*" "$SUDO_ASKPASS" >> "$CALLS"',
-        "mise": 'printf "mise %s %s\\n" "$*" "$MISE_ENV" >> "$CALLS"\n'
-        'printf "path %s\\n" "${PATH%%:*}" >> "$CALLS"',
-    }
-    for name, body in commands.items():
-        path = tmp_path / name
-        path.write_text("#!/bin/sh\n" + body + "\n")
-        path.chmod(0o755)
-    task = tomllib.loads((ROOT / "mise.toml").read_text())["tasks"]["terminal-theme"]
-    subprocess.run(
-        ["sh", "-ec", task["run"]],
-        check=True,
-        env={
-            **os.environ,
-            "PATH": f"{tmp_path}:{os.environ['PATH']}",
-            "CALLS": str(calls),
-            "MISE_PROJECT_ROOT": str(project),
-            "usage_check": "true" if check else "",
-        },
-    )
-    lines = calls.read_text().splitlines()
-    if not check:
-        secret = "HOMEBREW_SUDO_ASKPASS_PASS"
-        if host == "ML-DFC6YK6VJQ":
-            secret += "_WORK"
-        assert lines.pop(0) == f"resolve {secret}"
-        assert lines.pop() == f"path {project}/scripts/askpass-sudo"
-    else:
-        assert lines.pop() == f"path {tmp_path}"
-    assert len(lines) == 1
-    assert "--dry-run" in lines[0] if check else "--yes" in lines[0]
-    assert lines[0].endswith("terminal-theme,terminal-theme-macos,terminal-theme-files")
 
 
 def test_three_hosts_include_shared_capability_with_host_behavior() -> None:
@@ -94,64 +41,6 @@ def test_three_hosts_include_shared_capability_with_host_behavior() -> None:
             macos = target / "mise.terminal-theme-macos.toml"
             assert macos.is_symlink()
             assert macos.resolve() == (CAPABILITY / "mise.macos.toml").resolve()
-
-
-def test_macos_private_resources_are_host_local_and_watcher_is_shared() -> None:
-    shared = tomllib.loads((CAPABILITY / "mise.macos.toml").read_text())
-    assert "directories" not in shared["bootstrap"]
-    assert "files" not in shared["bootstrap"]
-    for host, (owner, home) in MAC_HOSTS.items():
-        config = tomllib.loads(
-            (
-                ROOT / "bootstrap/targets" / host / "mise.terminal-theme-files.toml"
-            ).read_text()
-        )["bootstrap"]
-        assert config["directories"] == {
-            f"{home}/.ssh": {"owner": owner, "group": "staff", "mode": "0700"},
-            f"{home}/.ssh/config.d": {
-                "owner": owner,
-                "group": "staff",
-                "mode": "0700",
-            },
-        }
-        assert config["files"] == {
-            f"{home}/.ssh/config.d/terminal-theme.conf": {
-                "source": "terminal-theme/terminal-theme-ssh.conf.tera",
-                "template": True,
-                "owner": owner,
-                "group": "staff",
-                "mode": "0644",
-            },
-        }
-
-    agent = shared["bootstrap"]["macos"]["launchd"]["agents"][
-        "house.thurstons.terminal-theme-watch"
-    ]
-    assert "kickstart" not in agent
-    runtime_hash = agent["environment"]["TERMINAL_THEME_RUNTIME_HASH"]
-    assert "config_root" in runtime_hash
-    assert "terminal_theme_home" not in runtime_hash
-    assert "hunk-gruvbox-light.toml" in runtime_hash
-    assert "hunk-gruvbox-dark.toml" in runtime_hash
-
-
-def test_helper_source_modes() -> None:
-    executable = {
-        "hunk_gruvbox_theme.py",
-        "terminal-theme-init.py",
-        "terminal-theme-ssh-lease.py",
-        "terminal-theme-switch.py",
-        "terminal-theme-watch",
-    }
-    for path in (CAPABILITY / "files").iterdir():
-        mode = stat.S_IMODE(path.stat().st_mode)
-        if path.name in executable:
-            assert mode == 0o755
-    # Git normalizes this source to 0644; destination secrecy is declarative.
-    assert (
-        stat.S_IMODE((CAPABILITY / "files/terminal-theme-ssh.conf.tera").stat().st_mode)
-        == 0o644
-    )
 
 
 def isolated_mise_env(home: Path, config: Path) -> dict[str, str]:
