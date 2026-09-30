@@ -19,6 +19,7 @@ THEME_NAME = re.compile(r"[a-z0-9_][a-z0-9._+-]*\Z")
 PLUGIN_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 KINDS = {"packages", "aur", "themes", "plugins"}
 PACMAN_RUN = re.compile(r"\[(?P<time>[^\]]+)\] \[PACMAN\] Running '(?P<command>[^']*)'")
+PKG_ADD = re.compile(r"^\s*omarchy-pkg-add ([a-z0-9][a-z0-9@._+ -]*)$", re.MULTILINE)
 PLUGINS_DIR = Path.home() / ".config/omarchy/plugins"
 SETUP_STATE = Path.home() / ".local/state/omarchy-loadout/plugin-setup"
 
@@ -119,6 +120,12 @@ def installed_themes() -> set[str]:
     return {entry.name for entry in themes_dir.iterdir() if entry.is_dir()}
 
 
+def generated_themes() -> set[str]:
+    """Themes the Aether app writes for itself, which have no source to declare."""
+    themes_dir = Path.home() / ".config/omarchy/themes"
+    return {marker.parent.name for marker in themes_dir.glob("*/.aether-managed")}
+
+
 def installed_plugins() -> set[str]:
     catalog = subprocess.run(
         ["omarchy", "plugin", "catalog"], check=True, capture_output=True, text=True
@@ -174,6 +181,17 @@ def installer_packages(pacman_log: Path, install_log: Path) -> set[str]:
     return packages
 
 
+def maintenance_packages(omarchy_bin: Path) -> set[str]:
+    """Packages Omarchy's update commands install on demand, such as fwupd for firmware.
+    Its opt-in installers are left out, since those record choices worth declaring."""
+    return {
+        package
+        for script in omarchy_bin.glob("omarchy-update-*")
+        for run in PKG_ADD.finditer(script.read_text())
+        for package in run[1].split()
+    }
+
+
 def undeclared_packages(
     declared: dict[str, str], pacman_log: Path, install_log: Path
 ) -> set[str]:
@@ -181,16 +199,17 @@ def undeclared_packages(
     explicit = subprocess.run(
         ["pacman", "-Qqe"], check=True, capture_output=True, text=True
     ).stdout.split()
-    omarchy_lists = Path(os.environ["OMARCHY_PATH"]) / "install"
+    omarchy_path = Path(os.environ["OMARCHY_PATH"])
     listed = {
         line.split("#", 1)[0].strip()
-        for package_list in omarchy_lists.glob("*.packages")
+        for package_list in (omarchy_path / "install").glob("*.packages")
         for line in package_list.read_text().splitlines()
     }
     return (
         set(explicit)
         - listed
         - installer_packages(pacman_log, install_log)
+        - maintenance_packages(omarchy_path / "bin")
         - set(declared)
     )
 
@@ -278,7 +297,10 @@ def reconcile(
                     )
                 )
             ),
-            *(f"theme: {name}" for name in sorted(themes - set(manifest.themes))),
+            *(
+                f"theme: {name}"
+                for name in sorted(themes - set(manifest.themes) - generated_themes())
+            ),
             *(f"plugin: {name}" for name in sorted(plugins - set(manifest.plugins))),
         ]
         for entry in undeclared:
