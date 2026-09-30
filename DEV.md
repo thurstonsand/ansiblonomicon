@@ -15,7 +15,7 @@
 Every host reconciles the same way:
 
 ```sh
-mise <host>                # laptop | udmp | pod042
+mise <host>                # laptop | udmp | pod042 | omarchy
 mise <host> --check        # dry run
 mise laptop -t shell       # focused native capability
 mise reconcile             # whichever of those this machine's hostname selects
@@ -72,7 +72,7 @@ The physical Debian NAS, declared in `bootstrap/targets/pod042/`.
 
 ## Omarchy laptop
 
-`type-a-no2` is the personal laptop running Omarchy. Any customization on this laptop should build on top of and integrate with the native Omarchy methodology and style. Ideally, everything should be done Omarchy-native, then captured in the repo as is relevant. The `omarchy-loadout` capability reads packages, themes, and plugins from `bootstrap/targets/type-a-no2/loadout.toml` and reconciles them in a way native to Omarchy. Declare a theme or plugin by its Omarchy name or id with its git `source`, and mark a retired entry `absent` to remove it explicitly, then delete the line once applied. Upgrades are natively managed by `omarchy update`, `omarchy theme update`, and `omarchy plugin update`, not the reconciler.
+`type-a-no2` is the personal laptop running Omarchy, reconciled by `mise omarchy`; `-t omarchy-config` and friends narrow it like the laptop tags. Any customization on this laptop should build on top of and integrate with the native Omarchy methodology and style. Ideally, everything should be done Omarchy-native, then captured in the repo as is relevant. The `omarchy-loadout` capability reads packages, themes, and plugins from `bootstrap/targets/type-a-no2/loadout.toml` and reconciles them in a way native to Omarchy. Declare a theme or plugin by its Omarchy name or id with its git `source`, and mark a retired entry `absent` to remove it explicitly, then delete the line once applied. Upgrades are natively managed by `omarchy update`, `omarchy theme update`, and `omarchy plugin update`, not the reconciler.
 
 Optional theme or plugin extras, such as `theme-set` hooks or files an author asks you to copy into another app, are ordinary `[dotfiles]` in `mise.omarchy-config.toml`, which runs after installs. Keep repo-owned extras under `omarchy/themes/<name>/`; a file copied from the install itself can use its `~/.config/omarchy/themes/<name>/` path as the source. Web apps follow the same rule: create one with `omarchy-webapp-install`, then move its `.desktop` file and icon under `omarchy/applications/` and `omarchy/icons/` and symlink them back.
 

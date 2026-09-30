@@ -10,6 +10,7 @@ if [[ -z "$host" ]]; then
     ML-DFC6YK6VJQ) host=work ;;
     pod042) host=pod042 ;;
     Thurstons-MacBook-Pro) host=macos ;;
+    type-a-no2) host=omarchy ;;
     *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
   esac
 fi
@@ -21,5 +22,6 @@ fi
 case "$host" in
   macos) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions hostname agent-harness agent-config berkeley-mono claude-code desktop-tools docker-context editor-config homebrew language-tools mac-apps mas mise opencode sessions shp uvc-util git-client jj-client ssh-client neovim nvim-deps shell terminal-theme terminal-tools tmux user-tools\n' ;;
   work) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions agent-harness agent-config berkeley-mono desktop-tools editor-config homebrew language-tools mac-apps mas mise pi sessions uvc-util git-client jj-client neovim nvim-deps python-index shell terminal-theme terminal-tools tmux user-tools work-local\n' ;;
-  *) printf 'Unknown host: %s (expected macos, pod042, or work)\n' "$host" >&2; exit 1 ;;
+  omarchy) printf 'Native mise tags: omarchy-loadout mise omarchy-config berkeley-mono amp-cli agent-harness agent-config\n' ;;
+  *) printf 'Unknown host: %s (expected macos, pod042, work, or omarchy)\n' "$host" >&2; exit 1 ;;
 esac

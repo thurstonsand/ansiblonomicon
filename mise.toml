@@ -577,10 +577,7 @@ run = '''
 case "$(hostname -s)" in
   ML-DFC6YK6VJQ|Thurstons-MacBook-Pro) exec mise run //:reconcile:laptop ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   pod042) exec python3 "$MISE_PROJECT_ROOT/scripts/pod042_reconcile.py" ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
-  type-a-no2)
-    [ -z "${usage_tags:-}" ] || { echo "Omarchy host tags are not registered yet" >&2; exit 1; }
-    exec mise run //:reconcile:omarchy ${usage_check:+--check}
-    ;;
+  type-a-no2) exec mise run //:reconcile:omarchy ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
 esac
 '''
@@ -643,28 +640,58 @@ MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
 [tasks."reconcile:omarchy"]
 description = "Reconcile this Omarchy laptop's installs, tools, font, and agent configuration"
 alias = "omarchy"
-usage = 'flag "-c --check" help="Show agent configuration changes without applying them"'
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+flag "-t --tags <tags>" help="Only run these capabilities (comma-separated)"
+'''
 run = '''
 target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
-mise run //:omarchy-loadout ${usage_check:+--check} || exit "$?"
-if [ -n "${usage_check:-}" ]; then
-  mise -C "$target" bootstrap --only dotfiles --force-dotfiles --dry-run || exit "$?"
-  MISE_ENV=omarchy-config mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles --dry-run || exit "$?"
-  mise -C "$HOME" bootstrap --only tools --dry-run || exit "$?"
-else
-  hypr_before=$(sha256sum "$HOME"/.config/hypr/*.lua 2>/dev/null || true)
-  mise -C "$target" bootstrap --only dotfiles --force-dotfiles --yes || exit "$?"
-  MISE_ENV=omarchy-config mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles --yes || exit "$?"
-  hypr_after=$(sha256sum "$HOME"/.config/hypr/*.lua)
-  [ "$hypr_before" = "$hypr_after" ] || hyprctl reload || exit "$?"
-  [ "$(hyprctl configerrors)" = "" ] || { hyprctl configerrors; exit 1; }
-  mise -C "$HOME" bootstrap --only tools --yes || exit "$?"
+tags="${usage_tags:-}"
+supported=" all omarchy-loadout mise omarchy-config berkeley-mono amp-cli agent-harness agent-config "
+unsupported=
+for tag in $(printf '%s' "$tags" | tr ',' ' '); do
+  case "$supported" in
+    *" $tag "*) ;;
+    *) unsupported="${unsupported:+$unsupported,}$tag" ;;
+  esac
+done
+[ -z "$unsupported" ] || { echo "Unsupported omarchy-host tags: $unsupported" >&2; exit 1; }
+selected() {
+  case ",$tags," in ,,|*,all,*|*,"$1",*) return 0 ;; esac
+  return 1
+}
+mode=--yes
+[ -z "${usage_check:-}" ] || mode=--dry-run
+if selected omarchy-loadout; then
+  mise run //:omarchy-loadout ${usage_check:+--check} || exit "$?"
 fi
-mise run //:berkeley-mono ${usage_check:+--check} || exit "$?"
-mise run //:amp-cli ${usage_check:+--check} || exit "$?"
-mise run //:agent-harness ${usage_check:+--check}
+if selected mise; then
+  mise -C "$target" bootstrap --only dotfiles --force-dotfiles "$mode" || exit "$?"
+fi
+if selected omarchy-config; then
+  hypr_before=$(sha256sum "$HOME"/.config/hypr/*.lua 2>/dev/null || true)
+  MISE_ENV=omarchy-config mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles "$mode" || exit "$?"
+  if [ -z "${usage_check:-}" ]; then
+    hypr_after=$(sha256sum "$HOME"/.config/hypr/*.lua)
+    [ "$hypr_before" = "$hypr_after" ] || hyprctl reload || exit "$?"
+    [ "$(hyprctl configerrors)" = "" ] || { hyprctl configerrors; exit 1; }
+  fi
+fi
+if selected mise; then
+  mise -C "$HOME" bootstrap --only tools "$mode" || exit "$?"
+fi
+for native_capability in berkeley-mono amp-cli; do
+  if selected "$native_capability"; then
+    mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
+  fi
+done
+if selected agent-harness; then
+  mise run //:agent-harness ${usage_check:+--check}
+elif selected agent-config; then
+  mise run //:agent-config ${usage_check:+--check}
+fi
 '''
 
 [tasks."agent-config"]
@@ -820,7 +847,7 @@ python3 scripts/pod042_reconcile.py \
 [tasks."reconcile:tags"]
 description = "List the --tags a host offers (defaults to this machine's own)"
 usage = '''
-arg "[playbook]" help="Host to inspect: macos, work, pod042"
+arg "[playbook]" help="Host to inspect: macos, work, pod042, omarchy"
 '''
 run = "./scripts/list-tags.sh ${usage_playbook:-}"
 
