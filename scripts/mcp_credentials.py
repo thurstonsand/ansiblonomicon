@@ -47,17 +47,13 @@ def remote_environment(name: str, value: str) -> dict[str, str]:
     return environment
 
 
-def exec_remote(
-    endpoint: str, credential_name: str, extra_headers: tuple[str, ...] = ()
-) -> None:
+def exec_remote(endpoint: str, credential_name: str) -> None:
     command = [
         "mcp-remote",
         endpoint,
         "--header",
         f"Authorization:Bearer ${{{credential_name}}}",
     ]
-    for header in extra_headers:
-        command.extend(["--header", header])
     os.execvpe(
         command[0],
         command,
@@ -67,29 +63,13 @@ def exec_remote(
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument(
-        "mode", choices=["cloudflare-api", *HEADER_SECRETS, "work-web-search"]
-    )
-    parser.add_argument("endpoint", nargs="?")
+    parser.add_argument("mode", choices=["cloudflare-api", *HEADER_SECRETS])
     args = parser.parse_args()
     if args.mode in HEADER_SECRETS:
-        if args.endpoint:
-            parser.error(f"{args.mode} does not accept an endpoint")
         token = credential(HEADER_SECRETS[args.mode])
         print(json.dumps({"Authorization": f"Bearer {token}"}))
         return
-    if args.mode == "cloudflare-api":
-        if args.endpoint:
-            parser.error("cloudflare-api does not accept an endpoint")
-        exec_remote("https://mcp.cloudflare.com/mcp", "CLOUDFLARE_API_TOKEN")
-        return
-    if not args.endpoint:
-        parser.error("work-web-search requires an endpoint")
-    exec_remote(
-        args.endpoint,
-        "ANTHROPIC_AUTH_TOKEN",
-        ("User-Agent:claude-code/2.1.2 pi-mcp-adapter",),
-    )
+    exec_remote("https://mcp.cloudflare.com/mcp", "CLOUDFLARE_API_TOKEN")
 
 
 if __name__ == "__main__":

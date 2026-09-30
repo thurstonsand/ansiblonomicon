@@ -64,6 +64,7 @@ def main() -> None:
     due = not stamp.exists() or time.time() - stamp.stat().st_mtime >= INTERVAL
     env = {
         **os.environ,
+        "HOMEBREW_NO_ASK": "1",
         "HOMEBREW_NO_UPGRADE_AUTO_UPDATES_CASKS": "1",
         "MAS_NO_AUTO_INDEX": "1",
     }

@@ -367,6 +367,13 @@ def test_mcp_converts_claude_schema_preserves_foreign_and_rejects_transport(
                     "url": "https://example.test/mcp",
                     "headers": {"Authorization": "Bearer value"},
                 },
+                {
+                    "name": "env-token",
+                    "transport": "http",
+                    "url": "https://example.test/mcp",
+                    "headers": {"User-Agent": "agent"},
+                    "bearer_token_env_var": "TOKEN",
+                },
             ]
         },
     )
@@ -382,6 +389,11 @@ def test_mcp_converts_claude_schema_preserves_foreign_and_rejects_transport(
             "type": "http",
             "url": "https://example.test/mcp",
             "headers": {"Authorization": "Bearer value"},
+        },
+        "env-token": {
+            "type": "http",
+            "url": "https://example.test/mcp",
+            "headers": {"User-Agent": "agent", "Authorization": "Bearer ${TOKEN}"},
         },
     }
     with pytest.raises(ValueError, match="transport"):
@@ -412,6 +424,13 @@ def test_codex_mcp_replaces_owned_servers_and_preserves_foreign() -> None:
                     "url": "https://example.test/mcp",
                     "headers": {"Authorization": "Bearer value"},
                 },
+                {
+                    "name": "env-token",
+                    "transport": "http",
+                    "url": "https://example.test/mcp",
+                    "headers": {"User-Agent": "agent"},
+                    "bearer_token_env_var": "TOKEN",
+                },
             ]
         },
         {"retired"},
@@ -424,6 +443,11 @@ def test_codex_mcp_replaces_owned_servers_and_preserves_foreign() -> None:
         "remote": {
             "url": "https://example.test/mcp",
             "http_headers": {"Authorization": "Bearer value"},
+        },
+        "env-token": {
+            "url": "https://example.test/mcp",
+            "http_headers": {"User-Agent": "agent"},
+            "bearer_token_env_var": "TOKEN",
         },
     }
     with pytest.raises(ValueError, match="SSE"):

@@ -184,8 +184,11 @@ def _claude_mcp_output(
             }
         else:
             server = {"type": transport, "url": item.get("url")}
-            if "headers" in item:
-                server["headers"] = item["headers"]
+            headers = dict(item.get("headers", {}))
+            if "bearer_token_env_var" in item:
+                headers["Authorization"] = f"Bearer ${{{item['bearer_token_env_var']}}}"
+            if headers:
+                server["headers"] = headers
         desired[item["name"]] = server
     target = _safe_target(home, ".claude.json")
     if target.is_symlink():
@@ -224,6 +227,8 @@ def _codex_mcp_config(
             server = {"url": item.get("url")}
             if "headers" in item:
                 server["http_headers"] = item["headers"]
+            if "bearer_token_env_var" in item:
+                server["bearer_token_env_var"] = item["bearer_token_env_var"]
         desired[item["name"]] = server
     document = tomlkit.parse(config)
     if not desired and "mcp_servers" not in document:

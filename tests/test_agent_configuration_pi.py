@@ -88,7 +88,7 @@ def test_work_gateway_models_packages_and_runtime(tmp_path: Path) -> None:
     providers = json.loads(result[".pi/agent/models.json"])["providers"]
     assert settings["defaultProvider"] == "corp-anthropic"
     assert settings["defaultModel"] == "opus-v"
-    assert settings["enabledModels"] == ["corp/opus:medium", "corp/gpt_sol:medium"]
+    assert settings["enabledModels"] == ["corp/opus:high", "corp/gpt_sol:medium"]
     assert [m["id"] for m in providers["corp-openai"]["models"]] == [
         "gpt_sol-v[1m]",
         "gpt_luna-v[1m]",

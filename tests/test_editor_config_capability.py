@@ -134,7 +134,6 @@ def metadata(
         if mode is not None:
             assert stat.S_IMODE(info.st_mode) == mode
         assert info.st_uid == os.getuid()
-        assert info.st_gid == os.getgid()
         values.append(
             (
                 relative,

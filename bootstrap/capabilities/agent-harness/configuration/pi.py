@@ -74,8 +74,8 @@ def _profile(
             "auto_title": wm["sonnet"]["pi_alias"],
             "handoff": sol,
             "vibe": wm["gpt_luna"]["pi_alias"],
-            "enabled": [f"{opus}:medium", f"{sol}:medium"],
-            "roster": [f"{opus}:medium", f"{sol}:low", f"{sol}:medium", f"{sol}:high"],
+            "enabled": [f"{opus}:high", f"{sol}:medium"],
+            "roster": [f"{opus}:high", f"{sol}:low", f"{sol}:medium", f"{sol}:high"],
             "packages": [*data.get("piWorkPackages", []), *WORK_PACKAGES],
         }
     aliases = {
@@ -104,9 +104,12 @@ def _profile(
         "auto_title": aliases["luna"],
         "handoff": aliases["sol"],
         "vibe": aliases["luna"],
-        "enabled": [f"{aliases[k]}:medium" for k in ("opus", "fable", "astra", "sol")],
+        "enabled": [
+            f"{aliases['opus']}:high",
+            *(f"{aliases[k]}:medium" for k in ("fable", "astra", "sol")),
+        ],
         "roster": [
-            f"{aliases['opus']}:medium",
+            f"{aliases['opus']}:high",
             f"{aliases['fable']}:medium",
             f"{aliases['astra']}:medium",
             f"{aliases['astra']}:high",
@@ -196,7 +199,7 @@ def _settings(
     settings: dict[str, Any] = {
         "defaultProvider": profile["provider"],
         "defaultModel": profile["model"],
-        "defaultThinkingLevel": "medium",
+        "defaultThinkingLevel": "high",
         "showCacheMissNotices": True,
         "tuiMode": "fullscreen",
         "fullscreenScrollbar": "auto",
@@ -317,7 +320,12 @@ def _settings(
         "autocompleteMaxVisible": 7,
     }
     if hostname == WORK_HOST:
-        settings["npmCommand"] = ["node", f"{home}/.pi/agent/npm-mirror-shim.mjs"]
+        settings["npmCommand"] = [
+            "node",
+            f"{home}/.pi/agent/npm-mirror-shim.mjs",
+            "--",
+            "npm",
+        ]
     else:
         settings["doppelclaude"] = {
             "debug": {"enabled": True},
