@@ -87,40 +87,40 @@ models:
       vision: true
       agent_harness:
         aliases:
-          pi: "openai-codex/gpt-6-astra"
+          pi: "openai/gpt-6-astra"
       vscode:
         include: true
         thinking: true
       zed: true
 
     gpt_sol:
-      version: "gpt-6-sol"
-      display_name: "GPT 6 Sol"
+      version: "gpt-6.1-sol"
+      display_name: "GPT 6.1 Sol"
       # Check current subscription-backed limits with:
-      # codex debug models | jq -r '.models[] | select(.slug=="gpt-6-sol") | {slug, context_window, max_context_window, effective_context_window_percent}'
+      # codex debug models | jq -r '.models[] | select(.slug=="gpt-6.1-sol") | {slug, context_window, max_context_window, effective_context_window_percent}'
       max_input: 272000
       max_output: 128000
       vision: true
       agent_harness:
         aliases:
-          pi: "openai-codex/gpt-6-sol"
+          pi: "openai/gpt-6.1-sol"
       vscode:
         include: true
         thinking: true
       zed: true
       variants:
         medium:
-          id: "gpt-6-sol(medium)"
-          display_name: "GPT 6 Sol Medium"
+          id: "gpt-6.1-sol(medium)"
+          display_name: "GPT 6.1 Sol Medium"
           vscode: true
         high:
-          id: "gpt-6-sol(high)"
-          display_name: "GPT 6 Sol High"
+          id: "gpt-6.1-sol(high)"
+          display_name: "GPT 6.1 Sol High"
           vscode: true
           zed: true
         xhigh:
-          id: "gpt-6-sol(xhigh)"
-          display_name: "GPT 6 Sol XHigh"
+          id: "gpt-6.1-sol(xhigh)"
+          display_name: "GPT 6.1 Sol XHigh"
           vscode: true
 
     gpt_luna:
@@ -131,7 +131,7 @@ models:
       vision: true
       agent_harness:
         aliases:
-          pi: "openai-codex/gpt-6-luna"
+          pi: "openai/gpt-6-luna"
       vscode:
         include: true
         thinking: true
