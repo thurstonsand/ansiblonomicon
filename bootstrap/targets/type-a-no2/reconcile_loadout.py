@@ -19,6 +19,16 @@ THEME_NAME = re.compile(r"[a-z0-9_][a-z0-9._+-]*\Z")
 PLUGIN_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9._-]*\Z")
 KINDS = {"packages", "aur", "themes", "plugins"}
 PACMAN_RUN = re.compile(r"\[(?P<time>[^\]]+)\] \[PACMAN\] Running '(?P<command>[^']*)'")
+PLUGINS_DIR = Path.home() / ".config/omarchy/plugins"
+SETUP_STATE = Path.home() / ".local/state/omarchy-loadout/plugin-setup"
+
+
+@dataclass(frozen=True)
+class Plugin:
+    source: str
+    # Runs from the plugin checkout after install and again whenever its commit changes,
+    # since Omarchy clones plugins without running any install steps of their own.
+    setup: str | None
 
 
 @dataclass(frozen=True)
@@ -27,7 +37,7 @@ class Manifest:
     aur: dict[str, str]
     # A git URL to install from, or None when the theme or plugin is declared absent.
     themes: dict[str, str | None]
-    plugins: dict[str, str | None]
+    plugins: dict[str, Plugin | None]
 
 
 def declared_packages(table: dict[object, object]) -> dict[str, str]:
@@ -63,6 +73,25 @@ def declared_sources(
     return sources
 
 
+def declared_plugins(table: dict[object, object]) -> dict[str, Plugin | None]:
+    plugins: dict[str, Plugin | None] = {}
+    for name, declaration in table.items():
+        if not isinstance(name, str):
+            raise ValueError(f"invalid plugin name: {name!r}")
+        setup = None
+        if isinstance(declaration, dict):
+            fields = cast(dict[str, object], declaration)
+            setup = fields.get("setup")
+            if setup is not None and not isinstance(setup, str):
+                raise ValueError(f"invalid plugin setup: {name} = {setup!r}")
+            declaration = {k: v for k, v in fields.items() if k != "setup"}
+        source = declared_sources("plugin", {name: declaration}, PLUGIN_ID)[name]
+        if source is None and setup is not None:
+            raise ValueError(f"absent plugin declares setup: {name}")
+        plugins[name] = None if source is None else Plugin(source, setup)
+    return plugins
+
+
 def load_manifest(path: Path) -> Manifest:
     data = tomllib.loads(path.read_text())
     if not set(data) <= KINDS or not all(isinstance(v, dict) for v in data.values()):
@@ -72,7 +101,7 @@ def load_manifest(path: Path) -> Manifest:
         packages=declared_packages(tables.get("packages", {})),
         aur=declared_packages(tables.get("aur", {})),
         themes=declared_sources("theme", tables.get("themes", {}), THEME_NAME),
-        plugins=declared_sources("plugin", tables.get("plugins", {}), PLUGIN_ID),
+        plugins=declared_plugins(tables.get("plugins", {})),
     )
 
 
@@ -91,15 +120,39 @@ def installed_themes() -> set[str]:
 
 
 def installed_plugins() -> set[str]:
-    plugins_dir = Path.home() / ".config/omarchy/plugins"
     catalog = subprocess.run(
         ["omarchy", "plugin", "catalog"], check=True, capture_output=True, text=True
     )
     return {
         plugin["id"]
         for plugin in json.loads(catalog.stdout)
-        if Path(plugin["sourceDir"]).parent == plugins_dir
+        if Path(plugin["sourceDir"]).parent == PLUGINS_DIR
     }
+
+
+def pending_setups(plugins: dict[str, Plugin | None]) -> dict[str, tuple[str, str]]:
+    """Setup commands whose last successful run predates the plugin's current commit,
+    keyed by plugin id, with the stamp that records a run of that command at that commit."""
+    pending: dict[str, tuple[str, str]] = {}
+    for plugin_id, plugin in plugins.items():
+        if plugin is None or plugin.setup is None:
+            continue
+        checkout = PLUGINS_DIR / plugin_id
+        commit = (
+            subprocess.run(
+                ["git", "-C", str(checkout), "rev-parse", "HEAD"],
+                check=True,
+                capture_output=True,
+                text=True,
+            ).stdout.strip()
+            if checkout.is_dir()
+            else "uninstalled"
+        )
+        stamp = f"{commit}\n{plugin.setup}\n"
+        recorded = SETUP_STATE / plugin_id
+        if not recorded.is_file() or recorded.read_text() != stamp:
+            pending[plugin_id] = (plugin.setup, stamp)
+    return pending
 
 
 def installer_packages(pacman_log: Path, install_log: Path) -> set[str]:
@@ -199,8 +252,12 @@ def reconcile(
         ["omarchy", "theme", "install"],
         ["omarchy", "theme", "remove"],
     )
+    plugin_sources = {
+        plugin_id: None if plugin is None else plugin.source
+        for plugin_id, plugin in manifest.plugins.items()
+    }
     commands += source_commands(
-        manifest.plugins,
+        plugin_sources,
         plugins,
         ["omarchy", "plugin", "add", "--yes"],
         ["omarchy", "plugin", "remove", "--yes"],
@@ -236,13 +293,27 @@ def reconcile(
             ),
             *(
                 f"plugin {name}"
-                for name in unconverged(manifest.plugins, installed_plugins())
+                for name in unconverged(plugin_sources, installed_plugins())
             ),
         ]
         if mismatched:
             raise SystemExit(
                 f"declared name does not match what Omarchy installed: {', '.join(mismatched)}"
             )
+
+    if not check:
+        for plugin_id, plugin in manifest.plugins.items():
+            if plugin is None:
+                (SETUP_STATE / plugin_id).unlink(missing_ok=True)
+
+    for plugin_id, (setup, stamp) in pending_setups(manifest.plugins).items():
+        print(f"setup {plugin_id}", flush=True)
+        if not check:
+            subprocess.run(
+                ["bash", "-c", setup], cwd=PLUGINS_DIR / plugin_id, check=True
+            )
+            SETUP_STATE.mkdir(parents=True, exist_ok=True)
+            (SETUP_STATE / plugin_id).write_text(stamp)
 
 
 def main() -> None:

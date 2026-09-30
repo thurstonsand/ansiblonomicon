@@ -10,6 +10,13 @@ state = "absent"
 [bootstrap.directories."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock"]
 state = "absent"
 
+[bootstrap.repos]
+"~/.local/share/omarchy-icloud-photos" = { url = "https://github.com/jankeesvw/omarchy-icloud-photos.git", ref = "main" }
+
+# install.sh is idempotent and upstream asks for a rerun after every pull; icloudpd comes from the loadout's AUR package.
+[bootstrap.hooks.post-repos]
+run = "~/.local/share/omarchy-icloud-photos/install.sh"
+
 [dotfiles]
 "~/.config/hypr/monitors.lua" = { source = "omarchy/hypr/monitors.lua", mode = "symlink" }
 "~/.config/hypr/input.lua" = { source = "omarchy/hypr/input.lua", mode = "symlink" }
@@ -21,6 +28,7 @@ state = "absent"
 "~/.config/hypr/xdph.conf" = { source = "omarchy/hypr/xdph.conf", mode = "symlink" }
 "~/.config/hypr/.luarc.json" = { source = "omarchy/hypr/.luarc.json", mode = "symlink" }
 "~/.config/omarchy/shell.json" = { source = "omarchy/shell.json", mode = "symlink" }
+"~/.config/omarchy/sandman.json" = { source = "omarchy/sandman.json", mode = "symlink" }
 "~/.config/omarchy/extensions/omarchy-menu.jsonc" = { source = "omarchy/extensions/omarchy-menu.jsonc", mode = "symlink" }
 "~/.config/omarchy/branding/about.txt" = { source = "omarchy/branding/about.txt", mode = "symlink" }
 "~/.config/omarchy/branding/screensaver.txt" = { source = "omarchy/branding/screensaver.txt", mode = "symlink" }

@@ -1,0 +1,8 @@
+{
+  "screensaver": 120,
+  "display": 600,
+  "lock": 600,
+  "sleep": 900,
+  "hibernate": 7200,
+  "lid": "system"
+}

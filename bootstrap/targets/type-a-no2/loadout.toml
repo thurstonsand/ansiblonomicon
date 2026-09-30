@@ -3,21 +3,33 @@
 1password-cli = "present"
 beeper-bin = "present"
 brave-origin-bin = "present"
+cmake = "present"
 direnv = "present"
 ghostty = "present"
 github-cli = "present"
+libpulse = "present"
+ninja = "present"
 omarchy-zsh = "present"
 openai-codex-desktop = "present"
+pkgconf = "present"
+qt6-connectivity = "present"
+qt6-declarative = "present"
+qt6-quick3d = "present"
+qt6-quicktimeline = "present"
+qt6-tools = "present"
 rust = "present"
 t3code-bin = "present"
 "webkitgtk-6.0" = "present"
 yaru-icon-theme = "present"
 
 [aur]
+icloudpd-bin = "present"
 openwhispr-bin = "present"
 
 [themes]
 sakura-mochi = { source = "https://github.com/OldJobobo/omarchy-sakura-mochi-theme.git" }
 
 [plugins]
-omamail = { source = "https://github.com/huacnlee/omamail.git" }
+"io.github.mb-jambon.omapods" = { source = "https://github.com/MB-JAMBON/omarchy-pods.git", setup = "./setup" }
+"io.github.wouldja.mouse" = { source = "https://github.com/wouldja/omarchy-mouse.git" }
+"lgse.sandman" = { source = "https://github.com/lgse/sandman.git", setup = "sudo install -D -o root -g root -m 0755 sandman-configure-hibernate /usr/local/libexec/sandman-configure-hibernate" }
