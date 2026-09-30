@@ -49,9 +49,7 @@ quiet = true
 [tasks."bootstrap:agent-deps"]
 description = "Install agent tooling development dependencies"
 run = '''
-# The work machine skips the install (npm rewrites package-lock to the internal
-# mirror), but still writes the stamp: a task that succeeds without producing its
-# declared output is stale forever and re-runs on every shell entry.
+# The work machine skips the install: npm rewrites package-lock to the internal mirror.
 if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
   # --no-audit: the audit endpoint is a separate service from the registry and
   # can hang for minutes while package fetches are fine. It blocks every shell
@@ -67,8 +65,6 @@ if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
       fi
     done
 fi
-mkdir -p bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/node_modules
-touch bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/node_modules/agent-deps-stamp
 '''
 sources = [
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/package.json",
@@ -81,9 +77,7 @@ sources = [
   "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/package-lock.json",
   "scripts/ts-package-json-paths.sh",
 ]
-outputs = [
-  "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/node_modules/agent-deps-stamp",
-]
+outputs = { auto = true }
 quiet = true
 
 # No sources/outputs: the task cache lives in mise's state dir, outside the repo,
