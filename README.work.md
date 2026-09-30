@@ -4,6 +4,17 @@ This documents private files that live **only** on the work Mac, plus their trac
 
 Every private input is gitignored before it holds corporate values. `*.local.toml` files and `bootstrap/targets/*/local/` directories are ignored repo-wide; `.fdignore` unhides them for `fd` and the editor file picker.
 
+## Pending: Pi 0.99 Migration
+
+This section self-destructs: follow it once on the work Mac, then delete it and commit the deletion.
+
+1. `mise run pull`.
+2. Convert each `pi_mcp_json` fragment in `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/data.toml` from the pi-mcp-adapter schema to pi's native `mcp.json` schema. Pass bearer tokens as `headers.Authorization` with an `!command` value instead of adapter auth fields, and replace `directTools` with `"exposure": "direct"`. The tracked `.pi/mcp.json` is a worked example.
+3. Remove `pi-mcp-adapter` from `piWorkPackages` if it is listed there.
+4. Check that no `[work_models]` `pi_alias` still uses the `openai-codex/` provider; ChatGPT sign-in now lives under `openai/`.
+5. `mise agent-config --check --real-secrets`, then `mise laptop -t agent-harness`. The old `~/.pi/agent/mcp-adapter.json` is retired automatically.
+6. In Pi, trust this project so `.pi/mcp.json` loads, then run `pi mcp list` and confirm each server resolves. The adapter's MCP panel and prompt slash commands are gone.
+
 ## Target Variables
 
 Git/Jujutsu identity, corporate Git URL rewrites, LazyGit services, Go editor settings, Neovim private values, and Python indexes belong in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`. Mise loads it for every capability environment of the target.
