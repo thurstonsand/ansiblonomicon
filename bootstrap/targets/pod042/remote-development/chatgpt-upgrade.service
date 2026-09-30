@@ -1,0 +1,6 @@
+[Unit]
+Description=Restart the ChatGPT app when it still runs a replaced package
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/bin/chatgpt-upgrade

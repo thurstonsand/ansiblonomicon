@@ -63,6 +63,7 @@ def apply_services(
     monkeypatch.setattr(services, "output", output)
     monkeypatch.setattr(services, "run", run)
     monkeypatch.setattr(services, "require_amp", lambda: None)
+    monkeypatch.setattr(services, "require_chatgpt", lambda: None)
     monkeypatch.setattr(services, "require_herdr", lambda: None)
 
     def unit_active(unit: str) -> bool:

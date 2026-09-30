@@ -51,3 +51,16 @@ source = "repositories/files/tailscale.sources"
 owner = "root"
 group = "root"
 mode = "0644"
+
+[bootstrap.files."/etc/apt/keyrings/chatgpt.asc"]
+source = "repositories/files/chatgpt.asc"
+owner = "root"
+group = "root"
+mode = "0644"
+
+# The package postinst rewrites this file only while it matches its own generated copy.
+[bootstrap.files."/etc/apt/sources.list.d/chatgpt.sources"]
+source = "repositories/files/chatgpt.sources"
+owner = "root"
+group = "root"
+mode = "0644"

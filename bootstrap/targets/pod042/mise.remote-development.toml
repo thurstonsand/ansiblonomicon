@@ -1,5 +1,8 @@
 [bootstrap.packages]
 "apt:polkitd" = "latest"
+"apt:chatgpt" = "latest"
+"apt:xvfb" = "latest"
+"apt:bubblewrap" = "latest"
 
 [bootstrap.directories."/home/thurstonsand/.config/t3code"]
 owner = "thurstonsand"
@@ -21,6 +24,10 @@ mode = "0755"
 # User services must remain runnable while this checkout is unavailable.
 "/home/thurstonsand/.config/systemd/user/amp-remote.service" = { source = "remote-development/amp-remote.service", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/herdr.service" = { source = "remote-development/herdr.service", mode = "copy" }
+"/home/thurstonsand/.config/systemd/user/chatgpt.service" = { source = "remote-development/chatgpt.service", mode = "copy" }
+"/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.path" = { source = "remote-development/chatgpt-upgrade.path", mode = "copy" }
+"/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.service" = { source = "remote-development/chatgpt-upgrade.service", mode = "copy" }
+"/home/thurstonsand/.local/bin/chatgpt-upgrade" = { source = "remote-development/chatgpt-upgrade", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/t3code.service.d/operator.conf" = { source = "remote-development/t3-operator.conf", mode = "copy" }
 
 [bootstrap.hooks.final]

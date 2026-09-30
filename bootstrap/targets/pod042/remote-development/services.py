@@ -11,7 +11,13 @@ import subprocess
 HOME = Path("/home/thurstonsand")
 SHIMS = HOME / ".local/share/mise/shims"
 HERDR = SHIMS / "herdr"
-UNITS = ("t3code.service", "amp-remote.service", "herdr.service")
+UNITS = (
+    "t3code.service",
+    "amp-remote.service",
+    "herdr.service",
+    "chatgpt.service",
+    "chatgpt-upgrade.path",
+)
 T3 = HOME / ".local/bin/t3"
 
 
@@ -35,6 +41,13 @@ def require_amp() -> None:
     if not (HOME / ".local/share/amp/secrets.json").is_file():
         raise SystemExit(
             "Amp login state missing. Run amp login as thurstonsand first."
+        )
+
+
+def require_chatgpt() -> None:
+    if not (HOME / ".codex/auth.json").is_file():
+        raise SystemExit(
+            "ChatGPT login state missing. Run codex login as thurstonsand first."
         )
 
 
@@ -88,6 +101,7 @@ def main() -> None:
     os.chdir(HOME)
     require_t3()
     require_amp()
+    require_chatgpt()
     require_herdr()
     if action == "plan":
         run(str(T3), "service", "status")
@@ -104,8 +118,9 @@ def main() -> None:
         print(json.dumps(asdict(herdr_server())), flush=True)
         print(
             "Apply: enable operator linger if absent; vendor-idempotent t3 service install; "
-            "stop any Herdr server systemd does not own, losing its panes; start all three "
-            "services, restarting on unit changes and on a stale Herdr binary."
+            "stop any Herdr server systemd does not own, losing its panes; start all four "
+            "services and the ChatGPT upgrade watch, restarting on unit changes and on a "
+            "stale Herdr or ChatGPT binary."
         )
         return
     if action == "apply":
@@ -147,6 +162,21 @@ def main() -> None:
             "restart" if changed["amp-remote.service"] else "start",
             "amp-remote.service",
         )
+        run("systemctl", "--user", "enable", "chatgpt.service")
+        run(
+            "systemctl",
+            "--user",
+            "restart" if changed["chatgpt.service"] else "start",
+            "chatgpt.service",
+        )
+        run("systemctl", "--user", "enable", "chatgpt-upgrade.path")
+        run(
+            "systemctl",
+            "--user",
+            "restart" if changed["chatgpt-upgrade.path"] else "start",
+            "chatgpt-upgrade.path",
+        )
+        run("systemctl", "--user", "start", "chatgpt-upgrade.service")
         # A Herdr client that finds no socket spawns its own server, which then owns the
         # socket and holds the login session's kernel keyring. Logging out revokes that
         # keyring and every agent credential store reading through it. Handing the socket

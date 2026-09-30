@@ -1,0 +1,17 @@
+#!/bin/sh
+# Restart chatgpt.service when its processes run /usr/lib/chatgpt binaries that dpkg has
+# replaced, once dpkg reports the replacing package fully installed.
+set -eu
+cgroup=$(systemctl --user show -p ControlGroup --value chatgpt.service)
+[ -n "$cgroup" ] || exit 0
+stale=0
+while read -r pid; do
+  case "$(readlink "/proc/$pid/exe" || true)" in
+    "/usr/lib/chatgpt/"*" (deleted)") stale=1 ;;
+  esac
+done <"/sys/fs/cgroup$cgroup/cgroup.procs"
+[ "$stale" = 1 ] || exit 0
+# dpkg rewrites its status again when configure finishes, which runs this check again.
+[ "$(dpkg-query -W -f='${db:Status-Status}' chatgpt)" = installed ] || exit 0
+echo "ChatGPT runs a replaced package; restarting."
+exec systemctl --user try-restart chatgpt.service

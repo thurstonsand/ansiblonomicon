@@ -1,0 +1,9 @@
+[Unit]
+Description=Check the ChatGPT app for a replaced package after each dpkg state change
+
+[Path]
+PathChanged=/var/lib/dpkg/status
+Unit=chatgpt-upgrade.service
+
+[Install]
+WantedBy=default.target

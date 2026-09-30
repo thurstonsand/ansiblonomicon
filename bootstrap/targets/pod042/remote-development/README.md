@@ -1,6 +1,6 @@
 # pod042 remote development
 
-These are normal-user services for `thurstonsand`. T3 serves multiple projects from the operator's home and has no runtime dependency on this checkout. Amp is rooted at `/home/thurstonsand/code` and discovers every Git checkout up to two levels beneath it, so a new clone becomes a servable directory without touching the unit. Herdr runs from the operator's home and is reached by attaching a client over SSH. None of the three needs an inbound firewall rule or router port forward. T3 Connect uses its managed relay; Amp connects outbound; Herdr listens only on a unix socket in `~/.config/herdr/`.
+These are normal-user services for `thurstonsand`. T3 serves multiple projects from the operator's home and has no runtime dependency on this checkout. Amp is rooted at `/home/thurstonsand/code` and discovers every Git checkout up to two levels beneath it, so a new clone becomes a servable directory without touching the unit. Herdr runs from the operator's home and is reached by attaching a client over SSH. The ChatGPT desktop app runs headless on Xvfb display `:42` so the dot 2B can use pod042 as its computer. None of the four needs an inbound firewall rule or router port forward. T3 Connect uses its managed relay; Amp connects outbound; Herdr listens only on a unix socket in `~/.config/herdr/`.
 
 ## Integration contract
 
@@ -46,6 +46,8 @@ python3 remote-development/services.py apply
 python3 remote-development/services.py status
 ```
 
+The ChatGPT app reuses the Codex login, so `codex login` is its enrollment and the unit asserts `~/.codex/auth.json`. Connecting it to a dot is a one-time GUI step with no CLI: drive display `:42` (`DISPLAY=:42 XAUTHORITY=$(ls -d /tmp/xvfb-run.*/Xauthority | head -1)`, with `xdotool` and a screenshot tool installed for the occasion), open 2B's profile, and choose Computers → Your computer → Allow access. A dot holds one personal computer at a time, so connecting another machine evicts pod042. The approval lives in `~/.config/Codex`.
+
 Verify T3 appears online in the T3 client, then open an Amp remote terminal on runner `pod042` and confirm `amp runner dirs list` names every checkout under `~/code`. Test again after closing SSH and after a reboot. A systemd active state does not prove either authenticated relay is usable. Inspect failures with `journalctl --user -u amp-remote.service -u t3code.service`; T3's vendor status also prints its application log path.
 
 ## Vendor lifecycle evidence
@@ -61,6 +63,15 @@ Upstream source inspected 2026-09-06:
 - The same release makes `amp --no-tui` self-updating (`amp.runner.autoUpdate.enabled`, default on): it installs a new CLI hourly and restarts into it once no thread is running, at most once every 12 hours. `operator:agents` installs Amp only when absent, so this is now the mechanism that keeps the binary current, and it upgrades the interactive CLI along with the runner because both are the same file.
 
 Herdr 0.9.0 inspected 2026-09-11. It documents no unit file and ships no `sd_notify`, so the unit rests on observed behavior instead: `herdr server` runs the server in the foreground and refuses a second one while the socket is live, `SIGTERM` exits 0 in well under a second and removes the socket, and `herdr status server --json` exits 0 either way with `running`, `restart_needed`, and `server_binary_stale`. The binary advertises `detached_server_daemon` and spawns exactly that from `src/server/autodetect.rs` when a client finds no server, which is the behavior the unit is racing.
+
+ChatGPT 26.928.20755 inspected 2026-09-29, the day dots launched:
+
+- [Dots](https://learn.chatgpt.com/docs/dots) and [computers and apps](https://learn.chatgpt.com/docs/dots/computers-and-apps): a dot reaches a local computer only through the desktop app, which must stay open and online; one personal computer per dot.
+- [Linux app](https://learn.chatgpt.com/docs/linux/linux-app): preview; Debian 13 x64 is supported through the `.deb`, which adds its own apt repository. Computer Use is not available on Linux, so 2B gets a shell, not the screen. Headless use under Xvfb is not a documented configuration.
+- The package postinst always writes `/usr/share/keyrings/chatgpt-archive-keyring.gpg` but rewrites `/etc/apt/sources.list.d/chatgpt.sources` only while it matches `/var/lib/chatgpt/repository.sources`, so the declared sources file and upgrades do not fight. Unattended upgrades pick the package up through `origin=*`, which matches the repository's empty Origin. Neither the postinst nor anything else restarts the running app. dpkg replaces every file's inode on unpack, so the running app's exe then reads `/usr/lib/chatgpt/... (deleted)`. `chatgpt-upgrade.path` watches `/var/lib/dpkg/status`, which dpkg renames into place on every package state transition, and `chatgpt-upgrade` try-restarts `chatgpt.service` only when a process in its cgroup runs a deleted `/usr/lib/chatgpt` binary and dpkg reports `chatgpt` installed. The main PID is xvfb-run's `dash`, hence the cgroup walk. Reconcile runs the same check. On 2026-09-29 an `xvfb` reinstall left `Xvfb (deleted)` in the cgroup without a restart, and a `chatgpt` reinstall skipped the mid-upgrade check and restarted once after configure. A restart during 2B's work is accepted; unattended upgrades run around 06:00.
+- The Codex Linux sandbox needs `bubblewrap`; without it every command fails with "bubblewrap is unavailable". The sandbox also blocks the user D-Bus, so `systemctl --user` fails from inside a dot's command. That is the sandbox working, not the service failing.
+
+Deployed on 2026-09-29: under `chatgpt.service`, 2B ran `hostname && date -Is && cat /proc/1/comm` and got `pod042`, the local time, and `codex`. Reboot persistence is unverified.
 
 Local validation covers TOML parsing, Python compilation, and a real wrong-host rejection. Enrollment, Linux unit validation, reboot persistence, and real remote sessions remain deployment checks.
 
