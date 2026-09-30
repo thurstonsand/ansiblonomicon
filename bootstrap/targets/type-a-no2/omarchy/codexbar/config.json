@@ -1,0 +1,7 @@
+{
+  "providers": [
+    { "enabled": true, "id": "codex" },
+    { "enabled": true, "id": "claude" }
+  ],
+  "version": 1
+}

@@ -30,6 +30,7 @@ openwhispr-bin = "present"
 sakura-mochi = { source = "https://github.com/OldJobobo/omarchy-sakura-mochi-theme.git" }
 
 [plugins]
+"felixzsh.codexbar" = { source = "https://github.com/thurstonsand/omarchy-codexbar.git" }
 "io.github.mb-jambon.omapods" = { source = "https://github.com/MB-JAMBON/omarchy-pods.git", setup = "./setup" }
 "io.github.wouldja.mouse" = { source = "https://github.com/wouldja/omarchy-mouse.git" }
 "lgse.sandman" = { source = "https://github.com/lgse/sandman.git", setup = "sudo install -D -o root -g root -m 0755 sandman-configure-hibernate /usr/local/libexec/sandman-configure-hibernate" }

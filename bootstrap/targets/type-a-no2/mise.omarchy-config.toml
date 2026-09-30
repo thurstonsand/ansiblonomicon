@@ -34,5 +34,7 @@ run = "~/.local/share/omarchy-icloud-photos/install.sh"
 "~/.config/omarchy/branding/screensaver.txt" = { source = "omarchy/branding/screensaver.txt", mode = "symlink" }
 "~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }
 "~/.config/open-whispr-flags.conf" = { source = "omarchy/open-whispr-flags.conf", mode = "symlink" }
+# CodexBar replaces this file on save, which would break a symlink.
+"~/.config/codexbar/config.json" = { source = "omarchy/codexbar/config.json", mode = "copy" }
 "~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }
