@@ -112,6 +112,8 @@ When creating threads, pick the tier as usual, then always set `agent_mode` to:
 - ultra: `doppelclaude-fable-ultra`
 
 Use built-in `medium` only when GPT Sol is requested. Never use a `claude-*` mode.
+
+Call the Oracle one at a time, never in parallel.
 {% else -%}
 ### Delegation and model selection
 
