@@ -166,7 +166,7 @@ def test_live_changelog_and_explicit_mcp_are_preserved(tmp_path: Path) -> None:
     assert (
         json.loads(result[".pi/agent/settings.json"])["lastChangelogVersion"] == "9.7.3"
     )
-    assert json.loads(result[".pi/agent/mcp-adapter.json"])["mcpServers"] == {
+    assert json.loads(result[".pi/agent/mcp.json"])["mcpServers"] == {
         "one": {"command": "one"},
         "two": {"command": "two"},
     }

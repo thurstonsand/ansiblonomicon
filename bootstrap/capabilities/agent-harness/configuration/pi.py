@@ -6,15 +6,7 @@ from pathlib import Path
 from typing import Any, cast
 
 WORK_HOST = "ML-DFC6YK6VJQ"
-CHANGELOG_FALLBACK = "0.84.2"
-THEMES = {
-    "source": "git:github.com/hasit/pi-community-themes",
-    "themes": [
-        "!themes/*.json",
-        "+themes/gruvbox-dark-hard.json",
-        "+themes/gruvbox-light-hard.json",
-    ],
-}
+CHANGELOG_FALLBACK = "0.99.1"
 PERSONAL_PACKAGES = [
     ("pi-permissions", "pi-permissions"),
     ("pi-sessions", "pi-sessions"),
@@ -25,7 +17,6 @@ PERSONAL_PACKAGES = [
     ("pi-powerline-footer", None),
     ("glimpseui", None),
     ("pi-interview", None),
-    ("pi-mcp-adapter", "pi-mcp-adapter"),
     ("sideshow", None),
     ("@thurstonsand/pi-paste", None),
 ]
@@ -39,7 +30,6 @@ WORK_PACKAGES = [
     "git:github.com/thurstonsand/wt",
     "git:github.com/nicobailon/pi-interview-tool",
     "git:github.com/hazat/glimpse",
-    "npm:pi-mcp-adapter",
 ]
 
 
@@ -86,7 +76,7 @@ def _profile(
             "vibe": wm["gpt_luna"]["pi_alias"],
             "enabled": [f"{opus}:medium", f"{sol}:medium"],
             "roster": [f"{opus}:medium", f"{sol}:low", f"{sol}:medium", f"{sol}:high"],
-            "packages": [*data.get("piWorkPackages", []), *WORK_PACKAGES, THEMES],
+            "packages": [*data.get("piWorkPackages", []), *WORK_PACKAGES],
         }
     aliases = {
         key: _alias(models, provider, name)
@@ -124,7 +114,7 @@ def _profile(
             f"{aliases['sol']}:medium",
             f"{aliases['sol']}:high",
         ],
-        "packages": [*packages, THEMES, "npm:@howaboua/pi-smart-btw"],
+        "packages": [*packages, "npm:@howaboua/pi-smart-btw"],
     }
 
 
@@ -239,12 +229,8 @@ def _settings(
                         "detail": {"from": "query"},
                     },
                     "librarian": {"status": "searching", "detail": {"from": "query"}},
-                    "mcp": {
-                        "status": "mcping",
-                        "detail": {
-                            "from": ["tool", "server", "search", "connect", "describe"]
-                        },
-                    },
+                    "codemode": {"status": "Scripting"},
+                    "tool_search": {"status": "searching", "detail": {"from": "query"}},
                 },
             }
         },
@@ -322,9 +308,7 @@ def _settings(
         },
         "packages": profile["packages"],
         "hideThinkingBlock": True,
-        "theme": "omarchy-system"
-        if hostname == "type-a-no2"
-        else "gruvbox-light-hard/gruvbox-dark-hard",
+        "theme": "omarchy-system" if hostname == "type-a-no2" else "system",
         "transport": "auto",
         "collapseChangelog": False,
         "quietStartup": True,
@@ -403,7 +387,7 @@ def render(
     if hostname != WORK_HOST:
         result[".pi/agent/pi-smart-btw.json"] = _json(
             {
-                "provider": "openai-codex",
+                "provider": "openai",
                 "modelId": models["openai"]["gpt_sol"]["version"],
                 "thinking": "low",
                 "composeShortcut": "ctrl+alt+shift+f13",
@@ -424,7 +408,7 @@ def render(
         servers: dict[str, Any] = {}
         for raw in data["pi_mcp_json"]:
             _merge(servers, cast(dict[str, Any], json.loads(raw)))
-        result[".pi/agent/mcp-adapter.json"] = _json({"mcpServers": servers})
+        result[".pi/agent/mcp.json"] = _json({"mcpServers": servers})
     return result
 
 

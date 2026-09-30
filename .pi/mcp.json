@@ -5,9 +5,10 @@
     },
     "cloudflare-api": {
       "url": "https://mcp.cloudflare.com/mcp",
-      "auth": "bearer",
-      "bearerToken": "!\"$HOME/.local/bin/fnox-host\" get CLOUDFLARE_API_TOKEN",
-      "directTools": true
+      "headers": {
+        "Authorization": "!echo Bearer $(\"$HOME/.local/bin/fnox-host\" get CLOUDFLARE_API_TOKEN)"
+      },
+      "exposure": "direct"
     }
   }
 }

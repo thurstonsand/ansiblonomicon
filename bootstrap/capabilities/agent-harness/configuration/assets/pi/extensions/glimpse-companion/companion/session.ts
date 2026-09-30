@@ -13,7 +13,7 @@ import {
   resolveNode,
 } from "./glimpse-support.js";
 import { loadCompanionSettings } from "./settings.js";
-import { buildCompanionThemeForContext } from "./theme.js";
+import { buildCompanionTheme } from "./theme.js";
 
 const SESSION_ID = randomUUID().slice(0, 8);
 
@@ -214,7 +214,7 @@ export class CompanionSession {
       acknowledgementPending: this.doneNeedsAcknowledgement,
     };
     if (this.lastCtx) {
-      msg.theme = buildCompanionThemeForContext(this.lastCtx);
+      msg.theme = buildCompanionTheme(this.lastCtx.ui.theme);
       try {
         const usage = this.lastCtx.getContextUsage();
         if (usage && usage.percent != null) {
