@@ -990,13 +990,15 @@ def agent_harness_transform_skill_content(
     models_config: dict[str, Any],
     plugin_root: str = "",
     name_override: str = "",
+    skill_dir: str = "",
 ) -> dict[str, Any]:
     """Transform skill/agent Markdown content for the target agent.
 
-    Applies up to three transformations:
+    Applies up to four transformations:
     1. Model alias replacement in frontmatter (e.g., "sonnet" → provider-specific ID)
     2. ${CLAUDE_PLUGIN_ROOT} substitution with the absolute plugin path
-    3. Frontmatter name rewrite (for agent namespace prefixing)
+    3. ${CLAUDE_SKILL_DIR} substitution with the deployed skill directory
+    4. Frontmatter name rewrite (for agent namespace prefixing)
     """
     modified = False
 
@@ -1020,6 +1022,13 @@ def agent_harness_transform_skill_content(
     if plugin_root and "CLAUDE_PLUGIN_ROOT" in content:
         content = content.replace("${CLAUDE_PLUGIN_ROOT}", plugin_root)
         content = content.replace("$CLAUDE_PLUGIN_ROOT", plugin_root)
+        modified = True
+
+    # Claude Code substitutes ${CLAUDE_SKILL_DIR} itself, in both the body and
+    # allowed-tools rules, so only other harnesses need the literal path.
+    if skill_dir and target_agent != "claude" and "CLAUDE_SKILL_DIR" in content:
+        content = content.replace("${CLAUDE_SKILL_DIR}", skill_dir)
+        content = content.replace("$CLAUDE_SKILL_DIR", skill_dir)
         modified = True
 
     # Frontmatter name rewrite — uses regex to avoid re-serializing the full

@@ -1125,6 +1125,33 @@ def test_transform_skill_content_rewrites_name_only_when_it_changes(
 
 
 @pytest.mark.unit
+def test_transform_skill_content_resolves_skill_dir_outside_claude(
+    sample_models_config: dict[str, Any],
+) -> None:
+    content = (
+        "---\nname: tool\ndescription: A test skill\n"
+        "allowed-tools: Bash(${CLAUDE_SKILL_DIR}/bin/tool *)\n---\n\n"
+        "Run `${CLAUDE_SKILL_DIR}/bin/tool`.\n"
+    )
+
+    pi = agent_harness_transform_skill_content(
+        content, "pi", sample_models_config, skill_dir="/home/me/.pi/agent/skills/tool"
+    )
+    claude = agent_harness_transform_skill_content(
+        content,
+        "claude",
+        sample_models_config,
+        skill_dir="/home/me/.claude/skills/tool",
+    )
+
+    assert pi["modified"] is True
+    assert "CLAUDE_SKILL_DIR" not in pi["content"]
+    assert "Run `/home/me/.pi/agent/skills/tool/bin/tool`." in pi["content"]
+    assert claude["modified"] is False
+    assert claude["content"] == content
+
+
+@pytest.mark.unit
 def test_transform_skill_replaces_model_for_opencode(
     create_skill_with_model: Callable[[str, str], Path],
     sample_models_config: dict[str, Any],

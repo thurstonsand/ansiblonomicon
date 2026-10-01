@@ -344,6 +344,7 @@ def render_files(
                             models,
                             resource["plugin_root"],
                             name,
+                            str(Path(destination) / name),
                         )
                         content = transformed["content"].encode()
                         transformed_asset |= transformed["modified"]

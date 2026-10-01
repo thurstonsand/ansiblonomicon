@@ -164,10 +164,7 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
                 "apiKey": token,
                 "api": "anthropic-messages",
                 "authHeader": True,
-                "headers": {
-                    "anthropic-beta": "context-1m-2025-08-07",
-                    "User-Agent": "pi-coding-agent",
-                },
+                "headers": {"User-Agent": "pi-coding-agent"},
                 "models": [
                     model(n, anthropic=True) for n in ("opus", "sonnet", "haiku")
                 ],
