@@ -22,6 +22,12 @@ resource "unifi_client" "google_nest_hub" {
   allow_existing = true
 }
 
+resource "unifi_client" "nest_doorbell" {
+  mac            = "b4:23:a2:7a:23:0a"
+  name           = "Nest Doorbell"
+  allow_existing = true
+}
+
 resource "unifi_client" "thurston_mbp" {
   mac            = "0a:e0:d0:07:0a:37"
   name           = "Thurston's M4 Pro MBP"
@@ -170,6 +176,12 @@ resource "unifi_client" "honeywell_t5_second_floor" {
 resource "unifi_client" "breville_oracle_dual_boiler" {
   mac            = "98:a1:4a:3c:22:d8"
   name           = "Breville Oracle Dual Boiler"
+  allow_existing = true
+}
+
+resource "unifi_client" "meta_ray_ban_gen_3" {
+  mac            = "e6:bc:56:cc:9b:2f"
+  name           = "Meta Ray-Ban Gen 3"
   allow_existing = true
 }
 
