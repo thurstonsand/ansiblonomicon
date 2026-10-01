@@ -40,6 +40,12 @@ resource "unifi_client" "thurston_watch" {
   allow_existing = true
 }
 
+resource "unifi_client" "thurston_ipad" {
+  mac            = "6a:c1:bf:9f:fd:1b"
+  name           = "Thurston's iPad Pro 5th Gen"
+  allow_existing = true
+}
+
 # The Dell dual-boot presents a different address per partition. Only Omarchy's is
 # burned-in; Windows randomizes, so it earns no record until it stops.
 resource "unifi_client" "dell_omarchy" {
