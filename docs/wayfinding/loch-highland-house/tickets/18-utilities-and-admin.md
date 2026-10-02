@@ -12,4 +12,4 @@ blocked-by: []
 - schedule internet switchover — done via [New-house Internet cutover](../../new-house-internet-cutover/map.md)
 - cleaning service: follow up whether the previous service covers the new address; otherwise find a new one
 - **moving boxes**: keep ~3 months, then discard if unused → scheduled for **2026-12-10** in a fresh Amp orb
-- evaluate the Matic robot vacuums
+- Matic robot vacuums passed the trial and are staying

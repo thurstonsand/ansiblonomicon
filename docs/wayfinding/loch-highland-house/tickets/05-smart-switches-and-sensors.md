@@ -8,12 +8,13 @@ blocked-by: []
 
 ## Question
 
-Whole-house switch strategy. Leaning all-in on **Matter over Thread**, e.g. Inovelli White, bound directly to smart bulbs so they work without Home Assistant running. Open to alternatives:
+The device strategy has settled into three lanes:
 
-- Inovelli Blue (Zigbee) with built-in motion sensing
-- Hue bulbs/fixtures with motion detection
-- **Everything Smart Technology** sensors: two of their new **Presence Pro** units (combined PIR + mmWave for better overall detection), still untested — test them, possibly as part of the HA setup process
-- hidden switches? Lutron (had them; expensive)?
+- **Hue** for color lighting
+- **UniFi SuperLink** for security sensors
+- **Matter**, over Thread or Wi-Fi as appropriate, as the catch-all for everything else
+
+The remaining switch question is how wall controls preserve ordinary local operation across the Hue and Matter lanes. Inovelli White remains the Matter-over-Thread candidate; Inovelli Blue, hidden relays, and Lutron are alternatives only where the chosen lane cannot provide the required behavior. Two **Everything Smart Technology Presence Pro** sensors (PIR + mmWave) are still untested.
 
 **UniFi SuperLink** is the installed trial system for exterior-door contacts and motion, and the leading candidate for smoke/CO alarms. The house already has many UniFi cameras and Protect, so this adds one SuperLink Gateway and radio rather than a new software ecosystem. It may earn that extra radio through long-range, low-power sub-GHz coverage, local push into Protect and Home Assistant, first-class Alarm Manager events, and one gateway shared by entry, motion/environment, glass-break, siren, and smoke/CO devices.
 
@@ -25,4 +26,4 @@ Home Assistant, Hue lighting, and Apple Home are set up. The SuperLink Gateway i
 
 The [initial smoke and CO candidate screen](../research/smoke-co-candidate-screen.md) also evaluates Owl Wired, Phare C1, Gentex PLACE Any Space, and Sensereo MSC-1 against the same safety gate. UniFi is the preferred smart candidate and PLACE remains the strongest documented hardwired alternative. The final replacement decision depends on the existing wiring and applicable power-source requirements, not further paper investigation of UniFi's daisy-chain claim. Owl, Phare, and Sensereo do not currently qualify as the house's primary US alarm system, regardless of their more interesting smart features.
 
-Decide the protocol stack (Thread/Matter vs Zigbee vs mixed), the switch model, where sensors live, and which independently listed smoke/CO system or layered combination preserves whole-house alarm behavior while providing useful smart observation. Ties to [Lighting design](04-lighting-design.md) and the smart-home rebuild (HAOS returns under incus per Bunker Rebuild).
+Decide the wall-switch model, where sensors live, and which independently listed smoke/CO system or layered combination preserves whole-house alarm behavior while providing useful smart observation. Ties to [Lighting design](04-lighting-design.md) and the smart-home rebuild (HAOS returns under incus per Bunker Rebuild).

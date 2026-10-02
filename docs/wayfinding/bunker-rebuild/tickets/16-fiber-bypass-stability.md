@@ -19,11 +19,15 @@ Branches to settle:
 - **Cooling decision deferred to the new house (2026-08-20)**: no fan purchase pre-move; the user will evaluate a naturally better-ventilated placement at the new house first. Post-move step: place, let temps settle 24–48h, re-read the metrics endpoint, and only then decide on active cooling. Until then the thermal-lockup hypothesis stands untreated — capture-before-reboot remains the rule on any outage, including during the move window.
 - Known instability patterns for that method: DHCP lease renewal against AT&T's network, ONT firmware, heat, auth re-negotiation.
 - Diagnostics to capture *before* the move while the failure is reproducible: logs from the device and UDMP WAN state at failure time.
-- Mitigations: firmware, config, watchdog automation (detect WAN-down → power-cycle via smart plug?), or replacing the method.
+- Mitigations: firmware, config, or replacing the method. If instability returns, UniFi's **Power Cycle on Internet Loss** is a candidate remediation: place the WAS-110 on a controllable PDU outlet and permit one delayed cycle per outage, after proving the trigger cannot remove its own control path or turn a provider outage into a reboot loop.
 
 Output: root cause or best hypothesis, plus the stabilization plan for the new house.
 
 ## Research log
+
+- 2026-09-19: The direct-service WAS-110 has produced no user-visible recurrence for roughly two to three weeks. Current metrics remain clean at PLOAM O5.1, Rx -15.56 dBm, Tx 5.67 dBm, CPU 73.7/71.6°C, and optic 62.2°C. The new placement is still warm but materially cooler than the pre-move 82.4/79.7°C reading. Continue observation for two more weeks; if no real outage recurs, close this as stabilized by firmware plus placement rather than adding active cooling.
+
+  The monitor recorded six capture events between August 28 and September 13, plus one isolated failed sample on September 18. Five events lasted roughly one to three minutes; the September 8 event overlaps 10 hours of rebuild work. In every event, both WAN probes and the stick management endpoint disappeared together, which does not resemble the earlier degraded-but-reachable failure. None produced stick diagnostics: OpenSSH exited with `No user exists for uid 1000` because the container ran as numeric `1000:3000` without a matching passwd entry. The repaired image now declares that user and group; it was deployed on September 19, returned healthy, sampled both the WAN and stick successfully, and completed the same read-only SSH command the next capture will use. Separately, repeated Healthchecks delivery failures on September 19 were DNS failures from the container, not proof of a PON outage; direct-IP WAN probes and current stick metrics remained healthy.
 
 - 2026-08-27: **First outage since the firmware upgrade, and the UDMP captured it even though the stick did not.** 13:35:52 the WAN failover monitors went to 100% DNS loss; 13:36:06 dpinger reported 57% ICMP loss with 24,003 ms latency to 1.1.1.1 and 3,793 ms to 8.8.8.8. The user power-cycled the stick at 13:36:41 (`dmesg` on the UDMP: `AL_ETH_LM_MODE_10G_OPTIC -> DISCONNECTED`), it booted at 13:37:17, and WAN was declared up at 13:38:54 on the same lease, 108.207.130.230, with no DHCP renewal. The UDMP was not rebooted; its uptime is unbroken since 2026-08-21.
 
