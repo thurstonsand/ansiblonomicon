@@ -31,6 +31,7 @@ services:
 
 networks:
   scanners:
+    name: scanners
     driver: macvlan
     driver_opts:
       parent: enp5s0.40

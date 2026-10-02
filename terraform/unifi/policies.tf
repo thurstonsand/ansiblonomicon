@@ -94,6 +94,28 @@ resource "unifi_firewall_policy" "home_assistant_to_protect" {
   }
 }
 
+resource "unifi_firewall_policy" "pod042_to_scrypted" {
+  name                 = "pod042 to Scrypted"
+  action               = "ALLOW"
+  protocol             = "tcp"
+  ip_version           = "IPV4"
+  create_allow_respond = true
+
+  source = {
+    zone_id         = unifi_firewall_zone.bunker.id
+    matching_target = "IP"
+    ips             = ["10.10.10.42"]
+  }
+
+  destination = {
+    zone_id            = unifi_firewall_zone.scanners.id
+    matching_target    = "IP"
+    ips                = ["10.10.40.43"]
+    port               = "11080"
+    port_matching_type = "SPECIFIC"
+  }
+}
+
 resource "unifi_firewall_policy" "home_assistant_to_matic" {
   name                 = "Home Assistant to Matic"
   action               = "ALLOW"

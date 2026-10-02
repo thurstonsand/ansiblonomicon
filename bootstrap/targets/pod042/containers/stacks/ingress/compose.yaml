@@ -4,6 +4,7 @@ services:
     command: ["caddy", "run", "--config", "/etc/caddy/Caddyfile", "--adapter", "caddyfile", "--watch"]
     environment:
       CLOUDFLARE_API_TOKEN: "${CLOUDFLARE_API_TOKEN:?required}"
+      NEST_EVENTS_TOKEN: "${NEST_EVENTS_TOKEN:?required}"
     ports:
       - "80:80"
       - "443:443"

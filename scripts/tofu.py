@@ -9,6 +9,9 @@ ALIASES = {
         "TF_VAR_cloudflare_api_token": "CLOUDFLARE_API_TOKEN",
         "TF_VAR_parent_home_ip": "PARENT_HOME_IP",
     },
+    "google": {
+        "TF_VAR_nest_events_token": "NEST_EVENTS_TOKEN",
+    },
     "unifi": {
         "TF_VAR_unifi_username": "UNIFI_USERNAME",
         "TF_VAR_unifi_password": "UNIFI_PASSWORD",

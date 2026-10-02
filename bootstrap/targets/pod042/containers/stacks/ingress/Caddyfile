@@ -31,6 +31,19 @@ seerr.thurstons.house, http://seerr.thurstons.house {
 	reverse_proxy seerr:5055
 }
 
+# Google Pub/Sub pushes Nest events here; only the secret path reaches Scrypted's public endpoint.
+http://nest-events.thurstons.house {
+	@push {
+		method POST
+		path /{$NEST_EVENTS_TOKEN}
+	}
+	handle @push {
+		rewrite * /endpoint/@scrypted/google-device-access/public/
+		reverse_proxy 10.10.40.43:11080
+	}
+	respond 404
+}
+
 dash.thurstons.house {
 	import local_only homepage:3000
 }
@@ -56,7 +69,7 @@ radarr.thurstons.house {
 }
 
 scrypted.thurstons.house {
-	import local_only host.docker.internal:11080
+	import local_only 10.10.40.43:11080
 }
 
 sonarr.thurstons.house {

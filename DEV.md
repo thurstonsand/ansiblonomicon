@@ -118,3 +118,11 @@ mise run edge:deploy:tesla
 ```
 
 Worker deploys manage their own secrets through the deploy scripts; pass `--force-secret` to overwrite existing ones.
+
+## Google Cloud
+
+`terraform/google/` holds every Google Cloud project I keep, one file per project: `cloudflare` (the Access SSO OAuth client), `gemini` (the AI Studio project and its Gemini auth key), and `nest` (the Device Access project's OAuth client and its `nest-events` topic). It authenticates with my user's application default credentials from `gcloud auth login --update-adc`. The Device Access Console, OAuth consent screens, and OAuth clients have no usable API, so they stay manual.
+
+```sh
+mise run google:plan       # google:init and google:apply for init and apply
+```

@@ -1,7 +1,6 @@
 services:
   scrypted:
     image: ghcr.io/koush/scrypted
-    network_mode: host
     environment:
       SCRYPTED_DOCKER_AVAHI: "true"
       SCRYPTED_INSECURE_PORT: "11080"
@@ -9,6 +8,12 @@ services:
     volumes:
       - /mnt/black-box/docker/scrypted/scrypted/server/volume:/server/volume
       - /etc/localtime:/etc/localtime:ro
+    # HomeKit pairs and streams over mDNS and direct connections with the HomePods,
+    # so Scrypted lives on their segment rather than behind pod042's Bunker address.
+    networks:
+      scanners:
+        ipv4_address: 10.10.40.43
+        mac_address: 02:00:0a:0a:28:2b
     healthcheck:
       test:
         - CMD
@@ -20,3 +25,8 @@ services:
       retries: 5
       start_period: 2m
     restart: unless-stopped
+
+networks:
+  scanners:
+    external: true
+    name: scanners

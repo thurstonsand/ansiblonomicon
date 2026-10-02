@@ -15,6 +15,7 @@ locals {
     { host = "anypod", service = "http://caddy:80" },
     { host = "blog", service = "http://caddy:80" },
     { host = "cli-proxy-api", service = "http://caddy:80" },
+    { host = "nest-events", service = "http://caddy:80" },
     { host = "doppelclaude-origin", service = "http://doppelclaude:3456" },
   ]
 
