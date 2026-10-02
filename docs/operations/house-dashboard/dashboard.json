@@ -317,7 +317,13 @@
                     "Kitchen"
                   ],
                   "entity": "media_player.kitchen_kitchen_homepod",
-                  "mapNote": "HomePod"
+                  "mapNote": "HomePod",
+                  "appliances": [
+                    {
+                      "entity": "switch.espresso_machine_power",
+                      "name": "Espresso machine"
+                    }
+                  ]
                 },
                 {
                   "id": "breakfast_nook",

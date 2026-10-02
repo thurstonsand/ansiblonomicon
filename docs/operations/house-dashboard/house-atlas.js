@@ -360,7 +360,12 @@ class HouseAtlas extends HTMLElement {
     `;
     const rooms = floor.rooms
       .map((room) => {
-        const connected = !!(room.lights || room.entity || room.note);
+        const connected = !!(
+          room.lights ||
+          room.entity ||
+          room.appliances ||
+          room.note
+        );
         const [x, y] = room.label;
         const lines = room.lines || [room.name];
         return `<g id="room-${room.id}" data-room="${room.id}" class="room ${connected ? "connected" : ""} ${room.outdoor ? "outdoor" : ""} ${this.roomId === room.id ? "selected" : ""}" tabindex="0" role="button" aria-label="${escapeXml(room.name)}" aria-pressed="${this.roomId === room.id}"><path class="wall" d="${escapeXml(room.path)}"/><text class="label">${lines.map((line, i) => `<tspan x="${x}" y="${y + i * 17}">${escapeXml(line)}</tspan>`).join("")}</text>${connected ? `<text id="status-${room.id}" class="status" x="${x}" y="${y + lines.length * 17 + 5}">${escapeXml(room.lights ? `${room.lights.length} lights` : room.mapNote || "")}</text>` : ""}${room.lights ? `<circle id="dot-${room.id}" class="indicator" cx="${x}" cy="${y - 20}" r="3.5"/>` : ""}</g>`;
@@ -645,12 +650,20 @@ class HouseAtlas extends HTMLElement {
           { type: "media-player-volume-slider" },
         ],
       });
-    } else {
+    } else if (!room.appliances) {
       const text = document.createElement("p");
       text.className = "muted";
       text.textContent = room.note || "No connected devices in this room yet.";
       body.append(text);
     }
+    for (const { entity, name } of room.appliances || [])
+      add({
+        type: "tile",
+        entity,
+        name,
+        tap_action: { action: "more-info" },
+        icon_tap_action: { action: "toggle" },
+      });
     if (room.hueScenes) {
       const scenes = document.createElement("section");
       scenes.className = "hue-scenes";
