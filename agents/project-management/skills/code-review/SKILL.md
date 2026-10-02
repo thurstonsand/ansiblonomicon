@@ -10,7 +10,7 @@ Two-axis review of a change:
 - **Standards**: does the code conform to this repo's documented standards?
 - **Spec**: does the code faithfully implement the agreed plan or design?
 
-Both axes run as **parallel reviewers** so they don't pollute each other's context, then this skill aggregates their findings. Each reviewer is the Oracle where your harness has one, otherwise a subagent. Reviewers read the repo but do not write to it.
+Both axes run as **separate reviewers** so they don't pollute each other's context, then this skill aggregates their findings. Each reviewer is the Oracle where your harness has one, otherwise a subagent.
 
 ## Process
 
@@ -19,8 +19,6 @@ Both axes run as **parallel reviewers** so they don't pollute each other's conte
 Whatever the user said is the scope: uncommitted changes, staged changes, or everything since a fixed point (a commit SHA, branch name, tag, `main`, `HEAD~5`, etc.). If they didn't specify one, ask for it.
 
 Capture the diff command once: `git diff <fixed-point>...HEAD` (three-dot, so the comparison is against the merge-base), `git diff HEAD` for uncommitted, or `git diff --staged` for staged. Also note the list of commits via `git log <fixed-point>..HEAD --oneline`.
-
-Before going further, confirm the fixed point resolves (`git rev-parse <fixed-point>`) and the diff is non-empty. A bad ref or empty diff should fail here, not inside two parallel reviewers.
 
 ### 2. Identify the spec source
 
@@ -34,7 +32,7 @@ Look for the agreed plan or design, in this order:
 
 `AGENTS.md`, `DEV.md`, and `CONTEXT.md`, at the repo root and in the directories the diff touches, plus anything else in the repo that documents how code should be written.
 
-On top of whatever the repo documents, the Standards axis always carries the **smell baseline** below: a fixed set of Fowler code smells (_Refactoring_, ch.3) and two test smells that apply even when a repo documents nothing. Two rules bind it:
+On top of whatever the repo documents, the Standards axis always carries the **smell baseline** below: a fixed set of Fowler code smells (_Refactoring_, ch.3) and a handful of test smells that apply even when a repo documents nothing. Two rules bind it:
 
 - **The repo overrides.** A documented repo standard always wins; where it endorses something the baseline would flag, suppress the smell.
 - **Always a judgement call.** Each smell is a labelled heuristic ("possible Feature Envy"), never a hard violation. Like any standard here, skip anything tooling already enforces.
@@ -54,15 +52,19 @@ Each smell reads _what it is_ → _how to fix_; match it against the diff:
 - **Middle Man**: a class or function that mostly just delegates onward. → cut it, call the real target direct.
 - **Refused Bequest**: a subclass or implementer that ignores or overrides most of what it inherits. → drop the inheritance, use composition.
 - **Implementation-coupled test**: mocks internal collaborators, tests private methods, or verifies through a side channel (querying the database instead of using the interface); it breaks when you refactor but behavior hasn't changed. → test through the public interface.
-- **Tautological test**: the assertion recomputes the expected value the way the code does, so it passes by construction and can never disagree with the code. → take the expected value from an independent source of truth: a known-good literal, a worked example, the spec.
+- **Tautological test**: the assertion recomputes the expected value the way the code does, or a mock or fixture supplies the very behaviour being asserted, so it passes by construction and can never disagree with the code. → take the expected value from an independent source of truth: a known-good literal, a worked example, the spec; let the real code produce the behaviour.
+- **Vacuous negative test**: a rejection or denial test that passes for the wrong reason: a different guard fires, or the input never reaches the path it claims to cover. → assert the specific reason, and feed it input that clears every other guard.
+- **Unproven regression test**: a bug-fix test with no evidence it fails on the pre-fix code; it may prove the mock, not the fix. → show it failing at the parent commit for the intended reason.
+- **Redundant test**: re-asserts a contract another test already owns, often the same scenario replayed at every layer it crosses. → keep one owner at the strongest boundary; extend a table case instead of adding a sibling.
+- **Test-only seam**: an export, flag, wrapper, or hook that no production caller uses, added so a test can reach in. → test through the real boundary and delete the seam. Injected dependencies that production also passes are not seams.
 
-### 4. Spawn both reviewers in parallel
+### 4. Spawn both reviewers
 
 **Standards reviewer prompt** should include:
 
 - The full diff command and commit list.
 - The list of standards-source files you found in step 3, **plus the smell baseline from step 3** pasted in full (the reviewer has no other access to it).
-- The brief: "Report, per file/hunk where relevant, (a) every place the diff violates a documented standard: cite the standard (file + the rule); and (b) any baseline smell you spot: name it and quote the hunk. Distinguish hard violations from judgement calls: documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
+- The brief: "Report, per file/hunk where relevant, (a) every place the diff violates a documented standard: cite the standard (file + the rule); (b) any baseline smell you spot: name it and quote the hunk; and (c) for each new or changed test, the credible regression that makes it fail. If you can't name one, or existing coverage already catches it, that is the finding. Distinguish hard violations from judgement calls: documented-standard breaches can be hard, but baseline smells are always judgement calls, and a documented repo standard overrides the baseline. Skip anything tooling enforces. Under 400 words."
 
 **Spec reviewer prompt** should include:
 

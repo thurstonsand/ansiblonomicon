@@ -113,7 +113,7 @@ When creating threads, pick the tier as usual, then always set `agent_mode` to:
 
 Use built-in `medium` only when GPT Sol is requested. Never use a `claude-*` mode.
 
-Call the Oracle one at a time, never in parallel.
+Call the Oracle one at a time, never in parallel. When asked for parallel Oracle instances, juts run them one after another.
 {% else -%}
 ### Delegation and model selection
 
