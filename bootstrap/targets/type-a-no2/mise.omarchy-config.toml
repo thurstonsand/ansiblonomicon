@@ -1,14 +1,10 @@
-[bootstrap.files."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock/manifest.json"]
-state = "absent"
-
-[bootstrap.files."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock/Service.qml"]
-state = "absent"
-
-[bootstrap.files."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock/LockView.qml"]
-state = "absent"
-
-[bootstrap.directories."/home/thurstonsand/.config/omarchy/plugins/thurstonsand.lock"]
-state = "absent"
+# The erijl.lock plugin's security-key lock service, matching what its own `setup` writes. Its `setup` can't
+# run as the loadout hook: the doctor it ends with fails while the freshly cloned plugin is still disabled.
+[bootstrap.files."/etc/pam.d/omarchy-lock-fido2"]
+source = "omarchy/pam.d/omarchy-lock-fido2"
+owner = "root"
+group = "root"
+mode = "0644"
 
 [bootstrap.repos]
 "~/.local/share/omarchy-icloud-photos" = { url = "https://github.com/jankeesvw/omarchy-icloud-photos.git", ref = "main" }

@@ -1,0 +1,17 @@
+#%PAM-1.0
+# omarchy-fido2-suite:managed (erijl.lock) -- written by omarchy-fido2-suite
+# Security-key unlock for the Omarchy lock screen (plugin: erijl.lock).
+#
+# Its own service on purpose. Adding `sufficient pam_u2f.so` to
+# omarchy-lock-password instead would send every mistyped password to the key
+# as a PIN attempt, and a key has only eight of those before it locks itself
+# out and needs a factory reset that destroys every credential on it.
+#
+# `required` with no pam_unix fallback: the way back to a password is the mode
+# switch in the UI, not a silent fall-through.
+#
+# No pinverification=1 here. pam_u2f ORs that module option with the
+# per-credential flag, so setting it would force a PIN onto keys registered
+# without one. Verification requirements belong on the credential.
+auth       required    pam_u2f.so authfile=/etc/fido2/fido2 cue [cue_prompt=Touch your security key]
+account    include     system-local-login

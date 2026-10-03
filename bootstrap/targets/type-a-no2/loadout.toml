@@ -7,10 +7,12 @@ cmake = "present"
 direnv = "present"
 ghostty = "present"
 github-cli = "present"
+libfido2 = "present"
 libpulse = "present"
 ninja = "present"
 omarchy-zsh = "present"
 openai-codex-desktop = "present"
+pam-u2f = "present"
 pkgconf = "present"
 qt6-connectivity = "present"
 qt6-declarative = "present"
@@ -30,6 +32,7 @@ openwhispr-bin = "present"
 sakura-mochi = { source = "https://github.com/OldJobobo/omarchy-sakura-mochi-theme.git" }
 
 [plugins]
+"erijl.lock" = { source = "https://github.com/Erijl/omarchy-fido2-key-suite.git" }
 "felixzsh.codexbar" = { source = "https://github.com/thurstonsand/omarchy-codexbar.git" }
 "io.github.mb-jambon.omapods" = { source = "https://github.com/MB-JAMBON/omarchy-pods.git", setup = "./setup" }
 "io.github.wouldja.mouse" = { source = "https://github.com/wouldja/omarchy-mouse.git" }

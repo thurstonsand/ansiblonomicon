@@ -42,6 +42,9 @@
           "id": "omarchy.tray"
         },
         {
+          "id": "erijl.lock"
+        },
+        {
           "id": "lgse.sandman"
         },
         {
@@ -71,5 +74,11 @@
       ]
     }
   },
-  "plugins": []
+  "plugins": [],
+  "disabledPlugins": [
+    "omarchy.lock"
+  ],
+  "cloneSourceRestores": [
+    "erijl.lock"
+  ]
 }
