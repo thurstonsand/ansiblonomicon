@@ -67,3 +67,16 @@ resource "google_pubsub_subscription" "nest_events_scrypted" {
     ttl = ""
   }
 }
+
+# Home Assistant's nest integration pulls with the linked user's OAuth token; select this
+# subscription in its config flow instead of letting it create an expiring one.
+resource "google_pubsub_subscription" "nest_events_home_assistant" {
+  project                    = google_project.nest.project_id
+  name                       = "nest-events-home-assistant"
+  topic                      = google_pubsub_topic.nest_events.id
+  message_retention_duration = "3600s"
+
+  expiration_policy {
+    ttl = ""
+  }
+}

@@ -117,8 +117,13 @@
                   "path": "M10 80H180V260H150V220H10Z",
                   "label": [95.0, 144.0],
                   "lines": ["Main Bedroom"],
-                  "lights": ["light.main_bedroom_yanie_fluff_lamp"],
-                  "hueScenes": true
+                  "lights": [
+                    "light.main_bedroom_yanie_fluff_lamp",
+                    "light.main_bedroom_fluff_floor_lamp"
+                  ],
+                  "hueScenes": true,
+                  "entity": "media_player.main_bedroom_homepod",
+                  "mapNote": "HomePod"
                 },
                 {
                   "id": "living_room",
@@ -228,8 +233,8 @@
                   "path": "M315 220H390V410H315V300H250V280H315Z",
                   "label": [352.5, 309.0],
                   "lines": ["Kitchen"],
-                  "entity": "media_player.kitchen_kitchen_homepod",
-                  "mapNote": "HomePod",
+                  "entity": "media_player.kitchen_display",
+                  "mapNote": "Nest Hub",
                   "appliances": [
                     {
                       "entity": "switch.espresso_machine_power",
