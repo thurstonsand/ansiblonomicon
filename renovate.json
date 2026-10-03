@@ -14,6 +14,12 @@
   "dependencyDashboard": true,
   "timezone": "America/New_York",
   "labels": ["dependencies"],
+  "prHourlyLimit": 0,
+  "prConcurrentLimit": 0,
+  "branchConcurrentLimit": 0,
+  "lockFileMaintenance": {
+    "enabled": true
+  },
   "customManagers": [
     {
       "customType": "regex",
