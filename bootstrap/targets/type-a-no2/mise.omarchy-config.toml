@@ -6,6 +6,24 @@ owner = "root"
 group = "root"
 mode = "0644"
 
+[bootstrap.files."/etc/sudoers.d/ansiblonomicon"]
+source = "omarchy/sudoers.d/ansiblonomicon"
+owner = "root"
+group = "root"
+mode = "0440"
+
+[bootstrap.files."/etc/pam.d/sudo-unattended"]
+source = "omarchy/pam.d/sudo-unattended"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/usr/local/libexec/sudo-unattended-notify"]
+source = "omarchy/libexec/sudo-unattended-notify"
+owner = "root"
+group = "root"
+mode = "0755"
+
 [bootstrap.repos]
 "~/.local/share/omarchy-icloud-photos" = { url = "https://github.com/jankeesvw/omarchy-icloud-photos.git", ref = "main" }
 

@@ -1,0 +1,4 @@
+#!/bin/bash
+# pam_exec runs this as the invoking user, with the authenticating sudo as its parent and none of the user's environment.
+command=$(tr '\0' ' ' <"/proc/$PPID/cmdline")
+DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus" notify-send --app-name=sudo "Unattended root" "$command"

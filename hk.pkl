@@ -62,6 +62,12 @@ local linters = new Mapping<String, Step> {
     fix = "./scripts/session-recovery-lint.sh --format"
   }
 
+  // mise installs these without validating them, and one bad line takes sudo down with it.
+  ["visudo"] {
+    glob = "**/sudoers.d/*"
+    check = #"for f in {{files}}; do visudo -cf "$f" || exit 1; done"#
+  }
+
   // Both Go subprojects carry a go.mod, so workspace_indicator fans these out per
   // project without naming either path.
   ["go-fmt"] = (Builtins.go_fmt) {}

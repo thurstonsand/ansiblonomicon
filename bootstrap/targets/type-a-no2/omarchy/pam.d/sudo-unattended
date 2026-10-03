@@ -1,0 +1,7 @@
+#%PAM-1.0
+# Password-only sudo for `sudo -A`, selected by /etc/sudoers.d/ansiblonomicon. The alert stands in for the touch.
+auth		optional	pam_exec.so quiet /usr/local/libexec/sudo-unattended-notify
+auth		include		system-auth
+account		include		system-auth
+session		include		system-auth
+session		optional	pam_systemd.so class=none

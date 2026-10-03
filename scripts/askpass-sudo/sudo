@@ -2,5 +2,7 @@
 # Put first on PATH for commands whose nested sudo calls must authenticate
 # through SUDO_ASKPASS. The work Mac's BeyondTrust policy keeps no sudo
 # timestamp, so priming with `sudo -A -v` never satisfies mise's `sudo -n`
-# preflight; `-A` also satisfies `-n`, so every call authenticates itself.
+# preflight; every call authenticates itself instead. Stock sudo refuses
+# askpass under `-n`, so drop the preflight's flag: askpass never blocks.
+[ "$1" = -n ] && shift
 exec /usr/bin/sudo -A "$@"

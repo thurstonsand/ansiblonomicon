@@ -673,7 +673,9 @@ if selected mise; then
 fi
 if selected omarchy-config; then
   hypr_before=$(sha256sum "$HOME"/.config/hypr/*.lua 2>/dev/null || true)
-  MISE_ENV=omarchy-config mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles "$mode" || exit "$?"
+  PATH="$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH" MISE_ENV=omarchy-config \
+    "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD -- \
+    mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles "$mode" || exit "$?"
   if [ -z "${usage_check:-}" ]; then
     hypr_after=$(sha256sum "$HOME"/.config/hypr/*.lua)
     [ "$hypr_before" = "$hypr_after" ] || hyprctl reload || exit "$?"
@@ -974,6 +976,7 @@ depends = [
   "workers:typecheck",
   "pi:check",
   "session-recovery:check",
+  "sudoers:check",
   "//bootstrap/capabilities/software/sources/...:check",
 ]
 
@@ -1069,6 +1072,10 @@ cat "$guidance"
 [tasks."session-recovery:check"]
 description = "Lint and type-check the session-recovery library and its Pi entry"
 run = "./scripts/session-recovery-lint.sh"
+
+[tasks."sudoers:check"]
+description = "Validate sudoers drop-ins, which mise installs unchecked"
+run = 'for f in bootstrap/targets/*/omarchy/sudoers.d/*; do visudo -cf "$f" || exit 1; done'
 
 [tasks."session-recovery:fix"]
 description = "Format and autofix session-recovery, then type-check"

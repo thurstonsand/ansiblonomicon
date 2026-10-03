@@ -1,0 +1,3 @@
+# Unattended callers authenticate with `sudo -A` and a password from 1Password, so route them past the security
+# key that Omarchy's /etc/pam.d/sudo asks for first; an untouched key stalls them 30 seconds before falling through.
+Defaults pam_askpass_service=sudo-unattended
