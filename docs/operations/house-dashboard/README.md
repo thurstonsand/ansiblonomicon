@@ -41,6 +41,16 @@ The Living Room scene scripts are also prerequisites. Each runs `hue.activate_sc
 
 The individual entity IDs are in the corresponding room's `lights` array. Hue scenes continue to address their original bulbs. These files do not back up integrations, helpers, area assignments, or Hue scenes; retain ordinary HA backups for those.
 
+## House controls
+
+The card's `override` key names an `input_boolean` that pauses the door automations; the card refuses to load without it. `input_boolean.door_automations_override` is a prerequisite helper, not created by these exports. `automation.garage_close_after_departure`, `automation.front_door_auto_lock_after_closed`, and `automation.basement_door_auto_lock_after_closed` each require it off and also trigger when it turns off, so resuming locks and closes anything left open.
+
+A strip of house controls sits above the floor tabs, and below the map on phones:
+
+- **Turn all off** shows while any light in a room's `lights` list is on and turns them all off in one `light.turn_off` call.
+- **Secure** shows while a room's `lock.` entity is not locked or its `cover.` entity is not closed. It locks or closes only those.
+- **Pause** and **Resume** toggle the override. While paused, an "Auto-lock paused" stamp sits on the map; drag it off to resume.
+
 ## Pickup reminder
 
 The Main-floor garage has a small indicator inside its top-left corner, positioned by `room.pickup.position` in map coordinates. It never changes the map's size or position. Green indicates garbage; blue indicates recycling. Only the bin symbols are visible; the pickup description remains available to screen readers. No dismissal or bin-movement detection is implied.
@@ -59,4 +69,4 @@ Apply approved changes through HA-MCP: update the existing inline module with `h
 
 Verify light/dark phone and tablet layouts, all three floors, room-list navigation, scene updates, and sheet dismissal versus scrolling/slider interactions. Intercept service calls when testing lock buttons; do not operate physical locks as a smoke test. Compare the resulting live configuration with these files before committing.
 
-Future work: [Global controls for House](../../wayfinding/loch-highland-house/tickets/29-house-global-controls.md). Design and acceptance history: [House dashboard thread](https://ampcode.com/threads/T-01a0a859-11a2-724a-a131-fa9cdd0f2cda).
+Global controls design: [Global controls for House](../../wayfinding/loch-highland-house/tickets/29-house-global-controls.md). Design and acceptance history: [House dashboard thread](https://ampcode.com/threads/T-01a0a859-11a2-724a-a131-fa9cdd0f2cda).

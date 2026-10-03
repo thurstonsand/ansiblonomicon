@@ -8,6 +8,7 @@
       "cards": [
         {
           "type": "custom:house-atlas-card",
+          "override": "input_boolean.door_automations_override",
           "floors": [
             {
               "id": "basement",

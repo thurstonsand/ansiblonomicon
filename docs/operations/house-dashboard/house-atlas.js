@@ -81,6 +81,8 @@ class HouseAtlas extends HTMLElement {
             throw new Error(`No car shape for vehicle "${vehicle.id}".`);
       }
     }
+    if (!config.override?.startsWith("input_boolean."))
+      throw new Error("House Atlas requires an input_boolean override.");
     this.config = config;
     this.render();
   }
@@ -93,6 +95,7 @@ class HouseAtlas extends HTMLElement {
     const previous = this._hass;
     this._hass = hass;
     if (!this.config) return;
+    this.updateGlobal();
     if (!this.helpers) {
       if (!this.loading) {
         this.loading = window
@@ -127,6 +130,140 @@ class HouseAtlas extends HTMLElement {
   }
   get room() {
     return this.floor.rooms.find((room) => room.id === this.roomId);
+  }
+
+  get rooms() {
+    return this.config.floors.flatMap((floor) => floor.rooms);
+  }
+
+  houseLights() {
+    return [...new Set(this.rooms.flatMap((room) => room.lights || []))];
+  }
+
+  perimeter() {
+    return this.rooms
+      .filter((room) => /^(lock|cover)\./.test(room.entity || ""))
+      .map((room) => {
+        const state = this._hass.states[room.entity]?.state;
+        const lock = room.entity.startsWith("lock.");
+        return {
+          entity: room.entity,
+          lock,
+          name: room.mapNote.replace(/ Door$/, " door"),
+          open: lock ? state !== "locked" : state !== "closed",
+        };
+      });
+  }
+
+  pausedSince() {
+    return new Date(
+      this._hass.states[this.config.override].last_changed,
+    ).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+  }
+
+  updateGlobal() {
+    const root = this.shadowRoot;
+    const on = (id) => this._hass.states[id]?.state === "on";
+    const lit = this.houseLights().filter(on).length;
+    const lights = root.querySelector(".g-lights");
+    lights.hidden = !lit;
+    lights.querySelector("b").textContent =
+      `${lit} ${lit === 1 ? "light" : "lights"} on`;
+    lights.querySelector("small").textContent = this.rooms
+      .filter((room) => (room.lights || []).some(on))
+      .map((room) => room.name)
+      .join(" · ");
+    const perimeter = this.perimeter();
+    const open = perimeter.filter((door) => door.open);
+    const secure = root.querySelector(".g-secure");
+    secure.hidden = !open.length;
+    secure.querySelector("b").textContent =
+      open.length === 1
+        ? `${open[0].name} ${open[0].lock ? "unlocked" : "open"}`
+        : `${open.length} open`;
+    secure.querySelector("small").textContent = open
+      .map((door) => door.name)
+      .join(" · ");
+    const paused = this._hass.states[this.config.override]?.state === "on";
+    const override = root.querySelector(".g-override");
+    override.classList.toggle("warn", paused);
+    override
+      .querySelector("ha-icon")
+      .setAttribute("icon", paused ? "mdi:lock-off-outline" : "mdi:lock-clock");
+    override.querySelector("b").textContent = paused
+      ? "Auto-lock & close paused"
+      : "Auto-lock & close on";
+    override.querySelector("small").textContent = paused
+      ? `Since ${this.pausedSince()} · doors stay as you leave them`
+      : perimeter
+          .map((door) => `${door.name} auto-${door.lock ? "lock" : "close"}`)
+          .join(" · ");
+    override.querySelector("button").textContent = paused ? "Resume" : "Pause";
+    const stamp = root.querySelector(".stamp");
+    if (stamp.hidden === paused) stamp.removeAttribute("style");
+    stamp.hidden = !paused;
+    if (paused && !stamp.classList.contains("grab"))
+      stamp.querySelector("small").textContent =
+        `since ${this.pausedSince()} · drag off to resume`;
+  }
+
+  secureHouse() {
+    for (const door of this.perimeter().filter((door) => door.open))
+      this.perform(
+        door.lock ? "lock" : "cover",
+        door.lock ? "lock" : "close_cover",
+        door.entity,
+      );
+  }
+
+  wireStamp(stamp) {
+    const THROW = 130;
+    let start = null;
+    const distance = (event) => {
+      const dx = event.clientX - start.x;
+      const dy = event.clientY - start.y;
+      return [dx, dy, Math.hypot(dx, dy)];
+    };
+    stamp.addEventListener("pointerdown", (event) => {
+      start = { x: event.clientX, y: event.clientY };
+      stamp.setPointerCapture(event.pointerId);
+      stamp.classList.add("grab");
+    });
+    stamp.addEventListener("pointermove", (event) => {
+      if (!start) return;
+      const [dx, dy, d] = distance(event);
+      stamp.style.transform = `translate(${dx}px,${dy}px) rotate(${-11 + dx / 10}deg) scale(${1 + Math.min(d, THROW) / 900})`;
+      stamp.style.opacity = Math.max(0.25, 0.94 - d / 320);
+      stamp.classList.toggle("armed", d > THROW);
+      stamp.querySelector("small").textContent =
+        d > THROW
+          ? "let go to resume"
+          : `since ${this.pausedSince()} · drag off to resume`;
+    });
+    const release = (event) => {
+      if (!start) return;
+      const [dx, dy, d] = distance(event);
+      start = null;
+      stamp.classList.remove("grab", "armed");
+      if (event.type === "pointerup" && d > THROW) {
+        stamp.style.transform = `translate(${dx * 5}px,${dy * 5}px) rotate(${-11 + dx / 2}deg)`;
+        stamp.style.opacity = 0;
+        setTimeout(
+          () => this.perform("input_boolean", "turn_off", this.config.override),
+          300,
+        );
+        return;
+      }
+      stamp.removeAttribute("style");
+      this.updateGlobal();
+      if (d < 6) {
+        stamp.classList.remove("nudge");
+        void stamp.offsetWidth;
+        stamp.classList.add("nudge");
+      }
+    };
+    stamp.addEventListener("pointerup", release);
+    stamp.addEventListener("pointercancel", release);
   }
 
   mapEntities(floor) {
@@ -218,8 +355,30 @@ class HouseAtlas extends HTMLElement {
         .lock-action.secondary { background: transparent; color: var(--atlas-accent); }
         .muted { color: var(--atlas-muted); font-size: 13px; line-height: 1.6; }
         .map-wrap[hidden], .room-list[hidden] { display: none; }
+        .strip { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0,1fr); gap: 10px; margin: 18px 0 0; }
+        .g-cell { min-width: 0; display: flex; align-items: center; gap: 14px; border: 1px solid var(--atlas-border); background: var(--atlas-surface); border-radius: 8px; padding: 10px 10px 10px 16px; }
+        .g-cell[hidden] { display: none; }
+        .g-cell ha-icon { color: var(--atlas-muted); flex: 0 0 auto; }
+        .g-cell.warn { border-color: var(--atlas-light); background: color-mix(in srgb, var(--atlas-light) 16%, var(--atlas-bg)); }
+        .g-lights ha-icon, .g-cell.warn ha-icon { color: var(--atlas-light); }
+        .g-text { flex: 1; min-width: 0; }
+        .g-text b { display: block; font-weight: 600; font-size: 14px; }
+        .g-text small { display: block; font-size: 12px; color: var(--atlas-muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .g-cell button { background: var(--atlas-bg); border: 1px solid var(--atlas-border); border-radius: 6px; padding: 0 14px; font-size: 12px; white-space: nowrap; }
+        .map-panel { position: relative; }
+        .stamp { position: absolute; left: 4%; top: 46%; z-index: 2; transform: rotate(-11deg); padding: 10px 18px; border: 4px double var(--atlas-accent); border-radius: 4px; background: color-mix(in srgb, var(--atlas-bg) 90%, transparent); color: var(--atlas-accent); opacity: .94; font: 700 clamp(15px,3.2cqw,24px)/1.1 Georgia,serif; letter-spacing: .12em; text-transform: uppercase; text-align: center; box-shadow: 0 1px 0 #28282818; touch-action: none; user-select: none; cursor: grab; transition: transform .4s cubic-bezier(.2,.9,.3,1.25), opacity .4s; animation: thunk .35s cubic-bezier(.3,1.6,.5,1); }
+        .stamp[hidden] { display: none; }
+        .stamp small { display: block; margin-top: 4px; font: 400 11px/1.3 Arial,sans-serif; letter-spacing: .06em; text-transform: none; }
+        .stamp.grab { transition: none; cursor: grabbing; box-shadow: 0 10px 24px #28282840; }
+        .stamp.armed { border-style: dashed; }
+        .stamp.nudge { animation: nudge .45s; }
+        @keyframes thunk { from { transform: rotate(-11deg) scale(1.8); opacity: 0; } }
+        @keyframes nudge { 25% { transform: rotate(-6deg) translateX(10px); } 60% { transform: rotate(-14deg) translateX(-4px); } }
         @container(max-width:900px) {
-          .atlas { padding: 16px 12px 24px; }
+          .atlas { display: flex; flex-direction: column; padding: 16px 12px 24px; }
+          .strip { order: 1; grid-auto-flow: row; grid-auto-columns: auto; gap: 8px; margin-top: 16px; }
+          .atlas > .error { order: 2; }
+          .g-cell { padding: 6px 6px 6px 12px; gap: 10px; }
           .top { padding-bottom: 12px; }
           .eyebrow { font-size: 9px; }
           .tools { gap: 0; }
@@ -240,8 +399,13 @@ class HouseAtlas extends HTMLElement {
       </style>
       <main class="atlas">
         <header class="top"><div><div class="eyebrow">Loch Highland</div><h1>House</h1></div><div class="tools"><button class="mode" aria-pressed="false">Room list</button></div></header>
+        <section class="strip" aria-label="House controls">
+          <div class="g-cell g-lights" hidden><ha-icon icon="mdi:lightbulb-group-outline"></ha-icon><div class="g-text"><b></b><small></small></div><button>Turn all off</button></div>
+          <div class="g-cell g-secure warn" hidden><ha-icon icon="mdi:shield-alert-outline"></ha-icon><div class="g-text"><b></b><small></small></div><button>Secure</button></div>
+          <div class="g-cell g-override"><ha-icon></ha-icon><div class="g-text"><b></b><small></small></div><button></button></div>
+        </section>
         <nav class="floors" aria-label="Floors">${this.config.floors.map((floor) => `<button data-floor="${escapeXml(floor.id)}" aria-current="${floor.id === this.floorId}">${escapeXml(floor.name)}</button>`).join("")}</nav>
-        <div class="layout"><section class="map-panel" aria-label="Floor map"><div class="map-wrap"></div><div class="room-list" hidden></div></section><div class="detail-host"></div></div>
+        <div class="layout"><section class="map-panel" aria-label="Floor map"><div class="map-wrap"></div><div class="room-list" hidden></div><div class="stamp" hidden>Auto-lock paused<small></small></div></section><div class="detail-host"></div></div>
         <p class="error" role="alert"></p>
       </main>`;
     this.shadowRoot.querySelectorAll("[data-floor]").forEach((button) =>
@@ -264,6 +428,21 @@ class HouseAtlas extends HTMLElement {
       this.listMode = !this.listMode;
       this.updateMode();
     });
+    this.shadowRoot
+      .querySelector(".g-lights button")
+      .addEventListener("click", () =>
+        this.perform("light", "turn_off", this.houseLights()),
+      );
+    this.shadowRoot
+      .querySelector(".g-secure button")
+      .addEventListener("click", () => this.secureHouse());
+    this.shadowRoot
+      .querySelector(".g-override button")
+      .addEventListener("click", () =>
+        this.perform("input_boolean", "toggle", this.config.override),
+      );
+    this.wireStamp(this.shadowRoot.querySelector(".stamp"));
+    if (this._hass) this.updateGlobal();
     this.shadowRoot
       .querySelector(".atlas")
       .addEventListener("ll-custom", (event) => {
@@ -638,11 +817,17 @@ class HouseAtlas extends HTMLElement {
         icon_tap_action: { action: "more-info" },
         features: [{ type: "cover-open-close" }],
       });
-    } else if (room.entity?.startsWith("media_player.")) {
+    } else if (!room.entity && !room.appliances) {
+      const text = document.createElement("p");
+      text.className = "muted";
+      text.textContent = room.note || "No connected devices in this room yet.";
+      body.append(text);
+    }
+    if (room.entity?.startsWith("media_player."))
       add({
         type: "tile",
         entity: room.entity,
-        name: "HomePod",
+        name: room.mapNote,
         tap_action: { action: "more-info" },
         icon_tap_action: { action: "more-info" },
         features: [
@@ -650,12 +835,6 @@ class HouseAtlas extends HTMLElement {
           { type: "media-player-volume-slider" },
         ],
       });
-    } else if (!room.appliances) {
-      const text = document.createElement("p");
-      text.className = "muted";
-      text.textContent = room.note || "No connected devices in this room yet.";
-      body.append(text);
-    }
     for (const { entity, name } of room.appliances || [])
       add({
         type: "tile",
