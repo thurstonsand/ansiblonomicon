@@ -1,5 +1,5 @@
 ---
-status: open
+status: closed
 type: research
 blocked-by: []
 ---
@@ -24,6 +24,12 @@ Branches to settle:
 Output: root cause or best hypothesis, plus the stabilization plan for the new house.
 
 ## Research log
+
+- 2026-10-03: **Closed as stable after the v2.8.3 upgrade and cooler new-house placement.** The two-week window contained no WAS-110 failure. On October 1 the monitor recorded continuous WAN loss from 14:18:51–20:57:50 UTC, 937 failed samples over 6h39m, followed by a second loss from 21:24:49–21:34:56 UTC, 25 failed samples over 10m. This was a known external physical fiber cut, not a bypass-device fault. The healthy container had zero restarts, both independent HTTPS probes failed, and the WAS-110 management endpoint remained reachable throughout.
+
+  Both captures identify loss of downstream light rather than the former hot management-plane wedge. The host link remained up at 10 Gb/s, while the PON fell to O1.1 off-sync, receive power became `-inf`, and the stick reported `LOS`, `LODS`, and no signal. It recovered on its own: receive power returned around -15.7 dBm, PLOAM progressed to O5.1, and the WAN probes succeeded without a monitor or stick restart. As of October 3 it is healthy at O5.1, Rx -15.59 dBm, CPU 73.7/71.2°C, and optic 61.9°C.
+
+  The captures also contain repeated kernel `BUG: Bad page state` reports across the VLAN daemon, detection daemon, `awk`, and `sleep`. The stick's wall clock is wrong, and its uptime places those reports before rather than at the optical-loss transition. They did not cause this outage and have produced no observed service failure; preserve the captures and revisit them only if a future event correlates with the warnings. Keep the monitor in place. On another LOS event, check the physical fiber path and provider status before power-cycling; absent downstream light recovered without intervention here, and a reboot would erase evidence without repairing the optical path.
 
 - 2026-09-19: The direct-service WAS-110 has produced no user-visible recurrence for roughly two to three weeks. Current metrics remain clean at PLOAM O5.1, Rx -15.56 dBm, Tx 5.67 dBm, CPU 73.7/71.6°C, and optic 62.2°C. The new placement is still warm but materially cooler than the pre-move 82.4/79.7°C reading. Continue observation for two more weeks; if no real outage recurs, close this as stabilized by firmware plus placement rather than adding active cooling.
 
