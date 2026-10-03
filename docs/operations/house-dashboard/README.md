@@ -4,12 +4,12 @@ Versioned copies of Loch Highland's shipped Home Assistant dashboard, verified a
 
 ## Files and live locations
 
-| File | Live location |
-| --- | --- |
-| `dashboard.json` | Storage dashboard `house-atlas`, view `home`, title **House** |
-| `house-atlas.js` | Inline module resource `b917dcc7055c41c2bbe8167df0727d30`; registers `custom:house-atlas-card` |
-| `house-atlas-theme.yaml` | `themes/house_atlas.yaml`, theme **House Atlas** |
-| `trash-pickup-template.yaml` | Value of `template:` in `configuration.yaml`; creates `sensor.trash_pickup_reminder` |
+| File                         | Live location                                                                                  |
+| ---------------------------- | ---------------------------------------------------------------------------------------------- |
+| `dashboard.json`             | Storage dashboard `house-atlas`, view `home`, title **House**                                  |
+| `house-atlas.js`             | Inline module resource `b917dcc7055c41c2bbe8167df0727d30`; registers `custom:house-atlas-card` |
+| `house-atlas-theme.yaml`     | `themes/house_atlas.yaml`, theme **House Atlas**                                               |
+| `trash-pickup-template.yaml` | Value of `template:` in `configuration.yaml`; creates `sensor.trash_pickup_reminder`           |
 
 Open `/house-atlas/home` on the current HA address. House is the system default dashboard. The global theme has Gruvbox-derived light and dark palettes; the user profile must use the backend-selected theme and Auto mode to follow the device appearance.
 
@@ -18,7 +18,7 @@ Open `/house-atlas/home` on the current HA address. House is the system default 
 - Tested with HA 2026.9.2 and HACS **ha-floorplan v1.1.5**, registered as a module at `/hacsfiles/ha-floorplan/floorplan.js?hacstag=188323494115` (resource `49c6783e7fb24c1ba63688c9bf2d8f83`).
 - Native HA tiles provide controls. Phones use HA's internal `ha-bottom-sheet`; wider layouts dock controls. The sheet and frontend entity/device registry interfaces are not stable public custom-card APIs, so check them after HA upgrades. No Bubble Card or card-mod dependency.
 - `dashboard.json` contains the final geometry, door openings, labels, and explicit entity controls. Edit it directly; no generator is required. Room `id` values match HA area IDs, which need not match renamed display names: `primary_bath` is Main Bath, `stair_hall` is Entryway, and `marianne_office` is Yanie Office.
-- `room.lights` lists individual bulbs for map counts/status. `room.controls` selects displayed light-group controls. `room.group` is the optional whole-room control. `room.appliances` adds toggleable tiles beside the room's primary entity; Kitchen lists the espresso machine's power switch. Hue scenes populate dynamically by their entity/device area assignment; buttons call `scene.turn_on`, not explicit dynamic-animation playback.
+- `room.lights` lists individual bulbs for map counts/status. `room.controls` selects displayed light-group controls. `room.group` is the optional whole-room control. `room.appliances` adds toggleable tiles beside the room's primary entity; Kitchen lists the espresso machine's power switch. `room.scenes` lists curated scene buttons, each calling `<domain>.turn_on`, so scripts work; Living Room lists its combined scripts. Without it, `room.hueScenes` populates Hue scenes dynamically by their entity/device area assignment; those buttons call `scene.turn_on`, not explicit dynamic-animation playback.
 - Map taps open room details. Lock and Unlock execute directly without confirmation. Floor and room selection stay local to each browser.
 - Room rules use `double_tap_action: false` for immediate selection. An `{ action: "none" }` object still enables Floorplan's 400 ms double-click detection delay.
 
@@ -28,13 +28,16 @@ Main Bedroom omits the whole-room lighting tile; its Hue group `light.main_bedro
 
 `light.main_bedroom_cloud_painting` is temporarily disabled in HA's entity registry and omitted from Main Bedroom's `lights` list while the painting is offline. Its Hue device, identity, and scenes are retained. To restore it, enable that entity, reload its Hue integration if needed, and add the entity ID back to the room's `lights` list in the live dashboard and this copy.
 
-Three HA light-group helpers are prerequisites, not created by these exports:
+Four HA light-group helpers are prerequisites, not created by these exports:
 
-| Helper | Members |
-| --- | --- |
-| `light.living_room_ambient_light` | Living Room Signe Floor Light Left, Floor Right, Wall Wash Right |
-| `light.thurston_office_desk_lights` | Thurston Office Desk Lamp Left and Right |
-| `light.thurston_office_ambient_light` | Thurston Office Wall Wash Left and Right |
+| Helper                                | Members                                                                                                    |
+| ------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `light.living_room_ambient_light`     | Living Room Signe Floor Light Left, Floor Right, Wall Wash Right                                           |
+| `light.thurston_office_desk_lights`   | Thurston Office Desk Lamp Left and Right                                                                   |
+| `light.thurston_office_ambient_light` | Thurston Office Wall Wash Left and Right                                                                   |
+| `light.living_room_floor_lamps`       | Living Room Front Right and Rear Center Floor Lamps, Switch-as-X lights over the Eve Energy bottom sockets |
+
+The Living Room scene scripts are also prerequisites. Each runs `hue.activate_scene` with `dynamic: true`, then sets `light.living_room_floor_lamps`: `script.living_room_evening_lights` plays Autumn gold with the lamps on, `script.living_room_late_night` plays November haze with them off, and `script.living_room_tokyo` plays Tokyo with them off. Hue stores brightness per scene, so the scripts leave it to the Hue app.
 
 The individual entity IDs are in the corresponding room's `lights` array. Hue scenes continue to address their original bulbs. These files do not back up integrations, helpers, area assignments, or Hue scenes; retain ordinary HA backups for those.
 

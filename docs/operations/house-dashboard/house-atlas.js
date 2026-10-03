@@ -664,7 +664,7 @@ class HouseAtlas extends HTMLElement {
         tap_action: { action: "more-info" },
         icon_tap_action: { action: "toggle" },
       });
-    if (room.hueScenes) {
+    if (room.scenes || room.hueScenes) {
       const scenes = document.createElement("section");
       scenes.className = "hue-scenes";
       body.append(scenes);
@@ -679,7 +679,37 @@ class HouseAtlas extends HTMLElement {
   updateScenes() {
     const container = this.shadowRoot.querySelector(".hue-scenes");
     if (!container || !this.room) return;
-    const scenes = Object.values(this._hass.entities || {})
+    const scenes = this.room.scenes
+      ? this.room.scenes.map(({ entity, name }) => ({
+          entity,
+          name,
+          unavailable: [undefined, "unavailable"].includes(
+            this._hass.states[entity]?.state,
+          ),
+        }))
+      : this.hueScenes();
+    const signature = JSON.stringify(scenes);
+    if (container.dataset.scenes === signature) return;
+    container.dataset.scenes = signature;
+    container.innerHTML = `<p class="section-label">${
+      this.room.scenes ? "Scenes" : "Hue scenes"
+    }</p><div class="scenes"></div>`;
+    for (const scene of scenes) {
+      const button = document.createElement("button");
+      button.className = "scene";
+      button.textContent = scene.name;
+      button.disabled = scene.unavailable;
+      button.addEventListener("click", () =>
+        this.perform(scene.entity.split(".")[0], "turn_on", scene.entity),
+      );
+      container.querySelector(".scenes").append(button);
+    }
+    if (!scenes.length)
+      container.innerHTML += '<p class="muted">No Hue scenes in this room.</p>';
+  }
+
+  hueScenes() {
+    return Object.values(this._hass.entities || {})
       .filter((entity) => {
         const device = this._hass.devices?.[entity.device_id];
         return (
@@ -698,23 +728,6 @@ class HouseAtlas extends HTMLElement {
           this._hass.states[entity.entity_id].state === "unavailable",
       }))
       .sort((a, b) => a.name.localeCompare(b.name));
-    const signature = JSON.stringify(scenes);
-    if (container.dataset.scenes === signature) return;
-    container.dataset.scenes = signature;
-    container.innerHTML =
-      '<p class="section-label">Hue scenes</p><div class="scenes"></div>';
-    for (const scene of scenes) {
-      const button = document.createElement("button");
-      button.className = "scene";
-      button.textContent = scene.name;
-      button.disabled = scene.unavailable;
-      button.addEventListener("click", () =>
-        this.perform("scene", "turn_on", scene.entity),
-      );
-      container.querySelector(".scenes").append(button);
-    }
-    if (!scenes.length)
-      container.innerHTML += '<p class="muted">No Hue scenes in this room.</p>';
   }
 
   updateLockButtons() {
