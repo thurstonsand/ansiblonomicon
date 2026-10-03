@@ -36,7 +36,7 @@ services:
       - /mnt/black-box/docker/ghost/ghost/var/lib/ghost/content:/var/lib/ghost/content
 
   ghost-mysql:
-    image: mysql:8
+    image: mysql:26
     # The restored database was initialized case-insensitive; MySQL cannot change this in place.
     command: ["--lower-case-table-names=2"]
     restart: unless-stopped
