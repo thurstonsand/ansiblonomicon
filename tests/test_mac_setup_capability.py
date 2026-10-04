@@ -104,6 +104,35 @@ def test_berkeley_mono_public_task_check_apply_partial_and_repeat(
     ]
 
 
+def test_berkeley_mono_reads_through_a_service_account(
+    isolated: tuple[dict[str, str], Path, Path, Path, Path], tmp_path: Path
+) -> None:
+    env, fakebin, _, _, _ = isolated
+    archive = tmp_path / "font.zip"
+    font_archive(archive)
+    token = tmp_path / "token"
+    token.write_text("service-token\n")
+    executable(
+        fakebin / "op",
+        'echo "${OP_SERVICE_ACCOUNT_TOKEN-unset}:${OP_CONNECT_HOST-unset}:$*" >> "$HOME/op-calls"\ncat "$FONT_ARCHIVE"',
+    )
+    result = run(
+        sys.executable,
+        str(SOFTWARE / "berkeley_mono.py"),
+        "--service-account",
+        "op://agent/Berkeley Mono Font/nerd-font",
+        str(token),
+        env={**env, "FONT_ARCHIVE": str(archive), "OP_CONNECT_HOST": "bad"},
+    )
+    assert result.returncode == 0, result.stderr
+    assert sorted(
+        path.name for path in (Path(env["HOME"]) / FONT_DIR).iterdir()
+    ) == sorted(FONT_NAMES)
+    assert (Path(env["HOME"]) / "op-calls").read_text().splitlines() == [
+        "service-token:unset:read op://agent/Berkeley Mono Font/nerd-font"
+    ]
+
+
 @pytest.mark.parametrize("provider_failure", [False, True])
 def test_berkeley_mono_bad_archive_or_provider_failure_touches_no_fonts(
     isolated: tuple[dict[str, str], Path, Path, Path, Path],

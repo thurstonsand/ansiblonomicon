@@ -3,6 +3,20 @@
 "apt:chatgpt" = "latest"
 "apt:xvfb" = "latest"
 "apt:bubblewrap" = "latest"
+"apt:labwc" = "latest"
+"apt:wlr-randr" = "latest"
+"apt:ffmpeg" = "latest"
+"apt:chromium" = "latest"
+"apt:swaybg" = "latest"
+"apt:xsettingsd" = "latest"
+"apt:foot" = "latest"
+"apt:fuzzel" = "latest"
+"apt:grim" = "latest"
+"apt:fonts-dejavu-core" = "latest"
+"apt:pulseaudio" = "latest"
+"apt:pulseaudio-utils" = "latest"
+"apt:libwayland-dev" = "latest"
+"apt:libxkbcommon-dev" = "latest"
 
 [bootstrap.directories."/home/thurstonsand/.config/t3code"]
 owner = "thurstonsand"
@@ -19,8 +33,49 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
 
+[bootstrap.directories."/home/thurstonsand/.config/labwc"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.config/gtk-3.0"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.config/gtk-4.0"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.config/xsettingsd"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.config/foot"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.config/fuzzel"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
 [dotfiles]
 "/home/thurstonsand/.config/t3code/npmrc" = { source = "remote-development/t3.npmrc", mode = "symlink" }
+"/home/thurstonsand/.config/labwc/autostart" = { source = "remote-development/desktop/labwc/autostart", mode = "symlink" }
+"/home/thurstonsand/.config/labwc/environment" = { source = "remote-development/desktop/labwc/environment", mode = "symlink" }
+"/home/thurstonsand/.config/labwc/rc.xml" = { source = "remote-development/desktop/labwc/rc.xml", mode = "symlink" }
+"/home/thurstonsand/.config/labwc/menu.xml" = { source = "remote-development/desktop/labwc/menu.xml", mode = "symlink" }
+"/home/thurstonsand/.config/labwc/themerc-override" = { source = "remote-development/desktop/labwc/themerc-override", mode = "symlink" }
+"/home/thurstonsand/.config/gtk-3.0/settings.ini" = { source = "remote-development/desktop/gtk-settings.ini", mode = "symlink" }
+"/home/thurstonsand/.config/gtk-4.0/settings.ini" = { source = "remote-development/desktop/gtk-settings.ini", mode = "symlink" }
+"/home/thurstonsand/.config/xsettingsd/xsettingsd.conf" = { source = "remote-development/desktop/xsettingsd.conf", mode = "symlink" }
+"/home/thurstonsand/.config/foot/foot.ini" = { source = "remote-development/desktop/foot.ini", mode = "symlink" }
+"/home/thurstonsand/.config/fuzzel/fuzzel.ini" = { source = "remote-development/desktop/fuzzel.ini", mode = "symlink" }
+"/home/thurstonsand/.local/bin/desktop-chromium" = { source = "remote-development/desktop/desktop-chromium", mode = "symlink" }
 # User services must remain runnable while this checkout is unavailable.
 "/home/thurstonsand/.config/systemd/user/amp-remote.service" = { source = "remote-development/amp-remote.service", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/herdr.service" = { source = "remote-development/herdr.service", mode = "copy" }
@@ -31,7 +86,12 @@ mode = "0755"
 "/home/thurstonsand/.config/systemd/user/t3code.service.d/operator.conf" = { source = "remote-development/t3-operator.conf", mode = "copy" }
 
 [bootstrap.hooks.final]
-run = "python3 remote-development/services.py apply"
+run = '''
+set -e
+remote-development/waymote.sh
+python3 remote-development/services.py apply
+python3 ../../capabilities/software/berkeley_mono.py --service-account "op://agent/Berkeley Mono Font/nerd-font" /home/thurstonsand/.config/op-service-account/token
+'''
 
 [tasks."remote-development:reconcile"]
 run = "python3 remote-development/services.py apply"

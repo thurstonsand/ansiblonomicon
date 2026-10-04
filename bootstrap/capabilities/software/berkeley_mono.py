@@ -45,6 +45,12 @@ def validate_paths(font_dir: Path) -> list[str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
+    parser.add_argument(
+        "--service-account",
+        nargs=2,
+        metavar=("REFERENCE", "TOKEN_FILE"),
+        help="read REFERENCE as the 1Password service account in TOKEN_FILE",
+    )
     args = parser.parse_args()
     font_dir = (
         Path.home() / "Library/Fonts"
@@ -69,8 +75,13 @@ def main() -> int:
     environment = os.environ.copy()
     for name in ("OP_SERVICE_ACCOUNT_TOKEN", "OP_CONNECT_HOST", "OP_CONNECT_TOKEN"):
         environment.pop(name, None)
+    command = ["op", "read", REFERENCE, "--account", ACCOUNT]
+    if args.service_account:
+        reference, token_file = args.service_account
+        environment["OP_SERVICE_ACCOUNT_TOKEN"] = Path(token_file).read_text().strip()
+        command = ["op", "read", reference]
     result = subprocess.run(
-        ["op", "read", REFERENCE, "--account", ACCOUNT],
+        command,
         env=environment,
         stdout=subprocess.PIPE,
         check=False,

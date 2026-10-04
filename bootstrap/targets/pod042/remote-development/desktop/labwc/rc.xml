@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<labwc_config>
+  <theme>
+    <cornerRadius>0</cornerRadius>
+    <font name="DejaVu Sans" size="10" />
+  </theme>
+  <keyboard>
+    <default />
+    <keybind key="W-Return">
+      <action name="Execute" command="foot" />
+    </keybind>
+    <keybind key="W-b">
+      <action name="Execute" command="desktop-chromium" />
+    </keybind>
+    <keybind key="W-space">
+      <action name="Execute" command="fuzzel" />
+    </keybind>
+  </keyboard>
+</labwc_config>

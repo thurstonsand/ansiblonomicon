@@ -1,0 +1,4 @@
+XDG_SESSION_TYPE=wayland
+GTK_THEME=Adwaita:dark
+XCURSOR_THEME=Adwaita
+XCURSOR_SIZE=24
