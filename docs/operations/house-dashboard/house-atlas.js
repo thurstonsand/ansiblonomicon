@@ -10,6 +10,7 @@ const escapeXml = (value) =>
         "'": "&apos;",
       })[c],
   );
+const POLAROID_LIFE = 15 * 60 * 1000;
 const resource = (type, text) => ({
   location: `data:${type},${encodeURIComponent(text)}`,
   cache: true,
@@ -28,6 +29,7 @@ class HouseAtlas extends HTMLElement {
     this.roomId = null;
     this.listMode = false;
     this.cards = [];
+    this.polaroids = new Map();
     this.mobile = false;
     this.keyboardNavigation = false;
     this.addEventListener(
@@ -65,8 +67,7 @@ class HouseAtlas extends HTMLElement {
   }
 
   setConfig(config) {
-    if (!Array.isArray(config.floors) || config.floors.length !== 3)
-      throw new Error("House Atlas requires three floors.");
+    if (!config.floors?.length) throw new Error("House Atlas requires floors.");
     for (const floor of config.floors) {
       for (const room of floor.rooms) {
         if (
@@ -96,6 +97,7 @@ class HouseAtlas extends HTMLElement {
     this._hass = hass;
     if (!this.config) return;
     this.updateGlobal();
+    this.updatePolaroids();
     if (!this.helpers) {
       if (!this.loading) {
         this.loading = window
@@ -202,8 +204,8 @@ class HouseAtlas extends HTMLElement {
     const stamp = root.querySelector(".stamp");
     if (stamp.hidden === paused) stamp.removeAttribute("style");
     stamp.hidden = !paused;
-    if (paused && !stamp.classList.contains("grab"))
-      stamp.querySelector("small").textContent =
+    if (paused)
+      stamp.querySelector(".since").textContent =
         `since ${this.pausedSince()} · drag off to resume`;
   }
 
@@ -216,7 +218,7 @@ class HouseAtlas extends HTMLElement {
       );
   }
 
-  wireStamp(stamp) {
+  wireThrow(element, tilt, { onThrow, onTap }) {
     const THROW = 130;
     let start = null;
     const distance = (event) => {
@@ -224,46 +226,198 @@ class HouseAtlas extends HTMLElement {
       const dy = event.clientY - start.y;
       return [dx, dy, Math.hypot(dx, dy)];
     };
-    stamp.addEventListener("pointerdown", (event) => {
+    element.addEventListener("pointerdown", (event) => {
       start = { x: event.clientX, y: event.clientY };
-      stamp.setPointerCapture(event.pointerId);
-      stamp.classList.add("grab");
+      element.setPointerCapture(event.pointerId);
+      element.classList.add("grab");
     });
-    stamp.addEventListener("pointermove", (event) => {
+    element.addEventListener("pointermove", (event) => {
       if (!start) return;
       const [dx, dy, d] = distance(event);
-      stamp.style.transform = `translate(${dx}px,${dy}px) rotate(${-11 + dx / 10}deg) scale(${1 + Math.min(d, THROW) / 900})`;
-      stamp.style.opacity = Math.max(0.25, 0.94 - d / 320);
-      stamp.classList.toggle("armed", d > THROW);
-      stamp.querySelector("small").textContent =
-        d > THROW
-          ? "let go to resume"
-          : `since ${this.pausedSince()} · drag off to resume`;
+      element.style.transform = `translate(${dx}px,${dy}px) rotate(${tilt + dx / 10}deg) scale(${1 + Math.min(d, THROW) / 900})`;
+      element.style.opacity = Math.max(0.25, 0.94 - d / 320);
+      element.classList.toggle("armed", d > THROW);
     });
     const release = (event) => {
       if (!start) return;
       const [dx, dy, d] = distance(event);
       start = null;
-      stamp.classList.remove("grab", "armed");
+      element.classList.remove("grab", "armed");
       if (event.type === "pointerup" && d > THROW) {
-        stamp.style.transform = `translate(${dx * 5}px,${dy * 5}px) rotate(${-11 + dx / 2}deg)`;
-        stamp.style.opacity = 0;
-        setTimeout(
-          () => this.perform("input_boolean", "turn_off", this.config.override),
-          300,
-        );
+        element.style.transform = `translate(${dx * 5}px,${dy * 5}px) rotate(${tilt + dx / 2}deg)`;
+        element.style.opacity = 0;
+        setTimeout(onThrow, 300);
         return;
       }
-      stamp.removeAttribute("style");
-      this.updateGlobal();
-      if (d < 6) {
-        stamp.classList.remove("nudge");
-        void stamp.offsetWidth;
-        stamp.classList.add("nudge");
-      }
+      element.style.removeProperty("transform");
+      element.style.removeProperty("opacity");
+      if (d < 6) onTap();
     };
-    stamp.addEventListener("pointerup", release);
-    stamp.addEventListener("pointercancel", release);
+    element.addEventListener("pointerup", release);
+    element.addEventListener("pointercancel", release);
+  }
+
+  dismissedPolaroids() {
+    return JSON.parse(localStorage.getItem("house-atlas-dismissed") || "{}");
+  }
+
+  updatePolaroids() {
+    const room = this.rooms.find((room) => room.doorbell);
+    if (!room) return;
+    const dismissed = this.dismissedPolaroids();
+    for (const kind of ["ring", "motion"]) {
+      const event = this._hass.states[room.doorbell[kind]];
+      const id = event?.attributes.nest_event_id;
+      const at = Date.parse(event?.state);
+      if (
+        !id ||
+        !(Date.now() - at < POLAROID_LIFE) ||
+        this.polaroids.has(id) ||
+        dismissed[id]
+      )
+        continue;
+      const polaroid = {
+        id,
+        kind,
+        at,
+        label:
+          kind === "ring"
+            ? "Ring"
+            : { camera_person: "Person", camera_sound: "Sound" }[
+                event.attributes.event_type
+              ] || "Motion",
+        time: new Date(at).toLocaleTimeString([], {
+          hour: "numeric",
+          minute: "2-digit",
+        }),
+      };
+      this.polaroids.set(id, polaroid);
+      this.loadSnapshot(
+        polaroid,
+        `${room.doorbell.snapshots}/${kind}-${Math.floor(at / 1000) % 1000}.jpg`,
+      );
+    }
+    this.renderPolaroids();
+  }
+
+  async loadSnapshot(polaroid, mediaId) {
+    const { url } = await this._hass.callWS({
+      type: "media_source/resolve_media",
+      media_content_id: mediaId,
+    });
+    // Slots repeat every 1000 seconds, so a file older than the event is an earlier event's frame still awaiting this one.
+    const since = Math.floor(polaroid.at / 1000) * 1000;
+    for (let attempt = 0; attempt < 10; attempt++) {
+      if (!this.polaroids.has(polaroid.id)) return;
+      const response = await fetch(this._hass.hassUrl(url), {
+        cache: "no-store",
+      });
+      if (
+        response.ok &&
+        Date.parse(response.headers.get("last-modified")) >= since
+      ) {
+        polaroid.photo = URL.createObjectURL(await response.blob());
+        this.renderPolaroids();
+        return;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+
+  dropPolaroid(id) {
+    const polaroid = this.polaroids.get(id);
+    if (polaroid.photo) URL.revokeObjectURL(polaroid.photo);
+    this.polaroids.delete(id);
+    for (const dialog of this.shadowRoot.querySelectorAll(".lightbox"))
+      if (dialog.dataset.id === id) dialog.close();
+  }
+
+  dismissPolaroid(id) {
+    const dismissed = Object.fromEntries(
+      Object.entries(this.dismissedPolaroids()).filter(
+        ([, at]) => Date.now() - at < POLAROID_LIFE,
+      ),
+    );
+    dismissed[id] = this.polaroids.get(id).at;
+    localStorage.setItem("house-atlas-dismissed", JSON.stringify(dismissed));
+    this.dropPolaroid(id);
+    this.renderPolaroids();
+  }
+
+  openPolaroid(id) {
+    const polaroid = this.polaroids.get(id);
+    const room = this.rooms.find((room) => room.doorbell);
+    const dialog = document.createElement("dialog");
+    dialog.className = "lightbox";
+    dialog.dataset.id = id;
+    dialog.setAttribute("aria-label", `${polaroid.label} at ${polaroid.time}`);
+    dialog.innerHTML = `<figure>${polaroid.photo ? `<img src="${polaroid.photo}" alt="">` : '<span class="photo"><ha-icon icon="mdi:doorbell-video"></ha-icon></span>'}<figcaption class="caption"><span>${polaroid.label} ·</span> <span>${polaroid.time}</span></figcaption></figure><div class="lightbox-actions"><button class="live"><ha-icon icon="mdi:cctv"></ha-icon>Live</button><button class="dismiss"><ha-icon icon="mdi:close"></ha-icon>Dismiss</button></div>`;
+    dialog.addEventListener("click", (event) => {
+      if (event.target === dialog) dialog.close();
+    });
+    dialog.querySelector(".live").addEventListener("click", () => {
+      dialog.close();
+      this.selectRoom(room.id);
+    });
+    dialog.querySelector(".dismiss").addEventListener("click", () => {
+      dialog.close();
+      this.dismissPolaroid(id);
+    });
+    dialog.addEventListener("close", () => dialog.remove());
+    this.shadowRoot.append(dialog);
+    dialog.showModal();
+  }
+
+  renderPolaroids() {
+    clearTimeout(this.polaroidExpiry);
+    for (const polaroid of this.polaroids.values())
+      if (Date.now() - polaroid.at >= POLAROID_LIFE)
+        this.dropPolaroid(polaroid.id);
+    const next = Math.min(...[...this.polaroids.values()].map((p) => p.at));
+    if (this.polaroids.size)
+      this.polaroidExpiry = setTimeout(
+        () => this.renderPolaroids(),
+        next + POLAROID_LIFE - Date.now(),
+      );
+    const layer = this.shadowRoot.querySelector(".map-wrap .pins");
+    const room = this.floor.rooms.find((room) => room.doorbell);
+    if (!layer) return;
+    const shown = room
+      ? [...this.polaroids.values()].sort((a, b) => b.at - a.at).slice(0, 3)
+      : [];
+    const existing = new Map(
+      [...layer.children].map((pin) => [pin.dataset.id, pin]),
+    );
+    for (const [id, pin] of existing)
+      if (!shown.some((polaroid) => polaroid.id === id)) pin.remove();
+    shown.forEach((polaroid, index) => {
+      let pin = existing.get(polaroid.id);
+      if (!pin) {
+        const tilt = (polaroid.at % 13) - 6;
+        pin = document.createElement("div");
+        pin.className = "pin";
+        pin.dataset.id = polaroid.id;
+        pin.innerHTML = `<div class="polaroid" role="button" tabindex="0" data-polaroid="${polaroid.id}" style="--tilt:${tilt}deg" aria-label="${polaroid.label} at ${polaroid.time}. Opens the snapshot; drag off to dismiss."><span class="photo"><ha-icon icon="mdi:doorbell-video"></ha-icon></span>${polaroid.kind === "ring" ? '<b class="ring-stamp">Ring</b>' : ""}<span class="caption"><span>${polaroid.label} ·</span> <span>${polaroid.time}</span></span></div>`;
+        pin
+          .querySelector(".photo")
+          .style.setProperty(
+            "animation-delay",
+            `${(polaroid.at - Date.now()) / 1000}s`,
+          );
+        this.wireThrow(pin.firstChild, tilt, {
+          onThrow: () => this.dismissPolaroid(polaroid.id),
+          onTap: () => this.openPolaroid(polaroid.id),
+        });
+        layer.append(pin);
+      }
+      const [x, y] = room.doorbell.pin;
+      pin.style.left = `calc(${(x / this.floor.width) * 100}% - ${index * 18}px)`;
+      pin.style.top = `calc(${(y / this.floor.height) * 100}% - ${index * 10}px)`;
+      pin.style.zIndex = shown.length - index;
+      if (polaroid.photo)
+        pin.querySelector(".photo").style.backgroundImage =
+          `url(${polaroid.photo})`;
+    });
   }
 
   mapEntities(floor) {
@@ -372,6 +526,31 @@ class HouseAtlas extends HTMLElement {
         .stamp.grab { transition: none; cursor: grabbing; box-shadow: 0 10px 24px #28282840; }
         .stamp.armed { border-style: dashed; }
         .stamp.nudge { animation: nudge .45s; }
+        .stamp .let-go, .stamp.armed .since { display: none; }
+        .stamp.armed .let-go { display: inline; }
+        .map-wrap { position: relative; }
+        .pins { position: absolute; inset: 0; pointer-events: none; }
+        .pin { position: absolute; translate: -50% -100%; width: clamp(72px,21%,116px); pointer-events: auto; animation: pin .5s cubic-bezier(.3,1.5,.5,1) both; }
+        .polaroid { position: relative; display: block; padding: 7% 7% 0; background: #fbf8ef; color: #3c3836; border-radius: 2px; box-shadow: 0 2px 6px #28282840, 0 0 0 1px #28282814; transform: rotate(var(--tilt)); touch-action: none; user-select: none; cursor: grab; transition: transform .4s cubic-bezier(.2,.9,.3,1.25), opacity .4s; }
+        .polaroid::before { content: ""; position: absolute; z-index: 1; top: -5px; left: 50%; translate: -50% 0; width: 11px; height: 11px; border-radius: 50%; background: var(--atlas-error); box-shadow: 0 1px 2px #28282880; }
+        .polaroid:focus-visible { outline: 3px solid var(--atlas-accent); outline-offset: 3px; }
+        .polaroid.grab { transition: none; cursor: grabbing; box-shadow: 0 12px 26px #28282855; }
+        .polaroid.armed { outline: 2px dashed var(--atlas-error); outline-offset: 4px; }
+        .photo { display: grid; place-items: center; aspect-ratio: 3/4; background: #32302f center/cover no-repeat; color: #7c6f64; animation: age 900s linear both; }
+        .photo[style*=background-image] ha-icon { display: none; }
+        .caption { display: block; padding: 7px 0 9px; font: italic 12px/1.2 Georgia,serif; text-align: center; text-wrap: balance; }
+        .caption span { white-space: nowrap; }
+        .lightbox { border: 0; padding: 0; background: none; max-width: none; max-height: none; overflow: visible; }
+        .lightbox::backdrop { background: #1d2021e0; }
+        .lightbox figure { margin: 0; padding: 14px 14px 0; background: #fbf8ef; color: #3c3836; border-radius: 2px; box-shadow: 0 16px 40px #00000080; transform: rotate(-1deg); }
+        .lightbox img, .lightbox .photo { display: grid; width: min(86vw, 68vh); aspect-ratio: 1; object-fit: cover; }
+        .lightbox .caption { padding: 12px 0 16px; font-size: 20px; }
+        .lightbox-actions { display: flex; justify-content: center; gap: 12px; margin-top: 20px; }
+        .lightbox-actions button { display: flex; align-items: center; gap: 8px; padding: 0 20px; background: #fbf8ef; color: #3c3836; border: 0; border-radius: 6px; font-size: 15px; }
+        .lightbox-actions .dismiss { background: none; color: #fbf8ef; border: 1px solid #fbf8ef80; }
+        .ring-stamp { position: absolute; top: 22%; left: 50%; translate: -50% 0; transform: rotate(-14deg); padding: 2px 7px; border: 3px double #cc241d; background: #fbf8efd9; color: #cc241d; font: 700 15px/1.1 Georgia,serif; letter-spacing: .14em; text-transform: uppercase; }
+        @keyframes pin { from { transform: translateY(-36px) rotate(10deg) scale(1.2); opacity: 0; } }
+        @keyframes age { to { filter: sepia(.75) contrast(.8) brightness(1.1); opacity: .5; } }
         @keyframes thunk { from { transform: rotate(-11deg) scale(1.8); opacity: 0; } }
         @keyframes nudge { 25% { transform: rotate(-6deg) translateX(10px); } 60% { transform: rotate(-14deg) translateX(-4px); } }
         @container(max-width:900px) {
@@ -405,7 +584,7 @@ class HouseAtlas extends HTMLElement {
           <div class="g-cell g-override"><ha-icon></ha-icon><div class="g-text"><b></b><small></small></div><button></button></div>
         </section>
         <nav class="floors" aria-label="Floors">${this.config.floors.map((floor) => `<button data-floor="${escapeXml(floor.id)}" aria-current="${floor.id === this.floorId}">${escapeXml(floor.name)}</button>`).join("")}</nav>
-        <div class="layout"><section class="map-panel" aria-label="Floor map"><div class="map-wrap"></div><div class="room-list" hidden></div><div class="stamp" hidden>Auto-lock paused<small></small></div></section><div class="detail-host"></div></div>
+        <div class="layout"><section class="map-panel" aria-label="Floor map"><div class="map-wrap"></div><div class="room-list" hidden></div><div class="stamp" hidden>Auto-lock paused<small><span class="since"></span><span class="let-go">let go to resume</span></small></div></section><div class="detail-host"></div></div>
         <p class="error" role="alert"></p>
       </main>`;
     this.shadowRoot.querySelectorAll("[data-floor]").forEach((button) =>
@@ -441,7 +620,16 @@ class HouseAtlas extends HTMLElement {
       .addEventListener("click", () =>
         this.perform("input_boolean", "toggle", this.config.override),
       );
-    this.wireStamp(this.shadowRoot.querySelector(".stamp"));
+    const stamp = this.shadowRoot.querySelector(".stamp");
+    this.wireThrow(stamp, -11, {
+      onThrow: () =>
+        this.perform("input_boolean", "turn_off", this.config.override),
+      onTap: () => {
+        stamp.classList.remove("nudge");
+        void stamp.offsetWidth;
+        stamp.classList.add("nudge");
+      },
+    });
     if (this._hass) this.updateGlobal();
     this.shadowRoot
       .querySelector(".atlas")
@@ -461,8 +649,11 @@ class HouseAtlas extends HTMLElement {
         if (event.key === "Enter" || event.key === " ") {
           const target = event
             .composedPath()
-            .find((node) => node.dataset?.room);
-          if (target) {
+            .find((node) => node.dataset?.room || node.dataset?.polaroid);
+          if (target?.dataset.polaroid) {
+            event.preventDefault();
+            this.openPolaroid(target.dataset.polaroid);
+          } else if (target) {
             event.preventDefault();
             this.selectRoom(target.dataset.room);
           }
@@ -687,7 +878,10 @@ class HouseAtlas extends HTMLElement {
     this.map = card;
     const mapWrap = this.shadowRoot.querySelector(".map-wrap");
     mapWrap.style.setProperty("--floor-ratio", floor.width / floor.height);
-    mapWrap.replaceChildren(card);
+    const pins = document.createElement("div");
+    pins.className = "pins";
+    mapWrap.replaceChildren(card, pins);
+    this.renderPolaroids();
     this.updateMode();
   }
 
@@ -755,6 +949,14 @@ class HouseAtlas extends HTMLElement {
       this.cards.push(card);
       body.append(card);
     };
+    if (room.doorbell)
+      add({
+        type: "picture-entity",
+        entity: room.doorbell.camera,
+        camera_view: "live",
+        show_name: false,
+        show_state: false,
+      });
     if (room.group)
       add({
         type: "tile",

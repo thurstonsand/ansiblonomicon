@@ -168,14 +168,19 @@
                   "name": "Main Bath",
                   "path": "M10 220h85v100h-85Z",
                   "label": [52.5, 262.0],
-                  "lines": ["Main", "Bath"]
+                  "lines": ["Main", "Bath"],
+                  "lights": [
+                    "light.main_bath_vanity_lights",
+                    "light.main_bath_tub_light"
+                  ]
                 },
                 {
                   "id": "w_i_c",
                   "name": "Main Floor W.I.C.",
                   "path": "M95 220H150V260H180V320H95Z",
                   "label": [137.5, 270.0],
-                  "lines": ["W.I.C."]
+                  "lines": ["W.I.C."],
+                  "lights": ["light.main_floor_w_i_c_lights"]
                 },
                 {
                   "id": "foyer",
@@ -184,7 +189,14 @@
                   "label": [215.0, 354.0],
                   "lines": ["Foyer"],
                   "entity": "lock.foyer_front_door",
-                  "mapNote": "Front Door"
+                  "mapNote": "Front Door",
+                  "doorbell": {
+                    "camera": "camera.front_door_doorbell",
+                    "ring": "event.front_door_doorbell_chime",
+                    "motion": "event.front_door_doorbell_motion",
+                    "snapshots": "media-source://media_source/local/doorbell",
+                    "pin": [215, 495]
+                  }
                 },
                 {
                   "id": "laundry",
@@ -427,6 +439,33 @@
                 {
                   "between": ["guest_bedroom", "guest_bath"],
                   "path": "M339 180H364"
+                }
+              ]
+            },
+            {
+              "id": "grounds",
+              "name": "Grounds",
+              "width": 400,
+              "height": 510,
+              "context": "<g pointer-events=\"none\"><path class=\"context\" d=\"M110 180H290V350H110Z\"/><text class=\"context-label\" x=\"200\" y=\"270\" text-anchor=\"middle\">House</text><path class=\"context\" style=\"fill:none\" d=\"M110 140H250V180H110ZM250 140H310V220H290V180H250Z\"/><g class=\"stairs\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"0.6\" opacity=\"0.45\"><path d=\"M110 160L130 140M110 180L150 140M130 180L170 140M150 180L190 140M170 180L210 140M190 180L230 140M210 180L250 140M230 180L250 160M250 160L270 140M250 180L290 140M270 180L310 140M290 180L310 160M290 200L310 180M290 220L310 200\"/></g><path class=\"context\" style=\"fill:none\" d=\"M10 280H110M10 340H90M100 340H110M90 340V385H230V350M100 340V375H220V350\"/><text class=\"context-label\" x=\"60\" y=\"314\" text-anchor=\"middle\" style=\"font-size:10px\">Driveway</text><path class=\"context\" style=\"fill:none;stroke-width:0.8\" d=\"M10 280V10H390V500H10V340\"/></g>",
+              "rooms": [
+                {
+                  "id": "front_yard",
+                  "name": "Front Yard",
+                  "path": "M10 340H90V385H230V350H290V250H390V500H10ZM100 340H110V350H220V375H100Z",
+                  "label": [240, 440]
+                },
+                {
+                  "id": "backyard",
+                  "name": "Backyard",
+                  "path": "M10 10H390V250H290V220H310V140H110V280H10Z",
+                  "label": [200, 85]
+                }
+              ],
+              "openings": [
+                {
+                  "between": ["front_yard", "outside"],
+                  "path": "M10 280V340"
                 }
               ]
             }

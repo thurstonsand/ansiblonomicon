@@ -51,6 +51,18 @@ A strip of house controls sits above the floor tabs, and below the map on phones
 - **Secure** shows while a room's `lock.` entity is not locked or its `cover.` entity is not closed. It locks or closes only those.
 - **Pause** and **Resume** toggle the override. While paused, an "Auto-lock paused" stamp sits on the map; drag it off to resume.
 
+## Grounds
+
+A fourth floor, Grounds, maps the lot with the empty `front_yard` and `backyard` areas; the house, rear platforms, driveway, and walk are noninteractive context. The geometry is an abstracted, squared-off reading of the McClung lot 25 block R survey (`plans/site.jpg` in the [Grounds sheet thread](https://ampcode.com/threads/T-01a0a86f-0e76-748e-a00e-6561bf9ef87a)). Side-yard splits are diagrammatic, not fences. Neither area has an HA floor.
+
+## Doorbell polaroids
+
+`room.doorbell` on Foyer names the Nest doorbell's `camera`, its `ring` and `motion` event entities, the `snapshots` media folder, and the `pin` point in map coordinates. The Foyer panel opens with a live `picture-entity` feed.
+
+Each ring or motion event pins a polaroid at the front door on the Main floor, newest three stacked. Rings carry a RING stamp; motion captions name the event type. A polaroid fades with age and expires 15 minutes after its event. Tap one to open its snapshot full screen, with buttons for the Foyer's live feed and for dismissal; or drag it off to dismiss it. Dismissals are stored per browser in `localStorage` under `house-atlas-dismissed`, keyed by `nest_event_id`.
+
+Nest gives HA no event media for this doorbell: it advertises `CameraEventImage`, but SDM rejects `GenerateImage` for WebRTC-only cameras ("camera not supporting RTSP protocol"), and it lacks `CameraClipPreview`. The photo instead comes from Scrypted. On each event the `Front door snapshot` automation calls `shell_command.front_door_snapshot`, declared in HA's `configuration.yaml`, which has ffmpeg save the first frame of a fresh connection to Scrypted's Rebroadcast RTSP stream (`rtsp://10.10.40.43:33159/85272fedf846f071`) as `/media/doorbell/<kind>-<slot>.jpg`, where `<slot>` is the event's epoch second modulo 1000. Nest events reach HA about 3 seconds after they happen, too late for the newest frame to still show a passing person, but a fresh Rebroadcast connection replays Scrypted's prebuffer from its last keyframe, about 2.6 seconds back, so the frame lands near the event moment. Slots bound storage to 2000 files; the card resolves the slot through `media_source/resolve_media` and retries for 10 seconds until the file is no older than its event. Until then, or without one, the polaroid shows a doorbell icon.
+
 ## Pickup reminder
 
 The Main-floor garage has a small indicator inside its top-left corner, positioned by `room.pickup.position` in map coordinates. It never changes the map's size or position. Green indicates garbage; blue indicates recycling. Only the bin symbols are visible; the pickup description remains available to screen readers. No dismissal or bin-movement detection is implied.
@@ -67,6 +79,6 @@ Before editing, read the live dashboard, resources, and theme through HA-MCP and
 
 Apply approved changes through HA-MCP: update the existing inline module with `ha_config_set_dashboard_resource`, the storage config with `ha_config_set_dashboard`, and the theme through managed YAML editing with diff confirmation and validation. Refresh the best-practices read-receipt required by gated tools. The instance already includes `themes` through `frontend.themes`; reload themes and select House Atlas for both backend light and dark defaults when restoring it. Refresh the browser after JavaScript changes.
 
-Verify light/dark phone and tablet layouts, all three floors, room-list navigation, scene updates, and sheet dismissal versus scrolling/slider interactions. Intercept service calls when testing lock buttons; do not operate physical locks as a smoke test. Compare the resulting live configuration with these files before committing.
+Verify light/dark phone and tablet layouts, all four floors, doorbell polaroids with injected event states and slot files, room-list navigation, scene updates, and sheet dismissal versus scrolling/slider interactions. Intercept service calls when testing lock buttons; do not operate physical locks as a smoke test. Compare the resulting live configuration with these files before committing.
 
 Global controls design: [Global controls for House](../../wayfinding/loch-highland-house/tickets/29-house-global-controls.md). Design and acceptance history: [House dashboard thread](https://ampcode.com/threads/T-01a0a859-11a2-724a-a131-fa9cdd0f2cda).
