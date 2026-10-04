@@ -29,7 +29,12 @@ def test_capability_environments_are_explicit_and_disjoint() -> None:
         for path in target_root.glob("mise.*.toml")
         if not path.name.endswith(".local.toml")
     }
-    assert set(environment_files) == set(pod042_reconcile.FULL_CAPABILITIES)
+    bootstrap_capabilities = tuple(
+        capability
+        for capability in pod042_reconcile.FULL_CAPABILITIES
+        if capability != "agent-harness"
+    )
+    assert set(environment_files) == set(bootstrap_capabilities)
     assert "vcs-identity" not in pod042_reconcile.CAPABILITIES
 
     exclusive_tables = (
@@ -63,7 +68,7 @@ def test_capability_environments_are_explicit_and_disjoint() -> None:
         (MODULE_PATH.parents[1] / "bootstrap/mise.toml").read_text()
     )
     assert tuple(inventory["bootstrap"]["remote"]["hosts"]["pod042"]["mise_env"]) == (
-        pod042_reconcile.FULL_CAPABILITIES
+        bootstrap_capabilities
     )
 
 

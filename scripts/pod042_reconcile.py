@@ -181,6 +181,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
     assert_hostname()
     selected = capabilities_for(capability)
     root_capabilities = {
+        "agent-harness",
         "agent-instructions",
         "vcs-identity",
         "git-client",
@@ -431,6 +432,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
             run_command(["mise", "-C", str(ROOT), "run", "user-tools"])
         if "neovim" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "neovim"])
+        if "agent-harness" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "agent-harness"])
 
 
 def build_parser() -> argparse.ArgumentParser:
