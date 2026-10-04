@@ -10,6 +10,12 @@ resource "unifi_client" "nausea" {
   allow_existing = true
 }
 
+resource "unifi_client" "tesla_wall_connector" {
+  mac            = "98:ed:5c:a2:8c:a9"
+  name           = "Tesla Wall Connector"
+  allow_existing = true
+}
+
 resource "unifi_client" "kitchen_homepod" {
   mac            = "ac:bc:b5:ca:34:ab"
   name           = "Apple HomePod - Kitchen"
@@ -52,11 +58,24 @@ resource "unifi_client" "thurston_ipad" {
   allow_existing = true
 }
 
-# The Dell dual-boot presents a different address per partition. Only Omarchy's is
-# burned-in; Windows randomizes, so it earns no record until it stops.
+# The Dell dual-boot presents a different address per partition. Omarchy's is
+# burned-in; Windows keeps a fixed random address per network, so this record
+# holds only while Windows stays on YoRHa with "Random hardware addresses" On.
 resource "unifi_client" "dell_omarchy" {
   mac            = "84:08:3a:61:fe:81"
   name           = "Dell Laptop - Omarchy"
+  allow_existing = true
+}
+
+resource "unifi_client" "dell_windows" {
+  mac            = "5a:d2:dd:96:5a:3a"
+  name           = "Dell Laptop - Windows"
+  allow_existing = true
+}
+
+resource "unifi_client" "realtek_usb_ethernet" {
+  mac            = "00:e0:4c:00:0a:9a"
+  name           = "Realtek USB Ethernet Adapter"
   allow_existing = true
 }
 
@@ -150,6 +169,13 @@ resource "unifi_client" "matic_vacuum_main_floor" {
   allow_existing = true
 }
 
+resource "unifi_client" "matic_vacuum_second_floor" {
+  mac            = "bc:d2:2c:88:be:22"
+  name           = "Matic Robot Vacuum - Second Floor"
+  fixed_ip       = "10.10.50.168"
+  allow_existing = true
+}
+
 resource "unifi_client" "ratgdo_garage_door" {
   mac              = "f4:2d:c9:91:93:04"
   name             = "ratgdo - Garage Door"
@@ -189,6 +215,12 @@ resource "unifi_client" "breville_oracle_dual_boiler" {
 resource "unifi_client" "meta_ray_ban_gen_3" {
   mac            = "e6:bc:56:cc:9b:2f"
   name           = "Meta Ray-Ban Gen 3"
+  allow_existing = true
+}
+
+resource "unifi_client" "nintendo_switch_2" {
+  mac            = "e0:ef:bf:51:76:c0"
+  name           = "Nintendo Switch 2"
   allow_existing = true
 }
 

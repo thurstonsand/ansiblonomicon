@@ -132,7 +132,7 @@ resource "unifi_firewall_policy" "home_assistant_to_matic" {
   destination = {
     zone_id            = unifi_firewall_zone.the_village.id
     matching_target    = "IP"
-    ips                = ["10.10.50.104"]
+    ips                = ["10.10.50.104", "10.10.50.168"]
     port               = "16320"
     port_matching_type = "SPECIFIC"
   }
