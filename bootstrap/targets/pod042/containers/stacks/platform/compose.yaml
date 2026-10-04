@@ -9,6 +9,7 @@ services:
       PING: "1"
       VERSION: "1"
       POST: "0"
+      SOCKET_PATH: /run/docker-socket/docker.sock
     ports:
       - "127.0.0.1:2375:2375"
     healthcheck:
@@ -24,11 +25,12 @@ services:
       - /run
       - /tmp
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /run/docker-socket:/run/docker-socket:ro
 
   watchtower:
     image: nickfedor/watchtower:latest
     environment:
+      DOCKER_HOST: unix:///run/docker-socket/docker.sock
       TZ: America/New_York
       WATCHTOWER_CLEANUP: "true"
       WATCHTOWER_INCLUDE_RESTARTING: "false"
@@ -42,7 +44,7 @@ services:
     networks:
       - ingress
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
+      - /run/docker-socket:/run/docker-socket
 
 networks:
   docker-socket-proxy:

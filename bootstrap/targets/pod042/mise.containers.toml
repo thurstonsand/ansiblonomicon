@@ -56,6 +56,11 @@ owner = "root"
 group = "root"
 mode = "0755"
 
+[bootstrap.directories."/etc/systemd/system/docker.socket.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
 [bootstrap.directories."/etc/systemd/system/netdata.service.d"]
 owner = "root"
 group = "root"
@@ -169,6 +174,13 @@ owner = "root"
 group = "root"
 mode = "0644"
 notify = ["docker"]
+
+[bootstrap.files."/etc/systemd/system/docker.socket.d/shared.conf"]
+source = "containers/config/docker-socket.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["docker.socket", "docker"]
 
 [bootstrap.files."/etc/systemd/system/netdata.service.d/docker.conf"]
 source = "containers/config/netdata-docker.conf"
@@ -514,6 +526,11 @@ mode = "0600"
 
 [bootstrap.services.containerd]
 enabled = true
+
+[bootstrap.services."docker.socket"]
+state = "running"
+enabled = true
+on_change = "restart"
 
 [bootstrap.services.docker]
 enabled = true
