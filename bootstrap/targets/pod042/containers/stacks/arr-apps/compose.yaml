@@ -1,3 +1,23 @@
+x-swaparr: &swaparr
+  image: ghcr.io/thijmengthn/swaparr:latest
+  # dockerd ignores depends_on when it restarts containers at boot, and swaparr
+  # only refreshes its health after a 30m scan, so a first scan against a
+  # warming API stays unhealthy. Wait until the API answers with JSON.
+  entrypoint: ["/bin/sh", "-c"]
+  command:
+    - >-
+      until wget -qO- --header "X-Api-Key: $$APIKEY" "$$BASEURL/api/v3/health" | grep -q '^\['; do sleep 5; done; exec swaparr
+  restart: unless-stopped
+
+x-swaparr-environment: &swaparr-environment
+  MAX_STRIKES: "6"
+  SCAN_INTERVAL: 30m
+  MAX_DOWNLOAD_TIME: 6h
+  IGNORE_ABOVE_SIZE: 25GB
+  REMOVE_FROM_CLIENT: "true"
+  STRIKE_QUEUED: "false"
+  DRY_RUN: "false"
+
 services:
   flaresolverr:
     image: ghcr.io/flaresolverr/flaresolverr:latest
@@ -84,40 +104,26 @@ services:
     restart: unless-stopped
 
   swaparr-sonarr:
-    image: ghcr.io/thijmengthn/swaparr:latest
+    <<: *swaparr
     environment:
+      <<: *swaparr-environment
       BASEURL: http://sonarr:8989
       APIKEY: "${SONARR_API_KEY:?required}"
       PLATFORM: sonarr
-      MAX_STRIKES: "6"
-      SCAN_INTERVAL: 30m
-      MAX_DOWNLOAD_TIME: 6h
-      IGNORE_ABOVE_SIZE: 25GB
-      REMOVE_FROM_CLIENT: "true"
-      STRIKE_QUEUED: "false"
-      DRY_RUN: "false"
     depends_on:
       sonarr:
         condition: service_healthy
-    restart: unless-stopped
 
   swaparr-radarr:
-    image: ghcr.io/thijmengthn/swaparr:latest
+    <<: *swaparr
     environment:
+      <<: *swaparr-environment
       BASEURL: http://radarr:7878
       APIKEY: "${RADARR_API_KEY:?required}"
       PLATFORM: radarr
-      MAX_STRIKES: "6"
-      SCAN_INTERVAL: 30m
-      MAX_DOWNLOAD_TIME: 6h
-      IGNORE_ABOVE_SIZE: 25GB
-      REMOVE_FROM_CLIENT: "true"
-      STRIKE_QUEUED: "false"
-      DRY_RUN: "false"
     depends_on:
       radarr:
         condition: service_healthy
-    restart: unless-stopped
 
   recyclarr:
     image: ghcr.io/recyclarr/recyclarr:8
