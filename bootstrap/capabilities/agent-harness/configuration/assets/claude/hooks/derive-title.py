@@ -47,7 +47,7 @@ def main() -> None:
             model=CONFIG.model,
             token=CONFIG.token,
             prompt=CONFIG.prompt,
-            max_context_bytes=CONFIG.max_context_bytes,
+            max_message_bytes=CONFIG.max_message_bytes,
         )
     except (ValueError, TitleRequestError) as e:
         log(session_id, cwd, str(e))

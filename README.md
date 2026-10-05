@@ -22,7 +22,7 @@ Interactive sudo still uses TouchID as normal, including inside tmux sessions.
 
 The shared automation identity gives fnox unattended access to the agent vault. Run `mise --no-env exec -- python3 scripts/automation_identity.py` once to enroll or rotate it through attended desktop authentication, then `mise trust` for this repository. `--no-env` keeps enrollment independent of project activation. See [the identity design](docs/designs/26-unattended-automation-identity.md) for environment boundaries.
 
-Entering ansiblonomicon activates tools and the virtualenv without reading or exporting credentials. Repo tasks request their named secrets through fnox when needed. Agents launch normally without fetching the whole host set; MCPs resolve their own credentials, and Pi resolves its Parallel key only when a web operation needs it. OpenCode retains Parallel; Zed does not.
+Entering ansiblonomicon activates tools and the virtualenv without reading or exporting credentials. Repo tasks request their named secrets through fnox when needed. Agents launch normally without fetching the whole host set; MCPs resolve their own credentials, and Pi resolves its Parallel key only when a web operation needs it.
 
 Use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND` to give a command only its declared credentials. Selection is mandatory; there is no whole-host or `--all` mode. Agent-vault reads use the unattended identity; only consumers that actually request Private or corporate credentials use desktop authentication. Use `scripts/fnox-host get NAME` for one credential, or `mise run secrets:check NAME` to test its resolution without printing it. Do not export the automation service-account token into your shell. See [consumer-scoped credentials](docs/designs/27-consumer-scoped-credentials.md).
 
@@ -60,7 +60,7 @@ Work's [Python-index capability](bootstrap/capabilities/python-index/README.md) 
 
 `mise language-tools` reconciles the inventories under `bootstrap/capabilities/language-tools/`. It preserves unrelated global mise configuration and packages, updates only declared tools when their daily interval or inventory changes, and restores declared npm packages after Node replacement. `--check` validates the inventory and reports intended work without changing files or installing tools. Work requires its private inventory and Python-index mapping first; see [README.work.md](README.work.md).
 
-Small vendor-installed and source-built software is also native: run `mise claude-code`, `mise opencode`, `mise pi`, `mise sessions`, `mise shp`, or `mise uvc-util`, with `--check` for a nonmutating drift report. Host registration limits each command to the laptops that declare it. Go and UVC sources live under `bootstrap/capabilities/software/sources/`.
+Small vendor-installed and source-built software is also native: run `mise claude-code`, `mise pi`, `mise sessions`, `mise shp`, or `mise uvc-util`, with `--check` for a nonmutating drift report. Host registration limits each command to the laptops that declare it. Go and UVC sources live under `bootstrap/capabilities/software/sources/`.
 
 Capability-driven Node upgrades carry unmanaged registry npm globals into the new prefix at their installed versions, excluding bundled npm/Corepack. A private pending snapshot survives failed runs and is removed after successful reconciliation; linked/local packages require explicit handling before an upgrade. The self-contained Node postinstall hook restores declared packages even when Node is installed outside reconciliation.
 

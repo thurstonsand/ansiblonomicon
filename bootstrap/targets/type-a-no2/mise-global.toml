@@ -1,5 +1,6 @@
 [tools]
 "aqua:modem-dev/hunk" = "latest"
+bun = "latest"
 claude = "latest"
 codex = "latest"
 gh = "latest"

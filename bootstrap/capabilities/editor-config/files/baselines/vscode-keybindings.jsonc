@@ -20,10 +20,6 @@
     "command": "lazygit.openLazygit"
   },
   {
-    "key": "alt+cmd+k",
-    "command": "-opencode.addFilepathToTerminal"
-  },
-  {
     "key": "cmd+k",
     "command": "workbench.action.terminal.clear",
     "when": "terminalFocus && !terminalTextSelected"

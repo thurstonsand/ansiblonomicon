@@ -24,11 +24,6 @@ def read_models(path: Path) -> dict[str, Any]:
 
 def vscode_settings(args: argparse.Namespace) -> dict[str, Any]:
     result = read_jsonc("vscode-settings.jsonc")
-    if args.editor == "Cursor":
-        for key in list(result):
-            if key.startswith("basedpyright.analysis."):
-                result.pop(key)
-        result.update(read_jsonc("cursor-settings-overlay.json"))
     result["editor.fontFamily"] = args.proportional_font
     result["editor.fontSize"] = args.font_size
     result["terminal.integrated.fontFamily"] = args.monospace_font
@@ -154,7 +149,6 @@ def main() -> None:
     parser.add_argument("kind", choices=("zed", "vscode", "llm"))
     parser.add_argument("--models", type=Path, required=True)
     parser.add_argument("--profile", choices=("personal", "work"))
-    parser.add_argument("--editor", choices=("Cursor", "Windsurf", "Antigravity"))
     parser.add_argument("--monospace-font")
     parser.add_argument("--proportional-font")
     parser.add_argument("--font-size", type=int)
@@ -177,8 +171,6 @@ def main() -> None:
     if args.kind == "zed":
         value: Any = zed_settings(args, catalogue)
     elif args.kind == "vscode":
-        if args.editor is None:
-            parser.error("vscode requires --editor")
         value = vscode_settings(args)
     else:
         value = llm_models(catalogue)

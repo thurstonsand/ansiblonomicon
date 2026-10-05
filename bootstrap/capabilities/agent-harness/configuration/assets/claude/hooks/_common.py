@@ -28,7 +28,7 @@ class TitleRequestError(Exception):
 
 class TitleConfig(NamedTuple):
     api_url: str
-    max_context_bytes: int
+    max_message_bytes: int
     model: str
     prompt: str
     token: str
@@ -44,7 +44,7 @@ def load_title_config() -> TitleConfig:
     spec.loader.exec_module(module)
     return TitleConfig(
         api_url=module.API_URL,
-        max_context_bytes=module.MAX_CONTEXT_BYTES,
+        max_message_bytes=module.MAX_MESSAGE_BYTES,
         model=module.MODEL,
         prompt=module.TITLE_PROMPT,
         token=module.TOKEN,
@@ -119,7 +119,12 @@ def _read_transcript_context(transcript: str) -> str | None:
 
 
 def post_title_request(
-    context: str, prompt: str, base_url: str, model: str, token: str
+    context: str,
+    prompt: str,
+    api_url: str,
+    model: str,
+    token: str,
+    max_message_bytes: int,
 ) -> str:
     headers = {
         "Authorization": f"Bearer {token}",
@@ -132,39 +137,45 @@ def post_title_request(
         model = model[: -len("[1m]")]
         headers["anthropic-beta"] = "context-1m-2025-08-07"
 
+    # Doppelclaude admits markerless requests only within a serialized message
+    # budget, so keep the newest transcript tail that fits.
+    while True:
+        messages = [{"role": "user", "content": f"{prompt}\n\n{context}"}]
+        overflow = len(json.dumps(messages, ensure_ascii=False).encode()) - (
+            max_message_bytes
+        )
+        if overflow <= 0:
+            break
+        context = context[overflow:]
+
     body = json.dumps(
-        {
-            "model": model,
-            "max_tokens": 60,
-            "messages": [{"role": "user", "content": f"{prompt}\n\n{context}"}],
-        }
+        {"model": model, "max_tokens": 60, "stream": True, "messages": messages},
+        ensure_ascii=False,
     ).encode()
 
-    req = urllib.request.Request(
-        f"{base_url.rstrip('/')}/v1/messages",
-        data=body,
-        headers=headers,
-        method="POST",
-    )
+    req = urllib.request.Request(api_url, data=body, headers=headers, method="POST")
 
+    text: list[str] = []
     try:
         with urllib.request.urlopen(req, timeout=60) as resp:
-            result: dict[str, object] = json.loads(resp.read())
+            for raw in resp:
+                line = raw.decode().strip()
+                if not line.startswith("data:"):
+                    continue
+                event: dict[str, object] = json.loads(line.removeprefix("data:"))
+                if event.get("type") == "error":
+                    raise TitleRequestError(f"API stream error: {event.get('error')}")
+                if event.get("type") == "content_block_delta":
+                    delta = cast(dict[str, object], event["delta"])
+                    if delta["type"] == "text_delta":
+                        text.append(str(delta["text"]))
     except (urllib.error.URLError, OSError, json.JSONDecodeError) as exc:
         raise TitleRequestError(f"API request failed: {exc}") from exc
 
-    content = result.get("content")
-    if not isinstance(content, list):
+    title = "".join(text).strip()
+    if not title:
         raise TitleRequestError("API response contained no text content")
-
-    blocks = cast(list[dict[str, object]], content)
-    for block in blocks:
-        if block.get("type") == "text":
-            text = block.get("text")
-            if isinstance(text, str):
-                return text.strip()
-
-    raise TitleRequestError("API response contained no text content")
+    return title
 
 
 def generate_title(
@@ -176,7 +187,7 @@ def generate_title(
     model: str,
     token: str,
     prompt: str,
-    max_context_bytes: int,
+    max_message_bytes: int,
     hint: str | None = None,
 ) -> str:
     """Full pipeline: read transcript, call API. Returns generated title.
@@ -187,15 +198,15 @@ def generate_title(
     if not context:
         raise ValueError("transcript has no user content")
 
-    context = context[-max_context_bytes:]
-
     effective_prompt = prompt
     if hint:
         effective_prompt = (
             f"{prompt}\n\n"
             f"The user provided this context for titling the session: {hint}"
         )
-    return post_title_request(context, effective_prompt, api_url, model, token)
+    return post_title_request(
+        context, effective_prompt, api_url, model, token, max_message_bytes
+    )
 
 
 # ---------------------------------------------------------------------------

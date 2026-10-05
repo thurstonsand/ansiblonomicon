@@ -1,3 +1,4 @@
+# Retirement layout only: lets Mac and pod042 remove stale OpenCode skills. Delete once both have reconciled.
 [harness]
 name = "opencode"
 skills_root = "~/.config/opencode/skill"

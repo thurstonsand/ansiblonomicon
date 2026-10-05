@@ -80,10 +80,6 @@ fi
 export EDITOR="nvim"
 export VISUAL="nvim"
 
-# The harness deploys our skills to ~/.config/opencode/skill and ~/.claude/skills alike.
-# OpenCode reads both, and a name present in both flips roots between runs, which
-# changes its system prompt and costs Doppelclaude the prompt cache.
-export OPENCODE_DISABLE_CLAUDE_CODE_SKILLS=1
 {% if vars.host_profile == "work" %}
 
 # 1Password SSH agent
@@ -103,7 +99,6 @@ path=(
 {% if vars.host_os == "linux" %}
   "$HOME/.local/bin"
   "$HOME/.amp/bin"
-  "$HOME/.opencode/bin"
 {% endif %}
 {% if vars.host_os == "darwin" %}
   "/opt/homebrew/bin"
@@ -112,9 +107,6 @@ path=(
   "$HOME/.local/share/mise/shims"
   "$HOME/.bun/bin"
   "$HOME/.npm-global/bin"
-{% if vars.host_profile != "work" %}
-  "$HOME/.opencode/bin"
-{% endif %}
   "$HOME/.cargo/bin"
   "$HOME/.local/share/pnpm"
   "$HOME/go/bin"

@@ -84,7 +84,7 @@ dir = "/home/thurstonsand"
 shell = "bash -c"
 run = '''
 set -euo pipefail
-export PATH="$HOME/.local/bin:$HOME/.amp/bin:$HOME/.opencode/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.amp/bin:$PATH"
 if [ ! -x "$HOME/.amp/bin/amp" ]; then
   curl -fsSL https://ampcode.com/install.sh | bash
 fi
@@ -95,9 +95,6 @@ fi
 if [ ! -x "$HOME/.local/bin/codex" ]; then
   curl -fsSL https://chatgpt.com/codex/install.sh | bash
 fi
-if [ ! -x "$HOME/.opencode/bin/opencode" ]; then
-  curl -fsSL https://opencode.ai/install | bash -s -- --no-modify-path
-fi
 release=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
 if [ "$(readlink "$HOME/.local/bin/t3" || true)" != "$HOME/.t3/runtime/versions/${release##*/v}/t3" ]; then
   curl -fsSL https://t3.codes/install.sh | T3CODE_VERSION="${release##*/v}" sh
@@ -105,7 +102,6 @@ fi
 test -x "$HOME/.amp/bin/amp"
 test -x "$HOME/.local/bin/claude"
 test -x "$HOME/.local/bin/codex"
-test -x "$HOME/.opencode/bin/opencode"
 "$HOME/.local/bin/t3" --version
 '''
 

@@ -24,17 +24,23 @@ destination = '.codex/rules/10-command-gates.rules'
 [[absent]]
 destination = '.config/amp/plugins'
 
-[[files]]
-source = 'assets/gemini/GEMINI.md'
-destination = '.gemini/GEMINI.md'
-hosts = ['Thurstons-MacBook-Pro', 'pod042']
-mode = 'symlink'
+[[absent]]
+destination = '.opencode'
 
-[[files]]
-source = 'assets/gemini/settings.json'
-destination = '.gemini/settings.json'
-hosts = ['Thurstons-MacBook-Pro', 'pod042']
-mode = 'symlink'
+[[absent]]
+destination = '.config/opencode'
+
+[[absent]]
+destination = '.local/share/opencode'
+
+[[absent]]
+destination = '.local/state/opencode'
+
+[[absent]]
+destination = '.cache/opencode'
+
+[[absent]]
+destination = '.gemini'
 
 [[files]]
 source = 'assets/oracle/config.json'
@@ -51,7 +57,7 @@ mode = 'symlink'
 source = 'assets/claude/hooks/_common.py'
 destination = '.claude/hooks/_common.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042']
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
 mode = 'symlink'
 
 [[files]]
@@ -64,7 +70,7 @@ mode = 'symlink'
 source = 'assets/claude/hooks/derive-title.py'
 destination = '.claude/hooks/derive-title.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042']
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
 mode = 'symlink'
 
 [[files]]
@@ -74,23 +80,17 @@ harness = 'claude'
 mode = 'symlink'
 
 [[files]]
-source = 'assets/claude/hooks/force-ask-patterns.test.mjs'
-destination = '.claude/hooks/force-ask-patterns.test.mjs'
-harness = 'claude'
-mode = 'symlink'
-
-[[files]]
 source = 'assets/claude/hooks/retitle.py'
 destination = '.claude/hooks/retitle.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042']
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/claude/hooks/set-title.py'
 destination = '.claude/hooks/set-title.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042']
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
 mode = 'symlink'
 
 [[files]]
@@ -115,25 +115,7 @@ mode = 'symlink'
 source = 'assets/claude/scripts/session-recovery/tsconfig.json'
 destination = '.claude/scripts/session-recovery/tsconfig.json'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042']
-mode = 'symlink'
-
-[[files]]
-source = 'assets/opencode/antigravity.json'
-destination = '.config/opencode/antigravity.json'
-harness = 'opencode'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/opencode/config.json'
-destination = '.config/opencode/config.json'
-harness = 'opencode'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/opencode/tui.json'
-destination = '.config/opencode/tui.json'
-harness = 'opencode'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
 mode = 'symlink'
 
 [[files]]
@@ -145,12 +127,6 @@ mode = 'symlink'
 [[files]]
 source = 'assets/pi/extensions/agents-context/index.ts'
 destination = '.pi/agent/extensions/agents-context/index.ts'
-harness = 'pi'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/pi/extensions/agents-context/load.test.ts'
-destination = '.pi/agent/extensions/agents-context/load.test.ts'
 harness = 'pi'
 mode = 'symlink'
 
@@ -299,12 +275,6 @@ harness = 'pi'
 mode = 'symlink'
 
 [[files]]
-source = 'assets/pi/extensions/glimpse-companion/companion/focus.test.ts'
-destination = '.pi/agent/extensions/glimpse-companion/companion/focus.test.ts'
-harness = 'pi'
-mode = 'symlink'
-
-[[files]]
 source = 'assets/pi/extensions/glimpse-companion/companion/focus.ts'
 destination = '.pi/agent/extensions/glimpse-companion/companion/focus.ts'
 harness = 'pi'
@@ -313,12 +283,6 @@ mode = 'symlink'
 [[files]]
 source = 'assets/pi/extensions/glimpse-companion/companion/glimpse-support.ts'
 destination = '.pi/agent/extensions/glimpse-companion/companion/glimpse-support.ts'
-harness = 'pi'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/pi/extensions/glimpse-companion/companion/handlers.test.ts'
-destination = '.pi/agent/extensions/glimpse-companion/companion/handlers.test.ts'
 harness = 'pi'
 mode = 'symlink'
 
@@ -455,12 +419,6 @@ harness = 'pi'
 mode = 'symlink'
 
 [[files]]
-source = 'assets/pi/extensions/pi-powerline-footer-custom/context-usage.test.ts'
-destination = '.pi/agent/extensions/pi-powerline-footer-custom/context-usage.test.ts'
-harness = 'pi'
-mode = 'symlink'
-
-[[files]]
 source = 'assets/pi/extensions/pi-powerline-footer-custom/context-usage.ts'
 destination = '.pi/agent/extensions/pi-powerline-footer-custom/context-usage.ts'
 harness = 'pi'
@@ -485,12 +443,6 @@ harness = 'pi'
 mode = 'symlink'
 
 [[files]]
-source = 'assets/pi/extensions/pi-powerline-footer-custom/gauge.test.ts'
-destination = '.pi/agent/extensions/pi-powerline-footer-custom/gauge.test.ts'
-harness = 'pi'
-mode = 'symlink'
-
-[[files]]
 source = 'assets/pi/extensions/pi-powerline-footer-custom/gauge.ts'
 destination = '.pi/agent/extensions/pi-powerline-footer-custom/gauge.ts'
 harness = 'pi'
@@ -505,12 +457,6 @@ mode = 'symlink'
 [[files]]
 source = 'assets/pi/extensions/pi-powerline-footer-custom/json-file.ts'
 destination = '.pi/agent/extensions/pi-powerline-footer-custom/json-file.ts'
-harness = 'pi'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/pi/extensions/pi-powerline-footer-custom/model-display.test.ts'
-destination = '.pi/agent/extensions/pi-powerline-footer-custom/model-display.test.ts'
 harness = 'pi'
 mode = 'symlink'
 
@@ -535,12 +481,6 @@ mode = 'symlink'
 [[files]]
 source = 'assets/pi/extensions/pi-powerline-footer-custom/typebox.ts'
 destination = '.pi/agent/extensions/pi-powerline-footer-custom/typebox.ts'
-harness = 'pi'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/pi/extensions/pi-powerline-footer-custom/workspace-display.test.ts'
-destination = '.pi/agent/extensions/pi-powerline-footer-custom/workspace-display.test.ts'
 harness = 'pi'
 mode = 'symlink'
 

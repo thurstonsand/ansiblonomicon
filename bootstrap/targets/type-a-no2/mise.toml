@@ -7,3 +7,4 @@ host_profile = "omarchy"
 "~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "symlink" }
 "~/.cargo/config.toml" = { source = "cargo-config.toml", mode = "symlink" }
 "~/.local/bin/fnox-host" = { source = "../../capabilities/user-tools/files/fnox-host", mode = "symlink" }
+"~/.local/libexec/tab-title.py" = { source = "../../capabilities/user-tools/files/tab-title.py", mode = "symlink" }

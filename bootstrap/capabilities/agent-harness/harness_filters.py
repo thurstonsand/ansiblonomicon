@@ -953,7 +953,7 @@ def _build_model_alias_map(
 
     Returns:
         Dict mapping source_alias -> {target_agent -> replacement_model}
-        e.g., {"sonnet": {"opencode": "anthropic/claude-sonnet-4-5-..."}}
+        e.g., {"sonnet": {"pi": "anthropic/claude-sonnet-4-5-..."}}
     """
     alias_map: dict[str, dict[str, str]] = {}
 
@@ -1060,7 +1060,7 @@ def agent_harness_transform_skill(
 
     Args:
         source_path: Path to the source .md file (SKILL.md or agent .md)
-        target_agent: Target agent name (e.g., "opencode", "claude", "amp")
+        target_agent: Target agent name (e.g., "pi", "claude", "amp")
         models_config: The 'models' section from models.yml
         plugin_root: Absolute path to substitute for ${CLAUDE_PLUGIN_ROOT}
         name_override: If set, rewrite the frontmatter name field to this value

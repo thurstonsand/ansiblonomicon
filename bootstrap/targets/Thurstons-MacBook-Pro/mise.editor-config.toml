@@ -7,12 +7,8 @@ cf_access_client_secret = "CF_ACCESS_CLIENT_SECRET"
 "~/.config/zed/settings.json" = { source = "editor-config/files/zed-settings.json.tera", mode = "template" }
 "~/.config/zed/keymap.json" = { source = "editor-config/files/baselines/zed-keymap.jsonc", mode = "symlink" }
 "~/.config/zed/tasks.json" = { source = "editor-config/files/baselines/zed-tasks.jsonc", mode = "symlink" }
-"~/Library/Application Support/Cursor/User/settings.json" = { source = "editor-config/files/Cursor-settings.json.tera", mode = "template" }
-"~/Library/Application Support/Cursor/User/keybindings.json" = { source = "editor-config/files/baselines/Cursor-keybindings.jsonc", mode = "symlink" }
-"~/Library/Application Support/Windsurf/User/settings.json" = { source = "editor-config/files/Windsurf-settings.json.tera", mode = "template" }
-"~/Library/Application Support/Windsurf/User/keybindings.json" = { source = "editor-config/files/baselines/Windsurf-keybindings.jsonc", mode = "symlink" }
-"~/Library/Application Support/Antigravity/User/settings.json" = { source = "editor-config/files/Antigravity-settings.json.tera", mode = "template" }
-"~/Library/Application Support/Antigravity/User/keybindings.json" = { source = "editor-config/files/baselines/Antigravity-keybindings.jsonc", mode = "symlink" }
+"~/Library/Application Support/Code/User/settings.json" = { source = "editor-config/files/Code-settings.json.tera", mode = "template" }
+"~/Library/Application Support/Code/User/keybindings.json" = { source = "editor-config/files/baselines/vscode-keybindings.jsonc", mode = "symlink" }
 "~/Library/Application Support/io.datasette.llm/default_model.txt" = { source = "editor-config/files/default_model.txt", mode = "symlink" }
 
 [bootstrap.files."~/Library/Application Support/io.datasette.llm/keys.json"]

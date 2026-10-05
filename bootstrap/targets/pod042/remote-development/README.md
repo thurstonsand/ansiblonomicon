@@ -4,7 +4,7 @@ These are normal-user services for `thurstonsand`. T3 serves multiple projects f
 
 ## Integration contract
 
-Mise supplies Node LTS. T3 uses its official standalone archive installer, with `~/.local/bin/t3` linked into `~/.t3/runtime/versions/`; `services.py` calls that native launcher directly. `operator:agents` reconciles the latest stable release; this capability reconciles its service afterward. The archive path avoids npm pruning the platform bundle on repeated installs and retains the existing Connect state in `~/.t3`. Amp uses its official installer and `/home/thurstonsand/.amp/bin/amp`. Codex and Claude use their official installers under `~/.local/bin`; OpenCode uses `~/.opencode/bin`. Native agent directories precede mise shims so old version-manager installations cannot shadow them.
+Mise supplies Node LTS. T3 uses its official standalone archive installer, with `~/.local/bin/t3` linked into `~/.t3/runtime/versions/`; `services.py` calls that native launcher directly. `operator:agents` reconciles the latest stable release; this capability reconciles its service afterward. The archive path avoids npm pruning the platform bundle on repeated installs and retains the existing Connect state in `~/.t3`. Amp uses its official installer and `/home/thurstonsand/.amp/bin/amp`. Codex and Claude use their official installers under `~/.local/bin`. Native agent directories precede mise shims so old version-manager installations cannot shadow them.
 
 Native dotfiles own the Amp and Herdr units and one T3 drop-in, not the vendor's `t3code.service` or launcher. The service-critical units are copies so the user manager remains independent of checkout availability; T3's npmrc links to its first-party source. Register this config environment after operator tooling. Its final hook runs `python3 remote-development/services.py apply` after operator installation without replacing the base bootstrap task. Native dry runs report the files; use the separate `plan` action to inspect vendor-managed service state. Named `remote-development:{reconcile,status,plan}` tasks are also provided. Paths in these tasks are relative to the target config root.
 
@@ -25,7 +25,7 @@ T3 alone selects `~/.config/t3code/npmrc` through `NPM_CONFIG_USERCONFIG`. Its `
 In an interactive SSH login as `thurstonsand` on pod042:
 
 ```sh
-export PATH="$HOME/.local/bin:$HOME/.amp/bin:$HOME/.opencode/bin:$HOME/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin"
+export PATH="$HOME/.local/bin:$HOME/.amp/bin:$HOME/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin"
 cd /home/thurstonsand/code
 amp login
 ```

@@ -275,7 +275,6 @@ def render(
     if hostname == "ML-DFC6YK6VJQ":
         return outputs
 
-    models = _models(data)
     try:
         token = secrets["CLI_PROXY_API_KEY"]
     except KeyError as error:
@@ -289,9 +288,9 @@ def render(
     )
     outputs[".claude/hooks/_config.py"] = (
         '"""Rendered configuration for auto-title hooks."""\n\n'
-        'API_URL = "https://aig.thurstons.house/v1/messages"\n'
-        f"MODEL = {json.dumps(models['anthropic']['sonnet']['version'])}\n"
-        f"TOKEN = {json.dumps(token)}\nMAX_CONTEXT_BYTES = 2_000_000\n\n"
+        'API_URL = "https://doppelclaude.thurstons.house/v1/messages"\n'
+        'MODEL = "sonnet"\n'
+        f"TOKEN = {json.dumps(token)}\nMAX_MESSAGE_BYTES = 16_000\n\n"
         f'TITLE_PROMPT = """\n{title_prompt}\n"""\n'
     )
     return outputs

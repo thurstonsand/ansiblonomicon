@@ -11,7 +11,7 @@ repo = "vercel-labs/agent-browser"
 excluded_on = ["work"]
 [[sources.plugins]]
 name = "agent-browser"
-target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "opencode", "pi"] }
+target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "pi"] }
 
 [[sources]]
 repo = "modem-dev/hunk"
@@ -48,7 +48,7 @@ target_agents = ["pi"]
 exclude_skills = { "work" = ["grill-me", "tui-screenshot"], "*" = ["grill-me"] }
 [[sources.plugins]]
 name = "project-management"
-target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex", "opencode"] }
+target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex"] }
 exclude_skills = { "work" = ["tui-screenshot"], "amp_publish" = ["notify"] }
 
 [[sources]]
@@ -76,5 +76,5 @@ local = "agents/homelab"
 excluded_on = ["work"]
 [[sources.plugins]]
 name = "homelab"
-target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex", "opencode", "pi"] }
+target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex", "pi"] }
 exclude_data = ["__pycache__", "*.pyc"]

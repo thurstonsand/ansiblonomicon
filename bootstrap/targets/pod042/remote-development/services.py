@@ -93,8 +93,7 @@ def main() -> None:
     os.environ["HOME"] = str(HOME)
     os.environ["NPM_CONFIG_USERCONFIG"] = str(HOME / ".config/t3code/npmrc")
     os.environ["PATH"] = (
-        f"{HOME}/.local/bin:{HOME}/.amp/bin:{HOME}/.opencode/bin:"
-        f"{SHIMS}:/usr/local/bin:/usr/bin:/bin"
+        f"{HOME}/.local/bin:{HOME}/.amp/bin:{SHIMS}:/usr/local/bin:/usr/bin:/bin"
     )
     os.environ["XDG_RUNTIME_DIR"] = f"/run/user/{os.getuid()}"
     os.environ["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path=/run/user/{os.getuid()}/bus"

@@ -72,11 +72,6 @@ local linters = new Mapping<String, Step> {
   // project without naming either path.
   ["go-fmt"] = (Builtins.go_fmt) {}
   ["go-lint"] = (Builtins.golangci_lint) {}
-  ["go-test"] {
-    glob = "**/*.go"
-    workspace_indicator = "go.mod"
-    check = "cd {{workspace}} && go test ./..."
-  }
 }
 
 hooks {

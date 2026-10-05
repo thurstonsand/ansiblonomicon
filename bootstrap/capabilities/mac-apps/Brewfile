@@ -86,11 +86,10 @@ mas "Tailscale", id: 1475387142
 
 # Editors/Terminals
 brew "neovim"
-cask "cursor"
-cask "devin-desktop"
 cask "ghostty"
 cask "iterm2"
 cask "monodraw"
+cask "visual-studio-code"
 cask "warp"
 cask "zed"
 cask "thurstonsand/tap/wt"
@@ -104,13 +103,11 @@ mas "Xcode", id: 497799835
 # AI
 # =============================================================================
 brew "cliproxyapi"
-brew "gemini-cli"
 brew "llm"
 
 cask "chatgpt", greedy: true
 cask "claude"
 cask "codexbar"
-cask "opencode-desktop"
 cask "t3-code"
 
 mas "Perplexity: Ask Anything", id: 6714467650
@@ -134,7 +131,6 @@ mas "Play: Save Videos Watch Later", id: 1596506190
 # Productivity
 # =============================================================================
 # Browsers
-cask "antigravity"
 cask "comet"
 cask "firefox" # headless render backend for trmnlp (TRMNL plugin previews)
 cask "google-chrome"

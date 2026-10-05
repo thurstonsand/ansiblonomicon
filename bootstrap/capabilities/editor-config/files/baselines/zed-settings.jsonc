@@ -45,11 +45,6 @@
   "preferred_line_length": 88,
   "scroll_beyond_last_line": "off",
   "redact_private_values": true,
-  "agent_servers": {
-    "opencode": {
-      "type": "registry"
-    }
-  },
   "theme": {
     "mode": "system",
     "light": "Catppuccin Latte",

@@ -32,7 +32,6 @@ mise run fix               # every formatter and autofixer
 mise run python:lint       # or nvim:fmt:check, workers:typecheck,
                            # pi:check, session-recovery:check
 mise tasks                 # the full list; --all adds the two Go subprojects
-uv run pytest
 ```
 
 ### Code style

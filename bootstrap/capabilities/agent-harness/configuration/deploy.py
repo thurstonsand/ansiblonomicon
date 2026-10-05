@@ -33,19 +33,17 @@ RENDERERS = {
     "amp": "amp",
     "claude": "claude",
     "codex": "codex",
-    "opencode": "opencode",
     "pi": "pi",
 }
 SECRET_KEYS = {
-    "type-a-no2": set(),
+    "type-a-no2": {"CLI_PROXY_API_KEY"},
     WORK_HOST: {"ANTHROPIC_AUTH_TOKEN"},
-    "Thurstons-MacBook-Pro": {"CLI_PROXY_API_KEY", "PARALLEL_API_KEY"},
-    "pod042": {"CLI_PROXY_API_KEY", "PARALLEL_API_KEY"},
+    "Thurstons-MacBook-Pro": {"CLI_PROXY_API_KEY"},
+    "pod042": {"CLI_PROXY_API_KEY"},
 }
 PRIVATE = {
     ".claude/hooks/_config.py",
     ".config/amp/settings.json",
-    ".config/opencode/opencode.jsonc",
     ".pi/agent/auth.json",
     ".pi/agent/models.json",
     ".codex/config.toml",

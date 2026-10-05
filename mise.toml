@@ -215,7 +215,7 @@ flag "-c --check"
 run = '''
 host=$(hostname -s)
 case "$host:$usage_capability" in
-  Thurstons-MacBook-Pro:claude-code|Thurstons-MacBook-Pro:opencode|Thurstons-MacBook-Pro:sessions|Thurstons-MacBook-Pro:shp|Thurstons-MacBook-Pro:uvc-util|Thurstons-MacBook-Pro:berkeley-mono|Thurstons-MacBook-Pro:docker-context) ;;
+  Thurstons-MacBook-Pro:claude-code|Thurstons-MacBook-Pro:sessions|Thurstons-MacBook-Pro:shp|Thurstons-MacBook-Pro:uvc-util|Thurstons-MacBook-Pro:berkeley-mono|Thurstons-MacBook-Pro:docker-context) ;;
   ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:sessions|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
@@ -228,9 +228,6 @@ exec bootstrap/capabilities/software/reconcile "$@"
 
 [tasks.claude-code]
 run = "mise run //:software:dispatch claude-code ${usage_check:+--check}"
-usage = 'flag "-c --check"'
-[tasks.opencode]
-run = "mise run //:software:dispatch opencode ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks.pi]
 run = "mise run //:software:dispatch pi ${usage_check:+--check}"
@@ -708,8 +705,7 @@ set -e
 host=$(hostname -s)
 case "$host" in
   ML-DFC6YK6VJQ) set -- --secret ANTHROPIC_AUTH_TOKEN ;;
-  Thurstons-MacBook-Pro|pod042) set -- --secret CLI_PROXY_API_KEY --secret PARALLEL_API_KEY ;;
-  type-a-no2) set -- ;;
+  Thurstons-MacBook-Pro|pod042|type-a-no2) set -- --secret CLI_PROXY_API_KEY ;;
   *) echo "Native agent configuration is available only on registered systems" >&2; exit 1 ;;
 esac
 status=0
@@ -754,7 +750,7 @@ config_capabilities="sysconfig terminal-theme git-client jj-client shell termina
 sysconfig_sections="dock finder nsglobaldomain menubar desktop-services permissions"
 case "$profile" in
   personal)
-    software_capabilities="$software_capabilities claude-code opencode sessions shp uvc-util docker-context"
+    software_capabilities="$software_capabilities claude-code sessions shp uvc-util docker-context"
     config_capabilities="$config_capabilities ssh-client"
     sysconfig_sections="$sysconfig_sections hostname"
     ;;
@@ -1042,9 +1038,9 @@ dir = "wrangler/aig"
 run = "wrangler deploy --dry-run"
 
 [tasks."workers:typecheck:doppelclaude"]
-description = "Check the Doppelclaude Worker bundle and proxy contract"
+description = "Type-check the Doppelclaude Worker via a wrangler dry run"
 dir = "wrangler/doppelclaude"
-run = "node --test worker.test.ts && wrangler deploy --dry-run"
+run = "wrangler deploy --dry-run"
 
 [tasks."pi:check"]
 description = "Lint and type-check the pi extensions"

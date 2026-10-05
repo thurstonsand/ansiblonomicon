@@ -12,7 +12,7 @@ Manage host software through this repo's desired state. Use the host's existing 
 - Homebrew and Mac App Store apps: `bootstrap/capabilities/mac-apps/Brewfile`, with `Brewfile.work` for work; reconcile through `mise mac-apps`. Work's private additions go in an ignored `Brewfile.work.*` beside it.
 - Runtime and global-package inventories: `bootstrap/capabilities/language-tools/`; work's private inventory lives in its native target. Reconcile through `mise language-tools`.
 - Reconciliation: `mise laptop` runs every registered native capability. Work's private files belong to the `work-local` capability.
-- Claude Code, OpenCode, sessions, shp, and uvc-util: `bootstrap/capabilities/software/`, registered under the Mac targets. Go and UVC overlay sources live in its `sources/` directory. Use the matching root task with `--check` before applying; UVC reconciliation builds but never runs camera settings.
+- Claude Code, sessions, shp, and uvc-util: `bootstrap/capabilities/software/`, registered under the Mac targets. Go and UVC overlay sources live in its `sources/` directory. Use the matching root task with `--check` before applying; UVC reconciliation builds but never runs camera settings.
 
 ## pod042
 

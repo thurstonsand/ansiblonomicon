@@ -59,7 +59,6 @@ function getRequestCategory(pathname: string): RequestCategory {
 // /codex/callback
 // /google/callback
 // /iflow/callback
-// /antigravity/callback
 // /auth/*              - Root auth
 // /docs/*              - Docs
 // /settings/*          - Settings

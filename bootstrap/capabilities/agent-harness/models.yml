@@ -19,7 +19,6 @@ models:
       agent_harness:
         aliases:
           claude: "claude-fable-5-1[1m]"
-          opencode: "anthropic/claude-fable-5-1"
           pi: "doppelclaude/claude-fable-5-1"
       vscode:
         include: true
@@ -36,7 +35,6 @@ models:
       agent_harness:
         aliases:
           claude: "opus[1m]"
-          opencode: "anthropic/claude-opus-5-5"
           pi: "doppelclaude/claude-opus-5-5"
       vscode:
         include: true
@@ -52,7 +50,6 @@ models:
       agent_harness:
         aliases:
           claude: "sonnet"
-          opencode: "anthropic/claude-sonnet-5"
           pi: "doppelclaude/claude-sonnet-5"
       vscode:
         include: true
@@ -68,7 +65,6 @@ models:
       agent_harness:
         aliases:
           claude: "haiku"
-          opencode: "anthropic/claude-haiku-4-5-20251001"
           pi: "doppelclaude/claude-haiku-4-5"
       vscode:
         include: true
@@ -150,7 +146,6 @@ models:
       vision: true
       agent_harness:
         aliases:
-          opencode: google/gemini-3.1-pro-preview
           pi: google/gemini-3.1-pro-preview
       vscode:
         include: true
@@ -165,7 +160,6 @@ models:
       vision: true
       agent_harness:
         aliases:
-          opencode: google/gemini-3.8-flash
           pi: google/gemini-3.8-flash
       vscode:
         include: true
@@ -180,7 +174,6 @@ models:
       vision: true
       agent_harness:
         aliases:
-          opencode: google/gemini-3.5-flash-lite
           pi: google/gemini-3.5-flash-lite
       vscode:
         include: true
@@ -198,31 +191,6 @@ cli_proxy_api:
       # Dateless aliases
       - name: claude-haiku-4-5-20251001
         alias: claude-haiku-4-5
-    antigravity:
-      # Claude models via Antigravity
-      - name: gemini-claude-opus-4-5-thinking
-        alias: claude-opus-4-5-thinking
-        fork: true
-      - name: gemini-claude-sonnet-4-5
-        alias: claude-sonnet-4-5
-        fork: true
-      - name: gemini-claude-sonnet-4-5-thinking
-        alias: claude-sonnet-4-5-thinking
-        fork: true
-      # Gemini model name mappings (internal codenames → friendly names)
-      - name: rev19-uic3-1p
-        alias: gemini-2.5-computer-use-preview-10-2025
-      - name: gemini-3-pro-image
-        alias: gemini-3-pro-image-preview
-      - name: gemini-3-pro-high
-        alias: gemini-3-pro-preview
-      - name: gemini-3-flash
-        alias: gemini-3-flash-preview
-      # Dateless aliases
-      - name: gemini-3-pro-preview
-        alias: gemini-3-pro
-      - name: gemini-3-flash-preview
-        alias: gemini-3-flash
 
   # Legacy/deprecated model exclusions (models not in the models section)
   legacy_exclusions:
@@ -238,18 +206,6 @@ cli_proxy_api:
       - claude-opus-4-6
       - claude-fable-5
       - claude-opus-5
-    gemini-cli:
-      - gemini-2.5-computer-use-preview-10-2025
-      - gemini-2.0-*
-      - gemini-1.5-*
-      - gemini-1.0-*
-    antigravity:
-      - gemini-2.5-computer-use-preview-10-2025
-      - gemini-2.0-*
-      - gemini-1.5-*
-      - gemini-1.0-*
-      - gemini-claude-*
-      - gpt-oss-*
     codex:
       - gpt-5
       - gpt-5.1

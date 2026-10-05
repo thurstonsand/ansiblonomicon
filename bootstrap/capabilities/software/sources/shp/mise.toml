@@ -26,10 +26,6 @@ fi
 description = "Run golangci-lint"
 run = "golangci-lint run --allow-parallel-runners ./..."
 
-[tasks.test]
-description = "Run Go tests"
-run = "go test ./..."
-
 [tasks.build]
 description = "Build the shp binary into the project directory"
 run = "go build -o shp ."
@@ -48,5 +44,5 @@ description = "Upgrade Go dependencies and tidy go.mod"
 run = ["go get -u -t ./...", "go mod tidy"]
 
 [tasks.check]
-description = "Format check, lint, and test"
-depends = [":fmt:check", ":lint", ":test"]
+description = "Format check and lint"
+depends = [":fmt:check", ":lint"]

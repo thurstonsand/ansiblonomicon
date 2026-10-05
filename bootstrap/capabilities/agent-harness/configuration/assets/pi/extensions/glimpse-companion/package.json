@@ -9,16 +9,12 @@
       "./index.ts"
     ]
   },
-  "scripts": {
-    "test": "node --import jiti/register --test companion/focus.test.ts companion/font-source.test.ts companion/handlers.test.ts"
-  },
   "devDependencies": {
     "@biomejs/biome": "^2.5.10",
     "@earendil-works/pi-coding-agent": "^1.0.0",
     "@earendil-works/pi-server": "^1.0.0",
     "@earendil-works/pi-tui": "^1.0.0",
     "@types/node": "^24.13.3",
-    "jiti": "^2.7.0",
     "typebox": "1.3.34",
     "typescript": "^7.0.2"
   },

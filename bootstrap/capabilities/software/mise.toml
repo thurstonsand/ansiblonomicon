@@ -4,9 +4,6 @@ source_freshness_hash_contents = true
 [tasks.claude-code]
 run = 'software/install-official claude-code "$HOME/.local/bin/claude" https://claude.ai/install.sh ${SOFTWARE_CHECK:+--check}'
 
-[tasks.opencode]
-run = 'software/install-official opencode "$HOME/.opencode/bin/opencode" https://opencode.ai/install ${SOFTWARE_CHECK:+--check} --no-modify-path'
-
 [tasks.berkeley-mono]
 run = 'python3 software/berkeley_mono.py ${SOFTWARE_CHECK:+--check}'
 
