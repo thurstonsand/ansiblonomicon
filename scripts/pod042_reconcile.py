@@ -236,13 +236,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         if "sharing" in selected:
             secrets.append("SAMBA_MEDIA_PASSWORD")
         if "doppelclaude" in selected:
-            secrets.extend(
-                (
-                    "CLI_PROXY_API_KEY",
-                    "CLAUDE_CODE_OAUTH_TOKEN",
-                    "DOPPELCLAUDE_OPENCODE_ENVIRONMENT_HEADING",
-                )
-            )
+            secrets.extend(("CLI_PROXY_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"))
         command = [
             sys.executable,
             "-B",
