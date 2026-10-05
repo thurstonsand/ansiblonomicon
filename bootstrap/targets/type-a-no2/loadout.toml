@@ -23,6 +23,7 @@ rust = "present"
 t3code-bin = "present"
 "webkitgtk-6.0" = "present"
 yaru-icon-theme = "present"
+zsh-autosuggestions = "present"
 
 [aur]
 icloudpd-bin = "present"

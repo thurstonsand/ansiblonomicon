@@ -12,8 +12,8 @@ style = "bold purple"
 disabled = true
 
 [directory]
-truncation_length = 0                                                                                 # Show full path
-truncate_to_repo = false                                                                              # Don't truncate to repo root
+truncation_length = 2
+truncation_symbol = "…/"
 style = "bold yellow"                                                                                 # Style for non-repo path
 repo_root_style = "bold yellow"                                                                       # Style for repo path
 before_repo_root_style = "dimmed cyan"                                                                # Style for path before repo
@@ -28,3 +28,20 @@ style = "bold blue"
 
 [gcloud]
 disabled = true
+
+[git_branch]
+format = "[$branch]($style) "
+
+[git_status]
+format     = '[$all_status]($style)'
+ahead      = "⇡${count} "
+diverged   = "⇕⇡${ahead_count}⇣${behind_count} "
+behind     = "⇣${count} "
+conflicted = " "
+up_to_date = " "
+untracked  = "? "
+modified   = " "
+stashed    = ""
+staged     = ""
+renamed    = ""
+deleted    = ""

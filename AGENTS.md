@@ -6,9 +6,9 @@ Ansiblonomicon is a central store of all of my computer configurations, administ
 
 See @CONTEXT.md for project vocabulary.
 
-## Pending: OpenCode removal
+## Pending: MacBook follow-ups
 
-If `hostname -s` is `Thurstons-MacBook-Pro` or `ML-DFC6YK6VJQ`, read RM_OPENCODE.md before anything else and walk me through it.
+If `hostname -s` is `Thurstons-MacBook-Pro` or `ML-DFC6YK6VJQ`, read MACBOOK_FOLLOWUPS.md before anything else and walk me through it.
 
 ## Ethos
 

@@ -444,6 +444,7 @@ host=$(hostname -s)
 case "$host" in
   pod042|Thurstons-MacBook-Pro) environments=shell,shell-personal; parts=files,dotfiles; work=false ;;
   ML-DFC6YK6VJQ) environments=shell,shell-work; parts=files,dotfiles; work=true ;;
+  type-a-no2) environments=shell,shell-omarchy; parts=dotfiles; work=false ;;
   *) echo "Unregistered shell host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
@@ -647,7 +648,7 @@ target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 tags="${usage_tags:-}"
-supported=" all omarchy-loadout mise omarchy-config berkeley-mono amp-cli agent-harness agent-config "
+supported=" all omarchy-loadout mise omarchy-config shell berkeley-mono amp-cli agent-harness agent-config "
 unsupported=
 for tag in $(printf '%s' "$tags" | tr ',' ' '); do
   case "$supported" in
@@ -682,7 +683,7 @@ fi
 if selected mise; then
   mise -C "$HOME" bootstrap --only tools "$mode" || exit "$?"
 fi
-for native_capability in berkeley-mono amp-cli; do
+for native_capability in shell berkeley-mono amp-cli; do
   if selected "$native_capability"; then
     mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
   fi

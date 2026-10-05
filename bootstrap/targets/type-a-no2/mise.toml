@@ -2,6 +2,7 @@ min_version = "2026.8.12"
 
 [vars]
 host_profile = "omarchy"
+host_os = "linux"
 
 [dotfiles]
 "~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "symlink" }

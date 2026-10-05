@@ -11,11 +11,11 @@ end
 # =============================================================================
 brew "autojump"
 brew "bat"
+brew "btop"
 brew "direnv"
 brew "duti"
 brew "fd"
 brew "fzf"
-brew "htop"
 brew "jq"
 brew "ripgrep"
 brew "starship"

@@ -5,11 +5,13 @@
 # SECTION 1: Runs at EVERY shell level (functions don't inherit)
 # =============================================================================
 
+{% if vars.host_os == "darwin" %}
 # Cache directory for evalcache
 ZSH_CACHE_DIR="${XDG_CACHE_HOME:-$HOME/.cache}/zsh"
 
 # Evalcache function - caches slow shell init commands
 # Used by .zprofile and .zshrc for lazy initialization
+# Pending a macOS measurement (MACBOOK_FOLLOWUPS.md): on Linux it saved ~10ms and was dropped.
 _evalcache() {
   local cmd=$1
   shift
@@ -50,6 +52,9 @@ _evalcache() {
   fi
   source "$cache_file"
 }
+{% else %}
+_evalcache() { eval "$("$@")" }
+{% endif %}
 
 # =============================================================================
 # SECTION 2: Environment variables, aliases, and PATH
@@ -96,7 +101,7 @@ export GENAIHUB_API_KEY='{{ get_env(name="ANTHROPIC_AUTH_TOKEN") }}'
 {% endif %}
 typeset -U path
 path=(
-{% if vars.host_os == "linux" %}
+{% if vars.host_os == "linux" and vars.host_profile != "omarchy" %}
   "$HOME/.local/bin"
   "$HOME/.amp/bin"
 {% endif %}
@@ -104,7 +109,9 @@ path=(
   "/opt/homebrew/bin"
   "/opt/homebrew/sbin"
 {% endif %}
+{% if vars.host_profile != "omarchy" %}
   "$HOME/.local/share/mise/shims"
+{% endif %}
   "$HOME/.bun/bin"
   "$HOME/.npm-global/bin"
   "$HOME/.cargo/bin"
@@ -122,7 +129,7 @@ path=(
 {% if vars.host_profile == "work" %}
   "$HOME/scripts"
 {% endif %}
-{% if vars.host_os != "darwin" %}
+{% if vars.host_os != "darwin" and vars.host_profile != "omarchy" %}
   "$HOME/.local/bin"
 {% endif %}
   $path

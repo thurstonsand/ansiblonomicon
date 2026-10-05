@@ -8,7 +8,7 @@
 "apt:git-delta" = "latest"
 "apt:gh" = "latest"
 "apt:jq" = "latest"
-"apt:htop" = "latest"
+"apt:btop" = "latest"
 # With no Secret Service on a headless box, pi's MCP OAuth store falls back to the
 # kernel keyring, and a login session ending revokes it under any agent still
 # running. pi's recovery path shells out to keyctl to reach the keys again.
