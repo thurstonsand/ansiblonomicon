@@ -3,11 +3,24 @@
 bun = "latest"
 claude = "latest"
 codex = "latest"
+fnox = "latest"
 gh = "latest"
 go = "latest"
+gofumpt = "latest"
+golangci-lint = "latest"
 "github:steipete/CodexBar" = { version = "latest", asset_pattern = "CodexBarCLI-*-linux-x86_64.tar.gz" }
 node = "lts"
+"npm:agent-browser" = "latest"
+# Reviewed 2026-10-05: @pierre/theme lost npm provenance when a co-maintainer took
+# over publishing at 1.1.0; 2.0.0 is script-free, dependency-free theme JSON.
+# Drop the exclusion once @pierre/theme publishes with provenance again; a newer
+# unprovenanced release fails the install and needs its own review.
+"npm:sideshow" = { version = "latest", allow_low_downloads = true, trust_policy_excludes = ["@pierre/theme@2.0.0"] }
+"npm:tuistory" = "latest"
 pi = "latest"
+"pipx:nurb" = "latest"
+pnpm = { version = "latest", postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"' }
+uv = "latest"
 
 [settings.upgrade]
 auto_prune = false

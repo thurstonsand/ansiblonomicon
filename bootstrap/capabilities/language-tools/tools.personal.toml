@@ -3,7 +3,7 @@ version = "latest"
 postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"'
 
 [npm]
-packages = ["openclaw"]
+packages = []
 allow_scripts = []
 
 [uv]

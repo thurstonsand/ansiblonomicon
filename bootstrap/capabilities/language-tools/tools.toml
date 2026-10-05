@@ -1,5 +1,7 @@
 # Shared Mac language-tool inventory. Tool names are keys so reconciliation can
 # install/upgrade only this declared set rather than every global mise tool.
+# type-a-no2 declares the same set in its global mise config
+# (bootstrap/targets/type-a-no2/mise-global.toml), the Omarchy-native path.
 [tools.node]
 version = "lts"
 

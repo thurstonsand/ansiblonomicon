@@ -21,15 +21,16 @@ Changes made from the Omarchy laptop that the MacBooks still need to reconcile o
    - `homebrew` uninstalls the `opencode-desktop`, `cursor`, `antigravity`, and `devin-desktop` casks and the `gemini-cli` and `htop` formulae, and installs `visual-studio-code` and `btop`.
    - `editor-config` writes VS Code's `settings.json` and `keybindings.json` under `~/Library/Application Support/Code/User/`.
    - `shell` renders the new `.zshrc` and `.zshenv`; Starship's config is a symlink and is already current.
-3. Verify that none of these exist, and remove any that do: `~/.opencode`, `~/.config/opencode`, `~/.local/share/opencode`, `~/.local/state/opencode`, `~/.cache/opencode`, `~/.gemini`, and `~/Library/Application Support/{Cursor,Windsurf,Antigravity}/User/{settings,keybindings}.json` (dangling links left by the old editor-config).
-4. Check that `command -v opencode gemini` prints nothing, and that a new shell shows the new `ls`, `cd`, and `top` aliases and prompt without errors.
-5. Measure `_evalcache`. Build two scratch files from the `_evalcache` lines the rendered `~/.zshrc` runs: one that sources the `_evalcache` function from `~/.zshenv` and calls it, and one using plain `eval "$(cmd args)"`. Time `zsh -fc "source <file>"` from `$HOME` over 40 interleaved runs and compare medians. Report the numbers to Thurston. If the saving is small, drop the darwin `_evalcache` branch in `zshenv.tera` so every host uses the plain-eval passthrough, and delete `~/.cache/zsh/*_init.zsh*`.
+3. `npm uninstall -g openclaw` (dropped from `tools.personal.toml`; the npm inventory has no retirement field, so reconcile won't remove it).
+4. Verify that none of these exist, and remove any that do: `~/.opencode`, `~/.config/opencode`, `~/.local/share/opencode`, `~/.local/state/opencode`, `~/.cache/opencode`, `~/.gemini`, and `~/Library/Application Support/{Cursor,Windsurf,Antigravity}/User/{settings,keybindings}.json` (dangling links left by the old editor-config).
+5. Check that `command -v opencode gemini openclaw` prints nothing, and that a new shell shows the new `ls`, `cd`, and `top` aliases and prompt without errors.
+6. Measure `_evalcache`. Build two scratch files from the `_evalcache` lines the rendered `~/.zshrc` runs: one that sources the `_evalcache` function from `~/.zshenv` and calls it, and one using plain `eval "$(cmd args)"`. Time `zsh -fc "source <file>"` from `$HOME` over 40 interleaved runs and compare medians. Report the numbers to Thurston. If the saving is small, drop the darwin `_evalcache` branch in `zshenv.tera` so every host uses the plain-eval passthrough, and delete `~/.cache/zsh/*_init.zsh*`.
 
 ## Work MacBook (`ML-DFC6YK6VJQ`)
 
 1. `mise run pull`
 2. `mise laptop -t agent-harness,shell,user-tools,neovim`, then `homebrew` with its stamp removed as above to swap `htop` for `btop`.
-3. Verify the OpenCode paths and `~/.gemini` from step 3 above are gone, and that a new shell starts cleanly with autojump's `cd`.
+3. Verify the OpenCode paths and `~/.gemini` from step 4 above are gone, and that a new shell starts cleanly with autojump's `cd`.
 4. `lazy-lock.work.json` has no `neo-tree.nvim` pin, so Lazy restore installs it unpinned. Once neo-tree opens with `<leader>e`, copy its entry from `~/.config/nvim/lazy-lock.json` into `bootstrap/capabilities/neovim/files/lazy-lock.work.json` and commit it.
 5. **Unverified Mason fix:** the work branch of `mason.lua.tera` used to set `ensure_installed = {}` as a table. That merged with the LazyVim extras' tool lists rather than emptying them, so work has been auto-installing those tools from Mason all along. It is now an opts function that empties the list. This was tested only by rendering the work branch on type-a-no2. Confirm it on this machine: `nvim --headless +'lua local P=require("lazy.core.config").plugins; print(#require("lazy.core.plugin").values(P["mason.nvim"],"opts",false).ensure_installed)' +qa` should print `0`. Then open a Go, Python, and TypeScript file and check that the LSPs and formatters still attach from the system installs. If anything that used to work now relies on a Mason install, report which tool.
 
