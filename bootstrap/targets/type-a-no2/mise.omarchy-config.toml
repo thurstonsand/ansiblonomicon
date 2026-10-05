@@ -46,6 +46,9 @@ run = "~/.local/share/omarchy-icloud-photos/install.sh"
 "~/.config/omarchy/extensions/omarchy-menu.jsonc" = { source = "omarchy/extensions/omarchy-menu.jsonc", mode = "symlink" }
 "~/.config/omarchy/branding/about.txt" = { source = "omarchy/branding/about.txt", mode = "symlink" }
 "~/.config/omarchy/branding/screensaver.txt" = { source = "omarchy/branding/screensaver.txt", mode = "symlink" }
+# omarchy-theme-bg-next compares unresolved paths against bg-set's realpath, so a symlink stalls cycling.
+"~/.config/omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg", mode = "copy" }
 "~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }
 "~/.config/open-whispr-flags.conf" = { source = "omarchy/open-whispr-flags.conf", mode = "symlink" }
 # CodexBar replaces this file on save, which would break a symlink.

@@ -29,6 +29,8 @@ icloudpd-bin = "present"
 openwhispr-bin = "present"
 
 [themes]
+fire-and-shadow = { source = "https://github.com/mattbbia/fire-and-shadow.git" }
+ghost-pastel = { source = "https://github.com/row-huh/omarchy-ghost-pastel-theme.git" }
 sakura-mochi = { source = "https://github.com/OldJobobo/omarchy-sakura-mochi-theme.git" }
 
 [plugins]
