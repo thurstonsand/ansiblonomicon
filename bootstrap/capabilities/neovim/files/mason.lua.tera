@@ -2,7 +2,10 @@
 return {
   {
     "mason-org/mason.nvim",
-    opts = { ensure_installed = {} },
+    -- A table here would merge with the extras' lists rather than replace them.
+    opts = function(_, opts)
+      opts.ensure_installed = {}
+    end,
   },
   {
     "neovim/nvim-lspconfig",
