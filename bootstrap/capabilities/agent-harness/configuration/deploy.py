@@ -209,6 +209,28 @@ def _claude_mcp_output(
     return ".claude.json", json.dumps(existing, indent=2) + "\n"
 
 
+def _hook_key(event: str, group: Any) -> str:
+    return json.dumps([event, group], sort_keys=True)
+
+
+def _claude_hooks(
+    home: Path, rendered: str, previously_owned: set[str]
+) -> tuple[str, list[str]]:
+    settings = json.loads(rendered)
+    hooks = settings.setdefault("hooks", {})
+    owned = [
+        _hook_key(event, group) for event, groups in hooks.items() for group in groups
+    ]
+    target = _safe_target(home, ".claude/settings.json")
+    existing = json.loads(target.read_text()) if target.exists() else {}
+    for event, groups in existing.get("hooks", {}).items():
+        for group in groups:
+            key = _hook_key(event, group)
+            if key not in owned and key not in previously_owned:
+                hooks.setdefault(event, []).append(group)
+    return json.dumps(settings, indent=2) + "\n", sorted(owned)
+
+
 def _codex_mcp_config(
     config: str, data: dict[str, Any], previously_owned: set[str]
 ) -> str:
@@ -444,7 +466,7 @@ def _read_owned_names(path: Path) -> set[str]:
         return set()
     value = json.loads(path.read_text())
     if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
-        raise ValueError(f"{path}: invalid MCP ownership manifest")
+        raise ValueError(f"{path}: invalid ownership manifest")
     return set(value)
 
 
@@ -466,6 +488,12 @@ def reconcile(
     if ".codex/config.toml" in outputs:
         outputs[".codex/config.toml"] = _codex_mcp_config(
             outputs[".codex/config.toml"], data, previously_owned_mcp
+        )
+    hook_ownership = state_dir / "claude-hooks-owned.json"
+    owned_hooks: list[str] = []
+    if ".claude/settings.json" in outputs:
+        outputs[".claude/settings.json"], owned_hooks = _claude_hooks(
+            home, outputs[".claude/settings.json"], _read_owned_names(hook_ownership)
         )
     links, packages, absent = _assets(repo, hostname, harnesses)
     package_states: list[tuple[Path, list[str], str, Path, Path | None]] = []
@@ -639,6 +667,8 @@ def reconcile(
     )
     mcp_ownership.write_text(json.dumps(declared_mcp, indent=2) + "\n")
     mcp_ownership.chmod(0o600)
+    hook_ownership.write_text(json.dumps(owned_hooks, indent=2) + "\n")
+    hook_ownership.chmod(0o600)
     return 0
 
 
