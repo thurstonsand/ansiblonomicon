@@ -351,7 +351,7 @@ flag "-c --check" help="Show changes using non-secret placeholders"
 run = '''
 host=$(hostname -s)
 case "$host" in
-  Thurstons-MacBook-Pro) environments=ssh-client ;;
+  Thurstons-MacBook-Pro|type-a-no2) environments=ssh-client ;;
   pod042) environments=ssh-client,ssh-client-pod042 ;;
   ML-DFC6YK6VJQ) echo "ssh-client is intentionally unavailable on the work host" >&2; exit 1 ;;
   *) echo "Unregistered ssh-client host" >&2; exit 1 ;;
@@ -648,7 +648,7 @@ target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 tags="${usage_tags:-}"
-supported=" all omarchy-loadout mise omarchy-config shell berkeley-mono amp-cli agent-harness agent-config "
+supported=" all omarchy-loadout mise omarchy-config shell ssh-client berkeley-mono amp-cli agent-harness agent-config "
 unsupported=
 for tag in $(printf '%s' "$tags" | tr ',' ' '); do
   case "$supported" in
@@ -683,7 +683,7 @@ fi
 if selected mise; then
   mise -C "$HOME" bootstrap --only tools "$mode" || exit "$?"
 fi
-for native_capability in shell berkeley-mono amp-cli; do
+for native_capability in shell ssh-client berkeley-mono amp-cli; do
   if selected "$native_capability"; then
     mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
   fi
