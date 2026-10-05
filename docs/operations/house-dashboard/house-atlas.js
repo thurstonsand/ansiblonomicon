@@ -989,7 +989,8 @@ class HouseAtlas extends HTMLElement {
           features: [{ type: "light-brightness" }],
         }),
       );
-    } else if (room.entity?.startsWith("lock.")) {
+    }
+    if (room.entity?.startsWith("lock.")) {
       add({
         type: "tile",
         entity: room.entity,
@@ -1019,7 +1020,7 @@ class HouseAtlas extends HTMLElement {
         icon_tap_action: { action: "more-info" },
         features: [{ type: "cover-open-close" }],
       });
-    } else if (!room.entity && !room.appliances) {
+    } else if (!room.lights && !room.entity && !room.appliances) {
       const text = document.createElement("p");
       text.className = "muted";
       text.textContent = room.note || "No connected devices in this room yet.";
