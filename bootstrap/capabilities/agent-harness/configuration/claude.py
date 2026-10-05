@@ -230,6 +230,20 @@ def _aggregate_hooks(settings: dict[str, Any], home: Path) -> None:
             hooks[event] = [*hooks.get(event, []), *entries]
 
 
+def _keep_herdr_hooks(settings: dict[str, Any], existing: dict[str, Any]) -> None:
+    # `herdr integration install claude` owns its hook entry; keep whatever it wrote.
+    hooks = cast(dict[str, list[Any]], settings.setdefault("hooks", {}))
+    existing_hooks = existing.get("hooks")
+    if not isinstance(existing_hooks, dict):
+        return
+    for event, groups in cast(dict[str, Any], existing_hooks).items():
+        if not isinstance(groups, list):
+            continue
+        for group in cast(list[Any], groups):
+            if "herdr-agent-state.sh" in json.dumps(group):
+                hooks[event] = [*hooks.get(event, []), group]
+
+
 def render(
     *,
     repo: Path,
@@ -257,6 +271,7 @@ def render(
         existing = cast(dict[str, Any], existing)
         if isinstance(existing.get("model"), str):
             settings["model"] = existing["model"]
+        _keep_herdr_hooks(settings, existing)
         settings = _existing_order(settings, existing)
 
     usage = (

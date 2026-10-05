@@ -2,9 +2,7 @@ import = ["fnox.toml"]
 
 [secrets]
 CLOUDFLARE_TOKEN = { provider = "agent", value = "op://agent/5cimwvc3mbcr6cikiv3wcmhekm/tunnel/token" }
-CLI_PROXY_API_ADMIN_KEY = { provider = "agent", value = "op://agent/vf3jsatixwtzauzoebt66xkiqe/admin apikey" }
 DOPPELCLAUDE_OPENCODE_ENVIRONMENT_HEADING = { provider = "agent", value = "op://agent/mljfrbxj7lptq25mu25mtf6m3q/opencode environment heading" }
-GEMINI_API_KEY = { provider = "agent", value = "op://agent/czcysdu5pyr5d7x2ztguqpftv4/credential" }
 XGS_PON_PASSWORD = { provider = "agent", value = "op://agent/fybwsg6a6cfbq5bvkg7y2ehbgy/password" }
 CANON_REMOTE_UI_PASSWORD = { provider = "agent", value = "op://fw3ej2f2ex5b7zr7lw4cd6atkq/44rsw6f7nlfjwdjctpsevtxd2i/password" }
 DDCLIENT_GITHUB_PAT = { provider = "agent", value = "op://agent/zid4qeby3vbv6wgcqkon2zxyxm/credential" }
