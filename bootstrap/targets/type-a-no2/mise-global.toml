@@ -4,6 +4,7 @@ bun = "latest"
 claude = "latest"
 codex = "latest"
 gh = "latest"
+go = "latest"
 "github:steipete/CodexBar" = { version = "latest", asset_pattern = "CodexBarCLI-*-linux-x86_64.tar.gz" }
 node = "lts"
 pi = "latest"

@@ -1,3 +1,5 @@
+require("config.remote_clipboard").setup()
+
 -- prefer the repo root over LSP workspace roots (e.g. vtsls rooting at a nested package.json)
 vim.g.root_spec = { ".git", "lsp", "cwd" }
 
@@ -35,51 +37,3 @@ vim.api.nvim_create_autocmd("DirChanged", { callback = update_title })
 vim.o.wrap = true
 vim.o.linebreak = true
 vim.o.breakindent = true
-
--- keep Neovim background aligned with the persisted terminal background
-local terminal_bg_path = vim.fn.expand("~/.terminal-bg")
-local function apply_terminal_bg()
-  local terminal_bg_file = io.open(terminal_bg_path, "r")
-  if not terminal_bg_file then
-    return
-  end
-  local terminal_bg = vim.trim(terminal_bg_file:read("*l") or "")
-  terminal_bg_file:close()
-  if (terminal_bg == "light" or terminal_bg == "dark") and terminal_bg ~= vim.o.background then
-    vim.o.background = terminal_bg
-  end
-end
-
-apply_terminal_bg()
-
-local terminal_bg_watcher = vim.uv.new_fs_event()
-if terminal_bg_watcher then
-  local function watch_terminal_bg()
-    terminal_bg_watcher:start(terminal_bg_path, {}, function(err)
-      if err then
-        return
-      end
-      vim.schedule(function()
-        apply_terminal_bg()
-        terminal_bg_watcher:stop()
-        watch_terminal_bg()
-      end)
-    end)
-  end
-  watch_terminal_bg()
-end
-
--- OSC 52 clipboard for remote/SSH sessions
-if os.getenv("SSH_TTY") or os.getenv("SSH_CONNECTION") then
-  vim.g.clipboard = {
-    name = "OSC 52",
-    copy = {
-      ["+"] = require("vim.ui.clipboard.osc52").copy("+"),
-      ["*"] = require("vim.ui.clipboard.osc52").copy("*"),
-    },
-    paste = {
-      ["+"] = require("vim.ui.clipboard.osc52").paste("+"),
-      ["*"] = require("vim.ui.clipboard.osc52").paste("*"),
-    },
-  }
-end

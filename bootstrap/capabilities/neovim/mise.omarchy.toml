@@ -1,0 +1,12 @@
+[dotfiles]
+"~/.config/nvim/lazy-lock.json" = { source = "neovim/lazy-lock.omarchy.json", mode = "symlink" }
+
+[env]
+NEOVIM_MODE = "sync"
+
+[tasks."neovim:omarchy-drift"]
+description = "Report Omarchy Neovim seed changes that the repository shadows or has not adopted"
+usage = '''
+flag "--update" help="Accept the current Omarchy package as the shadowed-file baseline"
+'''
+run = 'exec sh neovim/omarchy-drift.sh ${usage_update:+--update}'

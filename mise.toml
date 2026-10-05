@@ -381,17 +381,24 @@ host=$(hostname -s)
 case "$host" in
   pod042|Thurstons-MacBook-Pro) environments=neovim,neovim-personal ;;
   ML-DFC6YK6VJQ) environments=neovim,neovim-work ;;
+  type-a-no2) environments=neovim,neovim-omarchy ;;
   *) echo "Unregistered neovim host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV="$environments"
+omarchy_drift() {
+  case "$environments" in *neovim-omarchy*) mise -C "$target" run neovim:omarchy-drift ;; esac
+}
 if [ -n "${usage_check:-}" ]; then
-  exec mise -C "$target" bootstrap dotfiles apply --dry-run
+  mise -C "$target" bootstrap dotfiles apply --dry-run || exit "$?"
+  omarchy_drift
+  exit "$?"
 fi
 mise -C "$target" bootstrap dotfiles apply --yes || exit "$?"
-exec mise -C "$target" run neovim:setup
+mise -C "$target" run neovim:setup || exit "$?"
+omarchy_drift
 '''
 
 [tasks."python-index"]
@@ -648,7 +655,7 @@ target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 tags="${usage_tags:-}"
-supported=" all omarchy-loadout mise omarchy-config shell git-client jj-client ssh-client user-tools berkeley-mono amp-cli agent-harness agent-config "
+supported=" all omarchy-loadout mise omarchy-config shell git-client jj-client ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config "
 unsupported=
 for tag in $(printf '%s' "$tags" | tr ',' ' '); do
   case "$supported" in
@@ -683,7 +690,7 @@ fi
 if selected mise; then
   mise -C "$HOME" bootstrap --only tools "$mode" || exit "$?"
 fi
-for native_capability in shell git-client jj-client ssh-client user-tools berkeley-mono amp-cli; do
+for native_capability in shell git-client jj-client ssh-client user-tools neovim berkeley-mono amp-cli; do
   if selected "$native_capability"; then
     mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
   fi

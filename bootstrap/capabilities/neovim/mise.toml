@@ -2,6 +2,7 @@
 "~/.config/nvim" = { source = "neovim/nvim", mode = "symlink-each" }
 "~/.config/nvim/lua/plugins/mason.lua" = { source = "neovim/mason.lua.tera", mode = "template" }
 "~/.config/nvim/lua/plugins/jira.lua" = { source = "neovim/jira.lua.tera", mode = "template" }
+"~/.config/nvim/lua/plugins/colorscheme.lua" = { source = "neovim/colorscheme.lua.tera", mode = "template" }
 
 [tasks."neovim:plugins"]
 description = "Restore or synchronize Neovim plugins"

@@ -76,7 +76,12 @@ local mason_tools = {
 return {
   {
     "mason-org/mason.nvim",
-    opts = { ensure_installed = mason_tools },
+    -- mason-tool-installer owns installs. MasonToolsUpdateSync waits forever on
+    -- a package that LazyVim's startup install already has in flight. A table
+    -- here would merge with the extras' lists rather than replace them.
+    opts = function(_, opts)
+      opts.ensure_installed = {}
+    end,
   },
   {
     "WhoIsSethDaniel/mason-tool-installer.nvim",

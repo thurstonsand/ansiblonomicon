@@ -11,6 +11,7 @@ Changes made from the Omarchy laptop that the MacBooks still need to reconcile o
    - Starship truncating the path to 2 levels and showing git branch and status as glyphs
 3. **Hunk in Neovim:** the `<leader>gV` Hunk float and its `~/.local/libexec/hunk/nvim` editor helper were removed. `user-tools` retires the helper with a `state = "absent"` file declaration.
 4. **Evalcache:** `_evalcache` is now macOS-only. On Linux it saved about 10ms per shell (36.6ms cached vs 46.3ms plain eval over 40 interleaved runs), which did not justify its complexity. macOS starts processes more slowly, so it needs its own measurement.
+5. **Neovim:** the explorer is now neo-tree (LazyVim's `editor.neo-tree` extra) instead of the snacks explorer. The clipboard is Omarchy's vendored `remote_clipboard.lua`, which copies over OSC 52 and pastes from tmux's buffer when inside tmux, replacing the old OSC 52 block. `plugins/colorscheme.lua` is now rendered from `colorscheme.lua.tera`. The `neovim` tag picks all three up. Check that copy and paste inside tmux in Ghostty work without a paste-permission prompt.
 
 ## Personal MacBook (`Thurstons-MacBook-Pro`)
 
@@ -29,6 +30,7 @@ Changes made from the Omarchy laptop that the MacBooks still need to reconcile o
 1. `mise run pull`
 2. `mise laptop -t agent-harness,shell,user-tools,neovim`, then `homebrew` with its stamp removed as above to swap `htop` for `btop`.
 3. Verify the OpenCode paths and `~/.gemini` from step 3 above are gone, and that a new shell starts cleanly with autojump's `cd`.
+4. `lazy-lock.work.json` has no `neo-tree.nvim` pin, so Lazy restore installs it unpinned. Once neo-tree opens with `<leader>e`, copy its entry from `~/.config/nvim/lazy-lock.json` into `bootstrap/capabilities/neovim/files/lazy-lock.work.json` and commit it.
 
 ## Self-destruct
 
