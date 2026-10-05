@@ -26,11 +26,16 @@
                   "outdoor": true
                 },
                 {
-                  "id": "under_primary",
-                  "name": "Under Primary",
+                  "id": "under_main_bedroom",
+                  "name": "Under Main Bedroom",
                   "path": "M10 95h170v205h-170Z",
                   "label": [95.0, 189.5],
-                  "lines": ["Under", "Primary"]
+                  "lines": ["Under", "Main Bedroom"],
+                  "lights": [
+                    "light.under_main_bedroom_front_bulb",
+                    "light.under_main_bedroom_rear_bulb"
+                  ],
+                  "hueScenes": true
                 },
                 {
                   "id": "under_living_room",
@@ -39,14 +44,24 @@
                   "label": [285.0, 171.5],
                   "lines": ["Under Living Room"],
                   "entity": "lock.under_living_room_basement_door",
-                  "mapNote": "Basement Door"
+                  "mapNote": "Basement Door",
+                  "lights": [
+                    "light.under_living_room_left_bulb",
+                    "light.under_living_room_right_bulb"
+                  ],
+                  "hueScenes": true
                 },
                 {
-                  "id": "stair_hall",
+                  "id": "entryway",
                   "name": "Entryway",
                   "path": "M180 260H260V300H220V390H180V470H10V300H180Z",
                   "label": [114, 386],
-                  "lines": ["Entryway"]
+                  "lines": ["Entryway"],
+                  "lights": [
+                    "light.entryway_front_bulb",
+                    "light.entryway_rear_bulb"
+                  ],
+                  "hueScenes": true
                 },
                 {
                   "id": "little_room",
@@ -60,24 +75,29 @@
                   "name": "Under Kitchen",
                   "lines": ["Under Kitchen"],
                   "label": [325, 377],
-                  "path": "M260 260H390V470H180V390H260Z"
+                  "path": "M260 260H390V470H180V390H260Z",
+                  "lights": [
+                    "light.under_kitchen_front_bulb",
+                    "light.under_kitchen_rear_bulb"
+                  ],
+                  "hueScenes": true
                 }
               ],
               "openings": [
                 {
-                  "between": ["under_primary", "stair_hall"],
+                  "between": ["under_main_bedroom", "entryway"],
                   "path": "M180 270V292"
                 },
                 {
-                  "between": ["under_living_room", "stair_hall"],
+                  "between": ["under_living_room", "entryway"],
                   "path": "M198 260H236"
                 },
                 {
-                  "between": ["little_room", "stair_hall"],
+                  "between": ["little_room", "entryway"],
                   "path": "M220 356V379"
                 },
                 {
-                  "between": ["under_kitchen", "stair_hall"],
+                  "between": ["under_kitchen", "entryway"],
                   "path": "M180 421V447"
                 },
                 {
@@ -112,15 +132,12 @@
                   "path": "M230 10H390V220H350V80H230Z"
                 },
                 {
-                  "id": "bedroom",
+                  "id": "main_bedroom",
                   "name": "Main Bedroom",
                   "path": "M10 80H180V260H150V220H10Z",
                   "label": [95.0, 144.0],
                   "lines": ["Main Bedroom"],
-                  "lights": [
-                    "light.main_bedroom_yanie_fluff_lamp",
-                    "light.main_bedroom_fluff_floor_lamp"
-                  ],
+                  "lights": ["light.main_bedroom_fluff_floor_lamp"],
                   "hueScenes": true,
                   "entity": "media_player.main_bedroom_homepod",
                   "mapNote": "HomePod"
@@ -132,8 +149,8 @@
                   "label": [265.0, 144.0],
                   "lines": ["Living Room"],
                   "lights": [
-                    "light.living_room_signe_floor_light_left",
-                    "light.living_room_floor_right",
+                    "light.living_room_floor_light_left",
+                    "light.living_room_floor_light_right",
                     "light.living_room_wall_wash_right",
                     "light.living_room_front_right_floor_lamp",
                     "light.living_room_rear_center_floor_lamp"
@@ -164,7 +181,7 @@
                   ]
                 },
                 {
-                  "id": "primary_bath",
+                  "id": "main_bath",
                   "name": "Main Bath",
                   "path": "M10 220h85v100h-85Z",
                   "label": [52.5, 262.0],
@@ -175,7 +192,7 @@
                   ]
                 },
                 {
-                  "id": "w_i_c",
+                  "id": "main_floor_w_i_c",
                   "name": "Main Floor W.I.C.",
                   "path": "M95 220H150V260H180V320H95Z",
                   "label": [137.5, 270.0],
@@ -233,7 +250,7 @@
                   ]
                 },
                 {
-                  "id": "hall_bath",
+                  "id": "main_floor_hall_bath",
                   "name": "Main Floor Hall Bath",
                   "path": "M250 320h65v90h-65Z",
                   "label": [282.5, 357.0],
@@ -264,15 +281,15 @@
               ],
               "openings": [
                 {
-                  "between": ["bedroom", "primary_bath"],
+                  "between": ["main_bedroom", "main_bath"],
                   "path": "M44 220H66"
                 },
                 {
-                  "between": ["primary_bath", "w_i_c"],
+                  "between": ["main_bath", "main_floor_w_i_c"],
                   "path": "M95 280V302"
                 },
                 {
-                  "between": ["bedroom", "foyer"],
+                  "between": ["main_bedroom", "foyer"],
                   "path": "M180 228V252"
                 },
                 {
@@ -296,7 +313,7 @@
                   "path": "M275 300H301"
                 },
                 {
-                  "between": ["foyer", "hall_bath"],
+                  "between": ["foyer", "main_floor_hall_bath"],
                   "path": "M250 366V389"
                 },
                 {
@@ -312,7 +329,7 @@
                   "path": "M180 444V466"
                 },
                 {
-                  "between": ["bedroom", "screened_porch"],
+                  "between": ["main_bedroom", "screened_porch"],
                   "path": "M112 80H135"
                 },
                 {
@@ -338,7 +355,7 @@
               "stairs": "<g class=\"stairs\" aria-hidden=\"true\"><path d=\"M183 230h34\"/><path d=\"M183 238h34\"/><path d=\"M183 246h34\"/><path d=\"M183 254h34\"/><path d=\"M183 262h34\"/><path d=\"M183 270h34\"/><path d=\"M183 278h34\"/><path d=\"M183 286h34\"/><path d=\"M183 294h34\"/><path d=\"M200.0 290V234m-3 4l3 -4l3 4\"/></g>",
               "rooms": [
                 {
-                  "id": "marianne_office",
+                  "id": "yanie_office",
                   "name": "Yanie Office",
                   "path": "M10 45h150v135h-150Z",
                   "label": [85.0, 104.5],
@@ -413,7 +430,7 @@
               ],
               "openings": [
                 {
-                  "between": ["marianne_office", "landing"],
+                  "between": ["yanie_office", "landing"],
                   "path": "M120 180H145"
                 },
                 {
