@@ -1,6 +1,6 @@
 # User tools capability
 
-Native mise owns the remaining shared CLI configuration and standalone helpers: LazyGit, SourceKit-LSP, Vim, markdownlint, terminal-title and Hunk editor helpers, plus stable links to the repository's `fnox-host` and MCP credential launchers. Personal hosts additionally receive GitHub CLI and Rustup configuration; work intentionally receives neither.
+Native mise owns the remaining shared CLI configuration and standalone helpers: LazyGit, SourceKit-LSP, Vim, markdownlint, a terminal-title helper, plus stable links to the repository's `fnox-host` and MCP credential launchers. Personal hosts additionally receive GitHub CLI and Rustup configuration; work intentionally receives neither.
 
 Run `mise user-tools` or `mise user-tools --check` on a registered host. LazyGit discovers Hunk first and Delta second while rendering. Its optional `vars.lazygit_services` is trusted native LazyGit YAML and defaults to an empty string. When configured, the value must be the indented body of the `services` mapping. Preserve the two-space indentation inside the TOML multiline literal exactly:
 
