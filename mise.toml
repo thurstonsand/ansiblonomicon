@@ -488,6 +488,7 @@ case "$host" in
   Thurstons-MacBook-Pro) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles,repos; update=--update ;;
   ML-DFC6YK6VJQ) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles ;;
   pod042) environments=terminal-tools,terminal-tools-plugins; parts=dotfiles,repos ;;
+  type-a-no2) environments=terminal-tools; parts=dotfiles,repos; update=--update ;;
   *) echo "Unregistered terminal-tools host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
@@ -655,7 +656,7 @@ target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 tags="${usage_tags:-}"
-supported=" all omarchy-loadout mise omarchy-config shell git-client jj-client ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config "
+supported=" all omarchy-loadout mise omarchy-config shell terminal-tools tmux git-client jj-client ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config "
 unsupported=
 for tag in $(printf '%s' "$tags" | tr ',' ' '); do
   case "$supported" in
@@ -690,8 +691,8 @@ fi
 if selected mise; then
   mise -C "$HOME" bootstrap --only tools "$mode" || exit "$?"
 fi
-for native_capability in shell git-client jj-client ssh-client user-tools neovim berkeley-mono amp-cli; do
-  if selected "$native_capability"; then
+for native_capability in shell terminal-tools git-client jj-client ssh-client user-tools neovim berkeley-mono amp-cli; do
+  if selected "$native_capability" || { [ "$native_capability" = terminal-tools ] && selected tmux; }; then
     mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
   fi
 done

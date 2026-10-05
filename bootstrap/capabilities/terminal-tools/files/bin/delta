@@ -19,6 +19,10 @@ if [[ ! -x "$real_delta" ]]; then
   exit 1
 fi
 
-terminal_bg="$(cat ~/.terminal-bg 2>/dev/null || echo dark)"
+if command -v omarchy-theme-color >/dev/null; then
+  terminal_bg="$(omarchy-theme-color mode)"
+else
+  terminal_bg="$(cat ~/.terminal-bg 2>/dev/null || echo dark)"
+fi
 
 exec "$real_delta" --"$terminal_bg" "$@"

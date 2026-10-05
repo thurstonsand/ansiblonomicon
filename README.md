@@ -34,7 +34,7 @@ Run `mise terminal-theme` for this capability alone, or add `--check` for a nonm
 
 Shared Zsh startup files and static Starship configuration are also native mise resources; use `mise run shell` or `mise run shell --check`. Work rendering resolves its shell-wide Sourcegraph token and scoped sudo credential at apply time; check mode and personal/pod042 reconciliation perform no work-secret lookup. This repo's environment uses mise; direnv remains installed with its automatic shell hook for external projects. See the [shell capability](bootstrap/capabilities/shell/README.md).
 
-The [terminal-tools capability](bootstrap/capabilities/terminal-tools/README.md) owns tmux configuration, Mac Ghostty configuration and helpers, and personal-host TPM installation. Run `mise terminal-tools` or `mise laptop -t tmux`, adding `--check` for a preview. Full reconciliation supplies software prerequisites first; focused runs assume they are installed.
+The [terminal-tools capability](bootstrap/capabilities/terminal-tools/README.md) owns tmux configuration, Ghostty configuration and helpers, and personal-host TPM installation. Run `mise terminal-tools` or `mise laptop -t tmux`, adding `--check` for a preview. Full reconciliation supplies software prerequisites first; focused runs assume they are installed.
 
 The [user-tools capability](bootstrap/capabilities/user-tools/README.md) owns shared LazyGit, SourceKit-LSP, Vim and markdownlint configuration plus standalone helpers. Personal hosts also receive GitHub CLI and Rustup settings. Run `mise user-tools` or `mise laptop -t user-tools`, adding `--check` for a nonmutating preview.
 

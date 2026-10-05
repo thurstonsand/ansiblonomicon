@@ -1,3 +1,8 @@
+{% if vars.host_profile == "omarchy" -%}
+# Omarchy's defaults, status bar, and theme; everything below layers on top.
+source-file /usr/share/omarchy/config/tmux/tmux.conf
+
+{% endif -%}
 # Terminal compatibility (required for Amp CLI)
 set -g default-terminal "tmux-256color"
 set -g allow-passthrough all
@@ -9,12 +14,19 @@ set -as terminal-features 'xterm*:extkeys'
 set -s escape-time 0
 set -g focus-events on
 set -g set-titles on
+{%- if vars.host_profile != "omarchy" %}
 set -g set-titles-string "#{s|^ide-(.+)-[a-f0-9]+$|\\1|:session_name}:#{window_name}"
+{%- endif %}
 
 # Behavior
+{%- if vars.host_profile == "omarchy" %}
+unbind C-Space
+set -gu prefix2
+{%- else %}
 unbind C-b
+{%- endif %}
 set -g prefix M-a
-bind M-a send-prefix
+bind -N "Send prefix" M-a send-prefix
 set -g mouse on
 set -g base-index 1
 setw -g pane-base-index 1
@@ -27,6 +39,7 @@ set -g status-keys emacs
 set-hook -g after-select-window 'if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"'
 set-hook -g after-select-pane 'if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"'
 set-hook -g pane-focus-in 'if-shell -F "#{==:#{pane_current_command},nvim}" "set status off" "set status on"'
+{%- if vars.host_profile != "omarchy" %}
 
 # Status bar layout
 set -g status-position bottom
@@ -34,28 +47,29 @@ set -g status-position bottom
 # Pane border labels (gruvbox handles border colors)
 set -g pane-border-status top
 set -g pane-border-format " #{pane_index}: #{pane_current_command} "
+{%- endif %}
 
 # Quick window switching (no prefix)
-bind -n M-1 select-window -t :=1
-bind -n M-2 select-window -t :=2
-bind -n M-3 select-window -t :=3
-bind -n M-4 select-window -t :=4
-bind -n M-5 select-window -t :=5
-bind -n M-6 select-window -t :=6
-bind -n M-7 select-window -t :=7
-bind -n M-8 select-window -t :=8
-bind -n M-9 select-window -t :=9
-bind -n M-0 select-window -t :=10
+bind -N "Switch to window 1" -n M-1 select-window -t :=1
+bind -N "Switch to window 2" -n M-2 select-window -t :=2
+bind -N "Switch to window 3" -n M-3 select-window -t :=3
+bind -N "Switch to window 4" -n M-4 select-window -t :=4
+bind -N "Switch to window 5" -n M-5 select-window -t :=5
+bind -N "Switch to window 6" -n M-6 select-window -t :=6
+bind -N "Switch to window 7" -n M-7 select-window -t :=7
+bind -N "Switch to window 8" -n M-8 select-window -t :=8
+bind -N "Switch to window 9" -n M-9 select-window -t :=9
+bind -N "Switch to window 10" -n M-0 select-window -t :=10
 
 # Zoom toggle
-bind -n M-z resize-pane -Z
+bind -N "Zoom pane" -n M-z resize-pane -Z
 
 # Splits
-bind - split-window -v
-bind \\ split-window -h
+bind -N "Split pane below" - split-window -v
+bind -N "Split pane right" \\ split-window -h
 
 # Floating scratch session (sends C-/ to nvim for Snacks terminal toggle)
-bind -n M-s if-shell -F '#{==:#{session_name},scratch}' {
+bind -N "Toggle scratch popup" -n M-s if-shell -F '#{==:#{session_name},scratch}' {
     detach-client
 } {
     if-shell -F '#{==:#{pane_current_command},nvim}' {
@@ -66,18 +80,34 @@ bind -n M-s if-shell -F '#{==:#{session_name},scratch}' {
 }
 
 # Copy mode
-bind -n M-[ copy-mode
+bind -N "Enter copy mode" -n M-[ copy-mode
+{%- if vars.host_profile == "omarchy" %}
+
+# Scroll history; nvim keeps M-j/M-k for LazyVim's move-line
+bind -N "Scroll up" -n M-k if-shell -F '#{pane_in_mode}' {
+    send-keys -X -N 3 scroll-up
+} {
+    if-shell -F '#{==:#{pane_current_command},nvim}' { send-keys M-k } { copy-mode -e ; send-keys -X -N 3 scroll-up }
+}
+bind -N "Scroll down" -n M-j if-shell -F '#{pane_in_mode}' {
+    send-keys -X -N 3 scroll-down
+} {
+    send-keys M-j
+}
+{%- endif %}
 
 # Plugins (TPM)
 set-environment -g TMUX_PLUGIN_MANAGER_PATH '~/.config/tmux/plugins'
 set -g @plugin 'tmux-plugins/tpm'
 set -g @plugin 'christoomey/vim-tmux-navigator'
 set -g @plugin 'sainnhe/tmux-fzf'
+{%- if vars.host_profile != "omarchy" %}
 
 # Seed from persisted state; terminal-theme-switch.py applies live changes.
 if-shell "[ \"$(cat ~/.terminal-bg 2>/dev/null)\" = light ]" \
   "source-file ~/.config/tmux/gruvbox-light.conf" \
   "source-file ~/.config/tmux/gruvbox-dark.conf"
+{%- endif %}
 
 # Initialize TPM (keep at bottom — native terminal-tools owns TPM)
 run '~/.config/tmux/plugins/tpm/tpm'

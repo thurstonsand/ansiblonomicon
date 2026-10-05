@@ -1,3 +1,4 @@
+{% if vars.host_os == "darwin" -%}
 font-family = {{ vars.terminal_tools_font_family }}
 # also change the window title at the top
 window-title-font-family = {{ vars.terminal_tools_window_title_font_family }}
@@ -6,6 +7,18 @@ font-size = {{ vars.terminal_tools_font_size }}
 # (0.57em), so pi's footer provider icons come out at wildly different sizes. Zapf Dingbats covers
 # the whole block at one scale; on hosts without it this line falls back harmlessly.
 font-codepoint-map = U+2726,U+2734,U+2741=Zapf Dingbats
+{%- else %}
+# Omarchy owns ~/.config/ghostty/config (font, theme, keys); this file loads after it.
+# BerkeleyMono has no Dingbats, and the Adwaita Mono fallback draws pi's footer provider icons at
+# mismatched sizes. Noto Sans Symbols 2 covers all three at one scale.
+font-codepoint-map = U+2726,U+2734,U+2741=Noto Sans Symbols 2
+window-save-state = always
+clipboard-paste-protection = false
+window-inherit-working-directory = true
+tab-inherit-working-directory = true
+split-inherit-working-directory = true
+{%- endif %}
+{%- if vars.host_os == "darwin" %}
 
 # if not inheriting from a previous window
 working-directory = {{ vars.terminal_tools_home }}/{{ vars.terminal_tools_develop_dir }}
@@ -95,3 +108,4 @@ keybind = bypass/cmd+shift+a>j=new_split:down
 keybind = bypass/cmd+shift+a>k=new_split:up
 keybind = bypass/cmd+shift+a>l=new_split:right
 keybind = bypass/cmd+shift+a>m=toggle_mouse_reporting
+{%- endif %}

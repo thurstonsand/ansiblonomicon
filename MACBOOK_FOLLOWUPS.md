@@ -12,11 +12,12 @@ Changes made from the Omarchy laptop that the MacBooks still need to reconcile o
 3. **Hunk in Neovim:** the `<leader>gV` Hunk float and its `~/.local/libexec/hunk/nvim` editor helper were removed. `user-tools` retires the helper with a `state = "absent"` file declaration.
 4. **Evalcache:** `_evalcache` is now macOS-only. On Linux it saved about 10ms per shell (36.6ms cached vs 46.3ms plain eval over 40 interleaved runs), which did not justify its complexity. macOS starts processes more slowly, so it needs its own measurement.
 5. **Neovim:** the explorer is now neo-tree (LazyVim's `editor.neo-tree` extra) instead of the snacks explorer. The clipboard is Omarchy's vendored `remote_clipboard.lua`, which copies over OSC 52 and pastes from tmux's buffer when inside tmux, replacing the old OSC 52 block. `plugins/colorscheme.lua` is now rendered from `colorscheme.lua.tera`. The `neovim` tag picks all three up. Check that copy and paste inside tmux in Ghostty work without a paste-permission prompt.
+6. **Terminal tools:** `tmux.conf` and the Ghostty config are now single templates with an Omarchy branch, so `~/.config/tmux/tmux.conf` turns from a symlink into a rendered file. The Mac output is unchanged apart from `-N` descriptions on the custom bindings, which show up in `M-a ?`. The `terminal-tools` tag picks it up; check that tmux starts without errors and `M-a ?` lists "Split pane right".
 
 ## Personal MacBook (`Thurstons-MacBook-Pro`)
 
 1. `mise run pull`
-2. `rm -f ~/.cache/ansiblonomicon/homebrew-upgrade.stamp && mise laptop -t agent-harness,homebrew,editor-config,shell,user-tools,neovim` (cask and formula cleanup only runs when the daily stamp is due)
+2. `rm -f ~/.cache/ansiblonomicon/homebrew-upgrade.stamp && mise laptop -t agent-harness,homebrew,editor-config,shell,terminal-tools,user-tools,neovim` (cask and formula cleanup only runs when the daily stamp is due)
    - `agent-harness` retires the OpenCode plugin layout (`harnesses/opencode/mise.toml`) and the OpenCode and `~/.gemini` `[[absent]]` paths in `configuration/assets.toml`.
    - `homebrew` uninstalls the `opencode-desktop`, `cursor`, `antigravity`, and `devin-desktop` casks and the `gemini-cli` and `htop` formulae, and installs `visual-studio-code` and `btop`.
    - `editor-config` writes VS Code's `settings.json` and `keybindings.json` under `~/Library/Application Support/Code/User/`.
@@ -29,7 +30,7 @@ Changes made from the Omarchy laptop that the MacBooks still need to reconcile o
 ## Work MacBook (`ML-DFC6YK6VJQ`)
 
 1. `mise run pull`
-2. `mise laptop -t agent-harness,shell,user-tools,neovim`, then `homebrew` with its stamp removed as above to swap `htop` for `btop`.
+2. `mise laptop -t agent-harness,shell,terminal-tools,user-tools,neovim`, then `homebrew` with its stamp removed as above to swap `htop` for `btop`.
 3. Verify the OpenCode paths and `~/.gemini` from step 4 above are gone, and that a new shell starts cleanly with autojump's `cd`.
 4. `lazy-lock.work.json` has no `neo-tree.nvim` pin, so Lazy restore installs it unpinned. Once neo-tree opens with `<leader>e`, copy its entry from `~/.config/nvim/lazy-lock.json` into `bootstrap/capabilities/neovim/files/lazy-lock.work.json` and commit it.
 5. **Unverified Mason fix:** the work branch of `mason.lua.tera` used to set `ensure_installed = {}` as a table. That merged with the LazyVim extras' tool lists rather than emptying them, so work has been auto-installing those tools from Mason all along. It is now an opts function that empties the list. This was tested only by rendering the work branch on type-a-no2. Confirm it on this machine: `nvim --headless +'lua local P=require("lazy.core.config").plugins; print(#require("lazy.core.plugin").values(P["mason.nvim"],"opts",false).ensure_installed)' +qa` should print `0`. Then open a Go, Python, and TypeScript file and check that the LSPs and formatters still attach from the system installs. If anything that used to work now relies on a Mason install, report which tool.
