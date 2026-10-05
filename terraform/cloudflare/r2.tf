@@ -4,3 +4,10 @@ resource "cloudflare_r2_bucket" "tfstate" {
   name       = "tfstate"
   location   = "ENAM" # Eastern North America
 }
+
+# Restic repository for loch-highland-atlas backups
+resource "cloudflare_r2_bucket" "loch_highland_atlas_backups" {
+  account_id = local.account_id
+  name       = "loch-highland-atlas-backups"
+  location   = "ENAM"
+}
