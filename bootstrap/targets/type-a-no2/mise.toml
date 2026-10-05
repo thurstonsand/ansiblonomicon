@@ -3,6 +3,9 @@ min_version = "2026.8.12"
 [vars]
 host_profile = "omarchy"
 host_os = "linux"
+git_client_home = "/home/thurstonsand"
+git_signing_program = "/opt/1Password/op-ssh-sign"
+jj_signing_program = "/opt/1Password/op-ssh-sign"
 
 [dotfiles]
 "~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "symlink" }
