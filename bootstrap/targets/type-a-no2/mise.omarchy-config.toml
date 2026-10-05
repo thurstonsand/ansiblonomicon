@@ -51,6 +51,10 @@ run = "~/.local/share/omarchy-icloud-photos/install.sh"
 "~/.config/omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg", mode = "copy" }
 "~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }
 "~/.config/open-whispr-flags.conf" = { source = "omarchy/open-whispr-flags.conf", mode = "symlink" }
+# Omarchy 4.0.4 registers its bundled extensions' native hosts for Brave-Browser but not Brave-Origin.
+# Retire once a release ships basecamp/omarchy#10292, which registers them itself.
+"~/.config/BraveSoftware/Brave-Origin/NativeMessagingHosts/com.omarchy.copy_url.json" = { source = "~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.omarchy.copy_url.json", mode = "symlink" }
+"~/.config/BraveSoftware/Brave-Origin/NativeMessagingHosts/com.omarchy.ytdlp.json" = { source = "~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.omarchy.ytdlp.json", mode = "symlink" }
 # CodexBar replaces this file on save, which would break a symlink.
 "~/.config/codexbar/config.json" = { source = "omarchy/codexbar/config.json", mode = "copy" }
 "~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
