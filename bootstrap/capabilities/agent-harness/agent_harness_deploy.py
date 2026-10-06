@@ -75,6 +75,7 @@ def sync_sources(
             or not stamp.exists()
             or now - stamp.stat().st_mtime >= interval
         ):
+            print(f"Updating {origin}", flush=True)
             subprocess.run(
                 ["git", "-C", str(checkout), "pull", "--ff-only"], check=True
             )
