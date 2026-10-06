@@ -1,22 +1,15 @@
-[bootstrap.secrets]
-cli_proxy_api_key = "CLI_PROXY_API_KEY"
-cf_access_client_id = "CF_ACCESS_CLIENT_ID"
-cf_access_client_secret = "CF_ACCESS_CLIENT_SECRET"
-
 [dotfiles]
 "~/.config/zed/settings.json" = { source = "editor-config/files/zed-settings.json.tera", mode = "template" }
 "~/.config/zed/keymap.json" = { source = "editor-config/files/baselines/zed-keymap.jsonc", mode = "symlink" }
 "~/.config/zed/tasks.json" = { source = "editor-config/files/baselines/zed-tasks.jsonc", mode = "symlink" }
 "~/Library/Application Support/Code/User/settings.json" = { source = "editor-config/files/Code-settings.json.tera", mode = "template" }
 "~/Library/Application Support/Code/User/keybindings.json" = { source = "editor-config/files/baselines/vscode-keybindings.jsonc", mode = "symlink" }
-"~/Library/Application Support/io.datasette.llm/default_model.txt" = { source = "editor-config/files/default_model.txt", mode = "symlink" }
+
+[bootstrap.files."~/Library/Application Support/io.datasette.llm/default_model.txt"]
+state = "absent"
 
 [bootstrap.files."~/Library/Application Support/io.datasette.llm/keys.json"]
-source = "editor-config/files/keys.json.tera"
-template = true
-mode = "0600"
+state = "absent"
 
 [bootstrap.files."~/Library/Application Support/io.datasette.llm/extra-openai-models.yaml"]
-source = "editor-config/files/llm-models.json.tera"
-template = true
-mode = "0600"
+state = "absent"

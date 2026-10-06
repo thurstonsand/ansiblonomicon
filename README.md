@@ -48,7 +48,7 @@ Run `mise git-client` or `mise jj-client`, with `--check` for a preview. Regular
 
 ### Editor and Python indexes
 
-The [editor-config capability](bootstrap/capabilities/editor-config/README.md) is the source of truth for Zed on both Macs and for the personal Mac's VSCode-family and Datasette LLM configuration. `bootstrap/capabilities/agent-harness/models.yml` is the shared model catalogue. Run `mise editor-config` or add `--check`; previews use explicit non-secret placeholders and never resolve credentials.
+The [editor-config capability](bootstrap/capabilities/editor-config/README.md) is the source of truth for Zed on every laptop and for VS Code on the personal Mac and the Omarchy laptop. `bootstrap/capabilities/agent-harness/models.yml` is the shared model catalogue. Run `mise editor-config` or add `--check`.
 
 The [Neovim capability](bootstrap/capabilities/neovim/README.md) owns editor configuration and dependency setup. Run `mise neovim` (alias `mise nvim-deps`) or add `--check` to preview configuration without upgrading dependencies. Personal hosts write Lazy's lockfile back to the shared source; work receives its separate `lazy-lock.work.json` and restores those versions. Full reconciliation runs this after software prerequisites.
 

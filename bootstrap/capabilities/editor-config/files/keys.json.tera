@@ -1,4 +1,0 @@
-{
-  "// Note": "This file stores secret API credentials. Do not share!",
-  "llm-api-key": {{ secret(name="cli_proxy_api_key") | json_encode }}
-}

@@ -22,6 +22,14 @@ def read_models(path: Path) -> dict[str, Any]:
     return cast(dict[str, Any], document["models"])
 
 
+def omarchy_vscode_theme() -> str:
+    # Mirrors omarchy-theme-set-vscode so a reconcile keeps whatever theme Omarchy last applied.
+    descriptor = Path.home() / ".local/state/omarchy/current/theme/vscode.json"
+    if descriptor.exists():
+        return str(json.loads(descriptor.read_text())["name"])
+    return "Omarchy"
+
+
 def vscode_settings(args: argparse.Namespace) -> dict[str, Any]:
     result = read_jsonc("vscode-settings.jsonc")
     result["editor.fontFamily"] = args.proportional_font
@@ -37,6 +45,9 @@ def vscode_settings(args: argparse.Namespace) -> dict[str, Any]:
         result["go.formatFlags"] = ["-local", args.go_local_imports]
     if args.gopls_build_flags:
         gopls["buildFlags"] = [args.gopls_build_flags]
+    if args.profile == "omarchy":
+        result["update.mode"] = "none"
+        result["workbench.colorTheme"] = omarchy_vscode_theme()
     return result
 
 
@@ -49,6 +60,8 @@ def zed_settings(args: argparse.Namespace, catalogue: dict[str, Any]) -> dict[st
     if args.profile == "work":
         cast(dict[str, Any], result["languages"])["JSON"] = {"format_on_save": "off"}
         return result
+    if args.profile == "omarchy":
+        result["theme"] = "Omazed"
 
     sol = catalogue["openai"]["gpt_sol"]
     high = sol["variants"]["high"]
@@ -115,65 +128,24 @@ def zed_settings(args: argparse.Namespace, catalogue: dict[str, Any]) -> dict[st
     return result
 
 
-def llm_models(catalogue: dict[str, Any]) -> list[dict[str, Any]]:
-    selected: list[tuple[str, str]] = []
-    for provider in ("anthropic", "openai", "google"):
-        provider_models = cast(dict[str, dict[str, Any]], catalogue[provider])
-        for model_key in sorted(provider_models):
-            model = provider_models[model_key]
-            vscode = cast(dict[str, Any], model.get("vscode") or {})
-            if vscode.get("include") is True:
-                selected.append((str(model["display_name"]), str(model["version"])))
-            if provider == "openai":
-                variants = cast(dict[str, dict[str, Any]], model.get("variants") or {})
-                for variant_key in sorted(variants):
-                    variant = variants[variant_key]
-                    if variant.get("vscode") is True:
-                        selected.append(
-                            (str(variant["display_name"]), str(variant["id"]))
-                        )
-    return [
-        {
-            "model_id": display,
-            "model_name": version,
-            "api_base": "https://aig.thurstons.house/v1",
-            "api_key_name": "llm-api-key",
-            "headers": None,
-        }
-        for display, version in selected
-    ]
-
-
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("kind", choices=("zed", "vscode", "llm"))
+    parser.add_argument("kind", choices=("zed", "vscode"))
     parser.add_argument("--models", type=Path, required=True)
-    parser.add_argument("--profile", choices=("personal", "work"))
-    parser.add_argument("--monospace-font")
-    parser.add_argument("--proportional-font")
-    parser.add_argument("--font-size", type=int)
+    parser.add_argument(
+        "--profile", choices=("personal", "work", "omarchy"), required=True
+    )
+    parser.add_argument("--monospace-font", required=True)
+    parser.add_argument("--proportional-font", required=True)
+    parser.add_argument("--font-size", type=int, required=True)
     parser.add_argument("--go-local-imports")
     parser.add_argument("--gopls-build-flags")
     args = parser.parse_args()
     catalogue = read_models(args.models)
-    settings_required = {
-        "profile": args.profile,
-        "monospace-font": args.monospace_font,
-        "proportional-font": args.proportional_font,
-        "font-size": args.font_size,
-    }
-    if args.kind in {"zed", "vscode"}:
-        missing = [name for name, value in settings_required.items() if value is None]
-        if missing:
-            parser.error(
-                f"{args.kind} requires " + ", ".join(f"--{name}" for name in missing)
-            )
     if args.kind == "zed":
         value: Any = zed_settings(args, catalogue)
-    elif args.kind == "vscode":
-        value = vscode_settings(args)
     else:
-        value = llm_models(catalogue)
+        value = vscode_settings(args)
     json.dump(value, sys.stdout, indent=2, ensure_ascii=False)
     sys.stdout.write("\n")
 

@@ -103,7 +103,6 @@ mas "Xcode", id: 497799835
 # AI
 # =============================================================================
 brew "cliproxyapi"
-brew "llm"
 
 cask "chatgpt", greedy: true
 cask "claude"
