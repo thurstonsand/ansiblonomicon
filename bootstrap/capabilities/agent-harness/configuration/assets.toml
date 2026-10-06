@@ -39,24 +39,6 @@ destination = '.local/state/session-recovery'
 [[absent]]
 destination = '.pi/agent/extensions/session-recovery'
 
-[[absent]]
-destination = '.opencode'
-
-[[absent]]
-destination = '.config/opencode'
-
-[[absent]]
-destination = '.local/share/opencode'
-
-[[absent]]
-destination = '.local/state/opencode'
-
-[[absent]]
-destination = '.cache/opencode'
-
-[[absent]]
-destination = '.gemini'
-
 [[files]]
 source = 'assets/oracle/config.json'
 destination = '.oracle/config.json'

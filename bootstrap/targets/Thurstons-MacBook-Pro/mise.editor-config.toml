@@ -4,12 +4,3 @@
 "~/.config/zed/tasks.json" = { source = "editor-config/files/baselines/zed-tasks.jsonc", mode = "symlink" }
 "~/Library/Application Support/Code/User/settings.json" = { source = "editor-config/files/Code-settings.json.tera", mode = "template" }
 "~/Library/Application Support/Code/User/keybindings.json" = { source = "editor-config/files/baselines/vscode-keybindings.jsonc", mode = "symlink" }
-
-[bootstrap.files."~/Library/Application Support/io.datasette.llm/default_model.txt"]
-state = "absent"
-
-[bootstrap.files."~/Library/Application Support/io.datasette.llm/keys.json"]
-state = "absent"
-
-[bootstrap.files."~/Library/Application Support/io.datasette.llm/extra-openai-models.yaml"]
-state = "absent"

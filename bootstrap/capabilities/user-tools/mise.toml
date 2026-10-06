@@ -6,6 +6,3 @@
 "~/.local/libexec/tab-title.py" = { source = "user-tools/tab-title.py", mode = "symlink" }
 "~/.local/bin/fnox-host" = { source = "user-tools/fnox-host", mode = "symlink" }
 "~/.local/bin/mcp-credentials" = { source = "user-tools/mcp-credentials", mode = "symlink" }
-
-[bootstrap.files."~/.local/libexec/hunk/nvim"]
-state = "absent"
