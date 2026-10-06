@@ -42,15 +42,16 @@ models:
       zed: true
 
     sonnet:
-      version: "claude-sonnet-5"
-      display_name: "Claude Sonnet 5"
+      version: "claude-sonnet-5-5"
+      display_name: "Claude Sonnet 5.5"
       max_input: 1000000
       max_output: 128000
       vision: true
+      supports_temperature: false
       agent_harness:
         aliases:
           claude: "sonnet"
-          pi: "doppelclaude/claude-sonnet-5"
+          pi: "doppelclaude/claude-sonnet-5-5"
       vscode:
         include: true
         thinking: true

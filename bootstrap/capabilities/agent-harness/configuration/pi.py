@@ -153,7 +153,7 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
             )
         if anthropic and name != "haiku":
             result["compat"] = {"forceAdaptiveThinking": True}
-            if name == "opus":
+            if "supports_temperature" in source:
                 result["compat"]["supportsTemperature"] = source["supports_temperature"]
         return result
 
