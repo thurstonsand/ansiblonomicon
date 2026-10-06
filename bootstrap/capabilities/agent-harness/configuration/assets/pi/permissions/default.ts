@@ -49,7 +49,7 @@ const SQL_MUTATION_HIGHLIGHTS = [
   SQL_DDL_PATTERN,
   SQL_DCL_PATTERN,
 ] as const;
-const WORK_WEB_SEARCH_TOOL = "mcp__web_search__web_sesrch";
+const WORK_WEB_SEARCH_TOOL = "mcp__web_search__web_search";
 
 export default function permissions(api: PermissionsAPI): void {
   api.onToolUse({

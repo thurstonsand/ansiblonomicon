@@ -224,7 +224,7 @@ def _settings(
                 "enabled": hostname != "pod042",
                 "tools": {
                     "interview": {"status": "Interviewing"},
-                    "mcp__web_search__web_sesrch": {
+                    "mcp__web_search__web_search": {
                         "status": "searching",
                         "detail": {"from": "query"},
                     },
