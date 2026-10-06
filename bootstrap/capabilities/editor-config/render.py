@@ -62,6 +62,7 @@ def zed_settings(args: argparse.Namespace, catalogue: dict[str, Any]) -> dict[st
         return result
     if args.profile == "omarchy":
         result["theme"] = "Omazed"
+        del result["icon_theme"]
 
     sol = catalogue["openai"]["gpt_sol"]
     high = sol["variants"]["high"]
@@ -108,14 +109,6 @@ def zed_settings(args: argparse.Namespace, catalogue: dict[str, Any]) -> dict[st
             }
         },
     }
-    result["ssh_connections"] = [
-        {
-            "host": "truenas",
-            "projects": [
-                {"paths": ["/mnt/performance/home/admin/Develop/nixonomicon/./"]}
-            ],
-        }
-    ]
     agent = cast(dict[str, Any], result["agent"])
     opus = catalogue["anthropic"]["opus"]["version"]
     flash = catalogue["google"]["gemini_flash"]["version"]
