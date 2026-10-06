@@ -4,6 +4,3 @@
 "~/.config/zed/tasks.json" = { source = "editor-config/files/baselines/zed-tasks.jsonc", mode = "symlink" }
 "~/.config/Code/User/settings.json" = { source = "editor-config/files/Code-settings.json.tera", mode = "template" }
 "~/.config/Code/User/keybindings.json" = { source = "editor-config/files/baselines/vscode-keybindings.jsonc", mode = "symlink" }
-
-[bootstrap.hooks.post-dotfiles]
-run = "omarchy-theme-set-vscode"

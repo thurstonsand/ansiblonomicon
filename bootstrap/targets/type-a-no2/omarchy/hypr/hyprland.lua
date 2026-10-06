@@ -28,3 +28,4 @@ require("default.hypr.toggles")
 
 -- Add any other personal Hyprland configuration below.
 -- o.window("qemu", { workspace = "5" })
+pcall(require, "/home/thurstonsand/.config/hypr/openwhispr-binds.lua")
