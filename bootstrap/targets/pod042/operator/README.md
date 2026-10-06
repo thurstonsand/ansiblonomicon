@@ -8,7 +8,6 @@ The remaining installation steps are named mise tasks, ordered through dependenc
 
 1. `operator:tools`: install and update the inventory, reconcile npm globals beside Node, and refresh shims.
 2. `operator:agents`: install missing vendor-native agent CLIs and reconcile T3's standalone release.
-3. `operator:sessions`: build the sessions CLI from `bootstrap/capabilities/software/sources/sessions/` when its Go sources change.
 
 Terminal configuration, TPM, and plugins are owned by the `terminal-tools` capability, which runs after the prerequisite bootstrap during a full reconciliation.
 

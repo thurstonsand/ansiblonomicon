@@ -3,3 +3,15 @@
 "~/.local/opt/uvc-util/configure_camera.py" = { source = "uvc-files/configure_camera.py", mode = "symlink" }
 "~/.local/opt/uvc-util/camera_settings.json" = { source = "uvc-files/camera_settings.json", mode = "symlink" }
 "~/.local/bin/configure_camera.py" = { source = "uvc-files/configure_camera.py", mode = "symlink" }
+
+[bootstrap.files."~/.local/bin/sessions"]
+state = "absent"
+
+[bootstrap.files."~/.cache/ansiblonomicon/sessions/build-checksum"]
+state = "absent"
+
+[bootstrap.files."~/.cache/ansiblonomicon/sessions/upgrade.stamp"]
+state = "absent"
+
+[bootstrap.directories."~/.cache/ansiblonomicon/sessions"]
+state = "absent"

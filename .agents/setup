@@ -65,7 +65,6 @@ mapfile -t package_locks < <(
     bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions \
     bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions \
     bootstrap/capabilities/agent-harness/configuration/assets/amp/plugins \
-    bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery \
     -name package-lock.json \
     -not -path '*/node_modules/*' \
     -print | sort

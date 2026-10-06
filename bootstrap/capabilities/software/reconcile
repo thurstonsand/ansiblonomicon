@@ -51,7 +51,7 @@ if [ "$mode" = check ]; then
       export SOFTWARE_CHECK=true
       mise -C "$target" run "$capability"
       ;;
-    sessions|shp)
+    shp)
       export SOFTWARE_CHECK=true
       mise -C "$target" run "$capability:deps"
       project="${MISE_PROJECT_ROOT}/bootstrap/capabilities/software/sources/$capability"
@@ -80,7 +80,7 @@ if [ "$capability" = pi ]; then
   export MISE_ENV=software,pi
 fi
 case "$capability" in
-  sessions|shp)
+  shp)
     mise -C "$target" run "$capability:deps"
     project="${MISE_PROJECT_ROOT}/bootstrap/capabilities/software/sources/$capability"
     MISE_CEILING_PATHS=${project%/*} MISE_TRUSTED_CONFIG_PATHS="$target:$project" \

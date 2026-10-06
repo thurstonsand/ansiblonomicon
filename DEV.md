@@ -29,9 +29,8 @@ Verification:
 ```sh
 mise run check             # every non-mutating check
 mise run fix               # every formatter and autofixer
-mise run python:lint       # or nvim:fmt:check, workers:typecheck,
-                           # pi:check, session-recovery:check
-mise tasks                 # the full list; --all adds the two Go subprojects
+mise run python:lint       # or nvim:fmt:check, workers:typecheck, pi:check
+mise tasks                 # the full list; --all adds the Go subproject
 ```
 
 ### Code style
@@ -102,7 +101,6 @@ Spans every host and every harness. `bootstrap/capabilities/agent-harness/` is c
 - **Models** at `bootstrap/capabilities/agent-harness/models.yml` are the single source for versions, aliases, and per-editor config. Native renderers merge them with `configuration/data.toml` and the host overlay.
 - **Assets** under `configuration/assets/` are first-party source. `assets.toml` declares assets, package dependencies, and explicit retirements; an asset naming a `harness` deploys only where `profiles.toml` targets it, and `hosts` narrows host-specific content; native configuration symlinks unchanged files into `$HOME` and renders host-dependent or secret-bearing files as regular files. Never put credentials in templates, assets, or host overlays: declare SecretRefs in fnox and let `agent-config` resolve only the keys required by that host. Private outputs use mode `0600`.
 - **Amp User Skills** are rendered natively by `publish_amp_skills.py` using the `amp_publish` profile. `scripts/publish-amp-skills.sh` is the CI entry point, triggered on relevant main-branch pushes and a daily schedule. Overrideable by explicitly specifying `amp` as a target of a skill.
-- **Session recovery** lives under `configuration/assets/shared/session-recovery/`, with consumers under the Pi and Claude asset trees. Lint it through `mise run session-recovery:check` rather than from inside a consumer.
 
 Run `mise agent-config --check` for a placeholder-secret preview; exit 2 means the preview completed but secret-backed content remains unresolved. Use `mise agent-config --check --real-secrets` for read-only parity with resolved credentials, and `mise agent-config` to apply. `mise agent-harness` runs the catalogue first and then configuration; full host reconciliation routes both through the `agent-harness` tag.
 

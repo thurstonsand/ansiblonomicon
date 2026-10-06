@@ -10,7 +10,7 @@ local function tmux_session()
   if vim.v.shell_error ~= 0 or #lines == 0 then
     return vim.fn.fnamemodify(vim.fn.getcwd(), ":t")
   end
-  return lines[1]:match("^ide%-(.+)%-%x+$") or lines[1]
+  return lines[1]
 end
 
 return {

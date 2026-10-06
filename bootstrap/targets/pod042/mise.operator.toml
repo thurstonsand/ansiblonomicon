@@ -46,6 +46,9 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
 
+[bootstrap.files."/home/thurstonsand/.local/bin/sessions"]
+state = "absent"
+
 [dotfiles]
 "/home/thurstonsand/.config/mise/config.toml" = { source = "operator/mise.toml", mode = "symlink" }
 
@@ -62,8 +65,8 @@ sudo -u thurstonsand env -i \
 '''
 
 [tasks."operator:setup"]
-description = "Install operator tools and agents, then build sessions"
-depends = ["operator:sessions"]
+description = "Install operator tools and agents"
+depends = ["operator:agents"]
 
 [tasks."operator:tools"]
 dir = "/home/thurstonsand"
@@ -104,14 +107,3 @@ test -x "$HOME/.local/bin/claude"
 test -x "$HOME/.local/bin/codex"
 "$HOME/.local/bin/t3" --version
 '''
-
-[tasks."operator:sessions"]
-depends = ["operator:agents"]
-dir = "/home/thurstonsand"
-sources = [
-  "/home/thurstonsand/code/ansiblonomicon/bootstrap/capabilities/software/sources/sessions/**/*.go",
-  "/home/thurstonsand/code/ansiblonomicon/bootstrap/capabilities/software/sources/sessions/go.mod",
-  "/home/thurstonsand/code/ansiblonomicon/bootstrap/capabilities/software/sources/sessions/go.sum",
-]
-outputs = ["/home/thurstonsand/.local/bin/sessions"]
-run = "go -C /home/thurstonsand/code/ansiblonomicon/bootstrap/capabilities/software/sources/sessions build -o /home/thurstonsand/.local/bin/sessions ."

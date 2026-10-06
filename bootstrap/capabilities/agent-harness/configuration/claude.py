@@ -103,14 +103,6 @@ def _base_settings(
                         }
                     ]
                 },
-                {
-                    "hooks": [
-                        {
-                            "type": "command",
-                            "command": "bun ~/.claude/scripts/session-recovery/index.ts",
-                        }
-                    ]
-                },
             ],
             "UserPromptSubmit": [
                 {
@@ -138,21 +130,6 @@ def _base_settings(
                             "command": "~/.claude/hooks/derive-title.py",
                             "async": True,
                         },
-                        {
-                            "type": "command",
-                            "command": "bun ~/.claude/scripts/session-recovery/index.ts",
-                            "async": True,
-                        },
-                    ]
-                }
-            ],
-            "SessionEnd": [
-                {
-                    "hooks": [
-                        {
-                            "type": "command",
-                            "command": "bun ~/.claude/scripts/session-recovery/index.ts",
-                        }
                     ]
                 }
             ],

@@ -10,9 +10,6 @@ run = 'python3 software/berkeley_mono.py ${SOFTWARE_CHECK:+--check}'
 [tasks.docker-context]
 run = 'python3 software/docker_context.py ${SOFTWARE_CHECK:+--check}'
 
-[tasks."sessions:deps"]
-run = 'python3 software/deps-maintenance.py "{{config_root}}/../../capabilities/software/sources/sessions" "$HOME/.cache/ansiblonomicon/sessions/upgrade.stamp" ${SOFTWARE_CHECK:+--check}'
-
 [tasks."shp:deps"]
 run = 'python3 software/deps-maintenance.py "{{config_root}}/../../capabilities/software/sources/shp" "$HOME/.cache/ansiblonomicon/shp/upgrade.stamp" ${SOFTWARE_CHECK:+--check}'
 
@@ -23,7 +20,7 @@ run = 'python3 software/uvc-repo.py "$HOME/.local/opt/uvc-util" --origin "$UVC_U
 run = '''
 set -eu
 if [ -n "${SOFTWARE_CHECK:-}" ]; then
-  mise bootstrap --only dotfiles --force-dotfiles --dry-run
+  mise bootstrap --only files,dotfiles --force-dotfiles --dry-run
   if [ -f "$HOME/.local/opt/uvc-util/configure_camera.py" ]; then
     :
   else
@@ -31,7 +28,7 @@ if [ -n "${SOFTWARE_CHECK:-}" ]; then
   fi
   exit 0
 fi
-mise bootstrap --only dotfiles --force-dotfiles --yes
+mise bootstrap --only files,dotfiles --force-dotfiles --yes
 '''
 
 [tasks."uvc-util"]

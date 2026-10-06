@@ -5,7 +5,6 @@ PI_ROOT_DIRS=(
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions"
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions"
 )
-SESSION_RECOVERY_DIR="bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery"
 
 find_pi_package_json() {
   local pi_bin=""
@@ -37,7 +36,7 @@ NODE
 }
 
 collect_package_dirs() {
-  find "${PI_ROOT_DIRS[@]}" "$SESSION_RECOVERY_DIR" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort
+  find "${PI_ROOT_DIRS[@]}" -name package.json -not -path '*/node_modules/*' -exec dirname {} \; | sort
 }
 
 package_has_dependency() {
@@ -72,20 +71,8 @@ NODE_TYPES_VERSION="^$(node -p 'process.versions.node.split(".")[0]')"
 
 mapfile -t PACKAGE_DIRS < <(collect_package_dirs)
 
-# The Pi session-recovery extension depends on the shared library via a
-# local `file:` dependency on the shared source package. It carries no registry
-# deps to pin, so skip it; the shared package is tracked normally.
-FILTERED_DIRS=()
-for dir in "${PACKAGE_DIRS[@]}"; do
-  case "$dir" in
-    */assets/pi/extensions/session-recovery) continue ;;
-  esac
-  FILTERED_DIRS+=("$dir")
-done
-PACKAGE_DIRS=("${FILTERED_DIRS[@]}")
-
 if [[ ${#PACKAGE_DIRS[@]} -eq 0 ]]; then
-  echo "No TypeScript package.json files found under ${PI_ROOT_DIRS[*]} or $SESSION_RECOVERY_DIR"
+  echo "No TypeScript package.json files found under ${PI_ROOT_DIRS[*]}"
   exit 0
 fi
 
@@ -147,6 +134,6 @@ while IFS= read -r config; do
   echo "==> Migrating biome config in $config_dir"
   (cd "$config_dir" && npx --no-install biome migrate --write)
   MIGRATED=$((MIGRATED + 1))
-done < <(find "${PI_ROOT_DIRS[@]}" "$SESSION_RECOVERY_DIR" -name biome.json -not -path '*/node_modules/*' | sort)
+done < <(find "${PI_ROOT_DIRS[@]}" -name biome.json -not -path '*/node_modules/*' | sort)
 
 echo "Updated $UPDATED TypeScript package(s) and $MIGRATED biome config(s). Pi harness deps pinned to pi ${PI_VERSION}, typebox to ${PI_TYPEBOX_VERSION}, @types/node to ${NODE_TYPES_VERSION}."

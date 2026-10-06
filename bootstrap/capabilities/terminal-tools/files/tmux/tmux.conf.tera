@@ -15,7 +15,7 @@ set -s escape-time 0
 set -g focus-events on
 set -g set-titles on
 {%- if vars.host_profile != "omarchy" %}
-set -g set-titles-string "#{s|^ide-(.+)-[a-f0-9]+$|\\1|:session_name}:#{window_name}"
+set -g set-titles-string "#{session_name}:#{window_name}"
 {%- endif %}
 
 # Behavior

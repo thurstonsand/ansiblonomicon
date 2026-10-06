@@ -3,7 +3,6 @@ monorepo_root = true
 [monorepo]
 config_roots = [
   "bootstrap/capabilities/software/sources/shp",
-  "bootstrap/capabilities/software/sources/sessions",
 ]
 
 [tools]
@@ -57,8 +56,7 @@ if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
   # entry when it does, and it tells us nothing we act on here.
   scripts/ts-package-json-paths.sh \
     bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions \
-    bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions \
-    bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery |
+    bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions |
     while IFS= read -r package_json; do
       package_dir="$(dirname "$package_json")"
       if [ -f "$package_dir/package-lock.json" ]; then
@@ -74,8 +72,6 @@ sources = [
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/*/package-lock.json",
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/package.json",
   "bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/package-lock.json",
-  "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/package.json",
-  "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/package-lock.json",
   "scripts/ts-package-json-paths.sh",
 ]
 outputs = { auto = true }
@@ -215,8 +211,8 @@ flag "-c --check"
 run = '''
 host=$(hostname -s)
 case "$host:$usage_capability" in
-  Thurstons-MacBook-Pro:claude-code|Thurstons-MacBook-Pro:sessions|Thurstons-MacBook-Pro:shp|Thurstons-MacBook-Pro:uvc-util|Thurstons-MacBook-Pro:berkeley-mono|Thurstons-MacBook-Pro:docker-context) ;;
-  ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:sessions|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono) ;;
+  Thurstons-MacBook-Pro:claude-code|Thurstons-MacBook-Pro:shp|Thurstons-MacBook-Pro:uvc-util|Thurstons-MacBook-Pro:berkeley-mono|Thurstons-MacBook-Pro:docker-context) ;;
+  ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
 mode=apply
@@ -231,9 +227,6 @@ run = "mise run //:software:dispatch claude-code ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks.pi]
 run = "mise run //:software:dispatch pi ${usage_check:+--check}"
-usage = 'flag "-c --check"'
-[tasks.sessions]
-run = "mise run //:software:dispatch sessions ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks.shp]
 run = "mise run //:software:dispatch shp ${usage_check:+--check}"
@@ -710,12 +703,12 @@ config_capabilities="sysconfig terminal-theme vcs shell terminal-tools user-tool
 sysconfig_sections="dock finder nsglobaldomain menubar desktop-services permissions"
 case "$profile" in
   personal)
-    software_capabilities="$software_capabilities claude-code sessions shp uvc-util docker-context"
+    software_capabilities="$software_capabilities claude-code shp uvc-util docker-context"
     config_capabilities="$config_capabilities ssh-client"
     sysconfig_sections="$sysconfig_sections hostname"
     ;;
   work)
-    software_capabilities="$software_capabilities pi sessions uvc-util"
+    software_capabilities="$software_capabilities pi uvc-util"
     config_capabilities="$config_capabilities python-index work-local"
     ;;
 esac
@@ -931,7 +924,6 @@ depends = [
   "nvim:fmt:check",
   "workers:typecheck",
   "pi:check",
-  "session-recovery:check",
   "sudoers:check",
   "//bootstrap/capabilities/software/sources/...:check",
 ]
@@ -944,7 +936,6 @@ depends = [
   "python:lint:fix",
   "nvim:fmt",
   "pi:fix",
-  "session-recovery:fix",
   "//bootstrap/capabilities/software/sources/...:fmt",
 ]
 
@@ -1025,17 +1016,9 @@ length=$(wc -m < "$guidance")
 cat "$guidance"
 '''
 
-[tasks."session-recovery:check"]
-description = "Lint and type-check the session-recovery library and its Pi entry"
-run = "./scripts/session-recovery-lint.sh"
-
 [tasks."sudoers:check"]
 description = "Validate sudoers drop-ins, which mise installs unchecked"
 run = 'for f in bootstrap/targets/*/omarchy/sudoers.d/*; do visudo -cf "$f" || exit 1; done'
-
-[tasks."session-recovery:fix"]
-description = "Format and autofix session-recovery, then type-check"
-run = "./scripts/session-recovery-lint.sh --format"
 
 # ---------------------------------------------------------------------------
 # Upkeep

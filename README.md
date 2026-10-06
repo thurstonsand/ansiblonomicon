@@ -58,7 +58,7 @@ Work's [Python-index capability](bootstrap/capabilities/python-index/README.md) 
 
 `mise language-tools` reconciles the inventories under `bootstrap/capabilities/language-tools/`. It preserves unrelated global mise configuration and packages, updates only declared tools when their daily interval or inventory changes, and restores declared npm packages after Node replacement. `--check` validates the inventory and reports intended work without changing files or installing tools. Work requires its private inventory and Python-index mapping first; see [README.work.md](README.work.md).
 
-Small vendor-installed and source-built software is also native: run `mise claude-code`, `mise pi`, `mise sessions`, `mise shp`, or `mise uvc-util`, with `--check` for a nonmutating drift report. Host registration limits each command to the laptops that declare it. Go and UVC sources live under `bootstrap/capabilities/software/sources/`.
+Small vendor-installed and source-built software is also native: run `mise claude-code`, `mise pi`, `mise shp`, or `mise uvc-util`, with `--check` for a nonmutating drift report. Host registration limits each command to the laptops that declare it. Go and UVC sources live under `bootstrap/capabilities/software/sources/`.
 
 Capability-driven Node upgrades carry unmanaged registry npm globals into the new prefix at their installed versions, excluding bundled npm/Corepack. A private pending snapshot survives failed runs and is removed after successful reconciliation; linked/local packages require explicit handling before an upgrade. The self-contained Node postinstall hook restores declared packages even when Node is installed outside reconciliation.
 
@@ -70,7 +70,7 @@ The [macOS system capability](bootstrap/capabilities/macos-system/README.md) own
 
 On both Macs, `mise agent-harness` reconciles skills, subagents, and hook fragments through the [native catalogue capability](bootstrap/capabilities/agent-harness/README.md). `--check` compares cached sources without refreshing them; `--cached` applies those same cached sources. Normal apply refreshes declared Git sources at most once per day. Exact-file ownership preserves independently installed skills, Claude's `synced/` tree, and existing parent-directory permissions.
 
-`bootstrap/capabilities/agent-harness/configuration/` is the canonical source for harness settings, instructions, extensions, plugins, and shared libraries. `mise agent-config --check` previews with non-secret placeholders and exits 2 when secret-backed parity remains unresolved; add `--real-secrets` for read-only parity with scoped fnox resolution, or omit `--check` to apply. Static first-party assets are symlinked; rendered, host-dependent, and private outputs are regular files, with private outputs mode `0600`. Host-local non-secret inputs belong in `bootstrap/capabilities/agent-harness/local/<hostname>/data.toml`; credentials remain SecretRefs resolved only for the command.
+`bootstrap/capabilities/agent-harness/configuration/` is the canonical source for harness settings, instructions, extensions, and plugins. `mise agent-config --check` previews with non-secret placeholders and exits 2 when secret-backed parity remains unresolved; add `--real-secrets` for read-only parity with scoped fnox resolution, or omit `--check` to apply. Static first-party assets are symlinked; rendered, host-dependent, and private outputs are regular files, with private outputs mode `0600`. Host-local non-secret inputs belong in `bootstrap/capabilities/agent-harness/local/<hostname>/data.toml`; credentials remain SecretRefs resolved only for the command.
 
 `mise agent-harness` reconciles the catalogue and then calls `agent-config`. Full reconciliation routes both through the `agent-harness` tag. A host's private plugin sources belong in the ignored `bootstrap/capabilities/agent-harness/local/<hostname>/catalogue.toml`. Hosted Amp publication uses the same catalogue, resolver, and `publish_amp_skills.py`.
 
@@ -111,9 +111,9 @@ Deleting a source alone does not remove deployed state. Declare a `state = "abse
 - `mise run check` — Every non-mutating check across the repo; `mise run fix` for the mutating half
 - `mise run pi:check` — Lint and type-check pi extension packages (`pi:fix` formats and autofixes first)
 - `mise run deps:update` — Update every tracked lockfile (python + typescript)
-- `mise run deps:update:ts` — Update tracked TypeScript agent packages (Pi extension packages and session recovery)
+- `mise run deps:update:ts` — Update tracked TypeScript agent packages (Pi extension packages)
 - `mise run deps:update:uv` — Upgrade `uv.lock` to the newest allowed releases and sync (personal machines only)
-- `mise tasks` — List every task; `--all` includes the Go subprojects
+- `mise tasks` — List every task; `--all` includes the Go subproject
 
 ## Design
 

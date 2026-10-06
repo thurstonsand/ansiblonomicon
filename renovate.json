@@ -68,11 +68,10 @@
       "groupName": "Docker images"
     },
     {
-      "description": "The two Go config roots ask for `go = \"latest\"` and `golangci-lint = \"latest\"` deliberately: these are throwaway CLIs that should build against whatever toolchain the machine last installed, and pinning them would mean a PR every time either project releases. The mise manager extracts `latest` with a real datasource attached and no skip reason, so it has to be turned off by name rather than left to be ignored on its own.",
+      "description": "The Go config root asks for `go = \"latest\"` and `golangci-lint = \"latest\"` deliberately: shp is a throwaway CLI that should build against whatever toolchain the machine last installed, and pinning them would mean a PR every time either project releases. The mise manager extracts `latest` with a real datasource attached and no skip reason, so it has to be turned off by name rather than left to be ignored on its own.",
       "matchManagers": ["mise"],
       "matchFileNames": [
-        "bootstrap/capabilities/software/sources/shp/mise.toml",
-        "bootstrap/capabilities/software/sources/sessions/mise.toml"
+        "bootstrap/capabilities/software/sources/shp/mise.toml"
       ],
       "enabled": false
     },

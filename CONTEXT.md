@@ -15,7 +15,6 @@
 - **Pi**: My favorite AI agent harness. Extends through TypeScript **extensions** loaded straight from source, plus **packages** pulled from separate repos.
 - **Amp**: My other favorite AI agent harness. Extends through TypeScript **plugins** (different from **Agent plugins**).
 - **Agent plugin**: A directory under `agents/` holding a themed set of skills, installable by any harness configured in this repo.
-- **Session recovery**: The shared library that lets an interrupted agent session be picked back up, with a common core and per-harness entry points.
 - **Work machine**: The corporate laptop. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions.
 - **pod042**: The NAS — plain Debian 13 server.
 - **type-a-no2**: The personal Omarchy laptop.

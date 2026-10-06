@@ -3,3 +3,14 @@
 "~/.zshrc" = { source = "shell/zshrc.tera", mode = "template" }
 "~/.config/starship.toml" = { source = "shell/starship.toml", mode = "symlink" }
 
+[bootstrap.files."~/.cache/zsh/sessions_init.zsh"]
+state = "absent"
+
+[bootstrap.files."~/.cache/zsh/sessions_init.zsh.zwc"]
+state = "absent"
+
+[bootstrap.files."~/.cache/zsh/sessions_shell_zsh_init.zsh"]
+state = "absent"
+
+[bootstrap.files."~/.cache/zsh/sessions_shell_zsh_init.zsh.zwc"]
+state = "absent"

@@ -1,5 +1,7 @@
 # 15 — Session Recovery (Claude Code + Pi)
 
+Status: Superseded by [Agent Switchboard](https://github.com/thurstonsand/agent-switchboard), where its successor design lands.
+
 ## Problem
 
 A hard restart (power loss, forced reboot, kernel panic) kills every active

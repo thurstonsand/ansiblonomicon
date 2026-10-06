@@ -50,26 +50,14 @@ local linters = new Mapping<String, Step> {
     fix = "./scripts/pi-lint.sh --format"
   }
 
-  ["session-recovery"] {
-    glob = List(
-      "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/**/*.ts",
-      "bootstrap/capabilities/agent-harness/configuration/assets/shared/session-recovery/**/*.json",
-      "bootstrap/capabilities/agent-harness/configuration/assets/claude/scripts/session-recovery/**/*.ts",
-      "bootstrap/capabilities/agent-harness/configuration/assets/claude/scripts/session-recovery/**/*.json"
-    )
-    exclude = "**/node_modules/**"
-    check = "./scripts/session-recovery-lint.sh"
-    fix = "./scripts/session-recovery-lint.sh --format"
-  }
-
   // mise installs these without validating them, and one bad line takes sudo down with it.
   ["visudo"] {
     glob = "**/sudoers.d/*"
     check = #"for f in {{files}}; do visudo -cf "$f" || exit 1; done"#
   }
 
-  // Both Go subprojects carry a go.mod, so workspace_indicator fans these out per
-  // project without naming either path.
+  // Each Go subproject carries a go.mod, so workspace_indicator fans these out per
+  // project without naming its path.
   ["go-fmt"] = (Builtins.go_fmt) {}
   ["go-lint"] = (Builtins.golangci_lint) {}
 }

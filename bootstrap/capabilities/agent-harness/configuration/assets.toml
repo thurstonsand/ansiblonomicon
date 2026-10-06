@@ -25,6 +25,21 @@ destination = '.codex/rules/10-command-gates.rules'
 destination = '.config/amp/plugins'
 
 [[absent]]
+destination = '.claude/scripts/session-recovery'
+
+[[absent]]
+destination = '.config/session-recovery'
+
+[[absent]]
+destination = '.local/lib/session-recovery'
+
+[[absent]]
+destination = '.local/state/session-recovery'
+
+[[absent]]
+destination = '.pi/agent/extensions/session-recovery'
+
+[[absent]]
 destination = '.opencode'
 
 [[absent]]
@@ -46,11 +61,6 @@ destination = '.gemini'
 source = 'assets/oracle/config.json'
 destination = '.oracle/config.json'
 hosts = ['Thurstons-MacBook-Pro', 'pod042']
-mode = 'symlink'
-
-[[files]]
-source = 'assets/shared/session-recovery/config.json'
-destination = '.config/session-recovery/config.json'
 mode = 'symlink'
 
 [[files]]
@@ -97,25 +107,6 @@ mode = 'symlink'
 source = 'assets/claude/output-styles/support-line.md'
 destination = '.claude/output-styles/support-line.md'
 harness = 'claude'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/claude/scripts/session-recovery/index.ts'
-destination = '.claude/scripts/session-recovery/index.ts'
-harness = 'claude'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/claude/scripts/session-recovery/package.json'
-destination = '.claude/scripts/session-recovery/package.json'
-harness = 'claude'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/claude/scripts/session-recovery/tsconfig.json'
-destination = '.claude/scripts/session-recovery/tsconfig.json'
-harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
 mode = 'symlink'
 
 [[files]]
@@ -498,25 +489,6 @@ hosts = ['ML-DFC6YK6VJQ']
 mode = 'symlink'
 
 [[files]]
-source = 'assets/pi/extensions/session-recovery/index.ts'
-destination = '.pi/agent/extensions/session-recovery/index.ts'
-harness = 'pi'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/pi/extensions/session-recovery/package.json'
-destination = '.pi/agent/extensions/session-recovery/package.json'
-harness = 'pi'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/pi/extensions/session-recovery/tsconfig.json'
-destination = '.pi/agent/extensions/session-recovery/tsconfig.json'
-harness = 'pi'
-hosts = ['Thurstons-MacBook-Pro', 'pod042']
-mode = 'symlink'
-
-[[files]]
 source = 'assets/pi/extensions/session-title.ts'
 destination = '.pi/agent/extensions/session-title.ts'
 harness = 'pi'
@@ -577,42 +549,11 @@ harness = 'pi'
 mode = 'symlink'
 
 [[files]]
-source = 'assets/shared/session-recovery/core.ts'
-destination = '.local/lib/session-recovery/core.ts'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/shared/session-recovery/package-lock.json'
-destination = '.local/lib/session-recovery/package-lock.json'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/shared/session-recovery/package.json'
-destination = '.local/lib/session-recovery/package.json'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/shared/session-recovery/settings.ts'
-destination = '.local/lib/session-recovery/settings.ts'
-mode = 'symlink'
-
-[[files]]
-source = 'assets/shared/session-recovery/tsconfig.json'
-destination = '.local/lib/session-recovery/tsconfig.json'
-mode = 'symlink'
-
-[[files]]
 source = 'assets/pi/npm-mirror-shim.mjs'
 destination = '.pi/agent/npm-mirror-shim.mjs'
 harness = 'pi'
 hosts = ['ML-DFC6YK6VJQ']
 mode = 'symlink'
-
-[[packages]]
-source = 'assets/claude/scripts/session-recovery'
-destination = '.claude/scripts/session-recovery/node_modules'
-harness = 'claude'
-work_omit_dev = true
 
 [[packages]]
 source = 'assets/pi/extensions/agents-context'
@@ -639,18 +580,7 @@ harness = 'pi'
 work_omit_dev = true
 
 [[packages]]
-source = 'assets/pi/extensions/session-recovery'
-destination = '.pi/agent/extensions/session-recovery/node_modules'
-harness = 'pi'
-work_omit_dev = true
-
-[[packages]]
 source = 'assets/pi/permissions'
 destination = '.pi/agent/permissions/node_modules'
 harness = 'pi'
-work_omit_dev = true
-
-[[packages]]
-source = 'assets/shared/session-recovery'
-destination = '.local/lib/session-recovery/node_modules'
 work_omit_dev = true
