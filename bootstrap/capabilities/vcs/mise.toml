@@ -1,0 +1,29 @@
+[vars]
+vcs_personal_email = "thurstonsand@gmail.com"
+vcs_personal_public_signing_key = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIF6GpY+hdZp60Fbnk9B03sntiJRx7OgLwutV5vJpV6P+"
+
+[dotfiles]
+"~/.config/git/config/ansiblonomicon" = { source = "vcs/config.tera", template = "tera", comment = "#" }
+"~/.config/git/allowed_signers" = { source = "vcs/allowed_signers.tera", mode = "template" }
+"~/.config/git/attributes" = { source = "vcs/attributes", mode = "symlink" }
+"~/.config/git/ignore" = { source = "vcs/ignore", mode = "symlink" }
+"~/.config/jj/conf.d/00-ansiblonomicon.toml" = { source = "vcs/jj-config.toml.tera", mode = "template" }
+
+[env]
+HOST_PROFILE = "{{ vars.host_profile }}"
+VCS_PERSONAL_EMAIL = "{{ vars.vcs_personal_email }}"
+VCS_PERSONAL_PUBLIC_SIGNING_KEY = "{{ vars.vcs_personal_public_signing_key }}"
+VCS_GIT_PERSONAL_SIGNING_KEY = "{{ vars.git_personal_signing_key | default(value=vars.vcs_personal_public_signing_key) }}"
+VCS_WORK_EMAIL = "{{ vars.vcs_work_email | default(value='') }}"
+VCS_WORK_SIGNING_KEY = "{{ vars.vcs_work_signing_key | default(value='') }}"
+VCS_GIT_SCM_CONFIG = "{{ vars.git_scm_config | default(value='') }}"
+
+[bootstrap.hooks.pre-dotfiles]
+run = '''
+{% if vars.host_profile == "work" and (vars.vcs_work_email | default(value="") == "" or vars.vcs_work_signing_key | default(value="") == "") %}
+echo "work vcs requires vcs_work_email and vcs_work_signing_key in mise.local.toml" >&2
+exit 1
+{% else %}
+mise exec -- python3 vcs/validate.py
+{% endif %}
+'''

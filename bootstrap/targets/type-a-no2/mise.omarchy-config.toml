@@ -41,6 +41,8 @@ run = "~/.local/share/omarchy-icloud-photos/install.sh"
 "~/.config/hypr/hyprsunset.conf" = { source = "omarchy/hypr/hyprsunset.conf", mode = "symlink" }
 "~/.config/hypr/xdph.conf" = { source = "omarchy/hypr/xdph.conf", mode = "symlink" }
 "~/.config/hypr/.luarc.json" = { source = "omarchy/hypr/.luarc.json", mode = "symlink" }
+# The Mouse panel replaces this file on save, which would break a symlink.
+"~/.config/hypr/mouse.lua" = { source = "omarchy/hypr/mouse.lua", mode = "copy" }
 "~/.config/omarchy/shell.json" = { source = "omarchy/shell.json", mode = "symlink" }
 "~/.config/omarchy/sandman.json" = { source = "omarchy/sandman.json", mode = "symlink" }
 "~/.config/omarchy/extensions/omarchy-menu.jsonc" = { source = "omarchy/extensions/omarchy-menu.jsonc", mode = "symlink" }

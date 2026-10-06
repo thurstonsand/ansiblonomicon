@@ -1,0 +1,5 @@
+[dotfiles]
+"~/.config/linearmouse/linearmouse.json" = { source = "user-tools/linearmouse.json", mode = "symlink" }
+"~/.config/nextdns.conf" = { source = "user-tools/nextdns.conf", mode = "symlink" }
+"~/.mactop/config.json" = { source = "user-tools/mactop.json", mode = "symlink" }
+"~/.local/state/herdr/client/endpoints.json" = { source = "user-tools/herdr-endpoints.json", mode = "symlink" }

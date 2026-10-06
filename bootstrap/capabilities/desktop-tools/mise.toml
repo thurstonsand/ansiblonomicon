@@ -1,2 +1,0 @@
-[dotfiles]
-"~/Library/Application Support/go/telemetry/mode" = { source = "desktop-tools/go-telemetry-mode", mode = "symlink" }

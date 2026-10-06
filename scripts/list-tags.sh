@@ -20,8 +20,8 @@ if [[ "$host" == pod042 ]]; then
 fi
 
 case "$host" in
-  macos) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions hostname agent-harness agent-config berkeley-mono claude-code desktop-tools docker-context editor-config homebrew language-tools mac-apps mas mise sessions shp uvc-util git-client jj-client ssh-client neovim nvim-deps shell terminal-theme terminal-tools tmux user-tools\n' ;;
-  work) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions agent-harness agent-config berkeley-mono desktop-tools editor-config homebrew language-tools mac-apps mas mise pi sessions uvc-util git-client jj-client neovim nvim-deps python-index shell terminal-theme terminal-tools tmux user-tools work-local\n' ;;
-  omarchy) printf 'Native mise tags: omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config git-client jj-client ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config\n' ;;
+  macos) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions hostname agent-harness agent-config berkeley-mono claude-code docker-context editor-config homebrew language-tools mac-apps mas mise sessions shp uvc-util vcs ssh-client neovim nvim-deps shell terminal-theme terminal-tools tmux user-tools\n' ;;
+  work) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions agent-harness agent-config berkeley-mono editor-config homebrew language-tools mac-apps mas mise pi sessions uvc-util vcs neovim nvim-deps python-index shell terminal-theme terminal-tools tmux user-tools work-local\n' ;;
+  omarchy) printf 'Native mise tags: omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config\n' ;;
   *) printf 'Unknown host: %s (expected macos, pod042, work, or omarchy)\n' "$host" >&2; exit 1 ;;
 esac

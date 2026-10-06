@@ -18,6 +18,6 @@ T3's stable version is resolved through GitHub's public `releases/latest` redire
 
 The final hook runs those tasks as `thurstonsand` with an isolated environment. It does not load the project's credential hook or replace the base bootstrap task.
 
-Bootstrap owns software installation and service lifecycle. The shared native `shell`, `terminal-theme`, `terminal-tools`, `git-client`, `jj-client`, `neovim`, and `agent-harness`/`agent-config` capabilities own shell, terminal, VCS, Neovim, and agent configuration on pod042 and laptops; full reconciliation applies them after operator prerequisites. Focused VCS reconciliation loads shared identity facts and changes only the selected client's configuration.
+Bootstrap owns software installation and service lifecycle. The shared native `shell`, `terminal-theme`, `terminal-tools`, `vcs`, `neovim`, and `agent-harness`/`agent-config` capabilities own shell, terminal, VCS, Neovim, and agent configuration on pod042 and laptops; full reconciliation applies them after operator prerequisites.
 
 T3 and Amp enrollment and persistence belong to `remote-development`, not this capability. T3 serves multiple projects from the operator's home; Amp's runner belongs to this checkout.

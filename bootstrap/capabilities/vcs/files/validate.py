@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate Git identity and corporate configuration before mise writes it."""
+"""Validate VCS identity and corporate Git configuration before mise writes it."""
 
 import os
 from pathlib import Path
@@ -8,7 +8,7 @@ import tempfile
 
 
 def main() -> None:
-    scm_config = os.environ.get("GIT_CLIENT_SCM_CONFIG", "")
+    scm_config = os.environ.get("VCS_GIT_SCM_CONFIG", "")
     if scm_config:
         with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8") as stream:
             stream.write(scm_config)
@@ -20,15 +20,19 @@ def main() -> None:
                 text=True,
             )
 
-    required = ["GIT_CLIENT_PERSONAL_EMAIL", "GIT_CLIENT_PERSONAL_SIGNING_KEY"]
+    required = [
+        "VCS_PERSONAL_EMAIL",
+        "VCS_PERSONAL_PUBLIC_SIGNING_KEY",
+        "VCS_GIT_PERSONAL_SIGNING_KEY",
+    ]
     if os.environ["HOST_PROFILE"] == "work":
-        required.extend(["GIT_CLIENT_WORK_EMAIL", "GIT_CLIENT_WORK_SIGNING_KEY"])
+        required.extend(["VCS_WORK_EMAIL", "VCS_WORK_SIGNING_KEY"])
     for name in required:
         value = os.environ.get(name, "")
         if not value:
             raise RuntimeError(f"{name} is required")
         if any(character in value for character in ('"', "\\", "\n", "\r", "\0")):
-            raise RuntimeError(f"{name} contains characters unsafe for Git config")
+            raise RuntimeError(f"{name} contains characters unsafe for VCS config")
 
 
 if __name__ == "__main__":

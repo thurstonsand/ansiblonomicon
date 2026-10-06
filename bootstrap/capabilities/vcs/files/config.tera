@@ -10,7 +10,7 @@
 
 [commit]
 	gpgSign = true
-{% if get_env(name="GIT_CLIENT_DELTA", default="false") == "true" %}
+{% if get_env(name="VCS_GIT_DELTA", default="false") == "true" %}
 
 [core]
 	pager = delta

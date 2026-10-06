@@ -1,0 +1,2 @@
+[dotfiles]
+"~/.config/go/telemetry/mode" = { source = "user-tools/go-telemetry-mode", mode = "symlink" }

@@ -55,8 +55,7 @@ CAPABILITIES = (
     "snapshots",
     "terminal-tools",
     "operator",
-    "git-client",
-    "jj-client",
+    "vcs",
     "ssh-client",
     "agent-harness",
     "remote-development",
@@ -66,11 +65,8 @@ CAPABILITIES = (
     "neovim",
     "doppelclaude",
 )
-_VCS_CLIENT_INDEX = CAPABILITIES.index("git-client")
 FULL_CAPABILITIES = (
-    *CAPABILITIES[:_VCS_CLIENT_INDEX],
-    "vcs-identity",
-    *CAPABILITIES[_VCS_CLIENT_INDEX:],
+    *CAPABILITIES,
     "terminal-tools-plugins",
     "shell-personal",
     "user-tools-personal",
@@ -119,10 +115,6 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("repositories", "network")
     if capability == "operator":
         return ("base", "operator")
-    if capability == "git-client":
-        return ("vcs-identity", "git-client")
-    if capability == "jj-client":
-        return ("vcs-identity", "jj-client")
     if capability == "ssh-client":
         return ("ssh-client", "ssh-client-pod042")
     if capability == "agent-harness":
@@ -183,9 +175,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
     root_capabilities = {
         "agent-harness",
         "agent-instructions",
-        "vcs-identity",
-        "git-client",
-        "jj-client",
+        "vcs",
         "ssh-client",
         "ssh-client-pod042",
         "terminal-theme",
@@ -260,28 +250,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     "--check",
                 ]
             )
-        if "git-client" in selected:
-            run_command(
-                [
-                    "mise",
-                    "-C",
-                    str(ROOT),
-                    "run",
-                    "git-client",
-                    "--check",
-                ]
-            )
-        if "jj-client" in selected:
-            run_command(
-                [
-                    "mise",
-                    "-C",
-                    str(ROOT),
-                    "run",
-                    "jj-client",
-                    "--check",
-                ]
-            )
+        if "vcs" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "vcs", "--check"])
         if "ssh-client" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "ssh-client", "--check"])
         if "shell" in selected:
@@ -396,26 +366,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     "terminal-theme",
                 ]
             )
-        if "git-client" in selected:
-            run_command(
-                [
-                    "mise",
-                    "-C",
-                    str(ROOT),
-                    "run",
-                    "git-client",
-                ]
-            )
-        if "jj-client" in selected:
-            run_command(
-                [
-                    "mise",
-                    "-C",
-                    str(ROOT),
-                    "run",
-                    "jj-client",
-                ]
-            )
+        if "vcs" in selected:
+            run_command(["mise", "-C", str(ROOT), "run", "vcs"])
         if "ssh-client" in selected:
             run_command(["mise", "-C", str(ROOT), "run", "ssh-client"])
         if "shell" in selected:

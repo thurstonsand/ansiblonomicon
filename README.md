@@ -36,15 +36,13 @@ Shared Zsh startup files and static Starship configuration are also native mise 
 
 The [terminal-tools capability](bootstrap/capabilities/terminal-tools/README.md) owns tmux configuration, Ghostty configuration and helpers, and personal-host TPM installation. Run `mise terminal-tools` or `mise laptop -t tmux`, adding `--check` for a preview. Full reconciliation supplies software prerequisites first; focused runs assume they are installed.
 
-The [user-tools capability](bootstrap/capabilities/user-tools/README.md) owns shared LazyGit, SourceKit-LSP, Vim and markdownlint configuration plus standalone helpers. Personal hosts also receive GitHub CLI and Rustup settings. Run `mise user-tools` or `mise laptop -t user-tools`, adding `--check` for a nonmutating preview.
-
-The [desktop-tools capability](bootstrap/capabilities/desktop-tools/README.md) links application configuration to first-party repository sources. Go's local telemetry mode is shared by both Macs; four additional configurations are personal-only. Run `mise desktop-tools` or `mise laptop -t desktop-tools`; no credentials are required.
+The [user-tools capability](bootstrap/capabilities/user-tools/README.md) owns shared LazyGit, SourceKit-LSP, Vim and markdownlint configuration plus standalone helpers. Personal hosts also receive GitHub CLI and Rustup settings, and laptops receive Go telemetry, herdr endpoints, and the personal Mac's LinearMouse, NextDNS and mactop files. Run `mise user-tools` or `mise laptop -t user-tools`, adding `--check` for a nonmutating preview.
 
 ### VCS client configuration
 
-The shared [Git capability](bootstrap/capabilities/git-client/README.md) owns Git defaults, identities, signing configuration, attributes, and ignore patterns. A managed block preserves application-added settings outside it; attributes and ignore patterns are symlinked to the shared sources. The [Jujutsu capability](bootstrap/capabilities/jj-client/README.md) uses a native `conf.d` fragment, preserving the existing user config. Both independently load shared `vcs-identity` facts. SSH key provisioning remains separate.
+The [vcs capability](bootstrap/capabilities/vcs/README.md) owns Git and Jujutsu client configuration and their shared identity. Git defaults, identities and signing live in a managed block that preserves application-added settings outside it; attributes and ignore patterns are symlinked to the shared sources. Jujutsu uses a native `conf.d` fragment, preserving the existing user config. SSH key provisioning remains separate.
 
-Run `mise git-client` or `mise jj-client`, with `--check` for a preview. Regular laptop and pod042 reconciliation includes both; `mise laptop -t git-client,jj-client` runs only those two. Work identity and corporate URL rewrites belong in the work target's ignored `mise.local.toml`, as described in the capability README.
+Run `mise vcs`, with `--check` for a preview. Regular laptop and pod042 reconciliation includes it; `mise laptop -t vcs` runs only it. Work identity and corporate URL rewrites belong in the work target's ignored `mise.local.toml`, as described in the capability README.
 
 ### Editor and Python indexes
 

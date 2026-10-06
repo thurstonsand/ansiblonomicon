@@ -295,48 +295,27 @@ fi
 exec mise -C "$target" bootstrap --only "$parts" --yes
 '''
 
-[tasks."git-client"]
-description = "Reconcile Git client configuration on this registered host"
+[tasks.vcs]
+description = "Reconcile Git and Jujutsu client configuration on this registered host"
 usage = '''
 flag "-c --check" help="Show changes without applying them"
 '''
 run = '''
 host=$(hostname -s)
 case "$host" in
-  pod042|Thurstons-MacBook-Pro|type-a-no2) environments=vcs-identity,git-client ;;
-  ML-DFC6YK6VJQ) environments=vcs-identity,git-client,git-client-work ;;
-  *) echo "Unregistered git-client host" >&2; exit 1 ;;
+  pod042|Thurstons-MacBook-Pro|type-a-no2) environments=vcs ;;
+  ML-DFC6YK6VJQ) environments=vcs,vcs-work ;;
+  *) echo "Unregistered vcs host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV="$environments"
 if command -v delta >/dev/null 2>&1; then
-  export GIT_CLIENT_DELTA=true
+  export VCS_GIT_DELTA=true
 else
-  export GIT_CLIENT_DELTA=false
+  export VCS_GIT_DELTA=false
 fi
-if [ -n "${usage_check:-}" ]; then
-  exec mise -C "$target" bootstrap --only dotfiles --dry-run
-fi
-exec mise -C "$target" bootstrap --only dotfiles --yes
-'''
-
-[tasks."jj-client"]
-description = "Reconcile Jujutsu client configuration on this registered host"
-usage = '''
-flag "-c --check" help="Show changes without applying them"
-'''
-run = '''
-host=$(hostname -s)
-case "$host" in
-  pod042|Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2) ;;
-  *) echo "Unregistered jj-client host" >&2; exit 1 ;;
-esac
-target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
-export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
-export MISE_TRUSTED_CONFIG_PATHS="$target"
-export MISE_ENV=vcs-identity,jj-client
 if [ -n "${usage_check:-}" ]; then
   exec mise -C "$target" bootstrap --only dotfiles --dry-run
 fi
@@ -509,8 +488,10 @@ flag "-c --check" help="Show changes without applying them"
 run = '''
 host=$(hostname -s)
 case "$host" in
-  pod042|Thurstons-MacBook-Pro|type-a-no2) environments=user-tools,user-tools-personal ;;
-  ML-DFC6YK6VJQ) environments=user-tools ;;
+  pod042) environments=user-tools,user-tools-personal ;;
+  Thurstons-MacBook-Pro) environments=user-tools,user-tools-personal,user-tools-mac,user-tools-mac-personal ;;
+  ML-DFC6YK6VJQ) environments=user-tools,user-tools-mac ;;
+  type-a-no2) environments=user-tools,user-tools-personal,user-tools-omarchy ;;
   *) echo "Unregistered user-tools host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
@@ -521,26 +502,6 @@ if [ -n "${usage_check:-}" ]; then
   exec mise -C "$target" bootstrap --only files,dotfiles --dry-run
 fi
 exec mise -C "$target" bootstrap --only files,dotfiles --yes
-'''
-
-[tasks."desktop-tools"]
-description = "Reconcile desktop application configuration on a registered Mac"
-usage = '''
-flag "-c --check" help="Show changes without applying them"
-'''
-run = '''
-host=$(hostname -s)
-case "$host" in
-  Thurstons-MacBook-Pro) environments=desktop-tools,desktop-tools-personal ;;
-  ML-DFC6YK6VJQ) environments=desktop-tools ;;
-  *) echo "desktop-tools is registered only on the two Macs" >&2; exit 1 ;;
-esac
-target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
-run_desktop_tools='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles "$4"'
-if [ -n "${usage_check:-}" ]; then
-  exec sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --dry-run
-fi
-exec sh -c "$run_desktop_tools" desktop-tools "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
 '''
 
 [tasks."editor-config"]
@@ -646,7 +607,7 @@ target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 tags="${usage_tags:-}"
-supported=" all omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config git-client jj-client ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config "
+supported=" all omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config "
 unsupported=
 for tag in $(printf '%s' "$tags" | tr ',' ' '); do
   case "$supported" in
@@ -681,7 +642,7 @@ fi
 if selected mise; then
   mise -C "$HOME" bootstrap --only tools "$mode" || exit "$?"
 fi
-for native_capability in shell terminal-tools editor-config git-client jj-client ssh-client user-tools neovim berkeley-mono amp-cli; do
+for native_capability in shell terminal-tools editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli; do
   if selected "$native_capability" || { [ "$native_capability" = terminal-tools ] && selected tmux; }; then
     mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
   fi
@@ -745,7 +706,7 @@ case "$(hostname -s)" in
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
 software_capabilities="mac-apps language-tools berkeley-mono"
-config_capabilities="sysconfig terminal-theme git-client jj-client shell terminal-tools user-tools desktop-tools editor-config neovim"
+config_capabilities="sysconfig terminal-theme vcs shell terminal-tools user-tools editor-config neovim"
 sysconfig_sections="dock finder nsglobaldomain menubar desktop-services permissions"
 case "$profile" in
   personal)
