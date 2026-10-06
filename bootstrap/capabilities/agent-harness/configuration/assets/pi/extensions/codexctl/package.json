@@ -9,11 +9,11 @@
   },
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
-    "@earendil-works/pi-ai": "^1.0.0",
-    "@earendil-works/pi-coding-agent": "^1.0.0",
-    "@earendil-works/pi-server": "^1.0.0",
-    "@earendil-works/pi-tui": "^1.0.0",
-    "@types/node": "^24.13.3",
+    "@earendil-works/pi-ai": "^1.0.4",
+    "@earendil-works/pi-coding-agent": "^1.0.4",
+    "@earendil-works/pi-server": "^1.0.4",
+    "@earendil-works/pi-tui": "^1.0.4",
+    "@types/node": "^24.19.1",
     "typescript": "^7.0.2"
   },
   "description": "Codex integration controls for Pi"
