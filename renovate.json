@@ -18,7 +18,8 @@
   "prConcurrentLimit": 0,
   "branchConcurrentLimit": 0,
   "lockFileMaintenance": {
-    "enabled": true
+    "enabled": true,
+    "schedule": ["at any time"]
   },
   "customManagers": [
     {
@@ -87,6 +88,18 @@
       "matchManagers": ["terraform"],
       "matchPackageNames": ["cloudflare/cloudflare"],
       "allowedVersions": "<5"
+    },
+    {
+      "description": "The UniFi provider is my fork, served from a filesystem mirror rather than a registry, so there is nothing for Renovate to look up. A bump also has to carry the release's archive digests in provider.toml and a regenerated lockfile, which only install_unifi_provider.py can produce.",
+      "matchManagers": ["terraform"],
+      "matchPackageNames": ["thurstonsand/unifi"],
+      "enabled": false
+    },
+    {
+      "description": "Ghost supports only MySQL 8.0 and 8.4, and 8.4 is an LTS line. Leaving it is also not a tag bump: a clone of the live database had to go 8.4 → 9.7 LTS → 26.7, and 26.7 on the pod042 ZFS dataset additionally needed `--innodb-flush-method=fsync --innodb-use-native-aio=OFF`. Lift this ceiling only when Ghost supports a newer MySQL, and take that route.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["mysql"],
+      "allowedVersions": "<9"
     },
     {
       "description": "`required_version` in versions.tf is a floor, not a pin, and nothing here needs it raised. The version that actually runs is the opentofu pinned in mise.toml, which Renovate tracks properly. Bumping the floor only narrows what can run the config in exchange for nothing.",
