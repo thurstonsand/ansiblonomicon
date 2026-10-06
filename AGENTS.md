@@ -6,6 +6,10 @@ Ansiblonomicon is a central store of all of my computer configurations, administ
 
 See @CONTEXT.md for project vocabulary.
 
+## Pending: session-recovery follow-ups
+
+If `hostname -s` is `Thurstons-MacBook-Pro`, `type-a-no2`, or `pod042`, read SESSION_RECOVERY_FOLLOWUPS.md before anything else and walk me through it.
+
 ## Ethos
 
 I used to be a heavy user of nix, home-manager, and NixOS, but I found the strictness of adherence to the config to be stifling (many files deployed as read-only) and I found the language esoteric (tho this is largely solved by agents today). I thought there ought to be a way to achieve the same, but through a different, more lenient means, and stumbled on mise. I really liked the ability to write configuration once, and have it deployed and working across all my machines in a consistent way, and that I can start afresh with an almost-fully-configured system with relative ease.
