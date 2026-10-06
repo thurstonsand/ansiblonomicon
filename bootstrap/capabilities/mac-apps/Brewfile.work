@@ -48,22 +48,32 @@ brew "uv"
 
 # Go tools
 brew "delve"
+brew "gofumpt"
 brew "goimports"
 brew "golang-migrate"
 brew "gopls"
 
 # LSP / Formatters
+brew "bash-language-server"
 brew "biome"
+brew "lua-language-server"
+brew "marksman"
 brew "prettier"
+brew "shfmt"
+brew "taplo"
+brew "tree-sitter-cli"
+brew "vscode-langservers-extracted"
 brew "vtsls"
 brew "yaml-language-server"
 
 # Linters
 brew "hadolint"
+brew "markdown-toc"
 brew "markdownlint-cli2"
 brew "mcp-remote"
 brew "pyright"
 brew "ruff"
+brew "shellcheck"
 brew "stylua"
 brew "swiftformat"
 brew "swiftlint"

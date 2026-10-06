@@ -1,10 +1,25 @@
 {% if vars.host_profile == "work" %}
+local host_tools = {
+  "delve",
+  "gofumpt",
+  "goimports",
+  "golangci-lint",
+  "markdown-toc",
+  "markdownlint-cli2",
+  "prettier",
+  "shellcheck",
+  "shfmt",
+  "stylua",
+}
+
 return {
   {
     "mason-org/mason.nvim",
-    -- A table here would merge with the extras' lists rather than replace them.
+    -- LazyVim extras append to ensure_installed through opts_extend, so only a function can remove entries.
     opts = function(_, opts)
-      opts.ensure_installed = {}
+      opts.ensure_installed = vim.tbl_filter(function(tool)
+        return not vim.tbl_contains(host_tools, tool)
+      end, opts.ensure_installed)
     end,
   },
   {
@@ -12,6 +27,7 @@ return {
     opts = {
       servers = {
         basedpyright = { mason = false },
+        bashls = { mason = false },
         biome = { mason = false },
         gopls = {
           mason = false,
@@ -35,6 +51,11 @@ return {
             },
           },
         },
+        jsonls = { mason = false },
+        lua_ls = { mason = false },
+        marksman = { mason = false },
+        ruff = { mason = false },
+        taplo = { mason = false },
         vtsls = { mason = false },
         yamlls = { mason = false },
       },
