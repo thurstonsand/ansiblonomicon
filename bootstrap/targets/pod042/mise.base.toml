@@ -161,11 +161,6 @@ for install in fnox/latest/fnox op/latest/op aqua-tmux-tmux-builds/latest/tmux; 
   fi
 done
 ''',
-  '''
-if dpkg-query -W -f '${Status}' tmux 2>/dev/null | grep -q 'ok installed'; then
-  sudo apt-get purge --yes tmux
-fi
-''',
 ]
 
 # APT has no native absent-package resource. A rare package retirement belongs here
