@@ -139,7 +139,7 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
         }
         if name != "haiku":
             result["thinkingLevelMap"] = (
-                {"xhigh": "xhigh", "max": "max"}
+                {"off": None, "xhigh": "xhigh", "max": "max"}
                 if anthropic
                 else {
                     "off": "none",
@@ -257,7 +257,7 @@ def _settings(
         "sessions": {
             "autoTitle": {
                 "model": profile["auto_title"],
-                "thinkingLevel": "off",
+                "thinkingLevel": "low",
                 "timeoutSecs": 60,
                 "prompt": (
                     repo
