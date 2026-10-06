@@ -99,7 +99,8 @@ brew "openssh"
 # Editors/Terminals
 brew "neovim"
 brew "pngpaste"
-brew "thurstonsand/tap/ghosttykit-nightly", trusted: true, restart_service: true
+tap "thurstonsand/tap", trusted: true
+brew "thurstonsand/tap/ghosttykit-nightly", restart_service: true
 cask "ghostty"
 cask "thurstonsand/tap/wt"
 cask "zed"
