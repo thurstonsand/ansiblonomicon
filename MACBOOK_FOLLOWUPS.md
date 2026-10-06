@@ -10,13 +10,15 @@ Changes made from the Omarchy laptop that the MacBooks still need to reconcile o
    - `top` mapped to `btop`, with `btop` replacing `htop` in both Brewfiles
    - Starship truncating the path to 2 levels and showing git branch and status as glyphs
 3. **Hunk in Neovim:** the `<leader>gV` Hunk float and its `~/.local/libexec/hunk/nvim` editor helper were removed. `user-tools` retires the helper with a `state = "absent"` file declaration.
-4. **Evalcache:** `_evalcache` is now macOS-only. On Linux it saved about 10ms per shell (36.6ms cached vs 46.3ms plain eval over 40 interleaved runs), which did not justify its complexity. macOS starts processes more slowly, so it needs its own measurement.
+4. **Evalcache:** caching was removed from the shared template. On Linux it saved about 10ms per shell (36.6ms cached vs 46.3ms plain eval). The personal Mac measurement on 2026-10-06 found 87.2ms cached vs 112.0ms plain eval, saving 24.9ms. Both used 40 interleaved runs; neither saving justified the cache's complexity. `_evalcache` remains a plain-eval passthrough.
 5. **Neovim:** the explorer is now neo-tree (LazyVim's `editor.neo-tree` extra) instead of the snacks explorer. The clipboard is Omarchy's vendored `remote_clipboard.lua`, which copies over OSC 52 and pastes from tmux's buffer when inside tmux, replacing the old OSC 52 block. `plugins/colorscheme.lua` is now rendered from `colorscheme.lua.tera`. The `neovim` tag picks all three up. Check that copy and paste inside tmux in Ghostty work without a paste-permission prompt.
 6. **Terminal tools:** `tmux.conf` and the Ghostty config are now single templates with an Omarchy branch, so `~/.config/tmux/tmux.conf` turns from a symlink into a rendered file. The Mac output is unchanged apart from `-N` descriptions on the custom bindings, which show up in `M-a ?`. The `terminal-tools` tag picks it up; check that tmux starts without errors and `M-a ?` lists "Split pane right".
 7. **Datasette LLM:** the `llm` CLI and its editor-config files (`keys.json`, `extra-openai-models.yaml`, `default_model.txt`) were removed. The personal Mac's `homebrew` tag uninstalls the formula and its `editor-config` tag deletes the three files through `state = "absent"` declarations. `editor-config` no longer resolves any secrets.
 8. **Capability merges:** `desktop-tools` folded into `user-tools`, and `git-client`, `jj-client` and `vcs-identity` merged into one `vcs` capability. The old tags are gone; use `user-tools` and `vcs`. The work-only Git file moved to `mise.vcs-work.toml`, and the `git-client` validation hook became `vcs/validate.py`. The managed files are the same, but their symlinks point into the deleted `desktop-tools/` and `git-client/` target dirs and dangle until those tags run.
 
 ## Personal MacBook (`Thurstons-MacBook-Pro`)
+
+Completed on 2026-10-06. Retired apps, CLIs, and listed paths are absent; the merged capabilities' symlinks resolve. A fresh login shell starts cleanly with the new aliases and prompt. tmux starts and lists "Split pane right"; neo-tree opens; copy and paste passed inside tmux in Ghostty without a permission prompt. The plain-eval shell is applied and the old init caches are deleted.
 
 1. `mise run pull`
 2. `rm -f ~/.cache/ansiblonomicon/homebrew-upgrade.stamp && mise laptop -t agent-harness,homebrew,editor-config,shell,terminal-tools,user-tools,vcs,neovim` (cask and formula cleanup only runs when the daily stamp is due)
@@ -25,15 +27,15 @@ Changes made from the Omarchy laptop that the MacBooks still need to reconcile o
    - `editor-config` writes VS Code's `settings.json` and `keybindings.json` under `~/Library/Application Support/Code/User/` and deletes the three files under `~/Library/Application Support/io.datasette.llm/`. Then delete the directory itself; it also holds any `llm` plugins and logs.
    - `shell` renders the new `.zshrc` and `.zshenv`; Starship's config is a symlink and is already current.
    - `user-tools` and `vcs` relink Go telemetry, LinearMouse, NextDNS, mactop, herdr endpoints, and Git's `attributes` and `ignore`. Check `find ~/.config ~/.mactop ~/.local/state/herdr "$HOME/Library/Application Support/go" -xtype l` prints nothing.
-3. `npm uninstall -g openclaw` (dropped from `tools.personal.toml`; the npm inventory has no retirement field, so reconcile won't remove it).
+3. `npm uninstall -g openclaw` (dropped from `tools.personal.toml`; the npm inventory has no retirement field, so reconcile won't remove it). Also run `mise language-tools` to retire the installed Node post-install hook's reference. This Mac had extra OpenClaw installs under the Node 24.19.0, Node 24.20.0, and `/opt/homebrew` prefixes: remove each with `npm uninstall -g --prefix <prefix> openclaw`, then `mise reshim` so dormant installs cannot preserve its shim.
 4. Verify that none of these exist, and remove any that do: `~/.opencode`, `~/.config/opencode`, `~/.local/share/opencode`, `~/.local/state/opencode`, `~/.cache/opencode`, `~/.gemini`, and `~/Library/Application Support/{Cursor,Windsurf,Antigravity}/User/{settings,keybindings}.json` (dangling links left by the old editor-config).
 5. Check that `command -v opencode gemini openclaw llm` prints nothing, and that a new shell shows the new `ls`, `cd`, and `top` aliases and prompt without errors.
-6. Measure `_evalcache`. Build two scratch files from the `_evalcache` lines the rendered `~/.zshrc` runs: one that sources the `_evalcache` function from `~/.zshenv` and calls it, and one using plain `eval "$(cmd args)"`. Time `zsh -fc "source <file>"` from `$HOME` over 40 interleaved runs and compare medians. Report the numbers to Thurston. If the saving is small, drop the darwin `_evalcache` branch in `zshenv.tera` so every host uses the plain-eval passthrough, and delete `~/.cache/zsh/*_init.zsh*`.
+6. `_evalcache` measurement completed: scratch files used the ten init commands from the rendered `~/.zshrc`, one sourcing `~/.zshenv` and calling `_evalcache`, the other using plain `eval "$(cmd args)"`. Timed `zsh -fc "source <file>"` from `$HOME` with three warmups and 40 interleaved runs per variant. Results and the decision are above.
 
 ## Work MacBook (`ML-DFC6YK6VJQ`)
 
 1. `mise run pull`
-2. `mise laptop -t agent-harness,shell,terminal-tools,user-tools,vcs,neovim`, then `homebrew` with its stamp removed as above to swap `htop` for `btop`.
+2. `mise laptop -t agent-harness,shell,terminal-tools,user-tools,vcs,neovim`, then `homebrew` with its stamp removed as above to swap `htop` for `btop`. Delete `~/.cache/zsh/*_init.zsh*` after the plain-eval shell is applied.
 3. Verify the OpenCode paths and `~/.gemini` from step 4 above are gone, and that a new shell starts cleanly with autojump's `cd`. `vcs` needs `vcs_work_email` and `vcs_work_signing_key` in the ignored target `mise.local.toml` as before; check `git config --file ~/.config/git/personal.inc user.email` still prints the personal address and `find ~/.config "$HOME/Library/Application Support/go" -xtype l` prints nothing.
 4. `lazy-lock.work.json` has no `neo-tree.nvim` pin, so Lazy restore installs it unpinned. Once neo-tree opens with `<leader>e`, copy its entry from `~/.config/nvim/lazy-lock.json` into `bootstrap/capabilities/neovim/files/lazy-lock.work.json` and commit it.
 5. **Unverified Mason fix:** the work branch of `mason.lua.tera` used to set `ensure_installed = {}` as a table. That merged with the LazyVim extras' tool lists rather than emptying them, so work has been auto-installing those tools from Mason all along. It is now an opts function that empties the list. This was tested only by rendering the work branch on type-a-no2. Confirm it on this machine: `nvim --headless +'lua local P=require("lazy.core.config").plugins; print(#require("lazy.core.plugin").values(P["mason.nvim"],"opts",false).ensure_installed)' +qa` should print `0`. Then open a Go, Python, and TypeScript file and check that the LSPs and formatters still attach from the system installs. If anything that used to work now relies on a Mason install, report which tool.
@@ -44,7 +46,6 @@ Once Thurston confirms that both MacBooks have run this and decided on `_evalcac
 
 - this file
 - the `## Pending: MacBook follow-ups` section in `AGENTS.md`
-- the `MACBOOK_FOLLOWUPS.md` reference in `bootstrap/capabilities/shell/files/zshenv.tera`
 - `bootstrap/capabilities/agent-harness/harnesses/opencode/mise.toml`
 - the `~/.local/libexec/hunk/nvim` absent declaration in `bootstrap/capabilities/user-tools/mise.toml` (pod042 has applied it too)
 - the three `io.datasette.llm` absent declarations in `bootstrap/targets/Thurstons-MacBook-Pro/mise.editor-config.toml`
