@@ -20,7 +20,6 @@
 "apt:rsync" = "latest"
 "apt:shellcheck" = "latest"
 "apt:sqlite3" = "latest"
-"apt:tmux" = "latest"
 "apt:unzip" = "latest"
 "apt:zip" = "latest"
 "apt:zsh-autosuggestions" = "latest"

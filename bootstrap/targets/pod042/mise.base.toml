@@ -105,6 +105,7 @@ content = '''
 [tools]
 fnox = "latest"
 op = "latest"
+"aqua:tmux/tmux-builds" = "latest"
 '''
 owner = "root"
 group = "root"
@@ -151,14 +152,19 @@ fi
   "sudo -H env MISE_DATA_DIR=/opt/mise MISE_GLOBAL_CONFIG_FILE=/etc/mise/host-tools.toml /usr/local/bin/mise -C / upgrade --yes --jobs 1",
   '''
 set -eu
-for tool in fnox op; do
-  source="/opt/mise/installs/$tool/latest/$tool"
-  target="/usr/local/bin/$tool"
+for install in fnox/latest/fnox op/latest/op aqua-tmux-tmux-builds/latest/tmux; do
+  source="/opt/mise/installs/$install"
+  target="/usr/local/bin/${install##*/}"
   sudo test -x "$source"
   if [ "$(readlink "$target")" != "$source" ]; then
     sudo ln -sfnT "$source" "$target"
   fi
 done
+''',
+  '''
+if dpkg-query -W -f '${Status}' tmux 2>/dev/null | grep -q 'ok installed'; then
+  sudo apt-get purge --yes tmux
+fi
 ''',
 ]
 

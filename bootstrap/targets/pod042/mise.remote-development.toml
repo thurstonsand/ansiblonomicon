@@ -12,6 +12,7 @@
 "apt:foot" = "latest"
 "apt:fuzzel" = "latest"
 "apt:grim" = "latest"
+"apt:xdg-desktop-portal-gtk" = "latest"
 "apt:fonts-dejavu-core" = "latest"
 "apt:pulseaudio" = "latest"
 "apt:pulseaudio-utils" = "latest"
@@ -29,6 +30,11 @@ group = "thurstonsand"
 mode = "0755"
 
 [bootstrap.directories."/home/thurstonsand/.config/systemd/user/t3code.service.d"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.config/systemd/user/xdg-desktop-portal-gtk.service.d"]
 owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
@@ -63,6 +69,11 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
 
+[bootstrap.directories."/home/thurstonsand/.config/xdg-desktop-portal"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0755"
+
 [dotfiles]
 "/home/thurstonsand/.config/t3code/npmrc" = { source = "remote-development/t3.npmrc", mode = "symlink" }
 "/home/thurstonsand/.config/labwc/autostart" = { source = "remote-development/desktop/labwc/autostart", mode = "symlink" }
@@ -75,6 +86,7 @@ mode = "0755"
 "/home/thurstonsand/.config/xsettingsd/xsettingsd.conf" = { source = "remote-development/desktop/xsettingsd.conf", mode = "symlink" }
 "/home/thurstonsand/.config/foot/foot.ini" = { source = "remote-development/desktop/foot.ini", mode = "symlink" }
 "/home/thurstonsand/.config/fuzzel/fuzzel.ini" = { source = "remote-development/desktop/fuzzel.ini", mode = "symlink" }
+"/home/thurstonsand/.config/xdg-desktop-portal/portals.conf" = { source = "remote-development/desktop/portals.conf", mode = "symlink" }
 "/home/thurstonsand/.local/bin/desktop-chromium" = { source = "remote-development/desktop/desktop-chromium", mode = "symlink" }
 # User services must remain runnable while this checkout is unavailable.
 "/home/thurstonsand/.config/systemd/user/amp-remote.service" = { source = "remote-development/amp-remote.service", mode = "copy" }
@@ -84,10 +96,21 @@ mode = "0755"
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.service" = { source = "remote-development/chatgpt-upgrade.service", mode = "copy" }
 "/home/thurstonsand/.local/bin/chatgpt-upgrade" = { source = "remote-development/chatgpt-upgrade", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/t3code.service.d/operator.conf" = { source = "remote-development/t3-operator.conf", mode = "copy" }
+"/home/thurstonsand/.config/systemd/user/xdg-desktop-portal-gtk.service.d/runner-desktop.conf" = { source = "remote-development/xdg-desktop-portal-gtk-runner.conf", mode = "copy" }
 
 [bootstrap.hooks.final]
 run = '''
 set -e
+# Debian has no Ghostty package; Ghostty's docs send Debian to ghostty-ubuntu's release .debs.
+release=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/mkasberg/ghostty-ubuntu/releases/latest)
+tag=${release##*/}
+if [ "$(dpkg-query -W -f '${Version}' ghostty 2>/dev/null || true)" != "${tag%-*}~${tag##*-}" ]; then
+  deb=/tmp/ghostty_${tag%-*}.${tag##*-}_amd64_trixie.deb
+  curl -fsSL -o "$deb" "https://github.com/mkasberg/ghostty-ubuntu/releases/download/$tag/${deb##*/}"
+  chmod 0644 "$deb"
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install --yes "$deb"
+  rm "$deb"
+fi
 remote-development/waymote.sh
 python3 remote-development/services.py apply
 python3 ../../capabilities/software/berkeley_mono.py --service-account "op://agent/Berkeley Mono Font/nerd-font" /home/thurstonsand/.config/op-service-account/token

@@ -8,7 +8,13 @@ font-size = {{ vars.terminal_tools_font_size }}
 # the whole block at one scale; on hosts without it this line falls back harmlessly.
 font-codepoint-map = U+2726,U+2734,U+2741=Zapf Dingbats
 {%- else %}
+{%- if vars.host_profile == "omarchy" %}
 # Omarchy owns ~/.config/ghostty/config (font, theme, keys); this file loads after it.
+{%- else %}
+font-family = {{ vars.terminal_tools_font_family }}
+font-size = {{ vars.terminal_tools_font_size }}
+theme = dark:Gruvbox Dark Hard,light:Gruvbox Light Hard
+{%- endif %}
 # BerkeleyMono has no Dingbats, and the Adwaita Mono fallback draws pi's footer provider icons at
 # mismatched sizes. Noto Sans Symbols 2 covers all three at one scale.
 font-codepoint-map = U+2726,U+2734,U+2741=Noto Sans Symbols 2
