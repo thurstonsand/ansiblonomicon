@@ -114,9 +114,9 @@ IT treats Codex as an appliance. Self Service installs the `codex` cask, which `
 | File                                                        | Purpose                                                     |
 | ----------------------------------------------------------- | ----------------------------------------------------------- |
 | `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml` | Native private language-tool additions                      |
-| `mise.local.toml`                                           | Work-only exclusions for project tools supplied by Homebrew |
+| `mise.local.toml`                                           | Work-only exclusions for project tools                      |
 
-`mise.local.toml` disables `markdownlint-cli2` and `npm:mcp-remote`; Homebrew supplies both because Artifactory lacks the required npm releases. `language-tools.local.toml` is required before `language-tools` runs; an empty file explicitly confirms there are no private extras. The native task validates this inventory and applies the private Python-index configuration before running package managers.
+`mise.local.toml` disables `markdownlint-cli2`, which Homebrew supplies because Artifactory lacks the required npm release. It also disables tools this host does not use: `gcloud`, which only personal Google Cloud and scrypted work needs and whose installer rejects the corporate TLS-inspection certificate; `npm:mcp-remote`, whose only consumer is the Cloudflare skill's Amp-only MCP declaration; and `npm:wrangler`, because Cloudflare work does not happen here, so `workers:typecheck` fails on this host. `language-tools.local.toml` is required before `language-tools` runs; an empty file explicitly confirms there are no private extras. The native task validates this inventory and applies the private Python-index configuration before running package managers.
 
 ```toml
 [tools.ruby]
@@ -151,7 +151,7 @@ Declared for the `work` profile in `bootstrap/capabilities/agent-harness/catalog
 
 ## MCP Servers
 
-Native agent configuration reads `[[mcp_servers]]` from the host-local `data.toml` and registers Claude user-scope servers and Codex `[mcp_servers]` tables. An HTTP entry's `bearer_token_env_var` names the environment variable holding its bearer token. Repo-local skills can only launch subprocess MCP servers, so the Cloudflare skill uses Homebrew's `mcp-remote` to translate stdio MCP traffic to Cloudflare's authenticated HTTP endpoint. Pi and Claude's static project config support HTTP directly and bypass the adapter.
+Native agent configuration reads `[[mcp_servers]]` from the host-local `data.toml` and registers Claude user-scope servers and Codex `[mcp_servers]` tables. An HTTP entry's `bearer_token_env_var` names the environment variable holding its bearer token. The repo's pi extension `.pi/extensions/mcp.ts` skips the Cloudflare and Home Assistant MCP servers on this host. Claude's project `.mcp.json` still reaches both over HTTP directly. With no Amp here, the Cloudflare skill's `mcp-remote` adapter is not installed.
 
 ## Python Package Indexes (uv + pip)
 
