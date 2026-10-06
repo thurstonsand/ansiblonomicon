@@ -4,7 +4,7 @@ Native mise owns Neovim configuration directly. Static files use `symlink-each`,
 
 Sources live in `bootstrap/capabilities/neovim/files/`; each registered target exposes that directory as `neovim/` beside its mise environment files.
 
-Run `mise neovim` (alias `mise nvim-deps`) to apply configuration and then run the dependency sequence: personal Lazy sync (work Lazy restore), broken Mason Python-venv cleanup, personal-only `MasonToolsUpdateSync`, and Treesitter update. `mise neovim --check`, or native `mise bootstrap dotfiles apply --force --dry-run` in the target with the Neovim environments selected, previews configuration and never upgrades dependencies. Neovim itself is installed by the Brewfiles and the pod042 operator capability.
+Run `mise neovim` (alias `mise nvim-deps`) to apply configuration and then run the dependency sequence: personal Lazy sync (work Lazy restore), broken Mason Python-venv cleanup, personal-only `MasonToolsUpdateSync`, and Treesitter update. `files/reconcile.lua` drives the Neovim steps, reporting only plugins that moved and the full log of any failure; run `nvim --headless '+Lazy! sync' +qa` directly for Lazy's complete output. `mise neovim --check`, or native `mise bootstrap dotfiles apply --force --dry-run` in the target with the Neovim environments selected, previews configuration and never upgrades dependencies. Neovim itself is installed by the Brewfiles and the pod042 operator capability.
 
 ## Omarchy
 

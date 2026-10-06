@@ -7,13 +7,7 @@
 [tasks."neovim:plugins"]
 description = "Restore or synchronize Neovim plugins"
 timeout = "10m"
-run = '''
-if [ "$NEOVIM_MODE" = restore ]; then
-  exec nvim --headless '+Lazy! restore' +qa
-else
-  exec nvim --headless '+Lazy! sync' +qa
-fi
-'''
+run = 'exec nvim -u "$HOME/.config/nvim/init.lua" -l neovim/reconcile.lua plugins "$NEOVIM_MODE"'
 
 [tasks."neovim:mason"]
 description = "Repair and update Neovim Mason tools"
@@ -22,7 +16,7 @@ timeout = "10m"
 run = '''
 python3 neovim/repair-mason.py || exit "$?"
 if [ "$NEOVIM_MODE" = sync ]; then
-  exec nvim --headless '+MasonToolsUpdateSync' +qa
+  exec nvim -u "$HOME/.config/nvim/init.lua" -l neovim/reconcile.lua tools
 fi
 '''
 
@@ -30,6 +24,4 @@ fi
 description = "Update Neovim plugins, tools, and parsers"
 depends = ["neovim:mason"]
 timeout = "10m"
-run = '''
-exec nvim --headless '+lua local ok, err = xpcall(function() require("nvim-treesitter").update(nil, { summary = true }):wait(600000) end, debug.traceback); if not ok then vim.api.nvim_err_writeln(err); vim.cmd.cquit() end' +qa
-'''
+run = 'exec nvim -u "$HOME/.config/nvim/init.lua" -l neovim/reconcile.lua parsers'
