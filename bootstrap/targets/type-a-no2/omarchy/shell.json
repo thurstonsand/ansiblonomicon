@@ -42,7 +42,8 @@
           "id": "omarchy.tray"
         },
         {
-          "id": "erijl.lock"
+          "id": "erijl.lock",
+          "unlockAfterHibernate": true
         },
         {
           "id": "lgse.sandman"

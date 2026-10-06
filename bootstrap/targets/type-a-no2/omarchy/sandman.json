@@ -3,6 +3,6 @@
   "display": 600,
   "lock": 600,
   "sleep": 900,
-  "hibernate": 7200,
+  "hibernate": 172800,
   "lid": "system"
 }
