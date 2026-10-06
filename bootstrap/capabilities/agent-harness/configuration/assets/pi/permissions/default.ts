@@ -2,11 +2,9 @@ import { execFileSync } from "node:child_process";
 import {
   block,
   gitValueFlags,
-  isCustomToolInput,
   matchCommand,
   matchTool,
   type PermissionsAPI,
-  type PermissionToolInput,
   request,
   type SimpleCommand,
 } from "@thurstonsand/pi-permissions";
@@ -51,7 +49,7 @@ const SQL_MUTATION_HIGHLIGHTS = [
   SQL_DDL_PATTERN,
   SQL_DCL_PATTERN,
 ] as const;
-const WORK_WEB_SEARCH_TOOL = "web_search_web_search";
+const WORK_WEB_SEARCH_TOOL = "mcp__web_search__web_search";
 
 export default function permissions(api: PermissionsAPI): void {
   api.onToolUse({
@@ -107,9 +105,8 @@ export default function permissions(api: PermissionsAPI): void {
     handler: ({ tool }) =>
       matchTool(tool, {
         custom: {
-          mcp: (tool) => requestWebSearch(webSearchTarget(tool)),
+          [WORK_WEB_SEARCH_TOOL]: requestWebSearch,
         },
-        default: (tool) => requestWebSearch(tool.toolName),
       }),
   });
 }
@@ -254,15 +251,9 @@ function isPostgresMutationStatement(command: string): boolean {
   );
 }
 
-function requestWebSearch(target: string | undefined) {
-  if (target !== WORK_WEB_SEARCH_TOOL || isSubagent()) {
+function requestWebSearch() {
+  if (isSubagent()) {
     return undefined;
   }
   return request({ approveLabel: "Commence", rejectLabel: "Reconsider" });
-}
-
-function webSearchTarget(tool: PermissionToolInput): string | undefined {
-  return isCustomToolInput(tool, "mcp") && typeof tool.input.tool === "string"
-    ? tool.input.tool
-    : undefined;
 }
