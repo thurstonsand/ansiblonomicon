@@ -32,7 +32,9 @@ Completed on 2026-10-06. Retired apps, CLIs, and listed paths are absent; the me
 5. Check that `command -v opencode gemini openclaw llm` prints nothing, and that a new shell shows the new `ls`, `cd`, and `top` aliases and prompt without errors.
 6. `_evalcache` measurement completed: scratch files used the ten init commands from the rendered `~/.zshrc`, one sourcing `~/.zshenv` and calling `_evalcache`, the other using plain `eval "$(cmd args)"`. Timed `zsh -fc "source <file>"` from `$HOME` with three warmups and 40 interleaved runs per variant. Results and the decision are above.
 
-## Work MacBook (`ML-DFC6YK6VJQ`)
+## Work MacBook (`ML-DFC6YK6VJQ`): done 2026-10-06
+
+All five steps ran on 2026-10-06, alongside the session-recovery retirement. Item 5 resolved differently from what it described: the work branch of `mason.lua.tera` now filters the Homebrew-owned tools out of `ensure_installed` instead of emptying it, so the check prints `1 js-debug-adapter` (it has no Homebrew formula) rather than `0`, and the LSPs attach from Homebrew. The neo-tree pin is committed.
 
 1. `mise run pull`
 2. `mise laptop -t agent-harness,shell,terminal-tools,user-tools,vcs,neovim`, then `homebrew` with its stamp removed as above to swap `htop` for `btop`. Delete `~/.cache/zsh/*_init.zsh*` after the plain-eval shell is applied.
