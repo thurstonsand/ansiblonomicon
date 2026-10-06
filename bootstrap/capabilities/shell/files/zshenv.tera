@@ -22,11 +22,6 @@ tmux() (
 # Environment variables
 export XDG_CONFIG_HOME="$HOME/.config"
 
-# TODO: remove once Homebrew stops denying trust.json.lock inside the build
-# sandbox. Its tap-trust check re-runs in the sandbox, can't read the lock, and
-# fails every non-official tap build with UntrustedTapError.
-export HOMEBREW_NO_REQUIRE_TAP_TRUST=1
-
 # SSH strips local terminal metadata, but rendering still happens client-side.
 # Force icon-capable Pi powerline output when using Nerd Fonts locally.
 if [[ -n "${SSH_CONNECTION:-}" ]]; then
