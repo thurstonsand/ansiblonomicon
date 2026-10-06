@@ -20,10 +20,10 @@ VCS_GIT_SCM_CONFIG = "{{ vars.git_scm_config | default(value='') }}"
 
 [bootstrap.hooks.pre-dotfiles]
 run = '''
-{% if vars.host_profile == "work" and (vars.vcs_work_email | default(value="") == "" or vars.vcs_work_signing_key | default(value="") == "") %}
+{% if vars.host_profile == "work" and (vars.vcs_work_email | default(value="") == "" or vars.vcs_work_signing_key | default(value="") == "") -%}
 echo "work vcs requires vcs_work_email and vcs_work_signing_key in mise.local.toml" >&2
 exit 1
-{% else %}
+{%- else -%}
 mise exec -- python3 vcs/validate.py
-{% endif %}
+{%- endif %}
 '''
