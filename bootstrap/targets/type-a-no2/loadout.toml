@@ -34,8 +34,8 @@ zed = "present"
 zsh-autosuggestions = "present"
 
 [aur]
+hyprwhspr = "present"
 icloudpd-bin = "present"
-openwhispr-bin = "present"
 
 [themes]
 fire-and-shadow = { source = "https://github.com/mattbbia/fire-and-shadow.git" }
