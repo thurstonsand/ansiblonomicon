@@ -22,14 +22,6 @@ def read_models(path: Path) -> dict[str, Any]:
     return cast(dict[str, Any], document["models"])
 
 
-def omarchy_vscode_theme() -> str:
-    # Mirrors omarchy-theme-set-vscode so a reconcile keeps whatever theme Omarchy last applied.
-    descriptor = Path.home() / ".local/state/omarchy/current/theme/vscode.json"
-    if descriptor.exists():
-        return str(json.loads(descriptor.read_text())["name"])
-    return "Omarchy"
-
-
 def vscode_settings(args: argparse.Namespace) -> dict[str, Any]:
     result = read_jsonc("vscode-settings.jsonc")
     result["editor.fontFamily"] = args.proportional_font
@@ -47,7 +39,6 @@ def vscode_settings(args: argparse.Namespace) -> dict[str, Any]:
         gopls["buildFlags"] = [args.gopls_build_flags]
     if args.profile == "omarchy":
         result["update.mode"] = "none"
-        result["workbench.colorTheme"] = omarchy_vscode_theme()
     return result
 
 
