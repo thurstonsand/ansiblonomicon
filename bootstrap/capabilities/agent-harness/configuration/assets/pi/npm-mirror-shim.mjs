@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 // Pi installs git packages with `npm install --omit=dev`, but npm still
-// resolves dev dependencies. Packages pin @earendil-works/pi-* dev versions the
-// work mirror may lack, and Pi supplies those modules at runtime anyway, so a
-// git-package install drops them from package.json for the duration of the run.
+// resolves dev dependencies, and any the work mirror lacks fail the install.
+// None are installed anyway, so a git-package install drops them from
+// package.json for the duration of the run.
 // It also bypasses the lockfile: its pins may predate the mirror, and npm would
 // otherwise prune the dropped entries from the clone's tracked lockfile.
 // Pi's npmCommand names npm after `--`, which tells Pi to pass its npm-specific
@@ -20,14 +20,10 @@ if (args[0] === "install" && args.slice(1).every((arg) => arg.startsWith("-"))) 
   args.push("--no-package-lock");
   original = readFileSync(manifest, "utf8");
   const parsed = JSON.parse(original);
-  const dev = parsed.devDependencies ?? {};
-  const kept = Object.fromEntries(
-    Object.entries(dev).filter(([name]) => !name.startsWith("@earendil-works/pi-")),
-  );
-  if (Object.keys(kept).length === Object.keys(dev).length) {
+  if (parsed.devDependencies === undefined) {
     original = undefined;
   } else {
-    parsed.devDependencies = kept;
+    delete parsed.devDependencies;
     writeFileSync(manifest, `${JSON.stringify(parsed, null, 2)}\n`);
   }
 }
