@@ -1,6 +1,6 @@
 # Session-recovery follow-ups
 
-`refactor!: retire session recovery and the sessions CLI` deleted the recovery tree and the `sessions` CLI from the repo. The work Mac reconciled it on 2026-10-06. Every other host still carries the installed state, and the repo carries temporary retirement declarations until they have all reconciled.
+`refactor!: retire session recovery and the sessions CLI` deleted the recovery tree and the `sessions` CLI from the repo. The work Mac reconciled it on 2026-10-06 and pod042 on 2026-10-07. The other two hosts still carry the installed state, and the repo carries temporary retirement declarations until they have all reconciled.
 
 Two things the work Mac taught us:
 
@@ -23,17 +23,9 @@ Two things the work Mac taught us:
 2. `mise omarchy -t agent-config,shell`
 3. Do the Claude hook check above, restart running agents, and check the same paths as the personal MacBook's step 4.
 
-## pod042
-
-pod042 loses its recovery tracking for good; Agent Switchboard does not cover it.
-
-1. From a MacBook, run `mise pod042`. Its `operator` capability deletes `/home/thurstonsand/.local/bin/sessions`, and `shell` deletes the cached completions.
-2. On pod042, `git pull`, then `mise agent-harness`.
-3. On pod042, do the Claude hook check above, restart running agents, and check the same paths as the personal MacBook's step 4.
-
 ## Self-destruct
 
-Once Thurston confirms that all three hosts have run this, delete:
+Once Thurston confirms that both remaining hosts have run this, delete:
 
 - this file
 - the `## Pending: session-recovery follow-ups` section in `AGENTS.md`

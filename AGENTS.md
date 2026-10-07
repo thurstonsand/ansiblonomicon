@@ -8,7 +8,7 @@ See @CONTEXT.md for project vocabulary.
 
 ## Pending: session-recovery follow-ups
 
-If `hostname -s` is `Thurstons-MacBook-Pro`, `type-a-no2`, or `pod042`, read SESSION_RECOVERY_FOLLOWUPS.md before anything else and walk me through it.
+If `hostname -s` is `Thurstons-MacBook-Pro` or `type-a-no2`, read SESSION_RECOVERY_FOLLOWUPS.md before anything else and walk me through it.
 
 ## Ethos
 
