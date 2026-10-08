@@ -18,9 +18,14 @@
 "apt:pulseaudio-utils" = "latest"
 "apt:libwayland-dev" = "latest"
 "apt:libxkbcommon-dev" = "latest"
+"apt:x11vnc" = "latest"
+"apt:tigervnc-viewer" = "latest"
 
 [bootstrap.files."/etc/chromium/policies/managed/chatgpt.json"]
-source = "remote-development/desktop/chatgpt-extension-policy.json"
+state = "absent"
+
+[bootstrap.files."/etc/chromium/policies/managed/extensions.json"]
+source = "remote-development/desktop/extension-policy.json"
 owner = "root"
 group = "root"
 mode = "0644"
@@ -54,6 +59,11 @@ mode = "0755"
 owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
+
+[bootstrap.directories."/home/thurstonsand/.cache/1password-xvfb"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0700"
 
 [bootstrap.directories."/home/thurstonsand/.config/labwc"]
 owner = "thurstonsand"
@@ -105,10 +115,14 @@ mode = "0755"
 "/home/thurstonsand/.config/xdg-desktop-portal/portals.conf" = { source = "remote-development/desktop/portals.conf", mode = "symlink" }
 "/home/thurstonsand/.local/bin/desktop-chromium" = { source = "remote-development/desktop/desktop-chromium", mode = "symlink" }
 "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.openai.codexextension.json" = { source = "/home/thurstonsand/.config/chromium/NativeMessagingHosts/com.openai.codexextension.json", mode = "symlink" }
+"/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.1password.1password.json" = { source = "remote-development/desktop/1password-native-messaging.json", mode = "symlink" }
+"/home/thurstonsand/.local/bin/1password-window" = { source = "remote-development/desktop/1password-window", mode = "symlink" }
+"/home/thurstonsand/.local/bin/1password-browser-support" = { source = "remote-development/desktop/1password-browser-support", mode = "symlink" }
 # User services must remain runnable while this checkout is unavailable.
 "/home/thurstonsand/.config/systemd/user/amp-remote.service" = { source = "remote-development/amp-remote.service", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/herdr.service" = { source = "remote-development/herdr.service", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/chatgpt.service" = { source = "remote-development/chatgpt.service", mode = "copy" }
+"/home/thurstonsand/.config/systemd/user/1password.service" = { source = "remote-development/1password.service", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.path" = { source = "remote-development/chatgpt-upgrade.path", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.service" = { source = "remote-development/chatgpt-upgrade.service", mode = "copy" }
 "/home/thurstonsand/.local/bin/chatgpt-upgrade" = { source = "remote-development/chatgpt-upgrade", mode = "copy" }
@@ -127,6 +141,13 @@ if [ "$(dpkg-query -W -f '${Version}' ghostty 2>/dev/null || true)" != "${tag%-*
   chmod 0644 "$deb"
   sudo env DEBIAN_FRONTEND=noninteractive apt-get install --yes "$deb"
   rm "$deb"
+fi
+# 1Password's package installs and then owns its own apt repository, so only the first install comes from here.
+if ! dpkg-query -W -f '${Status}' 1password 2>/dev/null | grep -q 'ok installed'; then
+  curl -fsSL -o /tmp/1password-latest.deb https://downloads.1password.com/linux/debian/amd64/stable/1password-latest.deb
+  chmod 0644 /tmp/1password-latest.deb
+  sudo env DEBIAN_FRONTEND=noninteractive apt-get install --yes /tmp/1password-latest.deb
+  rm /tmp/1password-latest.deb
 fi
 remote-development/waymote.sh
 python3 remote-development/services.py apply

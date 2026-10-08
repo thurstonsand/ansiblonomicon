@@ -17,6 +17,7 @@ UNITS = (
     "herdr.service",
     "chatgpt.service",
     "chatgpt-upgrade.path",
+    "1password.service",
 )
 T3 = HOME / ".local/bin/t3"
 
@@ -117,7 +118,7 @@ def main() -> None:
         print(json.dumps(asdict(herdr_server())), flush=True)
         print(
             "Apply: enable operator linger if absent; vendor-idempotent t3 service install; "
-            "stop any Herdr server systemd does not own, losing its panes; start all four "
+            "stop any Herdr server systemd does not own, losing its panes; start all five "
             "services and the ChatGPT upgrade watch, restarting on unit changes and on a "
             "stale Herdr or ChatGPT binary."
         )
@@ -176,6 +177,14 @@ def main() -> None:
             "chatgpt-upgrade.path",
         )
         run("systemctl", "--user", "start", "chatgpt-upgrade.service")
+        # Restarting 1Password locks it until someone types the account password into 1password-window.
+        run("systemctl", "--user", "enable", "1password.service")
+        run(
+            "systemctl",
+            "--user",
+            "restart" if changed["1password.service"] else "start",
+            "1password.service",
+        )
         # A Herdr client that finds no socket spawns its own server, which then owns the
         # socket and holds the login session's kernel keyring. Logging out revokes that
         # keyring and every agent credential store reading through it. Handing the socket
