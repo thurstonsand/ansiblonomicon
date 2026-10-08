@@ -56,8 +56,8 @@ resource "unifi_wlan" "scanners" {
   # On WPA3 transition the Canon answered unicast normally and ignored every
   # broadcast and multicast frame, so it served IPP and the Canon app while being
   # invisible to any discovery browse. It started answering seconds after this
-  # became plain WPA2. Its reception still lapses at times, which is unexplained,
-  # but it announces itself unprompted often enough for the gateway to cache it.
+  # became plain WPA2. Asleep it still ignores multicast, so the pod042 mDNS
+  # beacon answers for it.
   wpa3_support    = false
   wpa3_transition = false
   pmf_mode        = "optional"

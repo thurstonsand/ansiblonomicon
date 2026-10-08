@@ -48,7 +48,7 @@ The controller was factory-reset and bootstrapped behind the BGW620 on UDM port 
 - YoRHa may initiate toward Bunker, Lunar Tear, Scanners, and The Village, with automatic return traffic
 - Lunar Tear may initiate toward Scanners, with automatic return traffic
 - Bunker initiation toward YoRHa has an explicit logged block; the zone matrix denies other unapproved inter-zone initiation
-- Gateway mDNS Proxy uses Custom mode for YoRHa, Lunar Tear, Scanners, and The Village; Bunker remains excluded. Service scope contains the predefined Apple AirPlay and HomeKit groups plus the AirPrint, AirScan, Philips Hue, and explicit `_hap._tcp.local` HomeKit Accessory custom services. The gateway browses only service types a network lists when asked, and the Canon printer never answers, so `pod042 mDNS Beacon` on Scanners answers on its behalf.
+- Gateway mDNS Proxy uses Custom mode for YoRHa, Lunar Tear, Scanners, and The Village; Bunker remains excluded. Service scope contains the predefined Apple AirPlay and HomeKit groups plus the AirPrint, AirScan, Philips Hue, and explicit `_hap._tcp.local` HomeKit Accessory custom services. The gateway browses only service types a network lists when asked, and the Canon printer never answers, so `pod042 mDNS Beacon` on Scanners answers on its behalf. The printer also ignores multicast while asleep, so the beacon answers its records too while it still answers ping.
 
 The full physical cutover and rollback gates live in [`docs/wayfinding/new-house-internet-cutover/tickets/03-cutover-safety-gates.md`](../../docs/wayfinding/new-house-internet-cutover/tickets/03-cutover-safety-gates.md).
 

@@ -21,13 +21,13 @@ sudo -n net-probe tcpdump -ni scanners udp port 5353   # watch the gateway's mDN
 
 The namespace is declared in `bootstrap/targets/pod042/network/probe.py` and holds no service of its own. It is also the only vantage that can watch the gateway's mDNS traffic on Scanners.
 
-`Host is unreachable` means the printer is answering no ARP, which it does whenever its radio is unwell or it is asleep. Unicast still works once something can resolve it, so install the neighbour entry by hand:
+`Host is unreachable` means the printer is answering no ARP, which it does whenever its radio is unwell. Unicast still works once something can resolve it, so install the neighbour entry by hand:
 
 ```sh
 sudo -n net-probe ip neigh replace 10.10.40.187 lladdr 14:d4:24:f2:6f:e6 dev scanners nud stale
 ```
 
-Auto Sleep Time is 10 minutes. Any unicast request wakes it, so the first HTTP call after a quiet spell may be the one that revives it.
+Auto Sleep Time is 10 minutes, and it is back asleep within a minute of waking. Asleep, it ignores multicast but still answers ARP, ping, TCP handshakes and HTTP without waking. Only an IPP request wakes it; it then works through any mDNS queries it heard while asleep, seconds to minutes late.
 
 ## Remote UI
 
@@ -62,7 +62,7 @@ Restarting is scriptable, takes about ninety seconds, and is the way to make a p
 
 IPP answers on 631 and is the fastest way to confirm the printer is healthy and knows how to print. Post a `Get-Printer-Attributes` operation to `/ipp/print`; the response names `printer-make-and-model` and lists `urf-supported`, which is what AirPrint needs. Ports 80, 443, 631, 9100 (RAW) and 515 (LPD) are open; 5353 is UDP only.
 
-Over mDNS it answers direct queries for `_ipp._tcp`, `_ipps._tcp`, `_universal._sub._ipp._tcp`, `_uscan._tcp`, `_scanner._tcp` and `_printer._tcp`, giving a complete instance, SRV and A set. It never answers `_services._dns-sd._udp` enumeration, which is why the beacon exists: the gateway browses only the types enumeration returns, so without the beacon the printer is absent from the gateway's cache and invisible to every other VLAN.
+Over mDNS it answers direct queries for `_ipp._tcp`, `_ipps._tcp`, `_universal._sub._ipp._tcp`, `_uscan._tcp`, `_scanner._tcp` and `_printer._tcp`, giving a complete instance, SRV and A set. It never answers `_services._dns-sd._udp` enumeration, which is why the beacon exists: the gateway browses only the types enumeration returns, so without the beacon the printer is absent from the gateway's cache and invisible to every other VLAN. The beacon is also its sleep proxy: it learns the printer's records whenever it hears them and answers in its place while the printer sleeps, as long as it answers ping.
 
 ## Traps already paid for
 

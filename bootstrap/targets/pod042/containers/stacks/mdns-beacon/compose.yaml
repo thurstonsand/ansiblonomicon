@@ -13,6 +13,8 @@ services:
     command:
       - python
       - /beacon.py
+      - --printer
+      - 10.10.40.187
       - _airplay._tcp.local
       - _raop._tcp.local
       - _hap._tcp.local
