@@ -19,6 +19,22 @@
 "apt:libwayland-dev" = "latest"
 "apt:libxkbcommon-dev" = "latest"
 
+[bootstrap.files."/etc/chromium/policies/managed/chatgpt.json"]
+source = "remote-development/desktop/chatgpt-extension-policy.json"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.directories."/etc/chromium/policies"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.directories."/etc/chromium/policies/managed"]
+owner = "root"
+group = "root"
+mode = "0755"
+
 [bootstrap.directories."/home/thurstonsand/.config/t3code"]
 owner = "thurstonsand"
 group = "thurstonsand"
@@ -88,6 +104,7 @@ mode = "0755"
 "/home/thurstonsand/.config/fuzzel/fuzzel.ini" = { source = "remote-development/desktop/fuzzel.ini", mode = "symlink" }
 "/home/thurstonsand/.config/xdg-desktop-portal/portals.conf" = { source = "remote-development/desktop/portals.conf", mode = "symlink" }
 "/home/thurstonsand/.local/bin/desktop-chromium" = { source = "remote-development/desktop/desktop-chromium", mode = "symlink" }
+"/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.openai.codexextension.json" = { source = "/home/thurstonsand/.config/chromium/NativeMessagingHosts/com.openai.codexextension.json", mode = "symlink" }
 # User services must remain runnable while this checkout is unavailable.
 "/home/thurstonsand/.config/systemd/user/amp-remote.service" = { source = "remote-development/amp-remote.service", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/herdr.service" = { source = "remote-development/herdr.service", mode = "copy" }
