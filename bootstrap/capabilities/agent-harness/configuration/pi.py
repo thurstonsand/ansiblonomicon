@@ -8,10 +8,11 @@ from typing import Any, cast
 WORK_HOST = "ML-DFC6YK6VJQ"
 CHANGELOG_FALLBACK = "0.99.1"
 PERSONAL_PACKAGES = [
-    ("pi-permissions", "pi-permissions"),
+    ("@thurstonsand/pi-permissions", "pi-permissions"),
     ("pi-sessions", "pi-sessions"),
     ("@thurstonsand/pi-librarian", "pi-librarian"),
     ("@thurstonsand/pi-wt", "wt/plugins/pi"),
+    ("@thurstonsand/pi-agent-switchboard", "agent-switchboard/packages/pi"),
     ("pi-doppelclaude", "pi-doppelclaude"),
     ("@thurstonsand/pi-web-tools", "pi-web-tools"),
     ("pi-powerline-footer", None),
@@ -28,6 +29,7 @@ WORK_PACKAGES = [
     "git:github.com/thurstonsand/pi-sessions",
     "git:@github.com/thurstonsand/pi-web-tools@downgrade",
     "git:github.com/thurstonsand/wt",
+    "git:github.com/thurstonsand/agent-switchboard@pi",
     "git:github.com/nicobailon/pi-interview-tool",
     "git:github.com/hazat/glimpse",
 ]

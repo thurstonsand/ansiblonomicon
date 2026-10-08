@@ -13,6 +13,11 @@ version = "latest"
 version = "latest"
 postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"'
 
+# First-party release: skip mise's default 24h supply-chain cooling.
+[tools."github:thurstonsand/agent-switchboard"]
+version = "latest"
+minimum_release_age = "0s"
+
 [npm]
 packages = []
 allow_scripts = []
