@@ -11,7 +11,7 @@
       <action name="Execute" command="fuzzel" />
     </item>
     <separator />
-    <menu id="client-list-combined-menu" label="Windows" />
+    <menu id="client-list-combined-menu" />
     <item label="Reconfigure">
       <action name="Reconfigure" />
     </item>

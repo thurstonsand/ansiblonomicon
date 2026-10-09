@@ -16,6 +16,18 @@ owner = "root"
 group = "root"
 mode = "0644"
 
+[bootstrap.files."/etc/apt/sources.list.d/labwc-forky.sources"]
+source = "remote-development/labwc-forky.sources"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/apt/preferences.d/labwc-forky"]
+source = "remote-development/labwc-forky.pref"
+owner = "root"
+group = "root"
+mode = "0644"
+
 [bootstrap.files."/etc/apt/keyrings/docker.asc"]
 source = "repositories/files/docker.asc"
 owner = "root"

@@ -1,0 +1,9 @@
+# Trixie's wlroots 0.18 aborts labwc on a diagonal scroll from Amp's Desktop tab; wlroots 0.19
+# fixed it. Forky's labwc needs newer Wayland, DRM and xkbcommon, so those families follow it too.
+Package: *
+Pin: release n=forky
+Pin-Priority: 100
+
+Package: src:labwc src:wlroots src:wayland src:libdrm src:libxkbcommon src:libsfdo src:libdisplay-info libxml2-16
+Pin: release n=forky
+Pin-Priority: 500
