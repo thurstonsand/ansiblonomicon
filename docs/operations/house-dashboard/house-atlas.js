@@ -11,6 +11,15 @@ const escapeXml = (value) =>
       })[c],
   );
 const POLAROID_LIFE = 15 * 60 * 1000;
+const MODE_NAMES = {
+  off: "Off",
+  heat: "Heat",
+  cool: "Cool",
+  heat_cool: "Heat/cool",
+  auto: "Auto",
+  dry: "Dry",
+  fan_only: "Fan",
+};
 const resource = (type, text) => ({
   location: `data:${type},${encodeURIComponent(text)}`,
   cache: true,
@@ -28,6 +37,8 @@ class HouseAtlas extends HTMLElement {
     this.floorId = "main";
     this.roomId = null;
     this.listMode = false;
+    this.controlRoom = false;
+    this.pendingTargets = new Map();
     this.cards = [];
     this.polaroids = new Map();
     this.mobile = false;
@@ -84,6 +95,13 @@ class HouseAtlas extends HTMLElement {
     }
     if (!config.override?.startsWith("input_boolean."))
       throw new Error("House Atlas requires an input_boolean override.");
+    if (
+      !config.thermostats?.length ||
+      config.thermostats.some(
+        (zone) => !zone.entity?.startsWith("climate.") || !zone.name,
+      )
+    )
+      throw new Error("House Atlas requires named climate thermostats.");
     this.config = config;
     this.render();
   }
@@ -97,6 +115,7 @@ class HouseAtlas extends HTMLElement {
     this._hass = hass;
     if (!this.config) return;
     this.updateGlobal();
+    this.updateControlRoom();
     this.updatePolaroids();
     if (!this.helpers) {
       if (!this.loading) {
@@ -186,27 +205,270 @@ class HouseAtlas extends HTMLElement {
     secure.querySelector("small").textContent = open
       .map((door) => door.name)
       .join(" · ");
+    root.querySelector(".strip").hidden = lights.hidden && secure.hidden;
     const paused = this._hass.states[this.config.override]?.state === "on";
-    const override = root.querySelector(".g-override");
-    override.classList.toggle("warn", paused);
-    override
-      .querySelector("ha-icon")
-      .setAttribute("icon", paused ? "mdi:lock-off-outline" : "mdi:lock-clock");
-    override.querySelector("b").textContent = paused
-      ? "Auto-lock & close paused"
-      : "Auto-lock & close on";
-    override.querySelector("small").textContent = paused
-      ? `Since ${this.pausedSince()} · doors stay as you leave them`
-      : perimeter
-          .map((door) => `${door.name} auto-${door.lock ? "lock" : "close"}`)
-          .join(" · ");
-    override.querySelector("button").textContent = paused ? "Resume" : "Pause";
     const stamp = root.querySelector(".stamp");
     if (stamp.hidden === paused) stamp.removeAttribute("style");
     stamp.hidden = !paused;
     if (paused)
       stamp.querySelector(".since").textContent =
         `since ${this.pausedSince()} · drag off to resume`;
+  }
+
+  zoneView(zone) {
+    const entity = this._hass.states[zone.entity];
+    const attributes = entity?.attributes || {};
+    const unit = this._hass.config.unit_system.temperature;
+    const pending = this.pendingTargets.get(zone.entity);
+    return {
+      entity,
+      attributes,
+      unit,
+      available: !!entity && !["unavailable", "unknown"].includes(entity.state),
+      current: attributes.current_temperature ?? null,
+      target: pending ? pending.value : (attributes.temperature ?? null),
+      pending: !!pending,
+      min: attributes.min_temp,
+      max: attributes.max_temp,
+      step: attributes.target_temp_step || (unit === "°C" ? 0.5 : 1),
+    };
+  }
+
+  setTarget(zone, value, delay) {
+    const view = this.zoneView(zone);
+    const target = Math.min(
+      view.max,
+      Math.max(view.min, Math.round(value / view.step) * view.step),
+    );
+    const pending = this.pendingTargets.get(zone.entity) || {};
+    clearTimeout(pending.commit);
+    clearTimeout(pending.expiry);
+    pending.value = Number(target.toFixed(1));
+    pending.state = "draft";
+    if (delay !== null)
+      pending.commit = setTimeout(() => this.commitTarget(zone.entity), delay);
+    this.pendingTargets.set(zone.entity, pending);
+    this.updateControlRoom();
+  }
+
+  async commitTarget(entity) {
+    const pending = this.pendingTargets.get(entity);
+    const { value } = pending;
+    pending.state = "sent";
+    // Nest reports the new setpoint seconds after the call returns; release the preview if it never does.
+    pending.expiry = setTimeout(() => this.clearPending(entity), 30000);
+    try {
+      await this._hass.callService("climate", "set_temperature", {
+        entity_id: entity,
+        temperature: value,
+      });
+    } catch (error) {
+      if (this.pendingTargets.get(entity)?.value === value)
+        this.clearPending(entity);
+      this.showError(error);
+    }
+  }
+
+  clearPending(entity) {
+    clearTimeout(this.pendingTargets.get(entity)?.commit);
+    clearTimeout(this.pendingTargets.get(entity)?.expiry);
+    this.pendingTargets.delete(entity);
+    this.updateControlRoom();
+  }
+
+  wireThermostat(article, zone) {
+    for (const button of article.querySelectorAll(".step"))
+      button.addEventListener("click", () => {
+        const view = this.zoneView(zone);
+        this.setTarget(
+          zone,
+          view.target + Number(button.dataset.step) * view.step,
+          700,
+        );
+      });
+    article.querySelector(".modes").addEventListener("click", (event) => {
+      const mode = event.target.closest("[data-mode]")?.dataset.mode;
+      if (mode)
+        this.perform("climate", "set_hvac_mode", zone.entity, {
+          hvac_mode: mode,
+        });
+    });
+    const mark = article.querySelector(".target-mark");
+    const track = article.querySelector(".track");
+    const valueAt = (event) => {
+      const rect = track.getBoundingClientRect();
+      const lo = Number(article.dataset.lo);
+      const hi = Number(article.dataset.hi);
+      const share = (event.clientX - rect.left) / rect.width;
+      return lo + Math.min(1, Math.max(0, share)) * (hi - lo);
+    };
+    let moved = false;
+    mark.addEventListener("keydown", (event) => {
+      const direction = {
+        ArrowLeft: -1,
+        ArrowDown: -1,
+        ArrowRight: 1,
+        ArrowUp: 1,
+      }[event.key];
+      if (!direction) return;
+      event.preventDefault();
+      const view = this.zoneView(zone);
+      this.setTarget(zone, view.target + direction * view.step, 700);
+    });
+    mark.addEventListener("pointerdown", (event) => {
+      mark.setPointerCapture(event.pointerId);
+      article.classList.add("dragging");
+      moved = false;
+    });
+    mark.addEventListener("pointermove", (event) => {
+      if (!article.classList.contains("dragging")) return;
+      moved = true;
+      this.setTarget(zone, valueAt(event), null);
+    });
+    mark.addEventListener("pointerup", (event) => {
+      if (!article.classList.contains("dragging")) return;
+      article.classList.remove("dragging");
+      if (moved) this.setTarget(zone, valueAt(event), 0);
+    });
+    mark.addEventListener("pointercancel", () => {
+      article.classList.remove("dragging");
+      if (this.pendingTargets.get(zone.entity)?.state === "draft")
+        this.clearPending(zone.entity);
+    });
+  }
+
+  updateControlRoom() {
+    if (!this.controlRoom || !this._hass) return;
+    const root = this.shadowRoot;
+    for (const article of root.querySelectorAll(".zone")) {
+      const zone = this.config.thermostats[article.dataset.zone];
+      const pending = this.pendingTargets.get(zone.entity);
+      if (
+        pending?.state === "sent" &&
+        this._hass.states[zone.entity]?.attributes.temperature === pending.value
+      ) {
+        clearTimeout(pending.expiry);
+        this.pendingTargets.delete(zone.entity);
+      }
+      this.updateThermostat(article, this.zoneView(zone));
+    }
+    const paused = this._hass.states[this.config.override]?.state === "on";
+    const policy = root.querySelector(".policy");
+    policy.classList.toggle("paused", paused);
+    policy.querySelector(".policy-state b").textContent = paused
+      ? "Paused"
+      : "On";
+    policy.querySelector(".policy-state small").textContent = paused
+      ? `Since ${this.pausedSince()} · doors stay as you leave them`
+      : this.perimeter()
+          .map((door) => `${door.name} auto-${door.lock ? "lock" : "close"}`)
+          .join(" · ");
+    policy.querySelector(".policy-note").textContent = paused
+      ? "Resuming locks and closes anything left open."
+      : "Pause to leave doors as they are until you resume.";
+    policy.querySelector(".policy-toggle").textContent = paused
+      ? "Resume"
+      : "Pause";
+  }
+
+  updateThermostat(article, view) {
+    const format = (value) =>
+      `${Number.isInteger(value) ? value : value.toFixed(1)}${view.unit}`;
+    article.classList.toggle("unavailable", !view.available);
+    article.querySelector(".action").textContent = view.available
+      ? (view.attributes.hvac_action || "").replaceAll("_", " ")
+      : "Unavailable";
+    const modes = view.attributes.hvac_modes || [];
+    const group = article.querySelector(".modes");
+    if (group.dataset.modes !== modes.join()) {
+      group.dataset.modes = modes.join();
+      group.innerHTML = modes
+        .map(
+          (mode) =>
+            `<button data-mode="${escapeXml(mode)}">${escapeXml(MODE_NAMES[mode] || mode.replaceAll("_", " "))}</button>`,
+        )
+        .join("");
+    }
+    for (const button of group.children) {
+      button.disabled = !view.available;
+      button.setAttribute(
+        "aria-pressed",
+        String(view.available && button.dataset.mode === view.entity.state),
+      );
+    }
+    const [lower, raise] = article.querySelectorAll(".step");
+    const fixed = !view.available || view.target === null;
+    lower.disabled = fixed || view.target <= view.min;
+    raise.disabled = fixed || view.target >= view.max;
+    const values = [view.current, view.target].filter((v) => v !== null);
+    const rule = article.querySelector(".rule");
+    rule.hidden = !view.available || !values.length;
+    if (rule.hidden) return;
+    if (!article.classList.contains("dragging")) {
+      const label = view.unit === "°C" ? 1 : 2;
+      const span = label * 6;
+      const margin = span / 4;
+      let lo = Math.floor((Math.min(...values) - margin) / label) * label;
+      let hi = Math.max(
+        lo + span,
+        Math.ceil((Math.max(...values) + margin) / label) * label,
+      );
+      if (lo < view.min) [lo, hi] = [view.min, Math.max(hi, view.min + span)];
+      if (hi > view.max)
+        [lo, hi] = [Math.max(view.min, view.max - span), view.max];
+      if (article.dataset.scale !== `${lo}:${hi}:${view.step}`) {
+        article.dataset.scale = `${lo}:${hi}:${view.step}`;
+        article.dataset.lo = lo;
+        article.dataset.hi = hi;
+        const ticks = [];
+        for (let value = lo; value <= hi + 1e-9; value += view.step) {
+          const left = ((value - lo) / (hi - lo)) * 100;
+          const major =
+            Math.abs(value / label - Math.round(value / label)) < 1e-9;
+          ticks.push(
+            `<span class="tick ${major ? "major" : ""}" style="left:${left}%"></span>${major ? `<span class="tick-label" style="left:${left}%">${Number(value.toFixed(1))}</span>` : ""}`,
+          );
+        }
+        article.querySelector(".ticks").innerHTML = ticks.join("");
+      }
+    }
+    const lo = Number(article.dataset.lo);
+    const hi = Number(article.dataset.hi);
+    const at = (value) =>
+      `${Math.min(100, Math.max(0, ((value - lo) / (hi - lo)) * 100))}%`;
+    const measured = article.querySelector(".measured-mark");
+    measured.hidden = view.current === null;
+    if (view.current !== null) {
+      measured.style.left = at(view.current);
+      measured.querySelector("small").innerHTML =
+        `Measured <b>${format(view.current)}</b>`;
+    }
+    const target = article.querySelector(".target-mark");
+    target.hidden = view.target === null;
+    target.classList.toggle("pending", view.pending);
+    if (view.target !== null) {
+      target.style.left = at(view.target);
+      target.querySelector("small").innerHTML =
+        `Target <b>${format(view.target)}</b>`;
+      target.setAttribute("aria-valuemin", view.min);
+      target.setAttribute("aria-valuemax", view.max);
+      target.setAttribute("aria-valuenow", view.target);
+      target.setAttribute(
+        "aria-valuetext",
+        `${format(view.target)}${view.pending ? ", setting" : ""}`,
+      );
+    }
+  }
+
+  setControlRoom(open) {
+    this.controlRoom = open;
+    if (open) this.listMode = false;
+    if (open && this.roomId) {
+      this.roomId = null;
+      this.renderMap();
+      this.renderDetails();
+    }
+    this.updateMode();
   }
 
   secureHouse() {
@@ -470,6 +732,7 @@ class HouseAtlas extends HTMLElement {
           min-height: calc(100dvh - 56px);
         }
         * { box-sizing: border-box; }
+        [hidden] { display: none !important; }
         button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; min-height: 48px; }
         button:focus-visible { outline: 3px solid var(--atlas-accent); outline-offset: 3px; }
         button:disabled { opacity: .45; cursor: default; }
@@ -519,6 +782,44 @@ class HouseAtlas extends HTMLElement {
         .g-text b { display: block; font-weight: 600; font-size: 14px; }
         .g-text small { display: block; font-size: 12px; color: var(--atlas-muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .g-cell button { background: var(--atlas-bg); border: 1px solid var(--atlas-border); border-radius: 6px; padding: 0 14px; font-size: 12px; white-space: nowrap; }
+        .desk-title { font: 400 24px/1.15 Georgia,serif; margin: 22px 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--atlas-border); }
+        .desk { display: grid; grid-template-columns: repeat(var(--zones),minmax(0,1fr)) minmax(240px,.7fr); gap: 16px; align-items: stretch; }
+        .instrument { min-width: 0; border: 1px solid var(--atlas-border); background: var(--atlas-surface); border-radius: 8px; padding: 16px 18px 18px; }
+        .instrument-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+        .instrument-head h2 { font: 400 22px/1.2 Georgia,serif; margin: 0; }
+        .action { font-size: 12px; color: var(--atlas-muted); text-transform: capitalize; }
+        .zone.unavailable .action { color: var(--atlas-error); }
+        .rule { padding: 34px 14px 50px; }
+        .track { position: relative; height: 40px; }
+        .track::before { content: ""; position: absolute; left: 0; right: 0; top: 20px; border-top: 1px solid var(--atlas-wall); }
+        .tick { position: absolute; top: 14px; width: 1px; height: 6px; translate: -50% 0; background: var(--atlas-wall); }
+        .tick.major { top: 8px; height: 12px; }
+        .tick-label { position: absolute; top: 25px; translate: -50% 0; font-size: 11px; color: var(--atlas-muted); }
+        .measured-mark { position: absolute; top: 2px; width: 4px; height: 20px; translate: -50% 0; background: var(--atlas-fg); border-radius: 1px; pointer-events: none; }
+        .measured-mark small, .target-mark small { position: absolute; left: 50%; translate: -50% 0; white-space: nowrap; font-size: 12px; color: var(--atlas-muted); }
+        .measured-mark small { bottom: calc(100% + 4px); }
+        .measured-mark b, .target-mark b { color: var(--atlas-fg); font-weight: 600; }
+        .target-mark { position: absolute; top: 38px; width: 44px; height: 30px; translate: -50% 0; cursor: grab; touch-action: none; outline: none; }
+        .target-mark::before { content: ""; position: absolute; left: 50%; top: 2px; translate: -50% 0; border: 8px solid transparent; border-top: 0; border-bottom: 13px solid var(--atlas-light); }
+        .target-mark small { top: 18px; }
+        .target-mark:focus-visible::after { content: ""; position: absolute; inset: -2px 6px 8px; border: 2px solid var(--atlas-accent); border-radius: 4px; }
+        .target-mark.pending::before { opacity: .55; }
+        .target-mark.pending small { font-style: italic; }
+        .dragging .target-mark { cursor: grabbing; }
+        .adjust { display: flex; flex-wrap: wrap; gap: 8px; }
+        .step { flex: 0 0 48px; border: 1px solid var(--atlas-border); background: var(--atlas-bg); border-radius: 6px; font-size: 22px; line-height: 1; }
+        .modes { display: flex; flex: 1 1 240px; min-width: 0; }
+        .modes button { flex: 1; min-width: 0; padding: 0 6px; margin-left: -1px; border: 1px solid var(--atlas-border); background: var(--atlas-bg); font-size: 12px; white-space: nowrap; }
+        .modes button:first-child { margin-left: 0; border-radius: 6px 0 0 6px; }
+        .modes button:last-child { border-radius: 0 6px 6px 0; }
+        .modes button[aria-pressed=true] { position: relative; z-index: 1; border-color: var(--atlas-light); background: color-mix(in srgb, var(--atlas-light) 22%, var(--atlas-bg)); font-weight: 600; }
+        .policy { display: flex; flex-direction: column; gap: 12px; }
+        .policy-state b { display: block; font: 400 26px/1.2 Georgia,serif; margin-top: 6px; }
+        .policy.paused .policy-state b { color: var(--atlas-accent); }
+        .policy-state small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; color: var(--atlas-muted); }
+        .policy-note { margin: 0; font-size: 13px; line-height: 1.5; color: var(--atlas-muted); }
+        .policy-toggle { margin-top: auto; border: 1px solid var(--atlas-border); background: var(--atlas-bg); border-radius: 6px; }
+        .policy.paused .policy-toggle { border-color: var(--atlas-accent); background: var(--atlas-accent); color: var(--atlas-on-accent); }
         .map-panel { position: relative; }
         .stamp { position: absolute; left: 4%; top: 46%; z-index: 2; transform: rotate(-11deg); padding: 10px 18px; border: 4px double var(--atlas-accent); border-radius: 4px; background: color-mix(in srgb, var(--atlas-bg) 90%, transparent); color: var(--atlas-accent); opacity: .94; font: 700 clamp(15px,3.2cqw,24px)/1.1 Georgia,serif; letter-spacing: .12em; text-transform: uppercase; text-align: center; box-shadow: 0 1px 0 #28282818; touch-action: none; user-select: none; cursor: grab; transition: transform .4s cubic-bezier(.2,.9,.3,1.25), opacity .4s; animation: thunk .35s cubic-bezier(.3,1.6,.5,1); }
         .stamp[hidden] { display: none; }
@@ -560,7 +861,7 @@ class HouseAtlas extends HTMLElement {
           .g-cell { padding: 6px 6px 6px 12px; gap: 10px; }
           .top { padding-bottom: 12px; }
           .eyebrow { font-size: 9px; }
-          .tools { gap: 0; }
+          .tools { gap: 6px; }
           .mode { padding: 0 10px; }
           .layout { display: block; }
           .map-wrap { width: 100%; min-width: 0; max-width: 520px; }
@@ -568,6 +869,9 @@ class HouseAtlas extends HTMLElement {
           .detail-heading { padding: 24px 18px 12px; }
           .detail-heading h2 { font-size: 26px; }
           .detail-body { padding: 14px 16px 20px; }
+          .desk-title { margin: 16px 0 12px; }
+          .desk { grid-template-columns: minmax(0,1fr); gap: 12px; }
+          .instrument { padding: 14px 16px 16px; }
         }
         @media(max-height:500px) {
           .atlas { padding-top: 8px; }
@@ -577,11 +881,22 @@ class HouseAtlas extends HTMLElement {
         }
       </style>
       <main class="atlas">
-        <header class="top"><div><div class="eyebrow">Loch Highland</div><h1>House</h1></div><div class="tools"><button class="mode" aria-pressed="false">Room list</button></div></header>
-        <section class="strip" aria-label="House controls">
+        <header class="top"><div><div class="eyebrow">Loch Highland</div><h1>House</h1></div><div class="tools"><button class="mode control-toggle" aria-pressed="false">Control Room</button><button class="mode list-toggle" aria-pressed="false">Room list</button></div></header>
+        <section class="strip" aria-label="Suggested actions" hidden>
           <div class="g-cell g-lights" hidden><ha-icon icon="mdi:lightbulb-group-outline"></ha-icon><div class="g-text"><b></b><small></small></div><button>Turn all off</button></div>
           <div class="g-cell g-secure warn" hidden><ha-icon icon="mdi:shield-alert-outline"></ha-icon><div class="g-text"><b></b><small></small></div><button>Secure</button></div>
-          <div class="g-cell g-override"><ha-icon></ha-icon><div class="g-text"><b></b><small></small></div><button></button></div>
+        </section>
+        <section class="control-room" aria-label="Control Room" hidden>
+          <h2 class="desk-title">Control Room</h2>
+          <div class="desk" style="--zones:${this.config.thermostats.length}">
+            ${this.config.thermostats
+              .map(
+                (zone, index) =>
+                  `<article class="instrument zone" data-zone="${index}"><header class="instrument-head"><h2>${escapeXml(zone.name)}</h2><span class="action"></span></header><div class="rule"><div class="track"><div class="ticks"></div><div class="measured-mark"><small></small></div><div class="target-mark" role="slider" tabindex="0" aria-label="${escapeXml(zone.name)} target temperature"><small></small></div></div></div><div class="adjust"><button class="step" data-step="-1" aria-label="Lower ${escapeXml(zone.name)} target">−</button><button class="step" data-step="1" aria-label="Raise ${escapeXml(zone.name)} target">+</button><div class="modes" role="group" aria-label="${escapeXml(zone.name)} mode"></div></div></article>`,
+              )
+              .join("")}
+            <article class="instrument policy"><header class="instrument-head"><h2>Auto-lock &amp; close</h2></header><div class="policy-state"><b></b><small></small></div><p class="policy-note"></p><button class="policy-toggle"></button></article>
+          </div>
         </section>
         <nav class="floors" aria-label="Floors">${this.config.floors.map((floor) => `<button data-floor="${escapeXml(floor.id)}" aria-current="${floor.id === this.floorId}">${escapeXml(floor.name)}</button>`).join("")}</nav>
         <div class="layout"><section class="map-panel" aria-label="Floor map"><div class="map-wrap"></div><div class="room-list" hidden></div><div class="stamp" hidden>Auto-lock paused<small><span class="since"></span><span class="let-go">let go to resume</span></small></div></section><div class="detail-host"></div></div>
@@ -603,10 +918,17 @@ class HouseAtlas extends HTMLElement {
         this.renderDetails();
       }),
     );
-    this.shadowRoot.querySelector(".mode").addEventListener("click", () => {
-      this.listMode = !this.listMode;
-      this.updateMode();
-    });
+    this.shadowRoot
+      .querySelector(".list-toggle")
+      .addEventListener("click", () => {
+        const listMode = this.controlRoom || !this.listMode;
+        this.setControlRoom(false);
+        this.listMode = listMode;
+        this.updateMode();
+      });
+    this.shadowRoot
+      .querySelector(".control-toggle")
+      .addEventListener("click", () => this.setControlRoom(!this.controlRoom));
     this.shadowRoot
       .querySelector(".g-lights button")
       .addEventListener("click", () =>
@@ -616,9 +938,23 @@ class HouseAtlas extends HTMLElement {
       .querySelector(".g-secure button")
       .addEventListener("click", () => this.secureHouse());
     this.shadowRoot
-      .querySelector(".g-override button")
+      .querySelectorAll(".zone")
+      .forEach((article) =>
+        this.wireThermostat(
+          article,
+          this.config.thermostats[article.dataset.zone],
+        ),
+      );
+    this.shadowRoot
+      .querySelector(".policy-toggle")
       .addEventListener("click", () =>
-        this.perform("input_boolean", "toggle", this.config.override),
+        this.perform(
+          "input_boolean",
+          this._hass.states[this.config.override]?.state === "on"
+            ? "turn_off"
+            : "turn_on",
+          this.config.override,
+        ),
       );
     const stamp = this.shadowRoot.querySelector(".stamp");
     this.wireThrow(stamp, -11, {
@@ -645,6 +981,9 @@ class HouseAtlas extends HTMLElement {
         if (event.key === "Escape" && this.roomId) {
           event.stopPropagation();
           this.selectRoom(null);
+        } else if (event.key === "Escape" && this.controlRoom) {
+          event.stopPropagation();
+          this.setControlRoom(false);
         }
         if (event.key === "Enter" || event.key === " ") {
           const target = event
@@ -666,12 +1005,21 @@ class HouseAtlas extends HTMLElement {
   }
 
   updateMode() {
-    const button = this.shadowRoot.querySelector(".mode");
-    button.textContent = this.listMode ? "Floor map" : "Room list";
-    button.setAttribute("aria-pressed", String(this.listMode));
-    this.shadowRoot.querySelector(".map-wrap").hidden = this.listMode;
-    this.shadowRoot.querySelector(".room-list").hidden = !this.listMode;
+    const root = this.shadowRoot;
+    const list = root.querySelector(".list-toggle");
+    const listing = this.listMode && !this.controlRoom;
+    list.textContent = listing ? "Floor map" : "Room list";
+    list.setAttribute("aria-pressed", String(listing));
+    const control = root.querySelector(".control-toggle");
+    control.textContent = this.controlRoom ? "Floor map" : "Control Room";
+    control.setAttribute("aria-pressed", String(this.controlRoom));
+    root.querySelector(".control-room").hidden = !this.controlRoom;
+    root.querySelector(".floors").hidden = this.controlRoom;
+    root.querySelector(".layout").hidden = this.controlRoom;
+    root.querySelector(".map-wrap").hidden = this.listMode;
+    root.querySelector(".room-list").hidden = !this.listMode;
     this.updateList();
+    this.updateControlRoom();
   }
 
   selectRoom(id) {
@@ -1126,11 +1474,14 @@ class HouseAtlas extends HTMLElement {
     });
   }
 
-  async perform(domain, service, entity) {
+  async perform(domain, service, entity, data = {}) {
     const error = this.shadowRoot.querySelector(".details .error");
     if (error) error.textContent = "";
     try {
-      await this._hass.callService(domain, service, { entity_id: entity });
+      await this._hass.callService(domain, service, {
+        entity_id: entity,
+        ...data,
+      });
     } catch (error) {
       this.showError(error);
     }

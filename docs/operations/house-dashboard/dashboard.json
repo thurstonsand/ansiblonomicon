@@ -9,6 +9,16 @@
         {
           "type": "custom:house-atlas-card",
           "override": "input_boolean.door_automations_override",
+          "thermostats": [
+            {
+              "name": "Main · Foyer",
+              "entity": "climate.foyer_main_floor_thermostat"
+            },
+            {
+              "name": "Second · Landing",
+              "entity": "climate.landing_second_floor_thermostat"
+            }
+          ],
           "floors": [
             {
               "id": "basement",

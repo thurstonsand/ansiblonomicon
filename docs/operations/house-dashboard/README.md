@@ -45,11 +45,17 @@ The individual entity IDs are in the corresponding room's `lights` array. Hue sc
 
 The card's `override` key names an `input_boolean` that pauses the door automations; the card refuses to load without it. `input_boolean.door_automations_override` is a prerequisite helper, not created by these exports. `automation.garage_close_after_departure`, `automation.front_door_auto_lock_after_closed`, and `automation.basement_door_auto_lock_after_closed` each require it off and also trigger when it turns off, so resuming locks and closes anything left open.
 
-A strip of house controls sits above the floor tabs, and below the map on phones:
+Controls split by lifetime. Suggested actions appear only while relevant, above the floor tabs and below the map on phones; the strip disappears when neither applies:
 
 - **Turn all off** shows while any light in a room's `lights` list is on and turns them all off in one `light.turn_off` call.
 - **Secure** shows while a room's `lock.` entity is not locked or its `cover.` entity is not closed. It locks or closes only those.
-- **Pause** and **Resume** toggle the override. While paused, an "Auto-lock paused" stamp sits on the map; drag it off to resume.
+
+House-wide settings live in **Control Room**, opened from the header beside Room list. It replaces the floor tabs and map with a control desk: one instrument per `thermostats` entry, then Auto-lock & close. Phones stack them in one column. The suggested actions stay visible above it.
+
+- Each thermostat shows its measured temperature above a rule and a draggable target below. The minus and plus buttons wait 700 ms for further taps, then send one `climate.set_temperature`; dragging sends on release. The target stays italic and faded until HA reports the new setpoint, or for 30 seconds. Mode buttons come from the entity's `hvac_modes` and call `climate.set_hvac_mode` immediately. An unavailable thermostat disables its controls.
+- Control Room is the only place to **Pause** the override. While paused, an "Auto-lock paused" stamp sits on the map; dragging it off, or **Resume** in Control Room, turns the override off.
+
+The card's `thermostats` key lists `{name, entity}` pairs for `climate.` entities; the card refuses to load without at least one.
 
 ## Grounds
 
