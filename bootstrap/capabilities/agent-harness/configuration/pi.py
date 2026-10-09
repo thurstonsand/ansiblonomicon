@@ -76,7 +76,7 @@ def _profile(
             "handoff": sol,
             "vibe": wm["gpt_luna"]["pi_alias"],
             "enabled": [f"{opus}:high", f"{sol}:medium"],
-            "roster": [f"{opus}:high", f"{sol}:low", f"{sol}:medium", f"{sol}:high"],
+            "roster": [f"{opus}:high", f"{sol}:low", f"{sol}:high"],
             "packages": [*data.get("piWorkPackages", []), *WORK_PACKAGES],
         }
     aliases = {
@@ -101,16 +101,15 @@ def _profile(
         "vibe": aliases["luna"],
         "enabled": [
             f"{aliases['opus']}:high",
-            *(f"{aliases[k]}:medium" for k in ("fable", "astra", "sol")),
+            f"{aliases['fable']}:high",
+            f"{aliases['astra']}:medium",
+            f"{aliases['sol']}:medium",
         ],
         "roster": [
             f"{aliases['opus']}:high",
-            f"{aliases['fable']}:medium",
-            f"{aliases['astra']}:medium",
+            f"{aliases['fable']}:high",
             f"{aliases['astra']}:high",
             f"{aliases['sol']}:low",
-            f"{aliases['sol']}:medium",
-            f"{aliases['sol']}:high",
         ],
         "packages": [*packages, "npm:@howaboua/pi-smart-btw"],
     }
