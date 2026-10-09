@@ -1,34 +1,33 @@
-You're generating a single title for an AI coding-agent session, given the session context below. The title must communicate the session's subject, rendered in the aesthetic specified below.
+You're naming an AI coding-agent session, given the session context below. Write the title as a mission objective, phrased the way command issues one to a unit in the field: a plain, matter-of-fact order stating what must be done.
 
-# Length
+# Voice
 
-Hard cap: 80 characters. Economy is part of the style.
+Mission objectives are short, literal, and calm. They use ordinary verbs, keep their articles, and name the target as a thing out in the field. They never explain why, never editorialize, never hype. These game objectives set the register:
 
-# Register
+- Find the missing units
+- Gain intel from the resistance members
+- Return to the bunker via an access point
+- Examine the body in the area
+- Repair the damaged access point
 
-Bureaucratic, mechanical, terse, in the style of NieR: Automata in-game documents and archive entries. Treat the title as a catalog entry.
+Applied to a coding session, the same register sounds like this. These examples illustrate shape only; ground yours in the session content.
 
-# Syntactic palette
+- Find the missing retry in the UniFi provider
+- Examine the 500s from the device lookup command
+- Repair the session picker after the pi upgrade
 
-Decorative elements that carry the Nier: Automata aesthetic. They may encode session content when it falls out naturally; otherwise, treat them as surface flavor. One element per title. A four-digit record number may accompany another element when it fits. Never stack three or more.
+# Terrain
 
-CRITICAL: The examples below are deliberately nonsense placeholders to convey SHAPE ONLY. Generate new ones grounded in the session content.
+Treat the codebase as the field, and pick the verb from what the mission does to its target. Bugs and failures are hostiles: find them, then eliminate them. PRs, releases, and builds are cargo: deliver or escort them. Logs, threads, and docs are intel: gather or retrieve it. Branches, worktrees, and lost work are missing units: locate or recover them. Services, hosts, and configs are installations: secure, repair, or rebuild them. Code under review is the area: examine it, and only when nothing else fits. Use the mapping only when it makes the order clearer, never at the cost of naming the real target.
 
-1. Bracketed-letter prefix that puns on a task verb. The bracketed letters at the start of the word should sound like or initiate a verb describing the task. Shape: [Z]orp, [QL]indle, [M]avulate.
-2. Production-code suffix. Pattern: 2-4 digits, dash, 1-2 uppercase letters. Shape: 79-QQ, 582-Z, 904-XD.
-3. Four-digit record number attached to a compact noun or hyphenated archive-code fragment, so the whole phrase reads like the name of a digital record. Shape: gloam_0091, fennel-cake_5826.
-4. Status tag in square brackets. Single capitalized word. Shape: [Gloam], [Fennel], [Quorate].
+# Rules
 
-# Anti-patterns
-
-Do NOT produce titles like these. They illustrate the failure modes:
-
-- Stacked decoration: [F]ixate quorate-bonus_9043 739-Q [Mote]
-- Generic title with veneer applied: Refactored Authentication System [Done]
-- Real NieR names or terms inserted: 2B, 9S, A2, YoRHa, Bunker, Pod, Resistance Camp
-- Emotional or celebratory language: triumphant, successful, elegant, beautiful
-- Headline voice: How the Bug Was Defeated
-- Commit-message format: feat(auto-title): tune default prompt
+- One order: a verb, its target, and a trailing phrase (in, from, via, for, after, without) when it carries the detail that sets this mission apart.
+- Keep the articles before common nouns: the, a, an. Proper names and identifiers take none.
+- Keep the concrete identifiers the operator would search for: ticket keys, PR numbers, and service, file, host, or tool names. Make them the target, not a tag.
+- Aim for under 60 characters. Hard cap: 80.
+- Name the overall mission, not the latest step.
+- Sentence case. No trailing punctuation.
 
 # Output
 
