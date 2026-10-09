@@ -8,18 +8,18 @@ from typing import Any, cast
 WORK_HOST = "ML-DFC6YK6VJQ"
 CHANGELOG_FALLBACK = "0.99.1"
 PERSONAL_PACKAGES = [
-    ("@thurstonsand/pi-permissions", "pi-permissions"),
-    ("pi-sessions", "pi-sessions"),
-    ("@thurstonsand/pi-librarian", "pi-librarian"),
-    ("@thurstonsand/pi-wt", "wt/plugins/pi"),
-    ("@thurstonsand/pi-agent-switchboard", "agent-switchboard/packages/pi"),
-    ("pi-doppelclaude", "pi-doppelclaude"),
-    ("@thurstonsand/pi-web-tools", "pi-web-tools"),
-    ("pi-powerline-footer", None),
-    ("glimpseui", None),
-    ("pi-interview", None),
-    ("sideshow", None),
-    ("@thurstonsand/pi-paste", None),
+    "@thurstonsand/pi-permissions",
+    "pi-sessions",
+    "@thurstonsand/pi-librarian",
+    "@thurstonsand/pi-wt",
+    "@thurstonsand/pi-agent-switchboard",
+    "pi-doppelclaude",
+    "@thurstonsand/pi-web-tools",
+    "pi-powerline-footer",
+    "glimpseui",
+    "pi-interview",
+    "sideshow",
+    "@thurstonsand/pi-paste",
 ]
 # Glimpse's Linux binary cannot resize windows until HazAT/glimpse merges this branch.
 GLIMPSE_LINUX_FORK = "git:github.com/thurstonsand/glimpse@fix/linux-resize"
@@ -60,7 +60,6 @@ def _alias(models: Mapping[str, Any], provider: str, name: str) -> str:
 
 
 def _profile(
-    home: Path,
     hostname: str,
     models: Mapping[str, Any],
     data: Mapping[str, Any],
@@ -90,13 +89,7 @@ def _profile(
             ("luna", "openai", "gpt_luna"),
         )
     }
-    mac = hostname not in {"pod042", "type-a-no2"}
-    develop_dir = Path(str(data["developDir"]))
-    projects_root = develop_dir if develop_dir.is_absolute() else home / develop_dir
-    packages = [
-        str(projects_root / local) if mac and local else f"npm:{npm}"
-        for npm, local in PERSONAL_PACKAGES
-    ]
+    packages = [f"npm:{npm}" for npm in PERSONAL_PACKAGES]
     if hostname == "type-a-no2":
         packages[packages.index("npm:glimpseui")] = GLIMPSE_LINUX_FORK
     return {
@@ -193,7 +186,7 @@ def _settings(
     data: Mapping[str, Any],
     models: Mapping[str, Any],
 ) -> dict[str, Any]:
-    profile = _profile(home, hostname, models, data)
+    profile = _profile(hostname, models, data)
     current = _read_object(home / ".pi/agent/settings.json", strict=False)
     settings: dict[str, Any] = {
         "defaultProvider": profile["provider"],
@@ -372,9 +365,7 @@ def render(
     """Return HOME-relative destination names and rendered contents."""
     models = data["models"]
     existing_auth = _read_object(home / ".pi/agent/auth.json", strict=True)
-    retired = (
-        {"anthropic"} if hostname == WORK_HOST else {"anthropic", "openai", "google"}
-    )
+    retired = {"anthropic"} if hostname == WORK_HOST else {"anthropic", "google"}
     auth = {key: value for key, value in existing_auth.items() if key not in retired}
     settings = _json(_settings(repo, home, hostname, data, models))
     auth_content = _json(auth)
