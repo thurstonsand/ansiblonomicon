@@ -156,6 +156,28 @@ const LISTING_MUTATING_FLAGS: Record<string, readonly string[]> = {
   ],
 };
 
+const LIST_MODE_FLAGS: Record<string, readonly string[]> = {
+  branch: [
+    "-l",
+    "--list",
+    "--contains",
+    "--no-contains",
+    "--merged",
+    "--no-merged",
+    "--points-at",
+  ],
+  tag: [
+    "-l",
+    "--list",
+    "-n",
+    "--contains",
+    "--no-contains",
+    "--merged",
+    "--no-merged",
+    "--points-at",
+  ],
+};
+
 function allowReadOnly(
   ...predicates: readonly ((command: SimpleCommand) => boolean)[]
 ): (command: SimpleCommand) => boolean {
@@ -182,9 +204,11 @@ function isReadOnlyListing(command: SimpleCommand): boolean {
   if (subcommand === undefined) return false;
 
   const mutatingFlags = LISTING_MUTATING_FLAGS[subcommand];
-  if (!mutatingFlags) return false;
+  const listModeFlags = LIST_MODE_FLAGS[subcommand];
+  if (!mutatingFlags || !listModeFlags) return false;
 
-  return positionals.length === 1 && !command.hasFlag(...mutatingFlags);
+  const listing = positionals.length === 1 || command.hasFlag(...listModeFlags);
+  return listing && !command.hasFlag(...mutatingFlags);
 }
 
 function isReadOnlyClean(command: SimpleCommand): boolean {
