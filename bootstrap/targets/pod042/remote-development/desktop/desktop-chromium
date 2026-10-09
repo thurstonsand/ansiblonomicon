@@ -1,6 +1,9 @@
 #!/bin/sh
 # A dedicated profile, because Chromium refuses remote debugging on its default one.
+# The runner tears the compositor down on every restart, so reopen the last tabs without asking.
 exec chromium \
+  --restore-last-session \
+  --hide-crash-restore-bubble \
   --ozone-platform=wayland \
   --user-data-dir="$HOME/.config/chromium-desktop" \
   --remote-debugging-address=127.0.0.1 \

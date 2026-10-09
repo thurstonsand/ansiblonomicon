@@ -120,7 +120,13 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
     if capability == "agent-harness":
         return ("base", "operator", "agent-harness")
     if capability == "remote-development":
-        return ("base", "operator", "agent-harness", "remote-development")
+        return (
+            "repositories",
+            "base",
+            "operator",
+            "agent-harness",
+            "remote-development",
+        )
     if capability == "terminal-theme":
         return ("terminal-theme",)
     if capability == "shell":
