@@ -19,6 +19,7 @@
               "entity": "climate.landing_second_floor_thermostat"
             }
           ],
+          "thermostatScale": [66, 76],
           "floors": [
             {
               "id": "basement",
@@ -286,7 +287,11 @@
                   "name": "Breakfast Nook",
                   "path": "M250 410h140v90h-140Z",
                   "label": [320.0, 455.0],
-                  "lines": ["Breakfast Nook"]
+                  "lines": ["Breakfast Nook"],
+                  "lights": [
+                    "light.breakfast_nook_blue_lamp",
+                    "light.breakfast_nook_yellow_lamp"
+                  ]
                 }
               ],
               "openings": [

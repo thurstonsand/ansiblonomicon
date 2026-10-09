@@ -102,6 +102,9 @@ class HouseAtlas extends HTMLElement {
       )
     )
       throw new Error("House Atlas requires named climate thermostats.");
+    const [low, high] = config.thermostatScale || [];
+    if (!Number.isInteger(low) || !Number.isInteger(high) || low >= high)
+      throw new Error("House Atlas requires a thermostatScale of [low, high].");
     this.config = config;
     this.render();
   }
@@ -236,9 +239,13 @@ class HouseAtlas extends HTMLElement {
 
   setTarget(zone, value, delay) {
     const view = this.zoneView(zone);
+    const [low, high] = this.config.thermostatScale;
     const target = Math.min(
-      view.max,
-      Math.max(view.min, Math.round(value / view.step) * view.step),
+      Math.min(view.max, high),
+      Math.max(
+        Math.max(view.min, low),
+        Math.round(value / view.step) * view.step,
+      ),
     );
     const pending = this.pendingTargets.get(zone.entity) || {};
     clearTimeout(pending.commit);
@@ -286,21 +293,18 @@ class HouseAtlas extends HTMLElement {
           700,
         );
       });
-    article.querySelector(".modes").addEventListener("click", (event) => {
-      const mode = event.target.closest("[data-mode]")?.dataset.mode;
-      if (mode)
-        this.perform("climate", "set_hvac_mode", zone.entity, {
-          hvac_mode: mode,
-        });
-    });
+    article.querySelector(".hvac-mode").addEventListener("change", (event) =>
+      this.perform("climate", "set_hvac_mode", zone.entity, {
+        hvac_mode: event.target.value,
+      }),
+    );
     const mark = article.querySelector(".target-mark");
     const track = article.querySelector(".track");
     const valueAt = (event) => {
       const rect = track.getBoundingClientRect();
-      const lo = Number(article.dataset.lo);
-      const hi = Number(article.dataset.hi);
+      const [low, high] = this.config.thermostatScale;
       const share = (event.clientX - rect.left) / rect.width;
-      return lo + Math.min(1, Math.max(0, share)) * (hi - lo);
+      return low + Math.min(1, Math.max(0, share)) * (high - low);
     };
     let moved = false;
     mark.addEventListener("keydown", (event) => {
@@ -355,17 +359,9 @@ class HouseAtlas extends HTMLElement {
     const paused = this._hass.states[this.config.override]?.state === "on";
     const policy = root.querySelector(".policy");
     policy.classList.toggle("paused", paused);
-    policy.querySelector(".policy-state b").textContent = paused
-      ? "Paused"
-      : "On";
-    policy.querySelector(".policy-state small").textContent = paused
-      ? `Since ${this.pausedSince()} · doors stay as you leave them`
-      : this.perimeter()
-          .map((door) => `${door.name} auto-${door.lock ? "lock" : "close"}`)
-          .join(" · ");
-    policy.querySelector(".policy-note").textContent = paused
-      ? "Resuming locks and closes anything left open."
-      : "Pause to leave doors as they are until you resume.";
+    policy.querySelector(".policy-doors").textContent = this.perimeter()
+      .map((door) => door.name)
+      .join(" · ");
     policy.querySelector(".policy-toggle").textContent = paused
       ? "Resume"
       : "Pause";
@@ -379,77 +375,51 @@ class HouseAtlas extends HTMLElement {
       ? (view.attributes.hvac_action || "").replaceAll("_", " ")
       : "Unavailable";
     const modes = view.attributes.hvac_modes || [];
-    const group = article.querySelector(".modes");
-    if (group.dataset.modes !== modes.join()) {
-      group.dataset.modes = modes.join();
-      group.innerHTML = modes
+    const select = article.querySelector(".hvac-mode");
+    if (select.dataset.modes !== modes.join()) {
+      select.dataset.modes = modes.join();
+      select.innerHTML = modes
         .map(
           (mode) =>
-            `<button data-mode="${escapeXml(mode)}">${escapeXml(MODE_NAMES[mode] || mode.replaceAll("_", " "))}</button>`,
+            `<option value="${escapeXml(mode)}">${escapeXml(MODE_NAMES[mode] || mode.replaceAll("_", " "))}</option>`,
         )
         .join("");
     }
-    for (const button of group.children) {
-      button.disabled = !view.available;
-      button.setAttribute(
-        "aria-pressed",
-        String(view.available && button.dataset.mode === view.entity.state),
-      );
+    select.hidden = !view.available || !modes.length;
+    select.value = view.entity.state;
+    const offline = article.querySelector(".offline");
+    offline.hidden = view.available;
+    if (!view.available) {
+      const since = new Date(view.entity.last_changed);
+      offline.textContent = `No reading since ${
+        since.toDateString() === new Date().toDateString()
+          ? since.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
+          : since.toLocaleDateString([], { month: "short", day: "numeric" })
+      }`;
     }
-    const [lower, raise] = article.querySelectorAll(".step");
-    const fixed = !view.available || view.target === null;
-    lower.disabled = fixed || view.target <= view.min;
-    raise.disabled = fixed || view.target >= view.max;
     const values = [view.current, view.target].filter((v) => v !== null);
     const rule = article.querySelector(".rule");
     rule.hidden = !view.available || !values.length;
     if (rule.hidden) return;
-    if (!article.classList.contains("dragging")) {
-      const label = view.unit === "°C" ? 1 : 2;
-      const span = label * 6;
-      const margin = span / 4;
-      let lo = Math.floor((Math.min(...values) - margin) / label) * label;
-      let hi = Math.max(
-        lo + span,
-        Math.ceil((Math.max(...values) + margin) / label) * label,
-      );
-      if (lo < view.min) [lo, hi] = [view.min, Math.max(hi, view.min + span)];
-      if (hi > view.max)
-        [lo, hi] = [Math.max(view.min, view.max - span), view.max];
-      if (article.dataset.scale !== `${lo}:${hi}:${view.step}`) {
-        article.dataset.scale = `${lo}:${hi}:${view.step}`;
-        article.dataset.lo = lo;
-        article.dataset.hi = hi;
-        const ticks = [];
-        for (let value = lo; value <= hi + 1e-9; value += view.step) {
-          const left = ((value - lo) / (hi - lo)) * 100;
-          const major =
-            Math.abs(value / label - Math.round(value / label)) < 1e-9;
-          ticks.push(
-            `<span class="tick ${major ? "major" : ""}" style="left:${left}%"></span>${major ? `<span class="tick-label" style="left:${left}%">${Number(value.toFixed(1))}</span>` : ""}`,
-          );
-        }
-        article.querySelector(".ticks").innerHTML = ticks.join("");
-      }
-    }
-    const lo = Number(article.dataset.lo);
-    const hi = Number(article.dataset.hi);
+    const [low, high] = this.config.thermostatScale;
     const at = (value) =>
-      `${Math.min(100, Math.max(0, ((value - lo) / (hi - lo)) * 100))}%`;
+      `${Math.min(100, Math.max(0, ((value - low) / (high - low)) * 100))}%`;
     const measured = article.querySelector(".measured-mark");
     measured.hidden = view.current === null;
     if (view.current !== null) {
       measured.style.left = at(view.current);
-      measured.querySelector("small").innerHTML =
-        `Measured <b>${format(view.current)}</b>`;
+      measured.setAttribute("aria-label", `Measured ${format(view.current)}`);
     }
+    const [lower, raise] = article.querySelectorAll(".step");
+    lower.disabled =
+      view.target === null || view.target <= Math.max(view.min, low);
+    raise.disabled =
+      view.target === null || view.target >= Math.min(view.max, high);
     const target = article.querySelector(".target-mark");
     target.hidden = view.target === null;
     target.classList.toggle("pending", view.pending);
     if (view.target !== null) {
       target.style.left = at(view.target);
-      target.querySelector("small").innerHTML =
-        `Target <b>${format(view.target)}</b>`;
       target.setAttribute("aria-valuemin", view.min);
       target.setAttribute("aria-valuemax", view.max);
       target.setAttribute("aria-valuenow", view.target);
@@ -711,6 +681,11 @@ class HouseAtlas extends HTMLElement {
   }
 
   render() {
+    const [low, high] = this.config.thermostatScale;
+    const ticks = Array.from({ length: high - low + 1 }, (_, i) => {
+      const left = `${(i / (high - low)) * 100}%`;
+      return `<span class="tick" style="left:${left}"></span><span class="tick-label" style="left:${left}">${low + i}</span>`;
+    }).join("");
     this.shadowRoot.innerHTML = `
       <style>
         :host {
@@ -785,39 +760,33 @@ class HouseAtlas extends HTMLElement {
         .desk-title { font: 400 24px/1.15 Georgia,serif; margin: 22px 0 16px; padding-bottom: 12px; border-bottom: 1px solid var(--atlas-border); }
         .desk { display: grid; grid-template-columns: repeat(var(--zones),minmax(0,1fr)) minmax(240px,.7fr); gap: 16px; align-items: stretch; }
         .instrument { min-width: 0; border: 1px solid var(--atlas-border); background: var(--atlas-surface); border-radius: 8px; padding: 16px 18px 18px; }
-        .instrument-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-        .instrument-head h2 { font: 400 22px/1.2 Georgia,serif; margin: 0; }
+        .instrument-head { display: flex; align-items: center; gap: 12px; min-height: 36px; }
+        .instrument-head h2 { font: 400 22px/1.2 Georgia,serif; margin: 0 auto 0 0; }
         .action { font-size: 12px; color: var(--atlas-muted); text-transform: capitalize; }
+        .hvac-mode { appearance: none; height: 32px; padding: 0 28px 0 10px; border: 1px solid var(--atlas-border); border-radius: 6px; background: linear-gradient(45deg, transparent 50%, currentColor 50%) right 15px center/5px 5px no-repeat, linear-gradient(135deg, currentColor 50%, transparent 50%) right 10px center/5px 5px no-repeat, var(--atlas-bg); color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+        .hvac-mode:focus-visible { outline: 3px solid var(--atlas-accent); outline-offset: 2px; }
         .zone.unavailable .action { color: var(--atlas-error); }
-        .rule { padding: 34px 14px 50px; }
-        .track { position: relative; height: 40px; }
+        .rule { display: flex; align-items: flex-start; gap: 14px; padding: 18px 0 34px; }
+        .track { position: relative; flex: 1; height: 40px; }
         .track::before { content: ""; position: absolute; left: 0; right: 0; top: 20px; border-top: 1px solid var(--atlas-wall); }
-        .tick { position: absolute; top: 14px; width: 1px; height: 6px; translate: -50% 0; background: var(--atlas-wall); }
-        .tick.major { top: 8px; height: 12px; }
-        .tick-label { position: absolute; top: 25px; translate: -50% 0; font-size: 11px; color: var(--atlas-muted); }
-        .measured-mark { position: absolute; top: 2px; width: 4px; height: 20px; translate: -50% 0; background: var(--atlas-fg); border-radius: 1px; pointer-events: none; }
-        .measured-mark small, .target-mark small { position: absolute; left: 50%; translate: -50% 0; white-space: nowrap; font-size: 12px; color: var(--atlas-muted); }
-        .measured-mark small { bottom: calc(100% + 4px); }
-        .measured-mark b, .target-mark b { color: var(--atlas-fg); font-weight: 600; }
-        .target-mark { position: absolute; top: 38px; width: 44px; height: 30px; translate: -50% 0; cursor: grab; touch-action: none; outline: none; }
-        .target-mark::before { content: ""; position: absolute; left: 50%; top: 2px; translate: -50% 0; border: 8px solid transparent; border-top: 0; border-bottom: 13px solid var(--atlas-light); }
-        .target-mark small { top: 18px; }
-        .target-mark:focus-visible::after { content: ""; position: absolute; inset: -2px 6px 8px; border: 2px solid var(--atlas-accent); border-radius: 4px; }
-        .target-mark.pending::before { opacity: .55; }
-        .target-mark.pending small { font-style: italic; }
+        .tick { position: absolute; top: 10px; width: 1px; height: 10px; translate: -50% 0; background: var(--atlas-wall); }
+        .tick-label { position: absolute; top: 25px; line-height: 1; translate: -50% 0; font-size: 11px; color: var(--atlas-muted); pointer-events: none; }
+        .measured-mark { position: absolute; top: 0; width: 6px; height: 22px; translate: -50% 0; background: var(--atlas-fg); border-radius: 3px; pointer-events: none; }
+        .target-mark { position: absolute; top: 0; width: 44px; height: 72px; translate: -50% 0; cursor: grab; touch-action: none; outline: none; }
+        .target-mark::before { content: ""; position: absolute; left: 50%; top: 20px; height: 22px; width: 2px; translate: -50% 0; background: var(--atlas-accent); }
+        .grip { position: absolute; left: 50%; top: 40px; width: 6px; height: 22px; translate: -50% 0; border-radius: 3px; background: var(--atlas-accent); transition: width .12s, box-shadow .12s; }
+        .target-mark:hover .grip { width: 8px; }
+        .dragging .grip { width: 10px; box-shadow: 0 3px 8px rgb(0 0 0 / .3); }
+        .target-mark:focus-visible .grip { outline: 2px solid var(--atlas-accent); outline-offset: 3px; }
+        .target-mark.pending { opacity: .55; }
         .dragging .target-mark { cursor: grabbing; }
-        .adjust { display: flex; flex-wrap: wrap; gap: 8px; }
-        .step { flex: 0 0 48px; border: 1px solid var(--atlas-border); background: var(--atlas-bg); border-radius: 6px; font-size: 22px; line-height: 1; }
-        .modes { display: flex; flex: 1 1 240px; min-width: 0; }
-        .modes button { flex: 1; min-width: 0; padding: 0 6px; margin-left: -1px; border: 1px solid var(--atlas-border); background: var(--atlas-bg); font-size: 12px; white-space: nowrap; }
-        .modes button:first-child { margin-left: 0; border-radius: 6px 0 0 6px; }
-        .modes button:last-child { border-radius: 0 6px 6px 0; }
-        .modes button[aria-pressed=true] { position: relative; z-index: 1; border-color: var(--atlas-light); background: color-mix(in srgb, var(--atlas-light) 22%, var(--atlas-bg)); font-weight: 600; }
+        .step { position: relative; flex: 0 0 30px; height: 30px; min-height: 0; margin-top: 5px; display: grid; place-items: center; padding: 0 0 2px; border: 1px solid var(--atlas-border); border-radius: 50%; background: var(--atlas-bg); font-size: 18px; line-height: 1; }
+        .step::after { content: ""; position: absolute; inset: -7px; }
+        .step:hover:not(:disabled) { border-color: var(--atlas-light); background: color-mix(in srgb, var(--atlas-light) 35%, var(--atlas-bg)); }
+        .step:disabled { visibility: hidden; }
+        .offline { margin: 10px 0 0; font-size: 13px; color: var(--atlas-muted); }
         .policy { display: flex; flex-direction: column; gap: 12px; }
-        .policy-state b { display: block; font: 400 26px/1.2 Georgia,serif; margin-top: 6px; }
-        .policy.paused .policy-state b { color: var(--atlas-accent); }
-        .policy-state small { display: block; margin-top: 4px; font-size: 12px; line-height: 1.5; color: var(--atlas-muted); }
-        .policy-note { margin: 0; font-size: 13px; line-height: 1.5; color: var(--atlas-muted); }
+        .policy-doors { margin: 0; font-size: 13px; line-height: 1.5; color: var(--atlas-muted); }
         .policy-toggle { margin-top: auto; border: 1px solid var(--atlas-border); background: var(--atlas-bg); border-radius: 6px; }
         .policy.paused .policy-toggle { border-color: var(--atlas-accent); background: var(--atlas-accent); color: var(--atlas-on-accent); }
         .map-panel { position: relative; }
@@ -892,10 +861,10 @@ class HouseAtlas extends HTMLElement {
             ${this.config.thermostats
               .map(
                 (zone, index) =>
-                  `<article class="instrument zone" data-zone="${index}"><header class="instrument-head"><h2>${escapeXml(zone.name)}</h2><span class="action"></span></header><div class="rule"><div class="track"><div class="ticks"></div><div class="measured-mark"><small></small></div><div class="target-mark" role="slider" tabindex="0" aria-label="${escapeXml(zone.name)} target temperature"><small></small></div></div></div><div class="adjust"><button class="step" data-step="-1" aria-label="Lower ${escapeXml(zone.name)} target">−</button><button class="step" data-step="1" aria-label="Raise ${escapeXml(zone.name)} target">+</button><div class="modes" role="group" aria-label="${escapeXml(zone.name)} mode"></div></div></article>`,
+                  `<article class="instrument zone" data-zone="${index}"><header class="instrument-head"><h2>${escapeXml(zone.name)}</h2><span class="action"></span><select class="hvac-mode" aria-label="${escapeXml(zone.name)} mode"></select></header><p class="offline" hidden></p><div class="rule"><button class="step" data-step="-1" aria-label="Lower ${escapeXml(zone.name)} target">‹</button><div class="track"><div class="ticks">${ticks}</div><div class="target-mark" role="slider" tabindex="0" aria-label="${escapeXml(zone.name)} target temperature"><span class="grip"></span></div><div class="measured-mark" role="img"></div></div><button class="step" data-step="1" aria-label="Raise ${escapeXml(zone.name)} target">›</button></div></article>`,
               )
               .join("")}
-            <article class="instrument policy"><header class="instrument-head"><h2>Auto-lock &amp; close</h2></header><div class="policy-state"><b></b><small></small></div><p class="policy-note"></p><button class="policy-toggle"></button></article>
+            <article class="instrument policy"><header class="instrument-head"><h2>Auto-lock &amp; close</h2></header><p class="policy-doors"></p><button class="policy-toggle"></button></article>
           </div>
         </section>
         <nav class="floors" aria-label="Floors">${this.config.floors.map((floor) => `<button data-floor="${escapeXml(floor.id)}" aria-current="${floor.id === this.floorId}">${escapeXml(floor.name)}</button>`).join("")}</nav>

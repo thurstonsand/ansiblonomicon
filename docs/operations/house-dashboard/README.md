@@ -52,10 +52,10 @@ Controls split by lifetime. Suggested actions appear only while relevant, above 
 
 House-wide settings live in **Control Room**, opened from the header beside Room list. It replaces the floor tabs and map with a control desk: one instrument per `thermostats` entry, then Auto-lock & close. Phones stack them in one column. The suggested actions stay visible above it.
 
-- Each thermostat shows its measured temperature above a rule and a draggable target below. The minus and plus buttons wait 700 ms for further taps, then send one `climate.set_temperature`; dragging sends on release. The target stays italic and faded until HA reports the new setpoint, or for 30 seconds. Mode buttons come from the entity's `hvac_modes` and call `climate.set_hvac_mode` immediately. An unavailable thermostat disables its controls.
-- Control Room is the only place to **Pause** the override. While paused, an "Auto-lock paused" stamp sits on the map; dragging it off, or **Resume** in Control Room, turns the override off.
+- Each thermostat shows its measured temperature as a bar above a rule, without text labels, and its target as a matching bar in the accent colour below the rule's numbers, joined to the rule by a hairline drawn over the numbers. Drag the target to set it; it sends on release. Its grab area is 44 px wide and spans the hairline and bar, larger than either mark. The ‹ and › buttons at the ends of the rule wait 700 ms for further taps, then send one `climate.set_temperature`; arrow keys on the focused target do the same. The target stays faded until HA reports the new setpoint, or for 30 seconds. A dropdown beside the `hvac_action` in the header lists the entity's `hvac_modes` and calls `climate.set_hvac_mode` on change. An unavailable thermostat shows only its header, "Unavailable", and when it last reported.
+- Auto-lock & close lists the doors and a single button. Control Room is the only place to **Pause** the override; the button then reads **Resume**. While paused, an "Auto-lock paused" stamp sits on the map; dragging it off, or **Resume** in Control Room, turns the override off.
 
-The card's `thermostats` key lists `{name, entity}` pairs for `climate.` entities; the card refuses to load without at least one.
+The card's `thermostats` key lists `{name, entity}` pairs for `climate.` entities; the card refuses to load without at least one. `thermostatScale` is the `[low, high]` whole-degree range every rule shares, so the instruments line up; each degree gets a labelled tick, and targets cannot be set outside it. A reading outside the range pins to the nearest end. At the narrowest layout, a window just wide enough for the side-by-side desk, the rule fits about ten labelled degrees; 66–76 fits everywhere.
 
 ## Grounds
 
