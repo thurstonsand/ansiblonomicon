@@ -17,3 +17,5 @@ jj = "latest"
 fzf = "latest"
 cloudflared = "latest"
 herdr = "latest"
+# First-party release: skip mise's default 24h supply-chain cooling.
+"github:thurstonsand/agent-switchboard" = { version = "latest", minimum_release_age = "0s" }
