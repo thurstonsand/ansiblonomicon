@@ -7,6 +7,18 @@ description: Operates Home Assistant through the `ha-mcp` MCP. Use before readin
 
 Home Assistant runs as an appliance in an Incus VM on pod042. This repo owns only the VM. Everything inside it is live state, reached through the `ha-mcp`. The house dashboard additionally keeps a repo copy, described in `docs/operations/house-dashboard/README.md`.
 
+Before your first `ha-mcp` call, read [HA-MCP.md](HA-MCP.md): it lists the tool quirks that cost earlier sessions their time.
+
+## Reaching Home Assistant outside the `ha-mcp`
+
+Home Assistant serves plain HTTP on port 80 at `10.10.40.42`, and remotely at `https://ha.thurstons.house` through Nabu Casa. Every request carries the token from `scripts/fnox-host get HOMEASSISTANT_API_KEY`, because Home Assistant notifies the user of each unauthenticated request as a failed login.
+
+pod042's host namespace cannot reach the VM over its macvlan. Pick the vantage by what you need:
+
+- HTTP or WebSocket from the LAN: `sudo -n net-probe curl -m 10 -H "Authorization: Bearer $T" http://10.10.40.42/api/` through the Scanners leg; see the `surveying-the-network` skill.
+- Files, logs or the `ha` CLI: `incus exec home-assistant -- ...`. The appliance shell is BusyBox, and the Core container has no `python3`.
+- A quick authenticated check from anywhere: the Nabu Casa URL.
+
 ## Renaming or removing entities and devices
 
 An entity ID belongs to every system that stores it, not only to Home Assistant. `ha_set_entity` and `ha_set_device` rewrite the registry and nothing else. Their docstrings list a few of the consumers they leave alone, not all of them.
