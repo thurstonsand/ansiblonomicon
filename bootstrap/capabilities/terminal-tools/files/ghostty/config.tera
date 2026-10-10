@@ -58,22 +58,16 @@ keybind = cmd+enter=ignore
 keybind = shift+enter=unbind
 keybind = cmd+shift+p=toggle_command_palette
 
-# ctrl-k is claimed by goto_split:up, so route kill-to-end-of-line through cmd+fn+delete
+# ctrl-k is claimed by agent-switchboard pane navigation, so route kill-to-end-of-line through cmd+fn+delete
 keybind = cmd+delete=text:\x0b
 
 keybind = cmd+j=scroll_page_lines:3
 keybind = cmd+k=scroll_page_lines:-3
 keybind = cmd+shift+j=jump_to_prompt:1
 keybind = cmd+shift+k=jump_to_prompt:-1
-# displaced by cmd+k; ctrl+l is spent on goto_split, so clear lands one modifier over
+# displaced by cmd+k; ctrl+l is spent on agent-switchboard pane navigation, so clear lands one modifier over
 keybind = cmd+l=clear_screen
 
-# ctrl-hjkl navigates Ghostty splits unless an inner layer owns this surface: nvim, or a remote
-# herdr session under gty herdr attach
-keybind = ctrl+h=goto_split:left
-keybind = ctrl+j=goto_split:down
-keybind = ctrl+k=goto_split:up
-keybind = ctrl+l=goto_split:right
 keybind = bypass/
 keybind = bypass/ctrl+h=text:\x08
 keybind = bypass/ctrl+j=text:\x0a
