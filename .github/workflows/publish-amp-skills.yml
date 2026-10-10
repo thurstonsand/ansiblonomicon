@@ -43,3 +43,6 @@ jobs:
 
       - name: Publish Amp skills
         run: scripts/publish-amp-skills.sh
+
+      - name: Check Amp mode pins
+        run: uv run --no-sync python bootstrap/capabilities/agent-harness/amp_modes.py check

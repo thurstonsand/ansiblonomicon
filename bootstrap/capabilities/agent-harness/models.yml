@@ -101,6 +101,7 @@ models:
       agent_harness:
         aliases:
           pi: "openai/gpt-6.1-sol"
+          amp: "openai/gpt-6.1-sol"
       vscode:
         include: true
         thinking: true
@@ -129,6 +130,7 @@ models:
       agent_harness:
         aliases:
           pi: "openai/gpt-6-luna"
+          amp: "openai/gpt-6-luna"
       vscode:
         include: true
         thinking: true
@@ -180,3 +182,22 @@ models:
         include: true
         thinking: true
       zed: true
+
+# =============================================================================
+# AMP - Tune Modes pins, drift-checked by the Publish Amp Skills workflow
+# =============================================================================
+# Pins for the built-in modes, keyed by mode then role (`main`, `oracle`, or
+# `subagents`). Each role is `{model: <provider>.<key>, effort: <level>}`, naming
+# a model above through its `agent_harness.aliases.amp`. An omitted mode or role
+# keeps Amp's automatic routing. Apply by hand through `mise run amp:modes`.
+amp:
+  tune_modes:
+    low:
+      main: {model: openai.gpt_luna, effort: max}
+      subagents: {model: openai.gpt_luna, effort: max}
+    medium:
+      subagents: {model: openai.gpt_sol, effort: medium}
+    high:
+      subagents: {model: openai.gpt_sol, effort: medium}
+    ultra:
+      subagents: {model: openai.gpt_sol, effort: medium}

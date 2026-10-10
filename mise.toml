@@ -1016,6 +1016,10 @@ length=$(wc -m < "$guidance")
 cat "$guidance"
 '''
 
+[tasks."amp:modes"]
+description = "Render Amp's Tune Modes pins from models.yml for an agent to apply"
+run = "uv run --no-sync python bootstrap/capabilities/agent-harness/amp_modes.py settings"
+
 [tasks."sudoers:check"]
 description = "Validate sudoers drop-ins, which mise installs unchecked"
 run = 'for f in bootstrap/targets/*/omarchy/sudoers.d/*; do visudo -cf "$f" || exit 1; done'
