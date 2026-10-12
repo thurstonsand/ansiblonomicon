@@ -1,0 +1,6 @@
+# ~/.config/hyprwhspr links here, so hyprwhspr's runtime files land beside these.
+*
+!.gitignore
+!config.json
+!panel.json
+!secrets.conf

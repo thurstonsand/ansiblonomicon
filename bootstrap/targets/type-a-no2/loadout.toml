@@ -3,13 +3,16 @@
 1password-cli = "present"
 beeper-bin = "present"
 brave-origin-bin = "present"
+cava = "present"
 cloudflared = "present"
 cmake = "present"
 direnv = "present"
 ghostty = "present"
 git-delta = "present"
 github-cli = "present"
+intel-compute-runtime = "present"
 jujutsu = "present"
+level-zero-loader = "present"
 libfido2 = "present"
 libpulse = "present"
 ninja = "present"
@@ -48,3 +51,4 @@ sakura-mochi = { source = "https://github.com/OldJobobo/omarchy-sakura-mochi-the
 "io.github.mb-jambon.omapods" = { source = "https://github.com/MB-JAMBON/omarchy-pods.git", setup = "./setup" }
 "io.github.wouldja.mouse" = { source = "https://github.com/wouldja/omarchy-mouse.git" }
 "lgse.sandman" = { source = "https://github.com/lgse/sandman.git", setup = "sudo install -D -o root -g root -m 0755 sandman-configure-hibernate /usr/local/libexec/sandman-configure-hibernate" }
+"thurstonsand.hyprwhspr" = { source = "https://github.com/thurstonsand/omarchy-hyprwhspr.git" }

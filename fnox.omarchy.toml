@@ -6,5 +6,7 @@ account = "PQ7X5W7V6FDADHPFFEO62TLFEM"
 auth_command = ""
 
 [secrets]
+CEREBRAS_API_KEY = { provider = "agent", value = "op://agent/ic7fmdvor4ok27sgtjsciussaq/credential" }
+HF_TOKEN = { provider = "agent", value = "op://agent/lxwbmd2wxqbw6v2ighlj3fhtvi/access token" }
 OMARCHY_SUDO_PASSWORD = { provider = "agent", value = "op://agent/oeqloglekpsdkjkpxgcsz4kag4/password" }
 POD042_SERVICE_ACCOUNT_TOKEN = { provider = "personal", value = "op://agent/gvsmrehmd3icpq3c5uow7s6mh4/credential", env = false }

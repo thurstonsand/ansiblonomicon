@@ -1,0 +1,20 @@
+{
+  "auto_hibernate_minutes": 30,
+  "cleanup": {
+    "enabled": true,
+    "provider": "cerebras",
+    "model": "gpt-oss-120b",
+    "effort": "",
+    "timeout": 4.5,
+    "prompt": "lowercase everything except proper nouns. no periods at the ends of dictations, but it's fine to include in the middle, and other punctuation (? ! etc) are always fine"
+  },
+  "providers": {
+    "doppelclaude": {
+      "label": "doppelclaude",
+      "protocol": "messages",
+      "base_url": "https://doppelclaude.thurstons.house/v1",
+      "key_env": "CLI_PROXY_API_KEY",
+      "auth": "x-api-key"
+    }
+  }
+}
