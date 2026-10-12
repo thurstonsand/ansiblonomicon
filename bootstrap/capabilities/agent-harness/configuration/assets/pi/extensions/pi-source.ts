@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { type ExtensionAPI, VERSION } from "@earendil-works/pi-coding-agent";
 
-const REPO_URL = "https://github.com/earendil-works/pi-mono.git";
+const REPO_URL = "https://github.com/earendil-works/pi.git";
 const CACHE_ROOT = path.join(os.homedir(), ".cache", "pi-source");
 
 // VERSION resolves to the running pi instance via the loader's module alias,

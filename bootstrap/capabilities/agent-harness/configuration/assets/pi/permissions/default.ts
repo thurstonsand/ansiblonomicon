@@ -157,15 +157,7 @@ const LISTING_MUTATING_FLAGS: Record<string, readonly string[]> = {
 };
 
 const LIST_MODE_FLAGS: Record<string, readonly string[]> = {
-  branch: [
-    "-l",
-    "--list",
-    "--contains",
-    "--no-contains",
-    "--merged",
-    "--no-merged",
-    "--points-at",
-  ],
+  branch: ["-l", "--list", "--contains", "--no-contains", "--merged", "--no-merged", "--points-at"],
   tag: [
     "-l",
     "--list",
