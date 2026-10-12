@@ -69,3 +69,5 @@ o.bind("SUPER + Delete", "Delete to end of line", delete_to_line_edge("End", "K"
 
 o.bind("Alt_R", "Start dictation (push-to-talk)", "hyprwhspr record start")
 o.bind("ALT + Alt_R", "Stop dictation (push-to-talk)", "hyprwhspr record stop", { release = true })
+
+o.bind("SUPER + ALT + V", "Paste last dictation", "~/.config/omarchy/plugins/thurstonsand.hyprwhspr/bin/paste-recent")
