@@ -35,7 +35,11 @@ done < "$baseline"
 for path in $package_files; do
   case "$path" in lazy-lock.json) continue ;; esac
   echo "$shadowed" | grep -qxF "$path" && continue
-  cmp -s "$package/$path" "$config/$path" || report "Omarchy's seed of $path is stale or missing: cp $package/$path $config/$path"
+  # omarchy-nvim before 2026.9.21 seeds gthelding's deleted monokai-pro fork
+  # (omacom/omarchy#12369), so the host's all-themes.lua names loctvl842 by
+  # hand. Drop the sed once that package is installed.
+  sed 's|"gthelding/monokai-pro.nvim"|"loctvl842/monokai-pro.nvim"|' "$package/$path" | cmp -s - "$config/$path" ||
+    report "Omarchy's seed of $path is stale or missing: cp $package/$path $config/$path"
 done
 
 rendered=$(sed -n 's|^"~/.config/nvim/\(lua/[^"]*\)".*mode = "template".*|\1|p' "$files"/../mise*.toml)
