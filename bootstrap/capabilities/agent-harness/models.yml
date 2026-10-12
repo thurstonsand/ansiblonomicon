@@ -58,18 +58,19 @@ models:
       zed: true
 
     haiku:
-      version: "claude-haiku-4-5-20251001"
-      display_name: "Claude Haiku 4.5"
+      version: "claude-haiku-5-5"
+      display_name: "Claude Haiku 5.5"
       max_input: 200000
       max_output: 64000
       vision: true
+      supports_temperature: false
       agent_harness:
         aliases:
           claude: "haiku"
-          pi: "doppelclaude/claude-haiku-4-5"
+          pi: "doppelclaude/claude-haiku-5-5"
       vscode:
         include: true
-        thinking: false
+        thinking: true
       zed: true
 
   # ===========================================================================

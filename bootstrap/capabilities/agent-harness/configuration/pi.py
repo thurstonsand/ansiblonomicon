@@ -125,27 +125,26 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
             if anthropic
             else source["version"],
             "name": source["display_name"],
-            "reasoning": name != "haiku",
+            "reasoning": True,
             "input": ["text", "image"],
             "cost": source["cost"],
             "contextWindow": source["context_window"],
             "maxTokens": source["max_output"],
         }
-        if name != "haiku":
-            result["thinkingLevelMap"] = (
-                {"off": None, "xhigh": "xhigh", "max": "max"}
-                if anthropic
-                else {
-                    "off": "none",
-                    "minimal": None,
-                    "low": "low",
-                    "medium": "medium",
-                    "high": "high",
-                    "xhigh": "xhigh",
-                    "max": "max",
-                }
-            )
-        if anthropic and name != "haiku":
+        result["thinkingLevelMap"] = (
+            {"off": None, "xhigh": "xhigh", "max": "max"}
+            if anthropic
+            else {
+                "off": "none",
+                "minimal": None,
+                "low": "low",
+                "medium": "medium",
+                "high": "high",
+                "xhigh": "xhigh",
+                "max": "max",
+            }
+        )
+        if anthropic:
             result["compat"] = {"forceAdaptiveThinking": True}
             if "supports_temperature" in source:
                 result["compat"]["supportsTemperature"] = source["supports_temperature"]
@@ -239,11 +238,11 @@ def _settings(
         "lastChangelogVersion": current.get("lastChangelogVersion", CHANGELOG_FALLBACK),
         "librarian": {
             "model": profile["librarian"],
-            "thinkingLevel": "off",
+            "thinkingLevel": "low",
             "tools": ["web_search", "web_fetch"],
         },
         "sourcegraph": {
-            "librarian": {"model": profile["librarian"], "thinkingLevel": "off"}
+            "librarian": {"model": profile["librarian"], "thinkingLevel": "low"}
         },
         "enabledModels": profile["enabled"],
         "steeringMode": "all",
