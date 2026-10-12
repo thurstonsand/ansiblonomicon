@@ -148,7 +148,17 @@
                   "path": "M10 80H180V260H150V220H10Z",
                   "label": [95.0, 144.0],
                   "lines": ["Main Bedroom"],
-                  "lights": ["light.main_bedroom_fluff_floor_lamp"],
+                  "lights": [
+                    "light.main_bedroom_fluff_floor_lamp",
+                    "light.main_bedroom_yanie_fluff_lamp",
+                    "light.main_bedroom_thurston_fluff_lamp"
+                  ],
+                  "controls": [
+                    {
+                      "entity": "light.main_bedroom_ambient_light",
+                      "name": "Ambient light"
+                    }
+                  ],
                   "hueScenes": true,
                   "entity": "media_player.main_bedroom_homepod",
                   "mapNote": "HomePod"
@@ -291,6 +301,9 @@
                   "lights": [
                     "light.breakfast_nook_blue_lamp",
                     "light.breakfast_nook_yellow_lamp"
+                  ],
+                  "controls": [
+                    { "entity": "light.breakfast_nook", "name": "Lights" }
                   ]
                 }
               ],
