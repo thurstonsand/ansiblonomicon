@@ -8,12 +8,12 @@ Most of what a harness ends up with is pulled verbatim from upstream repos and n
 
 Written here, no upstream lineage, nothing to sync.
 
-| plugin             | skills                                                                 |
-| ------------------ | ---------------------------------------------------------------------- |
-| project-management | `commit-msg`, `gc`, `update-docs`, `tui-screenshot`, `notify`          |
-| claude             | `retitle`                                                              |
-| codex              | `embrace-vet-claims`                                                   |
-| homelab            | `operating-pod042`, `operating-home-assistant`, `using-pod042-desktop` |
+| plugin             | skills                                                                                                   |
+| ------------------ | -------------------------------------------------------------------------------------------------------- |
+| project-management | `commit-msg`, `gc`, `update-docs`, `tui-screenshot`, `notify`                                            |
+| claude             | `retitle`                                                                                                |
+| codex              | `embrace-vet-claims`                                                                                     |
+| homelab            | `operating-pod042`, `operating-home-assistant`, `using-pod042-desktop`, `investigating-internet-outages` |
 
 Repo-local skills at `.agents/skills/` (`cloudflare-ops`, `installing-software`) are ours too, symlinked into `.claude/skills/` rather than deployed.
 
