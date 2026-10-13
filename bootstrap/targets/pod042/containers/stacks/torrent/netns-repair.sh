@@ -26,6 +26,8 @@ repair() {
   compose up --detach --force-recreate --no-build --no-deps "$1"
 }
 
+unhealthy_seen=""
+
 while :; do
   gluetun_id=$(container_id "$GLUETUN_SERVICE")
   if [ -z "$gluetun_id" ]; then
@@ -36,6 +38,7 @@ while :; do
 
   gluetun_health=$(health_status "$gluetun_id")
   if [ "$gluetun_health" != "healthy" ]; then
+    unhealthy_seen=""
     sleep "$INTERVAL"
     continue
   fi
@@ -53,6 +56,18 @@ while :; do
     dependent_started_at=$(started_at "$dependent_id")
     if [ "$attached_id" != "$gluetun_id" ] || [ "$dependent_started_at" \< "$gluetun_started_at" ]; then
       repair "$dependent"
+    elif [ "$(health_status "$dependent_id")" = "unhealthy" ]; then
+      # Gluetun can restart its tunnel in place; a dependent wedged by that keeps the same namespace.
+      # Require a second unhealthy pass so a dependent that heals after the tunnel returns is left alone.
+      case " $unhealthy_seen " in
+        *" $dependent_id "*)
+          repair "$dependent"
+          unhealthy_seen=$(echo "$unhealthy_seen" | sed "s/ *$dependent_id//")
+          ;;
+        *) unhealthy_seen="$unhealthy_seen $dependent_id" ;;
+      esac
+    else
+      unhealthy_seen=$(echo "$unhealthy_seen" | sed "s/ *$dependent_id//")
     fi
   done
 
