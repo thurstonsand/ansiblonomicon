@@ -138,11 +138,67 @@ check "pdu_outlet_names" {
   }
 }
 
+# Both APs hold fixed, non-overlapping channels: 80 MHz on 5 GHz in the two
+# non-DFS blocks (36-48 and 149-161), and 1 and 6 on 2.4 GHz. 2.4 GHz runs at
+# medium power so dual-band clients prefer 5 GHz. The 6 GHz radio carries no
+# SSID and keeps the controller's choice, but is declared because radio_table
+# replaces the whole list.
 resource "unifi_device" "u7_pro_max" {
   mac               = "94:2a:6f:2c:f0:d2"
   name              = "U7 Pro Max"
   allow_adoption    = true
   forget_on_destroy = false
+
+  radio_table = [
+    {
+      radio         = "ng"
+      channel       = "6"
+      ht            = 20
+      tx_power_mode = "medium"
+    },
+    {
+      radio         = "na"
+      channel       = "36"
+      ht            = 80
+      tx_power_mode = "high"
+    },
+    {
+      radio   = "6e"
+      channel = "auto"
+      ht      = 160
+    },
+  ]
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
+resource "unifi_device" "u7_pro_max_central" {
+  mac               = "94:2a:6f:2c:cb:25"
+  name              = "U7 Pro Max Central"
+  allow_adoption    = true
+  forget_on_destroy = false
+
+  radio_table = [
+    {
+      radio         = "ng"
+      channel       = "1"
+      ht            = 20
+      tx_power_mode = "medium"
+    },
+    {
+      radio         = "na"
+      channel       = "149"
+      ht            = 80
+      tx_power_mode = "high"
+    },
+    {
+      radio   = "6e"
+      channel = "auto"
+      ht      = 160
+    },
+  ]
 
   lifecycle {
     prevent_destroy = true
