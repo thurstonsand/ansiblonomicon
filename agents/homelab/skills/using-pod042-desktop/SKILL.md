@@ -40,10 +40,15 @@ wtype -M ctrl c -m ctrl              # hold, press, release
 wtype -M ctrl -M shift v -m shift -m ctrl   # paste in foot
 ```
 
-`wlrctl pointer move` is relative. Anchor it at the top-left corner and the coordinates match a full `grim` screenshot pixel for pixel:
+`wlrctl pointer move` is relative and works in logical pixels, while `grim` captures physical pixels. The user's viewer sets the output scale, so divide screenshot coordinates by `wlr-randr`'s `Scale:` and anchor at the top-left corner:
 
 ```sh
-click() { wlrctl pointer move -100000 -100000; wlrctl pointer move "$1" "$2"; wlrctl pointer click "${3:-left}"; }
+click() {   # x y in grim screenshot pixels
+  s=$(wlr-randr | awk '/Scale:/{print $2}')
+  wlrctl pointer move -100000 -100000
+  wlrctl pointer move "$(awk "BEGIN{print int($1/$s)}")" "$(awk "BEGIN{print int($2/$s)}")"
+  wlrctl pointer click "${3:-left}"
+}
 click 960 400
 wlrctl pointer scroll 3 0            # dy dx
 printf %s 'text' | wl-copy
@@ -56,10 +61,10 @@ Drive input only through `wtype` and `wlrctl`; each adds its own virtual device.
 
 ```sh
 grim /absolute/path/desktop.png
-grim -g '640,0 640x720' /absolute/path/right-half.png
+grim -g '400,0 400x720' /absolute/path/region.png   # -g takes logical pixels
 ```
 
-The viewer can resize the output, so read the size of a fresh capture before choosing points, and capture again after every input. A dispatched action is not success: verify the changed window, field, or file.
+The viewer can resize and rescale the output at any time, so check `wlr-randr` and a fresh capture before choosing points, and capture again after every input. A dispatched action is not success: verify the changed window, field, or file.
 
 ## Browser
 
