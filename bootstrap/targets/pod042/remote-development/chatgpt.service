@@ -1,8 +1,7 @@
 [Unit]
 Description=ChatGPT desktop app on a virtual display, serving pod042 as 2B's computer
 AssertPathExists=%h/.codex/auth.json
-StartLimitIntervalSec=300
-StartLimitBurst=5
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -13,7 +12,7 @@ Environment=CODEX_CHROMIUM_USER_DATA_DIR=/home/thurstonsand/.config/chromium-des
 Environment=CODEX_CHROMIUM_NATIVE_HOST_MANIFEST_PATH=/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.openai.codexextension.json
 ExecStart=/usr/bin/xvfb-run --server-num=42 --server-args="-screen 0 1440x900x24 -nolisten tcp" /usr/bin/chatgpt
 Restart=always
-RestartSec=10
+RestartSec=30
 StandardInput=null
 StandardOutput=journal
 StandardError=journal

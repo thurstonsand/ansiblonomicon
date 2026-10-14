@@ -1,8 +1,7 @@
 [Unit]
 Description=Herdr terminal workspace server for pod042
 AssertPathExists=%h/.local/share/mise/shims/herdr
-StartLimitIntervalSec=300
-StartLimitBurst=5
+StartLimitIntervalSec=0
 
 [Service]
 Type=simple
@@ -11,7 +10,7 @@ Environment=HOME=/home/thurstonsand
 Environment=PATH=/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin
 ExecStart=/home/thurstonsand/.local/share/mise/shims/herdr server
 Restart=always
-RestartSec=10
+RestartSec=30
 StandardInput=null
 StandardOutput=journal
 StandardError=journal
