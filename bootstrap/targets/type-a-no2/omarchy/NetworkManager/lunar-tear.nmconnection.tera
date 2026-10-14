@@ -1,0 +1,24 @@
+[connection]
+id=Lunar Tear
+uuid=da5e416e-d21f-492a-8a29-0a448731e211
+type=wifi
+autoconnect=false
+interface-name=wlp0s20f3
+
+[wifi]
+mode=infrastructure
+ssid=Lunar Tear
+
+[wifi-security]
+auth-alg=open
+key-mgmt=wpa-psk
+psk={{ secret(name="lunar_tear_passphrase") }}
+
+[ipv4]
+method=auto
+
+[ipv6]
+addr-gen-mode=default
+method=auto
+
+[proxy]

@@ -76,6 +76,8 @@ Optional theme or plugin extras, such as `theme-set` hooks or files an author as
 
 Software missing from Omarchy's repositories uses its vendor's installer instead of the AUR.
 
+`omarchy-config` declares the NetworkManager Wi-Fi profiles as templated keyfiles with fnox passphrases, so a reconcile reverts changes made through `nmcli` or the network panel.
+
 ## UDMP
 
 The home router.

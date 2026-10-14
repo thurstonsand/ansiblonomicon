@@ -24,6 +24,29 @@ owner = "root"
 group = "root"
 mode = "0755"
 
+[bootstrap.secrets]
+yorha_passphrase = "YORHA_PASSPHRASE"
+lunar_tear_passphrase = "LUNAR_TEAR_PASSPHRASE"
+
+# YoRHa is home. Lunar Tear is for pairing smart home devices, joined by hand and never automatically.
+[bootstrap.files."/etc/NetworkManager/system-connections/YoRHa.nmconnection"]
+source = "omarchy/NetworkManager/YoRHa.nmconnection.tera"
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/NetworkManager/system-connections/Lunar Tear.nmconnection"]
+source = "omarchy/NetworkManager/lunar-tear.nmconnection.tera"
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+# NetworkManager reads profiles from disk only on request. Reloading leaves the active connection up.
+[bootstrap.hooks.pre-repos]
+run = "sudo -n nmcli connection reload"
+
 [bootstrap.repos]
 "~/.local/share/omarchy-icloud-photos" = { url = "https://github.com/jankeesvw/omarchy-icloud-photos.git", ref = "main" }
 
@@ -71,5 +94,6 @@ fi
 # hyprwhspr replaces config.json on save, which would break a file symlink; linking the directory keeps the replacement in the repo.
 "~/.config/hyprwhspr" = { source = "omarchy/hyprwhspr", mode = "symlink" }
 "~/.config/systemd/user/hyprwhspr.service.d/secrets.conf" = { source = "omarchy/hyprwhspr/secrets.conf", mode = "symlink" }
+"~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
 "~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }

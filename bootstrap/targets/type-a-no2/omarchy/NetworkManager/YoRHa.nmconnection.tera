@@ -1,0 +1,23 @@
+[connection]
+id=YoRHa
+uuid=04a6001a-ba4e-4334-a473-b92527350714
+type=wifi
+autoconnect-priority=10
+interface-name=wlp0s20f3
+
+[wifi]
+mode=infrastructure
+ssid=YoRHa
+
+[wifi-security]
+key-mgmt=sae
+psk={{ secret(name="yorha_passphrase") }}
+
+[ipv4]
+method=auto
+
+[ipv6]
+addr-gen-mode=default
+method=auto
+
+[proxy]
