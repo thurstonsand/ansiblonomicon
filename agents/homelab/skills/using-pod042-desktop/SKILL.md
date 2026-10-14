@@ -51,7 +51,7 @@ click() {   # x y in grim screenshot pixels
 }
 click 960 400
 wlrctl pointer scroll 3 0            # dy dx
-printf %s 'text' | wl-copy
+printf %s 'text' | wl-copy >/dev/null 2>&1   # wl-copy stays running to serve the clipboard
 wl-paste -n
 ```
 
@@ -78,14 +78,21 @@ $S snapshot -i
 $S open https://example.org          # later navigation stays in that tab
 ```
 
-Make the pinned `open` the session's first call; starting with `tab` or `tab new` leaves an extra blank tab, and `tab new <url>` returns while the page is still `about:blank`. Read a field back after `fill`: on time, date, and other native pickers it reports success and sets nothing. Type those natively instead, in the field's display segments:
+Make the pinned `open` the session's first call; starting with `tab` or `tab new` leaves an extra blank tab, and `tab new <url>` returns while the page is still `about:blank`. Read a field back after `fill`: on time, date, and other native pickers it reports success and sets nothing. Type those natively instead, in the field's display segments. `$S click` moves Chromium's keyboard focus into the page; `$S focus` sets only DOM focus, so keys still reach the address bar if it had them:
 
 ```sh
-$S focus 'input[type=time]'
 wlrctl toplevel focus app_id:chromium
+$S click 'input[type=time]'
 wtype 0745P                          # 19:45
 ```
 
-Browser chrome (address bar, bookmark dialogs, extension popups, permission prompts) sits outside the page; drive it with `grim` and the pointer, or Chromium's keyboard shortcuts. Close only the tabs you opened (`$S tab close`) and leave the user's. `agent-browser --session my-task close`, without `--cdp`, disconnects your session and leaves Chromium running.
+Browser chrome (address bar, bookmark dialogs, extension popups, permission prompts) sits outside the page; drive it with `grim` and the pointer, or Chromium's keyboard shortcuts. Typing into the address bar triggers inline autocomplete from history, so Return can land on a different page; paste the URL instead:
+
+```sh
+printf %s 'https://example.com/' | wl-copy >/dev/null 2>&1
+wtype -M ctrl l -m ctrl -s 200 -M ctrl v -m ctrl -s 200 -k Return   # -s waits ms; without them a new tab drops the paste
+```
+
+Close only the tabs you opened (`$S tab close`) and leave the user's. `agent-browser --session my-task close`, without `--cdp`, disconnects your session and leaves Chromium running.
 
 If the CDP probe fails while the environment's Wayland socket exists, check `pgrep -af 'chromium.*chromium-desktop'`. With no browser running, start `setsid ~/.local/bin/desktop-chromium >/dev/null 2>&1 </dev/null &` and retry the probe for 15 seconds. A running browser without CDP needs its launch arguments and logs inspected before anything else; leave its process and profile locks alone. A missing environment file or socket is a runner fault: diagnose it through `operating-pod042`. Restarting `amp-remote.service` interrupts every runner thread.
