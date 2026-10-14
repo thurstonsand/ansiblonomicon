@@ -1,6 +1,6 @@
 {
   "$schema": "https://raw.githubusercontent.com/goodroot/hyprwhspr/main/share/config.schema.json",
-  "transcription_backend": "onnx-asr",
+  "transcription_backend": "cohere-transcribe",
   "cohere_transcribe_device": "xpu",
   "use_hypr_bindings": true,
   "recording_mode": "push_to_talk",

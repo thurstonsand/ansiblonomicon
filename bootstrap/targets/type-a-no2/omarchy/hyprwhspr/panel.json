@@ -2,8 +2,8 @@
   "auto_hibernate_minutes": 30,
   "cleanup": {
     "enabled": true,
-    "provider": "cerebras",
-    "model": "gpt-oss-120b",
+    "provider": "doppelclaude",
+    "model": "claude-haiku-5-5",
     "effort": "",
     "timeout": 4.5,
     "prompt": "lowercase everything except proper nouns. no periods at the ends of dictations, but it's fine to include in the middle, and other punctuation (? ! etc) are always fine"
