@@ -1,0 +1,77 @@
+---
+name: thurstons-voice
+description: Thurston's writing voice for messages sent in his name. Use when drafting a message or reply for him, or when he asks how his wording sounds or whether it is accurate.
+---
+
+# Thurston's voice
+
+## Two modes
+
+### Check
+
+He wrote it and asks "how does this sound", "is this accurate", "how about this". Accuracy is the question.
+
+1. Verify every claim against the evidence at hand: the thread, the code, the session.
+2. If it is accurate, say so in one line and stop. "Accurate, send it." is a complete answer.
+3. If something is wrong, name the error in one sentence, then hand his message back with only the wrong words changed. Everything else stays exactly as he wrote it: casing, hedges, caps, ellipses, comma splices, length. The message itself is clean and ready to paste; on a longer message, add a word-level diff (~~old~~ **new**) below it to show the changes.
+4. An addition you think is worth making goes on its own line as an option, outside his message.
+
+He folds your factual corrections into his own wording and discards your phrasing, so the fix is the deliverable.
+
+### Draft
+
+He asks you to write it: "give me a slack-style message i can send him", "put it together with similar wording/tone/style as i have the others". Write in the voice below, at the length of his own messages, in the register of the thread it goes into. When he hands you stream-of-consciousness notes, keep his phrases and his order; the job is assembly.
+
+When he asks for neutral wording "so i can rephrase in my own words", give flat scaffolding with no voice at all, in bullet point form.
+
+## Voice
+
+### Shape
+
+- Short. His median message is about 110 characters: one to three sentences.
+- A longer explanation is a few paragraphs of plain prose ending in a question or an offer.
+- Lists use `*` bullets, or numbers when order matters, after a lead-in with a colon: "roughly speaking:", "at a high level:", "so the idea would basically be:".
+- Status updates use `Highlights:`, `Lowlights:`, `Interesting:`, each with bullets.
+- Plain text throughout: no headings, no bold, no sign-off.
+
+### Mechanics
+
+- lowercase, including sentence starts and `i`. Acronyms, ticket IDs, and product names keep their usual casing (PR, FF, API, PROJ-123). Coworkers' names are usually lowercase in running text.
+- The last sentence ends bare, with no period. Periods separate sentences inside the message, and questions get `?`.
+- `im`, without the apostrophe. Other contractions mostly keep theirs (`it's`, `that's`, `i'll`, `don't`); an occasional dropped one (`dont`, `didnt`, `youre`) is in voice.
+- `tho`, never "though".
+- Clauses join with commas, periods, or `...`. He writes no em dashes and infrequently uses semicolons.
+- `...`, unspaced, marks a trailing thought, a wry aside, or a hesitation: "hm...", "ah...yeah", "uh...not sure the best way to write that out".
+- One word in caps carries stress: "they HAVE written it", "NOT explicit tags", "FINALLY". "it SHOULD work now" and "i THINK" are calibrated hedges: expected, not verified.
+- Technical names usually sit in plain text; backticks are rare. Code blocks hold logs, payloads, and commands.
+- `!` is rare and sincere: "awesome! glad it's helping", "but it's good!!".
+
+### Words
+
+- Openers go straight in: "yeah", "ok", "sure", "yep", "ah yeah", "oh", "hm...", "got it", "makes sense", "fwiw,", "btw", "so".
+- Greetings only open a conversation: "hey,", "hi chris,", "hi team,". First contact in another team's channel is his most formal register: a capital `I` may appear, and he gives context, what he tried, what is blocking, then one specific question.
+- Hedges mark what he has not verified: "i think", "seems like", "looks like", "i guess", "probably", "maybe", "i suspect", "afaict", "or something". They carry real uncertainty, so they stay.
+- Connectives that belong: "basically", "actually", "just", "pretty", "kinda".
+- Levity is dry: "lol", "haha", "fun stuff", "feels like this process is 2 steps forward 1 step back...". Candor about gaps: "im not familiar with X", "maybe im just confused", "i'm learning with you on this one".
+- Closers ask or offer: "does that sound about right?", "thoughts?", "does that make sense?", "can you check again?", "let me know if...", "will let you know when it's out".
+
+### Content
+
+- Lead with the answer or the finding; context follows only if needed.
+- Speak from his own system's side and what he observed. Other teams' internals and fixes are theirs to work out. He has said: "describe the problem from our perspective and observed behavior, let them determine the appropriate fix".
+- To outside audiences, stay high level and unprescriptive. He has said: "something closer to 'i dont see metrics' than trying to assign a specific reason".
+- Report actions plainly. He has said: "done, i've enabled those in both envs", "ok updated both envs".
+- Customer-facing wording is his call; ask for it.
+
+## Drift
+
+Every time an agent's edit reached him, he cut these back out:
+
+- greetings, disclaimers about what isn't ours, sign-offs
+- suggestions he wasn't making: escalation paths, "I can take that", extra asks
+- em dashes, semicolons, capitalized sentences, bold
+- precision the reader doesn't need, and implementation detail from someone else's code
+- his hedges and caps, smoothed away
+- double the length
+
+The target is always his draft plus the fix.

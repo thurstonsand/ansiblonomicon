@@ -10,7 +10,7 @@ Written here, no upstream lineage, nothing to sync.
 
 | plugin             | skills                                                                                                   |
 | ------------------ | -------------------------------------------------------------------------------------------------------- |
-| project-management | `commit-msg`, `gc`, `update-docs`, `tui-screenshot`, `notify`                                            |
+| project-management | `commit-msg`, `gc`, `update-docs`, `tui-screenshot`, `notify`, `thurstons-voice`                         |
 | claude             | `retitle`                                                                                                |
 | codex              | `embrace-vet-claims`                                                                                     |
 | homelab            | `operating-pod042`, `operating-home-assistant`, `using-pod042-desktop`, `investigating-internet-outages` |
