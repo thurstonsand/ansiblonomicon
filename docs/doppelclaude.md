@@ -12,6 +12,12 @@ The `home` tunnel forwards directly to `http://doppelclaude:3456` on pod042's pr
 
 Unlike `aig`, this Worker does not route through AI Gateway. It does not read, rewrite, cache or log request bodies. Only `POST /v1/messages`, `GET /v1/models` and `GET /v1/sdk-models` are forwarded. The daemon validates the `Amp Thread URL` system marker for keyed conversations and admits narrowly bounded markerless requests as described below; the proxy leaves the body untouched. Redirects are not followed and requests are not automatically retried.
 
+## Amp model routing
+
+The Amp custom-URL connection maps both `doppelclaude/*` and `anthropic/*`. The first line serves the permanent Doppelclaude modes. The second sends every Claude model call from Amp's own modes through the daemon as well, whether main agent, Oracle or subagent, so those roles keep Amp's prompt, tools and Oracle while billing to the Claude subscription through the Agent SDK instead of Amp credits. The connection must sit above any other connection that maps the same models. Removing `anthropic/*` or deactivating the connection returns them to Amp credits.
+
+Amp's native Claude Code mode, released 2026-10-10, also uses the Agent SDK with a linked Claude Pro/Max plan, but it replaces Amp's agent with Claude Code's and excludes the Oracle and Librarian. It does not replace this route.
+
 ## Host and subscription credentials
 
 The dedicated `doppelclaude` capability owns definitions under `/etc/ansiblonomicon/containers/doppelclaude` and mode-0700 durable state under `/mnt/black-box/docker/doppelclaude`. User/group `doppelclaude` has UID/GID 3456 and no login shell. The container uses that identity, a read-only root, dropped capabilities and no-new-privileges, with writable state and temporary storage only. No Docker socket, user home or repository is mounted. Its state volume supplies `HOME=/var/lib/doppelclaude`, `DOPPELCLAUDE_STATE_DIR=/var/lib/doppelclaude` and `CLAUDE_CONFIG_DIR=/var/lib/doppelclaude/.claude`.
