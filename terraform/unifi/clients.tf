@@ -97,6 +97,12 @@ resource "unifi_client" "whisker_feeder_robot" {
   allow_existing = true
 }
 
+resource "unifi_client" "fi_base" {
+  mac            = "a8:48:fa:24:b3:1c"
+  name           = "Fi Base"
+  allow_existing = true
+}
+
 resource "unifi_client" "canon_printer" {
   mac            = "14:d4:24:f2:6f:e6"
   name           = "Canon MF654Cdw"
