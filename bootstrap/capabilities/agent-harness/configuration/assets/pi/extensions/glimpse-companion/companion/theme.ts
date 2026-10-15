@@ -22,6 +22,7 @@ const STATUS_THEME_COLORS = {
   searching: "accent",
   compacting: "dim",
   done: "success",
+  aborted: "error",
   error: "error",
 } as const satisfies Record<string, ThemeColor>;
 

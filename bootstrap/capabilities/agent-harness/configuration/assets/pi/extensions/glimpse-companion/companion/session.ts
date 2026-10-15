@@ -34,8 +34,8 @@ export class CompanionSession {
   private readonly connection = new CompanionConnection();
   private readonly attention = new AttentionTracker();
   private readonly focus = new TerminalFocusTracker();
-  private doneDismissalTimer: NodeJS.Timeout | undefined;
-  private doneNeedsAcknowledgement = false;
+  private settledDismissalTimer: NodeJS.Timeout | undefined;
+  private settledNeedsAcknowledgement = false;
 
   get isEnabled(): boolean {
     return this.enabled;
@@ -130,23 +130,23 @@ export class CompanionSession {
   // Automatic compaction happens inside a run, and agent_settled reports done for it.
   compacted(reason: string): void {
     if (!this.active || reason !== "manual") return;
-    this.done();
+    this.settled(false);
   }
 
   compactionFailed(): void {
     if (this.lastStatus === COMPANION_STATUS.compacting) this.sendRemove();
   }
 
-  done(): void {
+  settled(aborted: boolean): void {
     if (!this.active) return;
-    this.clearDoneState();
+    this.clearSettledState();
     this.clearAttention();
-    this.doneNeedsAcknowledgement = !this.focus.isFocused;
-    this.send(COMPANION_STATUS.done);
-    if (!this.doneNeedsAcknowledgement) {
-      this.doneDismissalTimer = setTimeout(() => {
-        this.doneDismissalTimer = undefined;
-        if (this.lastStatus === COMPANION_STATUS.done) this.sendRemove();
+    this.settledNeedsAcknowledgement = !this.focus.isFocused;
+    this.send(aborted ? COMPANION_STATUS.aborted : COMPANION_STATUS.done);
+    if (!this.settledNeedsAcknowledgement) {
+      this.settledDismissalTimer = setTimeout(() => {
+        this.settledDismissalTimer = undefined;
+        if (this.isSettled) this.sendRemove();
       }, 3000);
     }
   }
@@ -194,8 +194,16 @@ export class CompanionSession {
     );
   }
 
+  private get isSettled(): boolean {
+    return (
+      this.lastStatus === COMPANION_STATUS.done || this.lastStatus === COMPANION_STATUS.aborted
+    );
+  }
+
   private send(status: CompanionStatusLabel, detail?: string): void {
-    if (status !== COMPANION_STATUS.done) this.clearDoneState();
+    if (status !== COMPANION_STATUS.done && status !== COMPANION_STATUS.aborted) {
+      this.clearSettledState();
+    }
     if (this.lastStatus === status && this.lastDetail === detail) return;
     this.lastStatus = status;
     this.lastDetail = detail;
@@ -211,7 +219,7 @@ export class CompanionSession {
       detail: this.lastDetail,
       attention: this.attention.active,
       attentionLabel: this.attention.label,
-      acknowledgementPending: this.doneNeedsAcknowledgement,
+      acknowledgementPending: this.settledNeedsAcknowledgement,
     };
     if (this.lastCtx) {
       msg.theme = buildCompanionTheme(this.lastCtx.ui.theme);
@@ -226,26 +234,26 @@ export class CompanionSession {
   }
 
   private focusChanged(focused: boolean): void {
-    if (this.lastStatus !== COMPANION_STATUS.done) return;
+    if (!this.isSettled) return;
     if (focused) {
-      if (this.doneNeedsAcknowledgement) this.sendRemove();
+      if (this.settledNeedsAcknowledgement) this.sendRemove();
       return;
     }
-    if (!this.doneDismissalTimer) return;
-    clearTimeout(this.doneDismissalTimer);
-    this.doneDismissalTimer = undefined;
-    this.doneNeedsAcknowledgement = true;
+    if (!this.settledDismissalTimer) return;
+    clearTimeout(this.settledDismissalTimer);
+    this.settledDismissalTimer = undefined;
+    this.settledNeedsAcknowledgement = true;
     this.resend();
   }
 
-  private clearDoneState(): void {
-    if (this.doneDismissalTimer) clearTimeout(this.doneDismissalTimer);
-    this.doneDismissalTimer = undefined;
-    this.doneNeedsAcknowledgement = false;
+  private clearSettledState(): void {
+    if (this.settledDismissalTimer) clearTimeout(this.settledDismissalTimer);
+    this.settledDismissalTimer = undefined;
+    this.settledNeedsAcknowledgement = false;
   }
 
   private sendRemove(): void {
-    this.clearDoneState();
+    this.clearSettledState();
     if (this.connection.isConnected) {
       this.connection.write({ id: SESSION_ID, type: "remove" });
     }
@@ -254,7 +262,7 @@ export class CompanionSession {
 
   private teardown(): void {
     this.focus.stop();
-    this.clearDoneState();
+    this.clearSettledState();
     if (this.connection.isConnected) this.sendRemove();
     this.connection.end();
     this.lastStatus = "";

@@ -116,6 +116,7 @@ const DEFAULT_THEME = {
     searching: "#83a598",
     compacting: "#928374",
     done: "#b8bb26",
+    aborted: "#fb4934",
     error: "#fb4934",
   },
 };
@@ -132,6 +133,7 @@ const STATUS_LABEL = {
   searching: "Searching",
   compacting: "Compacting",
   done: "Done",
+  aborted: "Aborted",
   error: "Error",
 };
 
@@ -206,8 +208,9 @@ function updateSession(update) {
   const now = Date.now();
   const previous = sessions.get(update.id);
   const startedAt = previous?.startedAt ?? now;
+  const settled = update.status === "done" || update.status === "aborted";
   const frozenElapsed =
-    previous?.frozenElapsed ?? (update.status === "done" ? fmtElapsed(now - startedAt) : null);
+    previous?.frozenElapsed ?? (settled ? fmtElapsed(now - startedAt) : null);
   const attentionStarted = update.attention ? (previous?.attentionStarted ?? now) : null;
 
   theme = update.theme ?? theme;

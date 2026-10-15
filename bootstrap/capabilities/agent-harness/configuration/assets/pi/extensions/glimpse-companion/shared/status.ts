@@ -9,6 +9,7 @@ export const COMPANION_STATUS = {
   searching: "searching",
   compacting: "compacting",
   done: "done",
+  aborted: "aborted",
   error: "error",
 } as const;
 
