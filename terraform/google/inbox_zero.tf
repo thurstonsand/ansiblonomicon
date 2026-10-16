@@ -20,6 +20,7 @@ resource "google_project" "inbox_zero" {
 resource "google_project_service" "inbox_zero" {
   for_each = toset([
     "calendar-json.googleapis.com",
+    "cloudquotas.googleapis.com",
     "drive.googleapis.com",
     "gmail.googleapis.com",
     "people.googleapis.com",
@@ -28,6 +29,25 @@ resource "google_project_service" "inbox_zero" {
 
   project = google_project.inbox_zero.project_id
   service = each.value
+}
+
+# Projects created after May 2026 get 6,000 Gmail units per user per minute, which onboarding and
+# Process Past Emails exhaust. 15,000 restores the old per-user limit and was approved automatically;
+# 30,000 and 60,000 were denied automatically.
+resource "google_cloud_quotas_quota_preference" "inbox_zero_gmail_per_user" {
+  parent        = "projects/${google_project.inbox_zero.project_id}"
+  name          = "gmail-per-user-query-cost"
+  service       = "gmail.googleapis.com"
+  quota_id      = "totalQueryCostPerMinutePerUser"
+  contact_email = "thurstonsand@gmail.com"
+  justification = "Single-user self-hosted Inbox Zero instance; onboarding and inbox backfills exceed the default per-user Gmail quota."
+  dimensions    = {}
+
+  quota_config {
+    preferred_value = 15000
+  }
+
+  depends_on = [google_project_service.inbox_zero]
 }
 
 resource "google_pubsub_topic" "inbox_zero_emails" {
