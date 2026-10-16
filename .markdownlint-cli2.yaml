@@ -1,5 +1,7 @@
 config:
   MD013: false
+  MD041:
+    front_matter_title: "^\\s*name\\s*[:=]"
 gitignore: true
 globs:
   - "**/*.md"

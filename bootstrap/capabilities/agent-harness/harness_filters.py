@@ -943,51 +943,33 @@ class SkillTransformResult:
         }
 
 
-def _build_model_alias_map(
+def agent_harness_model_tiers(
     models_config: dict[str, Any],
 ) -> dict[str, dict[str, str]]:
-    """Build a lookup map from source aliases to target agent model names.
+    """Map each models.yml tier name to its per-harness aliases.
 
     Args:
         models_config: The 'models' section from models.yml
 
     Returns:
-        Dict mapping source_alias -> {target_agent -> replacement_model}
-        e.g., {"sonnet": {"pi": "anthropic/claude-sonnet-4-5-..."}}
+        Dict mapping tier -> {target_agent -> alias}
+        e.g., {"fable": {"pi": "doppelclaude/claude-fable-5-1", ...}}
     """
-    alias_map: dict[str, dict[str, str]] = {}
-
-    for provider_models in models_config.values():
-        if not isinstance(provider_models, dict):
-            continue
-
-        for model_config in cast(dict[str, Any], provider_models).values():
-            if not isinstance(model_config, dict):
-                continue
-
-            harness_config = cast(dict[str, Any], model_config).get("agent_harness")
-            if not harness_config or not isinstance(harness_config, dict):
-                continue
-
-            aliases = cast(dict[str, Any], harness_config).get("aliases")
-            if not aliases or not isinstance(aliases, dict):
-                continue
-
-            aliases_dict = cast(dict[str, str], aliases)
-            for source_alias in aliases_dict.values():
-                if source_alias not in alias_map:
-                    alias_map[source_alias] = {}
-
-                for tgt_agent, tgt_alias in aliases_dict.items():
-                    alias_map[source_alias][tgt_agent] = tgt_alias
-
-    return alias_map
+    tiers: dict[str, dict[str, str]] = {}
+    for provider, provider_models in models_config.items():
+        for tier, model_config in cast(dict[str, Any], provider_models).items():
+            if tier in tiers:
+                msg = f"Model tier {tier!r} is declared twice; {provider} repeats it"
+                raise ValueError(msg)
+            harness_config = cast(dict[str, Any], model_config).get("agent_harness", {})
+            tiers[tier] = dict(cast(dict[str, str], harness_config.get("aliases", {})))
+    return tiers
 
 
 def agent_harness_transform_skill_content(
     content: str,
     target_agent: str,
-    models_config: dict[str, Any],
+    model_tiers: dict[str, dict[str, str]],
     plugin_root: str = "",
     name_override: str = "",
     skill_dir: str = "",
@@ -995,27 +977,27 @@ def agent_harness_transform_skill_content(
     """Transform skill/agent Markdown content for the target agent.
 
     Applies up to four transformations:
-    1. Model alias replacement in frontmatter (e.g., "sonnet" → provider-specific ID)
+    1. Model tier resolution in frontmatter (e.g., "fable" → the harness's alias)
     2. ${CLAUDE_PLUGIN_ROOT} substitution with the absolute plugin path
     3. ${CLAUDE_SKILL_DIR} substitution with the deployed skill directory
     4. Frontmatter name rewrite (for agent namespace prefixing)
     """
     modified = False
 
-    # Model alias replacement — regex on the model: line in frontmatter
+    frontmatter = re.match(r"---\n.*?\n---\n", content, flags=re.DOTALL)
     model_match = re.search(r"^model:\s*(.+)$", content, flags=re.MULTILINE)
-    if model_match:
+    if frontmatter and model_match and model_match.end() < frontmatter.end():
         model_value = model_match.group(1).strip()
-        alias_map = _build_model_alias_map(models_config)
-        replacement = alias_map.get(model_value, {}).get(target_agent)
-        if replacement and replacement != model_value:
-            content = re.sub(
-                r"^(model:\s*).+$",
-                rf"\g<1>{replacement}",
-                content,
-                count=1,
-                flags=re.MULTILINE,
+        replacement = model_tiers.get(model_value, {}).get(target_agent)
+        if replacement is None:
+            msg = (
+                f"{name_override}: model {model_value!r} names no model tier "
+                f"with a {target_agent} alias"
             )
+            raise ValueError(msg)
+        if replacement != model_value:
+            start, end = model_match.span(1)
+            content = content[:start] + replacement + content[end:]
             modified = True
 
     # Plugin root substitution (handle both ${VAR} and $VAR syntax)
@@ -1052,7 +1034,7 @@ def agent_harness_transform_skill_content(
 def agent_harness_transform_skill(
     source_path: str,
     target_agent: str,
-    models_config: dict[str, Any],
+    model_tiers: dict[str, dict[str, str]],
     plugin_root: str = "",
     name_override: str = "",
 ) -> dict[str, Any]:
@@ -1061,7 +1043,7 @@ def agent_harness_transform_skill(
     Args:
         source_path: Path to the source .md file (SKILL.md or agent .md)
         target_agent: Target agent name (e.g., "pi", "claude", "amp")
-        models_config: The 'models' section from models.yml
+        model_tiers: Tier -> harness -> alias, from agent_harness_model_tiers
         plugin_root: Absolute path to substitute for ${CLAUDE_PLUGIN_ROOT}
         name_override: If set, rewrite the frontmatter name field to this value
 
@@ -1073,5 +1055,5 @@ def agent_harness_transform_skill(
         return SkillTransformResult(content="", modified=False).to_dict()
 
     return agent_harness_transform_skill_content(
-        path.read_text(), target_agent, models_config, plugin_root, name_override
+        path.read_text(), target_agent, model_tiers, plugin_root, name_override
     )

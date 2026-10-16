@@ -2,6 +2,8 @@
 
 `catalogue.toml` is the single checked-in plugin catalogue. `harness_filters.py` beside it performs manifest discovery, selector handling, and the per-harness SKILL.md transforms; `models.yml` and `session-title-prompt.txt` are the canonical model catalogue and session-title prompt that those transforms, the configuration renderers, and skill templates read. Skill templates reach files in this directory through the `agent_harness_root` Jinja global. Templates also see `hostname` and `home`, and `lookup('file', path)` reads a file inside the checkout. A host's private plugin sources belong in the ignored `local/<hostname>/catalogue.toml`, a bare `[[sources]]` array appended to the shared catalogue.
 
+A skill or agent's frontmatter `model:` names a `models.yml` tier, such as `fable`, and deploys as that tier's `agent_harness.aliases.<harness>`; a name with no alias for a target harness fails the deploy. A host whose `local/<hostname>/data.toml` declares `work_models` resolves Pi through each tier's `pi_alias` there instead.
+
 Each `harnesses/<name>/mise.toml` is a native mise project fragment. Its `[harness]` table declares destination roots and the name transform; it may also compose ordinary `[vars]`, `[dotfiles]`, and `[bootstrap.files]` resources owned by that harness. Only fragments for harnesses the selected profile targets are applied. For example, a template stored beside the declaration can become a native dotfile:
 
 ```toml

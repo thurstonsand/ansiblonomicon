@@ -187,9 +187,22 @@ def declarations(
     return env, selected_profile, layouts, sources
 
 
-def load_models(repo: Path) -> dict[str, object]:
+def load_model_tiers(repo: Path, hostname: str) -> dict[str, dict[str, str]]:
     document = mapping(yaml.safe_load((repo / CAPABILITY / "models.yml").read_text()))
-    return mapping(document["models"])
+    tiers = filters.agent_harness_model_tiers(mapping(document["models"]))
+    local_data = repo / CAPABILITY / "local" / hostname / "data.toml"
+    if not local_data.is_file():
+        return tiers
+    work_models = mapping(tomllib.loads(local_data.read_text())).get("work_models")
+    if work_models is None:
+        return tiers
+    # Pi on the work host reaches models only through the work gateway, so
+    # models.yml's Pi aliases do not apply there.
+    for aliases in tiers.values():
+        aliases.pop("pi", None)
+    for tier, fields in mapping(work_models).items():
+        tiers.setdefault(tier, {})["pi"] = str(mapping(fields)["pi_alias"])
+    return tiers
 
 
 def excluded(path: Path, patterns: list[str]) -> bool:
@@ -250,7 +263,7 @@ def render_files(
     resources = filters.agent_harness_build_plugin_resources(
         sources, str(cache), allow_missing_selections
     )
-    models = load_models(repo)
+    model_tiers = load_model_tiers(repo, hostname)
     files: dict[Path, tuple[bytes, int]] = {}
 
     def add(
@@ -299,7 +312,7 @@ def render_files(
                     raise ValueError(f"Invalid harness resource name: {name}")
                 if kind == "agents":
                     transformed = filters.agent_harness_transform_skill(
-                        str(source), target, models, resource["plugin_root"], name
+                        str(source), target, model_tiers, resource["plugin_root"], name
                     )
                     agent_content = transformed["content"]
                     local_link = (
@@ -341,7 +354,7 @@ def render_files(
                         transformed = filters.agent_harness_transform_skill_content(
                             content.decode(),
                             target,
-                            models,
+                            model_tiers,
                             resource["plugin_root"],
                             name,
                             str(Path(destination) / name),

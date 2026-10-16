@@ -86,7 +86,7 @@ def _profile(
             ("fable", "anthropic", "fable"),
             ("astra", "openai", "gpt_astra"),
             ("sol", "openai", "gpt_sol"),
-            ("luna", "openai", "gpt_luna"),
+            ("haiku", "anthropic", "haiku"),
         )
     }
     packages = [f"npm:{npm}" for npm in PERSONAL_PACKAGES]
@@ -96,9 +96,9 @@ def _profile(
         "provider": "doppelclaude",
         "model": models["anthropic"]["opus"]["version"],
         "librarian": aliases["sol"],
-        "auto_title": aliases["luna"],
+        "auto_title": aliases["haiku"],
         "handoff": aliases["sol"],
-        "vibe": aliases["luna"],
+        "vibe": aliases["haiku"],
         "enabled": [
             f"{aliases['opus']}:high",
             f"{aliases['fable']}:high",

@@ -103,27 +103,20 @@ I treat it as a forcing function for correct application hierarchy. Nothing says
 Just use soft wrap, my editor knows how to handle long lines.
 
 {% if amp -%}
-### Choosing thread modes
+### Oracle
 
-When creating threads, pick the tier as usual, then always set `agent_mode` to:
-
-- low, medium: `doppelclaude-opus-medium`
-- high: `gpt-6-astra-high-mixed`
-- ultra: `doppelclaude-fable-ultra`
-
-Use built-in `medium` only when GPT Sol is requested. Never use a `claude-*` mode.
-
-Call the Oracle one at a time, never in parallel. When asked for parallel Oracle instances, juts run them one after another.
+Call the Oracle one at a time, never in parallel. When asked for parallel Oracle instances, just run them one after another.
 {% else -%}
 ### Delegation and model selection
 
 If you're reaching for a subagent, consider the following:
 {% if vars.host_profile == "work" %}
-| model               | role                           | thinking level | cost | intelligence | taste | notes                                                    |
-| ------------------- | ------------------------------ | -------------- | ---- | ------------ | ----- | -------------------------------------------------------- |
-| claude-5-5-opus     | default workhorse, implementer | high           | 6    | 9            | 7     | also great for prose and thinking through problems       |
-| bedrock.gpt-6.1-sol | reviewer, bug-finder           | high           | 6    | 7            | 5     | cross-lab adversarial review; root-causing stubborn bugs |
-| bedrock.gpt-6.1-sol | exploration subagent           | low            | 7    | 6            | 5     | digging for answers/explanations                         |
+| model               | role                               | thinking level | cost | intelligence | taste | notes                                                                            |
+| ------------------- | ---------------------------------- | -------------- | ---- | ------------ | ----- | -------------------------------------------------------------------------------- |
+| claude-5-5-opus     | default workhorse, implementer     | high           | 6    | 9            | 7     | also great for prose and thinking through problems                               |
+| claude-5-1-fable    | reviewer, unconventional solutions | high           | ?    | 9            | 7     | cross-lab adversarial review; reach for it when the obvious approach falls short |
+| bedrock.gpt-6.1-sol | reviewer, bug-finder               | high           | 6    | 7            | 5     | cross-lab adversarial review; root-causing stubborn bugs                         |
+| bedrock.gpt-6.1-sol | exploration subagent               | low            | 7    | 6            | 5     | digging for answers/explanations                                                 |
 {% else %}
 | model            | role                               | thinking level | cost | intelligence | taste | notes                                                                            |
 | ---------------- | ---------------------------------- | -------------- | ---- | ------------ | ----- | -------------------------------------------------------------------------------- |
@@ -140,9 +133,6 @@ If you're reaching for a subagent, consider the following:
 - cost is at most a tie-breaker; weight these in order of importance: intelligence > taste > cost
 
 Try to pick the right agent for the job. If it's not in the list, don't consider it. Also on the table: adversarial cross-lab reviews of your plans and implementations: OpenAI models reviewing Anthropic plans/implementations and vice versa.
-{% if vars.host_profile != "work" %}
-Note that you should request permission before firing off a Fable model for review.
-{% endif -%}
 {% endif -%}
 {% if local is file %}
 @~/.agents/local.md

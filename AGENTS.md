@@ -10,6 +10,10 @@ See @CONTEXT.md for project vocabulary.
 
 If `hostname -s` is `type-a-no2`, read SESSION_RECOVERY_FOLLOWUPS.md before anything else and walk me through it.
 
+## Pending: work Oracle model
+
+If `hostname -s` is `ML-DFC6YK6VJQ`, remind me before anything else: the `oracle` agent profile (`agents/project-management/agents/oracle.md`, deployed to `~/.pi/agent/agents/` and `~/.claude/agents/`) names the `fable` tier, which the catalogue already resolves to `work_models.fable.pi_alias` from the private `local/ML-DFC6YK6VJQ/data.toml` for Pi on this host. Two gaps remain: `_work_models` in `configuration/pi.py` serves only opus, sonnet, and haiku on the gateway, so Pi cannot reach fable until it serves that tier; and Claude Code still receives `models.yml`'s `claude-fable-5-1[1m]`, which the work gateway may not serve. Until the first lands, Pi's `subagent_launch` with `agent: "oracle"` fails on this host. Design thread: <https://ampcode.com/threads/T-01a140f8-0095-772b-a0b6-9d3f1d8ffbe4>
+
 ## Ethos
 
 I used to be a heavy user of nix, home-manager, and NixOS, but I found the strictness of adherence to the config to be stifling (many files deployed as read-only) and I found the language esoteric (tho this is largely solved by agents today). I thought there ought to be a way to achieve the same, but through a different, more lenient means, and stumbled on mise. I really liked the ability to write configuration once, and have it deployed and working across all my machines in a consistent way, and that I can start afresh with an almost-fully-configured system with relative ease.

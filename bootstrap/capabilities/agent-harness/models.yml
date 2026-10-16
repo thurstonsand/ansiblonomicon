@@ -19,6 +19,7 @@ models:
       agent_harness:
         aliases:
           claude: "claude-fable-5-1[1m]"
+          amp: "anthropic/claude-fable-5-1"
           pi: "doppelclaude/claude-fable-5-1"
       vscode:
         include: true
@@ -35,6 +36,7 @@ models:
       agent_harness:
         aliases:
           claude: "opus[1m]"
+          amp: "anthropic/claude-opus-5-5"
           pi: "doppelclaude/claude-opus-5-5"
       vscode:
         include: true
@@ -67,6 +69,7 @@ models:
       agent_harness:
         aliases:
           claude: "haiku"
+          amp: "anthropic/claude-haiku-5-5"
           pi: "doppelclaude/claude-haiku-5-5"
       vscode:
         include: true
@@ -86,6 +89,7 @@ models:
       agent_harness:
         aliases:
           pi: "openai/gpt-6-astra"
+          amp: "openai/gpt-6-astra"
       vscode:
         include: true
         thinking: true
