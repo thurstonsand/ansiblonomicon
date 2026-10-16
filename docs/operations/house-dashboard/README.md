@@ -4,12 +4,12 @@ Versioned copies of Loch Highland's shipped Home Assistant dashboard, verified a
 
 ## Files and live locations
 
-| File                         | Live location                                                                                  |
-| ---------------------------- | ---------------------------------------------------------------------------------------------- |
-| `dashboard.json`             | Storage dashboard `house-atlas`, view `home`, title **House**                                  |
-| `house-atlas.js`             | Inline module resource `b917dcc7055c41c2bbe8167df0727d30`; registers `custom:house-atlas-card` |
-| `house-atlas-theme.yaml`     | `themes/house_atlas.yaml`, theme **House Atlas**                                               |
-| `trash-pickup-template.yaml` | Value of `template:` in `configuration.yaml`; creates `sensor.trash_pickup_reminder`           |
+| File                         | Live location                                                                                                                                              |
+| ---------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dashboard.json`             | Storage dashboard `house-atlas`, view `home`, title **House**                                                                                              |
+| `house-atlas.js`             | `www/house-atlas.js`, module resource `b917dcc7055c41c2bbe8167df0727d30` at `/local/house-atlas.js?v=<sha256 prefix>`; registers `custom:house-atlas-card` |
+| `house-atlas-theme.yaml`     | `themes/house_atlas.yaml`, theme **House Atlas**                                                                                                           |
+| `trash-pickup-template.yaml` | Value of `template:` in `configuration.yaml`; creates `sensor.trash_pickup_reminder`                                                                       |
 
 Open `/house-atlas/home` on the current HA address. House is the system default dashboard. The global theme has Gruvbox-derived light and dark palettes; the user profile must use the backend-selected theme and Auto mode to follow the device appearance.
 
@@ -82,9 +82,9 @@ Run `uv run pytest tests/test_trash_pickup_reminder.py` for local-date, DST, str
 
 ## Maintenance
 
-Before editing, read the live dashboard, resources, and theme through HA-MCP and compare them with these copies so newer live changes are not overwritten. Use `ha_config_get_dashboard`, `ha_config_list_dashboard_resources(include_content=true)`, and `ha_config_get_yaml` for theme key `House Atlas` in `themes/house_atlas.yaml`.
+Before editing, read the live dashboard, resources, and theme through HA-MCP and compare them with these copies so newer live changes are not overwritten. Use `ha_config_get_dashboard`, `ha_config_list_dashboard_resources`, and `ha_config_get_yaml` for theme key `House Atlas` in `themes/house_atlas.yaml`; read the card itself with `sudo incus exec home-assistant -- cat /mnt/data/supervisor/homeassistant/www/house-atlas.js`.
 
-Apply approved changes through HA-MCP: update the existing inline module with `ha_config_set_dashboard_resource`, the storage config with `ha_config_set_dashboard`, and the theme through managed YAML editing with diff confirmation and validation. Refresh the best-practices read-receipt required by gated tools. The instance already includes `themes` through `frontend.themes`; reload themes and select House Atlas for both backend light and dark defaults when restoring it. Refresh the browser after JavaScript changes.
+The card is a `/local` file rather than an inline `data:` resource so the companion app can cache it: HA serves `/local` with a 31-day `max-age`, which is why the resource URL carries a `?v=` content hash. Apply approved changes: push the card with `sudo incus file push house-atlas.js home-assistant/mnt/data/supervisor/homeassistant/www/house-atlas.js`, then point the existing resource at the new hash with `ha_config_set_dashboard_resource(resource_id=…, url="/local/house-atlas.js?v=<first 8 of sha256sum>")`. Through HA-MCP, update the storage config with `ha_config_set_dashboard`, and the theme through managed YAML editing with diff confirmation and validation. Refresh the best-practices read-receipt required by gated tools. The instance already includes `themes` through `frontend.themes`; reload themes and select House Atlas for both backend light and dark defaults when restoring it. Refresh the browser after JavaScript changes.
 
 Verify light/dark phone and tablet layouts, all four floors, doorbell polaroids with injected event states and slot files, room-list navigation, scene updates, and sheet dismissal versus scrolling/slider interactions. Intercept service calls when testing lock buttons; do not operate physical locks as a smoke test. Compare the resulting live configuration with these files before committing.
 
