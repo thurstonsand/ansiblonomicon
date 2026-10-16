@@ -105,7 +105,7 @@ Spans every host and every harness. `bootstrap/capabilities/agent-harness/` is c
 - **Amp User Skills** are rendered natively by `publish_amp_skills.py` using the `amp_publish` profile. `scripts/publish-amp-skills.sh` is the CI entry point, triggered on relevant main-branch pushes and a daily schedule. Overrideable by explicitly specifying `amp` as a target of a skill.
 - **Amp Tune Modes pins** for the built-in modes are declared in the `amp` block of `models.yml`; Amp's factory dial and automatic routing cover everything else. Amp has no supported CI settings writer, so apply `mise run amp:modes` through `manage_amp`; the publish workflow fails when the live pins or dial drift.
 
-Run `mise agent-config --check` for a placeholder-secret preview; exit 2 means the preview completed but secret-backed content remains unresolved. Use `mise agent-config --check --real-secrets` for read-only parity with resolved credentials, and `mise agent-config` to apply. `mise agent-harness` runs the catalogue first and then configuration; full host reconciliation routes both through the `agent-harness` tag.
+Run `mise agent-config --check` to preview and `mise agent-config` to apply. `mise agent-harness` runs the catalogue first and then configuration; full host reconciliation routes both through the `agent-harness` tag.
 
 ## Cloudflare
 

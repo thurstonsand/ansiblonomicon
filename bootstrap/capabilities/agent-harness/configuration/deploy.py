@@ -678,28 +678,18 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--home", type=Path, required=True)
     parser.add_argument("--hostname", required=True)
     parser.add_argument("--check", action="store_true")
-    parser.add_argument("--real-secrets", action="store_true")
     args = parser.parse_args(argv)
     keys = SECRET_KEYS[args.hostname]
-    secrets = {key: os.environ.get(key, f"CHECK_PLACEHOLDER_{key}") for key in keys}
-    missing = [key for key in keys if key not in os.environ]
-    if missing and (not args.check or args.real_secrets):
+    missing = sorted(key for key in keys if key not in os.environ)
+    if missing:
         parser.error("missing resolved secrets: " + ", ".join(missing))
-    result = reconcile(
+    return reconcile(
         repo=args.repo.resolve(),
         home=args.home.resolve(),
         hostname=args.hostname,
-        secrets=secrets,
+        secrets={key: os.environ[key] for key in keys},
         check=args.check,
     )
-    if missing:
-        print(
-            "secret-backed outputs were validated with placeholders; content parity is "
-            "unresolved (rerun --check --real-secrets)",
-            file=sys.stderr,
-        )
-        return 2
-    return result
 
 
 if __name__ == "__main__":

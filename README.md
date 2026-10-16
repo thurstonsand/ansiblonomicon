@@ -70,7 +70,7 @@ The [macOS system capability](bootstrap/capabilities/macos-system/README.md) own
 
 On both Macs, `mise agent-harness` reconciles skills, subagents, and hook fragments through the [native catalogue capability](bootstrap/capabilities/agent-harness/README.md). `--check` compares cached sources without refreshing them; `--cached` applies those same cached sources. Normal apply refreshes declared Git sources at most once per day. Exact-file ownership preserves independently installed skills, Claude's `synced/` tree, and existing parent-directory permissions.
 
-`bootstrap/capabilities/agent-harness/configuration/` is the canonical source for harness settings, instructions, extensions, and plugins. `mise agent-config --check` previews with non-secret placeholders and exits 2 when secret-backed parity remains unresolved; add `--real-secrets` for read-only parity with scoped fnox resolution, or omit `--check` to apply. Static first-party assets are symlinked; rendered, host-dependent, and private outputs are regular files, with private outputs mode `0600`. Host-local non-secret inputs belong in `bootstrap/capabilities/agent-harness/local/<hostname>/data.toml`; credentials remain SecretRefs resolved only for the command.
+`bootstrap/capabilities/agent-harness/configuration/` is the canonical source for harness settings, instructions, extensions, and plugins. `mise agent-config --check` previews; omit `--check` to apply. Static first-party assets are symlinked; rendered, host-dependent, and private outputs are regular files, with private outputs mode `0600`. Host-local non-secret inputs belong in `bootstrap/capabilities/agent-harness/local/<hostname>/data.toml`; credentials remain SecretRefs resolved only for the command.
 
 `mise agent-harness` reconciles the catalogue and then calls `agent-config`. Full reconciliation routes both through the `agent-harness` tag. A host's private plugin sources belong in the ignored `bootstrap/capabilities/agent-harness/local/<hostname>/catalogue.toml`. Hosted Amp publication uses the same catalogue, resolver, and `publish_amp_skills.py`.
 
@@ -121,7 +121,7 @@ The earlier Nix-to-Ansible/chezmoi migration is documented in [nixonomicon/docs/
 
 ## Hosts
 
-SSH aliases are configured by the [SSH client capability](bootstrap/capabilities/ssh-client/README.md), which owns `~/.ssh/config` and `ssh-smart-proxy` without pruning unrelated SSH state. Infrastructure aliases use the proxy for LAN access with Cloudflare Access fallback. pod042 also answers on Tailscale as `pod042-ts`, and `pod042-remote` forces the Cloudflare path when the LAN probe needs bypassing. pod042 alone receives its GitHub key pair through two scoped secrets. Run `mise ssh-client` or `mise laptop -t ssh-client`; checks use non-secret placeholders.
+SSH aliases are configured by the [SSH client capability](bootstrap/capabilities/ssh-client/README.md), which owns `~/.ssh/config` and `ssh-smart-proxy` without pruning unrelated SSH state. Infrastructure aliases use the proxy for LAN access with Cloudflare Access fallback. pod042 also answers on Tailscale as `pod042-ts`, and `pod042-remote` forces the Cloudflare path when the LAN probe needs bypassing. pod042 alone receives its GitHub key pair through two scoped secrets. Run `mise ssh-client` or `mise laptop -t ssh-client`.
 
 | Target                                            | Alias        | Description             |
 | ------------------------------------------------- | ------------ | ----------------------- |

@@ -33,7 +33,7 @@ The untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/` holds 
 | `[[mcp_servers]]`    | Claude and Codex MCP registration                      |
 | `pi_mcp_json`        | Pi MCP config (`~/.pi/agent/mcp.json`)                 |
 
-Keep credentials out of these files. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml`, and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` first, then `mise agent-config --check --real-secrets` to prove credential access without writing.
+Keep credentials out of these files. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml`, and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` to preview changes without writing.
 
 `catalogue.toml` uses the shared catalogue's `[[sources]]` schema. Sources are appended after the tracked catalogue and resolved for the `work` profile:
 

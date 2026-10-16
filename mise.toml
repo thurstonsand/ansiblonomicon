@@ -318,7 +318,7 @@ exec mise -C "$target" bootstrap --only dotfiles --yes
 [tasks."ssh-client"]
 description = "Reconcile SSH client configuration on this registered personal host"
 usage = '''
-flag "-c --check" help="Show changes using non-secret placeholders"
+flag "-c --check" help="Show changes without writing"
 '''
 run = '''
 host=$(hostname -s)
@@ -330,16 +330,14 @@ case "$host" in
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 run_ssh_client='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles "$4"'
-if [ -n "${usage_check:-}" ]; then
-  export POD042_GIT_SSH_PRIVATE_KEY=preview-private-key POD042_GIT_SSH_PUBLIC_KEY=preview-public-key
-  exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" --dry-run
-fi
+mode=--yes
+[ -z "${usage_check:-}" ] || mode=--dry-run
 if [ "$host" = pod042 ]; then
   exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec \
     --secret POD042_GIT_SSH_PRIVATE_KEY --secret POD042_GIT_SSH_PUBLIC_KEY -- \
-    sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
+    sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" "$mode"
 fi
-exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" --yes
+exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" "$mode"
 '''
 
 [tasks.neovim]
@@ -651,37 +649,24 @@ fi
 description = "Reconcile native rendered agent configuration only"
 usage = '''
 flag "-c --check" help="Render and compare without changing files or installing packages"
-flag "--real-secrets" help="Resolve secrets during read-only validation"
 '''
 run = '''
 set -e
 host=$(hostname -s)
 case "$host" in
-  ML-DFC6YK6VJQ) set -- --secret ANTHROPIC_AUTH_TOKEN ;;
-  Thurstons-MacBook-Pro|pod042|type-a-no2) set -- --secret CLI_PROXY_API_KEY ;;
+  ML-DFC6YK6VJQ) secret=ANTHROPIC_AUTH_TOKEN ;;
+  Thurstons-MacBook-Pro|pod042|type-a-no2) secret=CLI_PROXY_API_KEY ;;
   *) echo "Native agent configuration is available only on registered systems" >&2; exit 1 ;;
 esac
-status=0
-if [ "$#" -eq 0 ] || { [ -n "${usage_check:-}" ] && [ -z "${usage_real_secrets:-}" ]; }; then
+"$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret "$secret" -- \
   "$MISE_PROJECT_ROOT/.venv/bin/python" \
-    "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
-    --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host" ${usage_check:+--check} || status=$?
-  [ "$status" -eq 0 ] || { [ "$status" -eq 2 ] && [ -n "${usage_check:-}" ]; } || exit "$status"
-else
-  set -- "$@" -- \
-    "$MISE_PROJECT_ROOT/.venv/bin/python" \
-    "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
-    --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host"
-  [ -z "${usage_check:-}" ] || set -- "$@" --check
-  [ -z "${usage_real_secrets:-}" ] || set -- "$@" --real-secrets
-  "$MISE_PROJECT_ROOT/scripts/fnox-host" exec "$@"
-fi
+  "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/configuration/deploy.py" \
+  --repo "$MISE_PROJECT_ROOT" --home "$HOME" --hostname "$host" ${usage_check:+--check}
 # deploy.py retires the instruction files it used to own, so mise renders them afterwards.
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$MISE_PROJECT_ROOT" MISE_ENV=agent-instructions
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
 mise -C "$MISE_PROJECT_ROOT/bootstrap/targets/$host" bootstrap --only dotfiles "$mode"
-exit "$status"
 '''
 
 [tasks."reconcile:laptop"]
