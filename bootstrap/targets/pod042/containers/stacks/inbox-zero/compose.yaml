@@ -14,6 +14,7 @@ services:
       NEXT_PUBLIC_BYPASS_PREMIUM_CHECKS: "true"
       DATABASE_URL: "postgresql://inboxzero:${INBOX_ZERO_POSTGRES_PASSWORD:?required}@inbox-zero-db:5432/inboxzero?schema=public"
       DIRECT_URL: "postgresql://inboxzero:${INBOX_ZERO_POSTGRES_PASSWORD:?required}@inbox-zero-db:5432/inboxzero?schema=public"
+      REDIS_URL: "redis://inbox-zero-redis:6379"
       REDIS_HTTP_URL: "http://inbox-zero-redis-http:80"
       REDIS_HTTP_TOKEN: "${INBOX_ZERO_REDIS_HTTP_TOKEN:?required}"
       INTERNAL_API_URL: "http://inbox-zero:3000"
