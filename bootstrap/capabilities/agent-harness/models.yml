@@ -2,6 +2,7 @@
 # ================================
 # Single source of truth for all model definitions across:
 # - Native agent-harness and editor-config renderers
+# - Inbox Zero on pod042 (anthropic opus, sonnet and haiku versions, via mise.containers.toml)
 #
 # Update model versions here; all consumers reference this file.
 ---

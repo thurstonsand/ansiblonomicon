@@ -10,6 +10,16 @@ DDCLIENT_GITHUB_PAT = { provider = "agent", value = "op://agent/zid4qeby3vbv6wgc
 GHOST_DB_PASSWORD = { provider = "agent", value = "op://agent/r3krzpluypr6dtsuoza5p7xafm/ghostuser password" }
 GHOST_MYSQL_ROOT_PASSWORD = { provider = "agent", value = "op://agent/r3krzpluypr6dtsuoza5p7xafm/root password" }
 GHOST_MAIL_AUTH_PASS = { provider = "agent", value = "op://agent/r3krzpluypr6dtsuoza5p7xafm/auth password" }
+INBOX_ZERO_AUTH_SECRET = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/auth secret" }
+INBOX_ZERO_EMAIL_ENCRYPT_SECRET = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/email encrypt secret" }
+INBOX_ZERO_EMAIL_ENCRYPT_SALT = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/email encrypt salt" }
+INBOX_ZERO_INTERNAL_API_KEY = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/internal api key" }
+INBOX_ZERO_API_KEY_SALT = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/api key salt" }
+INBOX_ZERO_CRON_SECRET = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/cron secret" }
+INBOX_ZERO_REDIS_HTTP_TOKEN = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/redis http token" }
+INBOX_ZERO_POSTGRES_PASSWORD = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/postgres password" }
+INBOX_ZERO_GOOGLE_CLIENT_ID = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/google client id" }
+INBOX_ZERO_GOOGLE_CLIENT_SECRET = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/google client secret" }
 HOMEPAGE_OVERSEERR_API_KEY = { provider = "agent", value = "op://agent/llvkionb6paszgyawy2utzpfoe/apikey" }
 HOMEPAGE_PLEX_API_KEY = { provider = "agent", value = "op://agent/fwi425e6pshd3226h5ved6g4ha/x-plex-token" }
 PLEX_CLAIM_TOKEN = { provider = "agent", value = "op://agent/fwi425e6pshd3226h5ved6g4ha/claim-token" }

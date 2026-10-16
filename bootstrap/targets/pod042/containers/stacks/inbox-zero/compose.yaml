@@ -1,0 +1,121 @@
+services:
+  inbox-zero:
+    image: ghcr.io/elie222/inbox-zero:latest
+    restart: unless-stopped
+    depends_on:
+      inbox-zero-db:
+        condition: service_healthy
+      inbox-zero-redis-http:
+        condition: service_started
+    environment:
+      # Next.js otherwise listens only on the container hostname, out of reach of the healthcheck.
+      HOSTNAME: "0.0.0.0"
+      NEXT_PUBLIC_BASE_URL: "https://inbox.thurstons.house"
+      NEXT_PUBLIC_BYPASS_PREMIUM_CHECKS: "true"
+      DATABASE_URL: "postgresql://inboxzero:${INBOX_ZERO_POSTGRES_PASSWORD:?required}@inbox-zero-db:5432/inboxzero?schema=public"
+      DIRECT_URL: "postgresql://inboxzero:${INBOX_ZERO_POSTGRES_PASSWORD:?required}@inbox-zero-db:5432/inboxzero?schema=public"
+      REDIS_HTTP_URL: "http://inbox-zero-redis-http:80"
+      REDIS_HTTP_TOKEN: "${INBOX_ZERO_REDIS_HTTP_TOKEN:?required}"
+      INTERNAL_API_URL: "http://inbox-zero:3000"
+      GOOGLE_CLIENT_ID: "${INBOX_ZERO_GOOGLE_CLIENT_ID:?required}"
+      GOOGLE_CLIENT_SECRET: "${INBOX_ZERO_GOOGLE_CLIENT_SECRET:?required}"
+      GOOGLE_PUBSUB_TOPIC_NAME: "projects/inbox-zero-248085/topics/inbox-zero-emails"
+      GOOGLE_PUBSUB_VERIFICATION_TOKEN: "${INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN:?required}"
+      AUTH_SECRET: "${INBOX_ZERO_AUTH_SECRET:?required}"
+      AUTH_ALLOWED_EMAILS: "thurstonsand@gmail.com"
+      EMAIL_ENCRYPT_SECRET: "${INBOX_ZERO_EMAIL_ENCRYPT_SECRET:?required}"
+      EMAIL_ENCRYPT_SALT: "${INBOX_ZERO_EMAIL_ENCRYPT_SALT:?required}"
+      INTERNAL_API_KEY: "${INBOX_ZERO_INTERNAL_API_KEY:?required}"
+      API_KEY_SALT: "${INBOX_ZERO_API_KEY_SALT:?required}"
+      CRON_SECRET: "${INBOX_ZERO_CRON_SECRET:?required}"
+      ANTHROPIC_BASE_URL: "http://cli-proxy-api:8317/v1"
+      ANTHROPIC_API_KEY: "${CLI_PROXY_API_KEY:?required}"
+      DEFAULT_LLMS: "anthropic:${INBOX_ZERO_MODEL_SONNET:?required}"
+      DRAFT_LLMS: "anthropic:${INBOX_ZERO_MODEL_OPUS:?required}"
+      ECONOMY_LLMS: "anthropic:${INBOX_ZERO_MODEL_HAIKU:?required}"
+      CHAT_LLMS: "anthropic:${INBOX_ZERO_MODEL_HAIKU:?required}"
+      NANO_LLMS: "anthropic:${INBOX_ZERO_MODEL_HAIKU:?required}"
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:3000/',r=>process.exit(r.statusCode<500?0:1)).on('error',()=>process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 120s
+    networks:
+      default: {}
+      ingress: {}
+
+  inbox-zero-cron:
+    image: alpine:3
+    restart: unless-stopped
+    depends_on:
+      inbox-zero:
+        condition: service_healthy
+    environment:
+      CRON_SECRET: "${INBOX_ZERO_CRON_SECRET:?required}"
+    # Upstream's loops, minus Recall.ai meeting bots.
+    command:
+      - sh
+      - -c
+      - |
+        apk add --no-cache curl
+        every() {
+          while true; do
+            curl -fsS -o /dev/null -H "Authorization: Bearer $${CRON_SECRET}" "http://inbox-zero:3000$$2" || echo "[cron] $$2 failed"
+            sleep "$$1"
+          done
+        }
+        every 900 /api/cron/scheduled-actions &
+        every 900 /api/cron/automation-jobs &
+        every 3600 /api/follow-up-reminders &
+        every 1800 /api/resend/digest/all &
+        every 900 /api/meeting-briefs &
+        every 21600 /api/watch/all &
+        wait
+
+  inbox-zero-db:
+    image: postgres:16
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: inboxzero
+      POSTGRES_DB: inboxzero
+      POSTGRES_PASSWORD: "${INBOX_ZERO_POSTGRES_PASSWORD:?required}"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U inboxzero -d inboxzero"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    volumes:
+      - /mnt/black-box/docker/inbox-zero/postgres:/var/lib/postgresql/data
+
+  inbox-zero-redis:
+    image: redis:7
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+    volumes:
+      - /mnt/black-box/docker/inbox-zero/redis:/data
+
+  inbox-zero-redis-http:
+    image: hiett/serverless-redis-http:latest
+    restart: unless-stopped
+    depends_on:
+      inbox-zero-redis:
+        condition: service_healthy
+    environment:
+      SRH_MODE: env
+      SRH_TOKEN: "${INBOX_ZERO_REDIS_HTTP_TOKEN:?required}"
+      SRH_CONNECTION_STRING: "redis://inbox-zero-redis:6379"
+
+networks:
+  ingress:
+    external: true
+    name: ingress

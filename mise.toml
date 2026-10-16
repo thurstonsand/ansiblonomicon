@@ -837,7 +837,7 @@ run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --sec
 [tasks."google:plan"]
 description = "Plan the Google Cloud OpenTofu changes"
 dir = "terraform/google"
-run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret NEST_EVENTS_TOKEN -- python3 "{{config_root}}/scripts/tofu.py" google plan'
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret NEST_EVENTS_TOKEN --secret INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN -- python3 "{{config_root}}/scripts/tofu.py" google plan'
 
 [tasks."google:apply"]
 description = "Apply the Google Cloud OpenTofu changes"
@@ -845,7 +845,7 @@ dir = "terraform/google"
 usage = '''
 flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
 '''
-run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret NEST_EVENTS_TOKEN -- python3 "{{config_root}}/scripts/tofu.py" google apply ${usage_yes:+-auto-approve}'
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret NEST_EVENTS_TOKEN --secret INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN -- python3 "{{config_root}}/scripts/tofu.py" google apply ${usage_yes:+-auto-approve}'
 
 # ---------------------------------------------------------------------------
 # UniFi

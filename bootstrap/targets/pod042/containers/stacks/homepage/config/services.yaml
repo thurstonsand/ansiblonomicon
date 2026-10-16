@@ -92,6 +92,9 @@
     - Ghost:
         href: https://blog.thurstons.house
         icon: si-ghost
+    - Inbox Zero:
+        href: https://inbox.thurstons.house
+        icon: mdi-email-check
     - CLI Proxy API:
         href: https://cli-proxy-api.thurstons.house
         icon: mdi-api

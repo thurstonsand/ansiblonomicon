@@ -11,6 +11,7 @@ ALIASES = {
     },
     "google": {
         "TF_VAR_nest_events_token": "NEST_EVENTS_TOKEN",
+        "TF_VAR_inbox_zero_pubsub_verification_token": "INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN",
     },
     "unifi": {
         "TF_VAR_unifi_username": "UNIFI_USERNAME",

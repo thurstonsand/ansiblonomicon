@@ -27,6 +27,12 @@ cli-proxy-api.thurstons.house, http://cli-proxy-api.thurstons.house {
 	reverse_proxy cli-proxy-api:8317
 }
 
+inbox.thurstons.house, http://inbox.thurstons.house {
+	reverse_proxy inbox-zero:3000 {
+		header_up X-Forwarded-Proto https
+	}
+}
+
 seerr.thurstons.house, http://seerr.thurstons.house {
 	reverse_proxy seerr:5055
 }

@@ -11,6 +11,7 @@ run = [
 "apt:docker-buildx-plugin" = "latest"
 "apt:docker-compose-plugin" = "latest"
 "apt:netdata" = "latest"
+"apt:python3-yaml" = "latest"
 "apt:netdata-plugin-systemd-units" = "latest"
 "apt:netdata-plugin-systemd-journal" = "latest"
 
@@ -27,6 +28,18 @@ homepage_overseerr_api_key = "HOMEPAGE_OVERSEERR_API_KEY"
 homepage_plex_api_key = "HOMEPAGE_PLEX_API_KEY"
 homepage_unifi_password = "UNIFI_PASSWORD"
 homepage_unifi_username = "UNIFI_USERNAME"
+inbox_zero_api_key_salt = "INBOX_ZERO_API_KEY_SALT"
+inbox_zero_auth_secret = "INBOX_ZERO_AUTH_SECRET"
+inbox_zero_cron_secret = "INBOX_ZERO_CRON_SECRET"
+inbox_zero_cli_proxy_api_key = "CLI_PROXY_API_KEY"
+inbox_zero_email_encrypt_salt = "INBOX_ZERO_EMAIL_ENCRYPT_SALT"
+inbox_zero_email_encrypt_secret = "INBOX_ZERO_EMAIL_ENCRYPT_SECRET"
+inbox_zero_google_client_id = "INBOX_ZERO_GOOGLE_CLIENT_ID"
+inbox_zero_google_client_secret = "INBOX_ZERO_GOOGLE_CLIENT_SECRET"
+inbox_zero_internal_api_key = "INBOX_ZERO_INTERNAL_API_KEY"
+inbox_zero_postgres_password = "INBOX_ZERO_POSTGRES_PASSWORD"
+inbox_zero_pubsub_verification_token = "INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN"
+inbox_zero_redis_http_token = "INBOX_ZERO_REDIS_HTTP_TOKEN"
 nest_events_token = "NEST_EVENTS_TOKEN"
 netdata_claim_token = "NETDATA_CLAIM_TOKEN"
 nextdns_api_key = "NEXTDNS_API_KEY"
@@ -114,6 +127,11 @@ mode = "0750"
 [bootstrap.directories."/etc/ansiblonomicon/containers/homepage/config"]
 owner = "thurstonsand"
 group = "media"
+mode = "0750"
+
+[bootstrap.directories."/etc/ansiblonomicon/containers/inbox-zero"]
+owner = "root"
+group = "docker"
 mode = "0750"
 
 [bootstrap.directories."/etc/ansiblonomicon/containers/ingress"]
@@ -360,6 +378,33 @@ owner = "thurstonsand"
 group = "media"
 mode = "0644"
 
+[bootstrap.files."/etc/ansiblonomicon/containers/inbox-zero/compose.yaml"]
+source = "containers/stacks/inbox-zero/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/inbox-zero/.env"]
+content = '''
+CLI_PROXY_API_KEY="{{ secret(name="inbox_zero_cli_proxy_api_key") }}"
+{{ exec(command=`/usr/bin/python3 -c 'import sys, yaml; m = yaml.safe_load(open(sys.argv[1]))["models"]["anthropic"]; [print("INBOX_ZERO_MODEL_" + k.upper() + "=" + m[k]["version"]) for k in ("opus", "sonnet", "haiku")]' ` ~ (config_root ~ "/../../capabilities/agent-harness/models.yml") | quote) | trim }}
+INBOX_ZERO_API_KEY_SALT="{{ secret(name="inbox_zero_api_key_salt") }}"
+INBOX_ZERO_AUTH_SECRET="{{ secret(name="inbox_zero_auth_secret") }}"
+INBOX_ZERO_CRON_SECRET="{{ secret(name="inbox_zero_cron_secret") }}"
+INBOX_ZERO_EMAIL_ENCRYPT_SALT="{{ secret(name="inbox_zero_email_encrypt_salt") }}"
+INBOX_ZERO_EMAIL_ENCRYPT_SECRET="{{ secret(name="inbox_zero_email_encrypt_secret") }}"
+INBOX_ZERO_GOOGLE_CLIENT_ID="{{ secret(name="inbox_zero_google_client_id") }}"
+INBOX_ZERO_GOOGLE_CLIENT_SECRET="{{ secret(name="inbox_zero_google_client_secret") }}"
+INBOX_ZERO_INTERNAL_API_KEY="{{ secret(name="inbox_zero_internal_api_key") }}"
+INBOX_ZERO_POSTGRES_PASSWORD="{{ secret(name="inbox_zero_postgres_password") }}"
+INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN="{{ secret(name="inbox_zero_pubsub_verification_token") }}"
+INBOX_ZERO_REDIS_HTTP_TOKEN="{{ secret(name="inbox_zero_redis_http_token") }}"
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
 [bootstrap.files."/etc/ansiblonomicon/containers/ingress/compose.yaml"]
 source = "containers/stacks/ingress/compose.yaml"
 owner = "root"
@@ -600,6 +645,19 @@ sudo = true
 pull = "always"
 wait = true
 wait_timeout = 180
+remove_orphans = true
+depends_on = ["service:docker"]
+
+[bootstrap.compose.inbox-zero]
+project_dir = "/etc/ansiblonomicon/containers/inbox-zero"
+files = ["compose.yaml"]
+env_files = [".env"]
+project_name = "inbox-zero"
+state = "running"
+sudo = true
+pull = "always"
+wait = true
+wait_timeout = 300
 remove_orphans = true
 depends_on = ["service:docker"]
 

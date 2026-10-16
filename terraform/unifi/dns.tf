@@ -4,6 +4,7 @@ locals {
     "blog.thurstons.house",
     "cli-proxy-api.thurstons.house",
     "dash.thurstons.house",
+    "inbox.thurstons.house",
     "netdata.thurstons.house",
     "neutarr.thurstons.house",
     "plex.thurstons.house",
