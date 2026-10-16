@@ -3,7 +3,9 @@ model_reasoning_effort = "medium"
 model_reasoning_summary = "auto"
 {% if not is_work %}
 model = "{{ model }}"
-approvals_reviewer = "auto_review"
+{## The app labels exactly this triple as its "Full access" permission mode. ##}
+approval_policy = "never"
+approvals_reviewer = "user"
 sandbox_mode = "danger-full-access"
 web_search = "live"
 {% endif %}
