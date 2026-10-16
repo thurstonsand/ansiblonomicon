@@ -1022,7 +1022,7 @@ run = "uv run --no-sync python bootstrap/capabilities/agent-harness/amp_modes.py
 
 [tasks."sudoers:check"]
 description = "Validate sudoers drop-ins, which mise installs unchecked"
-run = 'for f in bootstrap/targets/*/omarchy/sudoers.d/*; do visudo -cf "$f" || exit 1; done'
+run = 'for f in bootstrap/targets/*/omarchy/sudoers.d/*; do /usr/sbin/visudo -cf "$f" || exit 1; done'
 
 # ---------------------------------------------------------------------------
 # Upkeep
