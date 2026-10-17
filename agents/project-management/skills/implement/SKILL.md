@@ -1,6 +1,6 @@
 ---
 name: implement
-description: "Implement an agreed plan or design, review it, verify it, and hand back evidence. Use when the user has agreed a plan and asks for it to be built."
+description: "Execute an implementation workflow on an agreed plan, design, or requested code change: implement, code review, verify, and hand back evidence. Load before the first edit whenever the user approves building (\"go\", \"yes\", \"build it for real\") or asks for a fix, upgrade, or port, including tasks delegated from another thread. Not for mockups or while the plan is still being refined."
 ---
 
 # Implement
