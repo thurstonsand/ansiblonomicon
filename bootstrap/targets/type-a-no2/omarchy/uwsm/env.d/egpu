@@ -1,0 +1,15 @@
+# When the eGPU is attached at login, Hyprland renders on it so its monitor is not fed by copying every frame across Thunderbolt.
+# Hyprland cannot survive losing the GPU it renders on, so log out before unplugging the eGPU.
+nvidia=
+others=
+for card in /sys/class/drm/card[0-9]*; do
+  case "${card##*/}" in *-*) continue ;; esac
+  if [ "$(cat "$card/device/vendor")" = 0x10de ]; then
+    nvidia="/dev/dri/${card##*/}"
+  else
+    others="$others:/dev/dri/${card##*/}"
+  fi
+done
+
+[ -n "$nvidia" ] && export AQ_DRM_DEVICES="$nvidia$others"
+unset card nvidia others

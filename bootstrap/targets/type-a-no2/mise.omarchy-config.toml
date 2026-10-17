@@ -76,6 +76,7 @@ fi
 "~/.config/hypr/.luarc.json" = { source = "omarchy/hypr/.luarc.json", mode = "symlink" }
 # The Mouse panel replaces this file on save, which would break a symlink.
 "~/.config/hypr/mouse.lua" = { source = "omarchy/hypr/mouse.lua", mode = "copy" }
+"~/.config/uwsm/env.d/egpu" = { source = "omarchy/uwsm/env.d/egpu", mode = "symlink" }
 "~/.config/omarchy/shell.json" = { source = "omarchy/shell.json", mode = "symlink" }
 "~/.config/omarchy/sandman.json" = { source = "omarchy/sandman.json", mode = "symlink" }
 "~/.config/omarchy/extensions/omarchy-menu.jsonc" = { source = "omarchy/extensions/omarchy-menu.jsonc", mode = "symlink" }
