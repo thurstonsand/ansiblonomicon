@@ -20,6 +20,13 @@
             }
           ],
           "thermostatScale": [66, 76],
+          "lamps": [
+            {
+              "name": "Portable Lamp",
+              "entity": "light.portable_lamp",
+              "sceneArea": "home"
+            }
+          ],
           "floors": [
             {
               "id": "basement",
@@ -399,7 +406,8 @@
                     "light.thurston_office_desk_lamp_left",
                     "light.thurston_office_desk_lamp_right",
                     "light.thurston_office_wall_wash_left",
-                    "light.thurston_office_wall_wash_right"
+                    "light.thurston_office_wall_wash_right",
+                    "light.thurston_office_iris"
                   ],
                   "controls": [
                     {

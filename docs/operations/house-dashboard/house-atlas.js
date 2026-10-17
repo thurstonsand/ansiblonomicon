@@ -40,6 +40,7 @@ class HouseAtlas extends HTMLElement {
     this.controlRoom = false;
     this.pendingTargets = new Map();
     this.cards = [];
+    this.lampCards = [];
     this.polaroids = new Map();
     this.mobile = false;
     this.keyboardNavigation = false;
@@ -105,6 +106,15 @@ class HouseAtlas extends HTMLElement {
     const [low, high] = config.thermostatScale || [];
     if (!Number.isInteger(low) || !Number.isInteger(high) || low >= high)
       throw new Error("House Atlas requires a thermostatScale of [low, high].");
+    if (
+      (config.lamps || []).some(
+        (lamp) =>
+          !lamp.entity?.startsWith("light.") ||
+          !lamp.name ||
+          (lamp.sceneArea !== undefined && typeof lamp.sceneArea !== "string"),
+      )
+    )
+      throw new Error("House Atlas lamps must be named lights.");
     this.config = config;
     this.render();
   }
@@ -128,6 +138,7 @@ class HouseAtlas extends HTMLElement {
             this.helpers = helpers;
             this.renderMap();
             this.renderDetails();
+            this.renderLamps();
           })
           .catch((error) => this.showError(error));
       }
@@ -142,7 +153,7 @@ class HouseAtlas extends HTMLElement {
       this.renderMap();
     }
     if (this.map) this.map.hass = hass;
-    for (const card of this.cards) card.hass = hass;
+    for (const card of [...this.cards, ...this.lampCards]) card.hass = hass;
     this.updateSummary();
     this.updateList();
     this.updateLockButtons();
@@ -160,8 +171,17 @@ class HouseAtlas extends HTMLElement {
     return this.config.floors.flatMap((floor) => floor.rooms);
   }
 
+  get lamps() {
+    return this.config.lamps || [];
+  }
+
   houseLights() {
-    return [...new Set(this.rooms.flatMap((room) => room.lights || []))];
+    return [
+      ...new Set([
+        ...this.rooms.flatMap((room) => room.lights || []),
+        ...this.lamps.map((lamp) => lamp.entity),
+      ]),
+    ];
   }
 
   perimeter() {
@@ -193,9 +213,11 @@ class HouseAtlas extends HTMLElement {
     lights.hidden = !lit;
     lights.querySelector("b").textContent =
       `${lit} ${lit === 1 ? "light" : "lights"} on`;
-    lights.querySelector("small").textContent = this.rooms
-      .filter((room) => (room.lights || []).some(on))
-      .map((room) => room.name)
+    lights.querySelector("small").textContent = [
+      ...this.rooms.filter((room) => (room.lights || []).some(on)),
+      ...this.lamps.filter((lamp) => on(lamp.entity)),
+    ]
+      .map((place) => place.name)
       .join(" · ");
     const perimeter = this.perimeter();
     const open = perimeter.filter((door) => door.open);
@@ -789,6 +811,11 @@ class HouseAtlas extends HTMLElement {
         .policy-doors { margin: 0; font-size: 13px; line-height: 1.5; color: var(--atlas-muted); }
         .policy-toggle { margin-top: auto; border: 1px solid var(--atlas-border); background: var(--atlas-bg); border-radius: 6px; }
         .policy.paused .policy-toggle { border-color: var(--atlas-accent); background: var(--atlas-accent); color: var(--atlas-on-accent); }
+        .lamps { grid-column: 1 / -1; }
+        .lamp { display: grid; grid-template-rows: auto auto; align-content: start; }
+        .lamp-scenes .section-label { margin-top: 12px; }
+        .lamp-scenes .section-label + .scenes { margin-top: 8px; }
+        .lamp-tiles { display: grid; grid-template-columns: repeat(auto-fill,minmax(280px,1fr)); gap: 12px; margin-top: 12px; }
         .map-panel { position: relative; }
         .stamp { position: absolute; left: 4%; top: 46%; z-index: 2; transform: rotate(-11deg); padding: 10px 18px; border: 4px double var(--atlas-accent); border-radius: 4px; background: color-mix(in srgb, var(--atlas-bg) 90%, transparent); color: var(--atlas-accent); opacity: .94; font: 700 clamp(15px,3.2cqw,24px)/1.1 Georgia,serif; letter-spacing: .12em; text-transform: uppercase; text-align: center; box-shadow: 0 1px 0 #28282818; touch-action: none; user-select: none; cursor: grab; transition: transform .4s cubic-bezier(.2,.9,.3,1.25), opacity .4s; animation: thunk .35s cubic-bezier(.3,1.6,.5,1); }
         .stamp[hidden] { display: none; }
@@ -865,6 +892,7 @@ class HouseAtlas extends HTMLElement {
               )
               .join("")}
             <article class="instrument policy"><header class="instrument-head"><h2>Auto-lock &amp; close</h2></header><p class="policy-doors"></p><button class="policy-toggle"></button></article>
+            ${this.lamps.length ? '<article class="instrument lamps"><header class="instrument-head"><h2>Lamps</h2></header><div class="lamp-tiles"></div></article>' : ""}
           </div>
         </section>
         <nav class="floors" aria-label="Floors">${this.config.floors.map((floor) => `<button data-floor="${escapeXml(floor.id)}" aria-current="${floor.id === this.floorId}">${escapeXml(floor.name)}</button>`).join("")}</nav>
@@ -970,6 +998,7 @@ class HouseAtlas extends HTMLElement {
     if (this.helpers) {
       this.renderMap();
       this.renderDetails();
+      this.renderLamps();
     }
   }
 
@@ -1232,6 +1261,35 @@ class HouseAtlas extends HTMLElement {
     if (target && this.room) target.textContent = this.summary(this.room);
   }
 
+  renderLamps() {
+    this.lampCards = [];
+    const tiles = this.lamps.map(({ entity, name, sceneArea }) => {
+      const card = this.helpers.createCardElement({
+        type: "tile",
+        entity,
+        name,
+        color: "amber",
+        tap_action: { action: "more-info" },
+        icon_tap_action: { action: "toggle" },
+        features: [{ type: "light-brightness" }],
+      });
+      card.hass = this._hass;
+      this.lampCards.push(card);
+      const lamp = document.createElement("div");
+      lamp.append(card);
+      lamp.className = "lamp";
+      if (sceneArea) {
+        const scenes = document.createElement("section");
+        scenes.className = "lamp-scenes";
+        scenes.dataset.area = sceneArea;
+        lamp.append(scenes);
+      }
+      return lamp;
+    });
+    this.shadowRoot.querySelector(".lamp-tiles")?.replaceChildren(...tiles);
+    this.updateScenes();
+  }
+
   renderDetails() {
     const host = this.shadowRoot.querySelector(".detail-host");
     const room = this.room;
@@ -1376,23 +1434,36 @@ class HouseAtlas extends HTMLElement {
   }
 
   updateScenes() {
+    for (const container of this.shadowRoot.querySelectorAll(".lamp-scenes"))
+      this.fillScenes(
+        container,
+        "Hue scenes",
+        this.hueScenes(container.dataset.area),
+        "No Hue scenes for this lamp.",
+      );
     const container = this.shadowRoot.querySelector(".hue-scenes");
     if (!container || !this.room) return;
-    const scenes = this.room.scenes
-      ? this.room.scenes.map(({ entity, name }) => ({
-          entity,
-          name,
-          unavailable: [undefined, "unavailable"].includes(
-            this._hass.states[entity]?.state,
-          ),
-        }))
-      : this.hueScenes();
+    this.fillScenes(
+      container,
+      this.room.scenes ? "Scenes" : "Hue scenes",
+      this.room.scenes
+        ? this.room.scenes.map(({ entity, name }) => ({
+            entity,
+            name,
+            unavailable: [undefined, "unavailable"].includes(
+              this._hass.states[entity]?.state,
+            ),
+          }))
+        : this.hueScenes(this.room.id),
+      "No Hue scenes in this room.",
+    );
+  }
+
+  fillScenes(container, label, scenes, empty) {
     const signature = JSON.stringify(scenes);
     if (container.dataset.scenes === signature) return;
     container.dataset.scenes = signature;
-    container.innerHTML = `<p class="section-label">${
-      this.room.scenes ? "Scenes" : "Hue scenes"
-    }</p><div class="scenes"></div>`;
+    container.innerHTML = `<p class="section-label">${label}</p><div class="scenes"></div>`;
     for (const scene of scenes) {
       const button = document.createElement("button");
       button.className = "scene";
@@ -1403,18 +1474,17 @@ class HouseAtlas extends HTMLElement {
       );
       container.querySelector(".scenes").append(button);
     }
-    if (!scenes.length)
-      container.innerHTML += '<p class="muted">No Hue scenes in this room.</p>';
+    if (!scenes.length) container.innerHTML += `<p class="muted">${empty}</p>`;
   }
 
-  hueScenes() {
+  hueScenes(area) {
     return Object.values(this._hass.entities || {})
       .filter((entity) => {
         const device = this._hass.devices?.[entity.device_id];
         return (
           entity.platform === "hue" &&
           entity.entity_id.startsWith("scene.") &&
-          (entity.area_id || device?.area_id) === this.room.id &&
+          (entity.area_id || device?.area_id) === area &&
           !entity.hidden &&
           this._hass.states[entity.entity_id]
         );
