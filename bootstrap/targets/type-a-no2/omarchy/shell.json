@@ -1,7 +1,7 @@
 {
   "version": 1,
   "idle": {
-    "screensaver": 120,
+    "screensaver": 300,
     "lock": 600
   },
   "bar": {
@@ -44,9 +44,6 @@
         {
           "id": "erijl.lock",
           "unlockAfterHibernate": true
-        },
-        {
-          "id": "lgse.sandman"
         },
         {
           "id": "io.github.mb-jambon.omapods"

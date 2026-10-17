@@ -78,7 +78,6 @@ fi
 "~/.config/hypr/mouse.lua" = { source = "omarchy/hypr/mouse.lua", mode = "copy" }
 "~/.config/uwsm/env.d/egpu" = { source = "omarchy/uwsm/env.d/egpu", mode = "symlink" }
 "~/.config/omarchy/shell.json" = { source = "omarchy/shell.json", mode = "symlink" }
-"~/.config/omarchy/sandman.json" = { source = "omarchy/sandman.json", mode = "symlink" }
 "~/.config/omarchy/extensions/omarchy-menu.jsonc" = { source = "omarchy/extensions/omarchy-menu.jsonc", mode = "symlink" }
 "~/.config/omarchy/branding/about.txt" = { source = "omarchy/branding/about.txt", mode = "symlink" }
 "~/.config/omarchy/branding/screensaver.txt" = { source = "omarchy/branding/screensaver.txt", mode = "symlink" }
