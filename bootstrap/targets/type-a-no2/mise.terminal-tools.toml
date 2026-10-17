@@ -3,6 +3,10 @@
 "~/.config/ghostty/config.ghostty" = { source = "terminal-tools/ghostty/config.tera", mode = "template" }
 "~/.local/bin/delta" = { source = "terminal-tools/bin/delta", mode = "symlink" }
 
+[vars]
+terminal_tools_font_family = "BerkeleyMono Nerd Font Mono"
+terminal_tools_font_size = 9
+
 [bootstrap.repos]
 "/home/thurstonsand/.config/tmux/plugins/tpm" = { url = "https://github.com/tmux-plugins/tpm.git" }
 

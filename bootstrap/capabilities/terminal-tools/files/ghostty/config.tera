@@ -10,9 +10,11 @@ font-codepoint-map = U+2726,U+2734,U+2741=Zapf Dingbats
 {%- else %}
 {%- if vars.host_profile == "omarchy" %}
 # Omarchy owns ~/.config/ghostty/config (font, theme, keys); this file loads after it.
-{%- else %}
+# fastfetch reads only this file when it exists, so Omarchy's About needs the font restated here.
+{%- endif %}
 font-family = {{ vars.terminal_tools_font_family }}
 font-size = {{ vars.terminal_tools_font_size }}
+{%- if vars.host_profile != "omarchy" %}
 theme = dark:Gruvbox Dark Hard,light:Gruvbox Light Hard
 {%- endif %}
 # BerkeleyMono has no Dingbats, and the Adwaita Mono fallback draws pi's footer provider icons at
