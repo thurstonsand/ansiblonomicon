@@ -1,5 +1,16 @@
 # When the eGPU is attached at login, Hyprland renders on it so its monitor is not fed by copying every frame across Thunderbolt.
 # Hyprland cannot survive losing the GPU it renders on, so log out before unplugging the eGPU.
+# nvidia-drm registers its card a few seconds after the eGPU reaches the PCI bus, and autologin can start the session in between.
+for device in /sys/bus/pci/devices/*; do
+  [ "$(cat "$device/vendor")" = 0x10de ] || continue
+  case "$(cat "$device/class")" in 0x03*) ;; *) continue ;; esac
+  waited=0
+  while ! ls "$device"/drm/card* >/dev/null 2>&1 && [ "$waited" -lt 100 ]; do
+    sleep 0.1
+    waited=$((waited + 1))
+  done
+done
+
 nvidia=
 others=
 for card in /sys/class/drm/card[0-9]*; do
@@ -12,4 +23,4 @@ for card in /sys/class/drm/card[0-9]*; do
 done
 
 [ -n "$nvidia" ] && export AQ_DRM_DEVICES="$nvidia$others"
-unset card nvidia others
+unset card nvidia others device waited
