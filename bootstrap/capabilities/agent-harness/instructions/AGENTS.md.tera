@@ -102,11 +102,7 @@ I treat it as a forcing function for correct application hierarchy. Nothing says
 
 Just use soft wrap, my editor knows how to handle long lines.
 
-{% if amp -%}
-### Oracle
-
-Call the Oracle one at a time, never in parallel. When asked for parallel Oracle instances, just run them one after another.
-{% else -%}
+{% if not amp -%}
 ### Delegation and model selection
 
 If you're reaching for a subagent, consider the following:
