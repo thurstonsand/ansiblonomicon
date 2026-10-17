@@ -559,7 +559,10 @@ exec mise run //:agent-config ${usage_check:+--check}
 
 [tasks."omarchy-loadout"]
 description = "Reconcile packages, themes, and plugins declared for the Omarchy laptop"
-usage = 'flag "-c --check" help="Show install changes and undeclared installs without applying them"'
+usage = '''
+flag "-c --check" help="Show install changes and undeclared installs without applying them"
+flag "--update" help="Also update installed plugins, following rewritten remote history"
+'''
 run = '''
 [ "$(hostname -s)" = type-a-no2 ] || { echo "Omarchy loadout requires type-a-no2" >&2; exit 1; }
 target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
@@ -567,12 +570,12 @@ export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV=omarchy-loadout
 if [ -n "${usage_check:-}" ]; then
-  exec mise -C "$target" run omarchy-loadout --check
+  exec mise -C "$target" run omarchy-loadout --check ${usage_update:+--update}
 fi
 export SUDO_ASKPASS="$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh"
 export PATH="$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH"
 exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD -- \
-  mise -C "$target" run omarchy-loadout
+  mise -C "$target" run omarchy-loadout ${usage_update:+--update}
 '''
 
 [tasks."amp-cli"]
@@ -592,6 +595,7 @@ alias = "omarchy"
 usage = '''
 flag "-c --check" help="Show changes without applying them"
 flag "-t --tags <tags>" help="Only run these capabilities (comma-separated)"
+flag "--full" help="Upgrade Omarchy, system packages, themes, and plugins before reconciling"
 '''
 run = '''
 target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
@@ -607,14 +611,23 @@ for tag in $(printf '%s' "$tags" | tr ',' ' '); do
   esac
 done
 [ -z "$unsupported" ] || { echo "Unsupported omarchy-host tags: $unsupported" >&2; exit 1; }
+if [ -n "${usage_full:-}" ]; then
+  if [ -n "${usage_check:-}" ]; then
+    omarchy update available || true
+  else
+    PATH="$MISE_PROJECT_ROOT/scripts/decline-gum:$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH" \
+      "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD -- \
+      sh -c 'omarchy update -y && omarchy theme update' || exit "$?"
+  fi
+fi
 selected() {
   case ",$tags," in ,,|*,all,*|*,"$1",*) return 0 ;; esac
   return 1
 }
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
-if selected omarchy-loadout; then
-  mise run //:omarchy-loadout ${usage_check:+--check} || exit "$?"
+if [ -n "${usage_full:-}" ] || selected omarchy-loadout; then
+  mise run //:omarchy-loadout ${usage_check:+--check} ${usage_full:+--update} || exit "$?"
 fi
 if selected mise; then
   mise -C "$target" bootstrap --only dotfiles --force-dotfiles "$mode" || exit "$?"

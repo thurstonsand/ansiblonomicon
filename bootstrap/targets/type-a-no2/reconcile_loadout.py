@@ -137,6 +137,76 @@ def installed_plugins() -> set[str]:
     }
 
 
+def plugin_git(
+    plugin_id: str, *args: str, check: bool = True
+) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", "-C", str(PLUGINS_DIR / plugin_id), *args],
+        check=check,
+        capture_output=True,
+        text=True,
+    )
+
+
+def follow_rewritten(plugin_ids: list[str], *, check: bool) -> None:
+    """Reset checkouts whose remote history was rewritten, such as a rebased fork,
+    straight to the remote head, since `omarchy plugin update` only fast-forwards. Only
+    follows when every local commit already exists on the remote under another hash and
+    nothing is uncommitted, and restores the original commit if validation fails."""
+    followed: list[str] = []
+    failed: list[str] = []
+    for plugin_id in plugin_ids:
+        plugin_git(plugin_id, "fetch", "--quiet", "origin", "HEAD")
+        if (
+            plugin_git(
+                plugin_id,
+                "merge-base",
+                "--is-ancestor",
+                "HEAD",
+                "FETCH_HEAD",
+                check=False,
+            ).returncode
+            == 0
+        ):
+            continue
+        local_only = any(
+            line.startswith("+")
+            for line in plugin_git(
+                plugin_id, "cherry", "FETCH_HEAD", "HEAD"
+            ).stdout.splitlines()
+        )
+        if (
+            local_only
+            or plugin_git(
+                plugin_id, "status", "--porcelain", "--untracked-files=no"
+            ).stdout
+        ):
+            continue
+        head = plugin_git(plugin_id, "rev-parse", "HEAD").stdout.strip()
+        remote = plugin_git(plugin_id, "rev-parse", "FETCH_HEAD").stdout.strip()
+        print(
+            f"follow {plugin_id} from {head[:7]} to {remote[:7]}, its remote history was rewritten",
+            flush=True,
+        )
+        if check:
+            continue
+        plugin_git(plugin_id, "reset", "--quiet", "--hard", remote)
+        validate = subprocess.run(
+            ["omarchy-plugin-validate", str(PLUGINS_DIR / plugin_id)], check=False
+        )
+        if validate.returncode == 0:
+            followed.append(plugin_id)
+        else:
+            plugin_git(plugin_id, "reset", "--quiet", "--hard", head)
+            failed.append(f"{plugin_id} (restored {head[:7]})")
+    if followed:
+        subprocess.run(
+            ["omarchy-shell", "shell", "rescanPlugins"], check=True, capture_output=True
+        )
+    if failed:
+        raise SystemExit(f"rewritten plugins failed validation: {', '.join(failed)}")
+
+
 def pending_setups(plugins: dict[str, Plugin | None]) -> dict[str, tuple[str, str]]:
     """Setup commands whose last successful run predates the plugin's current commit,
     keyed by plugin id, with the stamp that records a run of that command at that commit."""
@@ -238,7 +308,12 @@ def unconverged(declared: dict[str, str | None], installed: set[str]) -> list[st
 
 
 def reconcile(
-    manifest: Manifest, *, check: bool, pacman_log: Path, install_log: Path
+    manifest: Manifest,
+    *,
+    check: bool,
+    update: bool,
+    pacman_log: Path,
+    install_log: Path,
 ) -> None:
     install = [
         name
@@ -323,6 +398,20 @@ def reconcile(
                 f"declared name does not match what Omarchy installed: {', '.join(mismatched)}"
             )
 
+    if update:
+        follow_rewritten(
+            [
+                plugin_id
+                for plugin_id, plugin in manifest.plugins.items()
+                if plugin is not None and plugin_id in plugins
+            ],
+            check=check,
+        )
+        command = ["omarchy", "plugin", "update", "--yes"]
+        print(shlex.join(command), flush=True)
+        if not check:
+            subprocess.run(command, check=True)
+
     if not check:
         for plugin_id, plugin in manifest.plugins.items():
             if plugin is None:
@@ -342,6 +431,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("manifest", type=Path)
     parser.add_argument("--check", action="store_true")
+    parser.add_argument("--update", action="store_true")
     parser.add_argument("--pacman-log", type=Path, default=Path("/var/log/pacman.log"))
     parser.add_argument(
         "--install-log", type=Path, default=Path("/var/log/omarchy-install.log")
@@ -350,6 +440,7 @@ def main() -> None:
     reconcile(
         load_manifest(args.manifest),
         check=args.check,
+        update=args.update,
         pacman_log=args.pacman_log,
         install_log=args.install_log,
     )

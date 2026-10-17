@@ -1,0 +1,11 @@
+#!/bin/sh
+# Put first on PATH for `omarchy update -y`. It still asks gum questions (orphan
+# removal, reboot) whenever it has a terminal, and its `script` wrapper always
+# provides one; gum's timeout answers the reboot prompt with yes. Decline every
+# question and print it, so the run neither blocks nor reboots.
+if [ "$1" = confirm ]; then
+  for prompt; do :; done
+  echo "Declined: $prompt" >&2
+  exit 1
+fi
+exec /usr/bin/gum "$@"
