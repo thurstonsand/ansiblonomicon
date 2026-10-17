@@ -1,15 +1,16 @@
 {
   "$schema": "https://raw.githubusercontent.com/goodroot/hyprwhspr/main/share/config.schema.json",
-  "transcription_backend": "cohere-transcribe",
-  "cohere_transcribe_device": "xpu",
-  "use_hypr_bindings": true,
   "recording_mode": "push_to_talk",
-  "filter_filler_words": true,
-  "post_transcription_hook": "~/.config/omarchy/plugins/thurstonsand.hyprwhspr/bin/cleanup",
+  "external_bindings": true,
+  "language": "en",
   "word_overrides": {
     "ansiblonomicon": "ansiblonomicon",
     "omarchy": "omarchy",
     "pi": "pi"
   },
-  "language": "en"
+  "filter_filler_words": true,
+  "post_transcription_hook": "~/.config/omarchy/plugins/thurstonsand.hyprwhspr/bin/cleanup",
+  "transcription_backend": "cohere-transcribe",
+  "cohere_transcribe_device": "xpu",
+  "use_hypr_bindings": true
 }
