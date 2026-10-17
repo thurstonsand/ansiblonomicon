@@ -45,9 +45,7 @@ def vscode_settings(args: argparse.Namespace) -> dict[str, Any]:
         result["go.formatFlags"] = ["-local", args.go_local_imports]
     if args.gopls_build_flags:
         gopls["buildFlags"] = [args.gopls_build_flags]
-    if args.profile == "omarchy":
-        result["update.mode"] = "none"
-        result["workbench.colorTheme"] = omarchy_vscode_theme()
+    result["workbench.colorTheme"] = omarchy_vscode_theme()
     return result
 
 

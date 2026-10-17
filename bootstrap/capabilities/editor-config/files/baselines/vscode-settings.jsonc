@@ -2,10 +2,7 @@
   // ============================================================================
   // CORE UI & APPEARANCE
   // ============================================================================
-  "update.mode": "default",
-  "window.autoDetectColorScheme": true,
-  "workbench.preferredDarkColorTheme": "Gruvbox Dark Hard",
-  "workbench.preferredLightColorTheme": "Gruvbox Light Hard",
+  "update.mode": "none",
   "workbench.startupEditor": "none",
   "editor.fontFamily": "BerkeleyMono Nerd Font Mono",
   "editor.fontSize": 13,
