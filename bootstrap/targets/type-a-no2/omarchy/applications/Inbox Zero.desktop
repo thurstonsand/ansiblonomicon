@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=Inbox Zero
+Comment=Inbox Zero
+Exec=omarchy-launch-webapp "https://inbox.thurstons.house"
+Terminal=false
+Type=Application
+Icon=inbox-zero
+StartupNotify=true
