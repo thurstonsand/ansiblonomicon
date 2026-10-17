@@ -6,7 +6,7 @@
   },
   "bar": {
     "position": "right",
-    "transparent": false,
+    "transparent": true,
     "centerAnchor": "omarchy.clock",
     "layout": {
       "left": [
@@ -61,13 +61,17 @@
           "id": "omarchy.network"
         },
         {
+          "id": "thurstonsand.hyprwhspr"
+        },
+        {
           "id": "omarchy.audio"
         },
         {
           "id": "omarchy.monitor"
         },
         {
-          "id": "omarchy.power"
+          "id": "omarchy.power",
+          "showPercentage": true
         }
       ]
     }
