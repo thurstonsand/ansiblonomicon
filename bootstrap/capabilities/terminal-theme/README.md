@@ -2,6 +2,12 @@
 
 This native mise capability installs the shared Python runtime and zsh helper as source symlinks, renders Hunk's runtime-mutated config as a real native dotfile, and manages the macOS appearance watcher as a LaunchAgent. The detector seeds a missing `.terminal-bg` from macOS appearance; mirrors default a missing state to dark. Runtime state and SSH leases remain outside the repository. Both native rendering and Python runtime switching read the same light/dark TOML palettes.
 
+## Solitude
+
+The palette is Omarchy's Solitude: `solitude/colors.toml` is its terminal palette verbatim, paired with ashen.nvim's accents as Omarchy pairs them. The light variant mirrors each color's OKLCH lightness while keeping its hue and chroma, giving up chroma only where sRGB cannot hold it. `solitude/render.py` derives both modes and writes every theme file from them: Ghostty, tmux, Hunk, Neovim's light ashen palette, Codex's `.tmTheme` files and desktop chrome, Pi's interview CSS, and Claude's statusline colors. Edit the palette or the mirror there and rerun it; never hand-edit its outputs.
+
+On Omarchy, everything follows the active Omarchy theme instead. Ghostty, tmux, and Neovim are Omarchy's own; the light variant is the user theme `solitude-light`, whose `colors.toml` the script writes into type-a-no2's `omarchy/themes/` beside a Neovim spec for the `solitude-light` colorscheme. The same renderers, fed Omarchy `{{ key }}` placeholders instead of hex values, write `omarchy/themed/*.tpl`, which Omarchy fills from whichever theme is active; Solitude and Solitude Light carry exact copies that take precedence. Claude's statusline, Pi's interview, and a Hunk extension read the rendered files in place; `theme-set` hooks copy Codex's theme and chrome into `~/.codex` and cache the same `.tmTheme` as bat's `omarchy` theme, which bat and the delta wrapper select. Codex desktop's code blocks stay on its built-in `vercel`, the only kind of theme it accepts, and an open Hunk reads the new theme on restart. Omarchy renders only on a theme switch, so `omarchy-config` refreshes the current theme when any of these sources changed or a consumer's copy is missing.
+
 Run the focused reconciliation on a registered host:
 
 ```sh

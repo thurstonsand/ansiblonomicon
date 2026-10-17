@@ -18,7 +18,7 @@ chronicle = {{ "false" if is_work else "true" }}
 artifact = {{ "false" if is_work else "true" }}
 
 [tui]
-theme = "gruvbox-{{ terminal_background }}"
+theme = "{{ tui_theme }}"
 status_line = [ "context-remaining", "model-with-reasoning", "project-root", "git-branch" ]
 {% if not is_work %}
 
@@ -52,8 +52,8 @@ followUpQueueMode = "steer"
 mac-menu-bar-enabled = false
 preventSleepWhileRunning = true
 hotkey-window-projectless-default-enabled = true
-appearanceLightCodeThemeId = "gruvbox"
-appearanceDarkCodeThemeId = "gruvbox"
+appearanceLightCodeThemeId = "vercel"
+appearanceDarkCodeThemeId = "vercel"
 usePointerCursors = true
 selected-avatar-id = "custom:2b"
 open-local-url-in-target-preference = "in-app-browser"
@@ -62,27 +62,3 @@ dock-icon-preference = "app-default"
 
 [desktop.open-in-target-preferences]
 global = "zed"
-
-[desktop.appearanceLightChromeTheme]
-accent = "#458588"
-contrast = 45
-ink = "#3c3836"
-opaqueWindows = false
-surface = "#fbf1c7"
-
-[desktop.appearanceLightChromeTheme.semanticColors]
-diffAdded = "#3c3836"
-diffRemoved = "#cc241d"
-skill = "#b16286"
-
-[desktop.appearanceDarkChromeTheme]
-accent = "#458588"
-contrast = 60
-ink = "#ebdbb2"
-opaqueWindows = false
-surface = "#282828"
-
-[desktop.appearanceDarkChromeTheme.semanticColors]
-diffAdded = "#ebdbb2"
-diffRemoved = "#cc241d"
-skill = "#b16286"

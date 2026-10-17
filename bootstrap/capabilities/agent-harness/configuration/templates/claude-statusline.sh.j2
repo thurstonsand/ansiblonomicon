@@ -16,42 +16,24 @@ CACHE_DIR="${HOME}/.cache/claude-statusline"
 # COLORS
 # =============================================================================
 
-# Fixed 256-palette Gruvbox indices (16-231) because CC's statusline
-# renderer doesn't theme-map ANSI 0-15.
-CURRENT_THEME=$(cat ~/.terminal-bg 2>/dev/null || echo "dark")
+# Truecolor values because CC's statusline renderer doesn't theme-map ANSI 0-15.
 RESET='\033[0m'
 
-rgb_fg() { printf '\\033[38;2;%s;%s;%sm' "$1" "$2" "$3"; }
+rgb_fg() {
+  local hex=${1#\#}
+  printf '\\033[38;2;%d;%d;%dm' "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
+}
 
-if [[ "$CURRENT_THEME" == "light" ]]; then
-  FG_GREEN=$(rgb_fg 121 116 14)  # gruvbox-light-hard green #79740e
-  FG_YELLOW=$(rgb_fg 181 118 20) # gruvbox-light-hard yellow #b57614
-  FG_RED=$(rgb_fg 157 0 6)       # gruvbox-light-hard red #9d0006
-  FG_ORANGE=$(rgb_fg 175 58 3)   # gruvbox-light-hard orange #af3a03
-  FG_MUTED=$(rgb_fg 102 92 84)   # gruvbox-light-hard muted #665c54
-  STYLE_PALETTE=(
-    "$(rgb_fg 143 63 113)" # purple #8f3f71
-    "$(rgb_fg 66 123 88)"  # cyan/green #427b58
-    "$(rgb_fg 181 118 20)" # yellow #b57614
-    "$(rgb_fg 121 116 14)" # green #79740e
-    "$(rgb_fg 157 0 6)"    # red #9d0006
-    "$(rgb_fg 175 58 3)"   # orange #af3a03
-  )
+{% if omarchy -%}
+# Omarchy renders these from whichever theme is active.
+. ~/.local/state/omarchy/current/theme/claude-statusline-colors.sh
+{%- else -%}
+if [[ "$(cat ~/.terminal-bg 2>/dev/null || echo dark)" == "light" ]]; then
+{{ colors.light | indent(2, true) }}
 else
-  FG_GREEN=$(rgb_fg 184 187 38)  # gruvbox-dark-hard green #b8bb26
-  FG_YELLOW=$(rgb_fg 250 189 47) # gruvbox-dark-hard yellow #fabd2f
-  FG_RED=$(rgb_fg 251 73 52)     # gruvbox-dark-hard red #fb4934
-  FG_ORANGE=$(rgb_fg 254 128 25) # gruvbox-dark-hard orange #fe8019
-  FG_MUTED=$(rgb_fg 189 174 147) # gruvbox-dark-hard muted #bdae93
-  STYLE_PALETTE=(
-    "$(rgb_fg 211 134 155)" # purple #d3869b
-    "$(rgb_fg 142 192 124)" # cyan/green #8ec07c
-    "$(rgb_fg 250 189 47)"  # yellow #fabd2f
-    "$(rgb_fg 184 187 38)"  # green #b8bb26
-    "$(rgb_fg 251 73 52)"   # red #fb4934
-    "$(rgb_fg 254 128 25)"  # orange #fe8019
-  )
+{{ colors.dark | indent(2, true) }}
 fi
+{%- endif %}
 
 # =============================================================================
 # ARGS

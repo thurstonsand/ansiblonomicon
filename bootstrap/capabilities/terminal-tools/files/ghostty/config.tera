@@ -15,7 +15,7 @@ font-codepoint-map = U+2726,U+2734,U+2741=Zapf Dingbats
 font-family = {{ vars.terminal_tools_font_family }}
 font-size = {{ vars.terminal_tools_font_size }}
 {%- if vars.host_profile != "omarchy" %}
-theme = dark:Gruvbox Dark Hard,light:Gruvbox Light Hard
+theme = dark:solitude-dark,light:solitude-light
 {%- endif %}
 # BerkeleyMono has no Dingbats, and the Adwaita Mono fallback draws pi's footer provider icons at
 # mismatched sizes. Noto Sans Symbols 2 covers all three at one scale.
@@ -53,7 +53,7 @@ macos-non-native-fullscreen = visible-menu
 auto-update = download
 auto-update-channel = stable
 
-theme = dark:Gruvbox Dark Hard,light:Gruvbox Light Hard
+theme = dark:solitude-dark,light:solitude-light
 
 keybind = global:control+option+.=toggle_quick_terminal
 keybind = cmd+enter=ignore

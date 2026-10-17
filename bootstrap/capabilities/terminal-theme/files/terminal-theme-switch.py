@@ -16,7 +16,7 @@ from pathlib import Path
 import subprocess
 from typing import cast
 
-from hunk_gruvbox_theme import hunk_custom_theme_table
+from hunk_theme import hunk_custom_theme_table
 from terminal_theme_common import (
     Mode,
     ThemeLease,
@@ -35,11 +35,11 @@ class CliArgs:
 
 
 def update_terminal_bg(mode: Mode) -> None:
-    Path.home().joinpath(".terminal-bg").write_text(mode + "\n")
+    write_atomic(Path.home() / ".terminal-bg", f"{mode}\n")
 
 
 def codex_theme_name(mode: Mode) -> str:
-    return f"gruvbox-{mode}"
+    return f"solitude-{mode}"
 
 
 def set_codex_tui_theme(text: str, mode: Mode) -> str:
@@ -78,7 +78,7 @@ def update_hunk_theme(mode: Mode) -> None:
 
 
 def update_tmux_theme(mode: Mode) -> None:
-    theme_path = Path.home() / ".config" / "tmux" / f"gruvbox-{mode}.conf"
+    theme_path = Path.home() / ".config" / "tmux" / f"theme-{mode}.conf"
     subprocess.run(
         ["tmux", "source-file", str(theme_path)],
         check=False,

@@ -40,14 +40,23 @@ def render(
     secrets: dict[str, str],
 ) -> dict[str, str]:
     """Return HOME-relative Codex files; malformed live TOML is refused."""
-    del repo, secrets
+    del secrets
     models = data.get("models")
     if not isinstance(models, dict):
         raise ValueError("data.models must contain the canonical model mapping")
-    background_path = home / ".terminal-bg"
-    background = (
-        background_path.read_text().strip() if background_path.exists() else "dark"
-    )
+    # On Omarchy, the theme-set hook owns the TUI theme file and the desktop chrome tables.
+    chrome_path = None
+    if hostname == "type-a-no2":
+        tui_theme = "omarchy"
+    else:
+        background_path = home / ".terminal-bg"
+        background = (
+            background_path.read_text().strip() if background_path.exists() else "dark"
+        )
+        tui_theme = f"solitude-{background}"
+        chrome_path = (
+            repo / "bootstrap/capabilities/terminal-theme/solitude/codex-chrome.toml"
+        )
     develop_dir = Path(str(data["developDir"]))
     projects_root = develop_dir if develop_dir.is_absolute() else home / develop_dir
     declared = _ENV.get_template("codex-config.toml.j2").render(
@@ -55,9 +64,11 @@ def render(
         home=str(home),
         projects_root=str(projects_root),
         is_work=hostname == WORK_HOST,
-        terminal_background=background,
+        tui_theme=tui_theme,
     )
     overlay = cast(Container, tomlkit.parse(declared))
+    if chrome_path is not None:
+        _merge(overlay, cast(Container, tomlkit.parse(chrome_path.read_text())))
     target = home / ".codex/config.toml"
     if target.exists():
         merged = cast(Container, tomlkit.parse(target.read_text()))

@@ -24,6 +24,12 @@ destination = '.codex/rules/10-command-gates.rules'
 [[absent]]
 destination = '.config/amp/plugins'
 
+[[absent]]
+destination = '.pi/agent/interview-themes/gruvbox-dark-hard.css'
+
+[[absent]]
+destination = '.pi/agent/interview-themes/gruvbox-light-hard.css'
+
 [[files]]
 source = 'assets/oracle/config.json'
 destination = '.oracle/config.json'
@@ -468,15 +474,31 @@ harness = 'pi'
 mode = 'symlink'
 
 [[files]]
-source = 'assets/pi/interview-themes/gruvbox-dark-hard.css'
-destination = '.pi/agent/interview-themes/gruvbox-dark-hard.css'
+source = 'assets/pi/interview-themes/solitude-dark.css'
+destination = '.pi/agent/interview-themes/solitude-dark.css'
 harness = 'pi'
+hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
 mode = 'symlink'
 
 [[files]]
-source = 'assets/pi/interview-themes/gruvbox-light-hard.css'
-destination = '.pi/agent/interview-themes/gruvbox-light-hard.css'
+source = 'assets/pi/interview-themes/solitude-light.css'
+destination = '.pi/agent/interview-themes/solitude-light.css'
 harness = 'pi'
+hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/codex/themes/solitude-dark.tmTheme'
+destination = '.codex/themes/solitude-dark.tmTheme'
+harness = 'codex'
+hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = 'assets/codex/themes/solitude-light.tmTheme'
+destination = '.codex/themes/solitude-light.tmTheme'
+harness = 'codex'
+hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
 mode = 'symlink'
 
 [[files]]

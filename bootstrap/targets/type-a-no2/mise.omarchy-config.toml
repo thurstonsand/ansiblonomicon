@@ -62,6 +62,12 @@ if [ -n "$started" ] && [ "$(stat -Lc %Y ~/.config/systemd/user/hyprwhspr.servic
   systemctl --user daemon-reload
   systemctl --user try-restart hyprwhspr
 fi
+# Omarchy renders its templates and theme files only on a theme switch, so re-render when a source changed since the last one
+# or a consumer's copy is missing, as on a fresh home where the hooks first ran before agent-config created ~/.claude.
+changed=$(find -L ~/.config/omarchy/themed ~/.config/omarchy/themes -newer ~/.local/state/omarchy/current/theme.name -type f -print -quit)
+if [ -n "$changed" ] || [ ! -f ~/.codex/themes/omarchy.tmTheme ] || [ ! -f ~/.config/bat/themes/omarchy.tmTheme ] || [ ! -f ~/.claude/themes/omarchy.json ]; then
+  omarchy-theme-refresh
+fi
 '''
 
 [dotfiles]
@@ -84,6 +90,17 @@ fi
 # omarchy-theme-bg-next compares unresolved paths against bg-set's realpath, so a symlink stalls cycling.
 "~/.config/omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg", mode = "copy" }
 "~/.config/omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/solitude-light/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/solitude-light/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg", mode = "copy" }
+"~/.config/omarchy/themes/solitude-light" = { source = "omarchy/themes/solitude-light", mode = "symlink" }
+"~/.config/omarchy/themes/solitude" = { source = "omarchy/themes/solitude", mode = "symlink" }
+"~/.config/omarchy/themed" = { source = "omarchy/themed", mode = "symlink-each" }
+"~/.config/omarchy/hooks/theme-set.d/codex" = { source = "omarchy/hooks/theme-set.d/codex", mode = "symlink" }
+"~/.config/omarchy/hooks/theme-set.d/bat" = { source = "omarchy/hooks/theme-set.d/bat", mode = "symlink" }
+"~/.config/bat/config" = { source = "omarchy/bat/config", mode = "symlink" }
+"~/.config/hunk/extensions/omarchy-theme.ts" = { source = "omarchy/hunk/omarchy-theme.ts", mode = "symlink" }
+# Hunk rewrites its config when a theme is picked in its selector, which would break a symlink.
+"~/.config/hunk/config.toml" = { source = "omarchy/hunk/config.toml", mode = "copy" }
 "~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }
 # Omarchy 4.0.4 registers its bundled extensions' native hosts for Brave-Browser but not Brave-Origin.
 # Retire once a release ships basecamp/omarchy#10292, which registers them itself.

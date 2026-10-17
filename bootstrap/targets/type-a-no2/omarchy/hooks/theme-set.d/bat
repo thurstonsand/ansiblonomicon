@@ -1,0 +1,7 @@
+#!/bin/bash
+set -euo pipefail
+themes="$(bat --config-dir)/themes"
+mkdir -p "$themes"
+cp ~/.local/state/omarchy/current/theme/syntax.tmTheme "$themes/omarchy.tmTheme.tmp"
+mv "$themes/omarchy.tmTheme.tmp" "$themes/omarchy.tmTheme"
+bat cache --build >/dev/null

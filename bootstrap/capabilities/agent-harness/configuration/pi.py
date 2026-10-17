@@ -230,8 +230,12 @@ def _settings(
         "interview": {
             "theme": {
                 "mode": "auto",
-                "lightPath": "~/.pi/agent/interview-themes/gruvbox-light-hard.css",
-                "darkPath": "~/.pi/agent/interview-themes/gruvbox-dark-hard.css",
+                "lightPath": "~/.local/state/omarchy/current/theme/pi-interview.css"
+                if hostname == "type-a-no2"
+                else "~/.pi/agent/interview-themes/solitude-light.css",
+                "darkPath": "~/.local/state/omarchy/current/theme/pi-interview.css"
+                if hostname == "type-a-no2"
+                else "~/.pi/agent/interview-themes/solitude-dark.css",
                 "toggleHotkey": "alt+l",
             }
         },

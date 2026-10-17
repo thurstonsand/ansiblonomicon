@@ -1,7 +1,8 @@
 [dotfiles]
 "~/.local/bin/terminal_theme_common.py" = { source = "terminal-theme/terminal_theme_common.py", mode = "symlink" }
 "~/.local/bin/terminal-theme-switch.py" = { source = "terminal-theme/terminal-theme-switch.py", mode = "symlink" }
-"~/.local/bin/hunk_gruvbox_theme.py" = { source = "terminal-theme/hunk_gruvbox_theme.py", mode = "symlink" }
+"~/.local/bin/hunk_theme.py" = { source = "terminal-theme/hunk_theme.py", mode = "symlink" }
+"~/.local/bin/hunk_gruvbox_theme.py" = { mode = "absent" }
 "~/.local/bin/terminal-theme-init.py" = { source = "terminal-theme/terminal-theme-init.py", mode = "symlink" }
 "~/.config/zsh/terminal-theme.zsh" = { source = "terminal-theme/terminal-theme.zsh", mode = "symlink" }
 

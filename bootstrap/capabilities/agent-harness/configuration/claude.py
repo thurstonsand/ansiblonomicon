@@ -142,7 +142,7 @@ def _base_settings(
         "autoDreamEnabled": True,
         "skipDangerousModePermissionPrompt": True,
         "skipAutoPermissionPrompt": True,
-        "theme": "auto",
+        "theme": "custom:omarchy" if hostname == "type-a-no2" else "auto",
         "remoteControlAtStartup": True,
         "inputNeededNotifEnabled": True,
         "agentPushNotifEnabled": True,
@@ -243,7 +243,15 @@ def render(
         / "statusline-usage.sh"
     )
     statusline = _ENV.get_template("claude-statusline.sh.j2").render(
-        statusline_usage=usage.read_text().rstrip() if usage.exists() else ""
+        statusline_usage=usage.read_text().rstrip() if usage.exists() else "",
+        omarchy=hostname == "type-a-no2",
+        colors={
+            mode: (
+                repo
+                / f"bootstrap/capabilities/terminal-theme/solitude/claude-statusline-colors-{mode}.sh"
+            ).read_text()
+            for mode in ("light", "dark")
+        },
     )
     outputs = {
         ".claude/settings.json": json.dumps(settings, indent=2) + "\n",

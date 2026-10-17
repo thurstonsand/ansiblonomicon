@@ -3,7 +3,7 @@
 # requires-python = ">=3.14"
 # dependencies = ["tomlkit>=0.13.2"]
 # ///
-"""Gruvbox Hard custom theme fragments for Hunk."""
+"""Custom theme fragments for Hunk."""
 
 import argparse
 from collections.abc import Mapping
@@ -24,20 +24,20 @@ _SOURCE_DIR = Path(__file__).resolve().parent
 
 
 def _load_theme(mode: Mode) -> Mapping[str, Mapping[str, str]]:
-    palette = _SOURCE_DIR / f"hunk-gruvbox-{mode.value}.toml"
+    palette = _SOURCE_DIR / f"hunk-{mode.value}.toml"
     parsed = tomllib.loads(palette.read_text())
     custom_theme = parsed["custom_theme"]
-    syntax = custom_theme.pop("syntax")
-    return {"custom_theme": custom_theme, "syntax": syntax}
+    syntax_scopes = custom_theme.pop("syntax_scopes")
+    return {"custom_theme": custom_theme, "syntax_scopes": syntax_scopes}
 
 
-HUNK_GRUVBOX_THEMES: Mapping[Mode, Mapping[str, Mapping[str, str]]] = {
+HUNK_THEMES: Mapping[Mode, Mapping[str, Mapping[str, str]]] = {
     mode: _load_theme(mode) for mode in Mode
 }
 
 
 def hunk_custom_theme(mode: Mode) -> Mapping[str, Mapping[str, str]]:
-    return HUNK_GRUVBOX_THEMES[mode]
+    return HUNK_THEMES[mode]
 
 
 def hunk_custom_theme_toml(mode: Mode) -> str:
@@ -53,10 +53,10 @@ def hunk_custom_theme_table(mode: Mode):
 
     for key, value in theme["custom_theme"].items():
         custom_theme[key] = value
-    for key, value in theme["syntax"].items():
+    for key, value in theme["syntax_scopes"].items():
         syntax[key] = value
 
-    custom_theme["syntax"] = syntax
+    custom_theme["syntax_scopes"] = syntax
     return custom_theme
 
 

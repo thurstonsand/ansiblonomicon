@@ -20,9 +20,8 @@ if [[ ! -x "$real_delta" ]]; then
 fi
 
 if command -v omarchy-theme-color >/dev/null; then
-  terminal_bg="$(omarchy-theme-color mode)"
-else
-  terminal_bg="$(cat ~/.terminal-bg 2>/dev/null || echo dark)"
+  # Omarchy's bat theme-set hook caches the active theme as `omarchy`.
+  exec "$real_delta" --"$(omarchy-theme-color mode)" --syntax-theme=omarchy "$@"
 fi
 
-exec "$real_delta" --"$terminal_bg" "$@"
+exec "$real_delta" --"$(cat ~/.terminal-bg 2>/dev/null || echo dark)" "$@"

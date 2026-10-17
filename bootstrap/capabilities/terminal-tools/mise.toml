@@ -1,8 +1,12 @@
 [dotfiles]
 "~/.config/tmux/tmux.conf" = { source = "terminal-tools/tmux/tmux.conf.tera", mode = "template" }
-"~/.config/tmux/gruvbox-dark.conf" = { source = "terminal-tools/tmux/gruvbox-dark.conf", mode = "symlink" }
-"~/.config/tmux/gruvbox-light.conf" = { source = "terminal-tools/tmux/gruvbox-light.conf", mode = "symlink" }
+"~/.config/tmux/theme-dark.conf" = { source = "terminal-tools/tmux/theme-dark.conf", mode = "symlink" }
+"~/.config/tmux/theme-light.conf" = { source = "terminal-tools/tmux/theme-light.conf", mode = "symlink" }
+"~/.config/tmux/gruvbox-dark.conf" = { mode = "absent" }
+"~/.config/tmux/gruvbox-light.conf" = { mode = "absent" }
 "~/.config/ghostty/config.ghostty" = { source = "terminal-tools/ghostty/config.tera", mode = "template" }
+"~/.config/ghostty/themes/solitude-dark" = { source = "terminal-tools/ghostty/themes/solitude-dark", mode = "symlink" }
+"~/.config/ghostty/themes/solitude-light" = { source = "terminal-tools/ghostty/themes/solitude-light", mode = "symlink" }
 
 [vars]
 terminal_tools_font_family = "BerkeleyMono Nerd Font Mono"

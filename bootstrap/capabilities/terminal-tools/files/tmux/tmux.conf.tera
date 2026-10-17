@@ -44,7 +44,7 @@ set-hook -g pane-focus-in 'if-shell -F "#{==:#{pane_current_command},nvim}" "set
 # Status bar layout
 set -g status-position bottom
 
-# Pane border labels (gruvbox handles border colors)
+# Pane border labels (the theme handles border colors)
 set -g pane-border-status top
 set -g pane-border-format " #{pane_index}: #{pane_current_command} "
 {%- endif %}
@@ -105,8 +105,8 @@ set -g @plugin 'sainnhe/tmux-fzf'
 
 # Seed from persisted state; terminal-theme-switch.py applies live changes.
 if-shell "[ \"$(cat ~/.terminal-bg 2>/dev/null)\" = light ]" \
-  "source-file ~/.config/tmux/gruvbox-light.conf" \
-  "source-file ~/.config/tmux/gruvbox-dark.conf"
+  "source-file ~/.config/tmux/theme-light.conf" \
+  "source-file ~/.config/tmux/theme-dark.conf"
 {%- endif %}
 
 # Initialize TPM (keep at bottom — native terminal-tools owns TPM)
