@@ -24,21 +24,6 @@ destination = '.codex/rules/10-command-gates.rules'
 [[absent]]
 destination = '.config/amp/plugins'
 
-[[absent]]
-destination = '.claude/scripts/session-recovery'
-
-[[absent]]
-destination = '.config/session-recovery'
-
-[[absent]]
-destination = '.local/lib/session-recovery'
-
-[[absent]]
-destination = '.local/state/session-recovery'
-
-[[absent]]
-destination = '.pi/agent/extensions/session-recovery'
-
 [[files]]
 source = 'assets/oracle/config.json'
 destination = '.oracle/config.json'

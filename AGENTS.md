@@ -6,10 +6,6 @@ Ansiblonomicon is a central store of all of my computer configurations, administ
 
 See @CONTEXT.md for project vocabulary.
 
-## Pending: session-recovery follow-ups
-
-If `hostname -s` is `type-a-no2`, read SESSION_RECOVERY_FOLLOWUPS.md before anything else and walk me through it.
-
 ## Pending: work Oracle model
 
 If `hostname -s` is `ML-DFC6YK6VJQ`, remind me before anything else: the `oracle` agent profile (`agents/project-management/agents/oracle.md`, deployed to `~/.pi/agent/agents/` and `~/.claude/agents/`) names the `fable` tier, which the catalogue already resolves to `work_models.fable.pi_alias` from the private `local/ML-DFC6YK6VJQ/data.toml` for Pi on this host. Two gaps remain: `_work_models` in `configuration/pi.py` serves only opus, sonnet, and haiku on the gateway, so Pi cannot reach fable until it serves that tier; and Claude Code still receives `models.yml`'s `claude-fable-5-1[1m]`, which the work gateway may not serve. Until the first lands, Pi's `subagent_launch` with `agent: "oracle"` fails on this host. Design thread: <https://ampcode.com/threads/T-01a140f8-0095-772b-a0b6-9d3f1d8ffbe4>

@@ -45,9 +45,6 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
 
-[bootstrap.files."/home/thurstonsand/.local/bin/sessions"]
-state = "absent"
-
 [dotfiles]
 "/home/thurstonsand/.config/mise/config.toml" = { source = "operator/mise.toml", mode = "symlink" }
 
