@@ -418,6 +418,10 @@
                     {
                       "entity": "light.thurston_office_ambient_light",
                       "name": "Ambient light"
+                    },
+                    {
+                      "entity": "light.thurston_office_iris",
+                      "name": "Iris"
                     }
                   ],
                   "hueScenes": true
