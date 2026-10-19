@@ -4,8 +4,9 @@
   "type": "module",
   "devDependencies": {
     "@biomejs/biome": "^2.5.15",
-    "@thurstonsand/pi-permissions": "^0.12.1",
+    "@thurstonsand/pi-permissions": "^0.12.2",
     "@types/node": "^24.19.2",
+    "typebox": "1.3.27",
     "typescript": "^7.0.2"
   }
 }
