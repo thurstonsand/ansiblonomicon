@@ -107,6 +107,11 @@
       "enabled": false
     },
     {
+      "description": "The Pi extensions declare the Pi release they were checked against, so a Pi update raises the caret floor in package.json rather than only moving the lockfile under an older range.",
+      "matchPackageNames": ["@earendil-works/**"],
+      "rangeStrategy": "bump"
+    },
+    {
       "description": "@types/node describes the runtime, so it tracks the Node these packages run on rather than the newest DefinitelyTyped release. Types from a later major describe APIs that are not there and hide ones that were removed, and tsc believes them either way. Raise the ceiling when the toolchain in mise.toml moves.",
       "matchPackageNames": ["@types/node"],
       "allowedVersions": "<25"
