@@ -20,6 +20,7 @@ Open `/house-atlas/home` on the current HA address. House is the system default 
 - `dashboard.json` contains the final geometry, door openings, labels, and explicit entity controls. Edit it directly; no generator is required. Room `id` values match HA area IDs; the Hue scene picker depends on it.
 - `room.lights` lists individual bulbs for map counts/status. `room.controls` selects displayed light-group controls. `room.group` is the optional whole-room control. `room.appliances` adds toggleable tiles beside the room's primary entity; Kitchen lists the espresso machine's power switch. `room.scenes` lists curated scene buttons, each calling `<domain>.turn_on`, so scripts work; Living Room lists its combined scripts. Without it, `room.hueScenes` populates Hue scenes dynamically by their entity/device area assignment; those buttons call `scene.turn_on`, not explicit dynamic-animation playback.
 - Map taps open room details. Lock and Unlock execute directly without confirmation. Floor and room selection stay local to each browser.
+- The Garage Door tile is one button: a tap anywhere calls `cover.toggle`, which opens a closed door, closes an open one, and stops a moving one. The frontend's own `toggle` action would close a moving door instead. Its icon follows the state, with arrows while moving; the map status reads `▲ opening` or `▼ closing` then.
 - Room rules use `double_tap_action: false` for immediate selection. An `{ action: "none" }` object still enables Floorplan's 400 ms double-click detection delay.
 
 The desktop map stays in its left-hand column, reserving space for room controls even when none are selected. The controls panel appears only after selection. Floor names appear in the tabs without repeated headings.
@@ -39,6 +40,20 @@ Five HA light-group helpers are prerequisites, not created by these exports:
 The Living Room scene scripts are also prerequisites. Each runs `hue.activate_scene` with `dynamic: true`, then sets `light.living_room_floor_lamps`: `script.living_room_evening_lights` plays Autumn gold with the lamps on, `script.living_room_late_night` plays November haze with them off, and `script.living_room_tokyo` plays Tokyo with them off. Hue stores brightness per scene, so the scripts leave it to the Hue app.
 
 The individual entity IDs are in the corresponding room's `lights` array. Hue scenes continue to address their original bulbs. These files do not back up integrations, helpers, area assignments, or Hue scenes; retain ordinary HA backups for those.
+
+## Press and hold
+
+Holding a room on the map for 400 ms runs its `room.hold` quick action, with a pulse on the room and a haptic in the companion app, and does not open the room. Rooms without `hold`, such as Kitchen, ignore it. The card refuses to load an invalid `hold`.
+
+| `hold.action` | Requires          | Does                                                                                              |
+| ------------- | ----------------- | ------------------------------------------------------------------------------------------------- |
+| `lights`      | `room.lights`     | Turns them all off if any is on; otherwise turns them on, or runs the current `hold.scenes` entry |
+| `lock`        | a `lock.` entity  | `lock.lock` only; a hold never unlocks                                                            |
+| `toggle`      | a `cover.` entity | `cover.toggle`                                                                                    |
+
+`hold.scenes` lists `{from, entity}` for `scene.` or `script.` entities. Each entry runs from its `HH:MM`, in HA's time zone, until the next; the latest carries past midnight. Living Room plays Tokyo from 00:00, Evening lights from 06:00 and Late night from 21:00; Thurston Office plays Blossom from 06:00 and Tokyo from 18:00; Screened Porch plays November haze and Main Bedroom Pensive. Under Living Room's hold locks the basement door rather than toggling its bulbs.
+
+Two Floorplan behaviours shape this. Its stylesheet forces `pointer-events: all !important` on every SVG element, so the card restores pass-through for the cars, bins and stairs with a more specific rule; otherwise presses on them miss the room. And it fires the tap action on release even after a hold, so the card ignores a tap on a `hold` room when the press lasted 400 ms.
 
 ## House controls
 

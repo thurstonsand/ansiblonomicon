@@ -53,7 +53,10 @@
                     "light.under_main_bedroom_front_bulb",
                     "light.under_main_bedroom_rear_bulb"
                   ],
-                  "hueScenes": true
+                  "hueScenes": true,
+                  "hold": {
+                    "action": "lights"
+                  }
                 },
                 {
                   "id": "under_living_room",
@@ -67,7 +70,10 @@
                     "light.under_living_room_left_bulb",
                     "light.under_living_room_right_bulb"
                   ],
-                  "hueScenes": true
+                  "hueScenes": true,
+                  "hold": {
+                    "action": "lock"
+                  }
                 },
                 {
                   "id": "entryway",
@@ -79,7 +85,10 @@
                     "light.entryway_front_bulb",
                     "light.entryway_rear_bulb"
                   ],
-                  "hueScenes": true
+                  "hueScenes": true,
+                  "hold": {
+                    "action": "lights"
+                  }
                 },
                 {
                   "id": "little_room",
@@ -98,7 +107,10 @@
                     "light.under_kitchen_front_bulb",
                     "light.under_kitchen_rear_bulb"
                   ],
-                  "hueScenes": true
+                  "hueScenes": true,
+                  "hold": {
+                    "action": "lights"
+                  }
                 }
               ],
               "openings": [
@@ -139,7 +151,16 @@
                   "lines": ["Screened Porch"],
                   "outdoor": true,
                   "lights": ["light.screened_porch_string_lights"],
-                  "hueScenes": true
+                  "hueScenes": true,
+                  "hold": {
+                    "action": "lights",
+                    "scenes": [
+                      {
+                        "from": "00:00",
+                        "entity": "scene.screened_porch_november_haze"
+                      }
+                    ]
+                  }
                 },
                 {
                   "id": "wood_deck",
@@ -169,7 +190,16 @@
                   ],
                   "hueScenes": true,
                   "entity": "media_player.main_bedroom_homepod",
-                  "mapNote": "HomePod"
+                  "mapNote": "HomePod",
+                  "hold": {
+                    "action": "lights",
+                    "scenes": [
+                      {
+                        "from": "00:00",
+                        "entity": "scene.main_bedroom_main_bedroom_pensive"
+                      }
+                    ]
+                  }
                 },
                 {
                   "id": "living_room",
@@ -207,7 +237,24 @@
                       "entity": "script.living_room_tokyo",
                       "name": "Tokyo"
                     }
-                  ]
+                  ],
+                  "hold": {
+                    "action": "lights",
+                    "scenes": [
+                      {
+                        "from": "00:00",
+                        "entity": "script.living_room_tokyo"
+                      },
+                      {
+                        "from": "06:00",
+                        "entity": "script.living_room_evening_lights"
+                      },
+                      {
+                        "from": "21:00",
+                        "entity": "script.living_room_late_night"
+                      }
+                    ]
+                  }
                 },
                 {
                   "id": "main_bath",
@@ -218,7 +265,10 @@
                   "lights": [
                     "light.main_bath_vanity_lights",
                     "light.main_bath_tub_light"
-                  ]
+                  ],
+                  "hold": {
+                    "action": "lights"
+                  }
                 },
                 {
                   "id": "main_floor_w_i_c",
@@ -226,7 +276,10 @@
                   "path": "M95 220H150V260H180V320H95Z",
                   "label": [137.5, 270.0],
                   "lines": ["W.I.C."],
-                  "lights": ["light.main_floor_w_i_c_lights"]
+                  "lights": ["light.main_floor_w_i_c_lights"],
+                  "hold": {
+                    "action": "lights"
+                  }
                 },
                 {
                   "id": "foyer",
@@ -242,6 +295,9 @@
                     "motion": "event.front_door_doorbell_motion",
                     "snapshots": "media-source://media_source/local/doorbell",
                     "pin": [215, 495]
+                  },
+                  "hold": {
+                    "action": "lock"
                   }
                 },
                 {
@@ -276,7 +332,10 @@
                       "entity": "binary_sensor.garage_tesla_parked",
                       "position": [101.3, 399.2]
                     }
-                  ]
+                  ],
+                  "hold": {
+                    "action": "toggle"
+                  }
                 },
                 {
                   "id": "main_floor_hall_bath",
@@ -312,7 +371,10 @@
                   ],
                   "controls": [
                     { "entity": "light.breakfast_nook", "name": "Lights" }
-                  ]
+                  ],
+                  "hold": {
+                    "action": "lights"
+                  }
                 }
               ],
               "openings": [
@@ -424,7 +486,20 @@
                       "name": "Iris"
                     }
                   ],
-                  "hueScenes": true
+                  "hueScenes": true,
+                  "hold": {
+                    "action": "lights",
+                    "scenes": [
+                      {
+                        "from": "06:00",
+                        "entity": "scene.thurston_office_blossom"
+                      },
+                      {
+                        "from": "18:00",
+                        "entity": "scene.thurston_office_tokyo"
+                      }
+                    ]
+                  }
                 },
                 {
                   "id": "linen_closet",

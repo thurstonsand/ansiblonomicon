@@ -20,6 +20,17 @@ const MODE_NAMES = {
   dry: "Dry",
   fan_only: "Fan",
 };
+const HOLDS = {
+  lights: (room) =>
+    !!room.lights &&
+    (room.hold.scenes || []).every(
+      (scene) =>
+        /^([01]\d|2[0-3]):[0-5]\d$/.test(scene.from) &&
+        /^(scene|script)\./.test(scene.entity || ""),
+    ),
+  lock: (room) => !!room.entity?.startsWith("lock."),
+  toggle: (room) => !!room.entity?.startsWith("cover."),
+};
 const resource = (type, text) => ({
   location: `data:${type},${encodeURIComponent(text)}`,
   cache: true,
@@ -92,6 +103,8 @@ class HouseAtlas extends HTMLElement {
         for (const vehicle of room.vehicles || [])
           if (!CAR_SHAPES[vehicle.id])
             throw new Error(`No car shape for vehicle "${vehicle.id}".`);
+        if (room.hold && !HOLDS[room.hold.action]?.(room))
+          throw new Error(`Invalid hold for room "${room.id}".`);
       }
     }
     if (!config.override?.startsWith("input_boolean."))
@@ -969,9 +982,24 @@ class HouseAtlas extends HTMLElement {
       .addEventListener("ll-custom", (event) => {
         if (event.detail.atlas_room) {
           event.stopPropagation();
-          this.selectRoom(event.detail.atlas_room);
+          // Floorplan still fires the tap when a long press is released; it holds at 400 ms.
+          const held = performance.now() - this.pressedAt >= 400;
+          const room = this.floor.rooms.find(
+            (room) => room.id === event.detail.atlas_room,
+          );
+          if (!(held && room?.hold)) this.selectRoom(event.detail.atlas_room);
+        } else if (event.detail.atlas_hold) {
+          event.stopPropagation();
+          this.hold(event.detail.atlas_hold);
         }
       });
+    const mapWrap = this.shadowRoot.querySelector(".map-wrap");
+    mapWrap.addEventListener("contextmenu", (event) => event.preventDefault());
+    mapWrap.addEventListener(
+      "pointerdown",
+      () => (this.pressedAt = performance.now()),
+      true,
+    );
     this.shadowRoot
       .querySelector(".atlas")
       .addEventListener("keydown", (event) => {
@@ -1038,7 +1066,11 @@ class HouseAtlas extends HTMLElement {
     if (!this.helpers || !this._hass) return;
     const floor = this.floor;
     const styles = `
-      svg{font-family:Arial,sans-serif;color:var(--atlas-fg);background:var(--atlas-bg)}
+      svg{font-family:Arial,sans-serif;color:var(--atlas-fg);background:var(--atlas-bg);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+      /* Floorplan forces ":host svg *{pointer-events:all!important}"; overlays inside rooms must pass presses through. */
+      svg g.vehicle *,svg g.pickup *,svg g.stairs *{pointer-events:none!important}
+      .room.held .wall{animation:held .6s ease-out}
+      @keyframes held{40%{fill:var(--atlas-light);stroke:var(--atlas-accent);stroke-width:4}}
       .room{cursor:pointer;outline:none}
       .wall{stroke:var(--atlas-wall);stroke-width:1.6;stroke-linejoin:round;fill:var(--atlas-bg)}
       .room.connected .wall{fill:var(--atlas-surface)}
@@ -1119,7 +1151,9 @@ class HouseAtlas extends HTMLElement {
     const rules = floor.rooms.map((room) => ({
       element: `room-${room.id}`,
       tap_action: { action: "fire-dom-event", atlas_room: room.id },
-      hold_action: { action: "none" },
+      hold_action: room.hold
+        ? { action: "fire-dom-event", atlas_hold: room.id }
+        : { action: "none" },
       double_tap_action: false,
     }));
     for (const room of floor.rooms) {
@@ -1203,7 +1237,7 @@ class HouseAtlas extends HTMLElement {
             action: "call-service",
             service: "floorplan.text_set",
             service_data: {
-              text: `> return entity.state.replaceAll('_', ' ');`,
+              text: `> return ({ opening: '▲ opening', closing: '▼ closing' })[entity.state] || entity.state.replaceAll('_', ' ');`,
             },
           },
         });
@@ -1387,13 +1421,18 @@ class HouseAtlas extends HTMLElement {
       body.append(actions);
       this.updateLockButtons();
     } else if (room.entity?.startsWith("cover.")) {
+      // The frontend's "toggle" action closes a moving door; cover.toggle stops it.
+      const toggle = {
+        action: "perform-action",
+        perform_action: "cover.toggle",
+        target: { entity_id: room.entity },
+      };
       add({
         type: "tile",
         entity: room.entity,
         name: "Garage Door",
-        tap_action: { action: "more-info" },
-        icon_tap_action: { action: "more-info" },
-        features: [{ type: "cover-open-close" }],
+        tap_action: toggle,
+        icon_tap_action: toggle,
       });
     } else if (!room.lights && !room.entity && !room.appliances) {
       const text = document.createElement("p");
@@ -1511,6 +1550,51 @@ class HouseAtlas extends HTMLElement {
         state ===
           (button.dataset.lockAction === "lock" ? "locked" : "unlocked");
     });
+  }
+
+  hold(id) {
+    const room = this.floor.rooms.find((room) => room.id === id);
+    window.dispatchEvent(new CustomEvent("haptic", { detail: "medium" }));
+    const element = this.mapRoom(id);
+    element?.classList.remove("held");
+    void element?.getBBox();
+    element?.classList.add("held");
+    if (room.hold.action === "toggle")
+      return this.perform("cover", "toggle", room.entity);
+    if (room.hold.action === "lock")
+      return this.perform("lock", "lock", room.entity);
+    if (room.lights.some((light) => this._hass.states[light]?.state === "on"))
+      return this.perform("light", "turn_off", room.lights);
+    const scene = this.currentScene(room.hold.scenes || []);
+    if (!scene) return this.perform("light", "turn_on", room.lights);
+    return this.perform(scene.entity.split(".")[0], "turn_on", scene.entity);
+  }
+
+  // Each entry starts at `from`, house time, and runs until the next; the latest one carries past midnight.
+  currentScene(scenes) {
+    if (!scenes.length) return null;
+    const now = new Intl.DateTimeFormat("en-GB", {
+      hour: "2-digit",
+      minute: "2-digit",
+      hourCycle: "h23",
+      timeZone: this._hass.config.time_zone,
+    }).format(new Date());
+    const sorted = [...scenes].sort((a, b) => a.from.localeCompare(b.from));
+    return sorted.filter((scene) => scene.from <= now).pop() || sorted.at(-1);
+  }
+
+  mapRoom(id) {
+    const walk = (node) => {
+      if (node.dataset?.room === id) return node;
+      for (const child of [
+        ...(node.shadowRoot?.children || []),
+        ...node.children,
+      ]) {
+        const found = walk(child);
+        if (found) return found;
+      }
+    };
+    return this.map && walk(this.map);
   }
 
   async perform(domain, service, entity, data = {}) {
