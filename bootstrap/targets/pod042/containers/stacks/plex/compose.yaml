@@ -1,6 +1,6 @@
 services:
   plex:
-    image: plexinc/pms-docker:plexpass
+    image: plexinc/pms-docker:latest
     network_mode: host
     devices:
       - /dev/dri:/dev/dri
