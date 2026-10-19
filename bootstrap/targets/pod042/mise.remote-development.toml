@@ -20,8 +20,6 @@
 "apt:fonts-dejavu-core" = "latest"
 "apt:pulseaudio" = "latest"
 "apt:pulseaudio-utils" = "latest"
-"apt:libwayland-dev" = "latest"
-"apt:libxkbcommon-dev" = "latest"
 "apt:x11vnc" = "latest"
 "apt:tigervnc-viewer" = "latest"
 
@@ -153,7 +151,6 @@ if ! dpkg-query -W -f '${Status}' 1password 2>/dev/null | grep -q 'ok installed'
   sudo env DEBIAN_FRONTEND=noninteractive apt-get install --yes /tmp/1password-latest.deb
   rm /tmp/1password-latest.deb
 fi
-remote-development/waymote.sh
 python3 remote-development/services.py apply
 python3 ../../capabilities/software/berkeley_mono.py --service-account "op://agent/Berkeley Mono Font/nerd-font" /home/thurstonsand/.config/op-service-account/token
 '''
