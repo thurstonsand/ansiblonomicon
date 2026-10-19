@@ -24,16 +24,15 @@ rgb_fg() {
   printf '\\033[38;2;%d;%d;%dm' "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
 }
 
-{% if omarchy -%}
-# Omarchy renders these from whichever theme is active.
-. ~/.local/state/omarchy/current/theme/claude-statusline-colors.sh
-{%- else -%}
-if [[ "$(cat ~/.terminal-bg 2>/dev/null || echo dark)" == "light" ]]; then
-{{ colors.light | indent(2, true) }}
+omarchy_colors=~/.local/state/omarchy/current/theme/claude-statusline-colors.sh
+if [[ -f $omarchy_colors ]]; then
+  # Omarchy renders these from whichever theme is active.
+  . "$omarchy_colors"
+elif [[ "$(cat ~/.terminal-bg 2>/dev/null || echo dark)" == "light" ]]; then
+  . ~/.claude/scripts/statusline-colors-light.sh
 else
-{{ colors.dark | indent(2, true) }}
+  . ~/.claude/scripts/statusline-colors-dark.sh
 fi
-{%- endif %}
 
 # =============================================================================
 # ARGS
@@ -236,7 +235,10 @@ render_section_style() {
   printf '%b' "${color}◉ ${style}${RESET}"
 }
 
-{{ statusline_usage }}
+usage_section=~/.claude/scripts/statusline-usage.sh
+if [[ -f $usage_section ]]; then
+  . "$usage_section"
+fi
 
 output_line() {
   local used_pct=$1 over_cap=$2 model="$3" dir="$4" branch="$5" style="$6" worktree="${7:-0}"
@@ -249,13 +251,11 @@ output_line() {
     branch) [[ -n "$branch" ]] && sections+=("$(render_section_branch "$branch" "$worktree")") ;;
     style) [[ -n "$style" ]] && sections+=("$(render_section_style "$style")") ;;
     usage)
-{% if statusline_usage %}
-      local usage_out
-      usage_out=$(render_section_usage)
-      [[ -n "$usage_out" ]] && sections+=("$usage_out")
-{% else %}
-      : # usage elided
-{% endif %}
+      if declare -F render_section_usage >/dev/null; then
+        local usage_out
+        usage_out=$(render_section_usage)
+        [[ -n "$usage_out" ]] && sections+=("$usage_out")
+      fi
       ;;
     esac
   done

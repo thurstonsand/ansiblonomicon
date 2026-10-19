@@ -7,18 +7,6 @@ from pathlib import Path
 import re
 from typing import Any, cast
 
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
-
-_TEMPLATES = Path(__file__).parent / "templates"
-_ENV = Environment(
-    loader=FileSystemLoader(_TEMPLATES),
-    undefined=StrictUndefined,
-    keep_trailing_newline=True,
-    autoescape=False,
-    comment_start_string="{##",
-    comment_end_string="##}",
-)
-
 
 def _deep_merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
     """Merge dictionaries recursively, retaining order and treating null as delete."""
@@ -77,6 +65,44 @@ def _base_settings(
             raise ValueError(
                 "ANTHROPIC_AUTH_TOKEN is required on the work host"
             ) from error
+    hooks: dict[str, Any] = {
+        "SessionStart": [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.local/libexec/tab-title.py --claude-hook",
+                    }
+                ]
+            },
+        ],
+        "PreToolUse": [
+            {
+                "matcher": "Bash",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "node ~/.claude/hooks/force-ask-patterns.mjs",
+                    }
+                ],
+            }
+        ],
+    }
+    if hostname != "ML-DFC6YK6VJQ":
+        hooks["UserPromptSubmit"] = [
+            {"hooks": [{"type": "command", "command": "~/.claude/hooks/set-title.py"}]}
+        ]
+        hooks["Stop"] = [
+            {
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "~/.claude/hooks/derive-title.py",
+                        "async": True,
+                    },
+                ]
+            }
+        ]
     return {
         "$schema": "https://json.schemastore.org/claude-code-settings.json",
         "cleanupPeriodDays": 99999,
@@ -93,47 +119,7 @@ def _base_settings(
             "deny": ["Read(**/.env)", "Read(**/.env.*)"],
             "defaultMode": "auto",
         },
-        "hooks": {
-            "SessionStart": [
-                {
-                    "hooks": [
-                        {
-                            "type": "command",
-                            "command": "~/.local/libexec/tab-title.py --claude-hook",
-                        }
-                    ]
-                },
-            ],
-            "UserPromptSubmit": [
-                {
-                    "hooks": [
-                        {"type": "command", "command": "~/.claude/hooks/set-title.py"}
-                    ]
-                }
-            ],
-            "PreToolUse": [
-                {
-                    "matcher": "Bash",
-                    "hooks": [
-                        {
-                            "type": "command",
-                            "command": "node ~/.claude/hooks/force-ask-patterns.mjs",
-                        }
-                    ],
-                }
-            ],
-            "Stop": [
-                {
-                    "hooks": [
-                        {
-                            "type": "command",
-                            "command": "~/.claude/hooks/derive-title.py",
-                            "async": True,
-                        },
-                    ]
-                }
-            ],
-        },
+        "hooks": hooks,
         "worktree": {"baseRef": "head"},
         "statusLine": {"type": "command", "command": "~/.claude/scripts/statusline.sh"},
         "model": models["anthropic"]["opus"]["agent_harness"]["aliases"]["claude"],
@@ -236,28 +222,18 @@ def render(
             settings["model"] = existing["model"]
         settings = _existing_order(settings, existing)
 
-    usage = (
-        repo
-        / "bootstrap/capabilities/agent-harness/local"
-        / hostname
-        / "statusline-usage.sh"
-    )
-    statusline = _ENV.get_template("claude-statusline.sh.j2").render(
-        statusline_usage=usage.read_text().rstrip() if usage.exists() else "",
-        omarchy=hostname == "type-a-no2",
-        colors={
-            mode: (
-                repo
-                / f"bootstrap/capabilities/terminal-theme/solitude/claude-statusline-colors-{mode}.sh"
-            ).read_text()
-            for mode in ("light", "dark")
-        },
-    )
     outputs = {
         ".claude/settings.json": json.dumps(settings, indent=2) + "\n",
-        ".claude/scripts/statusline.sh": statusline,
     }
+    title_prompt = (
+        (repo / "bootstrap/capabilities/agent-harness/session-title-prompt.txt")
+        .read_text()
+        .strip()
+    )
     if hostname == "ML-DFC6YK6VJQ":
+        outputs[".cache/claude-code-auto-title/config.json"] = (
+            json.dumps({"model": "sonnet", "prompt": title_prompt}, indent=2) + "\n"
+        )
         return outputs
 
     try:
@@ -266,11 +242,6 @@ def render(
         raise ValueError(
             "CLI_PROXY_API_KEY is required for Claude title hooks"
         ) from error
-    title_prompt = (
-        (repo / "bootstrap/capabilities/agent-harness/session-title-prompt.txt")
-        .read_text()
-        .strip()
-    )
     outputs[".claude/hooks/_config.py"] = (
         '"""Rendered configuration for auto-title hooks."""\n\n'
         'API_URL = "https://doppelclaude.thurstons.house/v1/messages"\n'

@@ -110,14 +110,12 @@ If you're reaching for a subagent, consider the following:
 | model               | role                               | thinking level | cost | intelligence | taste | notes                                                                            |
 | ------------------- | ---------------------------------- | -------------- | ---- | ------------ | ----- | -------------------------------------------------------------------------------- |
 | claude-5-5-opus     | default workhorse, implementer     | high           | 6    | 9            | 7     | also great for prose and thinking through problems                               |
-| claude-5-1-fable    | reviewer, unconventional solutions | high           | ?    | 9            | 7     | cross-lab adversarial review; reach for it when the obvious approach falls short |
 | bedrock.gpt-6.1-sol | reviewer, bug-finder               | high           | 6    | 7            | 5     | cross-lab adversarial review; root-causing stubborn bugs                         |
 | bedrock.gpt-6.1-sol | exploration subagent               | low            | 7    | 6            | 5     | digging for answers/explanations                                                 |
 {% else %}
 | model            | role                               | thinking level | cost | intelligence | taste | notes                                                                            |
 | ---------------- | ---------------------------------- | -------------- | ---- | ------------ | ----- | -------------------------------------------------------------------------------- |
 | claude-opus-5-5  | default workhorse, implementer     | high           | 8    | 9            | 7     | also great for prose and thinking through problems                               |
-| claude-fable-5-1 | reviewer, unconventional solutions | high           | 4    | 9            | 7     | cross-lab adversarial review; reach for it when the obvious approach falls short |
 | gpt-6-astra      | reviewer, bug-finder               | high           | 2    | 7            | 6     | cross-lab adversarial review; root-causing stubborn bugs                         |
 | gpt-6.1-sol      | exploration subagent               | low            | 7    | 6            | 5     | digging for answers/explanations                                                 |
 {% endif %}

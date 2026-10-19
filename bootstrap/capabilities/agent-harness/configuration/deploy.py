@@ -48,7 +48,7 @@ PRIVATE = {
     ".pi/agent/models.json",
     ".codex/config.toml",
 }
-EXECUTABLE = {".claude/scripts/statusline.sh", ".local/bin/pi"}
+EXECUTABLE = {".local/bin/pi"}
 
 
 def _mode(relative: str, hostname: str) -> int:
@@ -194,7 +194,7 @@ def _claude_mcp_output(
     existing: dict[str, Any] = {}
     if target.exists():
         try:
-            value = json.loads(target.read_text())
+            value = json.loads(target.read_text(encoding="utf-8"))
         except json.JSONDecodeError as error:
             raise ValueError(f"{target}: invalid JSON; refusing MCP update") from error
         if not isinstance(value, dict):
@@ -206,7 +206,9 @@ def _claude_mcp_output(
     for name in previously_owned - desired.keys():
         servers.pop(name, None)
     servers.update(desired)
-    return ".claude.json", json.dumps(existing, indent=2) + "\n"
+    # Match Claude Code's own JSON.stringify(value, null, 2) so an untouched file
+    # renders byte-identical instead of drifting on every check.
+    return ".claude.json", json.dumps(existing, indent=2, ensure_ascii=False)
 
 
 def _hook_key(event: str, group: Any) -> str:
@@ -278,7 +280,7 @@ def _assets(
     links: list[tuple[Path, str]] = []
     for item in raw.get("files", []):
         if _selected(item, hostname, harnesses):
-            source = Path(__file__).parent / item["source"]
+            source = Path(os.path.normpath(Path(__file__).parent / item["source"]))
             if not source.is_file() or item.get("mode") != "symlink":
                 raise ValueError(f"invalid static asset declaration: {item}")
             links.append((source, item["destination"]))
@@ -405,7 +407,7 @@ def _stage_native(
     }
     for index, (relative, content) in enumerate(sorted(outputs.items())):
         source = rendered / str(index)
-        source.write_text(content)
+        source.write_text(content, encoding="utf-8")
         source.chmod(_mode(relative, hostname))
         file_mode = _mode(relative, hostname)
         if file_mode == 0o644:

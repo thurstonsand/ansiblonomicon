@@ -19,7 +19,7 @@ models:
       vision: true
       agent_harness:
         aliases:
-          claude: "claude-fable-5-1[1m]"
+          claude: "fable[1m]"
           amp: "anthropic/claude-fable-5-1"
           pi: "doppelclaude/claude-fable-5-1"
       vscode:

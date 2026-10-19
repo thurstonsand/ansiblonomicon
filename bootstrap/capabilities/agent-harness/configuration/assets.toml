@@ -47,6 +47,7 @@ mode = 'symlink'
 source = 'assets/claude/hooks/_config.pyi'
 destination = '.claude/hooks/_config.pyi'
 harness = 'claude'
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
 mode = 'symlink'
 
 [[files]]
@@ -80,6 +81,26 @@ mode = 'symlink'
 source = 'assets/claude/output-styles/support-line.md'
 destination = '.claude/output-styles/support-line.md'
 harness = 'claude'
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/scripts/statusline.sh'
+destination = '.claude/scripts/statusline.sh'
+harness = 'claude'
+mode = 'symlink'
+
+[[files]]
+source = '../../terminal-theme/solitude/claude-statusline-colors-dark.sh'
+destination = '.claude/scripts/statusline-colors-dark.sh'
+harness = 'claude'
+hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
+mode = 'symlink'
+
+[[files]]
+source = '../../terminal-theme/solitude/claude-statusline-colors-light.sh'
+destination = '.claude/scripts/statusline-colors-light.sh'
+harness = 'claude'
+hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
 mode = 'symlink'
 
 [[files]]

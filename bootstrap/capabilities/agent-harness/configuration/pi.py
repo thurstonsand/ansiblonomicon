@@ -68,6 +68,7 @@ def _profile(
         wm = data["work_models"]
         gateway = data["work_gateway"]
         sol, opus = wm["gpt_sol"]["pi_alias"], wm["opus"]["pi_alias"]
+        fable = wm["fable"]["pi_alias"]
         return {
             "provider": gateway["anthropic_provider"],
             "model": str(wm["opus"]["version"]).removesuffix("[1m]"),
@@ -75,8 +76,13 @@ def _profile(
             "auto_title": wm["sonnet"]["pi_alias"],
             "handoff": sol,
             "vibe": wm["gpt_luna"]["pi_alias"],
-            "enabled": [f"{opus}:high", f"{sol}:medium"],
-            "roster": [f"{opus}:high", f"{sol}:low", f"{sol}:high"],
+            "enabled": [f"{opus}:high", f"{fable}:high", f"{sol}:medium"],
+            "roster": [
+                f"{opus}:high",
+                f"{fable}:xhigh",
+                f"{sol}:low",
+                f"{sol}:high",
+            ],
             "packages": [*data.get("piWorkPackages", []), *WORK_PACKAGES],
         }
     aliases = {
@@ -107,7 +113,7 @@ def _profile(
         ],
         "roster": [
             f"{aliases['opus']}:high",
-            f"{aliases['fable']}:high",
+            f"{aliases['fable']}:xhigh",
             f"{aliases['astra']}:high",
             f"{aliases['sol']}:low",
         ],
@@ -159,7 +165,8 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
                 "authHeader": True,
                 "headers": {"User-Agent": "pi-coding-agent"},
                 "models": [
-                    model(n, anthropic=True) for n in ("opus", "sonnet", "haiku")
+                    model(n, anthropic=True)
+                    for n in ("opus", "fable", "sonnet", "haiku")
                 ],
             },
             gateway["openai_provider"]: {
