@@ -1,5 +1,5 @@
 [tools]
-"github:earendil-works/pi" = { version = "latest", asset_pattern = "pi-{{ os(macos=\"darwin\") }}-{{ arch() }}.tar.gz", strip_components = 0, bin_path = "pi" }
+"github:earendil-works/pi" = { version = "latest", asset_pattern = "pi-{{ os(macos=\"darwin\") }}-{{ arch() }}.tar.gz", strip_components = 0, bin_path = "pi", minimum_release_age = "0s" }
 
 [tasks.pi]
 run = '''
