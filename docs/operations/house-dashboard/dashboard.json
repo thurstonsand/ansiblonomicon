@@ -158,7 +158,8 @@
                   "lights": [
                     "light.main_bedroom_fluff_floor_lamp",
                     "light.main_bedroom_yanie_fluff_lamp",
-                    "light.main_bedroom_thurston_fluff_lamp"
+                    "light.main_bedroom_thurston_fluff_lamp",
+                    "light.main_bedroom_cloud_painting"
                   ],
                   "controls": [
                     {

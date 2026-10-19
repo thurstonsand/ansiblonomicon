@@ -24,9 +24,7 @@ Open `/house-atlas/home` on the current HA address. House is the system default 
 
 The desktop map stays in its left-hand column, reserving space for room controls even when none are selected. The controls panel appears only after selection. Floor names appear in the tabs without repeated headings.
 
-Main Bedroom omits the whole-room lighting tile; its Hue group `light.main_bedroom` remains enabled. Its single **Ambient light** control groups its three fluff lamps, beside its Hue scenes. Breakfast Nook's single **Lights** control is its Hue room group `light.breakfast_nook`, so it needs no helper.
-
-`light.main_bedroom_cloud_painting` is temporarily disabled in HA's entity registry and omitted from Main Bedroom's `lights` list while the painting is offline. Its Hue device, identity, and scenes are retained. To restore it, enable that entity, reload its Hue integration if needed, and add the entity ID back to the room's `lights` list in the live dashboard and this copy.
+Main Bedroom omits the whole-room lighting tile; its Hue group `light.main_bedroom` remains enabled. Its single **Ambient light** control groups its three fluff lamps and the cloud painting, beside its Hue scenes. Breakfast Nook's single **Lights** control is its Hue room group `light.breakfast_nook`, so it needs no helper.
 
 Five HA light-group helpers are prerequisites, not created by these exports:
 
@@ -36,7 +34,7 @@ Five HA light-group helpers are prerequisites, not created by these exports:
 | `light.thurston_office_desk_lights`   | Thurston Office Desk Lamp Left and Right                                                                   |
 | `light.thurston_office_ambient_light` | Thurston Office Wall Wash Left and Right                                                                   |
 | `light.living_room_floor_lamps`       | Living Room Front Right and Rear Center Floor Lamps, Switch-as-X lights over the Eve Energy bottom sockets |
-| `light.main_bedroom_ambient_light`    | Main Bedroom Fluff Floor Lamp, Yanie and Thurston Fluff Lamps                                              |
+| `light.main_bedroom_ambient_light`    | Main Bedroom Fluff Floor Lamp, Yanie and Thurston Fluff Lamps, Cloud Painting                              |
 
 The Living Room scene scripts are also prerequisites. Each runs `hue.activate_scene` with `dynamic: true`, then sets `light.living_room_floor_lamps`: `script.living_room_evening_lights` plays Autumn gold with the lamps on, `script.living_room_late_night` plays November haze with them off, and `script.living_room_tokyo` plays Tokyo with them off. Hue stores brightness per scene, so the scripts leave it to the Hue app.
 
