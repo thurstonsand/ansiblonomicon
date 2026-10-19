@@ -74,7 +74,7 @@ Retest procedure:
 4. On the iPhone: cycle Wi-Fi, then open the print sheet with no Canon app running. Twice, cold, per the rule above.
 5. Watch the segment while testing, so a failure is attributed to the printer rather than to the missing beacon: the relayed `_ipp` query from `10.10.40.1` should arrive, and the printer should answer within a second.
 
-If it passes, retire the beacon with `state = "absent"` rather than deleting it: the compose stack at `bootstrap/targets/pod042/containers/stacks/mdns-beacon/`, its directory, file and compose entries in `mise.containers.toml`, `tests/test_pod042_mdns_beacon.py`, and `unifi_client.pod042_mdns_beacon`. Note that the beacon's namespace is currently the only way onto Scanners from pod042, and both [ticket 50](50-pod042-network-observability.md) and the `operating-the-printer` skill rely on it, so a service-less probe identity has to replace it before it goes.
+If it passes, retire the beacon with `state = "absent"` rather than deleting it: the compose stack at `bootstrap/targets/pod042/containers/stacks/mdns-beacon/`, its directory, file and compose entries in `mise.containers.toml`, and `unifi_client.pod042_mdns_beacon`. Note that the beacon's namespace is currently the only way onto Scanners from pod042, and both [ticket 50](50-pod042-network-observability.md) and the `operating-the-printer` skill rely on it, so a service-less probe identity has to replace it before it goes.
 
 Also open, unrelated to discovery: the printer has Auto IP enabled, so a DHCP failure would park it on a 169.254 address with no symptom beyond disappearing. The Remote UI cannot change it; it is at Menu > Preferences > Network > TCP/IP Settings > IPv4 Settings on the panel.
 

@@ -79,7 +79,7 @@ ReCollect polls once a day, and HA does not retry a failed poll before the next 
 
 The sensor uses YAML because the Template Helper config flow cannot define custom attributes. Apply the file's list under `template:` through managed YAML editing, preserving any other template entries, and run `homeassistant.check_config`. The first template integration requires an approved Core restart; subsequent edits use `template.reload`. The sensor is active and verified against live provider data.
 
-Run `uv run pytest tests/test_trash_pickup_reminder.py` for local-date, DST, stream selection, and unavailable-data checks. Browser checks should cover both streams, each stream alone, hidden/unavailable states, and a sensor first appearing after the map loads. Inject preview states only into the browser card's `hass` object, never into the live provider entities.
+Browser checks should cover both streams, each stream alone, hidden/unavailable states, and a sensor first appearing after the map loads. Inject preview states only into the browser card's `hass` object, never into the live provider entities.
 
 ## Maintenance
 
