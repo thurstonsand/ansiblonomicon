@@ -16,4 +16,10 @@
       <action name="Execute" command="fuzzel" />
     </keybind>
   </keyboard>
+  <windowRules>
+    <!-- 1Password's prompt waits behind this viewer, and a click into Chromium must not bury it. -->
+    <windowRule title="pod042:43 - TigerVNC">
+      <action name="ToggleAlwaysOnTop" />
+    </windowRule>
+  </windowRules>
 </labwc_config>

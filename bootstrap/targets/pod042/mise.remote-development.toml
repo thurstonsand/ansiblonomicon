@@ -22,6 +22,7 @@
 "apt:pulseaudio-utils" = "latest"
 "apt:x11vnc" = "latest"
 "apt:tigervnc-viewer" = "latest"
+"apt:xdotool" = "latest"
 
 [bootstrap.files."/etc/chromium/policies/managed/chatgpt.json"]
 state = "absent"
@@ -119,6 +120,8 @@ mode = "0755"
 "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.openai.codexextension.json" = { source = "/home/thurstonsand/.config/chromium/NativeMessagingHosts/com.openai.codexextension.json", mode = "symlink" }
 "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.1password.1password.json" = { source = "remote-development/desktop/1password-native-messaging.json", mode = "symlink" }
 "/home/thurstonsand/.local/bin/1password-window" = { source = "remote-development/desktop/1password-window", mode = "symlink" }
+"/home/thurstonsand/.local/bin/1password-prompt" = { source = "remote-development/desktop/1password-prompt", mode = "symlink" }
+"/home/thurstonsand/.local/share/applications/1password.desktop" = { source = "remote-development/desktop/1password.desktop", mode = "symlink" }
 "/home/thurstonsand/.local/bin/1password-browser-support" = { source = "remote-development/desktop/1password-browser-support", mode = "symlink" }
 # User services must remain runnable while this checkout is unavailable.
 "/home/thurstonsand/.config/systemd/user/amp-remote.service" = { source = "remote-development/amp-remote.service", mode = "copy" }
