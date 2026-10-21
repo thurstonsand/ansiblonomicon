@@ -14,6 +14,8 @@
   "dependencyDashboard": true,
   "timezone": "America/New_York",
   "labels": ["dependencies"],
+  "minimumReleaseAge": "3 days",
+  "internalChecksFilter": "strict",
   "prHourlyLimit": 0,
   "prConcurrentLimit": 0,
   "branchConcurrentLimit": 0,
@@ -107,6 +109,17 @@
       "enabled": false
     },
     {
+      "description": "Pi, Claude Code and its Agent SDK, and Codex ship fixes the agent harnesses need the day they land, so they skip the three-day release age every other update waits out.",
+      "matchPackageNames": [
+        "@earendil-works/**",
+        "@anthropic-ai/claude-code",
+        "@anthropic-ai/claude-agent-sdk",
+        "@openai/codex",
+        "@openai/codex-sdk"
+      ],
+      "minimumReleaseAge": null
+    },
+    {
       "description": "The Pi extensions declare the Pi release they were checked against, so a Pi update raises the caret floor in package.json rather than only moving the lockfile under an older range.",
       "matchPackageNames": ["@earendil-works/**"],
       "rangeStrategy": "bump"
@@ -115,6 +128,11 @@
       "description": "@types/node describes the runtime, so it tracks the Node these packages run on rather than the newest DefinitelyTyped release. Types from a later major describe APIs that are not there and hide ones that were removed, and tsc believes them either way. Raise the ceiling when the toolchain in mise.toml moves.",
       "matchPackageNames": ["@types/node"],
       "allowedVersions": "<25"
+    },
+    {
+      "description": "Pi hands extensions its own bundled typebox at runtime, so the extensions pin typebox to exactly the version Pi depends on. scripts/ts-package-deps.sh owns that pin and moves it with each Pi release; any typebox Renovate offers on its own breaks the match.",
+      "matchPackageNames": ["typebox"],
+      "enabled": false
     }
   ]
 }
