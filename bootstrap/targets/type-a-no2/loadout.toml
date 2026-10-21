@@ -17,6 +17,7 @@ lib32-nvidia-utils = "present"
 libfido2 = "present"
 libpulse = "present"
 libva-nvidia-driver = "present"
+minisign = "present"
 ninja = "present"
 nvidia-open-dkms = "present"
 nvidia-utils = "present"
@@ -41,7 +42,6 @@ zed = "present"
 zsh-autosuggestions = "present"
 
 [aur]
-hyprwhspr = "present"
 icloudpd-bin = "present"
 
 [themes]
@@ -54,4 +54,3 @@ sakura-mochi = { source = "https://github.com/OldJobobo/omarchy-sakura-mochi-the
 "felixzsh.codexbar" = { source = "https://github.com/thurstonsand/omarchy-codexbar.git" }
 "io.github.mb-jambon.omapods" = { source = "https://github.com/thurstonsand/omarchy-pods.git", setup = "./setup" }
 "io.github.wouldja.mouse" = { source = "https://github.com/wouldja/omarchy-mouse.git" }
-"thurstonsand.hyprwhspr" = { source = "https://github.com/thurstonsand/omarchy-hyprwhspr.git" }

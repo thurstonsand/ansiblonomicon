@@ -1,0 +1,6 @@
+# ~/.config/superwhisper links here, so Superwhisper's device identity, credentials, usage, and runtime files land beside these.
+*
+!.gitignore
+!preferences.json
+!settings/
+!settings/settings.json

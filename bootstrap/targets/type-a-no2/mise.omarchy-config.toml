@@ -54,14 +54,11 @@ run = "sudo -n nmcli connection reload"
 [bootstrap.hooks.post-repos]
 run = "~/.local/share/omarchy-icloud-photos/install.sh"
 
-# mise daemon-reloads after writing user units but restarts nothing, and services converge before dotfiles.
 [bootstrap.hooks.post-dotfiles]
 run = '''
-started=$(systemctl --user show hyprwhspr -p ActiveEnterTimestamp --value)
-if [ -n "$started" ] && [ "$(stat -Lc %Y ~/.config/systemd/user/hyprwhspr.service.d/secrets.conf)" -gt "$(date -d "$started" +%s)" ]; then
-  systemctl --user daemon-reload
-  systemctl --user try-restart hyprwhspr
-fi
+# Superwhisper's installer also links its Omarchy panel, menu row, fcitx5 addon, and agent skill, and writes hypr/bindings.lua.
+"{{ config_root }}/omarchy/libexec/superwhisper-install"
+gsettings set org.gnome.desktop.interface toolkit-accessibility true
 # Omarchy renders its templates and theme files only on a theme switch, so re-render when a source changed since the last one
 # or a consumer's copy is missing, as on a fresh home where the hooks first ran before agent-config created ~/.claude.
 changed=$(find -L ~/.config/omarchy/themed ~/.config/omarchy/themes -newer ~/.local/state/omarchy/current/theme.name -type f -print -quit)
@@ -74,7 +71,7 @@ fi
 "~/.config/hypr/monitors.lua" = { source = "omarchy/hypr/monitors.lua", mode = "symlink" }
 "~/.config/hypr/input.lua" = { source = "omarchy/hypr/input.lua", mode = "symlink" }
 "~/.config/hypr/hyprland.lua" = { source = "omarchy/hypr/hyprland.lua", mode = "symlink" }
-"~/.config/hypr/bindings.lua" = { source = "omarchy/hypr/bindings.lua", mode = "symlink" }
+"~/.config/hypr/personal-bindings.lua" = { source = "omarchy/hypr/personal-bindings.lua", mode = "symlink" }
 "~/.config/hypr/looknfeel.lua" = { source = "omarchy/hypr/looknfeel.lua", mode = "symlink" }
 "~/.config/hypr/autostart.lua" = { source = "omarchy/hypr/autostart.lua", mode = "symlink" }
 "~/.config/hypr/hyprsunset.conf" = { source = "omarchy/hypr/hyprsunset.conf", mode = "symlink" }
@@ -108,9 +105,13 @@ fi
 "~/.config/BraveSoftware/Brave-Origin/NativeMessagingHosts/com.omarchy.ytdlp.json" = { source = "~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.omarchy.ytdlp.json", mode = "symlink" }
 # CodexBar replaces this file on save, which would break a symlink.
 "~/.config/codexbar/config.json" = { source = "omarchy/codexbar/config.json", mode = "copy" }
-# hyprwhspr replaces config.json on save, which would break a file symlink; linking the directory keeps the replacement in the repo.
-"~/.config/hyprwhspr" = { source = "omarchy/hyprwhspr", mode = "symlink" }
-"~/.config/systemd/user/hyprwhspr.service.d/secrets.conf" = { source = "omarchy/hyprwhspr/secrets.conf", mode = "symlink" }
+# Superwhisper replaces its files on save, which would break a file symlink; linking the directory keeps the replacement in the repo.
+"~/.config/superwhisper" = { source = "omarchy/superwhisper", mode = "symlink" }
+# Superwhisper's auto-learned vocabulary watches corrections over AT-SPI, and turning it on wrote these. It rewrites them when the
+# setting changes, and Omarchy's migrations rewrite the browser flags, so they are copies. The hook also sets toolkit-accessibility.
+"~/.config/environment.d/90-superwhisper-accessibility.conf" = { source = "omarchy/superwhisper-accessibility/environment.conf", mode = "copy" }
+"~/.config/chromium-flags.conf" = { source = "omarchy/superwhisper-accessibility/chromium-flags.conf", mode = "copy" }
+"~/.config/obsidian/user-flags.conf" = { source = "omarchy/superwhisper-accessibility/obsidian-user-flags.conf", mode = "copy" }
 "~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
 "~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }

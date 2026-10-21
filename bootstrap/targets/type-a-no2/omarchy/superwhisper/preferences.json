@@ -1,0 +1,24 @@
+{
+  "autoPasteEnabled": true,
+  "autoVocabCaptureEnabled": true,
+  "cancelRecordingShortcut": "Escape",
+  "deviceSelectionCounts": {},
+  "errorLoggingEnabled": false,
+  "launchAtLogin": true,
+  "linux": {
+    "asrBackend": "auto",
+    "cleanupGpuLayers": 99,
+    "saveRecordingAudio": true,
+    "vocabularyBackend": "auto"
+  },
+  "p2t": false,
+  "priorityInputDevices": {},
+  "pushToTalkShortcut": "",
+  "recordingIndicatorStyle": "pill",
+  "recordingPreservationPeriod": 31536000,
+  "showRecordingIndicator": true,
+  "toggleRecordingShortcut": "Ctrl+Alt+Space",
+  "tone": "casual",
+  "useDefaultInputDevice": true,
+  "userExcludedInputDevices": {}
+}

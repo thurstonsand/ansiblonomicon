@@ -19,7 +19,17 @@
       ],
       "center": [
         {
-          "id": "omarchy.indicators"
+          "id": "omarchy.indicators",
+          "items": [
+            "ScreenRecording",
+            "Reminder",
+            "NightLight",
+            "Dnd",
+            "StayAwake"
+          ]
+        },
+        {
+          "id": "superwhisper.panel"
         },
         {
           "id": "omarchy.clock",
@@ -59,9 +69,6 @@
         },
         {
           "id": "omarchy.network"
-        },
-        {
-          "id": "thurstonsand.hyprwhspr"
         },
         {
           "id": "omarchy.audio"

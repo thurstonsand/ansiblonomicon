@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+# Installs Superwhisper's latest stable Linux release when it is absent. Its own update timer keeps it current afterwards.
+set -euo pipefail
+
+[ -x "${XDG_DATA_HOME:-$HOME/.local/share}/superwhisper/app/current/run.sh" ] && exit 0
+
+repo=superultrainc/superwhisper-linux-releases
+# Releases carry their minisign key inside the signed archive, so the key is pinned here instead (BC524820AE37B966).
+key=RWRmuTeuIEhSvCYQejUR+zzMNsfxAn7pr9iOZ2ZJ9U1/zJwfsqvhzATB
+
+tag=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" | jq -er .tag_name)
+archive="superwhisper-omarchy-x86_64-${tag#v}.tar.zst"
+tmp=$(mktemp -d)
+trap 'rm -rf "$tmp"' EXIT
+curl -fsSL --output-dir "$tmp" -O "https://github.com/$repo/releases/download/$tag/$archive" \
+  -O "https://github.com/$repo/releases/download/$tag/$archive.minisig"
+minisign -Vq -P "$key" -m "$tmp/$archive"
+tar --zstd -xf "$tmp/$archive" -C "$tmp"
+"$tmp/${archive%.tar.zst}/install.sh"

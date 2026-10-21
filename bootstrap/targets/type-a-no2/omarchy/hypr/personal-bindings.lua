@@ -70,16 +70,13 @@ o.bind("SUPER + Delete", "Delete to end of line", delete_to_line_edge("End", "K"
 -- MiniWhisper's dictation gesture on Right Alt: hold to talk, double-tap to
 -- latch until the next press, and a lone tap discards. Recording starts on the
 -- first press so no speech is lost while the gesture is still ambiguous.
--- Writing the control FIFO directly skips the CLI's ~150ms Python startup;
--- timeout keeps a stopped service from wedging the writer.
+-- Superwhisper's own shortcuts have no double-tap latch, so this drives its CLI.
 local dictation_hold_ms = 200
 local dictation_double_tap_ms = 300
 local dictation = { state = "idle", held = false, generation = 0 }
 
 local function dictation_send(command)
-	hl.exec_cmd(
-		"timeout 1 sh -c 'echo " .. command .. ' > "$XDG_RUNTIME_DIR/hyprwhspr/recording_control"\''
-	)
+	hl.exec_cmd("superwhisper " .. command)
 end
 
 local function dictation_after(ms, callback)
@@ -135,5 +132,3 @@ o.bind("Alt_R", "Dictation (hold, or double-tap to latch)", dictation_press)
 -- Alt may or may not still count as held when Alt_R comes up.
 o.bind("Alt_R", nil, dictation_release, { release = true })
 o.bind("ALT + Alt_R", nil, dictation_release, { release = true })
-
-o.bind("SUPER + ALT + V", "Paste last dictation", "~/.config/omarchy/plugins/thurstonsand.hyprwhspr/bin/paste-recent")

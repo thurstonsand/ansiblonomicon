@@ -19,7 +19,14 @@ require("default.hypr.omarchy")
 require("hypr.monitors")
 require("hypr.input")
 require("hypr.mouse")
+-- Superwhisper replaces bindings.lua whenever it saves its shortcuts, which would break a symlink, so personal bindings live beside it.
+require("hypr.personal-bindings")
+-- With Omarchy's `o` visible, Superwhisper's hook reports Right Alt to its daemon as Omarchy's push-to-talk key, and the
+-- daemon then stops any recording started while Right Alt is down, which breaks the double-tap latch in personal-bindings.
+local omarchy = o
+o = nil
 require("hypr.bindings")
+o = omarchy
 require("hypr.looknfeel")
 require("hypr.autostart")
 
