@@ -58,7 +58,15 @@ run = "~/.local/share/omarchy-icloud-photos/install.sh"
 run = '''
 # Superwhisper's installer also links its Omarchy panel, menu row, fcitx5 addon, and agent skill, and writes hypr/bindings.lua.
 "{{ config_root }}/omarchy/libexec/superwhisper-install"
+# The rest of what Superwhisper's auto-learned vocabulary needs, plus Brave Origin, which it skips. Only the flag line is owned here,
+# because Omarchy's migrations also append to these files.
 gsettings set org.gnome.desktop.interface toolkit-accessibility true
+for flags in ~/.config/chromium-flags.conf ~/.config/brave-origin-flags.conf ~/.config/obsidian/user-flags.conf; do
+  grep -qxF -- --force-renderer-accessibility "$flags" 2>/dev/null && continue
+  mkdir -p "$(dirname "$flags")"
+  [ -s "$flags" ] && [ -n "$(tail -c1 "$flags")" ] && echo >>"$flags"
+  echo --force-renderer-accessibility >>"$flags"
+done
 # Omarchy renders its templates and theme files only on a theme switch, so re-render when a source changed since the last one
 # or a consumer's copy is missing, as on a fresh home where the hooks first ran before agent-config created ~/.claude.
 changed=$(find -L ~/.config/omarchy/themed ~/.config/omarchy/themes -newer ~/.local/state/omarchy/current/theme.name -type f -print -quit)
@@ -107,11 +115,9 @@ fi
 "~/.config/codexbar/config.json" = { source = "omarchy/codexbar/config.json", mode = "copy" }
 # Superwhisper replaces its files on save, which would break a file symlink; linking the directory keeps the replacement in the repo.
 "~/.config/superwhisper" = { source = "omarchy/superwhisper", mode = "symlink" }
-# Superwhisper's auto-learned vocabulary watches corrections over AT-SPI, and turning it on wrote these. It rewrites them when the
-# setting changes, and Omarchy's migrations rewrite the browser flags, so they are copies. The hook also sets toolkit-accessibility.
+# Superwhisper's auto-learned vocabulary watches corrections over AT-SPI, and turning it on wrote this file, which it rewrites when the
+# setting changes. The post-dotfiles hook covers the rest of what it needs.
 "~/.config/environment.d/90-superwhisper-accessibility.conf" = { source = "omarchy/superwhisper-accessibility/environment.conf", mode = "copy" }
-"~/.config/chromium-flags.conf" = { source = "omarchy/superwhisper-accessibility/chromium-flags.conf", mode = "copy" }
-"~/.config/obsidian/user-flags.conf" = { source = "omarchy/superwhisper-accessibility/obsidian-user-flags.conf", mode = "copy" }
 "~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
 "~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }
