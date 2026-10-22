@@ -3,7 +3,7 @@ hl.config({
   input = {
     sensitivity = 0.20,
     accel_profile = "adaptive",
-    natural_scroll = true,
+    natural_scroll = false,
     scroll_factor = 1.00,
     left_handed = false,
     touchpad = {
