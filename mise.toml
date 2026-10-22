@@ -580,11 +580,15 @@ exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD 
 '''
 
 [tasks."amp-cli"]
-description = "Install Amp and reconcile its runner on the Omarchy laptop"
+description = "Install Amp and reconcile its runner on the Omarchy laptop and eve"
 usage = 'flag "-c --check" help="Show Amp CLI and runner reconciliation changes"'
 run = '''
-[ "$(hostname -s 2>/dev/null || hostname)" = type-a-no2 ] || { echo "Amp CLI capability requires type-a-no2" >&2; exit 1; }
-target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
+host=$(hostname -s 2>/dev/null || hostname)
+case "$host" in
+  type-a-no2|eve) ;;
+  *) echo "Amp CLI capability requires type-a-no2 or eve" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
   MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=amp-cli \
   exec mise -C "$target" run amp-cli ${usage_check:+--check}
@@ -701,7 +705,7 @@ target="$MISE_PROJECT_ROOT/bootstrap/targets/eve"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 tags="${usage_tags:-}"
-supported=" all mise windows-system windows-apps vcs "
+supported=" all mise windows-system windows-apps vcs amp-cli "
 unsupported=
 for tag in $(printf '%s' "$tags" | tr ',' ' '); do
   case "$supported" in
@@ -727,7 +731,10 @@ if selected windows-apps; then
   mise run //:windows-apps ${usage_check:+--check} ${usage_update:+--update} || exit "$?"
 fi
 if selected vcs; then
-  mise run //:vcs ${usage_check:+--check}
+  mise run //:vcs ${usage_check:+--check} || exit "$?"
+fi
+if selected amp-cli; then
+  mise run //:amp-cli ${usage_check:+--check}
 fi
 '''
 

@@ -1,0 +1,43 @@
+[dotfiles]
+# Keep the runner startable when this checkout is unavailable.
+"~/.local/bin/amp-runner.ps1" = { source = "amp-cli/amp-runner.ps1", mode = "copy" }
+
+# A Scheduled Task, started at logon, which is how mise runs user services here.
+# A headless conhost keeps the console app from opening a closable terminal window.
+[bootstrap.services.amp-runner]
+scope = "user"
+description = "Amp runner for eve"
+command = "C:/Windows/System32/conhost.exe --headless powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File C:/Users/thurs/.local/bin/amp-runner.ps1"
+working_directory = "~/Code"
+
+[tasks.amp-cli]
+usage = 'flag "-c --check" help="Show Amp CLI and runner service drift"'
+run = '''
+amp="$HOME/.amp/bin/amp.exe"
+code_dir="$HOME/Code"
+login="$HOME/.local/share/amp/secrets.json"
+script="$HOME/.local/bin/amp-runner.ps1"
+script_changed=false
+cmp -s "$MISE_PROJECT_ROOT/amp-cli/amp-runner.ps1" "$script" || script_changed=true
+
+if [ -n "${usage_check:-}" ]; then
+  [ -d "$code_dir" ] || echo "BLOCKED: Amp runner working directory is absent: $code_dir"
+  [ -f "$login" ] || echo "BLOCKED: Amp persisted login is absent: $login"
+  [ -x "$amp" ] || echo "Amp CLI would be installed: $amp"
+  $script_changed && echo "Amp runner script would be copied to ~/.local/bin/amp-runner.ps1 and the runner restarted"
+  exec mise bootstrap services apply --dry-run
+fi
+
+[ -d "$code_dir" ] || { echo "Amp runner working directory is absent: $code_dir" >&2; exit 1; }
+[ -f "$login" ] || { echo "Amp persisted login is absent: $login" >&2; exit 1; }
+if [ ! -x "$amp" ]; then
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -Command 'irm https://ampcode.com/install.ps1 | iex'
+  [ -x "$amp" ] || { echo "Amp installer did not create $amp" >&2; exit 1; }
+fi
+mise bootstrap dotfiles apply --force --yes "$script"
+mise bootstrap services apply --yes
+if $script_changed; then
+  MSYS_NO_PATHCONV=1 schtasks /end /tn 'mise\amp-runner'
+  MSYS_NO_PATHCONV=1 schtasks /run /tn 'mise\amp-runner'
+fi
+'''
