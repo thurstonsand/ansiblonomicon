@@ -19,7 +19,7 @@ EXPECTED = (
     "BerkeleyMonoNerdFontMono-BoldOblique.otf",
 )
 ACCOUNT = "PQ7X5W7V6FDADHPFFEO62TLFEM"
-REFERENCE = "op://Private/Berkeley Mono Font/nerd-font"
+REFERENCE = "op://agent/Berkeley Mono Font/nerd-font"
 FONT_SIGNATURES = (b"OTTO", b"\x00\x01\x00\x00")
 
 
