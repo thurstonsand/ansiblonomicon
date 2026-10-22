@@ -73,6 +73,14 @@ resource "unifi_client" "dell_windows" {
   allow_existing = true
 }
 
+# The Framework dual-boot repeats the Dell's arrangement, with the same caveat
+# for its Windows record.
+resource "unifi_client" "framework_windows" {
+  mac            = "5a:25:d4:f7:df:cf"
+  name           = "Framework Laptop - Windows"
+  allow_existing = true
+}
+
 resource "unifi_client" "realtek_usb_ethernet" {
   mac            = "00:e0:4c:00:0a:9a"
   name           = "Realtek USB Ethernet Adapter"
