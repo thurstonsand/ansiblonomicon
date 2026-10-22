@@ -4,6 +4,7 @@
     "config:recommended",
     "customManagers:biomeVersions",
     ":configMigration",
+    ":maintainLockFilesWeekly",
     "abandonments:recommended",
     ":enableVulnerabilityAlertsWithAdditionalLabel(security)"
   ],
@@ -19,10 +20,6 @@
   "prHourlyLimit": 0,
   "prConcurrentLimit": 0,
   "branchConcurrentLimit": 0,
-  "lockFileMaintenance": {
-    "enabled": true,
-    "schedule": ["at any time"]
-  },
   "customManagers": [
     {
       "customType": "regex",
