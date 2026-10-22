@@ -164,7 +164,6 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
                 "apiKey": token,
                 "api": "anthropic-messages",
                 "authHeader": True,
-                "headers": {"User-Agent": "pi-coding-agent"},
                 "models": [
                     model(n, anthropic=True)
                     for n in ("opus", "fable", "sonnet", "haiku")
@@ -174,7 +173,6 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
                 "baseUrl": f"{gateway['base_url']}/v1",
                 "apiKey": token,
                 "api": "openai-responses",
-                "headers": {"User-Agent": "pi-coding-agent"},
                 "compat": {
                     "supportsStrictMode": True,
                     "supportsOpenAIGrammarTools": True,
