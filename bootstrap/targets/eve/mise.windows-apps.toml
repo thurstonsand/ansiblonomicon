@@ -1,0 +1,8 @@
+# Dia ships only as a sideloaded MSIX from The Browser Company, outside winget.
+[bootstrap.packages]
+"winget:AgileBits.1Password" = "latest"
+"winget:AgileBits.1Password.CLI" = "latest"
+"winget:Git.Git" = "latest"
+"winget:wez.wezterm" = "latest"
+# ChatGPT, from the Microsoft Store.
+"winget:9PLM9XGG6VKS" = "latest"

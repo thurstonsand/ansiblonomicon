@@ -18,6 +18,7 @@
 - **Work machine**: The corporate laptop. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions.
 - **pod042**: The NAS — plain Debian 13 server.
 - **type-a-no2**: The personal Omarchy laptop.
+- **eve**: The Framework laptop's Windows side, dual-booting with Omarchy.
 - **Home Assistant**: An appliance managed outside the scope of this repo, aside from management of the VM itself via Incus on pod042. All other management is done through the `home-assistant` mcp.
 
 ## Unifi Networks

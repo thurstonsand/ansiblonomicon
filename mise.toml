@@ -27,7 +27,7 @@ _.python.venv = { path = ".venv", create = true }
 # Ask mise for the path it resolved rather than rebuilding it from xdg_data_home
 # and the version spec: that spelling ignores MISE_DATA_DIR and names the `3.14`
 # alias directory instead of the concrete install pyvenv.cfg records.
-UV_PYTHON = { value = "{{ tools.python.path }}/bin/python", tools = true }
+UV_PYTHON = { value = "{{ tools.python.path }}{% if os() == 'windows' %}/python.exe{% else %}/bin/python{% endif %}", tools = true }
 SUDO_ASKPASS = "{{config_root}}/scripts/sudo-askpass.sh"
 
 [hooks]
@@ -50,7 +50,7 @@ quiet = true
 description = "Install agent tooling development dependencies"
 run = '''
 # The work machine skips the install: npm rewrites package-lock to the internal mirror.
-if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
+if [ "$(hostname -s 2>/dev/null || hostname)" != "ML-DFC6YK6VJQ" ]; then
   # --no-audit: the audit endpoint is a separate service from the registry and
   # can hang for minutes while package fetches are fine. It blocks every shell
   # entry when it does, and it tells us nothing we act on here.
@@ -95,7 +95,7 @@ if [ -d .git ] && [ -z "$(git config --local --get hook.hk-pre-commit.command ||
   hk install --mise
 fi
 
-if [ "$(hostname -s)" = "ML-DFC6YK6VJQ" ]; then
+if [ "$(hostname -s 2>/dev/null || hostname)" = "ML-DFC6YK6VJQ" ]; then
   # Same three the `pull` task unmasks across a rebase; the two-entry list this
   # inherited from .envrc left the permissions lockfile rewriting itself visibly.
   for f in uv.lock \
@@ -134,7 +134,7 @@ usage = '''
 flag "-c --check" help="Report Brewfile drift without installing or resolving credentials"
 '''
 run = '''
-case "$(hostname -s)" in
+case "$(hostname -s 2>/dev/null || hostname)" in
   Thurstons-MacBook-Pro)
     brewfile="$MISE_PROJECT_ROOT/bootstrap/capabilities/mac-apps/Brewfile"
     sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS
@@ -163,7 +163,7 @@ flag "-c --check" help="Validate inventory and report configuration and package 
 run = '''
 set -e
 set --
-case "$(hostname -s)" in
+case "$(hostname -s 2>/dev/null || hostname)" in
   Thurstons-MacBook-Pro) profile=personal ;;
   ML-DFC6YK6VJQ)
     profile=work
@@ -185,7 +185,7 @@ flag "-c --check" help="Report drift without writes, sudo, credentials, or app r
 flag "--sections <sections>" help="Comma-separated sysconfig sections"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   Thurstons-MacBook-Pro) profile=personal; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,permissions,hostname} ;;
   ML-DFC6YK6VJQ) profile=work; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,permissions} ;;
@@ -209,7 +209,7 @@ arg "capability"
 flag "-c --check"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host:$usage_capability" in
   Thurstons-MacBook-Pro:claude-code|Thurstons-MacBook-Pro:shp|Thurstons-MacBook-Pro:uvc-util|Thurstons-MacBook-Pro:berkeley-mono|Thurstons-MacBook-Pro:docker-context) ;;
   ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono) ;;
@@ -236,7 +236,7 @@ run = "mise run //:software:dispatch uvc-util ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks."berkeley-mono"]
 run = '''
-if [ "$(hostname -s)" = type-a-no2 ]; then
+if [ "$(hostname -s 2>/dev/null || hostname)" = type-a-no2 ]; then
   target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
   MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
     MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=berkeley-mono \
@@ -257,7 +257,7 @@ usage = '''
 flag "-c --check" help="Show changes without applying them"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   pod042|Thurstons-MacBook-Pro|ML-DFC6YK6VJQ) ;;
   *) echo "Unregistered terminal-theme host" >&2; exit 1 ;;
@@ -294,9 +294,9 @@ usage = '''
 flag "-c --check" help="Show changes without applying them"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  pod042|Thurstons-MacBook-Pro|type-a-no2) environments=vcs ;;
+  pod042|Thurstons-MacBook-Pro|type-a-no2|eve) environments=vcs ;;
   ML-DFC6YK6VJQ) environments=vcs,vcs-work ;;
   *) echo "Unregistered vcs host" >&2; exit 1 ;;
 esac
@@ -321,7 +321,7 @@ usage = '''
 flag "-c --check" help="Show changes without writing"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   Thurstons-MacBook-Pro|type-a-no2) environments=ssh-client ;;
   pod042) environments=ssh-client,ssh-client-pod042 ;;
@@ -347,7 +347,7 @@ usage = '''
 flag "-c --check" help="Show configuration changes without applying them"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   pod042|Thurstons-MacBook-Pro) environments=neovim,neovim-personal ;;
   ML-DFC6YK6VJQ) environments=neovim,neovim-work ;;
@@ -377,7 +377,7 @@ usage = '''
 flag "-c --check" help="Show changes without applying them"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 [ "$host" = ML-DFC6YK6VJQ ] || { echo "python-index is registered only on the work host" >&2; exit 1; }
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
@@ -395,7 +395,7 @@ usage = '''
 flag "-c --check" help="Show changes without applying them"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 [ "$host" = ML-DFC6YK6VJQ ] || { echo "work-local is registered only on the work host" >&2; exit 1; }
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 [ -f "$target/mise.work-local.local.toml" ] || { echo "work-local requires $target/mise.work-local.local.toml" >&2; exit 1; }
@@ -417,7 +417,7 @@ usage = '''
 flag "-c --check" help="Show changes without applying them"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   pod042|Thurstons-MacBook-Pro) environments=shell,shell-personal; parts=files,dotfiles; work=false ;;
   ML-DFC6YK6VJQ) environments=shell,shell-work; parts=files,dotfiles; work=true ;;
@@ -453,7 +453,7 @@ usage = '''
 flag "-c --check" help="Show changes without applying them"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   Thurstons-MacBook-Pro) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles,repos; update=--update ;;
   ML-DFC6YK6VJQ) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles ;;
@@ -477,7 +477,7 @@ usage = '''
 flag "-c --check" help="Show changes without applying them"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   pod042) environments=user-tools,user-tools-personal ;;
   Thurstons-MacBook-Pro) environments=user-tools,user-tools-personal,user-tools-mac,user-tools-mac-personal ;;
@@ -501,7 +501,7 @@ usage = '''
 flag "-c --check" help="Show changes without writing"
 '''
 run = '''
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2) ;;
   *) echo "editor-config is registered only on the laptops" >&2; exit 1 ;;
@@ -523,10 +523,11 @@ flag "-c --check" help="Dry-run mode (no changes made)"
 flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 '''
 run = '''
-case "$(hostname -s)" in
+case "$(hostname -s 2>/dev/null || hostname)" in
   ML-DFC6YK6VJQ|Thurstons-MacBook-Pro) exec mise run //:reconcile:laptop ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   pod042) exec python3 "$MISE_PROJECT_ROOT/scripts/pod042_reconcile.py" ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
   type-a-no2) exec mise run //:reconcile:omarchy ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
+  eve) exec mise run //:reconcile:windows ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
 esac
 '''
@@ -539,13 +540,13 @@ flag "--cached" help="Apply cached sources without fetching"
 '''
 run = '''
 set -e
-case "$(hostname -s)" in
+case "$(hostname -s 2>/dev/null || hostname)" in
   Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2)
     "$MISE_PROJECT_ROOT/.venv/bin/python" \
       "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/agent_harness_deploy.py" \
       --repo "$MISE_PROJECT_ROOT" --home "$HOME" \
       --cache "$HOME/.cache/ansiblonomicon-harness" \
-      --host-config "$MISE_PROJECT_ROOT/bootstrap/targets/$(hostname -s)/mise.agent-harness.toml" \
+      --host-config "$MISE_PROJECT_ROOT/bootstrap/targets/$(hostname -s 2>/dev/null || hostname)/mise.agent-harness.toml" \
       ${usage_check:+--check} ${usage_cached:+--cached}
     ;;
   pod042)
@@ -564,7 +565,7 @@ flag "-c --check" help="Show install changes and undeclared installs without app
 flag "--update" help="Also update installed plugins, following rewritten remote history"
 '''
 run = '''
-[ "$(hostname -s)" = type-a-no2 ] || { echo "Omarchy loadout requires type-a-no2" >&2; exit 1; }
+[ "$(hostname -s 2>/dev/null || hostname)" = type-a-no2 ] || { echo "Omarchy loadout requires type-a-no2" >&2; exit 1; }
 target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
@@ -582,7 +583,7 @@ exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD 
 description = "Install Amp and reconcile its runner on the Omarchy laptop"
 usage = 'flag "-c --check" help="Show Amp CLI and runner reconciliation changes"'
 run = '''
-[ "$(hostname -s)" = type-a-no2 ] || { echo "Amp CLI capability requires type-a-no2" >&2; exit 1; }
+[ "$(hostname -s 2>/dev/null || hostname)" = type-a-no2 ] || { echo "Amp CLI capability requires type-a-no2" >&2; exit 1; }
 target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
 MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
   MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=amp-cli \
@@ -658,6 +659,78 @@ elif selected agent-config; then
 fi
 '''
 
+[tasks."windows-system"]
+description = "Reconcile Windows registry settings on this registered host"
+usage = 'flag "-c --check" help="Show changes without applying them"'
+run = '''
+host=$(hostname -s 2>/dev/null || hostname)
+[ "$host" = eve ] || { echo "windows-system is registered only on eve" >&2; exit 1; }
+exec "$MISE_PROJECT_ROOT/.venv/Scripts/python" "$MISE_PROJECT_ROOT/bootstrap/capabilities/windows-system/reconcile.py" \
+  --declarations "$MISE_PROJECT_ROOT/bootstrap/targets/$host/windows-system.toml" ${usage_check:+--check}
+'''
+
+[tasks."windows-apps"]
+description = "Reconcile this Windows host's winget packages"
+usage = '''
+flag "-c --check" help="Show package changes without installing"
+flag "--update" help="Also upgrade declared packages"
+'''
+run = '''
+host=$(hostname -s 2>/dev/null || hostname)
+[ "$host" = eve ] || { echo "windows-apps is registered only on eve" >&2; exit 1; }
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+export MISE_ENV=windows-apps
+mode=--yes
+[ -z "${usage_check:-}" ] || mode=--dry-run
+exec mise -C "$target" bootstrap --only packages "$mode" ${usage_update:+--update}
+'''
+
+[tasks."reconcile:windows"]
+description = "Reconcile this Windows host's settings, packages, and Git configuration"
+alias = "windows"
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+flag "-t --tags <tags>" help="Only run these capabilities (comma-separated)"
+flag "--update" help="Also upgrade declared packages"
+'''
+run = '''
+[ "$(hostname -s 2>/dev/null || hostname)" = eve ] || { echo "Windows reconciliation requires eve" >&2; exit 1; }
+target="$MISE_PROJECT_ROOT/bootstrap/targets/eve"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
+export MISE_TRUSTED_CONFIG_PATHS="$target"
+tags="${usage_tags:-}"
+supported=" all mise windows-system windows-apps vcs "
+unsupported=
+for tag in $(printf '%s' "$tags" | tr ',' ' '); do
+  case "$supported" in
+    *" $tag "*) ;;
+    *) unsupported="${unsupported:+$unsupported,}$tag" ;;
+  esac
+done
+[ -z "$unsupported" ] || { echo "Unsupported windows-host tags: $unsupported" >&2; exit 1; }
+selected() {
+  case ",$tags," in ,,|*,all,*|*,"$1",*) return 0 ;; esac
+  return 1
+}
+mode=--yes
+[ -z "${usage_check:-}" ] || mode=--dry-run
+if selected mise; then
+  mise -C "$target" bootstrap --only dotfiles --force-dotfiles "$mode" || exit "$?"
+  mise -C "$HOME" bootstrap --only tools "$mode" || exit "$?"
+fi
+if selected windows-system; then
+  mise run //:windows-system ${usage_check:+--check} || exit "$?"
+fi
+if selected windows-apps; then
+  mise run //:windows-apps ${usage_check:+--check} ${usage_update:+--update} || exit "$?"
+fi
+if selected vcs; then
+  mise run //:vcs ${usage_check:+--check}
+fi
+'''
+
 [tasks."agent-config"]
 description = "Reconcile native rendered agent configuration only"
 usage = '''
@@ -665,7 +738,7 @@ flag "-c --check" help="Render and compare without changing files or installing 
 '''
 run = '''
 set -e
-host=$(hostname -s)
+host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   ML-DFC6YK6VJQ) secret=ANTHROPIC_AUTH_TOKEN ;;
   Thurstons-MacBook-Pro|pod042|type-a-no2) secret=CLI_PROXY_API_KEY ;;
@@ -691,7 +764,7 @@ flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 '''
 run = '''
 set -e
-case "$(hostname -s)" in
+case "$(hostname -s 2>/dev/null || hostname)" in
   ML-DFC6YK6VJQ) profile=work ;;
   Thurstons-MacBook-Pro) profile=personal ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
@@ -797,7 +870,7 @@ python3 scripts/pod042_reconcile.py \
 [tasks."reconcile:tags"]
 description = "List the --tags a host offers (defaults to this machine's own)"
 usage = '''
-arg "[playbook]" help="Host to inspect: macos, work, pod042, omarchy"
+arg "[playbook]" help="Host to inspect: macos, work, pod042, omarchy, windows"
 '''
 run = "./scripts/list-tags.sh ${usage_playbook:-}"
 
@@ -1042,7 +1115,7 @@ depends = ["deps:update:uv", "deps:update:ts"]
 [tasks."deps:update:uv"]
 description = "Upgrade the Python lockfile to the newest allowed releases"
 run = '''
-if [ "$(hostname -s)" = "ML-DFC6YK6VJQ" ]; then
+if [ "$(hostname -s 2>/dev/null || hostname)" = "ML-DFC6YK6VJQ" ]; then
   echo "The work lock is re-resolved against the mirror by 'mise run pull'; it already tracks the newest wheel Artifactory serves." >&2
   exit 1
 fi
@@ -1062,7 +1135,7 @@ description = "git pull --rebase, preserving the work machine's local-only lockf
 shell = "bash -c"
 run = '''
 set -euo pipefail
-if [ "$(hostname -s)" != "ML-DFC6YK6VJQ" ]; then
+if [ "$(hostname -s 2>/dev/null || hostname)" != "ML-DFC6YK6VJQ" ]; then
   git pull --rebase
   exit 0
 fi

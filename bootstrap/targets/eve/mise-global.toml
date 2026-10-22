@@ -1,0 +1,9 @@
+# Windows has no system python3 for hooks outside a project, as Unix hosts do.
+[tools]
+python = "3.14"
+
+[settings]
+# Tasks are POSIX shell. The bare name `bash` makes mise find Git Bash and skip
+# the WSL launcher; mise ignores this setting outside the global config.
+windows_default_inline_shell_args = "bash -o errexit -c"
+dotfiles.windows_symlinks = true

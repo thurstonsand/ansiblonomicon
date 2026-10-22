@@ -5,7 +5,6 @@ from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
-import pwd
 import shutil
 import socket
 import stat
@@ -27,8 +26,9 @@ HOST_PROFILES = {
     "Thurstons-MacBook-Pro": "macos",
     "ML-DFC6YK6VJQ": "work",
     "pod042": "pod042",
+    "eve": "windows",
 }
-PROFILES = ("macos", "work", "pod042", "omarchy", "orb")
+PROFILES = ("macos", "work", "pod042", "omarchy", "windows", "orb")
 # Homebrew's `env -i` cask boundary retains HOMEBREW_* metadata only.
 EXEC_PROFILE = "HOMEBREW_ANSIBLONOMICON_EXEC_PROFILE"
 EXEC_KEYS = "HOMEBREW_ANSIBLONOMICON_EXEC_KEYS"
@@ -128,6 +128,8 @@ def read_token(path: Path, owner: int) -> str:
 def shim_directory(inherited: dict[str, str], home: Path) -> Path:
     if data_directory := inherited.get("MISE_DATA_DIR"):
         return Path(data_directory) / "shims"
+    if sys.platform == "win32":
+        return Path(inherited["LOCALAPPDATA"]) / "mise/shims"
     share = inherited.get("XDG_DATA_HOME") or str(home / ".local/share")
     return Path(share) / "mise/shims"
 
@@ -187,6 +189,9 @@ def child_command(
         raise ConfigurationError(
             "exec requires an executable, not an environment assignment"
         )
+    if sys.platform == "win32":
+        # No env(1) here; the child's environment is built without those keys.
+        return command
     scrub = sorted(key for key in environment if key.startswith(("OP_", "FNOX_")))
     args = ["/usr/bin/env"]
     for key in scrub:
@@ -249,7 +254,9 @@ def prepare_invocation(
     identity = identity_path(home)
     native = identity.exists() or identity.is_symlink()
     if native:
-        configured_token = read_identity(identity, home.stat().st_uid)
+        configured_token = read_identity(
+            identity, None if sys.platform == "win32" else home.stat().st_uid
+        )
         if token is not None and token != configured_token:
             raise ConfigurationError("native and injected automation identities differ")
     environment = authentication_environment(
@@ -426,12 +433,14 @@ def main() -> int:
         identity = identity_path(Path.home())
         if not (identity.exists() or identity.is_symlink()):
             if profile == "pod042":
+                import pwd
+
                 token = read_token(TOKEN_PATH, pwd.getpwnam("thurstonsand").pw_uid)
             elif profile == "orb":
                 token = os.environ.get("OP_SERVICE_ACCOUNT_TOKEN")
         if profile == "pod042":
             binary = "/usr/local/bin/fnox"
-        elif profile in {"macos", "work", "omarchy"}:
+        elif profile in {"macos", "work", "omarchy", "windows"}:
             binary = subprocess.check_output(
                 ["mise", "--no-env", "-C", str(ROOT), "which", "fnox"], text=True
             ).strip()
@@ -451,6 +460,17 @@ def main() -> int:
         fnox=binary,
         secrets=arguments.secret if arguments.operation == "exec" else None,
     )
+    if sys.platform == "win32":
+        # Windows exec spawns and returns at once; callers would see the
+        # command finish before it ran.
+        executable = shutil.which(
+            invocation.argv[0], path=invocation.environment.get("PATH")
+        )
+        if executable is None:
+            raise ConfigurationError(f"{invocation.argv[0]} not found on PATH")
+        return subprocess.run(
+            [executable, *invocation.argv[1:]], env=invocation.environment
+        ).returncode
     os.execvpe(invocation.argv[0], invocation.argv, invocation.environment)
 
 

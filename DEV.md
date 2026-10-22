@@ -15,7 +15,7 @@
 Every host reconciles the same way:
 
 ```sh
-mise <host>                # laptop | udmp | pod042 | omarchy
+mise <host>                # laptop | udmp | pod042 | omarchy | windows
 mise <host> --check        # dry run
 mise laptop -t shell       # focused native capability
 mise reconcile             # whichever of those this machine's hostname selects
@@ -77,6 +77,23 @@ Optional theme or plugin extras, such as `theme-set` hooks or files an author as
 Software missing from Omarchy's repositories uses its vendor's installer instead of the AUR.
 
 `omarchy-config` declares the NetworkManager Wi-Fi profiles as templated keyfiles with fnox passphrases, so a reconcile reverts changes made through `nmcli` or the network panel.
+
+## Windows
+
+`eve` is the Framework laptop's Windows side, dual-booting with Omarchy, reconciled natively by `mise windows`; `-t windows-system` and friends narrow it. Tasks run under Git Bash, selected by the global mise config the `mise` tag links, so the target never assumes WSL. `windows-apps` declares winget packages in `[bootstrap.packages]`, and `windows-system` owns the registry values in the target's `windows-system.toml`, asking UAC once when a machine-wide value differs. `vcs` turns off Git for Windows' CRLF conversion and turns on symlinks.
+
+A fresh Windows host needs Git for Windows and Developer Mode first, because the repo and its dotfiles are symlinks. Then:
+
+```powershell
+git clone -c core.symlinks=true -c core.autocrlf=false git@github.com:thurstonsand/ansiblonomicon.git
+cd ansiblonomicon
+irm https://mise.run/powershell | iex      # official build at ~\.local\bin, so self-update works
+mise -C bootstrap/targets/eve bootstrap --only dotfiles --force-dotfiles --yes
+mise trust; mise run bootstrap; mise windows
+mise --no-env exec -- python3 scripts/automation_identity.py
+```
+
+The identity is the laptops' shared automation token, kept readable only by its owner through the file's access list instead of mode 0600.
 
 ## UDMP
 

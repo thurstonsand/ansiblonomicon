@@ -133,5 +133,6 @@ SSH aliases are configured by the [SSH client capability](bootstrap/capabilities
 
 - **macOS** (Darwin) — Primary, fully supported
 - **Debian** (pod042) — Physical NAS reconciled locally or over SSH with native mise bootstrap resources
+- **Windows** (eve) — Registry settings, winget packages, and Git configuration through native mise
 - **TrueNAS** — Retired; historical migration notes only
 - **Arch Linux** (omarchy) — Future; no active target

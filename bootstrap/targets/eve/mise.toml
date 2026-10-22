@@ -1,0 +1,14 @@
+min_version = "2026.8.12"
+
+[settings]
+dotfiles.windows_symlinks = true
+
+[vars]
+host_profile = "windows"
+host_os = "windows"
+git_client_home = "C:/Users/thurs"
+git_signing_program = "C:/Users/thurs/AppData/Local/Microsoft/WindowsApps/op-ssh-sign.exe"
+jj_signing_program = "C:/Users/thurs/AppData/Local/Microsoft/WindowsApps/op-ssh-sign.exe"
+
+[dotfiles]
+"~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "symlink" }

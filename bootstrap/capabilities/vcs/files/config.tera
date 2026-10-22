@@ -10,6 +10,12 @@
 
 [commit]
 	gpgSign = true
+{% if vars.host_os == "windows" %}
+
+[core]
+	autocrlf = false
+	symlinks = true
+{% endif %}
 {% if get_env(name="VCS_GIT_DELTA", default="false") == "true" %}
 
 [core]

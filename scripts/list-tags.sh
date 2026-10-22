@@ -6,11 +6,12 @@ repo_root="$(cd "$(dirname "$0")/.." && pwd)"
 host="${1:-}"
 
 if [[ -z "$host" ]]; then
-  case "$(hostname -s)" in
+  case "$(hostname -s 2>/dev/null || hostname)" in
     ML-DFC6YK6VJQ) host=work ;;
     pod042) host=pod042 ;;
     Thurstons-MacBook-Pro) host=macos ;;
     type-a-no2) host=omarchy ;;
+    eve) host=windows ;;
     *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
   esac
 fi
@@ -23,5 +24,6 @@ case "$host" in
   macos) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions hostname agent-harness agent-config berkeley-mono claude-code docker-context editor-config homebrew language-tools mac-apps mas mise shp uvc-util vcs ssh-client neovim nvim-deps shell terminal-theme terminal-tools tmux user-tools\n' ;;
   work) printf 'Native mise tags: sysconfig dock finder nsglobaldomain menubar desktop-services permissions agent-harness agent-config berkeley-mono editor-config homebrew language-tools mac-apps mas mise pi uvc-util vcs neovim nvim-deps python-index shell terminal-theme terminal-tools tmux user-tools work-local\n' ;;
   omarchy) printf 'Native mise tags: omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config\n' ;;
-  *) printf 'Unknown host: %s (expected macos, pod042, work, or omarchy)\n' "$host" >&2; exit 1 ;;
+  windows) printf 'Native mise tags: mise windows-system windows-apps vcs\n' ;;
+  *) printf 'Unknown host: %s (expected macos, pod042, work, omarchy, or windows)\n' "$host" >&2; exit 1 ;;
 esac

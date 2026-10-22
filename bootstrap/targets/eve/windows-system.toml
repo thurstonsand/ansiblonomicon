@@ -1,0 +1,24 @@
+# Integers are REG_DWORD values; strings are REG_SZ.
+
+# Dual boot with Omarchy: Linux keeps the hardware clock in UTC, and Linux
+# cannot safely mount a disk that Windows hibernated instead of shutting down.
+[registry.'HKLM\SYSTEM\CurrentControlSet\Control\TimeZoneInformation']
+RealTimeIsUniversal = 1
+
+[registry.'HKLM\SYSTEM\CurrentControlSet\Control\Power']
+HibernateEnabled = 0
+
+[registry.'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power']
+HiberbootEnabled = 0
+
+# Developer Mode lets git and mise create symlinks without elevation.
+[registry.'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock']
+AllowDevelopmentWithoutDevLicense = 1
+
+# Windows leaves HOME unset, and mise templates and the repo's scripts read it.
+[registry.'HKCU\Environment']
+HOME = 'C:\Users\thurs'
+
+# Restricted, the default, refuses every script, including a PowerShell profile.
+[registry.'HKCU\Software\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell']
+ExecutionPolicy = "RemoteSigned"

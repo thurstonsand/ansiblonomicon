@@ -8,12 +8,28 @@ from pathlib import Path
 import socket
 import stat
 import subprocess
+import sys
 import tempfile
 import tomllib
 from typing import cast
 
 ROOT = Path(__file__).resolve().parents[1]
 TOKEN_NAME = "FNOX_HOST_OP_TOKEN"
+# SYSTEM and Administrators stand where root does on Unix: they may read the
+# identity, but nobody else may. OWNER RIGHTS is the owner, which Python's
+# mkdir(mode=0o700) grants on Windows.
+WINDOWS_PRIVILEGED_SIDS = {"S-1-5-18", "S-1-5-32-544", "S-1-3-4"}
+WINDOWS_ACL_SCRIPT = """
+$acl = Get-Acl -LiteralPath $env:IDENTITY_ACL_PATH
+$sid = [Security.Principal.SecurityIdentifier]
+@{
+  owner = $acl.GetOwner($sid).Value
+  protected = $acl.AreAccessRulesProtected
+  readers = @($acl.GetAccessRules($true, $true, $sid) |
+    Where-Object AccessControlType -eq Allow |
+    ForEach-Object { $_.IdentityReference.Value })
+} | ConvertTo-Json -Compress
+"""
 
 
 class IdentityError(Exception):
@@ -30,17 +46,75 @@ def identity_path(home: Path) -> Path:
     return home / ".config/fnox/config.toml"
 
 
-def read_identity(path: Path, owner: int) -> str:
-    descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
-    with os.fdopen(descriptor, "rb") as source:
-        metadata = os.fstat(source.fileno())
+if sys.platform == "win32":
+
+    def windows_user_sid() -> str:
+        output = subprocess.check_output(
+            ["whoami", "/user", "/fo", "csv", "/nh"], text=True
+        )
+        return output.strip().rsplit(",", 1)[1].strip('"')
+
+    def require_windows_owner_only(path: Path, *, protected: bool) -> None:
+        if path.lstat().st_file_attributes & stat.FILE_ATTRIBUTE_REPARSE_POINT:
+            raise IdentityError(f"{path} must not be a link")
+        acl = cast(
+            dict[str, object],
+            json.loads(
+                subprocess.check_output(
+                    [
+                        "powershell",
+                        "-NoProfile",
+                        "-NonInteractive",
+                        "-Command",
+                        WINDOWS_ACL_SCRIPT,
+                    ],
+                    env={**os.environ, "IDENTITY_ACL_PATH": str(path)},
+                    text=True,
+                )
+            ),
+        )
+        user = windows_user_sid()
+        readers = set(cast(list[str], acl["readers"]))
         if (
-            not stat.S_ISREG(metadata.st_mode)
-            or stat.S_IMODE(metadata.st_mode) != 0o600
-            or metadata.st_uid != owner
+            acl["owner"] != user
+            or (protected and acl["protected"] is not True)
+            or not readers <= {user, *WINDOWS_PRIVILEGED_SIDS}
         ):
-            raise IdentityError("native identity must be an owner-only mode-0600 file")
-        config = tomllib.load(source)
+            raise IdentityError(f"{path} must be readable only by its owner")
+
+    def restrict_to_owner(path: Path) -> None:
+        subprocess.run(
+            [
+                "icacls",
+                str(path),
+                "/inheritance:r",
+                "/grant:r",
+                f"*{windows_user_sid()}:F",
+            ],
+            check=True,
+            capture_output=True,
+        )
+
+
+def read_identity(path: Path, owner: int | None) -> str:
+    """Check `owner`'s uid on Unix; Windows passes None and checks its own user."""
+    if sys.platform == "win32":
+        require_windows_owner_only(path, protected=True)
+        with path.open("rb") as source:
+            config = tomllib.load(source)
+    else:
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with os.fdopen(descriptor, "rb") as source:
+            metadata = os.fstat(source.fileno())
+            if (
+                not stat.S_ISREG(metadata.st_mode)
+                or stat.S_IMODE(metadata.st_mode) != 0o600
+                or metadata.st_uid != owner
+            ):
+                raise IdentityError(
+                    "native identity must be an owner-only mode-0600 file"
+                )
+            config = tomllib.load(source)
     expected = {"secrets": {TOKEN_NAME: {"default": "", "env": False}}}
     secrets = config.get("secrets")
     if not isinstance(secrets, dict):
@@ -97,7 +171,7 @@ def file_revision(path: Path) -> tuple[int, ...] | None:
 def current_identity_revision(destination: Path) -> tuple[int, ...] | None:
     if not (destination.exists() or destination.is_symlink()):
         return None
-    read_identity(destination, os.getuid())
+    read_identity(destination, None if sys.platform == "win32" else os.getuid())
     return file_revision(destination)
 
 
@@ -109,15 +183,18 @@ def install_identity(
 ) -> None:
     token = validate_token(token)
     destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    directory_metadata = destination.parent.lstat()
-    if (
-        not stat.S_ISDIR(directory_metadata.st_mode)
-        or directory_metadata.st_uid != os.getuid()
-        or directory_metadata.st_mode & 0o022
-    ):
-        raise IdentityError(
-            "native identity directory must be owned and not writable by others"
-        )
+    if sys.platform == "win32":
+        require_windows_owner_only(destination.parent, protected=False)
+    else:
+        directory_metadata = destination.parent.lstat()
+        if (
+            not stat.S_ISDIR(directory_metadata.st_mode)
+            or directory_metadata.st_uid != os.getuid()
+            or directory_metadata.st_mode & 0o022
+        ):
+            raise IdentityError(
+                "native identity directory must be owned and not writable by others"
+            )
     with tempfile.TemporaryDirectory(
         prefix=".enroll-", dir=destination.parent
     ) as temporary:
@@ -125,7 +202,12 @@ def install_identity(
         content = (
             f"[secrets.{TOKEN_NAME}]\ndefault = {json.dumps(token)}\nenv = false\n"
         )
-        descriptor = os.open(candidate, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+        if sys.platform == "win32":
+            candidate.touch(exist_ok=False)
+            restrict_to_owner(candidate)
+            descriptor = os.open(candidate, os.O_WRONLY)
+        else:
+            descriptor = os.open(candidate, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
         with os.fdopen(descriptor, "w") as stream:
             stream.write(content)
             stream.flush()
@@ -135,11 +217,12 @@ def install_identity(
         if file_revision(destination) != previous:
             raise IdentityError("native identity changed during enrollment")
         os.replace(candidate, destination)
-        descriptor = os.open(destination.parent, os.O_RDONLY | os.O_DIRECTORY)
-        try:
-            os.fsync(descriptor)
-        finally:
-            os.close(descriptor)
+        if sys.platform != "win32":
+            descriptor = os.open(destination.parent, os.O_RDONLY | os.O_DIRECTORY)
+            try:
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
 
 
 def enroll(
@@ -153,7 +236,7 @@ def enroll(
     environment = clean_environment(
         inherited, {"POD042_SERVICE_ACCOUNT_TOKEN", "NEXTDNS_PROFILE_ID"}
     )
-    environment["FNOX_CONFIG_DIR"] = "/dev/null"
+    environment["FNOX_CONFIG_DIR"] = os.devnull
     result = subprocess.run(
         [
             fnox,
@@ -220,8 +303,8 @@ def main() -> None:
     fnox = subprocess.check_output(
         ["mise", "--no-env", "-C", str(ROOT), "which", "fnox"], text=True
     ).strip()
-    profile = (
-        "omarchy" if socket.gethostname().split(".", 1)[0] == "type-a-no2" else "macos"
+    profile = {"type-a-no2": "omarchy", "eve": "windows"}.get(
+        socket.gethostname().split(".", 1)[0], "macos"
     )
     enroll(destination, ROOT, fnox, dict(os.environ), profile)
     print("Automation identity enrolled; no provider token exported.")
