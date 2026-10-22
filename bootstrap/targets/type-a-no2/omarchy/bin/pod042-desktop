@@ -1,0 +1,13 @@
+#!/bin/bash
+# Opens pod042's runner desktop full screen through SSH. wayvnc serves it on a socket in the runner's private runtime directory, so nothing listens on a port.
+set -euo pipefail
+
+runner=/home/thurstonsand/.cache/amp/runner-desktop/pod042
+socket="$XDG_RUNTIME_DIR/pod042-desktop.sock"
+read -r width height scale < <(hyprctl monitors -j | jq -r '.[] | select(.focused) | "\(.width) \(.height) \(.scale)"')
+
+# Waymote leaves the output at the size and scale of whichever Amp tab connected last, and the viewer asks for a resize only
+# when its window changes size, so size the output to this panel first.
+ssh -T -f -o ExitOnForwardFailure=yes -o StreamLocalBindUnlink=yes -L "$socket:$runner/runtime/wayvnc.sock" pod042 \
+  ". $runner/environment && wlr-randr --output HEADLESS-1 --custom-mode ${width}x${height} --scale $scale && exec sleep 10"
+exec vncviewer -FullScreen "$socket"

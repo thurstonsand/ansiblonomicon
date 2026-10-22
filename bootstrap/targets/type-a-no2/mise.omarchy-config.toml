@@ -123,3 +123,5 @@ fi
 "~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }
 "~/.local/share/applications/Inbox Zero.desktop" = { source = "omarchy/applications/Inbox Zero.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/inbox-zero.png" = { source = "omarchy/icons/inbox-zero.png", mode = "symlink" }
+"~/.local/share/applications/pod042 Desktop.desktop" = { source = "omarchy/applications/pod042 Desktop.desktop", mode = "symlink" }
+"~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }

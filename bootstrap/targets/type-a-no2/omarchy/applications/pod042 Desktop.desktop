@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=pod042 Desktop
+Comment=pod042's Amp runner desktop
+Exec=pod042-desktop
+Terminal=false
+Type=Application
+Icon=tigervnc
+StartupNotify=true
