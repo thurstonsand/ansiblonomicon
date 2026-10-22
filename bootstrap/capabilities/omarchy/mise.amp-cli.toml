@@ -57,11 +57,12 @@ if ! systemctl --user is-enabled --quiet "$unit"; then
   systemctl --user enable "$unit"
 fi
 if $activation_required; then
-  systemctl --user restart "$unit"
+  # Stamp first: a reconcile run from an Amp thread lives inside this runner, so the restart ends it.
   mkdir -p "$state_dir"
   stamp_tmp="$(mktemp "$state_dir/.amp-runner.sha256.XXXXXX")"
   printf '%s\n' "$desired_hash" >"$stamp_tmp"
   mv -f "$stamp_tmp" "$activation_stamp"
+  systemctl --user restart "$unit"
 elif ! systemctl --user is-active --quiet "$unit"; then
   systemctl --user start "$unit"
 fi
