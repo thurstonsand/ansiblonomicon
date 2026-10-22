@@ -1,2 +1,1 @@
-[dotfiles]
-"~/.config/go/telemetry/mode" = { source = "user-tools/go-telemetry-mode", mode = "symlink" }
+../../capabilities/user-tools/mise.omarchy.toml

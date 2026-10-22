@@ -106,6 +106,27 @@ def load_manifest(path: Path) -> Manifest:
     )
 
 
+def merge_manifests(manifests: list[Manifest]) -> Manifest:
+    """Combine the shared loadout with a host's, which may only add declarations."""
+
+    def merge[T](tables: list[dict[str, T]], kind: str) -> dict[str, T]:
+        merged: dict[str, T] = {}
+        for table in tables:
+            if repeated := merged.keys() & table.keys():
+                raise ValueError(
+                    f"{kind} declared in more than one manifest: {sorted(repeated)}"
+                )
+            merged |= table
+        return merged
+
+    return Manifest(
+        packages=merge([m.packages for m in manifests], "packages"),
+        aur=merge([m.aur for m in manifests], "aur"),
+        themes=merge([m.themes for m in manifests], "themes"),
+        plugins=merge([m.plugins for m in manifests], "plugins"),
+    )
+
+
 def package_installed(name: str) -> bool:
     present = subprocess.run(["omarchy", "pkg", "present", name], check=False)
     if present.returncode not in {0, 1}:
@@ -429,7 +450,7 @@ def reconcile(
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("manifest", type=Path)
+    parser.add_argument("manifests", type=Path, nargs="+")
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--update", action="store_true")
     parser.add_argument("--pacman-log", type=Path, default=Path("/var/log/pacman.log"))
@@ -438,7 +459,7 @@ def main() -> None:
     )
     args = parser.parse_args()
     reconcile(
-        load_manifest(args.manifest),
+        merge_manifests([load_manifest(path) for path in args.manifests]),
         check=args.check,
         update=args.update,
         pacman_log=args.pacman_log,

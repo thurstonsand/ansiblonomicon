@@ -56,9 +56,6 @@
           "unlockAfterHibernate": true
         },
         {
-          "id": "io.github.mb-jambon.omapods"
-        },
-        {
           "id": "io.github.wouldja.mouse"
         },
         {

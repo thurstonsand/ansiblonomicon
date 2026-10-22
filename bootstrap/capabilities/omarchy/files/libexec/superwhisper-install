@@ -16,4 +16,5 @@ curl -fsSL --output-dir "$tmp" -O "https://github.com/$repo/releases/download/$t
   -O "https://github.com/$repo/releases/download/$tag/$archive.minisig"
 minisign -Vq -P "$key" -m "$tmp/$archive"
 tar --zstd -xf "$tmp/$archive" -C "$tmp"
-"$tmp/${archive%.tar.zst}/install.sh"
+# Its doctor imports the system's GTK bindings, which the repository venv that reconciliation runs under lacks.
+PATH="/usr/bin:$PATH" "$tmp/${archive%.tar.zst}/install.sh"

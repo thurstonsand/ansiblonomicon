@@ -1,0 +1,3 @@
+[dotfiles]
+"~/.config/hypr/monitors.lua" = { source = "omarchy-host/hypr/monitors.lua", mode = "symlink" }
+"~/.config/omarchy/shell.json" = { source = "omarchy-host/shell.json", mode = "symlink" }

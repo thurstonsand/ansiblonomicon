@@ -1,0 +1,106 @@
+[bootstrap.files."/etc/sudoers.d/ansiblonomicon"]
+source = "omarchy/sudoers.d/ansiblonomicon"
+owner = "root"
+group = "root"
+mode = "0440"
+
+[bootstrap.files."/etc/pam.d/sudo-unattended"]
+source = "omarchy/pam.d/sudo-unattended"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.directories."/usr/local/libexec"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/usr/local/libexec/sudo-unattended-notify"]
+source = "omarchy/libexec/sudo-unattended-notify"
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.secrets]
+yorha_passphrase = "YORHA_PASSPHRASE"
+lunar_tear_passphrase = "LUNAR_TEAR_PASSPHRASE"
+
+# YoRHa is home. Lunar Tear is for pairing smart home devices, joined by hand and never automatically.
+[bootstrap.files."/etc/NetworkManager/system-connections/YoRHa.nmconnection"]
+source = "omarchy/NetworkManager/YoRHa.nmconnection.tera"
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/NetworkManager/system-connections/Lunar Tear.nmconnection"]
+source = "omarchy/NetworkManager/lunar-tear.nmconnection.tera"
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+# NetworkManager reads profiles from disk only on request. Reloading leaves the active connection up.
+[bootstrap.hooks.pre-repos]
+run = "sudo -n nmcli connection reload"
+
+[bootstrap.hooks.post-dotfiles]
+run = '''
+# Superwhisper's installer also links its Omarchy panel, menu row, fcitx5 addon, and agent skill, and writes hypr/bindings.lua.
+"{{ config_root }}/omarchy/libexec/superwhisper-install"
+# The rest of what Superwhisper's auto-learned vocabulary needs, plus Brave Origin, which it skips. Only the flag line is owned here,
+# because Omarchy's migrations also append to these files.
+gsettings set org.gnome.desktop.interface toolkit-accessibility true
+for flags in ~/.config/chromium-flags.conf ~/.config/brave-origin-flags.conf ~/.config/obsidian/user-flags.conf; do
+  grep -qxF -- --force-renderer-accessibility "$flags" 2>/dev/null && continue
+  mkdir -p "$(dirname "$flags")"
+  [ -s "$flags" ] && [ -n "$(tail -c1 "$flags")" ] && echo >>"$flags"
+  echo --force-renderer-accessibility >>"$flags"
+done
+# Omarchy renders its templates and theme files only on a theme switch, so re-render when a source changed since the last one
+# or a consumer's copy is missing, as on a fresh home where the hooks first ran before agent-config created ~/.claude.
+changed=$(find -L ~/.config/omarchy/themed ~/.config/omarchy/themes -newer ~/.local/state/omarchy/current/theme.name -type f -print -quit)
+if [ -n "$changed" ] || [ ! -f ~/.codex/themes/omarchy.tmTheme ] || [ ! -f ~/.config/bat/themes/omarchy.tmTheme ] || [ ! -f ~/.claude/themes/omarchy.json ]; then
+  omarchy-theme-refresh
+fi
+'''
+
+[dotfiles]
+"~/.config/hypr/input.lua" = { source = "omarchy/hypr/input.lua", mode = "symlink" }
+"~/.config/hypr/hyprland.lua" = { source = "omarchy/hypr/hyprland.lua", mode = "symlink" }
+"~/.config/hypr/personal-bindings.lua" = { source = "omarchy/hypr/personal-bindings.lua", mode = "symlink" }
+"~/.config/hypr/looknfeel.lua" = { source = "omarchy/hypr/looknfeel.lua", mode = "symlink" }
+"~/.config/hypr/autostart.lua" = { source = "omarchy/hypr/autostart.lua", mode = "symlink" }
+"~/.config/hypr/hyprsunset.conf" = { source = "omarchy/hypr/hyprsunset.conf", mode = "symlink" }
+"~/.config/hypr/xdph.conf" = { source = "omarchy/hypr/xdph.conf", mode = "symlink" }
+"~/.config/hypr/.luarc.json" = { source = "omarchy/hypr/.luarc.json", mode = "symlink" }
+# The Mouse panel replaces this file on save, which would break a symlink.
+"~/.config/hypr/mouse.lua" = { source = "omarchy/hypr/mouse.lua", mode = "copy" }
+"~/.config/omarchy/extensions/omarchy-menu.jsonc" = { source = "omarchy/extensions/omarchy-menu.jsonc", mode = "symlink" }
+"~/.config/omarchy/branding/about.txt" = { source = "omarchy/branding/about.txt", mode = "symlink" }
+"~/.config/omarchy/branding/screensaver.txt" = { source = "omarchy/branding/screensaver.txt", mode = "symlink" }
+# omarchy-theme-bg-next compares unresolved paths against bg-set's realpath, so a symlink stalls cycling.
+"~/.config/omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/solitude-light/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/solitude-light/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg", mode = "copy" }
+"~/.config/omarchy/themes/solitude-light" = { source = "omarchy/themes/solitude-light", mode = "symlink" }
+"~/.config/omarchy/themes/solitude" = { source = "omarchy/themes/solitude", mode = "symlink" }
+"~/.config/omarchy/themed" = { source = "omarchy/themed", mode = "symlink-each" }
+"~/.config/omarchy/hooks/theme-set.d/codex" = { source = "omarchy/hooks/theme-set.d/codex", mode = "symlink" }
+"~/.config/omarchy/hooks/theme-set.d/bat" = { source = "omarchy/hooks/theme-set.d/bat", mode = "symlink" }
+"~/.config/bat/config" = { source = "omarchy/bat/config", mode = "symlink" }
+"~/.config/hunk/extensions/omarchy-theme.ts" = { source = "omarchy/hunk/omarchy-theme.ts", mode = "symlink" }
+# Hunk rewrites its config when a theme is picked in its selector, which would break a symlink.
+"~/.config/hunk/config.toml" = { source = "omarchy/hunk/config.toml", mode = "copy" }
+"~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }
+# Superwhisper replaces its files on save, which would break a file symlink; linking the directory keeps the replacement in the repo.
+"~/.config/superwhisper" = { source = "omarchy/superwhisper", mode = "symlink" }
+# Superwhisper's auto-learned vocabulary watches corrections over AT-SPI, and turning it on wrote this file, which it rewrites when the
+# setting changes. The post-dotfiles hook covers the rest of what it needs.
+"~/.config/environment.d/90-superwhisper-accessibility.conf" = { source = "omarchy/superwhisper-accessibility/environment.conf", mode = "copy" }
+"~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
+"~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }
+"~/.local/share/applications/pod042 Desktop.desktop" = { source = "omarchy/applications/pod042 Desktop.desktop", mode = "symlink" }
+"~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }

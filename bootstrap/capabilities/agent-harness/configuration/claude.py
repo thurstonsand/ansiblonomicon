@@ -7,6 +7,8 @@ from pathlib import Path
 import re
 from typing import Any, cast
 
+OMARCHY_HOSTS = {"type-a-no2", "no9-type-s"}
+
 
 def _deep_merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
     """Merge dictionaries recursively, retaining order and treating null as delete."""
@@ -128,7 +130,7 @@ def _base_settings(
         "autoDreamEnabled": True,
         "skipDangerousModePermissionPrompt": True,
         "skipAutoPermissionPrompt": True,
-        "theme": "custom:omarchy" if hostname == "type-a-no2" else "auto",
+        "theme": "custom:omarchy" if hostname in OMARCHY_HOSTS else "auto",
         "remoteControlAtStartup": True,
         "inputNeededNotifEnabled": True,
         "agentPushNotifEnabled": True,

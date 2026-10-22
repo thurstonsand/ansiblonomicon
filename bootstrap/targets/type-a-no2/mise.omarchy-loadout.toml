@@ -1,8 +1,1 @@
-[tasks.omarchy-loadout]
-usage = '''
-flag "-c --check" help="Show install changes and undeclared installs without applying them"
-flag "--update" help="Also update installed plugins, following rewritten remote history"
-'''
-run = '''
-python3 "{{config_root}}/reconcile_loadout.py" "{{config_root}}/loadout.toml" ${usage_check:+--check} ${usage_update:+--update}
-'''
+../../capabilities/omarchy/mise.loadout.toml

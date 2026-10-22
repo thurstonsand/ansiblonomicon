@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import Any, cast
 
 WORK_HOST = "ML-DFC6YK6VJQ"
+OMARCHY_HOSTS = {"type-a-no2", "no9-type-s"}
 CHANGELOG_FALLBACK = "0.99.1"
 PERSONAL_PACKAGES = [
     "@thurstonsand/pi-permissions",
@@ -96,7 +97,7 @@ def _profile(
         )
     }
     packages = [f"npm:{npm}" for npm in PERSONAL_PACKAGES]
-    if hostname == "type-a-no2":
+    if hostname in OMARCHY_HOSTS:
         packages[packages.index("npm:glimpseui")] = GLIMPSE_LINUX_FORK
     return {
         "provider": "doppelclaude",
@@ -238,10 +239,10 @@ def _settings(
             "theme": {
                 "mode": "auto",
                 "lightPath": "~/.local/state/omarchy/current/theme/pi-interview.css"
-                if hostname == "type-a-no2"
+                if hostname in OMARCHY_HOSTS
                 else "~/.pi/agent/interview-themes/solitude-light.css",
                 "darkPath": "~/.local/state/omarchy/current/theme/pi-interview.css"
-                if hostname == "type-a-no2"
+                if hostname in OMARCHY_HOSTS
                 else "~/.pi/agent/interview-themes/solitude-dark.css",
                 "toggleHotkey": "alt+l",
             }
@@ -312,7 +313,7 @@ def _settings(
         },
         "packages": profile["packages"],
         "hideThinkingBlock": True,
-        "theme": "omarchy-system" if hostname == "type-a-no2" else "system",
+        "theme": "omarchy-system" if hostname in OMARCHY_HOSTS else "system",
         "transport": "auto",
         "collapseChangelog": False,
         "quietStartup": True,
@@ -378,7 +379,7 @@ def render(
     auth = {key: value for key, value in existing_auth.items() if key not in retired}
     settings = _json(_settings(repo, home, hostname, data, models))
     auth_content = _json(auth)
-    if hostname == "type-a-no2":
+    if hostname in OMARCHY_HOSTS:
         # Pi rewrites settings and auth without a final newline on this host.
         settings = settings.rstrip("\n")
         auth_content = auth_content.rstrip("\n")
@@ -409,7 +410,7 @@ def render(
     result[".pi/agent/extensions/glimpse-companion/companion/font-family.txt"] = (
         f"{data['fonts']['mono']}\n"
     )
-    if hostname != "type-a-no2":
+    if hostname not in OMARCHY_HOSTS:
         result[".local/bin/pi"] = _executable(home, hostname)
     if data.get("pi_mcp_json"):
         servers: dict[str, Any] = {}

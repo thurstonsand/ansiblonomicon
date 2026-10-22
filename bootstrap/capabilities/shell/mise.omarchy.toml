@@ -1,0 +1,5 @@
+[dotfiles]
+"~/.zshenv" = { source = "shell/zshenv.tera", mode = "template" }
+# Omarchy's own bash launcher (exec zsh) and readline config, linked so package updates apply.
+"~/.bashrc" = { source = "/usr/share/omarchy-zsh/templates/bashrc", mode = "symlink" }
+"~/.inputrc" = { source = "/usr/share/omarchy-zsh/shell/inputrc", mode = "symlink" }

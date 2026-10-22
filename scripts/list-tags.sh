@@ -10,7 +10,7 @@ if [[ -z "$host" ]]; then
     ML-DFC6YK6VJQ) host=work ;;
     pod042) host=pod042 ;;
     Thurstons-MacBook-Pro) host=macos ;;
-    type-a-no2) host=omarchy ;;
+    type-a-no2|no9-type-s) host=omarchy ;;
     eve) host=windows ;;
     *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
   esac

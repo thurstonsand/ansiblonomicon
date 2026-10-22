@@ -10,6 +10,7 @@ import tomlkit
 from tomlkit.items import Table
 
 WORK_HOST = "ML-DFC6YK6VJQ"
+OMARCHY_HOSTS = {"type-a-no2", "no9-type-s"}
 TRUSTED_PROJECTS = (
     "nixonomicon",
     "anypod",
@@ -103,7 +104,7 @@ def render(
     models = cast(dict[str, Any], models)
     # On Omarchy, the theme-set hook owns the TUI theme file and the desktop chrome tables.
     chrome_path = None
-    if hostname == "type-a-no2":
+    if hostname in OMARCHY_HOSTS:
         tui_theme = "omarchy"
     else:
         background_path = home / ".terminal-bg"

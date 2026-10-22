@@ -11,5 +11,5 @@ editor_proportional_font = "BerkeleyMono Nerd Font Mono"
 editor_font_size = "13"
 
 [dotfiles]
-"~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "symlink" }
-"~/.cargo/config.toml" = { source = "cargo-config.toml", mode = "symlink" }
+"~/.config/mise/config.toml" = { source = "omarchy/mise-global.toml", mode = "symlink" }
+"~/.cargo/config.toml" = { source = "omarchy/cargo-config.toml", mode = "symlink" }

@@ -1,0 +1,33 @@
+[packages]
+1password = "present"
+1password-cli = "present"
+cloudflared = "present"
+direnv = "present"
+ghostty = "present"
+git-delta = "present"
+github-cli = "present"
+jujutsu = "present"
+minisign = "present"
+omarchy-zsh = "present"
+omazed = "present"
+openbsd-netcat = "present"
+openai-codex-desktop = "present"
+rust = "present"
+t3code-bin = "present"
+tigervnc = "present"
+# Sushi, Nautilus's spacebar previewer, renders HTML previews through it.
+"webkitgtk-6.0" = "present"
+wev = "present"
+zed = "present"
+zsh-autosuggestions = "present"
+
+[aur]
+beeper-bin = "present"
+
+[themes]
+fire-and-shadow = { source = "https://github.com/mattbbia/fire-and-shadow.git" }
+ghost-pastel = { source = "https://github.com/row-huh/omarchy-ghost-pastel-theme.git" }
+sakura-mochi = { source = "https://github.com/OldJobobo/omarchy-sakura-mochi-theme.git" }
+
+[plugins]
+"io.github.wouldja.mouse" = { source = "https://github.com/wouldja/omarchy-mouse.git" }

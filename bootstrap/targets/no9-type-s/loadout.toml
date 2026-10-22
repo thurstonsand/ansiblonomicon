@@ -1,0 +1,5 @@
+# What omarchy-setup-security-fingerprint installed for the Goodix reader.
+[packages]
+fprintd = "present"
+libfprint-git = "present"
+usbutils = "present"

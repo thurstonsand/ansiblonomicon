@@ -1,5 +1,5 @@
 [Unit]
-Description=Amp runner for type-a-no2
+Description=Amp runner for %l
 AssertPathExists=%h/.local/share/amp/secrets.json
 AssertPathIsDirectory=%h/code
 StartLimitIntervalSec=300
@@ -10,7 +10,7 @@ Type=simple
 WorkingDirectory=/home/thurstonsand/code
 Environment=HOME=/home/thurstonsand
 Environment=PATH=/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin
-ExecStart=/home/thurstonsand/.amp/bin/amp --no-tui --remote-control-terminal --discover-dirs --runner-id type-a-no2
+ExecStart=/home/thurstonsand/.amp/bin/amp --no-tui --remote-control-terminal --discover-dirs --runner-id %l
 Restart=always
 RestartSec=10
 StandardInput=null

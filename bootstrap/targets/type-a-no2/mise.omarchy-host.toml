@@ -1,0 +1,47 @@
+# The erijl.lock plugin's security-key lock service, matching what its own `setup` writes. Its `setup` can't
+# run as the loadout hook: the doctor it ends with fails while the freshly cloned plugin is still disabled.
+[bootstrap.files."/etc/pam.d/omarchy-lock-fido2"]
+source = "omarchy-host/pam.d/omarchy-lock-fido2"
+owner = "root"
+group = "root"
+mode = "0644"
+
+# Retiring iCloud Photos: what its install.sh linked, plus its checkout. The library under ~/Pictures/iCloud stays.
+[bootstrap.files."/home/thurstonsand/.config/systemd/user/timers.target.wants/omarchy-icloud-photos-sync.timer"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.config/systemd/user/omarchy-icloud-photos-sync.timer"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.config/systemd/user/omarchy-icloud-photos-sync.service"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.local/bin/omarchy-icloud-photos"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.local/bin/omarchy-icloud-photos-sync"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.local/share/applications/omarchy-icloud-photos.desktop"]
+state = "absent"
+
+[bootstrap.directories."/home/thurstonsand/.config/omarchy-icloud-photos"]
+state = "absent"
+recursive = true
+
+[bootstrap.directories."/home/thurstonsand/.local/share/omarchy-icloud-photos"]
+state = "absent"
+recursive = true
+
+[dotfiles]
+"~/.config/hypr/monitors.lua" = { source = "omarchy-host/hypr/monitors.lua", mode = "symlink" }
+"~/.config/uwsm/env.d/egpu" = { source = "omarchy-host/uwsm/env.d/egpu", mode = "symlink" }
+"~/.config/omarchy/shell.json" = { source = "omarchy-host/shell.json", mode = "symlink" }
+# Omarchy 4.0.4 registers its bundled extensions' native hosts for Brave-Browser but not Brave-Origin.
+# Retire once a release ships basecamp/omarchy#10292, which registers them itself.
+"~/.config/BraveSoftware/Brave-Origin/NativeMessagingHosts/com.omarchy.copy_url.json" = { source = "~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.omarchy.copy_url.json", mode = "symlink" }
+"~/.config/BraveSoftware/Brave-Origin/NativeMessagingHosts/com.omarchy.ytdlp.json" = { source = "~/.config/BraveSoftware/Brave-Browser/NativeMessagingHosts/com.omarchy.ytdlp.json", mode = "symlink" }
+# CodexBar replaces this file on save, which would break a symlink.
+"~/.config/codexbar/config.json" = { source = "omarchy-host/codexbar/config.json", mode = "copy" }
+"~/.local/share/applications/Inbox Zero.desktop" = { source = "omarchy-host/applications/Inbox Zero.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/inbox-zero.png" = { source = "omarchy-host/icons/inbox-zero.png", mode = "symlink" }

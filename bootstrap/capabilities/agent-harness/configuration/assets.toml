@@ -40,21 +40,21 @@ mode = 'symlink'
 source = 'assets/claude/hooks/_common.py'
 destination = '.claude/hooks/_common.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/claude/hooks/_config.pyi'
 destination = '.claude/hooks/_config.pyi'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/claude/hooks/derive-title.py'
 destination = '.claude/hooks/derive-title.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
@@ -67,14 +67,14 @@ mode = 'symlink'
 source = 'assets/claude/hooks/retitle.py'
 destination = '.claude/hooks/retitle.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/claude/hooks/set-title.py'
 destination = '.claude/hooks/set-title.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2']
+hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]

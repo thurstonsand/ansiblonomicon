@@ -46,7 +46,7 @@ Run `mise vcs`, with `--check` for a preview. Regular laptop and pod042 reconcil
 
 ### Editor and Python indexes
 
-The [editor-config capability](bootstrap/capabilities/editor-config/README.md) is the source of truth for Zed on every laptop and for VS Code on the personal Mac and the Omarchy laptop. `bootstrap/capabilities/agent-harness/models.yml` is the shared model catalogue. Run `mise editor-config` or add `--check`.
+The [editor-config capability](bootstrap/capabilities/editor-config/README.md) is the source of truth for Zed on every laptop and for VS Code on the personal Mac and type-a-no2. `bootstrap/capabilities/agent-harness/models.yml` is the shared model catalogue. Run `mise editor-config` or add `--check`.
 
 The [Neovim capability](bootstrap/capabilities/neovim/README.md) owns editor configuration and dependency setup. Run `mise neovim` (alias `mise nvim-deps`) or add `--check` to preview configuration without upgrading dependencies. Personal hosts write Lazy's lockfile back to the shared source; work receives its separate `lazy-lock.work.json` and restores those versions. Full reconciliation runs this after software prerequisites.
 
@@ -135,4 +135,4 @@ SSH aliases are configured by the [SSH client capability](bootstrap/capabilities
 - **Debian** (pod042) — Physical NAS reconciled locally or over SSH with native mise bootstrap resources
 - **Windows** (eve) — Registry settings, winget packages, and Git configuration through native mise
 - **TrueNAS** — Retired; historical migration notes only
-- **Arch Linux** (omarchy) — Future; no active target
+- **Arch Linux** (Omarchy: type-a-no2, no9-type-s) — Shared Omarchy capability with per-laptop host layers, through native mise and Omarchy's own commands

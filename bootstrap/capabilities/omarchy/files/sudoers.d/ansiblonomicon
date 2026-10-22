@@ -1,0 +1,3 @@
+# Unattended callers authenticate with `sudo -A` and a password from 1Password, so route them past the fingerprint
+# or security key that /etc/pam.d/sudo asks for first; an untouched reader stalls them before falling through.
+Defaults pam_askpass_service=sudo-unattended

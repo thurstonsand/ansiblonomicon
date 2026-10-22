@@ -236,8 +236,9 @@ run = "mise run //:software:dispatch uvc-util ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks."berkeley-mono"]
 run = '''
-if [ "$(hostname -s 2>/dev/null || hostname)" = type-a-no2 ]; then
-  target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
+host=$(hostname -s 2>/dev/null || hostname)
+if [ "$host" = type-a-no2 ] || [ "$host" = no9-type-s ]; then
+  target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
   MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
     MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=berkeley-mono \
     SOFTWARE_CHECK="${usage_check:-}" mise -C "$target" run berkeley-mono
@@ -296,7 +297,7 @@ flag "-c --check" help="Show changes without applying them"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  pod042|Thurstons-MacBook-Pro|type-a-no2|eve) environments=vcs ;;
+  pod042|Thurstons-MacBook-Pro|type-a-no2|no9-type-s|eve) environments=vcs ;;
   ML-DFC6YK6VJQ) environments=vcs,vcs-work ;;
   *) echo "Unregistered vcs host" >&2; exit 1 ;;
 esac
@@ -323,7 +324,7 @@ flag "-c --check" help="Show changes without writing"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  Thurstons-MacBook-Pro|type-a-no2) environments=ssh-client ;;
+  Thurstons-MacBook-Pro|type-a-no2|no9-type-s) environments=ssh-client ;;
   pod042) environments=ssh-client,ssh-client-pod042 ;;
   ML-DFC6YK6VJQ) echo "ssh-client is intentionally unavailable on the work host" >&2; exit 1 ;;
   *) echo "Unregistered ssh-client host" >&2; exit 1 ;;
@@ -351,7 +352,7 @@ host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   pod042|Thurstons-MacBook-Pro) environments=neovim,neovim-personal ;;
   ML-DFC6YK6VJQ) environments=neovim,neovim-work ;;
-  type-a-no2) environments=neovim,neovim-omarchy ;;
+  type-a-no2|no9-type-s) environments=neovim,neovim-omarchy ;;
   *) echo "Unregistered neovim host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
@@ -421,7 +422,7 @@ host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   pod042|Thurstons-MacBook-Pro) environments=shell,shell-personal; parts=files,dotfiles; work=false ;;
   ML-DFC6YK6VJQ) environments=shell,shell-work; parts=files,dotfiles; work=true ;;
-  type-a-no2) environments=shell,shell-omarchy; parts=dotfiles; work=false ;;
+  type-a-no2|no9-type-s) environments=shell,shell-omarchy; parts=dotfiles; work=false ;;
   *) echo "Unregistered shell host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
@@ -458,7 +459,7 @@ case "$host" in
   Thurstons-MacBook-Pro) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles,repos; update=--update ;;
   ML-DFC6YK6VJQ) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles ;;
   pod042) environments=terminal-tools,terminal-tools-plugins; parts=dotfiles,repos ;;
-  type-a-no2) environments=terminal-tools; parts=dotfiles,repos; update=--update ;;
+  type-a-no2|no9-type-s) environments=terminal-tools; parts=dotfiles,repos; update=--update ;;
   *) echo "Unregistered terminal-tools host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
@@ -482,7 +483,7 @@ case "$host" in
   pod042) environments=user-tools,user-tools-personal ;;
   Thurstons-MacBook-Pro) environments=user-tools,user-tools-personal,user-tools-mac,user-tools-mac-personal ;;
   ML-DFC6YK6VJQ) environments=user-tools,user-tools-mac ;;
-  type-a-no2) environments=user-tools,user-tools-personal,user-tools-omarchy ;;
+  type-a-no2|no9-type-s) environments=user-tools,user-tools-omarchy ;;
   *) echo "Unregistered user-tools host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
@@ -503,7 +504,7 @@ flag "-c --check" help="Show changes without writing"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2) ;;
+  Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2|no9-type-s) ;;
   *) echo "editor-config is registered only on the laptops" >&2; exit 1 ;;
 esac
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
@@ -526,7 +527,7 @@ run = '''
 case "$(hostname -s 2>/dev/null || hostname)" in
   ML-DFC6YK6VJQ|Thurstons-MacBook-Pro) exec mise run //:reconcile:laptop ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   pod042) exec python3 "$MISE_PROJECT_ROOT/scripts/pod042_reconcile.py" ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
-  type-a-no2) exec mise run //:reconcile:omarchy ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
+  type-a-no2|no9-type-s) exec mise run //:reconcile:omarchy ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   eve) exec mise run //:reconcile:windows ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   *) echo "Unregistered reconciliation host" >&2; exit 1 ;;
 esac
@@ -541,7 +542,7 @@ flag "--cached" help="Apply cached sources without fetching"
 run = '''
 set -e
 case "$(hostname -s 2>/dev/null || hostname)" in
-  Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2)
+  Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2|no9-type-s)
     "$MISE_PROJECT_ROOT/.venv/bin/python" \
       "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/agent_harness_deploy.py" \
       --repo "$MISE_PROJECT_ROOT" --home "$HOME" \
@@ -565,8 +566,12 @@ flag "-c --check" help="Show install changes and undeclared installs without app
 flag "--update" help="Also update installed plugins, following rewritten remote history"
 '''
 run = '''
-[ "$(hostname -s 2>/dev/null || hostname)" = type-a-no2 ] || { echo "Omarchy loadout requires type-a-no2" >&2; exit 1; }
-target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
+host=$(hostname -s 2>/dev/null || hostname)
+case "$host" in
+  type-a-no2|no9-type-s) ;;
+  *) echo "Omarchy loadout requires an Omarchy laptop" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV=omarchy-loadout
@@ -585,8 +590,8 @@ usage = 'flag "-c --check" help="Show Amp CLI and runner reconciliation changes"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  type-a-no2|eve) ;;
-  *) echo "Amp CLI capability requires type-a-no2 or eve" >&2; exit 1 ;;
+  type-a-no2|no9-type-s|eve) ;;
+  *) echo "Amp CLI capability requires an Omarchy laptop or eve" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
@@ -603,7 +608,12 @@ flag "-t --tags <tags>" help="Only run these capabilities (comma-separated)"
 flag "--full" help="Upgrade Omarchy, system packages, themes, and plugins before reconciling"
 '''
 run = '''
-target="$MISE_PROJECT_ROOT/bootstrap/targets/type-a-no2"
+host=$(hostname -s 2>/dev/null || hostname)
+case "$host" in
+  type-a-no2|no9-type-s) ;;
+  *) echo "reconcile:omarchy requires an Omarchy laptop" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 tags="${usage_tags:-}"
@@ -639,7 +649,7 @@ if selected mise; then
 fi
 if selected omarchy-config; then
   hypr_before=$(sha256sum "$HOME"/.config/hypr/*.lua 2>/dev/null || true)
-  PATH="$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH" MISE_ENV=omarchy-config \
+  PATH="$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH" MISE_ENV=omarchy-config,omarchy-host \
     "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD --secret YORHA_PASSPHRASE --secret LUNAR_TEAR_PASSPHRASE -- \
     mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles "$mode" || exit "$?"
   if [ -z "${usage_check:-}" ]; then
@@ -748,7 +758,7 @@ set -e
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   ML-DFC6YK6VJQ) secret=ANTHROPIC_AUTH_TOKEN ;;
-  Thurstons-MacBook-Pro|pod042|type-a-no2) secret=CLI_PROXY_API_KEY ;;
+  Thurstons-MacBook-Pro|pod042|type-a-no2|no9-type-s) secret=CLI_PROXY_API_KEY ;;
   *) echo "Native agent configuration is available only on registered systems" >&2; exit 1 ;;
 esac
 "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret "$secret" -- \
@@ -1100,7 +1110,7 @@ run = "uv run --no-sync python bootstrap/capabilities/agent-harness/amp_modes.py
 
 [tasks."sudoers:check"]
 description = "Validate sudoers drop-ins, which mise installs unchecked"
-run = 'for f in bootstrap/targets/*/omarchy/sudoers.d/*; do /usr/sbin/visudo -cf "$f" || exit 1; done'
+run = 'for f in bootstrap/capabilities/omarchy/files/sudoers.d/*; do /usr/sbin/visudo -cf "$f" || exit 1; done'
 
 # ---------------------------------------------------------------------------
 # Upkeep

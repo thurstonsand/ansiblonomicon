@@ -1,3 +1,4 @@
 [dotfiles]
+"~/.config/go/telemetry/mode" = { source = "user-tools/go-telemetry-mode", mode = "symlink" }
 "~/.config/gh/config.yml" = { source = "user-tools/gh.yml", mode = "copy" }
 "~/.local/state/herdr/client/endpoints.json" = { source = "user-tools/herdr-endpoints.json", mode = "symlink" }

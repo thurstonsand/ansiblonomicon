@@ -1,0 +1,15 @@
+min_version = "2026.8.12"
+
+[vars]
+host_profile = "omarchy"
+host_os = "linux"
+git_client_home = "/home/thurstonsand"
+git_signing_program = "/opt/1Password/op-ssh-sign"
+jj_signing_program = "/opt/1Password/op-ssh-sign"
+editor_monospace_font = "BerkeleyMono Nerd Font Mono"
+editor_proportional_font = "BerkeleyMono Nerd Font Mono"
+editor_font_size = "13"
+
+[dotfiles]
+"~/.config/mise/config.toml" = { source = "omarchy/mise-global.toml", mode = "symlink" }
+"~/.cargo/config.toml" = { source = "omarchy/cargo-config.toml", mode = "symlink" }

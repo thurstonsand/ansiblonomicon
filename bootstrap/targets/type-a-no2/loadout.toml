@@ -1,57 +1,26 @@
 [packages]
-1password = "present"
-1password-cli = "present"
-beeper-bin = "present"
 brave-origin-bin = "present"
-cava = "present"
-cloudflared = "present"
-cmake = "present"
-direnv = "present"
-ghostty = "present"
-git-delta = "present"
-github-cli = "present"
-intel-compute-runtime = "present"
-jujutsu = "present"
-level-zero-loader = "present"
 lib32-nvidia-utils = "present"
 libfido2 = "present"
-libpulse = "present"
 libva-nvidia-driver = "present"
-minisign = "present"
-ninja = "present"
 nvidia-open-dkms = "present"
 nvidia-utils = "present"
-omarchy-zsh = "present"
-omazed = "present"
-openbsd-netcat = "present"
-openai-codex-desktop = "present"
 pam-u2f = "present"
-pkgconf = "present"
-qt6-connectivity = "present"
-qt6-declarative = "present"
-qt6-quick3d = "present"
-qt6-quicktimeline = "present"
-qt6-tools = "present"
-rust = "present"
-t3code-bin = "present"
-tigervnc = "present"
 visual-studio-code-bin = "present"
-"webkitgtk-6.0" = "present"
-wev = "present"
-yaru-icon-theme = "present"
-zed = "present"
-zsh-autosuggestions = "present"
+cava = "absent"
+cmake = "absent"
+intel-compute-runtime = "absent"
+level-zero-loader = "absent"
+ninja = "absent"
+qt6-connectivity = "absent"
+qt6-quick3d = "absent"
+qt6-quicktimeline = "absent"
+qt6-tools = "absent"
 
 [aur]
-icloudpd-bin = "present"
-
-[themes]
-fire-and-shadow = { source = "https://github.com/mattbbia/fire-and-shadow.git" }
-ghost-pastel = { source = "https://github.com/row-huh/omarchy-ghost-pastel-theme.git" }
-sakura-mochi = { source = "https://github.com/OldJobobo/omarchy-sakura-mochi-theme.git" }
+icloudpd-bin = "absent"
 
 [plugins]
 "erijl.lock" = { source = "https://github.com/thurstonsand/omarchy-fido2-key-suite.git" }
 "felixzsh.codexbar" = { source = "https://github.com/thurstonsand/omarchy-codexbar.git" }
-"io.github.mb-jambon.omapods" = { source = "https://github.com/thurstonsand/omarchy-pods.git", setup = "./setup" }
-"io.github.wouldja.mouse" = { source = "https://github.com/wouldja/omarchy-mouse.git" }
+"io.github.mb-jambon.omapods" = { state = "absent" }

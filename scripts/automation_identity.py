@@ -303,7 +303,7 @@ def main() -> None:
     fnox = subprocess.check_output(
         ["mise", "--no-env", "-C", str(ROOT), "which", "fnox"], text=True
     ).strip()
-    profile = {"type-a-no2": "omarchy", "eve": "windows"}.get(
+    profile = {"type-a-no2": "omarchy", "no9-type-s": "omarchy", "eve": "windows"}.get(
         socket.gethostname().split(".", 1)[0], "macos"
     )
     enroll(destination, ROOT, fnox, dict(os.environ), profile)

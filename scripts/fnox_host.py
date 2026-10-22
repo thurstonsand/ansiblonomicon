@@ -23,6 +23,7 @@ from automation_identity import (
 ROOT = Path(__file__).resolve().parents[1]
 HOST_PROFILES = {
     "type-a-no2": "omarchy",
+    "no9-type-s": "omarchy",
     "Thurstons-MacBook-Pro": "macos",
     "ML-DFC6YK6VJQ": "work",
     "pod042": "pod042",
