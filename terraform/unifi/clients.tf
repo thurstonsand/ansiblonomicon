@@ -75,6 +75,12 @@ resource "unifi_client" "dell_windows" {
 
 # The Framework dual-boot repeats the Dell's arrangement, with the same caveat
 # for its Windows record.
+resource "unifi_client" "framework_omarchy" {
+  mac            = "2c:ea:fc:6e:fc:9e"
+  name           = "Framework Laptop - Omarchy"
+  allow_existing = true
+}
+
 resource "unifi_client" "framework_windows" {
   mac            = "5a:25:d4:f7:df:cf"
   name           = "Framework Laptop - Windows"
