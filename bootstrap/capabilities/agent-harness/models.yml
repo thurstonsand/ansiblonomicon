@@ -192,18 +192,13 @@ models:
 # =============================================================================
 # AMP - Tune Modes pins, drift-checked by the Publish Amp Skills workflow
 # =============================================================================
-# Pins for the built-in modes, keyed by mode then role (`main`, `oracle`, or
-# `subagents`). Each role is `{model: <provider>.<key>, effort: <level>}`, naming
-# a model above through its `agent_harness.aliases.amp`. An omitted mode or role
-# keeps Amp's automatic routing. Apply by hand through `mise run amp:modes`.
+# Pins for the built-in modes, keyed by mode then role. Amp's schema now only
+# supports the `main` role (task subagents run the main model; the `subagents`
+# role was removed by an Amp platform migration in Oct 2026). Each entry is
+# `{model: <provider>.<key>, effort: <level>}`, naming a model above through
+# its `agent_harness.aliases.amp`. An omitted mode keeps Amp's automatic
+# routing. Apply by hand through `mise run amp:modes`.
 amp:
   tune_modes:
     low:
       main: {model: openai.gpt_luna, effort: max}
-      subagents: {model: openai.gpt_luna, effort: max}
-    medium:
-      subagents: {model: openai.gpt_sol, effort: medium}
-    high:
-      subagents: {model: openai.gpt_sol, effort: medium}
-    ultra:
-      subagents: {model: openai.gpt_sol, effort: medium}
