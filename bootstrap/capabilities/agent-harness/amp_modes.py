@@ -20,7 +20,10 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from catalogue import mapping
 
 CAPABILITY = Path(__file__).resolve().parent
-ROLES = ("main", "oracle", "subagents")
+# Amp's Tune Modes schema now supports only the `main` role: task subagents run
+# the main model, and Amp removed the `subagents`/`oracle` pins in an Oct 2026
+# platform migration. Declaring any other role is a config error, not drift.
+ROLES = ("main",)
 EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 BUILTIN_MODES = ("low", "medium", "high", "ultra")
 USER_INFO_URL = "https://ampcode.com/api/internal?getUserInfo"
