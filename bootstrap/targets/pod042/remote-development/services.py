@@ -11,13 +11,14 @@ import subprocess
 HOME = Path("/home/thurstonsand")
 SHIMS = HOME / ".local/share/mise/shims"
 HERDR = SHIMS / "herdr"
+HERDR_UNIT = "dev.mise.herdr.service"
 UNITS = (
     "t3code.service",
-    "amp-remote.service",
-    "herdr.service",
-    "chatgpt.service",
+    "dev.mise.amp-remote.service",
+    HERDR_UNIT,
+    "dev.mise.chatgpt.service",
     "chatgpt-upgrade.path",
-    "1password.service",
+    "dev.mise.1password.service",
 )
 T3 = HOME / ".local/bin/t3"
 
@@ -118,9 +119,9 @@ def main() -> None:
         print(json.dumps(asdict(herdr_server())), flush=True)
         print(
             "Apply: enable operator linger if absent; vendor-idempotent t3 service install; "
-            "stop any Herdr server systemd does not own, losing its panes; start all five "
-            "services and the ChatGPT upgrade watch, restarting on unit changes and on a "
-            "stale Herdr or ChatGPT binary."
+            "start T3 and the ChatGPT upgrade watch, restarting on unit changes; stop any "
+            "Herdr server systemd does not own, losing its panes, and restart Herdr on a "
+            "stale binary. Mise applies the Amp, Herdr, ChatGPT, and 1Password units."
         )
         return
     if action == "apply":
@@ -145,7 +146,7 @@ def main() -> None:
                 "--value",
             ).strip()
             == "yes"
-            for unit in UNITS
+            for unit in ("t3code.service", "chatgpt-upgrade.path")
         }
         run("systemctl", "--user", "daemon-reload")
         run(str(T3), "service", "install")
@@ -155,20 +156,6 @@ def main() -> None:
             "restart" if changed["t3code.service"] else "start",
             "t3code.service",
         )
-        run("systemctl", "--user", "enable", "amp-remote.service")
-        run(
-            "systemctl",
-            "--user",
-            "restart" if changed["amp-remote.service"] else "start",
-            "amp-remote.service",
-        )
-        run("systemctl", "--user", "enable", "chatgpt.service")
-        run(
-            "systemctl",
-            "--user",
-            "restart" if changed["chatgpt.service"] else "start",
-            "chatgpt.service",
-        )
         run("systemctl", "--user", "enable", "chatgpt-upgrade.path")
         run(
             "systemctl",
@@ -177,28 +164,19 @@ def main() -> None:
             "chatgpt-upgrade.path",
         )
         run("systemctl", "--user", "start", "chatgpt-upgrade.service")
-        # Restarting 1Password locks it until someone types the account password into 1password-window.
-        run("systemctl", "--user", "enable", "1password.service")
-        run(
-            "systemctl",
-            "--user",
-            "restart" if changed["1password.service"] else "start",
-            "1password.service",
-        )
         # A Herdr client that finds no socket spawns its own server, which then owns the
         # socket and holds the login session's kernel keyring. Logging out revokes that
         # keyring and every agent credential store reading through it. Handing the socket
         # to systemd means stopping that server, and its panes go with it.
         herdr = herdr_server()
-        if herdr.running and not unit_active("herdr.service"):
+        if herdr.running and not unit_active(HERDR_UNIT):
             print("Stopping a Herdr server systemd does not own; its panes end here.")
             run(str(HERDR), "server", "stop")
-        run("systemctl", "--user", "enable", "herdr.service")
         run(
             "systemctl",
             "--user",
-            "restart" if changed["herdr.service"] or herdr.binary_stale else "start",
-            "herdr.service",
+            "restart" if herdr.binary_stale else "start",
+            HERDR_UNIT,
         )
     run(str(T3), "service", "status")
     if (

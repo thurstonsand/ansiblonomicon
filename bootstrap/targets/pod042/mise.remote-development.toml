@@ -63,6 +63,42 @@ owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
 
+# Every unit retries every 30 seconds: an internet outage fails every start of the networked services.
+[bootstrap.linux.systemd.units.amp-remote]
+description = "Amp outbound remote development for pod042"
+exec_start_pre = ["/usr/bin/test -f %h/.local/share/amp/secrets.json"]
+exec_start = "~/.amp/bin/amp --no-tui --remote-control-terminal --discover-dirs --desktop --runner-id pod042"
+working_directory = "~/code"
+environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin" }
+restart = "always"
+restart_sec = "30"
+
+[bootstrap.linux.systemd.units.herdr]
+description = "Herdr terminal workspace server for pod042"
+exec_start_pre = ["/usr/bin/test -x %h/.local/share/mise/shims/herdr"]
+exec_start = "~/.local/share/mise/shims/herdr server"
+working_directory = "~"
+environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin" }
+restart = "always"
+restart_sec = "30"
+
+[bootstrap.linux.systemd.units.chatgpt]
+description = "ChatGPT desktop app on a virtual display, serving pod042 as 2B's computer"
+exec_start_pre = ["/usr/bin/test -f %h/.codex/auth.json"]
+exec_start = '/usr/bin/xvfb-run --server-num=42 --server-args="-screen 0 1440x900x24 -nolisten tcp" /usr/bin/chatgpt'
+working_directory = "~"
+environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin", CODEX_CHROMIUM_USER_DATA_DIR = "/home/thurstonsand/.config/chromium-desktop", CODEX_CHROMIUM_NATIVE_HOST_MANIFEST_PATH = "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.openai.codexextension.json" }
+restart = "always"
+restart_sec = "30"
+
+# The runner's compositor restarts with every self-update; Xvfb keeps the app, and its unlock, alive across them.
+[bootstrap.linux.systemd.units.1password]
+description = "1Password desktop app on a virtual display, unlocking the desktop Chromium's extension"
+exec_start = '/usr/bin/xvfb-run --server-num=43 --auth-file=%h/.cache/1password-xvfb/Xauthority --server-args="-screen 0 1280x800x24 -nolisten tcp" /usr/bin/1password'
+working_directory = "~"
+restart = "always"
+restart_sec = "30"
+
 [bootstrap.directories."/home/thurstonsand/.cache/1password-xvfb"]
 owner = "thurstonsand"
 group = "thurstonsand"
@@ -124,10 +160,6 @@ mode = "0755"
 "/home/thurstonsand/.local/share/applications/1password.desktop" = { source = "remote-development/desktop/1password.desktop", mode = "symlink" }
 "/home/thurstonsand/.local/bin/1password-browser-support" = { source = "remote-development/desktop/1password-browser-support", mode = "symlink" }
 # User services must remain runnable while this checkout is unavailable.
-"/home/thurstonsand/.config/systemd/user/amp-remote.service" = { source = "remote-development/amp-remote.service", mode = "copy" }
-"/home/thurstonsand/.config/systemd/user/herdr.service" = { source = "remote-development/herdr.service", mode = "copy" }
-"/home/thurstonsand/.config/systemd/user/chatgpt.service" = { source = "remote-development/chatgpt.service", mode = "copy" }
-"/home/thurstonsand/.config/systemd/user/1password.service" = { source = "remote-development/1password.service", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.path" = { source = "remote-development/chatgpt-upgrade.path", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.service" = { source = "remote-development/chatgpt-upgrade.service", mode = "copy" }
 "/home/thurstonsand/.local/bin/chatgpt-upgrade" = { source = "remote-development/chatgpt-upgrade", mode = "copy" }

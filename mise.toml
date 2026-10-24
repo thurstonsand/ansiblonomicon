@@ -585,13 +585,13 @@ exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD 
 '''
 
 [tasks."amp-cli"]
-description = "Install Amp and reconcile its runner on the Omarchy laptop and eve"
+description = "Install Amp and reconcile its runner on Omarchy laptops, eve, and the MacBook"
 usage = 'flag "-c --check" help="Show Amp CLI and runner reconciliation changes"'
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  type-a-no2|no9-type-s|eve) ;;
-  *) echo "Amp CLI capability requires an Omarchy laptop or eve" >&2; exit 1 ;;
+  type-a-no2|no9-type-s|eve|Thurstons-MacBook-Pro) ;;
+  *) echo "amp-cli is not registered on $host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
@@ -791,7 +791,7 @@ config_capabilities="sysconfig terminal-theme vcs shell terminal-tools user-tool
 sysconfig_sections="dock finder nsglobaldomain menubar desktop-services permissions"
 case "$profile" in
   personal)
-    software_capabilities="$software_capabilities claude-code shp uvc-util docker-context"
+    software_capabilities="$software_capabilities claude-code shp uvc-util docker-context amp-cli"
     config_capabilities="$config_capabilities ssh-client"
     sysconfig_sections="$sysconfig_sections hostname"
     ;;

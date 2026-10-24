@@ -1,0 +1,31 @@
+# The Amp app runs the runner itself, through the CLI on the login shell's PATH.
+[bootstrap.macos.defaults."com.ampcode.amp.macos"]
+runnerEnabled = true
+runnerID = "thurstons-macbook-pro"
+runnerDiscoverFolders = ["/Users/thurstonsand/Develop/"]
+runnerRemoteTerminalEnabled = true
+runnerRemoteDesktopEnabled = true
+runnerShareNetworkEnabled = true
+runnerShareBrowserEnabled = true
+"keepAwake.whileRunnerOn" = true
+
+[tasks.amp-cli]
+usage = 'flag "-c --check" help="Show Amp CLI and app runner setting drift"'
+shell = "bash -c"
+run = '''
+set -euo pipefail
+amp="$HOME/.amp/bin/amp"
+installer="$MISE_PROJECT_ROOT/../../capabilities/software/install-official"
+login="$HOME/.local/share/amp/secrets.json"
+
+if [ -n "${usage_check:-}" ]; then
+  [ -f "$login" ] || echo "BLOCKED: Amp persisted login is absent: $login"
+  "$installer" "Amp CLI" "$amp" https://ampcode.com/install.sh --check
+  exec mise bootstrap macos defaults apply --dry-run
+fi
+
+[ -f "$login" ] || { echo "Amp persisted login is absent: $login" >&2; exit 1; }
+
+"$installer" "Amp CLI" "$amp" https://ampcode.com/install.sh
+exec mise bootstrap macos defaults apply --yes
+'''
