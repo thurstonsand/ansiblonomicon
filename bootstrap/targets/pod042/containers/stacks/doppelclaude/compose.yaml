@@ -6,6 +6,13 @@ services:
     init: true
     restart: unless-stopped
     stop_grace_period: 25s
+    # Its request_complete records are the only cache and workaround telemetry, and json-file logs
+    # die with the container on every recreate. Read them with
+    # `journalctl CONTAINER_NAME=doppelclaude-doppelclaude-1 -o cat`; `docker logs` still works.
+    logging:
+      driver: journald
+      options:
+        tag: doppelclaude
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
