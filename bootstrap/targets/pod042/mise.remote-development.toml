@@ -23,8 +23,12 @@
 "apt:x11vnc" = "latest"
 "apt:tigervnc-viewer" = "latest"
 "apt:xdotool" = "latest"
+"apt:wayvnc" = "latest"
 
 [bootstrap.files."/etc/chromium/policies/managed/chatgpt.json"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.local/share/applications/1password.desktop"]
 state = "absent"
 
 [bootstrap.files."/etc/chromium/policies/managed/extensions.json"]
@@ -157,7 +161,7 @@ mode = "0755"
 "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.1password.1password.json" = { source = "remote-development/desktop/1password-native-messaging.json", mode = "symlink" }
 "/home/thurstonsand/.local/bin/1password-window" = { source = "remote-development/desktop/1password-window", mode = "symlink" }
 "/home/thurstonsand/.local/bin/1password-prompt" = { source = "remote-development/desktop/1password-prompt", mode = "symlink" }
-"/home/thurstonsand/.local/share/applications/1password.desktop" = { source = "remote-development/desktop/1password.desktop", mode = "symlink" }
+"/home/thurstonsand/.local/share/applications/com.onepassword.OnePassword.desktop" = { source = "remote-development/desktop/com.onepassword.OnePassword.desktop", mode = "symlink" }
 "/home/thurstonsand/.local/bin/1password-browser-support" = { source = "remote-development/desktop/1password-browser-support", mode = "symlink" }
 # User services must remain runnable while this checkout is unavailable.
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.path" = { source = "remote-development/chatgpt-upgrade.path", mode = "copy" }

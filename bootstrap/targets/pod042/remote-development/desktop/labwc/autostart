@@ -2,3 +2,5 @@ swaybg --color '#0b0d0b' >/dev/null 2>&1 &
 xsettingsd >/dev/null 2>&1 &
 desktop-chromium >/dev/null 2>&1 &
 1password-prompt >/dev/null 2>&1 &
+rm -f "$XDG_RUNTIME_DIR/wayvnc.sock"
+wayvnc --render-cursor --unix-socket "$XDG_RUNTIME_DIR/wayvnc.sock" >"$XDG_RUNTIME_DIR/wayvnc.log" 2>&1 &
