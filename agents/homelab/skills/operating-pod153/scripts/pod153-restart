@@ -1,0 +1,23 @@
+#!/usr/bin/env python3
+"""Restart pod153 straight back to its desktop, skipping FileVault pre-boot.
+
+Run on pod153 under fnox:
+  fnox-host exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- pod153-restart
+"""
+
+import getpass
+import os
+import plistlib
+import subprocess
+
+credentials = plistlib.dumps(
+    {
+        "Username": getpass.getuser(),
+        "Password": os.environ["HOMEBREW_SUDO_ASKPASS_PASS"],
+    }
+)
+subprocess.run(
+    ["sudo", "-n", "fdesetup", "authrestart", "-inputplist"],
+    input=credentials,
+    check=True,
+)

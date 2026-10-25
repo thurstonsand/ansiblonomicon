@@ -409,7 +409,7 @@ def reconcile(
         cache,
         profile,
         hostname,
-        trim_blocks=(profile == "personal") if trim_blocks is None else trim_blocks,
+        trim_blocks=(profile == "pod153") if trim_blocks is None else trim_blocks,
         metadata=metadata,
         allow_missing_selections=allowed_missing,
     )
@@ -479,7 +479,7 @@ def reconcile(
             cache,
             profile,
             hostname,
-            trim_blocks=(profile == "personal") if trim_blocks is None else trim_blocks,
+            trim_blocks=(profile == "pod153") if trim_blocks is None else trim_blocks,
             metadata=remove_metadata,
             sources_override=[unresolved_source],
         )

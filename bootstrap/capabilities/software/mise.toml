@@ -4,6 +4,22 @@ source_freshness_hash_contents = true
 [tasks.claude-code]
 run = 'software/install-official claude-code "$HOME/.local/bin/claude" https://claude.ai/install.sh ${SOFTWARE_CHECK:+--check}'
 
+[tasks.cua-driver]
+run = '''
+set -eu
+cua="$HOME/.local/bin/cua-driver"
+software/install-official cua-driver "$cua" https://cua.ai/driver/install.sh ${SOFTWARE_CHECK:+--check} --no-modify-path
+[ -x "$cua" ] || exit 0
+if [ -n "${SOFTWARE_CHECK:-}" ]; then
+  "$cua" update
+  exit 0
+fi
+"$cua" update --apply
+# The pack feeds the agent-harness catalogue; its own agent links would bypass profile scoping.
+"$cua" skills update
+"$cua" skills uninstall
+'''
+
 [tasks.berkeley-mono]
 run = 'python3 software/berkeley_mono.py ${SOFTWARE_CHECK:+--check}'
 

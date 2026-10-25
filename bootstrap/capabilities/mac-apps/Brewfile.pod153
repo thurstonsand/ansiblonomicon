@@ -1,0 +1,106 @@
+# Homebrew Bundle file for pod153, the always-on server Mac.
+# Brewfile beside this one is its desktop loadout, kept to restore a personal Mac.
+
+# =============================================================================
+# Shell & Terminal
+# =============================================================================
+brew "ast-grep"
+brew "bat"
+brew "btop"
+brew "direnv"
+brew "eza"
+brew "fd"
+brew "fzf"
+tap "thurstonsand/tap", trusted: true
+brew "thurstonsand/tap/ghosttykit-nightly", restart_service: true
+brew "herdr"
+brew "jq"
+brew "mas"
+brew "ripgrep"
+brew "rsync"
+brew "openai/tools/softnet", trusted: true
+brew "shellcheck"
+brew "shfmt"
+brew "starship"
+brew "tmux"
+brew "tree"
+brew "unzip"
+brew "zoxide"
+
+# =============================================================================
+# Software Engineering
+# =============================================================================
+# Git
+brew "gh"
+brew "git"
+brew "git-delta"
+
+# Languages
+brew "oven-sh/bun/bun", trusted: true
+brew "cmake"
+brew "go"
+brew "python"
+brew "ruby"
+brew "rustup"
+brew "swiftformat"
+brew "swiftlint"
+brew "uv"
+brew "zig@0.15"
+
+# Infra/Cloud
+brew "cloudflared"
+brew "sshpass"
+brew "openai/tools/tart", trusted: true
+
+cask "gcloud-cli"
+cask "orbstack"
+
+mas "Tailscale", id: 1475387142
+
+# Editors/Terminals
+brew "neovim"
+cask "ghostty"
+cask "zed"
+cask "thurstonsand/tap/wt"
+
+# Apple
+mas "TestFlight", id: 899247664
+mas "Xcode", id: 497799835
+
+# =============================================================================
+# AI
+# =============================================================================
+cask "chatgpt", greedy: true
+cask "claude"
+cask "t3-code"
+
+# =============================================================================
+# Media
+# =============================================================================
+brew "ffmpeg"
+brew "imagemagick"
+
+# =============================================================================
+# Productivity
+# =============================================================================
+cask "firefox" # headless render backend for trmnlp (TRMNL plugin previews)
+cask "google-chrome"
+cask "google-drive"
+
+cask "1password"
+cask "1password-cli"
+cask "localsend"
+
+mas "Parcel", id: 375589283
+mas "Uplock", id: 6469049274
+
+# Fonts
+cask "font-blex-mono-nerd-font"
+cask "font-fontawesome"
+cask "font-mononoki-nerd-font"
+
+# =============================================================================
+# Hardware & Drivers
+# =============================================================================
+brew "smartmontools"
+cask "prusaslicer"

@@ -33,28 +33,28 @@ destination = '.pi/agent/interview-themes/gruvbox-light-hard.css'
 [[files]]
 source = 'assets/oracle/config.json'
 destination = '.oracle/config.json'
-hosts = ['Thurstons-MacBook-Pro', 'pod042']
+hosts = ['pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/claude/hooks/_common.py'
 destination = '.claude/hooks/_common.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
+hosts = ['pod153', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/claude/hooks/_config.pyi'
 destination = '.claude/hooks/_config.pyi'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
+hosts = ['pod153', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/claude/hooks/derive-title.py'
 destination = '.claude/hooks/derive-title.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
+hosts = ['pod153', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
@@ -67,14 +67,14 @@ mode = 'symlink'
 source = 'assets/claude/hooks/retitle.py'
 destination = '.claude/hooks/retitle.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
+hosts = ['pod153', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/claude/hooks/set-title.py'
 destination = '.claude/hooks/set-title.py'
 harness = 'claude'
-hosts = ['Thurstons-MacBook-Pro', 'pod042', 'type-a-no2', 'no9-type-s']
+hosts = ['pod153', 'pod042', 'type-a-no2', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
@@ -93,14 +93,14 @@ mode = 'symlink'
 source = '../../terminal-theme/solitude/claude-statusline-colors-dark.sh'
 destination = '.claude/scripts/statusline-colors-dark.sh'
 harness = 'claude'
-hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
+hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
 source = '../../terminal-theme/solitude/claude-statusline-colors-light.sh'
 destination = '.claude/scripts/statusline-colors-light.sh'
 harness = 'claude'
-hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
+hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
@@ -498,28 +498,28 @@ mode = 'symlink'
 source = 'assets/pi/interview-themes/solitude-dark.css'
 destination = '.pi/agent/interview-themes/solitude-dark.css'
 harness = 'pi'
-hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
+hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/pi/interview-themes/solitude-light.css'
 destination = '.pi/agent/interview-themes/solitude-light.css'
 harness = 'pi'
-hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
+hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/codex/themes/solitude-dark.tmTheme'
 destination = '.codex/themes/solitude-dark.tmTheme'
 harness = 'codex'
-hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
+hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
 source = 'assets/codex/themes/solitude-light.tmTheme'
 destination = '.codex/themes/solitude-light.tmTheme'
 harness = 'codex'
-hosts = ['ML-DFC6YK6VJQ', 'Thurstons-MacBook-Pro', 'pod042']
+hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]

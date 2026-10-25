@@ -30,7 +30,7 @@ group = "thurstonsand"
 mode = "0700"
 
 [bootstrap.files."/home/thurstonsand/.ssh/authorized_keys"]
-source = "base/files/operator.pub"
+source = "ssh-client/authorized_keys"
 owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0600"

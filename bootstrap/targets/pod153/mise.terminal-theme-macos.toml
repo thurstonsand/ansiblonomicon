@@ -1,0 +1,7 @@
+# pod153 mirrors its SSH clients' theme like pod042; retiring the appearance watcher. Delete once converged.
+[dotfiles]
+"~/.local/bin/terminal-theme-ssh-lease.py" = { mode = "absent" }
+"~/.local/bin/terminal-theme-watch" = { mode = "absent" }
+
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/dev.mise.house.thurstons.terminal-theme-watch.plist"]
+state = "absent"

@@ -97,6 +97,15 @@ standard_error = "null"
 restart = "always"
 restart_sec = "30"
 
+# pod153 waits at FileVault pre-boot after an unplanned restart; this answers it.
+[bootstrap.linux.systemd.units.pod153-wake]
+description = "Unlock pod153's FileVault whenever it waits at pre-boot"
+exec_start = "%h/.local/bin/fnox-host exec --secret POD153_LOGIN_PASSWORD -- %h/code/ansiblonomicon/agents/homelab/skills/operating-pod153/scripts/pod153-wake watch"
+working_directory = "~"
+environment = { PATH = "/home/thurstonsand/.local/bin:/usr/local/bin:/usr/bin:/bin" }
+restart = "always"
+restart_sec = "30"
+
 # The runner's compositor restarts with every self-update; Xvfb keeps the app, and its unlock, alive across them.
 [bootstrap.linux.systemd.units.1password]
 description = "1Password desktop app on a virtual display, unlocking the desktop Chromium's extension"

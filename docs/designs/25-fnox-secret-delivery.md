@@ -45,7 +45,7 @@ Physical hostname selection is exact after removing an FQDN suffix:
 
 | Short hostname | Profile |
 | --- | --- |
-| `Thurstons-MacBook-Pro` | `macos` |
+| `pod153` | `macos` |
 | `ML-DFC6YK6VJQ` | `work` |
 | `pod042` | `pod042` |
 

@@ -112,10 +112,10 @@ def restart(applications: set[str]) -> None:
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", type=Path, required=True)
-    parser.add_argument("--profile", choices=("personal", "work"), required=True)
+    parser.add_argument("--profile", choices=("server", "work"), required=True)
     parser.add_argument("--sections", default=",".join(DEFAULT_SECTIONS))
     parser.add_argument("--check", action="store_true")
-    parser.add_argument("--hostname", default="Thurstons-MacBook-Pro")
+    parser.add_argument("--hostname")
     args = parser.parse_args()
     target = cast(Path, args.target).resolve()
     section_text = cast(str, args.sections)
@@ -127,6 +127,8 @@ def main() -> None:
         parser.error(f"unknown sections: {','.join(sorted(unknown))}")
     if args.profile == "work" and "hostname" in sections:
         parser.error("hostname is intentionally unmanaged on work")
+    if "hostname" in sections and not args.hostname:
+        parser.error("the hostname section requires --hostname")
 
     defaults = [
         section for section in sections if section not in ("permissions", "hostname")
@@ -148,14 +150,6 @@ def main() -> None:
             raise ValueError("unexpected native file status JSON")
         file_entries = cast(list[dict[str, object]], resources)
         changed_file = any(item.get("action") != "noop" for item in file_entries)
-        if (
-            changed_file
-            and args.profile == "personal"
-            and not Path("/opt/homebrew/lib/pam/pam_reattach.so").exists()
-        ):
-            raise RuntimeError(
-                "pam_reattach module is required before changing personal sudo authentication"
-            )
 
     differing = []
     if "hostname" in sections:

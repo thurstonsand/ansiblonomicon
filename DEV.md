@@ -54,19 +54,23 @@ Deleting a file from the repo does not remove it from a host. Declare a `state =
 
 ## macOS
 
-Hostname selects the native target. Both laptops reject unknown tags before taking action. Work's private inputs live in ignored files under its target, the agent-harness `local/` directory, and `mise.work-local.local.toml`, applied by the `work-local` capability; see [README.work.md](README.work.md).
+Hostname selects the native target: `pod153` or the work Mac. Both reject unknown tags before taking action. Work's private inputs live in ignored files under its target, the agent-harness `local/` directory, and `mise.work-local.local.toml`, applied by the `work-local` capability; see [README.work.md](README.work.md).
 
 ```sh
 mise laptop -t homebrew    # also: language-tools, shell, agent-harness
 ```
 
-Homebrew formulae, casks, and Mac App Store apps come from `bootstrap/capabilities/mac-apps/Brewfile`, with `Brewfile.work` for work. `Brewfile.work` includes any ignored `Brewfile.work.*` beside it. Go and UVC sources live under `bootstrap/capabilities/software/sources/`. System preferences and sudo Touch ID live in `bootstrap/capabilities/macos-system`, grouped by domain for `mise laptop -t dock,finder` or reconciled together with `mise sysconfig`.
+Homebrew formulae, casks, and Mac App Store apps come from `bootstrap/capabilities/mac-apps/Brewfile.pod153`, with `Brewfile.work` for work; `Brewfile` keeps the desktop loadout pod153 ran before it became a server. `Brewfile.work` includes any ignored `Brewfile.work.*` beside it. Go and UVC sources live under `bootstrap/capabilities/software/sources/`. System preferences and sudo authentication live in `bootstrap/capabilities/macos-system`, grouped by domain for `mise laptop -t dock,finder` or reconciled together with `mise sysconfig`.
 
 The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json` files are masked with `skip-worktree` there. Use `mise run pull`, and be careful with `merge`, `rebase`, or `stash pop` on work. Confirm a version exists on the mirror before bumping a dependency.
 
 ## pod042
 
 The physical Debian NAS, declared in `bootstrap/targets/pod042/`.
+
+## pod153
+
+The MacBook Pro, run as an always-on headless server and reconciled by `mise laptop`. Its `server` capability keeps it awake with the lid closed, reachable over Remote Login and Screen Sharing, and runs Cua Driver, Claude Remote Control, ChatGPT, and a daily 04:30 reconcile as LaunchAgents. Nothing unattended may depend on the 1Password app or its SSH agent. pod042's `dev.mise.pod153-wake` service unlocks FileVault over pre-boot SSH after an unplanned restart. `agents/homelab/skills/operating-pod153/` covers boot states, restarts, and answering macOS prompts.
 
 ## Omarchy laptops
 

@@ -25,7 +25,7 @@ import yaml
 HOST_CONFIGS = {
     "type-a-no2": "bootstrap/targets/type-a-no2/mise.agent-harness.toml",
     "no9-type-s": "bootstrap/targets/no9-type-s/mise.agent-harness.toml",
-    "Thurstons-MacBook-Pro": "bootstrap/targets/Thurstons-MacBook-Pro/mise.agent-harness.toml",
+    "pod153": "bootstrap/targets/pod153/mise.agent-harness.toml",
     "pod042": "bootstrap/targets/pod042/agent-harness/host.toml",
     "ML-DFC6YK6VJQ": "bootstrap/targets/ML-DFC6YK6VJQ/mise.agent-harness.toml",
 }
@@ -40,7 +40,7 @@ SECRET_KEYS = {
     "type-a-no2": {"CLI_PROXY_API_KEY"},
     "no9-type-s": {"CLI_PROXY_API_KEY"},
     WORK_HOST: {"ANTHROPIC_AUTH_TOKEN"},
-    "Thurstons-MacBook-Pro": {"CLI_PROXY_API_KEY"},
+    "pod153": {"CLI_PROXY_API_KEY"},
     "pod042": {"CLI_PROXY_API_KEY"},
 }
 PRIVATE = {
@@ -156,7 +156,7 @@ def render_all(
     return result
 
 
-def _declared_mcp(data: dict[str, Any]) -> list[dict[str, Any]]:
+def _declared_mcp(data: dict[str, Any], harness: str) -> list[dict[str, Any]]:
     declared = data.get("mcp_servers", [])
     for item in declared:
         if not isinstance(item, dict) or not isinstance(item.get("name"), str):
@@ -164,13 +164,15 @@ def _declared_mcp(data: dict[str, Any]) -> list[dict[str, Any]]:
         transport = item.get("transport", "stdio")
         if transport not in {"stdio", "sse", "http"}:
             raise ValueError(f"unsupported MCP transport: {transport}")
-    return declared
+        if item.get("harness", harness) not in RENDERERS:
+            raise ValueError(f"unknown MCP server harness: {item}")
+    return [item for item in declared if item.get("harness", harness) == harness]
 
 
 def _claude_mcp_output(
     home: Path, data: dict[str, Any], previously_owned: set[str] | None = None
 ) -> tuple[str, str] | None:
-    declared = _declared_mcp(data)
+    declared = _declared_mcp(data, "claude")
     previously_owned = previously_owned or set()
     if not declared and not previously_owned:
         return None
@@ -239,7 +241,7 @@ def _codex_mcp_config(
     config: str, data: dict[str, Any], previously_owned: set[str]
 ) -> str:
     desired: dict[str, Any] = {}
-    for item in _declared_mcp(data):
+    for item in _declared_mcp(data, "codex"):
         transport = item.get("transport", "stdio")
         if transport == "sse":
             raise ValueError(f"Codex does not support SSE MCP server {item['name']}")

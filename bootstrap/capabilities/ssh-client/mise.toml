@@ -10,4 +10,5 @@ template = true
 mode = "0644"
 
 [dotfiles]
+"~/.ssh/pod153.known_hosts" = { source = "ssh-client/pod153.known_hosts", mode = "symlink" }
 "~/.local/libexec/ssh-smart-proxy" = { source = "ssh-client/ssh-smart-proxy.tera", mode = "template" }

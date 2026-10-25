@@ -1,7 +1,7 @@
 # The Amp app runs the runner itself, through the CLI on the login shell's PATH.
 [bootstrap.macos.defaults."com.ampcode.amp.macos"]
 runnerEnabled = true
-runnerID = "thurstons-macbook-pro"
+runnerID = "pod153"
 runnerDiscoverFolders = ["/Users/thurstonsand/Develop/"]
 runnerRemoteTerminalEnabled = true
 runnerRemoteDesktopEnabled = true

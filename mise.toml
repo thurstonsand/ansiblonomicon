@@ -135,8 +135,8 @@ flag "-c --check" help="Report Brewfile drift without installing or resolving cr
 '''
 run = '''
 case "$(hostname -s 2>/dev/null || hostname)" in
-  Thurstons-MacBook-Pro)
-    brewfile="$MISE_PROJECT_ROOT/bootstrap/capabilities/mac-apps/Brewfile"
+  pod153)
+    brewfile="$MISE_PROJECT_ROOT/bootstrap/capabilities/mac-apps/Brewfile.pod153"
     sudo_secret=HOMEBREW_SUDO_ASKPASS_PASS
     ;;
   ML-DFC6YK6VJQ)
@@ -164,7 +164,7 @@ run = '''
 set -e
 set --
 case "$(hostname -s 2>/dev/null || hostname)" in
-  Thurstons-MacBook-Pro) profile=personal ;;
+  pod153) profile=personal ;;
   ML-DFC6YK6VJQ)
     profile=work
     set -- --extension "$MISE_PROJECT_ROOT/bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml"
@@ -178,7 +178,7 @@ exec python3 bootstrap/capabilities/language-tools/reconcile.py \
 '''
 
 [tasks.sysconfig]
-description = "Reconcile native macOS preferences, sudo Touch ID, and personal hostname"
+description = "Reconcile native macOS preferences, sudo authentication, and pod153's hostname"
 alias = "macos-system"
 usage = '''
 flag "-c --check" help="Report drift without writes, sudo, credentials, or app restarts"
@@ -187,19 +187,19 @@ flag "--sections <sections>" help="Comma-separated sysconfig sections"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  Thurstons-MacBook-Pro) profile=personal; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,permissions,hostname} ;;
+  pod153) profile=server; name=pod153; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,permissions,hostname} ;;
   ML-DFC6YK6VJQ) profile=work; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,permissions} ;;
   *) echo "sysconfig is registered only on Mac laptops" >&2; exit 1 ;;
 esac
 case ",$sections," in
-  *,hostname,*) [ "$profile" = personal ] || { echo "hostname is intentionally unmanaged on work" >&2; exit 1; } ;;
+  *,hostname,*) [ "$profile" != work ] || { echo "hostname is intentionally unmanaged on work" >&2; exit 1; } ;;
 esac
 if [ -z "${usage_check:-}" ] && printf '%s' "$sections" | grep -Eq '(^|,)(permissions|hostname)(,|$)'; then
   export SUDO_ASKPASS="${SUDO_ASKPASS:-$MISE_PROJECT_ROOT/scripts/sudo-askpass.sh}"
 fi
 exec "$MISE_PROJECT_ROOT/.venv/bin/python" "$MISE_PROJECT_ROOT/bootstrap/capabilities/macos-system/reconcile.py" \
   --target "$MISE_PROJECT_ROOT/bootstrap/targets/$host" --profile "$profile" \
-  --sections "$sections" ${usage_check:+--check}
+  --sections "$sections" ${name:+--hostname "$name"} ${usage_check:+--check}
 '''
 
 [tasks."software:dispatch"]
@@ -211,7 +211,7 @@ flag "-c --check"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host:$usage_capability" in
-  Thurstons-MacBook-Pro:claude-code|Thurstons-MacBook-Pro:shp|Thurstons-MacBook-Pro:uvc-util|Thurstons-MacBook-Pro:berkeley-mono|Thurstons-MacBook-Pro:docker-context) ;;
+  pod153:claude-code|pod153:cua-driver|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
   ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
@@ -224,6 +224,9 @@ exec bootstrap/capabilities/software/reconcile "$@"
 
 [tasks.claude-code]
 run = "mise run //:software:dispatch claude-code ${usage_check:+--check}"
+usage = 'flag "-c --check"'
+[tasks."cua-driver"]
+run = "mise run //:software:dispatch cua-driver ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks.pi]
 run = "mise run //:software:dispatch pi ${usage_check:+--check}"
@@ -260,19 +263,17 @@ flag "-c --check" help="Show changes without applying them"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  pod042|Thurstons-MacBook-Pro|ML-DFC6YK6VJQ) ;;
+  pod042|pod153|ML-DFC6YK6VJQ) ;;
   *) echo "Unregistered terminal-theme host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
-if [ "$host" = pod042 ]; then
-  export MISE_ENV=terminal-theme
-  parts=dotfiles
-else
-  export MISE_ENV=terminal-theme,terminal-theme-macos,terminal-theme-files
-  parts=files,dotfiles,macos-launchd-agents
-fi
+case "$host" in
+  pod042) export MISE_ENV=terminal-theme; parts=dotfiles ;;
+  pod153) export MISE_ENV=terminal-theme,terminal-theme-macos,terminal-theme-files; parts=files,dotfiles ;;
+  *) export MISE_ENV=terminal-theme,terminal-theme-macos,terminal-theme-files; parts=files,dotfiles,macos-launchd-agents ;;
+esac
 if [ -n "${usage_check:-}" ]; then
   exec mise -C "$target" bootstrap --only "$parts" --dry-run
 fi
@@ -297,7 +298,7 @@ flag "-c --check" help="Show changes without applying them"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  pod042|Thurstons-MacBook-Pro|type-a-no2|no9-type-s|eve) environments=vcs ;;
+  pod042|pod153|type-a-no2|no9-type-s|eve) environments=vcs ;;
   ML-DFC6YK6VJQ) environments=vcs,vcs-work ;;
   *) echo "Unregistered vcs host" >&2; exit 1 ;;
 esac
@@ -324,8 +325,8 @@ flag "-c --check" help="Show changes without writing"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  Thurstons-MacBook-Pro|type-a-no2|no9-type-s) environments=ssh-client ;;
-  pod042) environments=ssh-client,ssh-client-pod042 ;;
+  type-a-no2|no9-type-s) environments=ssh-client ;;
+  pod042|pod153) environments=ssh-client,ssh-client-pod042 ;;
   ML-DFC6YK6VJQ) echo "ssh-client is intentionally unavailable on the work host" >&2; exit 1 ;;
   *) echo "Unregistered ssh-client host" >&2; exit 1 ;;
 esac
@@ -333,7 +334,7 @@ target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 run_ssh_client='export MISE_CEILING_PATHS="$1/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$2" MISE_ENV="$3"; exec mise -C "$2" bootstrap --only files,dotfiles "$4"'
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
-if [ "$host" = pod042 ]; then
+if [ "$host" = pod042 ] || [ "$host" = pod153 ]; then
   exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec \
     --secret POD042_GIT_SSH_PRIVATE_KEY --secret POD042_GIT_SSH_PUBLIC_KEY -- \
     sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" "$mode"
@@ -350,7 +351,7 @@ flag "-c --check" help="Show configuration changes without applying them"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  pod042|Thurstons-MacBook-Pro) environments=neovim,neovim-personal ;;
+  pod042|pod153) environments=neovim,neovim-personal ;;
   ML-DFC6YK6VJQ) environments=neovim,neovim-work ;;
   type-a-no2|no9-type-s) environments=neovim,neovim-omarchy ;;
   *) echo "Unregistered neovim host" >&2; exit 1 ;;
@@ -420,7 +421,7 @@ flag "-c --check" help="Show changes without applying them"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  pod042|Thurstons-MacBook-Pro) environments=shell,shell-personal; parts=files,dotfiles; work=false ;;
+  pod042|pod153) environments=shell,shell-personal; parts=files,dotfiles; work=false ;;
   ML-DFC6YK6VJQ) environments=shell,shell-work; parts=files,dotfiles; work=true ;;
   type-a-no2|no9-type-s) environments=shell-omarchy; parts=files,dotfiles; work=false ;;
   *) echo "Unregistered shell host" >&2; exit 1 ;;
@@ -456,7 +457,7 @@ flag "-c --check" help="Show changes without applying them"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  Thurstons-MacBook-Pro) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles,repos; update=--update ;;
+  pod153) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles,repos; update=--update ;;
   ML-DFC6YK6VJQ) environments=terminal-tools,terminal-tools-darwin; parts=dotfiles ;;
   pod042) environments=terminal-tools,terminal-tools-plugins; parts=dotfiles,repos ;;
   type-a-no2|no9-type-s) environments=terminal-tools; parts=dotfiles,repos; update=--update ;;
@@ -481,7 +482,7 @@ run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   pod042) environments=user-tools,user-tools-personal ;;
-  Thurstons-MacBook-Pro) environments=user-tools,user-tools-personal,user-tools-mac,user-tools-mac-personal ;;
+  pod153) environments=user-tools,user-tools-personal,user-tools-mac,user-tools-mac-personal ;;
   ML-DFC6YK6VJQ) environments=user-tools,user-tools-mac ;;
   type-a-no2|no9-type-s) environments=user-tools,user-tools-omarchy ;;
   *) echo "Unregistered user-tools host" >&2; exit 1 ;;
@@ -504,7 +505,7 @@ flag "-c --check" help="Show changes without writing"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2|no9-type-s) ;;
+  pod153|ML-DFC6YK6VJQ|type-a-no2|no9-type-s) ;;
   *) echo "editor-config is registered only on the laptops" >&2; exit 1 ;;
 esac
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
@@ -517,6 +518,20 @@ mode=--yes
 exec mise -E editor-config -C "$MISE_PROJECT_ROOT/bootstrap/targets/$host" bootstrap --only files,dotfiles "$mode"
 '''
 
+[tasks.server]
+description = "Reconcile pod153's power, remote access, automation, and server agents"
+usage = '''
+flag "-c --check" help="Show changes without applying them"
+'''
+run = '''
+host=$(hostname -s 2>/dev/null || hostname)
+[ "$host" = pod153 ] || { echo "server is registered only on pod153" >&2; exit 1; }
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
+  MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=server \
+  exec mise -C "$target" run server ${usage_check:+--check}
+'''
+
 [tasks.reconcile]
 description = "Reconcile this machine, dispatching on hostname"
 usage = '''
@@ -525,7 +540,7 @@ flag "-t --tags <tags>" help="Only run tasks with these tags (comma-separated)"
 '''
 run = '''
 case "$(hostname -s 2>/dev/null || hostname)" in
-  ML-DFC6YK6VJQ|Thurstons-MacBook-Pro) exec mise run //:reconcile:laptop ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
+  ML-DFC6YK6VJQ|pod153) exec mise run //:reconcile:laptop ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   pod042) exec python3 "$MISE_PROJECT_ROOT/scripts/pod042_reconcile.py" ${usage_tags:+"${usage_tags}"} ${usage_check:+--check} ;;
   type-a-no2|no9-type-s) exec mise run //:reconcile:omarchy ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
   eve) exec mise run //:reconcile:windows ${usage_tags:+--tags "$usage_tags"} ${usage_check:+--check} ;;
@@ -542,7 +557,7 @@ flag "--cached" help="Apply cached sources without fetching"
 run = '''
 set -e
 case "$(hostname -s 2>/dev/null || hostname)" in
-  Thurstons-MacBook-Pro|ML-DFC6YK6VJQ|type-a-no2|no9-type-s)
+  pod153|ML-DFC6YK6VJQ|type-a-no2|no9-type-s)
     "$MISE_PROJECT_ROOT/.venv/bin/python" \
       "$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/agent_harness_deploy.py" \
       --repo "$MISE_PROJECT_ROOT" --home "$HOME" \
@@ -585,12 +600,12 @@ exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD 
 '''
 
 [tasks."amp-cli"]
-description = "Install Amp and reconcile its runner on Omarchy laptops, eve, and the MacBook"
+description = "Install Amp and reconcile its runner on Omarchy laptops, eve, and pod153"
 usage = 'flag "-c --check" help="Show Amp CLI and runner reconciliation changes"'
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  type-a-no2|no9-type-s|eve|Thurstons-MacBook-Pro) ;;
+  type-a-no2|no9-type-s|eve|pod153) ;;
   *) echo "amp-cli is not registered on $host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
@@ -760,7 +775,7 @@ set -e
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   ML-DFC6YK6VJQ) secret=ANTHROPIC_AUTH_TOKEN ;;
-  Thurstons-MacBook-Pro|pod042|type-a-no2|no9-type-s) secret=CLI_PROXY_API_KEY ;;
+  pod153|pod042|type-a-no2|no9-type-s) secret=CLI_PROXY_API_KEY ;;
   *) echo "Native agent configuration is available only on registered systems" >&2; exit 1 ;;
 esac
 "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret "$secret" -- \
@@ -775,7 +790,7 @@ mise -C "$MISE_PROJECT_ROOT/bootstrap/targets/$host" bootstrap --only dotfiles "
 '''
 
 [tasks."reconcile:laptop"]
-description = "Reconcile this laptop (auto-detects work vs personal)"
+description = "Reconcile this Mac (auto-detects work vs pod153)"
 alias = "laptop"
 usage = '''
 flag "-c --check" help="Dry-run mode (no changes made)"
@@ -785,16 +800,16 @@ run = '''
 set -e
 case "$(hostname -s 2>/dev/null || hostname)" in
   ML-DFC6YK6VJQ) profile=work ;;
-  Thurstons-MacBook-Pro) profile=personal ;;
+  pod153) profile=server ;;
   *) echo "Unregistered laptop hostname" >&2; exit 1 ;;
 esac
 software_capabilities="mac-apps language-tools berkeley-mono"
 config_capabilities="sysconfig terminal-theme vcs shell terminal-tools user-tools editor-config neovim"
 sysconfig_sections="dock finder nsglobaldomain menubar desktop-services permissions"
 case "$profile" in
-  personal)
-    software_capabilities="$software_capabilities claude-code shp uvc-util docker-context amp-cli"
-    config_capabilities="$config_capabilities ssh-client"
+  server)
+    software_capabilities="$software_capabilities claude-code cua-driver shp uvc-util docker-context amp-cli"
+    config_capabilities="$config_capabilities ssh-client server"
     sysconfig_sections="$sysconfig_sections hostname"
     ;;
   work)
@@ -889,7 +904,7 @@ python3 scripts/pod042_reconcile.py \
 [tasks."reconcile:tags"]
 description = "List the --tags a host offers (defaults to this machine's own)"
 usage = '''
-arg "[playbook]" help="Host to inspect: macos, work, pod042, omarchy, windows"
+arg "[playbook]" help="Host to inspect: pod153, work, pod042, omarchy, windows"
 '''
 run = "./scripts/list-tags.sh ${usage_playbook:-}"
 
@@ -1099,7 +1114,7 @@ home=$(mktemp -d)
 trap 'rm -rf "$home"' EXIT
 HOME="$home" AMP_GUIDANCE=1 MISE_ENV=agent-instructions \
   MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$MISE_PROJECT_ROOT" \
-  mise -C "$MISE_PROJECT_ROOT/bootstrap/targets/Thurstons-MacBook-Pro" bootstrap --only dotfiles --yes >/dev/null
+  mise -C "$MISE_PROJECT_ROOT/bootstrap/targets/pod153" bootstrap --only dotfiles --yes >/dev/null
 guidance="$home/.codex/AGENTS.md"
 length=$(wc -m < "$guidance")
 [ "$length" -le 8000 ] || { echo "Amp guidance is $length characters; the limit is 8000" >&2; exit 1; }

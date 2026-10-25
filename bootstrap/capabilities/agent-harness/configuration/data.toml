@@ -12,8 +12,14 @@ costsDashboardUrl = ""
 jiraBrowseUrl = ""
 piWorkPackages = []
 
-[host_defaults."Thurstons-MacBook-Pro"]
+[host_defaults."pod153"]
 developDir = "Develop"
+
+[[host_defaults."pod153".mcp_servers]]
+name = "cua-driver"
+command = "/Users/thurstonsand/.local/bin/cua-driver"
+args = ["mcp"]
+harness = "claude"
 
 [host_defaults.ML-DFC6YK6VJQ]
 developDir = "code"

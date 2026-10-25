@@ -1,0 +1,95 @@
+[bootstrap.macos.launchd.agents."house.thurstons.cua-driver"]
+program = "/Applications/CuaDriver.app/Contents/MacOS/cua-driver"
+args = ["serve"]
+run_at_load = true
+keep_alive = true
+stdout_path = "~/Library/Logs/cua-driver.log"
+stderr_path = "~/Library/Logs/cua-driver.log"
+
+[bootstrap.macos.launchd.agents."house.thurstons.claude-remote-control"]
+program = "~/.local/bin/claude"
+args = ["remote-control", "--name", "pod153: ~/Develop", "--spawn", "same-dir"]
+run_at_load = true
+keep_alive = true
+working_directory = "~/Develop"
+environment = { PATH = "/Users/thurstonsand/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
+# Its status screen redraws to stdout forever; only stderr is worth keeping.
+stdout_path = "/dev/null"
+stderr_path = "~/Library/Logs/claude-remote-control.log"
+
+# ChatGPT hosts Codex remote connections and computer use only while it is open.
+[bootstrap.macos.launchd.agents."house.thurstons.chatgpt"]
+program = "/usr/bin/open"
+args = ["-g", "-a", "ChatGPT"]
+run_at_load = true
+
+[bootstrap.macos.launchd.agents."house.thurstons.reconcile"]
+program = "~/.local/bin/mise"
+args = ["run", "reconcile"]
+working_directory = "~/Develop/ansiblonomicon"
+start_calendar_interval = { hour = 4, minute = 30 }
+process_type = "Background"
+environment = { PATH = "/Users/thurstonsand/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
+stdout_path = "~/Library/Logs/ansiblonomicon-reconcile.log"
+stderr_path = "~/Library/Logs/ansiblonomicon-reconcile.log"
+
+[bootstrap.files."/Users/thurstonsand/.ssh/authorized_keys"]
+source = "ssh-client/authorized_keys"
+mode = "0600"
+
+# Pre-boot SSH reads nothing from the locked data volume, so FileVault unlock keeps its password login.
+[bootstrap.files."/etc/ssh/sshd_config.d/00-ansiblonomicon.conf"]
+content = """
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+"""
+owner = "root"
+group = "wheel"
+mode = "0644"
+
+[tasks.server]
+usage = 'flag "-c --check"'
+run = '''
+set -eu
+python3 server/reconcile.py ${usage_check:+--check}
+mode=--yes
+[ -z "${usage_check:-}" ] || mode=--dry-run
+exec mise bootstrap --only files,macos-launchd-agents "$mode"
+'''
+
+# Retiring the desktop apps' background jobs; delete these once pod153 converges.
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate.plist"]
+state = "absent"
+
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/com.openai.atlas.update-helper.plist"]
+state = "absent"
+
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/com.setapp.DesktopClient.SetappAgent.plist"]
+state = "absent"
+
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/com.setapp.DesktopClient.SetappAssistant.plist"]
+state = "absent"
+
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/com.setapp.DesktopClient.SetappLauncher.plist"]
+state = "absent"
+
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/com.setapp.DesktopClient.SetappUpdater.plist"]
+state = "absent"
+
+[bootstrap.files."/Library/LaunchDaemons/com.hegenberg.BetterTouchProcessPrioWatcher.plist"]
+state = "absent"
+
+[bootstrap.files."/Library/LaunchDaemons/com.macpaw.CleanMyMac-setapp.Agent.plist"]
+state = "absent"
+
+[bootstrap.files."/Library/LaunchDaemons/com.proxyman.NSProxy.HelperTool.plist"]
+state = "absent"
+
+[bootstrap.files."/Library/LaunchDaemons/org.nixos.nix-gc.plist"]
+state = "absent"
+
+[bootstrap.files."/Library/PrivilegedHelperTools/com.macpaw.CleanMyMac-setapp.Agent"]
+state = "absent"
+
+[bootstrap.files."/Library/PrivilegedHelperTools/com.proxyman.NSProxy.HelperTool"]
+state = "absent"

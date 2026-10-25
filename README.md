@@ -28,7 +28,7 @@ Use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND` to giv
 
 ### Terminal theme sync
 
-On macOS, `dark-notify` acts as the source of truth for terminal theme state. The shared [native mise capability](bootstrap/capabilities/terminal-theme/README.md) installs the runtime helpers and manages the user LaunchAgent (`dev.mise.house.thurstons.terminal-theme-watch`). Together they keep `~/.terminal-bg`, Codex, Hunk, and tmux in sync; active SSH leases mirror the personal Mac's theme to pod042. Mise renders Hunk's real-file config, while deployment and runtime switching read the same Solitude palette assets. The watcher reloads only when its declaration or runtime inputs change.
+On the work Mac, `dark-notify` acts as the source of truth for terminal theme state. The shared [native mise capability](bootstrap/capabilities/terminal-theme/README.md) installs the runtime helpers and manages the user LaunchAgent (`dev.mise.house.thurstons.terminal-theme-watch`). Together they keep `~/.terminal-bg`, Codex, Hunk, and tmux in sync. pod042 and pod153 are mirrors: they stay dark unless a client's `terminal_theme_mirrors` leases its theme to them over SSH. Mise renders Hunk's real-file config, while deployment and runtime switching read the same Solitude palette assets. The watcher reloads only when its declaration or runtime inputs change.
 
 Run `mise terminal-theme` for this capability alone, or add `--check` for a nonmutating preview. Regular laptop and pod042 reconciliation includes it and updates the standalone mise binary to latest stable when its last successful update is at least 24 hours old. Check mode skips upgrades. `mise laptop -t terminal-theme` runs only this capability. Both laptops reject unsupported tags before taking action.
 
@@ -36,7 +36,7 @@ Shared Zsh startup files, the Omarchy laptops' bash startup files, and static St
 
 The [terminal-tools capability](bootstrap/capabilities/terminal-tools/README.md) owns tmux configuration, Ghostty configuration and helpers, and personal-host TPM installation. Run `mise terminal-tools` or `mise laptop -t tmux`, adding `--check` for a preview. Full reconciliation supplies software prerequisites first; focused runs assume they are installed.
 
-The [user-tools capability](bootstrap/capabilities/user-tools/README.md) owns shared LazyGit, SourceKit-LSP, Vim and markdownlint configuration plus standalone helpers. Personal hosts also receive GitHub CLI and Rustup settings, and laptops receive Go telemetry, herdr endpoints, and the personal Mac's LinearMouse, NextDNS and mactop files. Run `mise user-tools` or `mise laptop -t user-tools`, adding `--check` for a nonmutating preview.
+The [user-tools capability](bootstrap/capabilities/user-tools/README.md) owns shared LazyGit, SourceKit-LSP, Vim and markdownlint configuration plus standalone helpers. Personal hosts also receive GitHub CLI and Rustup settings, and laptops receive Go telemetry and herdr endpoints. Run `mise user-tools` or `mise laptop -t user-tools`, adding `--check` for a nonmutating preview.
 
 ### VCS client configuration
 
@@ -64,7 +64,7 @@ Capability-driven Node upgrades carry unmanaged registry npm globals into the ne
 
 Full laptop reconciliation ensures and maintains the standalone mise binary before Homebrew cleanup, then runs Mac apps, language tools, vendor-installed and source-built software, system configuration, agent deployment, and user configuration. Work also applies its private `work-local` files after the Python index. `mise laptop -t homebrew,language-tools` runs only the selected native software tasks; focused language-tool runs assume their Homebrew prerequisites are already installed.
 
-The [macOS system capability](bootstrap/capabilities/macos-system/README.md) owns typed preferences, sudo Touch ID, and personal hostname. Run `mise sysconfig` or `mise laptop -t dock,finder`, adding `--check` for a preview. Apps restart only when their preferences change; work hostname and existing work `pam_reattach` lines remain unmanaged.
+The [macOS system capability](bootstrap/capabilities/macos-system/README.md) owns typed preferences, sudo authentication, and pod153's hostname. Run `mise sysconfig` or `mise laptop -t dock,finder`, adding `--check` for a preview. Apps restart only when their preferences change; work hostname and existing work `pam_reattach` lines remain unmanaged.
 
 ### Agent catalogue
 

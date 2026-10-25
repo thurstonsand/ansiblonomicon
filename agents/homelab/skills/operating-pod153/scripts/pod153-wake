@@ -1,0 +1,136 @@
+#!/usr/bin/env python3
+"""Drive pod153 from a FileVault pre-boot screen to a logged-in desktop.
+
+Run it under fnox so POD153_LOGIN_PASSWORD is set:
+  fnox-host exec --secret POD153_LOGIN_PASSWORD -- pod153-wake {status,wake,watch}
+"""
+
+import argparse
+import os
+import re
+import subprocess
+import sys
+import time
+
+HOST = "pod153"
+PASSWORD = "POD153_LOGIN_PASSWORD"
+ASKPASS = "POD153_WAKE_ASKPASS"
+PROBE = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", HOST]
+
+
+def state() -> str:
+    """Return down, unverified, denied, preboot, login-window, or desktop."""
+    result = subprocess.run(
+        [*PROBE, "stat", "-f", "%Su", "/dev/console"],
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        return (
+            "desktop" if result.stdout.strip() not in ("", "root") else "login-window"
+        )
+    # Pre-boot sshd cannot read the data volume: it presents its own host key and
+    # offers only password logins, while the booted sshd takes keys alone.
+    if "REMOTE HOST IDENTIFICATION HAS CHANGED" in result.stderr:
+        return "preboot"
+    denied = re.search(r"Permission denied \(([^)]*)\)", result.stderr)
+    if denied:
+        return (
+            "preboot" if re.search(r"password|keyboard", denied.group(1)) else "denied"
+        )
+    if "Host key verification failed" in result.stderr:
+        return "unverified"
+    return "down"
+
+
+def unlock() -> None:
+    """Send the FileVault password; pre-boot sshd drops the session once it unlocks."""
+    subprocess.run(
+        [
+            "ssh",
+            "-o",
+            "PubkeyAuthentication=no",
+            "-o",
+            "PreferredAuthentications=keyboard-interactive,password",
+            "-o",
+            "NumberOfPasswordPrompts=1",
+            "-o",
+            "ConnectTimeout=10",
+            "-o",
+            "HostKeyAlias=pod153-preboot",
+            "-o",
+            "StrictHostKeyChecking=accept-new",
+            HOST,
+            "true",
+        ],
+        stdin=subprocess.DEVNULL,
+        env={
+            **os.environ,
+            "SSH_ASKPASS": os.path.abspath(__file__),
+            "SSH_ASKPASS_REQUIRE": "force",
+            ASKPASS: "1",
+        },
+        check=False,
+    )
+
+
+def wake(timeout: float) -> str:
+    """Unlock at most once and wait for the desktop; return the final state."""
+    deadline = time.monotonic() + timeout
+    unlocked = False
+    current = state()
+    while current != "desktop" and time.monotonic() < deadline:
+        if current == "preboot" and not unlocked:
+            log("pre-boot reached; sending the FileVault password")
+            unlock()
+            unlocked = True
+        time.sleep(10)
+        current = state()
+    return current
+
+
+def log(message: str) -> None:
+    print(message, flush=True)
+
+
+def main() -> None:
+    if os.environ.get(ASKPASS):
+        print(os.environ[PASSWORD])
+        return
+    parser = argparse.ArgumentParser(description=__doc__)
+    commands = parser.add_subparsers(dest="command", required=True)
+    commands.add_parser("status", help="print pod153's state")
+    wake_command = commands.add_parser("wake", help="unlock and wait for the desktop")
+    wake_command.add_argument("--timeout", type=float, default=900)
+    commands.add_parser("watch", help="unlock pod153 whenever it reaches pre-boot")
+    args = parser.parse_args()
+    if args.command != "status" and not os.environ.get(PASSWORD):
+        parser.error(f"{PASSWORD} is required; run under fnox-host exec")
+
+    if args.command == "status":
+        log(state())
+    elif args.command == "wake":
+        final = wake(args.timeout)
+        log(final)
+        sys.exit(0 if final == "desktop" else 1)
+    else:
+        previous = None
+        while True:
+            current = state()
+            if current != previous:
+                log(f"pod153 is {current}")
+                previous = current
+            if current == "preboot":
+                final = wake(900)
+                log(f"pod153 is {final}")
+                previous = final
+                if final == "preboot":
+                    # A wrong password must not turn into a stream of failed unlocks.
+                    log("unlock did not take; waiting an hour before retrying")
+                    time.sleep(3600)
+            time.sleep(30)
+
+
+if __name__ == "__main__":
+    main()

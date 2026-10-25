@@ -11,3 +11,9 @@ The helper keeps its daily-maintenance stamp at `~/.cache/ansiblonomicon/homebre
 Homebrew's public `bundle list --mas` prints app names rather than IDs. The helper therefore loads `bundle/brewfile` and uses Bundle's private `Homebrew::Bundle::Brewfile.read(file: PATH)` API through `brew ruby`. Parsing happens before `bundle check`, because Bundle uses status 1 for both malformed Brewfiles and ordinary drift. This private API is the compatibility point to revisit if Homebrew provides an ID-bearing public listing format.
 
 Due cleanup is deliberately bounded with the positive `--formula`, `--cask`, and `--tap` selectors. Homebrew combines those selectors, so formulae, casks, and taps are cleaned while Bundle extensions such as MAS, npm, uv, and Go stay outside this capability's cleanup ownership.
+
+## pod153 and the desktop record
+
+pod153 reconciles `Brewfile.pod153`. `Brewfile` is the personal desktop loadout it ran before becoming a server, kept so a desktop Mac can be restored from it. Bundle cleanup removed that loadout's casks without `--zap`, so application data in `~/Library` survived. Bundle does not own App Store cleanup, so the dropped `mas` entries were uninstalled once with `mas uninstall`.
+
+Apps no Brewfile declared were moved to the Trash on 2026-10-25, their data left in place: the Setapp suite (AirBuddy, Bartender, BetterTouchTool, CleanMyMac, CleanShot X, Craft, Dato, DisplayBuddy, Godspeed, GoodTask, Hand Mirror, Marked QL, Paste, Proxyman, Soulver, Spark Mail, Supercharge, TextSniper, Tripsy), Beeper Desktop, Cider, 2FHey, Minis, Polymath, Rangefinder, Sequel, supaterm, TurboTax 2025, and the Shure drivers. MiniWhisper is built from its own source checkout instead of the nightly cask.

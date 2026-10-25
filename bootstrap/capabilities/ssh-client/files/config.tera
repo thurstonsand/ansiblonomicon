@@ -1,4 +1,6 @@
+{% if vars.ssh_client_host != "pod153" %}
 Include ~/.ssh/1Password/config
+{% endif %}
 Include ~/.ssh/config.d/*.conf
 
 # SSH via Cloudflare Tunnel (hostname-based access)
@@ -16,12 +18,48 @@ Host haos
   HostKeyAlias haos
   ProxyCommand ~/.local/libexec/ssh-smart-proxy haos 192.168.1.89 22222 haos-ssh.thurstons.house
 
-{% if vars.ssh_client_host == "pod042" %}
+{% if vars.ssh_client_host == "pod042" or vars.ssh_client_host == "pod153" %}
 Host github.com
   User git
   IdentityFile ~/.ssh/id_ed25519_git
   IdentitiesOnly yes
+{% endif %}
+{% if vars.ssh_client_host == "pod153" %}
+
+Host pod042
+  User thurstonsand
+  HostKeyAlias pod042
+  IdentityFile ~/.ssh/id_ed25519_git
+  IdentitiesOnly yes
+  ProxyCommand ~/.local/libexec/ssh-smart-proxy pod042 10.10.10.42 22 pod042-ssh.thurstons.house
+  RequestTTY yes
+
+Host pod042-ts
+  HostName 100.64.249.18
+  User thurstonsand
+  HostKeyAlias pod042
+  IdentityFile ~/.ssh/id_ed25519_git
+  IdentitiesOnly yes
+  RequestTTY yes
+{% elif vars.ssh_client_host == "pod042" %}
+
+Host pod153
+  HostName 10.10.10.53
+  User thurstonsand
+  HostKeyAlias pod153
+  UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/pod153.known_hosts
+  IdentityFile ~/.ssh/id_ed25519_git
+  IdentitiesOnly yes
 {% else %}
+
+Host pod153
+  HostName 10.10.10.53
+  User thurstonsand
+  HostKeyAlias pod153
+  UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/pod153.known_hosts
+  IdentityFile ~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub
+  IdentitiesOnly yes
+
 Host pod042
   User thurstonsand
   ForwardAgent yes
@@ -68,8 +106,6 @@ Host *
   ServerAliveCountMax 3
   AddKeysToAgent no
   HashKnownHosts no
-{% if vars.host_os == "darwin" %}
-  IdentityAgent "~/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
-{% elif vars.host_profile == "omarchy" %}
+{% if vars.host_profile == "omarchy" %}
   IdentityAgent ~/.1password/agent.sock
 {% endif %}

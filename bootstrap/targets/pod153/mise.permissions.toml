@@ -1,0 +1,9 @@
+# Nobody sits at pod153 to answer the Touch ID sheet pam_tid raises, so sudo skips authentication instead.
+[bootstrap.files."/etc/sudoers.d/thurstonsand"]
+content = "thurstonsand ALL=(ALL:ALL) NOPASSWD: ALL\n"
+owner = "root"
+group = "wheel"
+mode = "0440"
+
+[bootstrap.files."/etc/pam.d/sudo_local"]
+state = "absent"

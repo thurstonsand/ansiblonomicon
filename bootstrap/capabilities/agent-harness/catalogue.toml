@@ -34,6 +34,15 @@ excluded_on = ["work"]
 name = "nurb"
 skills = { "nurb" = "skills/nurb" }
 
+# The driver fetches the skill pack matching its installed version; Codex keeps its own computer use.
+[[sources]]
+local = "/Users/thurstonsand/.cua-driver/skills"
+included_on = ["pod153"]
+[[sources.plugins]]
+name = "cua-driver"
+skills = { "cua-driver" = "cua-driver" }
+target_agents = ["claude", "amp", "pi"]
+
 [[sources]]
 local = "agents/pi"
 [[sources.plugins]]
