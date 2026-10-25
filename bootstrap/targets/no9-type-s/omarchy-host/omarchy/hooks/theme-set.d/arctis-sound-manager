@@ -1,0 +1,7 @@
+#!/bin/bash
+# ASM reads user themes only when its tray starts, so new colours appear at the next login.
+set -euo pipefail
+themes="${XDG_CONFIG_HOME:-$HOME/.config}/arctis-sound-manager/themes"
+mkdir -p "$themes"
+cp ~/.local/state/omarchy/current/theme/arctis-sound-manager.ini "$themes/omarchy.ini.tmp"
+mv "$themes/omarchy.ini.tmp" "$themes/omarchy.ini"

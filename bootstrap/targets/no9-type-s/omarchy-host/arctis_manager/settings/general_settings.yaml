@@ -1,0 +1,21 @@
+micro_input_source: __manual__
+oled_display_order: [sonar_mode, profile, eq, eq_chat, media, weather]
+oled_show_battery: true
+oled_show_eq: false
+oled_show_media: true
+oled_show_mic_status: false
+oled_show_profile: false
+oled_show_sonar_mode: false
+oled_show_time: true
+oled_show_weather_city: true
+oled_time_24h: true
+preferred_device: 1038:2270@3-2.4.4
+systray_master_osd: true
+systray_show_battery: false
+theme: omarchy
+weather_city_display: Roswell
+weather_enabled: true
+weather_lat: 34.02332
+weather_location: Roswell, GA
+weather_lon: -84.360022
+weather_units: fahrenheit

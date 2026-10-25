@@ -1,6 +1,11 @@
 [dotfiles]
 "~/.config/hypr/monitors.lua" = { source = "omarchy-host/hypr/monitors.lua", mode = "symlink" }
 "~/.config/omarchy/shell.json" = { source = "omarchy-host/shell.json", mode = "symlink" }
+# Directories, because ASM saves a file by renaming a temp file over it, which would replace a file symlink.
+"~/.config/arctis_manager/settings" = { source = "omarchy-host/arctis_manager/settings", mode = "symlink" }
+"~/.config/arctis_manager/profiles" = { source = "omarchy-host/arctis_manager/profiles", mode = "symlink" }
+"~/.config/omarchy/themed/arctis-sound-manager.ini.tpl" = { source = "omarchy-host/omarchy/themed/arctis-sound-manager.ini.tpl", mode = "symlink" }
+"~/.config/omarchy/hooks/theme-set.d/arctis-sound-manager" = { source = "omarchy-host/omarchy/hooks/theme-set.d/arctis-sound-manager", mode = "symlink" }
 
 # Match Omarchy install/hardware/nvidia.sh early KMS configuration.
 

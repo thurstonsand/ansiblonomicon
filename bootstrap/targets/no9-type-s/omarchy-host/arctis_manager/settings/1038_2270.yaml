@@ -1,0 +1,8 @@
+{auto_off_time_minutes: 5, bluetooth_auto_mute: 0, bluetooth_default: 1, chatmix_enabled: 1,
+  dial_interface: -1, equalizer_bluetooth: 0, equalizer_mic: 0, equalizer_wireless: 0,
+  gain: 0, line_out: 1, line_out_stream_aux_volume: 100, line_out_stream_main_left_volume: 100,
+  line_out_stream_main_right_volume: 100, mic_led_brightness: 10, mic_sidetone_boom: 0,
+  mic_sidetone_ear: 0, mic_volume: 10, noise_cancelling: 2, noise_cancelling_level: 3,
+  sonar_enabled: 1, station_home_screen_options: 0, station_home_screen_view: 0, station_screen_brightness: 10,
+  station_screen_saver_timeout: 4, station_screensaver: 1, station_volume: 28, transparent_noise_cancelling_level: 8,
+  wireless_mode: 0}

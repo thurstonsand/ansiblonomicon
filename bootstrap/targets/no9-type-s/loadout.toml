@@ -9,3 +9,10 @@ lib32-nvidia-utils = "present"
 libva-nvidia-driver = "present"
 nvidia-open-dkms = "present"
 nvidia-utils = "present"
+
+# Arctis Sound Manager's ClearCast mic noise suppression.
+noise-suppression-for-voice = "present"
+
+# The signed pacman repo would not survive `omarchy refresh pacman`, which rewrites /etc/pacman.conf.
+[aur]
+arctis-sound-manager = "present"
