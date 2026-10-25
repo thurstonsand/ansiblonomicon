@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=LocalSend
+Comment=LocalSend startup script
+Exec=localsend --hidden
+StartupNotify=false
+Terminal=false

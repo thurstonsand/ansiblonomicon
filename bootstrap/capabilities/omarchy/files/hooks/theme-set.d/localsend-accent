@@ -1,0 +1,15 @@
+#!/bin/bash
+# LocalSend reads its colour only at startup and rewrites its whole preferences file from memory, so stop it before writing.
+# Naming this hook "localsend" would let pkill -x localsend match the hook itself.
+set -euo pipefail
+prefs=~/.local/share/org.localsend.localsend_app/shared_preferences.json
+[ -f "$prefs" ] || exit 0
+running=
+if pkill -x localsend; then
+  running=1
+  while pgrep -x localsend >/dev/null; do sleep 0.1; done
+fi
+accent=$(omarchy-theme-color accent)
+jq --arg c "${accent#\#}" '."flutter.ls_custom_color" = $c' "$prefs" >"$prefs.tmp"
+mv "$prefs.tmp" "$prefs"
+[ -z "$running" ] || setsid -f uwsm-app -- localsend --hidden >/dev/null 2>&1

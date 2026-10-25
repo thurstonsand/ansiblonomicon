@@ -60,6 +60,7 @@ sudo -n udevadm trigger --property-match=ID_VENDOR_ID=35ef
 run = '''
 # Superwhisper's installer also links its Omarchy panel, menu row, fcitx5 addon, and agent skill, and writes hypr/bindings.lua.
 "{{ config_root }}/omarchy/libexec/superwhisper-install"
+"{{ config_root }}/omarchy/libexec/dodosend-install"
 # bindings.lua dofile()s Superwhisper's generated shortcuts.lua, which stays out of git and so is missing on a fresh checkout.
 [ -f ~/.config/superwhisper/shortcuts.lua ] || ~/.local/bin/superwhisper shortcuts apply >/dev/null
 # The rest of what Superwhisper's auto-learned vocabulary needs, plus Brave Origin, which it skips. Only the flag line is owned here,
@@ -103,11 +104,16 @@ fi
 "~/.config/omarchy/themed" = { source = "omarchy/themed", mode = "symlink-each" }
 "~/.config/omarchy/hooks/theme-set.d/codex" = { source = "omarchy/hooks/theme-set.d/codex", mode = "symlink" }
 "~/.config/omarchy/hooks/theme-set.d/bat" = { source = "omarchy/hooks/theme-set.d/bat", mode = "symlink" }
+"~/.config/omarchy/hooks/theme-set.d/localsend-accent" = { source = "omarchy/hooks/theme-set.d/localsend-accent", mode = "symlink" }
 "~/.config/omarchy/hooks/theme-set.d/sidra" = { source = "omarchy/hooks/theme-set.d/sidra", mode = "symlink" }
 "~/.config/bat/config" = { source = "omarchy/bat/config", mode = "symlink" }
 "~/.config/hunk/extensions/omarchy-theme.ts" = { source = "omarchy/hunk/omarchy-theme.ts", mode = "symlink" }
 # Hunk rewrites its config when a theme is picked in its selector, which would break a symlink.
 "~/.config/hunk/config.toml" = { source = "omarchy/hunk/config.toml", mode = "copy" }
+# LocalSend keeps its TLS identity and receive history beside these settings, so only these keys are owned.
+"~/.local/share/org.localsend.localsend_app/shared_preferences.json/settings" = { source = "omarchy/localsend/settings.json.tera", merge = true, template = "tera" }
+# LocalSend's own Autostart toggle reads and writes this path.
+"~/.config/autostart/localsend_app.desktop" = { source = "omarchy/autostart/localsend_app.desktop", mode = "symlink" }
 "~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }
 # Superwhisper replaces its files on save, which would break a file symlink; linking the directory keeps the replacement in the repo.
 "~/.config/superwhisper" = { source = "omarchy/superwhisper", mode = "symlink" }
@@ -123,5 +129,7 @@ fi
 "~/.local/share/icons/hicolor/256x256/apps/sidra.png" = { source = "omarchy/icons/sidra.png", mode = "symlink" }
 # Selects the palette Sidra's theme-set hook writes, and leaves upgrades to mise instead of the AppImage's self-updater.
 "~/.config/Sidra/config.json/omarchy" = { source = "omarchy/sidra/config.json", merge = true }
+"~/.local/share/applications/dodosend.desktop" = { source = "omarchy/applications/dodosend.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/dodosend.png" = { source = "omarchy/icons/dodosend.png", mode = "symlink" }
 "~/.local/share/applications/pod042 Desktop.desktop" = { source = "omarchy/applications/pod042 Desktop.desktop", mode = "symlink" }
 "~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }

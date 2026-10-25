@@ -1,0 +1,9 @@
+{
+  "flutter.ls_alias": "{{ exec(command="uname -n") | trim }}",
+  "flutter.ls_color": "custom",
+  "flutter.ls_custom_color": "{{ exec(command="omarchy-theme-color accent") | trim | trim_start_matches(pat="#") }}",
+  "flutter.ls_quick_save": "on",
+  "flutter.ls_auto_finish": true,
+  "flutter.ls_minimize_to_tray": true,
+  "flutter.ls_port": 53317
+}
