@@ -77,6 +77,17 @@ environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bi
 restart = "always"
 restart_sec = "30"
 
+[bootstrap.linux.systemd.units.claude-remote-control]
+description = "Claude Remote Control for pod042, rooted at ~/code"
+exec_start_pre = ["/usr/bin/grep -q claudeAiOauth %h/.claude/.credentials.json"]
+exec_start = '~/.local/bin/claude remote-control --name "pod042: ~/code" --spawn same-dir'
+working_directory = "~/code"
+environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin" }
+# Its status screen redraws to stdout forever; only stderr is worth keeping.
+standard_output = "null"
+restart = "always"
+restart_sec = "30"
+
 [bootstrap.linux.systemd.units.herdr]
 description = "Herdr terminal workspace server for pod042"
 exec_start_pre = ["/usr/bin/test -x %h/.local/share/mise/shims/herdr"]

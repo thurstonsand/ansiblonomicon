@@ -56,6 +56,17 @@ Secrets are declared in `fnox.toml` and `fnox.pod042.toml`. Reconciliation resol
 
 The retained pod042 service-account token provides unattended Agent-vault access. Installing or rotating it is the separate attended `mise pod042:install-service-token` operation.
 
+## Renewing Claude's login
+
+`dev.mise.claude-remote-control.service` needs the full-scope claude.ai login in `~/.claude/.credentials.json`, which lapses after about 28 days; `setup-token` credentials cannot run it. `env -u CLAUDE_CODE_OAUTH_TOKEN claude auth status` shows which login is in use, and `jq '.claudeAiOauth.refreshTokenExpiresAt / 1000 | todate' ~/.claude/.credentials.json` shows when it lapses. To renew it, follow `using-pod042-desktop` for the browser:
+
+1. Start `tail -f FILE | env -u CLAUDE_CODE_OAUTH_TOKEN BROWSER=true claude auth login --claudeai` in the background, with output to a log, and open the printed authorize URL in the desktop Chromium with agent-browser on CDP 9222.
+2. Press "Continue with Google", choose `thurstonsand@gmail.com`, press "Continue", then "Authorize".
+3. Read the code under "Paste this into Claude Code:" from the page snapshot and append it to FILE. Never print it. The log reports "Login successful".
+4. Kill the `tail` by its PID (a `pkill -f` pattern matches your own shell), then `systemctl --user restart dev.mise.claude-remote-control.service` so the server stops refreshing the replaced token.
+
+On 2026-10-25 the desktop profile had no claude.ai session, and "Continue with Google" raised an hCaptcha challenge. Agents do not solve CAPTCHAs: hand the Desktop tab to the user at that point, then finish steps 2 to 4.
+
 ## Safety boundaries
 
 - Read `bootstrap/targets/pod042/datasets/README.md` before changing datasets or migration state.

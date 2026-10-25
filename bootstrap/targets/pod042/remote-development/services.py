@@ -15,6 +15,7 @@ HERDR_UNIT = "dev.mise.herdr.service"
 UNITS = (
     "t3code.service",
     "dev.mise.amp-remote.service",
+    "dev.mise.claude-remote-control.service",
     HERDR_UNIT,
     "dev.mise.chatgpt.service",
     "chatgpt-upgrade.path",
@@ -43,6 +44,13 @@ def require_amp() -> None:
     if not (HOME / ".local/share/amp/secrets.json").is_file():
         raise SystemExit(
             "Amp login state missing. Run amp login as thurstonsand first."
+        )
+
+
+def require_claude() -> None:
+    if "claudeAiOauth" not in (HOME / ".claude/.credentials.json").read_text():
+        raise SystemExit(
+            "Claude login missing. Run claude auth login --claudeai as thurstonsand first."
         )
 
 
@@ -102,6 +110,7 @@ def main() -> None:
     os.chdir(HOME)
     require_t3()
     require_amp()
+    require_claude()
     require_chatgpt()
     require_herdr()
     if action == "plan":
@@ -121,7 +130,7 @@ def main() -> None:
             "Apply: enable operator linger if absent; vendor-idempotent t3 service install; "
             "start T3 and the ChatGPT upgrade watch, restarting on unit changes; stop any "
             "Herdr server systemd does not own, losing its panes, and restart Herdr on a "
-            "stale binary. Mise applies the Amp, Herdr, ChatGPT, and 1Password units."
+            "stale binary. Mise applies the Amp, Claude, Herdr, ChatGPT, and 1Password units."
         )
         return
     if action == "apply":
