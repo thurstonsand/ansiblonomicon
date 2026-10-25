@@ -1,5 +1,6 @@
 [Unit]
 Description=Restart the ChatGPT app when it still runs a replaced package
+StartLimitIntervalSec=0
 
 [Service]
 Type=oneshot
