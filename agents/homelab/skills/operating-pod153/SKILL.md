@@ -13,7 +13,7 @@ pod153 is a MacBook Pro running as a server next to pod042. Nobody sits at it, s
 - Reconciliation: `mise reconcile [--check] [-t tags]` on pod153 itself. `mise run reconcile:tags` lists the tags. A LaunchAgent runs the full reconcile daily at 04:30, logging to `~/Library/Logs/ansiblonomicon-reconcile.log`.
 - Secrets: `scripts/fnox-host get NAME`. The `agent` provider uses the service-account token, so it never prompts. Never route unattended work through the 1Password app or its SSH agent; it is locked whenever nobody is at the Mac.
 - Screen Sharing: `vnc://pod153` with the account name and password. It offers only Apple's authentication (RFB security type 30 and newer), which macOS Screen Sharing, Remmina, and RealVNC speak; plain VNC-password clients cannot connect.
-- Hardware console: the GL.iNet KVM on its HDMI and USB, the only path through a hard freeze or a pre-boot that SSH cannot reach.
+- Hardware console: none. `pod042-kvm` is wired to pod042, so a hard freeze or a pre-boot that SSH cannot reach needs someone at the Mac.
 
 ## Boot states
 
@@ -21,14 +21,16 @@ pod153 is a MacBook Pro running as a server next to pod042. Nobody sits at it, s
 
 | State | Meaning | Next step |
 | --- | --- | --- |
-| `down` | Nothing answers SSH. | Wait; a Mac does not power on over the network. After a long outage, use the KVM. |
+| `down` | Nothing answers SSH. | Wait; a Mac does not power on over the network. After a restart, see the Wi-Fi note below. |
 | `unverified` | No pinned host key for `pod153`. | Check `~/.ssh/pod153.known_hosts`, which `ssh-client` links from the repo. |
 | `denied` | The booted sshd refused the key. | Check `authorized_keys`; the watcher never sends the password here. |
 | `preboot` | FileVault is locked; only password SSH answers. | `pod153-wake wake` sends the password once. |
-| `login-window` | Unlocked, nobody logged in. LaunchAgents and the Amp runner are not running. | Log in through Screen Sharing or the KVM. |
+| `login-window` | Unlocked, nobody logged in. LaunchAgents and the Amp runner are not running. | Log in through Screen Sharing. |
 | `desktop` | Logged in. | Nothing. |
 
 pod042 runs `pod153-wake watch` as the `dev.mise.pod153-wake` user service, so an unplanned restart unlocks itself. `wake` and `watch` need `POD153_LOGIN_PASSWORD`: run them as `fnox-host exec --secret POD153_LOGIN_PASSWORD -- scripts/pod153-wake wake`. Check `journalctl --user -u dev.mise.pod153-wake` on pod042 when pod153 stays in `preboot`; the watcher waits an hour after an unlock that did not take, so a wrong password cannot turn into a lockout.
+
+Pre-boot joins only an open or WPA2-PSK Wi-Fi network the Mac has joined before, or unauthenticated Ethernet. The temporary Bunker SSID is WPA3-only, so on it an unplanned restart stays `down` until someone types the password at the Mac.
 
 ## Restarting
 
@@ -65,6 +67,6 @@ Claude Remote Control needs the full-scope login in the keychain, which lapses a
 
 ## Safety boundaries
 
-- Restarts, network changes, and anything touching Remote Login or Screen Sharing can strand pod153. Keep one working path (SSH, Screen Sharing, or the KVM) while changing another.
+- Restarts, network changes, and anything touching Remote Login or Screen Sharing can strand pod153. Keep one working path (SSH or Screen Sharing) while changing another.
 - Do not disable FileVault or enable auto-login to make boots easier; pre-boot unlock over SSH is the supported path.
 - Do not arm `fdesetup authrestart -delayminutes -1` as a standing setting: it keeps an unlock key in memory until the next restart.
