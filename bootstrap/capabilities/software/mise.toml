@@ -2,7 +2,19 @@
 source_freshness_hash_contents = true
 
 [tasks.claude-code]
-run = 'software/install-official claude-code "$HOME/.local/bin/claude" https://claude.ai/install.sh ${SOFTWARE_CHECK:+--check}'
+run = '''
+set -eu
+claude="$HOME/.local/bin/claude"
+software/install-official claude-code "$claude" https://claude.ai/install.sh ${SOFTWARE_CHECK:+--check}
+[ -x "$claude" ] || exit 0
+if [ -n "${SOFTWARE_CHECK:-}" ]; then
+  current=$("$claude" --version | cut -d' ' -f1)
+  latest=$(curl -fsSL https://downloads.claude.ai/claude-code-releases/latest)
+  [ "$current" = "$latest" ] || echo "claude-code would be updated: $current -> $latest" >&2
+  exit 0
+fi
+"$claude" update
+'''
 
 [tasks.cua-driver]
 run = '''
