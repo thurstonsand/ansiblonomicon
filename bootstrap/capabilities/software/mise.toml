@@ -48,11 +48,23 @@ if ! "$HOME/.local/bin/t3" connect status --json | python3 -c 'import json, sys;
   echo "T3 enrollment missing. Run t3 connect link --headless first." >&2
   exit 1
 fi
+service_env="T3CODE_HOST=0.0.0.0"
+if [ "$(cat "$HOME/.t3/service.env" 2>/dev/null || true)" != "$service_env" ]; then
+  if [ -n "${SOFTWARE_CHECK:-}" ]; then
+    echo "t3 service.env would be written: $service_env" >&2
+  else
+    printf '%s\n' "$service_env" > "$HOME/.t3/service.env"
+    restart=1
+  fi
+fi
 if [ -n "${SOFTWARE_CHECK:-}" ]; then
   "$HOME/.local/bin/t3" service status
   exit 0
 fi
 "$HOME/.local/bin/t3" service install
+if [ -n "${restart:-}" ]; then
+  "$HOME/.local/bin/t3" service restart
+fi
 '''
 
 [tasks.berkeley-mono]
