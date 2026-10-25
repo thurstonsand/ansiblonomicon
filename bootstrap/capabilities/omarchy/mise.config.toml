@@ -62,7 +62,7 @@ done
 # Omarchy renders its templates and theme files only on a theme switch, so re-render when a source changed since the last one
 # or a consumer's copy is missing, as on a fresh home where the hooks first ran before agent-config created ~/.claude.
 changed=$(find -L ~/.config/omarchy/themed ~/.config/omarchy/themes -newer ~/.local/state/omarchy/current/theme.name -type f -print -quit)
-if [ -n "$changed" ] || [ ! -f ~/.codex/themes/omarchy.tmTheme ] || [ ! -f ~/.config/bat/themes/omarchy.tmTheme ] || [ ! -f ~/.claude/themes/omarchy.json ]; then
+if [ -n "$changed" ] || [ ! -f ~/.codex/themes/omarchy.tmTheme ] || [ ! -f ~/.config/bat/themes/omarchy.tmTheme ] || [ ! -f ~/.claude/themes/omarchy.json ] || [ ! -f ~/.config/Sidra/custom-theme.json ]; then
   omarchy-theme-refresh
 fi
 '''
@@ -91,6 +91,7 @@ fi
 "~/.config/omarchy/themed" = { source = "omarchy/themed", mode = "symlink-each" }
 "~/.config/omarchy/hooks/theme-set.d/codex" = { source = "omarchy/hooks/theme-set.d/codex", mode = "symlink" }
 "~/.config/omarchy/hooks/theme-set.d/bat" = { source = "omarchy/hooks/theme-set.d/bat", mode = "symlink" }
+"~/.config/omarchy/hooks/theme-set.d/sidra" = { source = "omarchy/hooks/theme-set.d/sidra", mode = "symlink" }
 "~/.config/bat/config" = { source = "omarchy/bat/config", mode = "symlink" }
 "~/.config/hunk/extensions/omarchy-theme.ts" = { source = "omarchy/hunk/omarchy-theme.ts", mode = "symlink" }
 # Hunk rewrites its config when a theme is picked in its selector, which would break a symlink.
@@ -104,5 +105,9 @@ fi
 "~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
 "~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }
+"~/.local/share/applications/sidra.desktop" = { source = "omarchy/applications/sidra.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/sidra.png" = { source = "omarchy/icons/sidra.png", mode = "symlink" }
+# Selects the palette Sidra's theme-set hook writes, and leaves upgrades to mise instead of the AppImage's self-updater.
+"~/.config/Sidra/config.json/omarchy" = { source = "omarchy/sidra/config.json", merge = true }
 "~/.local/share/applications/pod042 Desktop.desktop" = { source = "omarchy/applications/pod042 Desktop.desktop", mode = "symlink" }
 "~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }

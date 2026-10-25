@@ -1,0 +1,23 @@
+[Desktop Entry]
+Name=Sidra
+Comment=Apple Music
+Exec=sidra %U
+Terminal=false
+Type=Application
+Icon=sidra
+StartupWMClass=sidra
+MimeType=x-scheme-handler/itms;
+Categories=AudioVideo;Audio;Player;
+Actions=PlayPause;Next;Previous;
+
+[Desktop Action PlayPause]
+Name=Play-Pause
+Exec=dbus-send --print-reply --dest=org.mpris.MediaPlayer2.sidra /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause
+
+[Desktop Action Next]
+Name=Next
+Exec=dbus-send --print-reply --dest=org.mpris.MediaPlayer2.sidra /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Next
+
+[Desktop Action Previous]
+Name=Previous
+Exec=dbus-send --print-reply --dest=org.mpris.MediaPlayer2.sidra /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Previous

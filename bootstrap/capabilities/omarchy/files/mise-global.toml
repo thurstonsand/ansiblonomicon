@@ -11,6 +11,7 @@ golangci-lint = "latest"
 "github:steipete/CodexBar" = { version = "latest", asset_pattern = "CodexBarCLI-*-linux-x86_64.tar.gz" }
 # First-party release: skip mise's default 24h supply-chain cooling.
 "github:thurstonsand/agent-switchboard" = { version = "latest", minimum_release_age = "0s" }
+"github:wimpysworld/sidra" = { version = "latest", asset_pattern = "Sidra-linux-x86_64.AppImage", bin = "sidra" }
 node = "lts"
 "npm:agent-browser" = "latest"
 # Reviewed 2026-10-05: @pierre/theme lost npm provenance when a co-maintainer took

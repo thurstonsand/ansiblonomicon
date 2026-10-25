@@ -1,0 +1,7 @@
+#!/bin/bash
+set -euo pipefail
+# Sidra watches its config directory, so a rename into place restyles a running window; a symlink's target changing would not.
+dir=~/.config/Sidra
+mkdir -p "$dir"
+cp ~/.local/state/omarchy/current/theme/sidra-theme.json "$dir/custom-theme.json.tmp"
+mv "$dir/custom-theme.json.tmp" "$dir/custom-theme.json"
