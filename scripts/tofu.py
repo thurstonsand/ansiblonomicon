@@ -21,6 +21,7 @@ ALIASES = {
         "TF_VAR_lunar_tear_passphrase": "LUNAR_TEAR_PASSPHRASE",
         "TF_VAR_the_village_passphrase": "THE_VILLAGE_PASSPHRASE",
         "TF_VAR_scanners_passphrase": "SCANNERS_PASSPHRASE",
+        "TF_VAR_bunker_passphrase": "BUNKER_PASSPHRASE",
     },
 }
 

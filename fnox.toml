@@ -27,6 +27,7 @@ YORHA_PASSPHRASE = { provider = "agent", value = "op://agent/skmsezufiiwrbsna7ti
 LUNAR_TEAR_PASSPHRASE = { provider = "agent", value = "op://agent/p6kdhsa7nr7yxqf4gixob52qru/wireless network password" }
 THE_VILLAGE_PASSPHRASE = { provider = "agent", value = "op://agent/dt2x5v3l737zc7orz3ay6wsb4m/wireless network password" }
 SCANNERS_PASSPHRASE = { provider = "agent", value = "op://agent/3uf6msjlzhqeutxucr67ga4weu/wireless network password" }
+BUNKER_PASSPHRASE = { provider = "agent", value = "op://agent/ocppodmdld7zhwgmjrbqt54d7q/password" }
 CF_ACCESS_CLIENT_ID = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client id" }
 CF_ACCESS_CLIENT_SECRET = { provider = "agent", value = "op://agent/cpymdnizu6btxnmt7hyfflbaqe/client secret" }
 CLI_PROXY_API_KEY = { provider = "agent", value = "op://agent/vf3jsatixwtzauzoebt66xkiqe/apikey" }

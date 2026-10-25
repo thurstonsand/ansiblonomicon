@@ -266,6 +266,15 @@ resource "unifi_client" "pod042" {
   allow_existing   = true
 }
 
+# The MAC is macOS's fixed private address for the Bunker SSID; move it to the USB Ethernet dongle's once wired.
+resource "unifi_client" "pod153" {
+  mac              = "32:a7:b5:72:32:59"
+  name             = "pod153"
+  fixed_ip         = "10.10.10.53"
+  local_dns_record = "pod153"
+  allow_existing   = true
+}
+
 resource "unifi_client" "home_assistant" {
   mac              = "00:16:3e:48:41:42"
   name             = "home-assistant"

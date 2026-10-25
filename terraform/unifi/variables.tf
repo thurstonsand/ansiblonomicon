@@ -37,3 +37,8 @@ variable "scanners_passphrase" {
   type      = string
   sensitive = true
 }
+
+variable "bunker_passphrase" {
+  type      = string
+  sensitive = true
+}
