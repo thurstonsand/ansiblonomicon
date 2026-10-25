@@ -8,6 +8,7 @@ gh = "latest"
 go = "latest"
 gofumpt = "latest"
 golangci-lint = "latest"
+"github:Dygmalab/Bazecor" = { version = "latest", asset_pattern = "Bazecor-*-x64.AppImage", bin = "bazecor" }
 "github:steipete/CodexBar" = { version = "latest", asset_pattern = "CodexBarCLI-*-linux-x86_64.tar.gz" }
 # First-party release: skip mise's default 24h supply-chain cooling.
 "github:thurstonsand/agent-switchboard" = { version = "latest", minimum_release_age = "0s" }

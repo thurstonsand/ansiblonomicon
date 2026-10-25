@@ -21,6 +21,13 @@ owner = "root"
 group = "root"
 mode = "0755"
 
+# Bazecor's own copy of these rules, byte for byte; any difference makes it offer to rewrite them through polkit at every launch.
+[bootstrap.files."/etc/udev/rules.d/60-dygma.rules"]
+source = "omarchy/udev/60-dygma.rules"
+owner = "root"
+group = "root"
+mode = "0644"
+
 [bootstrap.secrets]
 yorha_passphrase = "YORHA_PASSPHRASE"
 lunar_tear_passphrase = "LUNAR_TEAR_PASSPHRASE"
@@ -40,9 +47,14 @@ owner = "root"
 group = "root"
 mode = "0600"
 
-# NetworkManager reads profiles from disk only on request. Reloading leaves the active connection up.
+# NetworkManager and udev read their files from disk only on request. Reloading leaves the active connection up, and the trigger
+# reaches only an attached Dygma keyboard.
 [bootstrap.hooks.pre-repos]
-run = "sudo -n nmcli connection reload"
+run = '''
+sudo -n nmcli connection reload
+sudo -n udevadm control --reload-rules
+sudo -n udevadm trigger --property-match=ID_VENDOR_ID=35ef
+'''
 
 [bootstrap.hooks.post-dotfiles]
 run = '''
@@ -105,6 +117,8 @@ fi
 "~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
 "~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }
+"~/.local/share/applications/bazecor.desktop" = { source = "omarchy/applications/bazecor.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/512x512/apps/bazecor.png" = { source = "omarchy/icons/bazecor.png", mode = "symlink" }
 "~/.local/share/applications/sidra.desktop" = { source = "omarchy/applications/sidra.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/sidra.png" = { source = "omarchy/icons/sidra.png", mode = "symlink" }
 # Selects the palette Sidra's theme-set hook writes, and leaves upgrades to mise instead of the AppImage's self-updater.

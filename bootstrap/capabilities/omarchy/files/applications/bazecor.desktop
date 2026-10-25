@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Bazecor
+Comment=Dygma keyboard configurator
+Exec=bazecor %U
+Terminal=false
+Type=Application
+Icon=bazecor
+Categories=Utility;
