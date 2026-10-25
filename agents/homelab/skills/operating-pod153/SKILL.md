@@ -10,7 +10,7 @@ pod153 is a MacBook Pro running as a server next to pod042. Nobody sits at it, s
 ## Entry points
 
 - SSH host: `pod153` (`10.10.10.53` on Bunker). Key login only after boot; pod042 and pod153 share the `id_ed25519_git` file key, the laptops use the operator key from 1Password.
-- Reconciliation: `mise reconcile [--check] [-t tags]` on pod153 itself. `mise run reconcile:tags` lists the tags. A LaunchAgent runs the full reconcile daily at 04:30, logging to `~/Library/Logs/ansiblonomicon-reconcile.log`.
+- Reconciliation: `mise reconcile [--check] [-t tags]` on pod153 itself. `mise run reconcile:tags` lists the tags. A LaunchAgent runs `scripts/reconcile-or-fix` daily at 04:30: it pulls main and reconciles, logging to `~/.local/state/ansiblonomicon/reconcile.log`. On failure it starts an Amp thread labeled `reconcile-failure` that fixes and pushes, or notifies Thurston.
 - Secrets: `scripts/fnox-host get NAME`. The `agent` provider uses the service-account token, so it never prompts. Never route unattended work through the 1Password app or its SSH agent; it is locked whenever nobody is at the Mac.
 - Screen Sharing: `vnc://pod153` with the account name and password. It offers only Apple's authentication (RFB security type 30 and newer), which macOS Screen Sharing, Remmina, and RealVNC speak; plain VNC-password clients cannot connect.
 - Hardware console: none. `pod042-kvm` is wired to pod042, so a hard freeze or a pre-boot that SSH cannot reach needs someone at the Mac.

@@ -1,0 +1,102 @@
+#!/usr/bin/env python3
+"""Pull and reconcile this host; on failure, hand the log to an Amp agent to fix or escalate."""
+
+import json
+import os
+from pathlib import Path
+import socket
+import subprocess
+import sys
+import tempfile
+import time
+
+REPO = Path(__file__).resolve().parents[1]
+LOG = Path.home() / ".local/state/ansiblonomicon/reconcile.log"
+PROMPT = """The scheduled reconcile on {host} failed with exit status {status} at {when}.
+The full log is {log}; its last lines are below.
+
+Find the root cause. Then:
+- If the fix belongs in this repository, make it, verify it by rerunning the failing capability (and its --check), commit it following the repository's conventions, pull --rebase, and push to main. Before committing, run `git status`. {tree} Never commit, stash, or discard changes you did not make.
+- If the failure was transient, such as a network or upstream outage, rerun the failing capability to confirm it now passes and change nothing.
+- If it needs Thurston, such as an expired login, a credential, a physical step, or a judgment call you should not make alone, do not guess.
+
+Finish every run by sending Thurston one push notification with notify_user: what failed, what you did, and anything he must do.
+
+```
+{tail}
+```
+"""
+
+
+def run_reconcile() -> int:
+    LOG.parent.mkdir(parents=True, exist_ok=True)
+    with LOG.open("w") as log:
+        for command in (
+            ["git", "-C", str(REPO), "pull", "--ff-only"],
+            ["mise", "-C", str(REPO), "run", "reconcile"],
+        ):
+            log.write(f"$ {' '.join(command)}\n")
+            log.flush()
+            status = subprocess.run(
+                command, stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT
+            ).returncode
+            if status:
+                return status
+    return 0
+
+
+def main() -> int:
+    dirty = subprocess.run(
+        ["git", "-C", str(REPO), "status", "--porcelain"],
+        capture_output=True,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    status = run_reconcile()
+    sys.stdout.write(LOG.read_text())
+    if not status:
+        return 0
+
+    host = socket.gethostname().split(".", 1)[0]
+    prompt = PROMPT.format(
+        host=host,
+        status=status,
+        when=time.strftime("%Y-%m-%d %H:%M %Z"),
+        log=LOG,
+        tree="The tree already had uncommitted changes before the reconcile started; leave them alone."
+        if dirty
+        else "The tree was clean before the reconcile started.",
+        tail="\n".join(LOG.read_text().splitlines()[-150:]),
+    )
+    # Nobody answers confirmation prompts here, so this one run allows every command.
+    settings_path = Path.home() / ".config/amp/settings.json"
+    settings: dict[str, object] = (
+        json.loads(settings_path.read_text()) if settings_path.exists() else {}
+    )
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
+        json.dump({**settings, "amp.dangerouslyAllowAll": True}, handle)
+    try:
+        subprocess.run(
+            [
+                "amp",
+                "--settings-file",
+                handle.name,
+                "--title",
+                f"{host} reconcile failed",
+                "--label",
+                "reconcile-failure",
+                "--no-archive-after-execute",
+                "-x",
+                prompt,
+            ],
+            cwd=REPO,
+            stdin=subprocess.DEVNULL,
+            check=False,
+        )
+    finally:
+        os.unlink(handle.name)
+    return status
+
+
+if __name__ == "__main__":
+    sys.exit(main())

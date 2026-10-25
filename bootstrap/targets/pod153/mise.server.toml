@@ -24,12 +24,11 @@ args = ["-g", "-a", "ChatGPT"]
 run_at_load = true
 
 [bootstrap.macos.launchd.agents."house.thurstons.reconcile"]
-program = "~/.local/bin/mise"
-args = ["run", "reconcile"]
+program = "~/Develop/ansiblonomicon/scripts/reconcile-or-fix"
 working_directory = "~/Develop/ansiblonomicon"
 start_calendar_interval = { hour = 4, minute = 30 }
 process_type = "Background"
-environment = { PATH = "/Users/thurstonsand/.local/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
+environment = { PATH = "/Users/thurstonsand/.local/bin:/Users/thurstonsand/.amp/bin:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
 stdout_path = "~/Library/Logs/ansiblonomicon-reconcile.log"
 stderr_path = "~/Library/Logs/ansiblonomicon-reconcile.log"
 
