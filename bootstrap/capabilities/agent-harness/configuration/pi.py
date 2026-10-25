@@ -21,8 +21,6 @@ PERSONAL_PACKAGES = [
     "pi-interview",
     "sideshow",
     "@thurstonsand/pi-paste",
-    # After pi-doppelclaude: Pi keeps the last compaction an extension returns.
-    "pi-cached-compaction",
 ]
 # Glimpse's Linux binary cannot resize windows until HazAT/glimpse merges this branch.
 GLIMPSE_LINUX_FORK = "git:github.com/thurstonsand/glimpse@fix/linux-resize"
@@ -35,7 +33,6 @@ WORK_PACKAGES = [
     "git:github.com/thurstonsand/agent-switchboard@pi",
     "git:github.com/nicobailon/pi-interview-tool",
     "git:github.com/hazat/glimpse",
-    "git:github.com/nicobailon/pi-cached-compaction",
 ]
 
 
