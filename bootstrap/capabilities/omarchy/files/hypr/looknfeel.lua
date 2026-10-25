@@ -48,3 +48,6 @@
 --     column_width = 0.97,
 --   },
 -- })
+
+-- A maximized window (SUPER + ALT + F) fills its monitor edge to edge.
+hl.workspace_rule({ workspace = "f[1]", gaps_out = 0, border_size = 0, no_rounding = true })
