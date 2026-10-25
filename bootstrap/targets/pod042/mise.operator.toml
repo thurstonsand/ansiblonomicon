@@ -96,6 +96,7 @@ curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_NON_INTERACTIVE=1 sh
 release=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
 if [ "$(readlink "$HOME/.local/bin/t3" || true)" != "$HOME/.t3/runtime/versions/${release##*/v}/t3" ]; then
   curl -fsSL https://t3.codes/install.sh | T3CODE_VERSION="${release##*/v}" sh
+  systemctl --user try-restart dev.mise.t3code-maggie.service
 fi
 test -x "$HOME/.amp/bin/amp"
 test -x "$HOME/.local/bin/claude"

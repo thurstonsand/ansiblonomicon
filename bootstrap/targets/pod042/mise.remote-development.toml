@@ -88,6 +88,16 @@ standard_output = "null"
 restart = "always"
 restart_sec = "30"
 
+# `t3 service install` owns the single t3code.service, so Maggie's instance is its own unit. She reaches it
+# through her own T3 Connect account, linked with `t3 connect link --headless --base-dir ~/.t3-maggie`.
+[bootstrap.linux.systemd.units.t3code-maggie]
+description = "T3 Code server for Maggie, rooted at ~/code/maggie"
+exec_start = "~/.local/bin/t3 serve --base-dir %h/.t3-maggie --host 127.0.0.1 --port 3774"
+working_directory = "~/code/maggie"
+environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin", NPM_CONFIG_USERCONFIG = "/home/thurstonsand/.config/t3code/npmrc" }
+restart = "always"
+restart_sec = "30"
+
 [bootstrap.linux.systemd.units.herdr]
 description = "Herdr terminal workspace server for pod042"
 exec_start_pre = ["/usr/bin/test -x %h/.local/share/mise/shims/herdr"]
