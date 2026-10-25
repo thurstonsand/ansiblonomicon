@@ -422,7 +422,7 @@ host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
   pod042|Thurstons-MacBook-Pro) environments=shell,shell-personal; parts=files,dotfiles; work=false ;;
   ML-DFC6YK6VJQ) environments=shell,shell-work; parts=files,dotfiles; work=true ;;
-  type-a-no2|no9-type-s) environments=shell,shell-omarchy; parts=dotfiles; work=false ;;
+  type-a-no2|no9-type-s) environments=shell-omarchy; parts=files,dotfiles; work=false ;;
   *) echo "Unregistered shell host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"

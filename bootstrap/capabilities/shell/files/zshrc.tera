@@ -1,13 +1,6 @@
 # .zshrc - Interactive shell configuration
-# Note: _evalcache and PATH are defined in .zshenv
+# Note: PATH is defined in .zshenv
 
-{% if vars.host_profile == "omarchy" %}
-# Omarchy owns options, history, completion, syntax highlighting, eza/zoxide aliases, and the
-# fzf, zoxide, starship, and mise inits. Sourced from the package so its updates apply as-is.
-source /usr/share/omarchy-zsh/shell/zoptions
-source /usr/share/omarchy-zsh/shell/all
-unalias c cx
-{% else %}
 # Completion initialization
 # Only regenerate .zcompdump if it's older than 24 hours
 autoload -Uz compinit
@@ -33,7 +26,7 @@ setopt NOTIFY               # report background job status immediately
 unsetopt LIST_BEEP          # no beep on ambiguous completion
 
 bindkey -e
-{% endif %}
+
 # Emacs-style key bindings
 bindkey "^[[3~" delete-char
 bindkey "^[[3;3~" kill-word # alt+fn+delete
@@ -43,13 +36,10 @@ bindkey -r -M emacs '^[a'
 {% if vars.host_os == "darwin" %}
 # Autosuggestions (via Homebrew)
 source /opt/homebrew/share/zsh-autosuggestions/zsh-autosuggestions.zsh 2>/dev/null || :
-{% elif vars.host_profile == "omarchy" %}
-source /usr/share/zsh/plugins/zsh-autosuggestions/zsh-autosuggestions.zsh
 {% else %}
 source /usr/share/zsh-autosuggestions/zsh-autosuggestions.zsh
 {% endif %}
 
-{% if vars.host_profile != "omarchy" %}
 {% if vars.host_os == "darwin" %}
 # Syntax highlighting (via Homebrew)
 source /opt/homebrew/share/zsh-syntax-highlighting/zsh-syntax-highlighting.zsh 2>/dev/null || :
@@ -68,7 +58,7 @@ fi
 
 # Initialize tools (interactive only)
 if [[ -o interactive ]]; then
-  _evalcache fzf --zsh
+  eval "$(fzf --zsh)"
 {% if vars.host_profile == "work" %}
   [ -f /opt/homebrew/etc/profile.d/autojump.sh ] && . /opt/homebrew/etc/profile.d/autojump.sh
   # Mirror zoxide's `--cmd cd`: prefer literal dirs, fall through to autojump's `j`.
@@ -84,7 +74,7 @@ if [[ -o interactive ]]; then
     fi
   }
 {% else %}
-  _evalcache zoxide init zsh
+  eval "$(zoxide init zsh)"
   # Omarchy's `cd`: literal dirs first, then zoxide, printing where it landed.
   alias cd="zd"
   zd() {
@@ -104,21 +94,18 @@ if [[ -o interactive ]]; then
   }
 {% endif %}
   if [[ $TERM != "dumb" ]]; then
-    _evalcache starship init zsh
+    eval "$(starship init zsh)"
   fi
 fi
-{% endif %}
 {% if vars.host_os == "darwin" %}
-_evalcache bun completions
-_evalcache wt shell zsh
+eval "$(bun completions)"
+eval "$(wt shell zsh)"
 {% endif %}
-_evalcache direnv hook zsh
-{% if vars.host_profile != "omarchy" %}
-_evalcache mise activate zsh
-{% endif %}
-_evalcache mise completion zsh
+eval "$(direnv hook zsh)"
+eval "$(mise activate zsh)"
+eval "$(mise completion zsh)"
 {% if vars.host_profile == "personal" and vars.host_os == "darwin" %}
-_evalcache shp completion zsh
+eval "$(shp completion zsh)"
 {% endif %}
 # Aliases
 if command -v prettyping &>/dev/null; then
@@ -143,9 +130,7 @@ claude() {
 }
 {% endif %}
 
-{% if vars.host_profile != "omarchy" %}
 source ~/.config/zsh/terminal-theme.zsh 2>/dev/null || :
-{% endif %}
 
 {% if vars.host_os == "darwin" %}
 alias bd='brew desc'

@@ -359,6 +359,9 @@ def _settings(
         custom["jira"] = {"browseUrl": data["jiraBrowseUrl"]}
     if custom:
         settings["powerlineCustom"] = custom
+    # Pi mints this for Sign in with ChatGPT, expects it to stay stable, and appends it last.
+    if "deviceId" in current:
+        settings["deviceId"] = current["deviceId"]
     return settings
 
 
@@ -433,19 +436,19 @@ def _executable(home: Path, hostname: str) -> str:
     command = (
         'pi_bin="$HOME/.local/libexec/pi"\npi_command=("$pi_bin")'
         if work
-        else 'pi_bin="${pi_node:h}/pi"\npi_command=("$pi_node" "$pi_bin")'
+        else 'pi_bin="${pi_node%/*}/pi"\npi_command=("$pi_node" "$pi_bin")'
     )
-    return f'''#!/usr/bin/env zsh
+    return f'''#!/usr/bin/env bash
 set -euo pipefail
 pi_node="${{PI_NODE:-$(mise which -C "{home}" node)}}"
 if [[ ! -x "$pi_node" ]]; then
-  print -u2 "pi: node is not executable: $pi_node"
+  echo "pi: node is not executable: $pi_node" >&2
   exit 127
 fi
-path=("${{pi_node:h}}" $path)
+PATH="${{pi_node%/*}}:$PATH"
 {command}
 if [[ ! -e "$pi_bin" ]]; then
-  print -u2 "pi: pi binary not found: $pi_bin"
+  echo "pi: pi binary not found: $pi_bin" >&2
   exit 127
 fi
 exec "${{pi_command[@]}}" "$@"

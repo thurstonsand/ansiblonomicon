@@ -1,0 +1,36 @@
+# Omarchy's /etc/skel/.bashrc, then personal config. Its rc chain stays in the package so updates apply as-is.
+[[ -r /usr/share/omarchy/default/bash/env-bootstrap ]] && source /usr/share/omarchy/default/bash/env-bootstrap
+
+[[ $- != *i* ]] && return
+
+source "$OMARCHY_PATH/default/bash/rc"
+
+# SSH strips local terminal metadata, but rendering still happens client-side.
+# Force icon-capable Pi powerline output when using Nerd Fonts locally.
+if [[ -n "${SSH_CONNECTION:-}" ]]; then
+  export POWERLINE_NERD_FONTS=1
+fi
+
+# Start tmux outside project configuration so its server does not retain project credentials.
+tmux() (
+  local clean_env
+  clean_env="$(mise -C / hook-env -s bash)" || return
+  eval "$clean_env"
+  direnv exec / "$(type -P tmux)" "$@"
+)
+
+eval "$(direnv hook bash)"
+eval "$(mise completion bash)"
+
+if command -v prettyping &>/dev/null; then
+  alias ping='prettyping'
+fi
+alias top='btop'
+alias lg='lazygit'
+alias lzd='lazydocker'
+alias vi='nvim'
+alias vim='nvim'
+
+claude() {
+  command claude --dangerously-skip-permissions "$@"
+}

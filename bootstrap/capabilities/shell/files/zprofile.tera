@@ -1,6 +1,6 @@
 # .zprofile - Login shell configuration
 # Loaded once per login shell (before .zshrc)
-# Note: _evalcache and PATH are defined in .zshenv
+# Note: PATH is defined in .zshenv
 
 {% if vars.host_os == "darwin" %}
 

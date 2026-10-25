@@ -1,5 +1,18 @@
 [dotfiles]
-"~/.zshenv" = { source = "shell/zshenv.tera", mode = "template" }
-# Omarchy's own bash launcher (exec zsh) and readline config, linked so package updates apply.
-"~/.bashrc" = { source = "/usr/share/omarchy-zsh/templates/bashrc", mode = "symlink" }
-"~/.inputrc" = { source = "/usr/share/omarchy-zsh/shell/inputrc", mode = "symlink" }
+"~/.bashrc" = { source = "shell/bashrc", mode = "symlink" }
+"~/.inputrc" = { source = "shell/inputrc", mode = "symlink" }
+"~/.config/starship.toml" = { source = "shell/starship.toml", mode = "symlink" }
+"~/.config/uwsm/env.d/shell" = { source = "shell/uwsm-env", mode = "symlink" }
+
+# Retiring zsh: the startup files this capability rendered, and zsh's completion cache.
+[bootstrap.files."/home/thurstonsand/.zshenv"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.zprofile"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.zshrc"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.zcompdump"]
+state = "absent"

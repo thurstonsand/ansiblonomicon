@@ -2,13 +2,7 @@
 # Keep this minimal - avoid side effects that could break scripts
 
 # =============================================================================
-# SECTION 1: Runs at EVERY shell level (functions don't inherit)
-# =============================================================================
-
-_evalcache() { eval "$("$@")" }
-
-# =============================================================================
-# SECTION 2: Environment variables, aliases, and PATH
+# Environment variables, functions, and PATH
 # =============================================================================
 
 # Start tmux outside project configuration so its server does not retain project credentials.
@@ -48,7 +42,7 @@ export GENAI_HUB_API_KEY="$GENAIHUB_API_KEY"
 {% endif %}
 typeset -U path
 path=(
-{% if vars.host_os == "linux" and vars.host_profile != "omarchy" %}
+{% if vars.host_os == "linux" %}
   "$HOME/.local/bin"
   "$HOME/.amp/bin"
 {% endif %}
@@ -56,9 +50,7 @@ path=(
   "/opt/homebrew/bin"
   "/opt/homebrew/sbin"
 {% endif %}
-{% if vars.host_profile != "omarchy" %}
   "$HOME/.local/share/mise/shims"
-{% endif %}
   "$HOME/.bun/bin"
   "$HOME/.npm-global/bin"
   "$HOME/.cargo/bin"
@@ -76,7 +68,7 @@ path=(
 {% if vars.host_profile == "work" %}
   "$HOME/scripts"
 {% endif %}
-{% if vars.host_os != "darwin" and vars.host_profile != "omarchy" %}
+{% if vars.host_os != "darwin" %}
   "$HOME/.local/bin"
 {% endif %}
   $path

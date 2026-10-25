@@ -1,0 +1,5 @@
+$include /etc/inputrc
+
+# Omarchy's bash rc binds its own inputrc on top of this one.
+# alt+fn+delete
+"\e[3;3~": kill-word
