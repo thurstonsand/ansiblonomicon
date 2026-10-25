@@ -28,13 +28,13 @@ pod153 is a MacBook Pro running as a server next to pod042. Nobody sits at it, s
 | `login-window` | Unlocked, nobody logged in. LaunchAgents and the Amp runner are not running. | Log in through Screen Sharing. |
 | `desktop` | Logged in. | Nothing. |
 
-pod042 runs `pod153-wake watch` as the `dev.mise.pod153-wake` user service, so an unplanned restart unlocks itself. `wake` and `watch` need `POD153_LOGIN_PASSWORD`: run them as `fnox-host exec --secret POD153_LOGIN_PASSWORD -- scripts/pod153-wake wake`. Check `journalctl --user -u dev.mise.pod153-wake` on pod042 when pod153 stays in `preboot`; the watcher waits an hour after an unlock that did not take, so a wrong password cannot turn into a lockout.
+pod042 runs `pod153-wake watch` as the `dev.mise.pod153-wake` user service, so an unplanned restart unlocks itself, but it stops at `login-window`: an SSH unlock mounts the data volume without logging anyone in. `wake` and `watch` need `POD153_LOGIN_PASSWORD`: run them as `fnox-host exec --secret POD153_LOGIN_PASSWORD -- scripts/pod153-wake wake`. Check `journalctl --user -u dev.mise.pod153-wake` on pod042 when pod153 stays in `preboot`; the watcher waits an hour after an unlock that did not take, so a wrong password cannot turn into a lockout.
 
-Pre-boot joins only an open or WPA2-PSK Wi-Fi network the Mac has joined before, or unauthenticated Ethernet. The temporary Bunker SSID is WPA3-only, so on it an unplanned restart stays `down` until someone types the password at the Mac.
+Pre-boot joins only an open or WPA2-PSK Wi-Fi network the Mac has joined before, or unauthenticated Ethernet, which is why the temporary Bunker SSID is WPA2. Keep Bunker first in `networksetup -listpreferredwirelessnetworks en0`: a boot that picks YoRHa stays `down` from pod042, which UniFi blocks from YoRHa's SSH. After changing Wi-Fi, refresh pre-boot's copy with `sudo diskutil apfs updatePreboot /`.
 
 ## Restarting
 
-Plan restarts with `fnox-host exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- scripts/pod153-restart`. It runs `fdesetup authrestart`, which skips pre-boot and logs straight back in. A plain `sudo shutdown -r` lands in pre-boot and depends on the watcher. Restarting ends every session on pod153, including the agent's own runner, so finish and report first.
+Plan restarts with `fnox-host exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- scripts/pod153-restart`. It runs `fdesetup authrestart`, which skips pre-boot and logs straight back in. A plain `sudo shutdown -r` lands in pre-boot, depends on the watcher, and still needs a login. Restarting ends every session on pod153, including the agent's own runner, so finish and report first.
 
 ## Answering prompts
 
