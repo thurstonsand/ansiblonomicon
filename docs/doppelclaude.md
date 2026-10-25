@@ -14,7 +14,7 @@ Unlike `aig`, this Worker does not route through AI Gateway. It does not read, r
 
 ## Amp model routing
 
-The Amp custom-URL connection maps both `doppelclaude/*` and `anthropic/*`. The first line serves the permanent Doppelclaude modes. The second sends every Claude model call from Amp's own modes through the daemon as well, whether main agent, Oracle or subagent, so those roles keep Amp's prompt, tools and Oracle while billing to the Claude subscription through the Agent SDK instead of Amp credits. The connection must sit above any other connection that maps the same models. Removing `anthropic/*` or deactivating the connection returns them to Amp credits.
+The Amp custom-URL connection maps `anthropic/*`. It sends every Claude model call from Amp's own modes through the daemon, whether main agent, Oracle or subagent, so those roles keep Amp's prompt, tools and Oracle while billing to the Claude subscription through the Agent SDK instead of Amp credits. The connection must sit above any other connection that maps the same models. Removing `anthropic/*` or deactivating the connection returns them to Amp credits.
 
 Amp's native Claude Code mode, released 2026-10-10, also uses the Agent SDK with a linked Claude Pro/Max plan, but it replaces Amp's agent with Claude Code's and excludes the Oracle and Librarian. It does not replace this route.
 
@@ -74,6 +74,8 @@ A separate [automatic compaction conversation](https://ampcode.com/threads/T-01a
 This verifies real Amp tools, independent conversation history, warm cache reads, automatic compaction and continuation after both a graceful dedicated-container restart and idle SIGKILL with explicit start. The user waived UI fork testing as a release criterion because no fork action is exposed; it remains unverified, not passed, and direct branch-import tests do not substitute for it. Automatic restart-policy behavior, an in-flight crash, multi-minute silent-stream heartbeats and disconnect cancellation were not independently tested through this deployed route. The deployed service and Amp route remain in place; no debug logging was enabled.
 
 ## Both permanent personal modes are ready
+
+On 2026-10-25 both modes were retired in favor of Amp's built-in modes, which reach the daemon through the `anthropic/*` mapping above: `doppelclaude.ts` was removed from the user-plugins repo and the connection's `doppelclaude/*` mapping was dropped. The rest of this section is history.
 
 The budgeted-thinking compatibility image comes from [workflow 35493792893](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35493792893), [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/31bd3af39999f9fecb9b0e5e0d5b7c6bb94d8208), with 364 application checks passing. The preceding diagnostic image identified Amp's alias-specific `thinking.budget_tokens` at `/thinking` as the rejected field. This release accepts enabled thinking with a budget of at least 1,024 tokens and preserves the exact SDK budget; the application owner verified both aliases against the real SDK with a 2,048-token budget. Real permanent-mode commissioning follows deployment. This addresses the reproduced schema failure, not the unrelated lost-payload Fable SSE error. Diagnostic rollback image: `ghcr.io/thurstonsand/http-doppelclaude@sha256:9cf4365d1654b548d690c87301dc691e5b0ef42954ce65e8b6b1cad7ce641076`; earlier alias rollback image: `ghcr.io/thurstonsand/http-doppelclaude@sha256:09aca9d5e3ceed01b53a30999670723fdd24cfdaa06d2854911931c3ccde57b1`. No request-value logging was added.
 
