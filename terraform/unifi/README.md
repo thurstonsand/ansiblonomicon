@@ -10,7 +10,7 @@ OpenTofu owns:
 - Bunker, YoRHa, Lunar Tear, Scanners, and The Village firewall zones
 - the named one-way zone policies
 - the YoRHa WPA3 Personal SSID, including PMF, 2.4 and 5 GHz, and MLO
-- the temporary Bunker WPA3 Personal SSID that carries pod153 until it is wired
+- the temporary Bunker WPA2 Personal SSID that carries pod153 until it is wired
 - the Lunar Tear and Scanners WPA2/WPA3 transition SSIDs on 2.4 and 5 GHz
 - The Village WPA2 Personal SSID on 2.4 GHz
 - name-only stable client records for every device of Thurston's on any network; other people's Lunar Tear devices are deliberately unnamed

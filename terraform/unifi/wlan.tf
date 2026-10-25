@@ -88,15 +88,16 @@ resource "unifi_wlan" "the_village" {
 
 # Carries pod153 onto Bunker until its USB Ethernet is wired; retire it then.
 resource "unifi_wlan" "bunker" {
-  name            = "Bunker"
-  security        = "wpapsk"
-  passphrase      = var.bunker_passphrase
-  network_id      = unifi_network.bunker.id
-  ap_group_mode   = "all"
-  user_group_id   = data.unifi_client_qos_rate.default.id
-  wpa3_support    = true
+  name          = "Bunker"
+  security      = "wpapsk"
+  passphrase    = var.bunker_passphrase
+  network_id    = unifi_network.bunker.id
+  ap_group_mode = "all"
+  user_group_id = data.unifi_client_qos_rate.default.id
+  # FileVault pre-boot never rejoined this SSID as WPA3; pre-boot SSH unlock needs it reachable.
+  wpa3_support    = false
   wpa3_transition = false
-  pmf_mode        = "required"
+  pmf_mode        = "optional"
   # The APs carry four SSIDs per band, and 2.4 GHz already has four.
   wlan_band   = "5g"
   wlan_bands  = ["5g"]
