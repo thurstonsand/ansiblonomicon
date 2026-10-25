@@ -78,17 +78,6 @@ def _base_settings(
                 ]
             },
         ],
-        "PreToolUse": [
-            {
-                "matcher": "Bash",
-                "hooks": [
-                    {
-                        "type": "command",
-                        "command": "node ~/.claude/hooks/force-ask-patterns.mjs",
-                    }
-                ],
-            }
-        ],
     }
     if hostname != "ML-DFC6YK6VJQ":
         hooks["UserPromptSubmit"] = [
@@ -110,22 +99,11 @@ def _base_settings(
         "cleanupPeriodDays": 99999,
         "env": env,
         "attribution": {"commit": "", "pr": ""},
-        "permissions": {
-            "allow": [
-                "Bash(git *)",
-                "mcp__parallel-search__web_search_preview",
-                "mcp__parallel-search__web_fetch",
-                "Skill(updating-documentation-for-changes)",
-                "Skill(git-commit-helper)",
-            ],
-            "deny": ["Read(**/.env)", "Read(**/.env.*)"],
-            "defaultMode": "auto",
-        },
+        "permissions": {"defaultMode": "bypassPermissions"},
         "hooks": hooks,
         "worktree": {"baseRef": "head"},
         "statusLine": {"type": "command", "command": "~/.claude/scripts/statusline.sh"},
         "model": models["anthropic"]["opus"]["agent_harness"]["aliases"]["claude"],
-        "sandbox": {"excludedCommands": []},
         "alwaysThinkingEnabled": True,
         "autoDreamEnabled": True,
         "skipDangerousModePermissionPrompt": True,

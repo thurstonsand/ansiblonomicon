@@ -11,14 +11,6 @@ from tomlkit.items import Table
 
 WORK_HOST = "ML-DFC6YK6VJQ"
 OMARCHY_HOSTS = {"type-a-no2", "no9-type-s"}
-TRUSTED_PROJECTS = (
-    "nixonomicon",
-    "anypod",
-    "ansiblonomicon",
-    "pi-sessions",
-    "ghosttykit",
-    "flux-keyboard-sdk",
-)
 type Container = MutableMapping[str, object]
 
 
@@ -31,9 +23,7 @@ def _merge(base: Container, overlay: Container) -> None:
             base[key] = value
 
 
-def _declared(
-    *, model: str, projects_root: Path, is_work: bool, tui_theme: str
-) -> dict[str, Any]:
+def _declared(*, model: str, is_work: bool, tui_theme: str) -> dict[str, Any]:
     declared: dict[str, Any] = {
         "model_reasoning_effort": "medium",
         "model_reasoning_summary": "auto",
@@ -64,13 +54,7 @@ def _declared(
         ],
     }
     if not is_work:
-        declared["projects"] = {
-            **{
-                str(projects_root / name): {"trust_level": "trusted"}
-                for name in TRUSTED_PROJECTS
-            },
-            "/": {"trust_level": "trusted"},
-        }
+        declared["projects"] = {"/": {"trust_level": "trusted"}}
     declared["desktop"] = {
         "followUpQueueMode": "steer",
         "mac-menu-bar-enabled": False,
@@ -115,13 +99,10 @@ def render(
         chrome_path = (
             repo / "bootstrap/capabilities/terminal-theme/solitude/codex-chrome.toml"
         )
-    develop_dir = Path(str(data["developDir"]))
-    projects_root = develop_dir if develop_dir.is_absolute() else home / develop_dir
     overlay = cast(Container, tomlkit.document())
     overlay.update(
         _declared(
             model=models["openai"]["gpt_astra"]["version"],
-            projects_root=projects_root,
             is_work=hostname == WORK_HOST,
             tui_theme=tui_theme,
         )

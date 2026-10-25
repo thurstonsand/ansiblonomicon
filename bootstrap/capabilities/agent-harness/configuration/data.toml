@@ -12,27 +12,11 @@ costsDashboardUrl = ""
 jiraBrowseUrl = ""
 piWorkPackages = []
 
-[host_defaults."pod153"]
-developDir = "Develop"
-
 [[host_defaults."pod153".mcp_servers]]
 name = "cua-driver"
 command = "/Users/thurstonsand/.local/bin/cua-driver"
 args = ["mcp"]
 harness = "claude"
-
-[host_defaults.ML-DFC6YK6VJQ]
-developDir = "code"
-
-[host_defaults.pod042]
-developDir = "code"
-
-[host_defaults.type-a-no2]
-developDir = "code"
-
-[host_defaults.no9-type-s]
-developDir = "code"
-
 
 [fonts]
 mono = "BerkeleyMono Nerd Font Mono"

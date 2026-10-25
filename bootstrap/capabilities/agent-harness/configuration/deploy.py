@@ -81,7 +81,7 @@ def _merge(base: dict[str, Any], overlay: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def load_data(repo: Path, hostname: str, home: Path) -> dict[str, Any]:
+def load_data(repo: Path, hostname: str) -> dict[str, Any]:
     defaults = tomllib.loads((Path(__file__).parent / "data.toml").read_text())
     host_defaults = defaults.pop("host_defaults", {})
     if not isinstance(host_defaults, dict) or not isinstance(
@@ -95,7 +95,6 @@ def load_data(repo: Path, hostname: str, home: Path) -> dict[str, Any]:
     if not isinstance(models, dict):
         raise ValueError("agent configuration data sources must be mappings")
     data = _merge(defaults, models)
-    data["developDir"] = data.get("developDir") or str(home / "Develop")
     local = repo / "bootstrap/capabilities/agent-harness/local" / hostname / "data.toml"
     if local.exists():
         raw = tomllib.loads(local.read_text())
@@ -481,7 +480,7 @@ def reconcile(
 ) -> int:
     if hostname not in HOST_CONFIGS:
         raise ValueError(f"unsupported agent configuration host: {hostname}")
-    data = load_data(repo, hostname, home)
+    data = load_data(repo, hostname)
     harnesses = target_harnesses(repo, hostname)
     outputs = render_all(repo, home, hostname, data, secrets, harnesses)
     state_dir = home / ".cache/ansiblonomicon-harness/configuration"
