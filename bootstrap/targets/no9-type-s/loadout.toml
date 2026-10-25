@@ -3,3 +3,9 @@
 fprintd = "present"
 libfprint-git = "present"
 usbutils = "present"
+
+# Omarchy install/hardware/nvidia.sh: Turing eGPU with GSP firmware.
+lib32-nvidia-utils = "present"
+libva-nvidia-driver = "present"
+nvidia-open-dkms = "present"
+nvidia-utils = "present"

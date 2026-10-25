@@ -1,3 +1,17 @@
 [dotfiles]
 "~/.config/hypr/monitors.lua" = { source = "omarchy-host/hypr/monitors.lua", mode = "symlink" }
 "~/.config/omarchy/shell.json" = { source = "omarchy-host/shell.json", mode = "symlink" }
+
+# Match Omarchy install/hardware/nvidia.sh early KMS configuration.
+
+[bootstrap.files."/etc/modprobe.d/nvidia.conf"]
+source = "omarchy-host/modprobe.d/nvidia.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/mkinitcpio.conf.d/nvidia.conf"]
+source = "omarchy-host/mkinitcpio.conf.d/nvidia.conf"
+owner = "root"
+group = "root"
+mode = "0644"
