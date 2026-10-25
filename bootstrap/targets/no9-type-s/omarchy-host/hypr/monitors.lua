@@ -14,3 +14,6 @@ hl.monitor({ output = "eDP-1", mode = "2880x1920@120", position = "auto", scale 
 
 -- Portrait/rotated secondary monitor (transform: 1 = 90°, 3 = 270°).
 -- hl.monitor({ output = "DP-2", mode = "preferred", position = "auto", scale = 1, transform = 1 })
+
+-- AW3423DW through the current hub/HDMI path: native resolution at 100 Hz.
+hl.monitor({ output = "desc:Dell Inc. Dell AW3423DW", mode = "3440x1440@100", position = "auto", scale = 1 })
