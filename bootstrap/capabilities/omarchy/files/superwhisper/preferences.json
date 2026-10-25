@@ -1,8 +1,11 @@
 {
+  "audioInputDeviceId": "",
   "autoPasteEnabled": true,
   "autoVocabCaptureEnabled": true,
   "cancelRecordingShortcut": "Escape",
-  "deviceSelectionCounts": {},
+  "deviceSelectionCounts": {
+    "alsa_input.usb-Shure_Inc_Shure_MV7-00.mono-fallback": 1
+  },
   "errorLoggingEnabled": false,
   "launchAtLogin": true,
   "linux": {
@@ -16,9 +19,11 @@
   "pushToTalkShortcut": "",
   "recordingIndicatorStyle": "pill",
   "recordingPreservationPeriod": 31536000,
+  "selectedDeviceID": "",
   "showRecordingIndicator": true,
   "toggleRecordingShortcut": "Ctrl+Alt+Space",
   "tone": "casual",
+  "useDefaultAudioDevice": true,
   "useDefaultInputDevice": true,
   "userExcludedInputDevices": {}
 }
