@@ -68,7 +68,7 @@ I always like to see evidence that your code changes work as intended. Of course
 
 ### Prefactor
 
-I like the philosophy that "every change should be easy". If we have a new feature request, we should first evaluate "how easy will it be to implement this?". If there are challenges, e.g. the abstraction layer is not quite right, or we have to implement a hacky workaround, that is the signal to step back and first do a refactor that will subsequently make the feature trivial to implement. Similar with bug fixing: we should always strive to find the very root cause of a bug, and ensure that we address it in such a way that it can never happen again, not just find the failing point of code and patch it.
+I like the philosophy that "every change should be easy". If we have a new feature request, we should first evaluate "how easy will it be to implement this?". If there are challenges, e.g. the abstraction layer is not quite right, we have to implement a hacky workaround, or we try to copy the nearest-looking thing but it doesn't quite fit, that is the signal to step back and first do a refactor that will subsequently make the feature trivial to implement. Similar with bug fixing: we should always strive to find the very root cause of a bug, and ensure that we address it in such a way that it can never happen again, not just find the failing point of code and patch it.
 
 ### Comments are for exceptional circumstances
 
@@ -86,9 +86,13 @@ I always like seeing my programs crash, because that means something's wrong and
 - only handle raised errors when I can ACTUALLY resolve them; otherwise, let them propagate
 - only use fallback defaults for legitimate "this is most likely what you want" cases; a lot of the time, it's better to just not have a default and force the caller to decide the value or die.
 
+### Don't armor against ghosts
+
+Before adding complexity to handle a speculative race, security hole, or edge case, consider the concrete failure mode, how likely it is, and what handling it costs. If the costs outweigh the benefits, that is a sign to let it go. Tell me when you do this, or when it's close and you need my input on whether it's worth it.
+
 ### Conform at the edges
 
-If receiving untrusted input, validate, shape, conform them at the edge once, so that everyone downstream benefits from strong, validated types.
+If receiving untrusted input, validate, shape, conform them at the edge once, so that everyone downstream benefits from strong, validated types. And "once" is the operative word: don't revalidate downstream what a schema, constructor, or type already guarantees.
 
 ### Backwards compat is for schmucks
 
