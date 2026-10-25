@@ -12,7 +12,6 @@ brew "eza"
 brew "fd"
 brew "fzf"
 tap "thurstonsand/tap", trusted: true
-brew "thurstonsand/tap/ghosttykit-nightly", restart_service: true
 brew "herdr"
 brew "jq"
 brew "mas"

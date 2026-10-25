@@ -75,6 +75,25 @@ state = "absent"
 [bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/com.setapp.DesktopClient.SetappUpdater.plist"]
 state = "absent"
 
+[bootstrap.files."/Library/LaunchAgents/jp.co.canon.ScanGearMF.appl.Canon-MFSU-Agent.plist"]
+state = "absent"
+
+[bootstrap.directories."/Applications/Canon MF Utilities"]
+state = "absent"
+recursive = true
+
+[bootstrap.directories."/Library/Image Capture/Devices/Canon MFScanner1.app"]
+state = "absent"
+recursive = true
+
+[bootstrap.directories."/Library/Image Capture/Devices/Canon MFScanner2.app"]
+state = "absent"
+recursive = true
+
+[bootstrap.directories."/Library/Image Capture/Devices/Canon MFScanner3.app"]
+state = "absent"
+recursive = true
+
 [bootstrap.files."/Library/LaunchDaemons/com.hegenberg.BetterTouchProcessPrioWatcher.plist"]
 state = "absent"
 
