@@ -92,6 +92,8 @@ exec_start_pre = ["/usr/bin/test -f %h/.codex/auth.json"]
 exec_start = '/usr/bin/xvfb-run --server-num=42 --server-args="-screen 0 1440x900x24 -nolisten tcp" /usr/bin/chatgpt'
 working_directory = "~"
 environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin", CODEX_CHROMIUM_USER_DATA_DIR = "/home/thurstonsand/.config/chromium-desktop", CODEX_CHROMIUM_NATIVE_HOST_MANIFEST_PATH = "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.openai.codexextension.json" }
+standard_output = "null"
+standard_error = "null"
 restart = "always"
 restart_sec = "30"
 
