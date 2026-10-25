@@ -20,6 +20,21 @@ fi
 "$cua" skills uninstall
 '''
 
+[tasks.t3]
+run = '''
+set -eu
+release=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
+version=${release##*/v}
+if [ "$(readlink "$HOME/.local/bin/t3" || true)" = "$HOME/.t3/runtime/versions/$version/t3" ]; then
+  exit 0
+fi
+if [ -n "${SOFTWARE_CHECK:-}" ]; then
+  echo "t3 would be installed: $version" >&2
+  exit 0
+fi
+curl -fsSL https://t3.codes/install.sh | T3CODE_VERSION="$version" sh
+'''
+
 [tasks.berkeley-mono]
 run = 'python3 software/berkeley_mono.py ${SOFTWARE_CHECK:+--check}'
 

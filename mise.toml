@@ -211,7 +211,7 @@ flag "-c --check"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host:$usage_capability" in
-  pod153:claude-code|pod153:cua-driver|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
+  pod153:claude-code|pod153:cua-driver|pod153:t3|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
   ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
@@ -227,6 +227,9 @@ run = "mise run //:software:dispatch claude-code ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks."cua-driver"]
 run = "mise run //:software:dispatch cua-driver ${usage_check:+--check}"
+usage = 'flag "-c --check"'
+[tasks.t3]
+run = "mise run //:software:dispatch t3 ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks.pi]
 run = "mise run //:software:dispatch pi ${usage_check:+--check}"
@@ -808,7 +811,7 @@ config_capabilities="sysconfig terminal-theme vcs shell terminal-tools user-tool
 sysconfig_sections="dock finder nsglobaldomain menubar desktop-services permissions"
 case "$profile" in
   server)
-    software_capabilities="$software_capabilities claude-code cua-driver shp uvc-util docker-context amp-cli"
+    software_capabilities="$software_capabilities claude-code cua-driver t3 shp uvc-util docker-context amp-cli"
     config_capabilities="$config_capabilities ssh-client server"
     sysconfig_sections="$sysconfig_sections hostname"
     ;;
