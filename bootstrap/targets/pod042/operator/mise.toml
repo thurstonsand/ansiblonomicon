@@ -17,5 +17,7 @@ jj = "latest"
 fzf = "latest"
 cloudflared = "latest"
 herdr = "latest"
+# pod153-wake logs pod153 in over Screen Sharing; 1.1 added Apple's type 30 authentication.
+"pipx:vncdotool" = "latest"
 # First-party release: skip mise's default 24h supply-chain cooling.
 "github:thurstonsand/agent-switchboard" = { version = "latest", minimum_release_age = "0s" }

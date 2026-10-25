@@ -118,12 +118,12 @@ standard_error = "null"
 restart = "always"
 restart_sec = "30"
 
-# pod153 waits at FileVault pre-boot after an unplanned restart; this answers it.
+# pod153 waits at FileVault pre-boot after an unplanned restart, then at the login window; this answers both.
 [bootstrap.linux.systemd.units.pod153-wake]
-description = "Unlock pod153's FileVault whenever it waits at pre-boot"
+description = "Unlock pod153 and log it in whenever it waits at pre-boot or the login window"
 exec_start = "%h/.local/bin/fnox-host exec --secret POD153_LOGIN_PASSWORD -- %h/code/ansiblonomicon/agents/homelab/skills/operating-pod153/scripts/pod153-wake watch"
 working_directory = "~"
-environment = { PATH = "/home/thurstonsand/.local/bin:/usr/local/bin:/usr/bin:/bin" }
+environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin" }
 restart = "always"
 restart_sec = "30"
 

@@ -15,10 +15,6 @@ AC_POWER = {
 }
 SYSTEM_DAEMONS = {
     "Remote Login": ("com.openssh.sshd", "/System/Library/LaunchDaemons/ssh.plist"),
-    "Screen Sharing": (
-        "com.apple.screensharing",
-        "/System/Library/LaunchDaemons/com.apple.screensharing.plist",
-    ),
 }
 
 
@@ -45,6 +41,14 @@ def main() -> None:
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     changes: list[tuple[str, list[list[str]]]] = []
+
+    # Only the System Settings toggle grants com.apple.screensharing.agent Screen
+    # Recording and event posting; started through launchctl, Screen Sharing shows
+    # the login window black and drops every key, so pod153-wake cannot log in.
+    if not daemon_loaded("com.apple.screensharing"):
+        raise SystemExit(
+            "server: Screen Sharing is off; turn it on in System Settings > General > Sharing"
+        )
 
     current = ac_power()
     drift = {key: value for key, value in AC_POWER.items() if current.get(key) != value}

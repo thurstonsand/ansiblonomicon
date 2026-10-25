@@ -12,7 +12,7 @@ pod153 is a MacBook Pro running as a server next to pod042. Nobody sits at it, s
 - SSH host: `pod153` (`10.10.10.53` on Bunker). Key login only after boot; pod042 and pod153 share the `id_ed25519_git` file key, the laptops use the operator key from 1Password.
 - Reconciliation: `mise reconcile [--check] [-t tags]` on pod153 itself. `mise run reconcile:tags` lists the tags. A LaunchAgent runs `scripts/reconcile-or-fix` daily at 04:30: it pulls main and reconciles, logging to `~/.local/state/ansiblonomicon/reconcile.log`. On failure it starts an Amp thread labeled `reconcile-failure` that fixes and pushes, or notifies Thurston.
 - Secrets: `scripts/fnox-host get NAME`. The `agent` provider uses the service-account token, so it never prompts. Never route unattended work through the 1Password app or its SSH agent; it is locked whenever nobody is at the Mac.
-- Screen Sharing: `vnc://pod153` with the account name and password. It offers only Apple's authentication (RFB security type 30 and newer), which macOS Screen Sharing, Remmina, and RealVNC speak; plain VNC-password clients cannot connect.
+- Screen Sharing: `vnc://pod153` with the account name and password. It offers only Apple's authentication (RFB security type 30 and newer), which macOS Screen Sharing, Remmina, RealVNC, and vncdotool speak; plain VNC-password clients cannot connect. Turn it on only in System Settings → General → Sharing: that toggle grants `com.apple.screensharing.agent` Screen Recording and event posting, and without them the login window streams black and screensharingd logs `ignore key event` for every key. Started through `launchctl` or `kickstart` alone, it authenticates but cannot see or type. The grants live in the system TCC database and survive restarts, so a fresh host needs the toggle once: open System Settings → General → Sharing and, with Cua `run_script`, press `Screen SharingToggle` off and then on. Neither press asks for a password. The server capability refuses to reconcile while Screen Sharing is off, and `vncdo capture` of a real screen, with screensharingd logging `screenCapture flag 1  postEvents flag 1`, confirms the grants.
 - Hardware console: none. `pod042-kvm` is wired to pod042, so a hard freeze or a pre-boot that SSH cannot reach needs someone at the Mac.
 
 ## Boot states
@@ -25,16 +25,16 @@ pod153 is a MacBook Pro running as a server next to pod042. Nobody sits at it, s
 | `unverified` | No pinned host key for `pod153`. | Check `~/.ssh/pod153.known_hosts`, which `ssh-client` links from the repo. |
 | `denied` | The booted sshd refused the key. | Check `authorized_keys`; the watcher never sends the password here. |
 | `preboot` | FileVault is locked; only password SSH answers. | `pod153-wake wake` sends the password once. |
-| `login-window` | Unlocked, nobody logged in. LaunchAgents and the Amp runner are not running. | Log in through Screen Sharing. |
+| `login-window` | Unlocked, nobody logged in. LaunchAgents and the Amp runner are not running. | The watcher logs in over Screen Sharing; `pod153-wake login` does it once by hand. |
 | `desktop` | Logged in. | Nothing. |
 
-pod042 runs `pod153-wake watch` as the `dev.mise.pod153-wake` user service, so an unplanned restart unlocks itself, but it stops at `login-window`: an SSH unlock mounts the data volume without logging anyone in. `wake` and `watch` need `POD153_LOGIN_PASSWORD`: run them as `fnox-host exec --secret POD153_LOGIN_PASSWORD -- scripts/pod153-wake wake`. Check `journalctl --user -u dev.mise.pod153-wake` on pod042 when pod153 stays in `preboot`; the watcher waits an hour after an unlock that did not take, so a wrong password cannot turn into a lockout.
+pod042 runs `pod153-wake watch` as the `dev.mise.pod153-wake` user service, so every restart reaches the desktop on its own. Neither an SSH unlock nor `fdesetup authrestart` logs anyone in, so after either the watcher types the password into the login window through vncdotool (a `pod042` operator tool) and waits for the console to belong to `thurstonsand`. Each login leaves before and after captures in `~/.local/state/pod153-wake/` on pod042. `wake`, `login`, and `watch` need `POD153_LOGIN_PASSWORD`: run them as `fnox-host exec --secret POD153_LOGIN_PASSWORD -- scripts/pod153-wake login`. Check `journalctl --user -u dev.mise.pod153-wake` on pod042 when pod153 stays in `preboot` or `login-window`; the watcher waits an hour after an attempt that did not reach the desktop, so a wrong password cannot turn into a lockout.
 
 Pre-boot joins only an open or WPA2-PSK Wi-Fi network the Mac has joined before, or unauthenticated Ethernet, which is why the temporary Bunker SSID is WPA2. Keep Bunker first in `networksetup -listpreferredwirelessnetworks en0`: a boot that picks YoRHa stays `down` from pod042, which UniFi blocks from YoRHa's SSH. After changing Wi-Fi, refresh pre-boot's copy with `sudo diskutil apfs updatePreboot /`.
 
 ## Restarting
 
-Plan restarts with `fnox-host exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- scripts/pod153-restart`. It runs `fdesetup authrestart`, which skips pre-boot and logs straight back in. A plain `sudo shutdown -r` lands in pre-boot, depends on the watcher, and still needs a login. Restarting ends every session on pod153, including the agent's own runner, so finish and report first.
+Plan restarts with `fnox-host exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- scripts/pod153-restart`. It runs `fdesetup authrestart`, which skips pre-boot and its Wi-Fi requirement and lands at the login window for the watcher. A plain `sudo shutdown -r` lands in pre-boot, and the watcher unlocks and then logs in. Restarting ends every session on pod153, including the agent's own runner, so finish and report first.
 
 ## Answering prompts
 

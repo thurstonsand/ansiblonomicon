@@ -2,20 +2,29 @@
 """Drive pod153 from a FileVault pre-boot screen to a logged-in desktop.
 
 Run it under fnox so POD153_LOGIN_PASSWORD is set:
-  fnox-host exec --secret POD153_LOGIN_PASSWORD -- pod153-wake {status,wake,watch}
+  fnox-host exec --secret POD153_LOGIN_PASSWORD -- pod153-wake {status,wake,login,watch}
 """
 
 import argparse
+from datetime import datetime
 import os
+from pathlib import Path
 import re
+import shlex
 import subprocess
 import sys
 import time
 
 HOST = "pod153"
+USER = "thurstonsand"
 PASSWORD = "POD153_LOGIN_PASSWORD"
 ASKPASS = "POD153_WAKE_ASKPASS"
 PROBE = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", HOST]
+CAPTURES = Path.home() / ".local/state/pod153-wake"
+
+
+class ScreenSharingError(Exception):
+    pass
 
 
 def state() -> str:
@@ -75,16 +84,61 @@ def unlock() -> None:
     )
 
 
+def login() -> None:
+    """Type the password into the login window over Screen Sharing.
+
+    Neither an SSH unlock nor fdesetup authrestart logs anyone in. The captures
+    show what the login window looked like before and after; a black one means
+    Screen Sharing lacks the grant to see or drive the login window.
+    """
+    CAPTURES.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+    before = CAPTURES / f"{stamp}-before.png"
+    after = CAPTURES / f"{stamp}-after.png"
+    password = os.environ[PASSWORD]
+    commands = (
+        f"key shift pause 2 capture {before} "
+        f"type {shlex.quote(password)} key enter pause 5 capture {after}"
+    )
+    server = f"{HOST}::5900"
+    result = subprocess.run(
+        [
+            "vncdo",
+            "--force-caps",
+            "-s",
+            server,
+            "-u",
+            USER,
+            "-p",
+            password,
+            "-t",
+            "60",
+            "-",
+        ],
+        input=commands,
+        text=True,
+        check=False,
+    )
+    # CalledProcessError would print the argv, password included.
+    if result.returncode:
+        raise ScreenSharingError(f"vncdo exited {result.returncode}")
+    log(f"typed the password at the login window; captured {before} and {after}")
+
+
 def wake(timeout: float) -> str:
-    """Unlock at most once and wait for the desktop; return the final state."""
+    """Unlock and log in at most once each, then wait for the desktop; return the final state."""
     deadline = time.monotonic() + timeout
-    unlocked = False
+    unlocked = logged_in = False
     current = state()
     while current != "desktop" and time.monotonic() < deadline:
         if current == "preboot" and not unlocked:
             log("pre-boot reached; sending the FileVault password")
             unlock()
             unlocked = True
+        elif current == "login-window" and not logged_in:
+            log("login window reached; logging in over Screen Sharing")
+            login()
+            logged_in = True
         time.sleep(10)
         current = state()
     return current
@@ -101,9 +155,14 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("status", help="print pod153's state")
-    wake_command = commands.add_parser("wake", help="unlock and wait for the desktop")
+    wake_command = commands.add_parser(
+        "wake", help="unlock, log in, and wait for the desktop"
+    )
     wake_command.add_argument("--timeout", type=float, default=900)
-    commands.add_parser("watch", help="unlock pod153 whenever it reaches pre-boot")
+    commands.add_parser("login", help="log in at the login window once")
+    commands.add_parser(
+        "watch", help="unlock and log in whenever pod153 waits at pre-boot or login"
+    )
     args = parser.parse_args()
     if args.command != "status" and not os.environ.get(PASSWORD):
         parser.error(f"{PASSWORD} is required; run under fnox-host exec")
@@ -114,6 +173,13 @@ def main() -> None:
         final = wake(args.timeout)
         log(final)
         sys.exit(0 if final == "desktop" else 1)
+    elif args.command == "login":
+        current = state()
+        if current != "login-window":
+            sys.exit(f"pod153 is {current}, not at the login window")
+        final = wake(120)
+        log(final)
+        sys.exit(0 if final == "desktop" else 1)
     else:
         previous = None
         while True:
@@ -121,13 +187,18 @@ def main() -> None:
             if current != previous:
                 log(f"pod153 is {current}")
                 previous = current
-            if current == "preboot":
-                final = wake(900)
+            if current in ("preboot", "login-window"):
+                try:
+                    final = wake(900)
+                except ScreenSharingError as error:
+                    final = f"still at the login window: {error}"
                 log(f"pod153 is {final}")
                 previous = final
-                if final == "preboot":
-                    # A wrong password must not turn into a stream of failed unlocks.
-                    log("unlock did not take; waiting an hour before retrying")
+                if final != "desktop":
+                    # A wrong password must not turn into a stream of failed attempts.
+                    log(
+                        "pod153 did not reach the desktop; waiting an hour before retrying"
+                    )
                     time.sleep(3600)
             time.sleep(30)
 

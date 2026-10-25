@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Restart pod153 straight back to its desktop, skipping FileVault pre-boot.
+"""Restart pod153 past FileVault pre-boot to its login window, where pod042 logs it in.
 
 Run on pod153 under fnox:
   fnox-host exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- pod153-restart
