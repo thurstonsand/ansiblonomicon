@@ -605,7 +605,7 @@ alias = "omarchy"
 usage = '''
 flag "-c --check" help="Show changes without applying them"
 flag "-t --tags <tags>" help="Only run these capabilities (comma-separated)"
-flag "--full" help="Upgrade Omarchy, system packages, themes, and plugins before reconciling"
+flag "--full" help="Upgrade Omarchy, system packages, themes, plugins, and global mise tools before reconciling"
 '''
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
@@ -629,10 +629,12 @@ done
 if [ -n "${usage_full:-}" ]; then
   if [ -n "${usage_check:-}" ]; then
     omarchy update available || true
+    mise -C "$HOME" upgrade --dry-run || exit "$?"
   else
     PATH="$MISE_PROJECT_ROOT/scripts/decline-gum:$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH" \
       "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD -- \
       sh -c 'omarchy update -y && omarchy theme update' || exit "$?"
+    mise -C "$HOME" upgrade --yes || exit "$?"
   fi
 fi
 selected() {
