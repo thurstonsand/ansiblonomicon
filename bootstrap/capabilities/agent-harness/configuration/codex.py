@@ -63,7 +63,8 @@ def _declared(*, model: str, is_work: bool, tui_theme: str) -> dict[str, Any]:
         "appearanceLightCodeThemeId": "vercel",
         "appearanceDarkCodeThemeId": "vercel",
         "usePointerCursors": True,
-        "selected-avatar-id": "custom:2b",
+        # The account's synced copy of the custom 2B pet; the app rewrites custom:2b to it at launch.
+        "selected-avatar-id": "pet_6abe6b9a609c819186d28bc75fcdeaea",
         "open-local-url-in-target-preference": "in-app-browser",
         "git-always-force-push": True,
         "dock-icon-preference": "app-default",
