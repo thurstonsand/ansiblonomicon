@@ -4,6 +4,7 @@
 import json
 import os
 from pathlib import Path
+import signal
 import socket
 import subprocess
 import sys
@@ -13,6 +14,9 @@ import time
 REPO = Path(__file__).resolve().parents[1]
 LOG = Path.home() / ".local/state/ansiblonomicon/reconcile.log"
 LOCK = "bootstrap/capabilities/neovim/files/lazy-lock.json"
+# A step that waits on something nobody will answer, such as a denied privacy check, hangs
+# forever; past this it is killed and handed to the agent like any other failure.
+TIMEOUT_MINUTES = 30
 FINISH = f"""A reconcile syncs Neovim plugins and rewrites {LOCK}; commit that file alone as `chore(neovim): update lazy-lock`, pull --rebase, and push to main.
 
 Send Thurston one push notification with notify_user only when he must act or decide: an expired login, a credential, a physical step, a true conflict, or a behavior change you should not choose alone. Say what happened, what you did, and what he must do. A fix you pushed or a transient failure needs no notification; this thread is the record."""
@@ -52,13 +56,21 @@ def run_reconcile() -> int:
         def run(*command: str) -> int:
             log.write(f"$ {' '.join(command)}\n")
             log.flush()
-            return subprocess.run(
+            process = subprocess.Popen(
                 command,
                 cwd=REPO,
                 stdin=subprocess.DEVNULL,
                 stdout=log,
                 stderr=subprocess.STDOUT,
-            ).returncode
+                start_new_session=True,
+            )
+            try:
+                return process.wait(timeout=TIMEOUT_MINUTES * 60)
+            except subprocess.TimeoutExpired:
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                log.write(f"timed out after {TIMEOUT_MINUTES} minutes; killed\n")
+                return 124
 
         status = run("git", "pull", "--ff-only") or run("mise", "run", "reconcile")
         if (

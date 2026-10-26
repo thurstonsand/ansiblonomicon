@@ -49,6 +49,8 @@ Cua Driver runs as the `dev.mise.house.thurstons.cua-driver` LaunchAgent and hol
 - Grant a privacy permission in System Settings → Privacy & Security. Some grants then offer "Quit & Reopen" for the app. Choose "Later" for Amp, because quitting Amp kills the runner you are working through. The grant applies at Amp's next launch.
 - Prefer `run_script` for multi-step flows; element tokens do not survive between separate `cua-driver call` processes.
 
+Background jobs never raise a TCC prompt; a denied check hangs or fails with "Operation not permitted". Homebrew's Python is its own responsible process, so everything a scheduled reconcile runs through `python3`, including `op` reading the 1Password app's settings, is checked against `/opt/homebrew/Cellar/python@3.X/<version>/Frameworks/Python.framework/Versions/3.X/bin/python3.X`. That binary holds Full Disk Access. It is ad-hoc signed, so each Python upgrade drops the grant: add the new path under Privacy & Security → Full Disk Access with **+**, then Go to Folder (⌘⇧G), unlocking with the login password. `log show --predicate 'process == "tccd"' --info` names the denied identity.
+
 Codex and the ChatGPT app use their own computer use. Claude Code, Amp, and Pi use Cua.
 
 ## Renewing Claude's login
