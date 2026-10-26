@@ -46,14 +46,50 @@ owner = "root"
 group = "wheel"
 mode = "0644"
 
+# Points at Homebrew's opt path, unlike `tailscaled install-system-daemon`, whose copy brew upgrades never reach.
+[bootstrap.files."/Library/LaunchDaemons/com.tailscale.tailscaled.plist"]
+content = """
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.tailscale.tailscaled</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/opt/homebrew/opt/tailscale/bin/tailscaled</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>StandardOutPath</key>
+  <string>/var/log/tailscaled.log</string>
+  <key>StandardErrorPath</key>
+  <string>/var/log/tailscaled.log</string>
+</dict>
+</plist>
+"""
+owner = "root"
+group = "wheel"
+mode = "0644"
+
 [tasks.server]
 usage = 'flag "-c --check"'
 run = '''
 set -eu
-python3 server/reconcile.py ${usage_check:+--check}
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
-exec mise bootstrap --only files,macos-launchd-agents "$mode"
+mise bootstrap --only files,macos-launchd-agents "$mode"
+python3 server/reconcile.py ${usage_check:+--check}
+[ -z "${usage_check:-}" ] || exit 0
+state=$(/opt/homebrew/bin/tailscale status --json | python3 -c 'import json, sys; print(json.load(sys.stdin)["BackendState"])')
+if [ "$state" != Running ]; then
+  echo "server: Tailscale is $state; enroll once with: sudo tailscale up --hostname=pod153 --advertise-tags=tag:pod153 --ssh" >&2
+  exit 1
+fi
+sudo -n /opt/homebrew/bin/tailscale up --reset --hostname=pod153 --accept-dns=false --accept-routes=false --advertise-tags=tag:pod153 --advertise-routes= --advertise-exit-node=false --exit-node= --exit-node-allow-lan-access=false --report-posture=false --ssh=true
+sudo -n /opt/homebrew/bin/tailscale wait --timeout=15s
 '''
 
 # Retiring the desktop apps' background jobs; delete these once pod153 converges.
@@ -77,6 +113,10 @@ state = "absent"
 
 [bootstrap.files."/Library/LaunchAgents/jp.co.canon.ScanGearMF.appl.Canon-MFSU-Agent.plist"]
 state = "absent"
+
+[bootstrap.directories."/Applications/Tailscale.app"]
+state = "absent"
+recursive = true
 
 [bootstrap.directories."/Applications/Canon MF Utilities"]
 state = "absent"

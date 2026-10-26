@@ -20,6 +20,10 @@ AC_POWER = {
 PRINTER = ("Canon_MF650C_Series", "ipp://printer.thurstons.house/ipp/print")
 SYSTEM_DAEMONS = {
     "Remote Login": ("com.openssh.sshd", "/System/Library/LaunchDaemons/ssh.plist"),
+    "Tailscale": (
+        "com.tailscale.tailscaled",
+        "/Library/LaunchDaemons/com.tailscale.tailscaled.plist",
+    ),
 }
 
 

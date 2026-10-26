@@ -50,11 +50,11 @@ brew "zig@0.15"
 brew "cloudflared"
 brew "sshpass"
 brew "openai/tools/tart", trusted: true
+# The open-source tailscaled, unlike the App Store app, runs before login and serves Tailscale SSH.
+brew "tailscale"
 
 cask "gcloud-cli"
 cask "orbstack"
-
-mas "Tailscale", id: 1475387142
 
 # Editors/Terminals
 brew "neovim"
