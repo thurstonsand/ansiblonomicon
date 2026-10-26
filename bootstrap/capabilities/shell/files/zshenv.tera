@@ -46,11 +46,11 @@ path=(
   "$HOME/.local/bin"
   "$HOME/.amp/bin"
 {% endif %}
+  "$HOME/.local/share/mise/shims"
 {% if vars.host_os == "darwin" %}
   "/opt/homebrew/bin"
   "/opt/homebrew/sbin"
 {% endif %}
-  "$HOME/.local/share/mise/shims"
   "$HOME/.bun/bin"
   "$HOME/.npm-global/bin"
   "$HOME/.cargo/bin"
