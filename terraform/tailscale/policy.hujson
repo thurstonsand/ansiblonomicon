@@ -1,0 +1,52 @@
+{
+	"tagOwners": {
+		"tag:amp-orb": ["autogroup:admin"],
+		"tag:codex":   ["autogroup:admin"],
+		"tag:pod042":  ["autogroup:admin"],
+		"tag:pod153":  ["autogroup:admin"],
+	},
+
+	"acls": [
+		{"action": "accept", "src": ["*"], "dst": ["*:*"]},
+	],
+
+	"autoApprovers": {
+		"routes": {
+			"192.168.1.0/24": ["thurstonsand@gmail.com"],
+		},
+	},
+
+	"ssh": [
+		{
+			"action": "check",
+			"src":    ["autogroup:member"],
+			"dst":    ["autogroup:self"],
+			"users":  ["autogroup:nonroot", "root"],
+		},
+		{
+			"action": "check",
+			"src":    ["thurstonsand@gmail.com"],
+			"dst":    ["tag:pod042", "tag:pod153"],
+			"users":  ["thurstonsand"],
+		},
+		// Unattended agents: Amp orbs, and the two servers reaching each other.
+		{
+			"action": "accept",
+			"src":    ["tag:amp-orb"],
+			"dst":    ["tag:pod042", "tag:pod153"],
+			"users":  ["thurstonsand"],
+		},
+		{
+			"action": "accept",
+			"src":    ["tag:pod042"],
+			"dst":    ["tag:pod153"],
+			"users":  ["thurstonsand"],
+		},
+		{
+			"action": "accept",
+			"src":    ["tag:pod153"],
+			"dst":    ["tag:pod042"],
+			"users":  ["thurstonsand"],
+		},
+	],
+}

@@ -956,6 +956,28 @@ flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
 run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret NEST_EVENTS_TOKEN --secret INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN -- python3 "{{config_root}}/scripts/tofu.py" google apply ${usage_yes:+-auto-approve}'
 
 # ---------------------------------------------------------------------------
+# Tailscale
+# ---------------------------------------------------------------------------
+
+[tasks."tailscale:init"]
+description = "Initialize the Tailscale OpenTofu working directory"
+dir = "terraform/tailscale"
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY -- python3 "{{config_root}}/scripts/tofu.py" tailscale init'
+
+[tasks."tailscale:plan"]
+description = "Plan the Tailscale OpenTofu changes"
+dir = "terraform/tailscale"
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret TAILSCALE_ADMIN_OAUTH_CLIENT_ID --secret TAILSCALE_ADMIN_OAUTH_CLIENT_SECRET --secret NEXTDNS_PROFILE_ID -- python3 "{{config_root}}/scripts/tofu.py" tailscale plan'
+
+[tasks."tailscale:apply"]
+description = "Apply the Tailscale OpenTofu changes"
+dir = "terraform/tailscale"
+usage = '''
+flag "-y --yes" help="Auto-approve the apply (no confirmation prompt)"
+'''
+run = '"{{config_root}}/scripts/fnox-host" exec --secret AWS_ACCESS_KEY_ID --secret AWS_SECRET_ACCESS_KEY --secret TAILSCALE_ADMIN_OAUTH_CLIENT_ID --secret TAILSCALE_ADMIN_OAUTH_CLIENT_SECRET --secret NEXTDNS_PROFILE_ID -- python3 "{{config_root}}/scripts/tofu.py" tailscale apply ${usage_yes:+-auto-approve}'
+
+# ---------------------------------------------------------------------------
 # UniFi
 # ---------------------------------------------------------------------------
 

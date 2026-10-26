@@ -13,6 +13,11 @@ ALIASES = {
         "TF_VAR_nest_events_token": "NEST_EVENTS_TOKEN",
         "TF_VAR_inbox_zero_pubsub_verification_token": "INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN",
     },
+    "tailscale": {
+        "TAILSCALE_OAUTH_CLIENT_ID": "TAILSCALE_ADMIN_OAUTH_CLIENT_ID",
+        "TAILSCALE_OAUTH_CLIENT_SECRET": "TAILSCALE_ADMIN_OAUTH_CLIENT_SECRET",
+        "TF_VAR_nextdns_profile_id": "NEXTDNS_PROFILE_ID",
+    },
     "unifi": {
         "TF_VAR_unifi_username": "UNIFI_USERNAME",
         "TF_VAR_unifi_password": "UNIFI_PASSWORD",

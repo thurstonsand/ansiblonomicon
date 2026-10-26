@@ -86,6 +86,7 @@ Deleting a source alone does not remove deployed state. Declare a `state = "abse
 ├── .agents/                  # Project-local Claude/Pi skills for this repo
 ├── bootstrap/                # Native mise capabilities, agent catalogue, host targets, and remote inventory
 ├── terraform/cloudflare/     # Cloudflare infrastructure (DNS, tunnels, Zero Trust, R2)
+├── terraform/tailscale/      # Tailnet policy, DNS, settings, and server node keys
 ├── terraform/unifi/          # UniFi Network application (VLANs, zones, WLANs, ports)
 ├── wrangler/                 # Cloudflare Workers (deployed via wrangler)
 └── scripts/
