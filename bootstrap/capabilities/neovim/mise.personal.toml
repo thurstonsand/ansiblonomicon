@@ -2,5 +2,4 @@
 "~/.config/nvim/lazy-lock.json" = { source = "neovim/lazy-lock.json", mode = "symlink" }
 
 [env]
-# scripts/reconcile-or-fix restores to the committed lock, so a daily run never rewrites the repo.
-NEOVIM_MODE = "{{ get_env(name='NEOVIM_MODE', default='sync') }}"
+NEOVIM_MODE = "sync"

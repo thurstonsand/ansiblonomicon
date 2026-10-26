@@ -12,23 +12,32 @@ import time
 
 REPO = Path(__file__).resolve().parents[1]
 LOG = Path.home() / ".local/state/ansiblonomicon/reconcile.log"
+LOCK = "bootstrap/capabilities/neovim/files/lazy-lock.json"
+FINISH = f"""A reconcile syncs Neovim plugins and rewrites {LOCK}; commit that file alone as `chore(neovim): update lazy-lock`, pull --rebase, and push to main.
+
+Send Thurston one push notification with notify_user only when he must act or decide: an expired login, a credential, a physical step, a true conflict, or a behavior change you should not choose alone. Say what happened, what you did, and what he must do. A fix you pushed or a transient failure needs no notification; this thread is the record."""
 PROMPT = """The scheduled reconcile on {host} failed with exit status {status} at {when}.
 The full log is {log}; its last lines are below.
 
 Find the root cause. Then:
 - If the fix belongs in this repository, make it, verify it by rerunning the failing capability (and its --check), commit it following the repository's conventions, pull --rebase, and push to main. Before committing, run `git status`; the tree was clean when the reconcile started. Never commit, stash, or discard changes you did not make.
 - If the failure was transient, such as a network or upstream outage, rerun the failing capability to confirm it now passes and change nothing.
-- If it needs Thurston, such as an expired login, a credential, a physical step, or a judgment call you should not make alone, do not guess.
+- If it needs Thurston, do not guess.
 
-Finish every run by sending Thurston one push notification with notify_user: what failed, what you did, and anything he must do.
+{finish}
 
 ```
 {tail}
 ```
 """
-DIRTY_PROMPT = """The scheduled reconcile on {host} did not run at {when}: its checkout {repo} has uncommitted changes, listed below. Other agents share this checkout, and pulling and reconciling over their unfinished work would deploy it.
+DIRTY_PROMPT = """The scheduled reconcile on {host} found uncommitted changes in its checkout {repo} at {when}, listed below, and handed the run to you instead of pulling over them. Other agents share this checkout.
 
-Do not commit, stash, discard, or reconcile anything. Work out who left the changes: compare the files with recent Amp threads (find_thread) and the files' modification times. Then send Thurston one push notification with notify_user naming the files, the thread or person that most likely owns them, and that tonight's reconcile was skipped.
+Sort the changes out, then finish the run yourself with `git pull --ff-only` and `mise run reconcile`:
+- Leftovers from an earlier reconcile, such as lazy-lock.json updates, get committed following the repository's conventions. Leftovers that main already contains get discarded.
+- Another thread's unfinished work (find it with find_thread and the files' modification times) stays in place, uncommitted. Pull and reconcile around it when the incoming commits do not touch those files.
+- A true conflict, where incoming commits overlap the uncommitted changes or only Thurston can say whether a change should ship, leaves the tree untouched and unreconciled.
+
+{finish}
 
 ```
 {status}
@@ -39,24 +48,31 @@ Do not commit, stash, discard, or reconcile anything. Work out who left the chan
 def run_reconcile() -> int:
     LOG.parent.mkdir(parents=True, exist_ok=True)
     with LOG.open("w") as log:
-        for command in (
-            ["git", "-C", str(REPO), "pull", "--ff-only"],
-            ["mise", "-C", str(REPO), "run", "reconcile"],
-        ):
+
+        def run(*command: str) -> int:
             log.write(f"$ {' '.join(command)}\n")
             log.flush()
-            status = subprocess.run(
+            return subprocess.run(
                 command,
+                cwd=REPO,
                 stdin=subprocess.DEVNULL,
                 stdout=log,
                 stderr=subprocess.STDOUT,
-                # Syncing plugins would rewrite the symlinked lazy-lock.json and leave
-                # the tree dirty, which skips the next night's run.
-                env={**os.environ, "NEOVIM_MODE": "restore"},
             ).returncode
-            if status:
-                return status
-    return 0
+
+        status = run("git", "pull", "--ff-only") or run("mise", "run", "reconcile")
+        if (
+            status
+            or not subprocess.run(
+                ["git", "diff", "--quiet", "--", LOCK], cwd=REPO
+            ).returncode
+        ):
+            return status
+        return (
+            run("git", "commit", "-m", "chore(neovim): update lazy-lock", "--", LOCK)
+            or run("git", "pull", "--rebase")
+            or run("git", "push")
+        )
 
 
 def main() -> int:
@@ -71,8 +87,10 @@ def main() -> int:
     if dirty:
         status = 1
         LOG.parent.mkdir(parents=True, exist_ok=True)
-        LOG.write_text(f"skipped: {REPO} has uncommitted changes\n{dirty}\n")
-        prompt = DIRTY_PROMPT.format(host=host, when=when, repo=REPO, status=dirty)
+        LOG.write_text(f"handed to an agent: {REPO} has uncommitted changes\n{dirty}\n")
+        prompt = DIRTY_PROMPT.format(
+            host=host, when=when, repo=REPO, status=dirty, finish=FINISH
+        )
     else:
         status = run_reconcile()
         prompt = PROMPT.format(
@@ -80,6 +98,7 @@ def main() -> int:
             status=status,
             when=when,
             log=LOG,
+            finish=FINISH,
             tail="\n".join(LOG.read_text().splitlines()[-150:]),
         )
     sys.stdout.write(LOG.read_text())
@@ -100,7 +119,7 @@ def main() -> int:
                 "--settings-file",
                 handle.name,
                 "--title",
-                f"{host} reconcile {'skipped' if dirty else 'failed'}",
+                f"{host} reconcile {'found uncommitted changes' if dirty else 'failed'}",
                 "--label",
                 "reconcile-failure",
                 "--no-archive-after-execute",
