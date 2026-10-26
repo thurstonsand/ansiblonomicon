@@ -10,12 +10,6 @@
 		{"action": "accept", "src": ["*"], "dst": ["*:*"]},
 	],
 
-	"autoApprovers": {
-		"routes": {
-			"192.168.1.0/24": ["thurstonsand@gmail.com"],
-		},
-	},
-
 	"ssh": [
 		{
 			"action": "check",
