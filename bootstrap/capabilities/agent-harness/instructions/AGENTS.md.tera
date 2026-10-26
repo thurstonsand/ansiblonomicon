@@ -106,10 +106,6 @@ I treat it as a forcing function for correct application hierarchy. Nothing says
 
 Just use soft wrap, my editor knows how to handle long lines.
 
-### Skills and guidance files are loaded every time
-
-Only write into a skill, AGENTS.md, or similar guidance what will be relevant every time it is loaded. One-off fixes, incident history, and setup steps that already happened belong in the commit message, not in guidance.
-
 {% if not amp -%}
 ### Delegation and model selection
 
