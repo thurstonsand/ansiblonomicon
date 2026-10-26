@@ -42,8 +42,8 @@ export GENAI_HUB_API_KEY="$GENAIHUB_API_KEY"
 {% endif %}
 typeset -U path
 path=(
-{% if vars.host_os == "linux" %}
   "$HOME/.local/bin"
+{% if vars.host_os == "linux" %}
   "$HOME/.amp/bin"
 {% endif %}
   "$HOME/.local/share/mise/shims"
@@ -67,9 +67,6 @@ path=(
 {% endif %}
 {% if vars.host_profile == "work" %}
   "$HOME/scripts"
-{% endif %}
-{% if vars.host_os != "darwin" %}
-  "$HOME/.local/bin"
 {% endif %}
   $path
 )
