@@ -1,4 +1,10 @@
 [bootstrap.packages]
+# TEMPORARY: build dependencies for tmux 3.8 from source; see the host-tools
+# declaration below. mise-tmux builds its own libevent, and the operator
+# capability declares build-essential and pkg-config. Remove both lines when
+# tmux returns to aqua:tmux/tmux-builds.
+"apt:bison" = "latest"
+"apt:libncurses-dev" = "latest"
 "apt:ca-certificates" = "latest"
 "apt:curl" = "latest"
 "apt:git" = "latest"
@@ -100,12 +106,20 @@ owner = "root"
 group = "root"
 mode = "0755"
 
+# TEMPORARY: swb 0.8 needs tmux 3.8, which tmux-builds hasn't published
+# (https://github.com/tmux/tmux-builds/releases), and Debian's 3.8 is stuck in
+# unstable behind python-libtmux test failures
+# (https://qa.debian.org/excuses.php?package=tmux, https://bugs.debian.org/1150952).
+# Until then, mise-tmux builds it from source. Revert to
+# "aqua:tmux/tmux-builds" = "latest" once tmux-builds ships 3.8 or
+# trixie-backports carries it, along with the tmux symlink in tasks.bootstrap
+# and the build dependencies in bootstrap.packages.
 [bootstrap.files."/etc/mise/host-tools.toml"]
 content = '''
 [tools]
 fnox = "latest"
 op = "latest"
-"aqua:tmux/tmux-builds" = "latest"
+"asdf:mise-plugins/mise-tmux" = "3.8"
 '''
 owner = "root"
 group = "root"
@@ -152,7 +166,8 @@ fi
   "sudo -H env MISE_DATA_DIR=/opt/mise MISE_GLOBAL_CONFIG_FILE=/etc/mise/host-tools.toml /usr/local/bin/mise -C / upgrade --yes --jobs 1",
   '''
 set -eu
-for install in fnox/latest/fnox op/latest/op aqua-tmux-tmux-builds/latest/tmux; do
+# TEMPORARY: aqua-tmux-tmux-builds/latest/tmux again once tmux-builds ships 3.8.
+for install in fnox/latest/fnox op/latest/op asdf-mise-plugins-mise-tmux/3.8/bin/tmux; do
   source="/opt/mise/installs/$install"
   target="/usr/local/bin/${install##*/}"
   sudo test -x "$source"
