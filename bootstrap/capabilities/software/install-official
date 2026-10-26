@@ -19,7 +19,8 @@ trap 'rm -rf "$tmp"' EXIT
 trap 'exit 129' HUP
 trap 'exit 130' INT
 trap 'exit 143' TERM
-curl -fsSL "$url" -o "$tmp/install"
+# A stalled download fails within minutes and retries, rather than hanging the reconcile.
+curl -fsSL --connect-timeout 20 --max-time 300 --retry 3 --retry-delay 10 "$url" -o "$tmp/install"
 chmod 0700 "$tmp/install"
 "$tmp/install" "$@"
 if [ ! -x "$executable" ]; then

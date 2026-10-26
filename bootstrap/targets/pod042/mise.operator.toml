@@ -84,18 +84,26 @@ shell = "bash -c"
 run = '''
 set -euo pipefail
 export PATH="$HOME/.local/bin:$HOME/.amp/bin:$PATH"
+# A stalled download fails within minutes and retries; installers run from a file so a retry cannot replay half a script.
+fetch() { curl -fsSL --connect-timeout 20 --max-time 300 --retry 3 --retry-delay 10 "$@"; }
+installer=$(mktemp)
+trap 'rm -f "$installer"' EXIT
 if [ ! -x "$HOME/.amp/bin/amp" ]; then
-  curl -fsSL https://ampcode.com/install.sh | bash
+  fetch -o "$installer" https://ampcode.com/install.sh
+  bash "$installer"
 fi
 ln -sfn "$HOME/.amp/bin/amp" "$HOME/.local/bin/amp"
 if [ ! -x "$HOME/.local/bin/claude" ]; then
-  curl -fsSL https://claude.ai/install.sh | bash
+  fetch -o "$installer" https://claude.ai/install.sh
+  bash "$installer"
 fi
 "$HOME/.local/bin/claude" update
-curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_NON_INTERACTIVE=1 sh
-release=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
+fetch -o "$installer" https://chatgpt.com/codex/install.sh
+CODEX_NON_INTERACTIVE=1 sh "$installer"
+release=$(fetch -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
 if [ "$(readlink "$HOME/.local/bin/t3" || true)" != "$HOME/.t3/runtime/versions/${release##*/v}/t3" ]; then
-  curl -fsSL https://t3.codes/install.sh | T3CODE_VERSION="${release##*/v}" sh
+  fetch -o "$installer" https://t3.codes/install.sh
+  T3CODE_VERSION="${release##*/v}" sh "$installer"
   systemctl --user try-restart dev.mise.t3code-maggie.service
 fi
 test -x "$HOME/.amp/bin/amp"

@@ -7,6 +7,6 @@ check=${2:-}
 mkdir -p "$(dirname "$binary")"
 installer=$(mktemp)
 trap 'rm -f "$installer"' EXIT HUP INT TERM
-curl -fsSL https://mise.run -o "$installer"
+curl -fsSL --connect-timeout 20 --max-time 300 --retry 3 --retry-delay 10 https://mise.run -o "$installer"
 MISE_INSTALL_PATH="$binary" sh "$installer"
 [ -x "$binary" ] || { echo "mise installer did not create executable: $binary" >&2; exit 1; }

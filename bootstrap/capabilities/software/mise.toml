@@ -9,7 +9,7 @@ software/install-official claude-code "$claude" https://claude.ai/install.sh ${S
 [ -x "$claude" ] || exit 0
 if [ -n "${SOFTWARE_CHECK:-}" ]; then
   current=$("$claude" --version | cut -d' ' -f1)
-  latest=$(curl -fsSL https://downloads.claude.ai/claude-code-releases/latest)
+  latest=$(curl -fsSL --connect-timeout 20 --max-time 300 --retry 3 --retry-delay 10 https://downloads.claude.ai/claude-code-releases/latest)
   [ "$current" = "$latest" ] || echo "claude-code would be updated: $current -> $latest" >&2
   exit 0
 fi
@@ -35,14 +35,17 @@ fi
 [tasks.t3]
 run = '''
 set -eu
-release=$(curl -fsSL -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
+release=$(curl -fsSL --connect-timeout 20 --max-time 300 --retry 3 --retry-delay 10 -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
 version=${release##*/v}
 if [ "$(readlink "$HOME/.local/bin/t3" || true)" != "$HOME/.t3/runtime/versions/$version/t3" ]; then
   if [ -n "${SOFTWARE_CHECK:-}" ]; then
     echo "t3 would be installed: $version" >&2
     exit 0
   fi
-  curl -fsSL https://t3.codes/install.sh | T3CODE_VERSION="$version" sh
+  installer=$(mktemp)
+  trap 'rm -f "$installer"' EXIT
+  curl -fsSL --connect-timeout 20 --max-time 300 --retry 3 --retry-delay 10 -o "$installer" https://t3.codes/install.sh
+  T3CODE_VERSION="$version" sh "$installer"
 fi
 if ! "$HOME/.local/bin/t3" connect status --json | python3 -c 'import json, sys; d = json.load(sys.stdin); sys.exit(not (d["desired"] and d["authenticated"]))'; then
   echo "T3 enrollment missing. Run t3 connect link --headless first." >&2
