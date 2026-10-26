@@ -137,8 +137,8 @@ def post_title_request(
         model = model[: -len("[1m]")]
         headers["anthropic-beta"] = "context-1m-2025-08-07"
 
-    # Doppelclaude admits markerless requests only within a serialized message
-    # budget, so keep the newest transcript tail that fits.
+    # Titles are billed per token, so keep only the newest transcript tail that
+    # fits the message budget.
     while True:
         messages = [{"role": "user", "content": f"{prompt}\n\n{context}"}]
         overflow = len(json.dumps(messages, ensure_ascii=False).encode()) - (

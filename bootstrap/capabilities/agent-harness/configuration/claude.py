@@ -217,15 +217,16 @@ def render(
         return outputs
 
     try:
-        token = secrets["CLI_PROXY_API_KEY"]
+        token = secrets["ANTHROPIC_API_KEY"]
     except KeyError as error:
         raise ValueError(
-            "CLI_PROXY_API_KEY is required for Claude title hooks"
+            "ANTHROPIC_API_KEY is required for Claude title hooks"
         ) from error
+    haiku = data["models"]["anthropic"]["haiku"]["version"]
     outputs[".claude/hooks/_config.py"] = (
         '"""Rendered configuration for auto-title hooks."""\n\n'
-        'API_URL = "https://doppelclaude.thurstons.house/v1/messages"\n'
-        'MODEL = "sonnet"\n'
+        'API_URL = "https://api.anthropic.com/v1/messages"\n'
+        f"MODEL = {json.dumps(haiku)}\n"
         f"TOKEN = {json.dumps(token)}\nMAX_MESSAGE_BYTES = 16_000\n\n"
         f'TITLE_PROMPT = """\n{title_prompt}\n"""\n'
     )

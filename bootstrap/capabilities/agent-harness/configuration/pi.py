@@ -378,6 +378,11 @@ def render(
     existing_auth = _read_object(home / ".pi/agent/auth.json", strict=True)
     retired = {"anthropic"} if hostname == WORK_HOST else {"anthropic", "google"}
     auth = {key: value for key, value in existing_auth.items() if key not in retired}
+    if hostname != WORK_HOST:
+        auth["anthropic"] = {
+            "type": "api_key",
+            "key": f"!{home}/.local/bin/fnox-host get ANTHROPIC_API_KEY",
+        }
     settings = _json(_settings(repo, home, hostname, data, models))
     auth_content = _json(auth)
     if hostname in OMARCHY_HOSTS:

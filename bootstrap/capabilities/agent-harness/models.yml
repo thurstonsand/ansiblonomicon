@@ -71,7 +71,7 @@ models:
         aliases:
           claude: "haiku"
           amp: "anthropic/claude-haiku-5-5"
-          pi: "doppelclaude/claude-haiku-5-5"
+          pi: "anthropic/claude-haiku-5-5"
       vscode:
         include: true
         thinking: true

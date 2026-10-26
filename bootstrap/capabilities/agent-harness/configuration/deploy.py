@@ -37,11 +37,11 @@ RENDERERS = {
     "pi": "pi",
 }
 SECRET_KEYS = {
-    "type-a-no2": {"CLI_PROXY_API_KEY"},
-    "no9-type-s": {"CLI_PROXY_API_KEY"},
+    "type-a-no2": {"ANTHROPIC_API_KEY"},
+    "no9-type-s": {"ANTHROPIC_API_KEY"},
     WORK_HOST: {"ANTHROPIC_AUTH_TOKEN"},
-    "pod153": {"CLI_PROXY_API_KEY"},
-    "pod042": {"CLI_PROXY_API_KEY"},
+    "pod153": {"ANTHROPIC_API_KEY"},
+    "pod042": {"ANTHROPIC_API_KEY"},
 }
 PRIVATE = {
     ".claude/hooks/_config.py",
