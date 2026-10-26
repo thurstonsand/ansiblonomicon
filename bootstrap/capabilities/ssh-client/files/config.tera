@@ -50,6 +50,12 @@ Host pod153
   UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/pod153.known_hosts
   IdentityFile ~/.ssh/id_ed25519_git
   IdentitiesOnly yes
+
+Host pod153-ts
+  HostName 100.97.62.24
+  User thurstonsand
+  HostKeyAlias pod153
+  UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/pod153.known_hosts
 {% else %}
 
 Host pod153
@@ -59,6 +65,12 @@ Host pod153
   UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/pod153.known_hosts
   IdentityFile ~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub
   IdentitiesOnly yes
+
+Host pod153-ts
+  HostName 100.97.62.24
+  User thurstonsand
+  HostKeyAlias pod153
+  UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/pod153.known_hosts
 
 Host pod042
   User thurstonsand
