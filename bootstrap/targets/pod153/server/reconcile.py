@@ -2,6 +2,7 @@
 """Keep pod153 awake, reachable, and automatable with nobody at the keyboard."""
 
 import argparse
+import os
 import re
 import subprocess
 
@@ -9,6 +10,7 @@ import subprocess
 AC_POWER = {
     "sleep": "0",
     "disksleep": "0",
+    "displaysleep": "0",
     "standby": "0",
     "powernap": "0",
     "womp": "1",
@@ -39,6 +41,26 @@ def daemon_loaded(label: str) -> bool:
     return result.returncode == 0
 
 
+def screen_saver_idle() -> str | None:
+    result = subprocess.run(
+        ["defaults", "-currentHost", "read", "com.apple.screensaver", "idleTime"],
+        text=True,
+        capture_output=True,
+    )
+    return result.stdout.strip() if result.returncode == 0 else None
+
+
+def screen_lock_on() -> bool:
+    status = subprocess.run(
+        ["sysadminctl", "-screenLock", "status"], text=True, capture_output=True
+    )
+    return "screenLock delay is" in status.stderr
+
+
+def login_password() -> str:
+    return output(os.environ["SUDO_ASKPASS"]).strip()
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--check", action="store_true")
@@ -57,14 +79,46 @@ def main() -> None:
     drift = {key: value for key, value in AC_POWER.items() if current.get(key) != value}
     if drift:
         flags = [item for pair in drift.items() for item in pair]
-        changes.append((f"AC power {drift}", [["pmset", "-c", *flags]]))
+        changes.append((f"AC power {drift}", [["sudo", "-n", "pmset", "-c", *flags]]))
     if not re.search(r"^\s*SleepDisabled\s+1$", output("pmset", "-g"), re.MULTILINE):
-        changes.append(("sleep disabled", [["pmset", "-a", "disablesleep", "1"]]))
+        changes.append(
+            ("sleep disabled", [["sudo", "-n", "pmset", "-a", "disablesleep", "1"]])
+        )
+    # A sleeping display, a screen saver, or a locked screen hides every window from
+    # accessibility and drops Screen Sharing's keys, so no agent can reach the desktop
+    # until someone types the password at the Mac.
+    if screen_saver_idle() != "0":
+        changes.append(
+            (
+                "screen saver off",
+                [
+                    [
+                        "defaults",
+                        "-currentHost",
+                        "write",
+                        "com.apple.screensaver",
+                        "idleTime",
+                        "-int",
+                        "0",
+                    ]
+                ],
+            )
+        )
+    if screen_lock_on():
+        changes.append(
+            (
+                "screen lock off",
+                [["sysadminctl", "-screenLock", "off", "-password", "-"]],
+            )
+        )
     if "Restart After Freeze: On" not in output(
         "sudo", "-n", "systemsetup", "-getrestartfreeze"
     ):
         changes.append(
-            ("restart after freeze", [["systemsetup", "-setrestartfreeze", "on"]])
+            (
+                "restart after freeze",
+                [["sudo", "-n", "systemsetup", "-setrestartfreeze", "on"]],
+            )
         )
     for name, (label, plist) in SYSTEM_DAEMONS.items():
         if not daemon_loaded(label):
@@ -72,8 +126,8 @@ def main() -> None:
                 (
                     name,
                     [
-                        ["launchctl", "enable", f"system/{label}"],
-                        ["launchctl", "bootstrap", "system", plist],
+                        ["sudo", "-n", "launchctl", "enable", f"system/{label}"],
+                        ["sudo", "-n", "launchctl", "bootstrap", "system", plist],
                     ],
                 )
             )
@@ -95,6 +149,8 @@ def main() -> None:
                 "Automation Mode without authentication",
                 [
                     [
+                        "sudo",
+                        "-n",
                         "automationmodetool",
                         "enable-automationmode-without-authentication",
                     ]
@@ -107,7 +163,13 @@ def main() -> None:
             print(f"server: would set {name}")
             continue
         for command in commands:
-            subprocess.run(["sudo", "-n", *command], check=True)
+            # sysadminctl reads the password from stdin and refuses while the screen is locked.
+            if command[:2] == ["sysadminctl", "-screenLock"]:
+                subprocess.run(
+                    command, input=login_password() + "\n", text=True, check=True
+                )
+            else:
+                subprocess.run(command, check=True)
         print(f"server: set {name}")
 
 

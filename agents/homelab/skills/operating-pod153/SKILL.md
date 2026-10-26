@@ -39,6 +39,8 @@ Plan restarts with `fnox-host exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- script
 
 ## Answering prompts
 
+The screen must never lock. A sleeping display, a running screen saver, or a locked screen hides every window from accessibility, so Cua refuses all input, and Screen Sharing drops every key at the lock screen, so nothing remote can type the password. The server capability keeps display sleep and the screen saver off and turns the screen lock off with `sysadminctl -screenLock off`, which only works from an unlocked session. If pod153 is ever found locked, `pod153-restart` is the way back: the watcher logs in at the login window, and the next `mise run server` turns the lock off.
+
 Cua Driver runs as the `dev.mise.house.thurstons.cua-driver` LaunchAgent and holds Accessibility and Screen Recording. Use it to answer prompts:
 
 - TCC consent alerts ("would like to access", "would like to administer your computer") belong to `UserNotificationCenter`. Find them with `list_windows` on its pid, read each with `get_window_state`, and press the button by role and name. Alerts stack; only the frontmost one takes a press, so answer them one at a time and list again.
