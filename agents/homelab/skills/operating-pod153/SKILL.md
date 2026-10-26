@@ -12,8 +12,8 @@ pod153 is a MacBook Pro running as a server next to pod042. Nobody sits at it, s
 - SSH host: `pod153` (`10.10.10.53` on Bunker). Key login only after boot; pod042 and pod153 share the `id_ed25519_git` file key, the laptops use the operator key from 1Password.
 - Reconciliation: `mise reconcile [--check] [-t tags]` on pod153 itself. `mise run reconcile:tags` lists the tags. A LaunchAgent runs `scripts/reconcile-or-fix` daily at 04:30: it pulls main and reconciles, logging to `~/.local/state/ansiblonomicon/reconcile.log`. On failure it starts an Amp thread labeled `reconcile-failure` that fixes and pushes, or notifies Thurston. A checkout with uncommitted changes skips the night instead, and the thread names their likely owner.
 - Secrets: `scripts/fnox-host get NAME`. The `agent` provider uses the service-account token, so it never prompts. Never route unattended work through the 1Password app or its SSH agent; it is locked whenever nobody is at the Mac.
-- Screen Sharing: `vnc://pod153` with the account name and password. It offers only Apple's authentication (RFB security type 30 and newer), which macOS Screen Sharing, Remmina, RealVNC, and vncdotool speak; plain VNC-password clients cannot connect. Turn it on only in System Settings → General → Sharing: that toggle grants `com.apple.screensharing.agent` Screen Recording and event posting, and without them the login window streams black and screensharingd logs `ignore key event` for every key. Started through `launchctl` or `kickstart` alone, it authenticates but cannot see or type. The grants live in the system TCC database and survive restarts, so a fresh host needs the toggle once: open System Settings → General → Sharing and, with Cua `run_script`, press `Screen SharingToggle` off and then on. Neither press asks for a password. The server capability refuses to reconcile while Screen Sharing is off, and `vncdo capture` of a real screen, with screensharingd logging `screenCapture flag 1  postEvents flag 1`, confirms the grants.
-- T3 Code: the vendor LaunchAgent `com.t3tools.t3code.service` serves `*:3773` (`T3CODE_HOST=0.0.0.0` in `~/.t3/service.env`), so clients at home use `10.10.10.53:3773` directly, and reaches T3 Connect through its managed cloudflared relay. `t3 connect status --json` reports `reachability.status`; if the relay rejects a fresh link, restart with `launchctl kickstart -k gui/$(id -u)/com.t3tools.t3code.service`. A revoked link needs Thurston to approve a new `t3 connect link --headless` device code.
+- Screen Sharing: `vnc://pod153` with the account name and password, through a client that speaks Apple's authentication (macOS Screen Sharing, Remmina, RealVNC, vncdotool). Only the System Settings → General → Sharing toggle grants it screen capture and input; started through `launchctl`, it authenticates but streams black and drops every key.
+- T3 Code: the vendor LaunchAgent `com.t3tools.t3code.service` serves `*:3773` on the LAN and T3 Connect through its relay; `t3 connect status --json` reports reachability.
 - Hardware console: none. `pod042-kvm` is wired to pod042, so a hard freeze or a pre-boot that SSH cannot reach needs someone at the Mac.
 
 ## Boot states
@@ -31,7 +31,7 @@ pod153 is a MacBook Pro running as a server next to pod042. Nobody sits at it, s
 
 pod042 runs `pod153-wake watch` as the `dev.mise.pod153-wake` user service, so every restart reaches the desktop on its own. Neither an SSH unlock nor `fdesetup authrestart` logs anyone in, so after either the watcher types the password into the login window through vncdotool (a `pod042` operator tool) and waits for the console to belong to `thurstonsand`. Each login leaves before and after captures in `~/.local/state/pod153-wake/` on pod042. `wake`, `login`, and `watch` need `POD153_LOGIN_PASSWORD`: run them as `fnox-host exec --secret POD153_LOGIN_PASSWORD -- scripts/pod153-wake login`. Check `journalctl --user -u dev.mise.pod153-wake` on pod042 when pod153 stays in `preboot` or `login-window`; the watcher waits an hour after an attempt that did not reach the desktop, so a wrong password cannot turn into a lockout.
 
-Pre-boot joins only an open or WPA2-PSK Wi-Fi network the Mac has joined before, or unauthenticated Ethernet, which is why the temporary Bunker SSID is WPA2. Keep Bunker first in `networksetup -listpreferredwirelessnetworks en0`: a boot that picks YoRHa stays `down` from pod042, which UniFi blocks from YoRHa's SSH. After changing Wi-Fi, refresh pre-boot's copy with `sudo diskutil apfs updatePreboot /`.
+Pre-boot joins only an open or WPA2-PSK Wi-Fi network the Mac has joined before, or unauthenticated Ethernet. Keep Bunker first in `networksetup -listpreferredwirelessnetworks en0`, since UniFi blocks pod042 from YoRHa's SSH, and refresh pre-boot's copy with `sudo diskutil apfs updatePreboot /` after any Wi-Fi change.
 
 ## Restarting
 
@@ -39,7 +39,7 @@ Plan restarts with `fnox-host exec --secret HOMEBREW_SUDO_ASKPASS_PASS -- script
 
 ## Answering prompts
 
-The screen must never lock. A sleeping display, a running screen saver, or a locked screen hides every window from accessibility, so Cua refuses all input, and Screen Sharing drops every key at the lock screen, so nothing remote can type the password. The server capability keeps display sleep and the screen saver off and turns the screen lock off with `sysadminctl -screenLock off`, which only works from an unlocked session. If it exits 242 with `MKBDeviceSetGracePeriod error -14`, check Lock Screen settings: iPhone Mirroring set to "Authenticate automatically" pins the lock to Immediately. Set it to "Ask every time" in iPhone Mirroring → Settings. If pod153 is ever found locked, `pod153-restart` is the way back: the watcher logs in at the login window, and the next `mise run server` turns the lock off.
+The screen must never lock: a locked screen hides every window from Cua and drops Screen Sharing's keys, so nothing remote can unlock it. The server capability keeps display sleep, the screen saver, and the screen lock off. If pod153 is ever found locked, `pod153-restart` brings it back to an unlocked desktop.
 
 Cua Driver runs as the `dev.mise.house.thurstons.cua-driver` LaunchAgent and holds Accessibility and Screen Recording. Use it to answer prompts:
 
@@ -64,7 +64,7 @@ Claude Remote Control needs the full-scope login in the keychain, which lapses a
 | Service | Declared in |
 | --- | --- |
 | Cua Driver daemon, Claude Remote Control rooted at `~/Develop`, daily reconcile | `bootstrap/targets/pod153/mise.server.toml` |
-| Power (no sleep, lid-closed awake, restart after freeze), Remote Login, Screen Sharing, Automation Mode | `bootstrap/targets/pod153/server/reconcile.py` |
+| Power (no sleep, lid-closed awake, restart after freeze), display and screen lock, Remote Login, Screen Sharing, Automation Mode | `bootstrap/targets/pod153/server/reconcile.py` |
 | Amp runner | `bootstrap/targets/pod153/mise.amp-cli.toml` |
 | Apps | `bootstrap/capabilities/mac-apps/Brewfile.pod153` |
 
