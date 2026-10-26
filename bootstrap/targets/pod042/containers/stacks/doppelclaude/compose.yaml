@@ -34,6 +34,7 @@ services:
       DOPPELCLAUDE_SHUTDOWN_TIMEOUT_MS: "15000"
       DOPPELCLAUDE_RETRY_ATTEMPTS: "2"
       DOPPELCLAUDE_LOG_FILE: /var/lib/doppelclaude/diagnostics/records.jsonl
+      DOPPELCLAUDE_RECORD_PROMPTS: /var/lib/doppelclaude/diagnostics/prompts.jsonl
     volumes:
       - type: bind
         source: /mnt/black-box/docker/doppelclaude
