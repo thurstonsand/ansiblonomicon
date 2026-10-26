@@ -13,6 +13,9 @@ AC_POWER = {
     "powernap": "0",
     "womp": "1",
 }
+# Bunker gets no mDNS reflection, so the queue names the printer instead of
+# browsing for it. Plain IPP, because its self-signed certificate fails IPPS.
+PRINTER = ("Canon_MF650C_Series", "ipp://printer.thurstons.house/ipp/print")
 SYSTEM_DAEMONS = {
     "Remote Login": ("com.openssh.sshd", "/System/Library/LaunchDaemons/ssh.plist"),
 }
@@ -74,6 +77,18 @@ def main() -> None:
                     ],
                 )
             )
+    printer, uri = PRINTER
+    device = subprocess.run(
+        ["lpstat", "-v", printer], text=True, capture_output=True
+    ).stdout
+    if f"device for {printer}: {uri}" not in device:
+        driver = [] if device else ["-m", "everywhere"]
+        changes.append(
+            (
+                f"printer {printer}",
+                [["lpadmin", "-p", printer, "-E", "-v", uri, *driver]],
+            )
+        )
     if "DOES NOT REQUIRE" not in output("automationmodetool"):
         changes.append(
             (

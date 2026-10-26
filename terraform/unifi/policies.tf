@@ -94,6 +94,29 @@ resource "unifi_firewall_policy" "home_assistant_to_protect" {
   }
 }
 
+# Bunker gets no mDNS reflection, so pod153's queue addresses the printer by name over IPP.
+resource "unifi_firewall_policy" "pod153_to_printer" {
+  name                 = "pod153 to printer"
+  action               = "ALLOW"
+  protocol             = "tcp"
+  ip_version           = "IPV4"
+  create_allow_respond = true
+
+  source = {
+    zone_id         = unifi_firewall_zone.bunker.id
+    matching_target = "IP"
+    ips             = [unifi_client.pod153.fixed_ip]
+  }
+
+  destination = {
+    zone_id            = unifi_firewall_zone.scanners.id
+    matching_target    = "IP"
+    ips                = [unifi_client.canon_printer.fixed_ip]
+    port               = "631"
+    port_matching_type = "SPECIFIC"
+  }
+}
+
 resource "unifi_firewall_policy" "pod042_to_scrypted" {
   name                 = "pod042 to Scrypted"
   action               = "ALLOW"
