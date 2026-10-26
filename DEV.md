@@ -66,7 +66,7 @@ The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json
 
 ## pod042
 
-The physical Debian NAS, declared in `bootstrap/targets/pod042/`.
+The physical Debian NAS, declared in `bootstrap/targets/pod042/`. The `dev.mise.reconcile-daily.timer` user timer runs `scripts/reconcile-or-fix` at 05:30, an hour after pod153's, so the two never push to main at once; `remote-development` declares it. On both hosts the script skips the night when its checkout has uncommitted changes, because other agents share that checkout and a reconcile would deploy their unfinished work; it starts the agent to name the owner and notify Thurston instead.
 
 ## pod153
 
