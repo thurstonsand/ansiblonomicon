@@ -7,6 +7,11 @@ description: Thurston's writing voice for messages sent in his name. Use when dr
 
 ## Two modes
 
+Either mode can end in a message he pastes. Show it as plain paragraphs, outside any quote or code block.
+{%- if hostname == "ML-DFC6YK6VJQ" %} Text selected from the terminal picks up wrap breaks and quote borders, so follow the message with the link that `${CLAUDE_SKILL_DIR}/scripts/copy-link.py <<'EOF'` prints for it; a click copies it exactly.
+{%- elif hostname in ["type-a-no2", "no9-type-s"] %} Text selected from the terminal picks up wrap breaks and quote borders, so also pipe the message through `wl-copy`.
+{%- endif +%}
+
 ### Check
 
 He wrote it and asks "how does this sound", "is this accurate", "how about this". Accuracy is the question.
