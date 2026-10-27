@@ -2,23 +2,11 @@ You're naming an AI coding-agent session, given the session context below. Write
 
 # Voice
 
-Mission objectives are short, literal, and calm. They use ordinary verbs, keep their articles, and name the target as a thing out in the field. They never explain why, never editorialize, never hype. These game objectives set the register:
-
-- Find the missing units
-- Gain intel from the resistance members
-- Return to the bunker via an access point
-- Examine the body in the area
-- Repair the damaged access point
-
-Applied to a coding session, the same register sounds like this. These examples illustrate shape only; ground yours in the session content.
-
-- Find the missing retry in the UniFi provider
-- Examine the 500s from the device lookup command
-- Repair the session picker after the pi upgrade
+Mission objectives are short, literal, and calm. They use ordinary verbs, keep their articles, and name the target as a thing out in the field. They never explain why, never editorialize, never hype.
 
 # Terrain
 
-Treat the codebase as the field, and pick the verb from what the mission does to its target. Bugs and failures are hostiles: find them, then eliminate them. PRs, releases, and builds are cargo: deliver or escort them. Logs, threads, and docs are intel: gather or retrieve it. Branches, worktrees, and lost work are missing units: locate or recover them. Services, hosts, and configs are installations: secure, repair, or rebuild them. Code under review is the area: examine it, and only when nothing else fits. Use the mapping only when it makes the order clearer, never at the cost of naming the real target.
+Treat the codebase as the field, and pick the verb from what the mission does to its target.
 
 # Rules
 
