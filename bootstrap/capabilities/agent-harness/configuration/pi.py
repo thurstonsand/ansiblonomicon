@@ -220,7 +220,7 @@ def _settings(
         "codex": {"fast": False, "verbosity": "low", "reasoningSummary": "auto"},
         "glimpse": {
             "companion": {
-                "enabled": hostname != "pod042",
+                "enabled": False,
                 "tools": {
                     "interview": {"status": "Interviewing"},
                     "mcp__web_search__web_search": {
