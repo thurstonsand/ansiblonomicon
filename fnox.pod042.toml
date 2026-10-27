@@ -44,3 +44,4 @@ RESTIC_REPOSITORY_PASSWORD = { provider = "agent", value = "op://agent/Backblaze
 POD042_GIT_SSH_PRIVATE_KEY = { provider = "agent", value = "op://agent/xvusqt5rhadejhfjjp7crgyrp4/private key" }
 POD042_GIT_SSH_PUBLIC_KEY = { provider = "agent", value = "op://agent/xvusqt5rhadejhfjjp7crgyrp4/public key" }
 POD153_LOGIN_PASSWORD = { provider = "agent", value = "op://agent/oeqloglekpsdkjkpxgcsz4kag4/password" }
+PARALLEL_API_KEY = { provider = "agent", value = "op://agent/ujvwlvzywxv4z654bro2wjkaqq/credential" }

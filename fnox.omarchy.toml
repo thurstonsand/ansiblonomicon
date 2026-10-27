@@ -8,3 +8,4 @@ auth_command = ""
 [secrets]
 OMARCHY_SUDO_PASSWORD = { provider = "agent", value = "op://agent/oeqloglekpsdkjkpxgcsz4kag4/password" }
 POD042_SERVICE_ACCOUNT_TOKEN = { provider = "personal", value = "op://agent/gvsmrehmd3icpq3c5uow7s6mh4/credential", env = false }
+PARALLEL_API_KEY = { provider = "agent", value = "op://agent/ujvwlvzywxv4z654bro2wjkaqq/credential" }

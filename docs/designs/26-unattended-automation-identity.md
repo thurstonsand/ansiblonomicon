@@ -24,7 +24,7 @@ No secret currently needs a global shell export. Ordinary settings such as PATH 
 
 Inside ansiblonomicon, mise activates tools and the virtualenv without reading credentials. Consumers request only their named secrets through `fnox-host get` or `fnox-host exec`; MCP credentials resolve at connection time rather than requiring an agent to start in this directory.
 
-`CLI_PROXY_API_KEY` remains the AIG Worker's inbound authentication secret, not a local shell variable. `PARALLEL_API_KEY` belongs to its consumers: Pi resolves it when a Parallel operation needs a client, OpenCode retains its rendered MCP authorization header, and Zed no longer configures Parallel.
+`CLI_PROXY_API_KEY` remains the AIG Worker's inbound authentication secret, not a local shell variable. `PARALLEL_API_KEY` belongs to its consumers on non-work hosts: Pi resolves it when a Parallel operation needs a client, OpenCode retains its rendered MCP authorization header, and Zed no longer configures Parallel.
 
 Agent launch functions no longer run `fnox-host exec`. A fresh Pi launch from any directory must not prefetch the whole host set. The Pi web-tools package accepts a trusted global `webTools.parallel.apiKeyCommand`; registration does not execute that command. Each actual operation obtains a fresh key without changing `process.env` or writing a secret cache.
 

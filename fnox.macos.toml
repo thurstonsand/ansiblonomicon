@@ -12,3 +12,4 @@ POD042_GIT_SSH_PUBLIC_KEY = { provider = "agent", value = "op://agent/xvusqt5rha
 POD153_TUNNEL_TOKEN = { provider = "agent", value = "op://agent/yepuncd223mealzleq4jnrniha/tunnel_token" }
 REMCTL_MCP_TOKEN = { provider = "agent", value = "op://agent/yepuncd223mealzleq4jnrniha/remctl_token" }
 POD042_SERVICE_ACCOUNT_TOKEN = { provider = "personal", value = "op://agent/gvsmrehmd3icpq3c5uow7s6mh4/credential", env = false }
+PARALLEL_API_KEY = { provider = "agent", value = "op://agent/ujvwlvzywxv4z654bro2wjkaqq/credential" }

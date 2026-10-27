@@ -217,8 +217,6 @@ def _settings(
         },
         "images": {"autoResize": True, "blockImages": False},
         "paste": {"shortcut": "alt+v"},
-        # Work still runs pi-web-tools; pi-librarian 0.7 absorbed it everywhere else.
-        **({"webTools": parallel} if work else {}),
         "codex": {"fast": False, "verbosity": "low", "reasoningSummary": "auto"},
         "glimpse": {
             "companion": {
