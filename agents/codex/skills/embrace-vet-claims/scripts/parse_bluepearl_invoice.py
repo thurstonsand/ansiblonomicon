@@ -50,7 +50,7 @@ def parse_invoice(text: str) -> dict[str, str | None]:
 
 def read_pdf(path: Path) -> str:
     try:
-        import pdfplumber
+        import pdfplumber  # pyright: ignore[reportMissingModuleSource]
     except ImportError as exc:
         raise SystemExit(
             "pdfplumber is required to parse BluePearl invoice PDFs"
