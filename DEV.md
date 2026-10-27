@@ -70,7 +70,7 @@ The physical Debian NAS, declared in `bootstrap/targets/pod042/`. The `dev.mise.
 
 ## pod153
 
-The MacBook Pro, run as an always-on headless server and reconciled by `mise laptop`. Its `server` capability keeps it awake with the lid closed, reachable over Remote Login and Screen Sharing, and runs Cua Driver, Claude Remote Control, ChatGPT, and a daily 04:30 `scripts/reconcile-or-fix` as LaunchAgents. That script pulls main and reconciles; on failure it starts a headless Amp agent that fixes and pushes, or notifies Thurston when the fix needs him. Nothing unattended may depend on the 1Password app or its SSH agent. pod042's `dev.mise.pod153-wake` service unlocks FileVault over pre-boot SSH after an unplanned restart. `agents/homelab/skills/operating-pod153/` covers boot states, restarts, and answering macOS prompts.
+The MacBook Pro, run as an always-on headless server and reconciled by `mise laptop`. Its `server` capability keeps it awake with the lid closed, reachable over Remote Login and Screen Sharing, and runs Cua Driver, Claude Remote Control, ChatGPT, and a daily 04:30 `scripts/reconcile-or-fix` as LaunchAgents. That script pulls main and reconciles; on failure it starts an Amp thread on pod153's own runner that fixes and pushes, or notifies Thurston when the fix needs him. Nothing unattended may depend on the 1Password app or its SSH agent. pod042's `dev.mise.pod153-wake` service unlocks FileVault over pre-boot SSH after an unplanned restart. `agents/homelab/skills/operating-pod153/` covers boot states, restarts, and answering macOS prompts.
 
 ## Omarchy laptops
 

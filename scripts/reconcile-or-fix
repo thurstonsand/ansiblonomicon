@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 """Pull and reconcile this host; on failure, hand the log to an Amp agent to fix or escalate."""
 
-import json
 import os
 from pathlib import Path
 import signal
 import socket
 import subprocess
 import sys
-import tempfile
 import time
 
 REPO = Path(__file__).resolve().parents[1]
@@ -117,33 +115,28 @@ def main() -> int:
     if not status:
         return 0
 
-    # Nobody answers confirmation prompts here, so this one run allows every command.
-    settings_path = Path.home() / ".config/amp/settings.json"
-    settings: dict[str, object] = (
-        json.loads(settings_path.read_text()) if settings_path.exists() else {}
-    )
-    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as handle:
-        json.dump({**settings, "amp.dangerouslyAllowAll": True}, handle)
-    try:
-        subprocess.run(
-            [
-                "amp",
-                "--settings-file",
-                handle.name,
-                "--title",
-                f"{host} reconcile {'found uncommitted changes' if dirty else 'failed'}",
-                "--label",
-                "reconcile-failure",
-                "--no-archive-after-execute",
-                "-x",
-                prompt,
-            ],
-            cwd=REPO,
-            stdin=subprocess.DEVNULL,
-            check=False,
-        )
-    finally:
-        os.unlink(handle.name)
+    # The host's own runner hosts the thread, so it outlives this process; amp prints its URL and exits.
+    thread = subprocess.run(
+        [
+            "amp",
+            "--executor",
+            f"runner:{host}",
+            "--runner-dir",
+            str(REPO),
+            "--title",
+            f"{host} reconcile {'found uncommitted changes' if dirty else 'failed'}",
+            "--no-archive-after-execute",
+            "-x",
+            prompt,
+        ],
+        cwd=REPO,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        text=True,
+        check=True,
+    ).stdout.strip()
+    # A runner thread ignores --label, so the label goes on afterwards.
+    subprocess.run(["amp", "threads", "label", thread, "reconcile-failure"], check=True)
     return status
 
 
