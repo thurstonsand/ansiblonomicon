@@ -15,14 +15,20 @@ DEFAULT_SECTIONS = (
     "nsglobaldomain",
     "menubar",
     "desktop-services",
+    "hotkeys",
     "permissions",
     "hostname",
 )
+ACTIVATE_SETTINGS = (
+    "/System/Library/PrivateFrameworks/SystemAdministration.framework"
+    "/Resources/activateSettings"
+)
 DEFAULT_DOMAINS = {
-    "com.apple.dock": "Dock",
-    "com.apple.finder": "Finder",
-    "com.apple.desktopservices": "Finder",
-    "com.apple.menuextra.clock": "SystemUIServer",
+    "com.apple.dock": ("killall", "Dock"),
+    "com.apple.finder": ("killall", "Finder"),
+    "com.apple.desktopservices": ("killall", "Finder"),
+    "com.apple.menuextra.clock": ("killall", "SystemUIServer"),
+    "com.apple.symbolichotkeys": (ACTIVATE_SETTINGS, "-u"),
 }
 
 
@@ -88,11 +94,11 @@ def defaults_status(target: Path, environments: str) -> list[dict[str, Any]]:
     return cast(list[dict[str, Any]], entries)
 
 
-def restart(applications: set[str]) -> None:
+def restart(commands: set[tuple[str, str]]) -> None:
     failures: list[subprocess.CalledProcessError] = []
-    for application in sorted(applications):
+    for command in sorted(commands):
         result = subprocess.run(
-            ["killall", application], check=False, text=True, capture_output=True
+            list(command), check=False, text=True, capture_output=True
         )
         if result.returncode and not (
             result.returncode == 1 and "No matching processes" in result.stderr
@@ -197,7 +203,7 @@ def main() -> None:
             raise
     if args.check:
         if restarts:
-            print("would restart: " + ", ".join(sorted(restarts)))
+            print("would run: " + ", ".join(" ".join(c) for c in sorted(restarts)))
     else:
         restart(restarts)
 

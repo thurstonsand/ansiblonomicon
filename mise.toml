@@ -187,8 +187,8 @@ flag "--sections <sections>" help="Comma-separated sysconfig sections"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  pod153) profile=server; name=pod153; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,permissions,hostname} ;;
-  ML-DFC6YK6VJQ) profile=work; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,permissions} ;;
+  pod153) profile=server; name=pod153; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,hotkeys,permissions,hostname} ;;
+  ML-DFC6YK6VJQ) profile=work; sections=${usage_sections:-dock,finder,nsglobaldomain,menubar,desktop-services,hotkeys,permissions} ;;
   *) echo "sysconfig is registered only on Mac laptops" >&2; exit 1 ;;
 esac
 case ",$sections," in
@@ -808,7 +808,7 @@ case "$(hostname -s 2>/dev/null || hostname)" in
 esac
 software_capabilities="mac-apps language-tools berkeley-mono"
 config_capabilities="sysconfig terminal-theme vcs shell terminal-tools user-tools editor-config neovim"
-sysconfig_sections="dock finder nsglobaldomain menubar desktop-services permissions"
+sysconfig_sections="dock finder nsglobaldomain menubar desktop-services hotkeys permissions"
 case "$profile" in
   server)
     software_capabilities="$software_capabilities claude-code cua-driver t3 shp uvc-util docker-context amp-cli"
@@ -854,7 +854,7 @@ for native_capability in $software_capabilities; do
     ,,|*,all,*|*,"$native_capability",*) mise run "//:$native_capability" ${usage_check:+--check} || exit "$?" ;;
   esac
 done
-selected_sections=$(printf '%s' "$normalized_tags" | tr ',' '\n' | grep -E '^(dock|finder|nsglobaldomain|menubar|desktop-services|permissions|hostname)$' | paste -sd, -)
+selected_sections=$(printf '%s' "$normalized_tags" | tr ',' '\n' | grep -E '^(dock|finder|nsglobaldomain|menubar|desktop-services|hotkeys|permissions|hostname)$' | paste -sd, -)
 case ",$normalized_tags," in
   ,,|*,all,*|*,sysconfig,*) mise run //:sysconfig ${usage_check:+--check} || exit "$?" ;;
   *) [ -z "$selected_sections" ] || mise run //:sysconfig --sections "$selected_sections" ${usage_check:+--check} || exit "$?" ;;
