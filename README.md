@@ -58,7 +58,7 @@ Work's [Python-index capability](bootstrap/capabilities/python-index/README.md) 
 
 `mise language-tools` reconciles the inventories under `bootstrap/capabilities/language-tools/`. It preserves unrelated global mise configuration and packages, updates only declared tools when their daily interval or inventory changes, and restores declared npm packages after Node replacement. `--check` validates the inventory and reports intended work without changing files or installing tools. Work requires its private inventory and Python-index mapping first; see [README.work.md](README.work.md).
 
-Small vendor-installed and source-built software is also native: run `mise claude-code`, `mise pi`, `mise shp`, or `mise uvc-util`, with `--check` for a nonmutating drift report. Host registration limits each command to the laptops that declare it. Go and UVC sources live under `bootstrap/capabilities/software/sources/`.
+Small vendor-installed and source-built software is also native: run `mise claude-code`, `mise pi`, `mise shp`, `mise uvc-util`, or `mise docker-credentials`, with `--check` for a nonmutating drift report. Host registration limits each command to the laptops that declare it. Go and UVC sources live under `bootstrap/capabilities/software/sources/`.
 
 Capability-driven Node upgrades carry unmanaged registry npm globals into the new prefix at their installed versions, excluding bundled npm/Corepack. A private pending snapshot survives failed runs and is removed after successful reconciliation; linked/local packages require explicit handling before an upgrade. The self-contained Node postinstall hook restores declared packages even when Node is installed outside reconciliation.
 

@@ -13,6 +13,8 @@ auth_command = ""
 [secrets]
 HOMEBREW_SUDO_ASKPASS_PASS_WORK = { provider = "personal", value = "op://Private/Crowdstrike Okta/password" }
 ANTHROPIC_AUTH_TOKEN = { provider = "work", value = "op://Private/xg2nzqad3xccpjrcjjtq3zc4ra/dwtkda6l2u3vqthl6nal54e4ly" }
+ARTIFACTORY_IDENTITY_TOKEN = { provider = "work", value = "op://Employee/lzz47gb6m7dpwpuu25ydvwrbwi/identity token" }
+ARTIFACTORY_USERNAME = { provider = "work", value = "op://Employee/lzz47gb6m7dpwpuu25ydvwrbwi/username" }
 BITBUCKET_TOKEN = { provider = "work", value = "op://Private/htfleji6niyqanjjznh3ho7ig4/credential" }
 GITLAB_ACCESS_TOKEN = { provider = "work", value = "op://Employee/uvouduqgbabir7wsb3zimhkjq4/aokr7uxluwvrx3mv4ihhgtrb3i" }
 LOGSCALE_VIPER_SPOG_TOKEN = { provider = "work", value = "op://Employee/j34qyvjnwrcu6s4txdvv5qhccy/jtr42nh2zhaoqwpmnyuw5bevue" }

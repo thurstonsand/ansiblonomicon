@@ -212,7 +212,7 @@ run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host:$usage_capability" in
   pod153:claude-code|pod153:cua-driver|pod153:t3|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
-  ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono) ;;
+  ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono|ML-DFC6YK6VJQ:docker-credentials) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
 mode=apply
@@ -255,6 +255,15 @@ fi
 usage = 'flag "-c --check"'
 [tasks."docker-context"]
 run = "mise run //:software:dispatch docker-context ${usage_check:+--check}"
+usage = 'flag "-c --check"'
+[tasks."docker-credentials"]
+run = '''
+if [ -n "${usage_check:-}" ]; then
+  exec mise run //:software:dispatch docker-credentials --check
+fi
+exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret ARTIFACTORY_USERNAME --secret ARTIFACTORY_IDENTITY_TOKEN -- \
+  mise run //:software:dispatch docker-credentials
+'''
 usage = 'flag "-c --check"'
 
 [tasks."terminal-theme"]
@@ -816,7 +825,7 @@ case "$profile" in
     sysconfig_sections="$sysconfig_sections hostname"
     ;;
   work)
-    software_capabilities="$software_capabilities pi uvc-util"
+    software_capabilities="$software_capabilities pi uvc-util docker-credentials"
     config_capabilities="$config_capabilities python-index work-local"
     ;;
 esac

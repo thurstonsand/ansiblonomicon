@@ -6,7 +6,7 @@ Every private input is gitignored before it holds corporate values. `*.local.tom
 
 ## Target Variables
 
-Git/Jujutsu identity, corporate Git URL rewrites, LazyGit services, Go editor settings, Neovim private values, and Python indexes belong in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`. Mise loads it for every capability environment of the target.
+Git/Jujutsu identity, corporate Git URL rewrites, LazyGit services, Go editor settings, Neovim private values, Python indexes, and Artifactory Docker registries belong in `bootstrap/targets/ML-DFC6YK6VJQ/mise.local.toml`. Mise loads it for every capability environment of the target.
 
 ## Agent Configuration
 
