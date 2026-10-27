@@ -1,6 +1,9 @@
 # Homebrew Bundle file (work macOS)
 # Run with: brew bundle --file=Brewfile.work
 
+# The work account is not an admin, so in-app updaters cannot replace bundles in /Applications.
+cask_args appdir: "~/Applications"
+
 # Local overrides (corporate taps, gitignored)
 Dir.glob(File.join(__dir__, "Brewfile.work.*")).sort.each do |f|
   instance_eval(File.read(f))

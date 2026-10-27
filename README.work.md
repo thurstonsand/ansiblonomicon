@@ -109,6 +109,8 @@ IT treats Codex as an appliance. Self Service installs the `codex` cask, which `
 
 `Brewfile.work` includes every sibling `Brewfile.work.*`; the `.local` variant is for corporate taps and tools that are not publicly available.
 
+The work account is not in `admin`, so in-app updaters such as Sparkle cannot replace bundles in the root-owned `/Applications`. `Brewfile.work` therefore installs casks into `~/Applications` with `cask_args`. A cask installed before that keeps its recorded `appdir` until `brew reinstall --cask --appdir=~/Applications` moves it; the reinstall leaves an empty bundle directory behind in `/Applications` for `sudo rmdir`, and path-based login items and Dock tiles need repointing.
+
 ## Work-Local Config
 
 | File                                                        | Purpose                                                     |
@@ -116,7 +118,7 @@ IT treats Codex as an appliance. Self Service installs the `codex` cask, which `
 | `bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml` | Native private language-tool additions                      |
 | `mise.local.toml`                                           | Work-only exclusions for project tools                      |
 
-`mise.local.toml` disables `markdownlint-cli2`, which Homebrew supplies because Artifactory lacks the required npm release. It also disables tools this host does not use: `gcloud`, which only personal Google Cloud and scrypted work needs and whose installer rejects the corporate TLS-inspection certificate; `npm:mcp-remote`, whose only consumer is the Cloudflare skill's Amp-only MCP declaration; and `npm:wrangler`, because Cloudflare work does not happen here, so `workers:typecheck` fails on this host. `language-tools.local.toml` is required before `language-tools` runs; an empty file explicitly confirms there are no private extras. The native task validates this inventory and applies the private Python-index configuration before running package managers.
+`mise.local.toml` disables `markdownlint-cli2`, which Homebrew supplies because Artifactory lacks the required npm release. It also disables tools this host does not use: `gcloud`, which only personal Google Cloud and scrypted work needs and whose installer rejects the corporate TLS-inspection certificate; `npm:mcp-remote`, whose only consumer is the Cloudflare skill's Amp-only MCP declaration; and `npm:wrangler`, because Cloudflare work does not happen here. It replaces `workers:typecheck` and `pi:check` with no-ops so `mise run check` stays green: the first needs Wrangler, and the second needs npm packages Artifactory does not carry. `language-tools.local.toml` is required before `language-tools` runs; an empty file explicitly confirms there are no private extras. The native task validates this inventory and applies the private Python-index configuration before running package managers.
 
 ```toml
 [tools.ruby]
