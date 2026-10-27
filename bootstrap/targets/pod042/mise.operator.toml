@@ -104,7 +104,7 @@ release=$(fetch -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/
 if [ "$(readlink "$HOME/.local/bin/t3" || true)" != "$HOME/.t3/runtime/versions/${release##*/v}/t3" ]; then
   fetch -o "$installer" https://t3.codes/install.sh
   T3CODE_VERSION="${release##*/v}" sh "$installer"
-  systemctl --user try-restart dev.mise.t3code-maggie.service
+  XDG_RUNTIME_DIR="/run/user/$(id -u)" systemctl --user try-restart dev.mise.t3code-maggie.service
 fi
 test -x "$HOME/.amp/bin/amp"
 test -x "$HOME/.local/bin/claude"
