@@ -114,6 +114,7 @@ def _base_settings(
         "agentPushNotifEnabled": True,
         "voiceEnabled": True,
         "showClearContextOnPlanAccept": True,
+        "feedbackDrafts": "off",
         "extraKnownMarketplaces": {
             "claude-plugins-official": {
                 "source": {
