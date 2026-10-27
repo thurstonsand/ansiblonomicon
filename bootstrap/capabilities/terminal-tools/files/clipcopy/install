@@ -1,0 +1,26 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Builds ClipCopy.app, the handler that copies the text of a clipcopy:<percent-encoded> link.
+
+script="$(cd "$(dirname "$0")" && pwd)/ClipCopy.applescript"
+app="$HOME/Applications/ClipCopy.app"
+hash=$(cat "$script" "$0" | shasum -a 256 | cut -d' ' -f1)
+[[ $(plutil -extract ClipCopySourceHash raw "$app/Contents/Info.plist" 2>/dev/null) == "$hash" ]] && exit 0
+
+build=$(mktemp -d)
+trap 'rm -rf "$build"' EXIT
+osacompile -o "$build/ClipCopy.app" "$script"
+plist="$build/ClipCopy.app/Contents/Info.plist"
+plutil -replace CFBundleIdentifier -string house.thurstons.clipcopy "$plist"
+# Background-only apps never activate, so clicking a link leaves focus in the terminal.
+plutil -insert LSBackgroundOnly -bool YES "$plist"
+plutil -insert CFBundleURLTypes -json '[{"CFBundleURLName":"ClipCopy","CFBundleURLSchemes":["clipcopy"]}]' "$plist"
+plutil -insert ClipCopySourceHash -string "$hash" "$plist"
+codesign --force --sign - "$build/ClipCopy.app"
+
+mkdir -p "$(dirname "$app")"
+rm -rf "$app"
+mv "$build/ClipCopy.app" "$app"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$app"
+echo "ClipCopy.app installed"
