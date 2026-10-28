@@ -8,7 +8,7 @@
 - **Dev tool**: A binary needed to work on this repo. Pinned in `mise.toml`.
 - **Host tool**: A binary reconciliation installs onto a machine for its own sake. Declared in a native capability or a Brewfile under `bootstrap/capabilities/mac-apps/`. `mise` and `uv` are host tools that development also happens to need.
 - **Capability**: A unit of native host configuration, shared under `bootstrap/capabilities/` or owned by one target. It owns a thing that can be installed or configured, not a machine.
-- **Docker stack**: A Compose project under `bootstrap/targets/pod042/containers/stacks/`, reconciled by native mise Compose resources.
+- **Docker stack**: A Compose project reconciled by native mise Compose resources. General applications live under `bootstrap/targets/pod042/containers/stacks/`; the `observability` capability keeps its stack beside its collectors and parsers.
 - **UniFi provider fork**: `thurstonsand/terraform-provider-unifi` that supplies controller fields absent upstream. Its release branch stays rebased on upstream, publishes multi-platform GitHub Releases, and enters OpenTofu through ansiblonomicon's verified filesystem-mirror installer.
 - **SecretRef**: An `op://vault/item/field` pointer in `fnox.toml` or `fnox.<host>.toml`. Fnox resolves one host set for a consumer process.
 - **Agent harness**: A coding agent runtime — Pi, Claude Code, Amp, Codex. The native `agent-harness` capability reconciles their plugin catalogue; `agent-config` renders settings, instructions, and source assets for each runtime.

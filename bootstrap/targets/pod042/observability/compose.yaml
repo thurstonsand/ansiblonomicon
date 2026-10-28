@@ -1,0 +1,112 @@
+services:
+  loki:
+    image: grafana/loki:3.7.9
+    user: "3456:3456"
+    command: ["-config.file=/etc/loki/config.yaml"]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - ./loki.yaml:/etc/loki/config.yaml:ro
+      - type: bind
+        source: ${OBSERVABILITY_STATE_DIR:-/mnt/black-box/docker/observability}/loki
+        target: /loki
+        bind:
+          create_host_path: false
+    networks: [telemetry]
+
+  alloy:
+    image: grafana/alloy:v1.21.2
+    # The bridge's rotating records are private to UID 3456.
+    user: "3456:3456"
+    command: ["run", "--disable-reporting", "--storage.path=/var/lib/alloy", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - ./config.alloy:/etc/alloy/config.alloy:ro
+      - type: bind
+        source: ${DOPPELCLAUDE_DIAGNOSTICS_DIR:-/mnt/black-box/docker/doppelclaude/diagnostics}
+        target: /logs/doppelclaude
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${OBSERVABILITY_STATE_DIR:-/mnt/black-box/docker/observability}/cpa
+        target: /logs/cpa
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${OBSERVABILITY_STATE_DIR:-/mnt/black-box/docker/observability}/alloy
+        target: /var/lib/alloy
+        bind:
+          create_host_path: false
+    networks: [telemetry]
+
+  cpa-collector:
+    image: python:3.13-alpine
+    user: "3456:3456"
+    init: true
+    command: ["python", "-B", "/app/cpa_collector.py", "--url", "${CPA_USAGE_URL:-http://cli-proxy-api:8317/v8/management/observability/usage/queue?count=1000}", "--key-file", "/run/secrets/cpa-management-key", "--output", "/var/lib/cpa/records.jsonl"]
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    volumes:
+      - ./cpa_collector.py:/app/cpa_collector.py:ro
+      - type: bind
+        source: ${CPA_MANAGEMENT_KEY_FILE:-./cpa-management-key}
+        target: /run/secrets/cpa-management-key
+        read_only: true
+        bind:
+          create_host_path: false
+      - type: bind
+        source: ${OBSERVABILITY_STATE_DIR:-/mnt/black-box/docker/observability}/cpa
+        target: /var/lib/cpa
+        bind:
+          create_host_path: false
+    networks: [ingress]
+
+  grafana:
+    image: grafana/grafana:13.3.0
+    user: "3456:3456"
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    environment:
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Editor
+      GF_AUTH_DISABLE_LOGIN_FORM: "true"
+      GF_SECURITY_DISABLE_INITIAL_ADMIN_CREATION: "true"
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_ANALYTICS_REPORTING_ENABLED: "false"
+      GF_ANALYTICS_CHECK_FOR_UPDATES: "false"
+      GF_ANALYTICS_CHECK_FOR_PLUGIN_UPDATES: "false"
+      GF_PLUGINS_PREINSTALL_DISABLED: "true"
+      GF_PLUGINS_PREINSTALL_AUTO_UPDATE: "false"
+    ports:
+      - "127.0.0.1:${GRAFANA_PORT:-3030}:3000"
+    volumes:
+      - ./datasources.yaml:/etc/grafana/provisioning/datasources/loki.yaml:ro
+      - type: bind
+        source: ${OBSERVABILITY_STATE_DIR:-/mnt/black-box/docker/observability}/grafana
+        target: /var/lib/grafana
+        bind:
+          create_host_path: false
+    tmpfs: [/tmp]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    networks: [telemetry]
+
+networks:
+  telemetry: {}
+  ingress:
+    external: true
+    name: ${OBSERVABILITY_INGRESS_NETWORK:-ingress}

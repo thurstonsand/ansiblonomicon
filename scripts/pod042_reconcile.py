@@ -76,6 +76,7 @@ CAPABILITIES = (
     "user-tools",
     "neovim",
     "doppelclaude",
+    "observability",
 )
 FULL_CAPABILITIES = (
     *CAPABILITIES,
@@ -206,7 +207,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         "terminal-tools",
         "terminal-tools-plugins",
     }
-    if "doppelclaude" in selected:
+    if "doppelclaude" in selected or "observability" in selected:
         run_command(["findmnt", "--mountpoint", "/mnt/black-box/docker"])
         run_command(["sudo", "-n", "docker", "network", "inspect", "ingress"])
     bootstrap_capabilities = tuple(
@@ -234,7 +235,13 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         ]
     if any(
         item in selected
-        for item in ("alerting", "containers", "sharing", "doppelclaude")
+        for item in (
+            "alerting",
+            "containers",
+            "sharing",
+            "doppelclaude",
+            "observability",
+        )
     ):
         secrets: list[str] = list(CONTAINER_SECRETS) if "containers" in selected else []
         if "alerting" in selected and "HARK_WEBHOOK_URL_POD042" not in secrets:
@@ -251,6 +258,8 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                     "DOPPELCLAUDE_OPENCODE_ENVIRONMENT_HEADING",
                 )
             )
+        if "observability" in selected:
+            secrets.append("CLI_PROXY_API_MANAGEMENT_KEY")
         command = [
             sys.executable,
             "-B",
@@ -351,7 +360,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
                 ]
             )
     else:
-        if capability != "doppelclaude":
+        if capability not in ("doppelclaude", "observability"):
             run_command(
                 [
                     "mise",

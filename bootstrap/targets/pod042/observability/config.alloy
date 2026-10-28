@@ -1,0 +1,55 @@
+logging {
+  level = "info"
+}
+
+// Tail active files, not rotation globs: renaming a file must not ingest it twice.
+loki.source.file "usage" {
+  targets = [
+    {__path__ = "/logs/doppelclaude/records.jsonl", service_name = "doppelclaude", host = "pod042"},
+    {__path__ = "/logs/cpa/records.jsonl", service_name = "cli-proxy-api", host = "pod042"},
+  ]
+  file_match {
+    enabled = true
+    sync_period = "5s"
+  }
+  forward_to = [loki.process.usage.receiver]
+}
+
+loki.process "usage" {
+  stage.json {
+    expressions = {
+      timestamp  = "timestamp",
+      event      = "event",
+      request_id = "requestId || request_id",
+      thread_id  = "threadId || session_id",
+      runtime_id = "runtimeId",
+      event_id   = "event_id",
+    }
+  }
+  stage.timestamp {
+    source = "timestamp"
+    format = "RFC3339Nano"
+    action_on_failure = "skip"
+  }
+  stage.structured_metadata {
+    values = {
+      event      = "",
+      request_id = "",
+      thread_id  = "",
+      runtime_id = "",
+      event_id   = "",
+    }
+  }
+  stage.label_drop {
+    values = ["filename"]
+  }
+  forward_to = [loki.write.local.receiver]
+}
+
+loki.write "local" {
+  endpoint {
+    url = "http://loki:3100/loki/api/v1/push"
+    // Retain batches during a backend outage; source spools remain the replay source.
+    max_backoff_retries = 0
+  }
+}

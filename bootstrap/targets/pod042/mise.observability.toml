@@ -1,0 +1,89 @@
+[bootstrap.secrets]
+cpa_management_key = "CLI_PROXY_API_MANAGEMENT_KEY"
+
+[bootstrap.directories."/etc/ansiblonomicon/observability"]
+owner = "root"
+group = "root"
+mode = "0700"
+
+# Use the bridge's UID for private record access, without widening its permissions.
+[bootstrap.directories."/mnt/black-box/docker/observability"]
+owner = "doppelclaude"
+group = "doppelclaude"
+mode = "0700"
+
+[bootstrap.directories."/mnt/black-box/docker/observability/loki"]
+owner = "doppelclaude"
+group = "doppelclaude"
+mode = "0700"
+
+[bootstrap.directories."/mnt/black-box/docker/observability/alloy"]
+owner = "doppelclaude"
+group = "doppelclaude"
+mode = "0700"
+
+[bootstrap.directories."/mnt/black-box/docker/observability/cpa"]
+owner = "doppelclaude"
+group = "doppelclaude"
+mode = "0700"
+
+[bootstrap.directories."/mnt/black-box/docker/observability/grafana"]
+owner = "doppelclaude"
+group = "doppelclaude"
+mode = "0700"
+
+[bootstrap.files."/etc/ansiblonomicon/observability/compose.yaml"]
+source = "observability/compose.yaml"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/observability/loki.yaml"]
+source = "observability/loki.yaml"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/observability/config.alloy"]
+source = "observability/config.alloy"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/observability/datasources.yaml"]
+source = "observability/datasources.yaml"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/observability/cpa_collector.py"]
+source = "observability/cpa_collector.py"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/observability/cpa-management-key"]
+content = '{{ secret(name="cpa_management_key") }}'
+template = true
+owner = "doppelclaude"
+group = "doppelclaude"
+mode = "0600"
+
+[bootstrap.compose.observability]
+project_dir = "/etc/ansiblonomicon/observability"
+files = ["compose.yaml"]
+project_name = "observability"
+state = "running"
+sudo = true
+pull = "missing"
+wait = true
+wait_timeout = 180
+remove_orphans = true
+
+[tasks."observability:test"]
+description = "Test usage collection against a disposable HTTP queue"
+run = "python3 -m unittest discover -s observability -p 'test_*.py'"
+
+[tasks."observability:smoke"]
+description = "Exercise an isolated Loki/Alloy/Grafana stack with synthetic usage"
+run = "python3 observability/smoke.py"
