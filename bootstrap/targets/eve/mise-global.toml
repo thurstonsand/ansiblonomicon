@@ -1,6 +1,6 @@
 # Windows has no system python3 for hooks outside a project, as Unix hosts do.
 [tools]
-python = "3.14"
+python = "3.15"
 
 [settings]
 # Tasks are POSIX shell. The bare name `bash` makes mise find Git Bash and skip

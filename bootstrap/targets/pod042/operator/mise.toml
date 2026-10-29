@@ -1,7 +1,7 @@
 [tools]
 node = { version = "lts", postinstall = 'python3 /home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042/operator/node_packages.py "$MISE_TOOL_INSTALL_PATH/bin/npm"' }
 npm = "latest"
-python = "3.14"
+python = "3.15"
 uv = "latest"
 bun = "latest"
 go = "latest"

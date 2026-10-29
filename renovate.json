@@ -100,6 +100,13 @@
       "allowedVersions": "<9"
     },
     {
+      "description": "The work Mac stays on Python 3.14 while every other host runs 3.15: its mirror's wheel-only lock resolve finds no cp315 PyYAML wheel. README.work.md covers the override; lift this ceiling when the mirror serves one, together with the work .zshenv export and pyproject.toml.",
+      "matchManagers": ["mise"],
+      "matchFileNames": ["bootstrap/targets/ML-DFC6YK6VJQ/mise.toml"],
+      "matchPackageNames": ["python"],
+      "allowedVersions": "<3.15"
+    },
+    {
       "description": "`required_version` in versions.tf is a floor, not a pin, and nothing here needs it raised. The version that actually runs is the opentofu pinned in mise.toml, which Renovate tracks properly. Bumping the floor only narrows what can run the config in exchange for nothing.",
       "matchManagers": ["terraform"],
       "matchPackageNames": ["hashicorp/terraform"],

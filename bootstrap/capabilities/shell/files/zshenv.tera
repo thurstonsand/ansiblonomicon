@@ -32,6 +32,10 @@ export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/
 export SOURCEGRAPH_TOKEN='{{ get_env(name="SOURCEGRAPH_TOKEN") }}'
 export GENAIHUB_API_KEY='{{ get_env(name="ANTHROPIC_AUTH_TOKEN") }}'
 export GENAI_HUB_API_KEY="$GENAIHUB_API_KEY"
+# The repo asks for Python 3.15, but PyYAML has no cp315 wheel for the work
+# mirror's wheel-only lock resolve (README.work.md). Hold every project here to
+# the work target's 3.14 until it does.
+export MISE_PYTHON_VERSION="3.14"
 {% endif %}
 
 

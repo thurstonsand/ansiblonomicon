@@ -180,6 +180,8 @@ The mechanism is generic (no per-package pins, no version numbers anywhere) and 
 
 The restriction also pins `python_version` to the interpreter running the pull. Without it, the open `requires-python = ">=3.14"` makes uv resolve a Python 3.15+ split as well, and the mirror serves no wheels for that yet, so every compiled dependency (`markupsafe`, `pyyaml`) fails the wheel-only resolve.
 
+The same gap keeps the work Mac on Python 3.14 while the repo's `mise.toml` asks for 3.15: PyYAML ships no cp315 wheel at all yet, so a pull on 3.15 cannot resolve. The work `.zshenv` exports `MISE_PYTHON_VERSION=3.14`, which overrides every mise config on the machine, and `pyproject.toml` keeps targeting 3.14. Move the export, the work target's `python`, and `pyproject.toml` together once the mirror serves a cp315 PyYAML wheel.
+
 ### pi extension package-lock.json handling
 
 The pi extensions `package-lock.json` (`bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/`) has the same mirror-URL problem: `npm install` on work rewrites it with Artifactory URLs. `mise run bootstrap` sets `skip-worktree` on it (gated by hostname) so the rewrite never reaches git, and `mise run pull` lifts/re-applies the mask around the rebase (see above). Dependency/lock bumps for pi extensions must be committed from a personal machine, where it resolves against the public npm registry.
