@@ -36,6 +36,8 @@ RENDERERS = {
     "codex": "codex",
     "pi": "pi",
 }
+# Configures tools that span harnesses, so no harness name selects or validates them.
+CROSS_HARNESS_RENDERERS = ["swb"]
 SECRET_KEYS = {
     "type-a-no2": {"ANTHROPIC_API_KEY"},
     "no9-type-s": {"ANTHROPIC_API_KEY"},
@@ -144,8 +146,11 @@ def render_all(
 ) -> dict[str, str]:
     directory = Path(__file__).parent
     result: dict[str, str] = {}
-    for harness in harnesses:
-        outputs = _load_module(directory, RENDERERS[harness]).render(
+    for renderer in [
+        *(RENDERERS[harness] for harness in harnesses),
+        *CROSS_HARNESS_RENDERERS,
+    ]:
+        outputs = _load_module(directory, renderer).render(
             repo=repo, home=home, hostname=hostname, data=data, secrets=secrets
         )
         overlap = result.keys() & outputs.keys()
