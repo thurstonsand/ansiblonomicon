@@ -2,3 +2,5 @@
 name = "codex"
 skills_root = "~/.codex/skills"
 name_transform = "preserve"
+# Codex skips a SKILL.md that is a symlink, though it follows a symlinked skill directory.
+symlink_local_files = false

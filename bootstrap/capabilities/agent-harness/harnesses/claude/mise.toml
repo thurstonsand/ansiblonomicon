@@ -2,4 +2,5 @@
 name = "claude"
 skills_root = "~/.claude/skills"
 name_transform = "preserve"
+symlink_local_files = true
 agents_root = "~/.claude/agents"

@@ -67,6 +67,14 @@ MCP_FIELDS = {
     "tool_timeout_sec",
     "description",
     "harnesses",
+    "env_vars",
+    "omit_tools_from",
+    "supports_parallel_tool_calls",
+}
+CODEX_MCP_FIELDS = {
+    "env_vars",
+    "omit_tools_from",
+    "supports_parallel_tool_calls",
 }
 # Claude Code reads these from a plugin's .mcp.json; metadata is informational.
 PLUGIN_MCP_FIELDS = {
@@ -263,6 +271,12 @@ def _mcp_servers(home: Path, data: dict[str, Any]) -> list[dict[str, Any]]:
             raise ValueError(f"unsupported MCP transport: {transport}")
         if not set(item.get("harnesses", [])) <= RENDERERS.keys():
             raise ValueError(f"unknown MCP server harness: {item}")
+        codex_only = CODEX_MCP_FIELDS & set(item)
+        if codex_only and item.get("harnesses") != ["codex"]:
+            raise ValueError(
+                f"MCP server {item['name']} sets Codex-only {sorted(codex_only)}"
+                ' without harnesses = ["codex"]'
+            )
         if "oauth" in item and transport == "stdio":
             raise ValueError(f"stdio MCP server {item['name']} cannot use OAuth")
         required = "command" if transport == "stdio" else "url"
@@ -396,7 +410,9 @@ def _codex_mcp_config(
             raise ValueError(f"Codex does not support SSE MCP server {item['name']}")
         if transport == "stdio":
             server = {
-                key: item[key] for key in ("command", "args", "env") if key in item
+                key: item[key]
+                for key in ("command", "args", "env", "env_vars")
+                if key in item
             }
         else:
             server = {"url": item["url"]}
@@ -410,6 +426,12 @@ def _codex_mcp_config(
                 server["oauth"] = {"client_id": item["oauth"]["client_id"]}
         if "tool_timeout_sec" in item:
             server["tool_timeout_sec"] = item["tool_timeout_sec"]
+        if "omit_tools_from" in item:
+            server["omit_tools_from"] = item["omit_tools_from"]
+        if "supports_parallel_tool_calls" in item:
+            server["supports_parallel_tool_calls"] = item[
+                "supports_parallel_tool_calls"
+            ]
         desired[item["name"]] = server
     document = tomlkit.parse(config)
     if not desired and "mcp_servers" not in document:

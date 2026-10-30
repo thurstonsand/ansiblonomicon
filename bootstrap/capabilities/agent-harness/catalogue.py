@@ -29,6 +29,7 @@ class Layout(TypedDict):
     skills_dir: str
     agents_dir: str | None
     name_transform: str
+    symlink_local_files: bool
 
 
 class FileMetadata(TypedDict):
@@ -134,6 +135,7 @@ def declarations(
                 else None
             ),
             "name_transform": entry["name_transform"],
+            "symlink_local_files": entry["symlink_local_files"],
         }
     layouts: dict[str, Layout] = {}
     for name, value in raw_layouts.items():
@@ -141,9 +143,11 @@ def declarations(
         skills_dir = entry["skills_dir"]
         agents_dir = entry["agents_dir"]
         transform = entry["name_transform"]
+        symlink_local_files = entry["symlink_local_files"]
         if (
             not isinstance(skills_dir, str)
             or not isinstance(transform, str)
+            or not isinstance(symlink_local_files, bool)
             or not (agents_dir is None or isinstance(agents_dir, str))
         ):
             raise ValueError(f"Invalid harness layout: {name}")
@@ -151,6 +155,7 @@ def declarations(
             "skills_dir": skills_dir,
             "agents_dir": agents_dir,
             "name_transform": transform,
+            "symlink_local_files": symlink_local_files,
         }
     profiles = mapping(config["agent_harness_profiles"])
     selected_profile = load_profile(repo, profile)
@@ -316,7 +321,9 @@ def render_files(
                     )
                     agent_content = transformed["content"]
                     local_link = (
-                        resource["origin"] == "local" and not transformed["modified"]
+                        layout["symlink_local_files"]
+                        and resource["origin"] == "local"
+                        and not transformed["modified"]
                     )
                     mode = source.stat().st_mode & 0o777 if local_link else 0o644
                     add(
@@ -361,7 +368,11 @@ def render_files(
                         )
                         content = transformed["content"].encode()
                         transformed_asset |= transformed["modified"]
-                    local_link = resource["origin"] == "local" and not transformed_asset
+                    local_link = (
+                        layout["symlink_local_files"]
+                        and resource["origin"] == "local"
+                        and not transformed_asset
+                    )
                     mode = (
                         asset.stat().st_mode & 0o777
                         if local_link
