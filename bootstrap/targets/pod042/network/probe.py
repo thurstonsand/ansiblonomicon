@@ -59,22 +59,8 @@ def ensure_namespace() -> None:
     run("ip", "netns", "exec", NAMESPACE, "sysctl", "-q", "net.ipv4.ip_forward=0")
 
 
-def ensure_parent(leg: Leg) -> None:
-    """The VLAN link in the root namespace, which never carries an address.
-
-    IPv6 is disabled on it because an addressless interface still takes a link-local
-    address, and the host's services listen on [::].
-    """
-    if not exists("ip", "link", "show", leg.parent):
-        run(
-            "ip", "link", "add", "link", PARENT,
-            "name", leg.parent, "type", "vlan", "id", str(leg.vlan),
-        )  # fmt: skip
-    run("sysctl", "-q", f"net.ipv6.conf.{leg.parent.replace('.', '/')}.disable_ipv6=1")
-    run("ip", "link", "set", leg.parent, "up")
-
-
 def ensure_leg(leg: Leg) -> None:
+    """Attach to the VLAN link ifupdown owns; a missing parent is a failure."""
     if not exists("ip", "-n", NAMESPACE, "link", "show", leg.name):
         if exists("ip", "link", "show", leg.name):
             run("ip", "link", "delete", leg.name)
@@ -90,7 +76,6 @@ def ensure_leg(leg: Leg) -> None:
 def main() -> None:
     ensure_namespace()
     for leg in LEGS:
-        ensure_parent(leg)
         ensure_leg(leg)
     print("probe namespace holds " + ", ".join(leg.name for leg in LEGS))
 

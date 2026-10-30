@@ -10,7 +10,7 @@ from typing import Any, cast
 
 POOL_NAME = "black-box"
 POOL = {"driver": "dir", "source": "/mnt/black-box/incus"}
-NETWORK = {"type": "macvlan", "parent": "enp5s0", "vlan": "40"}
+NETWORK = {"type": "macvlan", "parent": "enp5s0.40", "vlan": None}
 
 
 def run(*args: str, capture: bool = False) -> subprocess.CompletedProcess[str]:
@@ -99,8 +99,7 @@ def ensure_network(apply: bool) -> None:
                 "create",
                 "scanners",
                 "--type=macvlan",
-                "parent=enp5s0",
-                "vlan=40",
+                "parent=enp5s0.40",
             )
         else:
             raise ValueError("Incus network scanners is missing")

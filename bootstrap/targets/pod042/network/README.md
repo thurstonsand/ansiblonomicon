@@ -1,6 +1,6 @@
 # pod042's physical network
 
-`enp5s0` is the only addressed interface. ifupdown raises it from `/etc/network/interfaces` and hands it to dhcpcd; there is no host bridge and no NetworkManager. `check.py` asserts the live contract after reconciliation: MAC, 2.5 Gb/s, MTU 1500, RX ring 4096, the sole DHCP address `10.10.10.42`, one default route through `10.10.10.1`, `10.10.10.1` in the resolver, default-denied forwarding, Tailscale's identity and preferences, and the client VLANs terminating only inside the `probe` namespace.
+`enp5s0` is the only addressed interface. ifupdown raises it from `/etc/network/interfaces` and hands it to dhcpcd; there is no host bridge and no NetworkManager. ifupdown also raises the client VLAN links `enp5s0.20`, `.30`, `.40` and `.50`, addressless with IPv6 disabled. The probe namespace, Docker's `scanners` network and Incus's `scanners` network only attach macvlans to them. On 2026-10-30 Incus still owned `enp5s0.40` through `vlan=40`, deleted it when the Home Assistant VM rebooted, and took the probe leg, Scrypted and mdns-beacon off Scanners with it. `check.py` asserts the live contract after reconciliation: MAC, 2.5 Gb/s, MTU 1500, RX ring 4096, the sole DHCP address `10.10.10.42`, one default route through `10.10.10.1`, `10.10.10.1` in the resolver, default-denied forwarding, Tailscale's identity and preferences, and the client VLANs terminating only inside the `probe` namespace.
 
 ## The resolver gate
 

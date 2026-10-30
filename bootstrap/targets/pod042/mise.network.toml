@@ -26,6 +26,21 @@ iface enp5s0 inet dhcp
     mtu 1500
     post-up /usr/sbin/ethtool -s enp5s0 wol g
     post-up /usr/sbin/ethtool -G enp5s0 rx 4096
+
+# The client VLANs stay addressless here. The probe namespace, Docker, and Incus
+# attach macvlans to them, and none of those may create or delete the parents:
+# Incus deletes a VLAN link it created when its VM stops, taking every sibling with it.
+auto enp5s0.20
+iface enp5s0.20 inet manual
+
+auto enp5s0.30
+iface enp5s0.30 inet manual
+
+auto enp5s0.40
+iface enp5s0.40 inet manual
+
+auto enp5s0.50
+iface enp5s0.50 inet manual
 '''
 owner = "root"
 group = "root"
@@ -35,6 +50,10 @@ mode = "0644"
 content = '''
 net.ipv4.ip_forward = 1
 net.ipv6.conf.all.forwarding = 0
+net.ipv6.conf.enp5s0/20.disable_ipv6 = 1
+net.ipv6.conf.enp5s0/30.disable_ipv6 = 1
+net.ipv6.conf.enp5s0/40.disable_ipv6 = 1
+net.ipv6.conf.enp5s0/50.disable_ipv6 = 1
 '''
 owner = "root"
 group = "root"
@@ -105,6 +124,7 @@ enabled = true
 
 [bootstrap.hooks.final]
 run = [
+  "sudo -n /usr/sbin/ifup -a",
   "sudo -n /usr/sbin/sysctl --system >/dev/null",
   '''
 if [ "$(sudo -n /usr/bin/tailscale status --json | python3 -c 'import json, sys; print(json.load(sys.stdin)["BackendState"])')" = "Running" ]; then
