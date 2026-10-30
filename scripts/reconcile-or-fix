@@ -15,34 +15,24 @@ LOCK = "bootstrap/capabilities/neovim/files/lazy-lock.json"
 # A step that waits on something nobody will answer, such as a denied privacy check, hangs
 # forever; past this it is killed and handed to the agent like any other failure.
 TIMEOUT_MINUTES = 30
-FINISH = f"""A reconcile syncs Neovim plugins and rewrites {LOCK}; commit that file alone as `chore(neovim): update lazy-lock`, pull --rebase, and push to main.
-
-Send Thurston one push notification with notify_user only when he must act or decide: an expired login, a credential, a physical step, a true conflict, or a behavior change you should not choose alone. Say what happened, what you did, and what he must do. A fix you pushed or a transient failure needs no notification; this thread is the record."""
 PROMPT = """The scheduled reconcile on {host} failed with exit status {status} at {when}.
 The full log is {log}; its last lines are below.
 
-Find the root cause. Then:
-- If the fix belongs in this repository, make it, verify it by rerunning the failing capability (and its --check), commit it following the repository's conventions, pull --rebase, and push to main. Before committing, run `git status`; the tree was clean when the reconcile started. Never commit, stash, or discard changes you did not make.
+Other agents share this checkout, so it may hold another thread's unfinished, uncommitted work, and the reconcile deployed that work along with main. The script pulls by fetching, trial-merging the uncommitted work with upstream through `git stash create` and `git merge-tree`, failing on a conflict, and otherwise running `git rebase --autostash`; pull the same way, because a conflicting autostash exits 0 and leaves conflict markers in that work. If a rebase stopped partway, `git rebase --abort` first; it restores the autostashed work.
+
+Before anything else, check whether that work is the cause, including a pull that stopped because incoming commits conflict with it. Find its thread with find_thread by what the changes do; the pull's autostash resets their modification times. Finishing it is not your job: `git stash push --include-untracked` it, pull and reconcile main cleanly, then `git stash pop` it back so it stays in progress, uncommitted, and tell its thread what broke with send_thread_message. If the pop conflicts, git keeps the stash entry, so check that it is still listed, return the conflicted files to main's version, and tell Thurston. An uncommitted {lock} is a leftover from an earlier reconcile, not another thread's work: commit it as below, or discard it when main already has it. Never commit or discard any other changes you did not make.
+
+Otherwise, find the root cause. Then:
+- If the fix belongs in this repository, make it, verify it by rerunning the failing capability (and its --check), commit only your own files following the repository's conventions, pull, and push to main.
 - If the failure was transient, such as a network or upstream outage, rerun the failing capability to confirm it now passes and change nothing.
 - If it needs Thurston, do not guess.
 
-{finish}
+A reconcile syncs Neovim plugins and rewrites {lock}; commit that file alone as `chore(neovim): update lazy-lock`, pull, and push to main.
+
+Send Thurston one push notification with notify_user only when he must act or decide: an expired login, a credential, a physical step, a true conflict, or a behavior change you should not choose alone. Say what happened, what you did, and what he must do. A fix you pushed or a transient failure needs no notification; this thread is the record.
 
 ```
 {tail}
-```
-"""
-DIRTY_PROMPT = """The scheduled reconcile on {host} found uncommitted changes in its checkout {repo} at {when}, listed below, and handed the run to you instead of pulling over them. Other agents share this checkout.
-
-Sort the changes out, then finish the run yourself with `git pull --rebase` and `mise run reconcile`:
-- Leftovers from an earlier reconcile, such as lazy-lock.json updates, get committed following the repository's conventions. Leftovers that main already contains get discarded.
-- Another thread's unfinished work (find it with find_thread and the files' modification times) stays in place, uncommitted. Pull and reconcile around it when the incoming commits do not touch those files.
-- A true conflict, where incoming commits overlap the uncommitted changes or only Thurston can say whether a change should ship, leaves the tree untouched and unreconciled.
-
-{finish}
-
-```
-{status}
 ```
 """
 
@@ -70,7 +60,30 @@ def run_reconcile() -> int:
                 log.write(f"timed out after {TIMEOUT_MINUTES} minutes; killed\n")
                 return 124
 
-        status = run("git", "pull", "--rebase") or run("mise", "run", "reconcile")
+        # Other agents leave unfinished work in this checkout. The autostash carries it over
+        # the rebase, but a conflicting autostash still exits 0 and leaves conflict markers
+        # behind, so a trial merge of that work with upstream fails the pull before anything moves.
+        def pull() -> int:
+            if status := run("git", "fetch"):
+                return status
+            stash = subprocess.run(
+                ["git", "stash", "create"],
+                cwd=REPO,
+                stdout=subprocess.PIPE,
+                stderr=log,
+                text=True,
+            )
+            if stash.returncode:
+                return stash.returncode
+            work = stash.stdout.strip() or "HEAD"
+            if status := run(
+                "git", "merge-tree", "--write-tree", "--name-only", work, "@{upstream}"
+            ):
+                log.write("incoming commits conflict with uncommitted changes\n")
+                return status
+            return run("git", "rebase", "--autostash")
+
+        status = pull() or run("mise", "run", "reconcile")
         if (
             status
             or not subprocess.run(
@@ -80,7 +93,7 @@ def run_reconcile() -> int:
             return status
         return (
             run("git", "commit", "-m", "chore(neovim): update lazy-lock", "--", LOCK)
-            or run("git", "pull", "--rebase")
+            or pull()
             or run("git", "push")
         )
 
@@ -88,29 +101,15 @@ def run_reconcile() -> int:
 def main() -> int:
     host = socket.gethostname().split(".", 1)[0]
     when = time.strftime("%Y-%m-%d %H:%M %Z")
-    dirty = subprocess.run(
-        ["git", "-C", str(REPO), "status", "--porcelain"],
-        capture_output=True,
-        text=True,
-        check=True,
-    ).stdout.rstrip()
-    if dirty:
-        status = 1
-        LOG.parent.mkdir(parents=True, exist_ok=True)
-        LOG.write_text(f"handed to an agent: {REPO} has uncommitted changes\n{dirty}\n")
-        prompt = DIRTY_PROMPT.format(
-            host=host, when=when, repo=REPO, status=dirty, finish=FINISH
-        )
-    else:
-        status = run_reconcile()
-        prompt = PROMPT.format(
-            host=host,
-            status=status,
-            when=when,
-            log=LOG,
-            finish=FINISH,
-            tail="\n".join(LOG.read_text().splitlines()[-150:]),
-        )
+    status = run_reconcile()
+    prompt = PROMPT.format(
+        host=host,
+        status=status,
+        when=when,
+        log=LOG,
+        lock=LOCK,
+        tail="\n".join(LOG.read_text().splitlines()[-150:]),
+    )
     sys.stdout.write(LOG.read_text())
     if not status:
         return 0
@@ -124,7 +123,7 @@ def main() -> int:
             "--runner-dir",
             str(REPO),
             "--title",
-            f"{host} reconcile {'found uncommitted changes' if dirty else 'failed'}",
+            f"{host} reconcile failed",
             "--no-archive-after-execute",
             "-x",
             prompt,

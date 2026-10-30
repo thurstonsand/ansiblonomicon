@@ -66,7 +66,7 @@ The work mirror rewrites lockfile URLs, so `uv.lock` and some `package-lock.json
 
 ## pod042
 
-The physical Debian NAS, declared in `bootstrap/targets/pod042/`. The `dev.mise.reconcile-daily.timer` user timer runs `scripts/reconcile-or-fix` at 05:30, an hour after pod153's, so the two never push to main at once; `remote-development` declares it. On both hosts the script commits and pushes the `lazy-lock.json` that the plugin sync rewrites. A checkout with uncommitted changes goes to the agent instead of being pulled over, because other agents share it; the agent sorts the changes out, finishes the reconcile, and notifies Thurston only for a true conflict or a decision he must make.
+The physical Debian NAS, declared in `bootstrap/targets/pod042/`. The `dev.mise.reconcile-daily.timer` user timer runs `scripts/reconcile-or-fix` at 05:30, an hour after pod153's, so the two never push to main at once; `remote-development` declares it. On both hosts the script commits and pushes the `lazy-lock.json` that the plugin sync rewrites. Other agents share the checkout, so the pull autostashes their uncommitted work and the reconcile deploys it along with main; only incoming commits that conflict with that work stop the run before the rebase. A failure goes to an agent, which sets unfinished work that caused it aside, reconciles main, and puts the work back in progress.
 
 ## pod153
 
