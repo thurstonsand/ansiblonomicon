@@ -34,7 +34,7 @@ Find the root cause. Then:
 """
 DIRTY_PROMPT = """The scheduled reconcile on {host} found uncommitted changes in its checkout {repo} at {when}, listed below, and handed the run to you instead of pulling over them. Other agents share this checkout.
 
-Sort the changes out, then finish the run yourself with `git pull --ff-only` and `mise run reconcile`:
+Sort the changes out, then finish the run yourself with `git pull --rebase` and `mise run reconcile`:
 - Leftovers from an earlier reconcile, such as lazy-lock.json updates, get committed following the repository's conventions. Leftovers that main already contains get discarded.
 - Another thread's unfinished work (find it with find_thread and the files' modification times) stays in place, uncommitted. Pull and reconcile around it when the incoming commits do not touch those files.
 - A true conflict, where incoming commits overlap the uncommitted changes or only Thurston can say whether a change should ship, leaves the tree untouched and unreconciled.
@@ -70,7 +70,7 @@ def run_reconcile() -> int:
                 log.write(f"timed out after {TIMEOUT_MINUTES} minutes; killed\n")
                 return 124
 
-        status = run("git", "pull", "--ff-only") or run("mise", "run", "reconcile")
+        status = run("git", "pull", "--rebase") or run("mise", "run", "reconcile")
         if (
             status
             or not subprocess.run(
