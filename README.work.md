@@ -30,8 +30,7 @@ The untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/` holds 
 | `costsDashboardUrl`  | Native Pi renderer (`powerlineCustom.budget.costsUrl`) |
 | `jiraBrowseUrl`      | Pi footer settings                                     |
 | `piWorkPackages`     | Pi packages prepended to the work set                  |
-| `[[mcp_servers]]`    | Claude and Codex MCP registration                      |
-| `pi_mcp_json`        | Pi MCP config (`~/.pi/agent/mcp.json`)                 |
+| `[[mcp_servers]]`    | Claude, Codex, and Pi MCP registration                 |
 
 Keep credentials out of these files. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml`, and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` to preview changes without writing.
 
@@ -153,7 +152,7 @@ Declared for the `work` profile in `bootstrap/capabilities/agent-harness/catalog
 
 ## MCP Servers
 
-Native agent configuration reads `[[mcp_servers]]` from the host-local `data.toml` and registers Claude user-scope servers and Codex `[mcp_servers]` tables. An HTTP entry's `bearer_token_env_var` names the environment variable holding its bearer token. The repo's pi extension `.pi/extensions/mcp.ts` skips the Cloudflare and Home Assistant MCP servers on this host. Claude's project `.mcp.json` still reaches both over HTTP directly. With no Amp here, the Cloudflare skill's `mcp-remote` adapter is not installed.
+Native agent configuration merges the catalogued plugins' own servers with `[[mcp_servers]]` from the host-local `data.toml`, where an entry named like a plugin server overrides its fields, and registers Claude user-scope servers, Codex `[mcp_servers]` tables, and Pi's `~/.pi/agent/mcp.json`. An HTTP entry's `bearer_token_env_var` names the environment variable holding its bearer token. The repo's pi extension `.pi/extensions/mcp.ts` skips the Cloudflare and Home Assistant MCP servers on this host. Claude's project `.mcp.json` still reaches both over HTTP directly. With no Amp here, the Cloudflare skill's `mcp-remote` adapter is not installed.
 
 ## Python Package Indexes (uv + pip)
 

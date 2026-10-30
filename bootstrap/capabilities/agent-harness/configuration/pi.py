@@ -418,22 +418,7 @@ def render(
     )
     if hostname not in OMARCHY_HOSTS:
         result[".local/bin/pi"] = _executable(home, hostname)
-    if data.get("pi_mcp_json"):
-        servers: dict[str, Any] = {}
-        for raw in data["pi_mcp_json"]:
-            _merge(servers, cast(dict[str, Any], json.loads(raw)))
-        result[".pi/agent/mcp.json"] = _json({"mcpServers": servers})
     return result
-
-
-def _merge(target: dict[str, Any], incoming: Mapping[str, Any]) -> None:
-    """Apply sprig mergeOverwrite semantics to MCP server fragments."""
-    for key, value in incoming.items():
-        current = target.get(key)
-        if isinstance(current, dict) and isinstance(value, Mapping):
-            _merge(cast(dict[str, Any], current), cast(Mapping[str, Any], value))
-        else:
-            target[key] = value
 
 
 def _executable(home: Path, hostname: str) -> str:

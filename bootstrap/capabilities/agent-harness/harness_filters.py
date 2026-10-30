@@ -22,6 +22,7 @@ class PluginEntry(TypedDict, total=False):
     include_agents: list[str] | dict[str, list[str]]
     exclude_agents: list[str] | dict[str, list[str]]
     hooks: bool
+    mcp: bool
     exclude_data: list[str]  # rsync --exclude patterns for deployed files
 
 
@@ -41,6 +42,7 @@ PLUGIN_FIELDS = frozenset(
         "include_agents",
         "exclude_agents",
         "hooks",
+        "mcp",
         "exclude_data",
         "remove",
     }
@@ -95,6 +97,27 @@ class HookFragment:
 
 
 @dataclass
+class McpFragment:
+    """A plugin's MCP servers, as its manifest declares them for Claude Code."""
+
+    name: str
+    servers: dict[str, Any]
+    target_agents: list[str]
+    plugin_root: str = ""
+    plugin_name: str = ""
+    source_id: str = ""
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "name": self.name,
+            "servers": self.servers,
+            "target_agents": list(self.target_agents),
+            "plugin_name": self.plugin_name,
+            "source_id": self.source_id,
+        }
+
+
+@dataclass
 class PluginResources:
     """Everything one pass over the resolved sources produced."""
 
@@ -102,6 +125,20 @@ class PluginResources:
         default_factory=lambda: {kind: [] for kind in RESOURCE_KINDS}
     )
     hooks: dict[str, HookFragment] = field(default_factory=dict)
+    mcp: dict[str, McpFragment] = field(default_factory=dict)
+
+    def add_mcp(self, fragment: McpFragment) -> None:
+        """Record a plugin's servers, rejecting a second, different declaration."""
+        existing = self.mcp.get(fragment.name)
+        if existing is None:
+            self.mcp[fragment.name] = fragment
+            return
+        if existing.to_dict() != fragment.to_dict():
+            msg = (
+                f"plugin {fragment.name}: conflicting MCP servers from "
+                f"{existing.plugin_root} and {fragment.plugin_root}"
+            )
+            raise ValueError(msg)
 
     def add_hooks(self, fragment: HookFragment) -> None:
         """Record a fragment, collapsing duplicates and rejecting conflicts.
@@ -132,6 +169,7 @@ class PluginResources:
                 for kind, resources in self.by_kind.items()
             },
             "hooks": [fragment.to_dict() for fragment in self.hooks.values()],
+            "mcp": [fragment.to_dict() for fragment in self.mcp.values()],
         }
 
 
@@ -149,6 +187,7 @@ class ResolvedPlugin:
     include: dict[str, list[str] | None] = field(default_factory=dict)
     exclude: dict[str, list[str] | None] = field(default_factory=dict)
     hooks: bool = True
+    mcp: bool = True
     exclude_data: list[str] = field(default_factory=list)
     remove: bool = False
 
@@ -171,6 +210,7 @@ class ResolvedPlugin:
                 for kind in RESOURCE_KINDS
             },
             hooks=plugin.get("hooks", True),
+            mcp=plugin.get("mcp", True),
             exclude_data=list(plugin.get("exclude_data", [])),
             remove=plugin.get("remove", False),
         )
@@ -410,6 +450,8 @@ def _resolve_plugin(
         )
     if "hooks" in plugin:
         resolved["hooks"] = _require_bool(plugin["hooks"], label, "hooks")
+    if "mcp" in plugin:
+        resolved["mcp"] = _require_bool(plugin["mcp"], label, "mcp")
     if "remove" in plugin:
         resolved["remove"] = _require_bool(plugin["remove"], label, "remove")
     return resolved
@@ -718,7 +760,7 @@ def agent_harness_build_plugin_resources(
         cache_dir: Path to the cache directory for git repos
 
     Returns:
-        Dict with 'skills', 'agents' and 'hooks' keys
+        Dict with 'skills', 'agents', 'hooks' and 'mcp' keys
     """
     resources = PluginResources()
 
@@ -793,9 +835,14 @@ def agent_harness_build_plugin_resources(
                     for name, path in found
                 )
 
-            if manifest is None or not plugin.hooks:
+            if manifest is None:
                 continue
-            hooks = _read_plugin_hooks(plugin_root, manifest, label)
+            source_id = str(source.get("repo") or source.get("local"))
+            hooks = (
+                _read_plugin_hooks(plugin_root, manifest, label)
+                if plugin.hooks
+                else None
+            )
             if hooks is not None:
                 hooks = hooks.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_root))
                 hooks = hooks.replace("$CLAUDE_PLUGIN_ROOT", str(plugin_root))
@@ -805,11 +852,58 @@ def agent_harness_build_plugin_resources(
                         content=hooks,
                         plugin_root=str(plugin_root),
                         plugin_name=plugin.name,
-                        source_id=str(source.get("repo") or source.get("local")),
+                        source_id=source_id,
+                    )
+                )
+            servers = (
+                _read_plugin_mcp(plugin_root, manifest, label) if plugin.mcp else None
+            )
+            if servers is not None:
+                resources.add_mcp(
+                    McpFragment(
+                        name=plugin.name,
+                        servers=servers,
+                        target_agents=list(plugin.target_agents),
+                        plugin_root=str(plugin_root),
+                        plugin_name=plugin.name,
+                        source_id=source_id,
                     )
                 )
 
     return resources.to_dict()
+
+
+def _read_plugin_mcp(
+    plugin_path: Path, manifest: Mapping[str, Any], label: str
+) -> dict[str, Any] | None:
+    """Read MCP servers the way Claude Code does for an installed plugin.
+
+    The manifest's "mcpServers" key, inline or as a path, takes precedence over
+    the conventional .mcp.json at the plugin root.
+    """
+    declared: Any = manifest.get("mcpServers")
+    match declared:
+        case dict():
+            content = json.dumps({"mcpServers": declared})
+        case str():
+            content = _join_within(
+                plugin_path, declared, label, "mcpServers path"
+            ).read_text()
+        case None:
+            default = plugin_path / ".mcp.json"
+            if not default.is_file():
+                return None
+            content = default.read_text()
+        case _:
+            msg = f"{label}: unsupported mcpServers declaration {declared!r}"
+            raise ValueError(msg)
+    content = content.replace("${CLAUDE_PLUGIN_ROOT}", str(plugin_path))
+    content = content.replace("$CLAUDE_PLUGIN_ROOT", str(plugin_path))
+    servers = json.loads(content).get("mcpServers")
+    if not isinstance(servers, dict):
+        msg = f"{label}: MCP declaration has no mcpServers object"
+        raise ValueError(msg)
+    return cast(dict[str, Any], servers)
 
 
 def _read_plugin_hooks(

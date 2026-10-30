@@ -133,7 +133,7 @@ def roots_for(
     repo: Path, home: Path, cache: Path, profile: str, hostname: str
 ) -> tuple[Path, ...]:
     _, _, layouts, _ = catalogue.declarations(repo, home, profile, hostname)
-    roots = {cache / "hooks"}
+    roots = {cache / "hooks", cache / "mcp"}
     for layout in layouts.values():
         roots.add(Path(layout["skills_dir"]))
         agents = layout["agents_dir"]

@@ -3,7 +3,6 @@ goplsBuildFlags = ""
 scm = []
 pypiIndex = []
 mcp_servers = []
-pi_mcp_json = []
 uvIndexStrategy = ""
 anthropicAuthToken = ""
 anthropicBaseUrl = ""
@@ -16,7 +15,7 @@ piWorkPackages = []
 name = "cua-driver"
 command = "/Users/thurstonsand/.local/bin/cua-driver"
 args = ["mcp"]
-harness = "claude"
+harnesses = ["claude"]
 
 [fonts]
 mono = "BerkeleyMono Nerd Font Mono"

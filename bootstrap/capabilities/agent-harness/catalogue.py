@@ -384,6 +384,22 @@ def render_files(
             0o644,
             f"{hook['source_id']}\0{hook['plugin_name']}",
         )
+    for fragment in resources["mcp"]:
+        if Path(fragment["name"]).name != fragment["name"]:
+            raise ValueError(f"Invalid MCP fragment name: {fragment['name']}")
+        add(
+            cache / "mcp" / f"{fragment['name']}.json",
+            json.dumps(
+                {
+                    "plugin": fragment["plugin_name"],
+                    "target_agents": fragment["target_agents"],
+                    "mcpServers": fragment["servers"],
+                },
+                indent=2,
+            ).encode(),
+            0o644,
+            f"{fragment['source_id']}\0{fragment['plugin_name']}",
+        )
     return files
 
 

@@ -11,6 +11,7 @@ import importlib.util
 import json
 import os
 from pathlib import Path
+import re
 import shutil
 import stat
 import subprocess
@@ -53,6 +54,33 @@ PRIVATE = {
     ".codex/config.toml",
 }
 EXECUTABLE = {".local/bin/pi"}
+MCP_FIELDS = {
+    "name",
+    "transport",
+    "command",
+    "args",
+    "env",
+    "url",
+    "headers",
+    "bearer_token_env_var",
+    "oauth",
+    "tool_timeout_sec",
+    "description",
+    "harnesses",
+}
+# Claude Code reads these from a plugin's .mcp.json; metadata is informational.
+PLUGIN_MCP_FIELDS = {
+    "type",
+    "command",
+    "args",
+    "env",
+    "url",
+    "headers",
+    "bearer_token_env_var",
+    "oauth",
+    "description",
+    "metadata",
+}
 
 
 def _mode(relative: str, hostname: str) -> int:
@@ -161,16 +189,127 @@ def render_all(
 
 
 def _declared_mcp(data: dict[str, Any], harness: str) -> list[dict[str, Any]]:
-    declared = data.get("mcp_servers", [])
-    for item in declared:
+    return [
+        item
+        for item in data["mcp_servers"]
+        if harness in item.get("harnesses", RENDERERS)
+    ]
+
+
+def _plugin_mcp(home: Path) -> list[dict[str, Any]]:
+    """Conform catalogued plugins' Claude Code server entries to mcp_servers."""
+    servers: list[dict[str, Any]] = []
+    for path in sorted((home / ".cache/ansiblonomicon-harness/mcp").glob("*.json")):
+        fragment = json.loads(path.read_text())
+        for name, raw in fragment["mcpServers"].items():
+            unknown = set(raw) - PLUGIN_MCP_FIELDS
+            if unknown:
+                raise ValueError(f"{path}: {name} has unsupported {sorted(unknown)}")
+            # Claude Code's own name for a plugin server, which the plugin's
+            # skills, agents, and hook matchers spell as mcp__plugin_<p>_<s>__.
+            item: dict[str, Any] = {
+                "name": f"plugin_{fragment['plugin']}_{name}",
+                "transport": raw.get("type", "http" if "url" in raw else "stdio"),
+            }
+            item.update(
+                {
+                    key: raw[key]
+                    for key in ("command", "args", "env", "url", "description")
+                    if key in raw
+                }
+            )
+            headers = dict(raw.get("headers", {}))
+            bearer = re.fullmatch(
+                r"Bearer \$\{(\w+)\}", headers.get("Authorization", "")
+            )
+            if bearer:
+                del headers["Authorization"]
+                item["bearer_token_env_var"] = bearer.group(1)
+            if "bearer_token_env_var" in raw:
+                item["bearer_token_env_var"] = raw["bearer_token_env_var"]
+            if headers:
+                item["headers"] = headers
+            if "oauth" in raw:
+                oauth = raw["oauth"]
+                if (
+                    set(oauth) - {"clientId", "callbackPort", "callbackHost"}
+                    or oauth.get("callbackHost", "localhost") != "localhost"
+                ):
+                    raise ValueError(f"{path}: {name} has unsupported oauth {oauth}")
+                item["oauth"] = {
+                    "client_id": oauth["clientId"],
+                    "callback_port": oauth["callbackPort"],
+                }
+            if fragment["target_agents"]:
+                item["harnesses"] = fragment["target_agents"]
+            servers.append(item)
+    return servers
+
+
+def _mcp_servers(home: Path, data: dict[str, Any]) -> list[dict[str, Any]]:
+    """Merge plugin servers with declared ones; a declared name overrides fields."""
+    servers = {item["name"]: item for item in _plugin_mcp(home)}
+    for item in data["mcp_servers"]:
         if not isinstance(item, dict) or not isinstance(item.get("name"), str):
             raise ValueError("each mcp_servers entry requires a string name")
+        name = item["name"]
+        servers[name] = _merge(servers[name], item) if name in servers else item
+    for item in servers.values():
+        unknown = set(item) - MCP_FIELDS
+        if unknown:
+            raise ValueError(f"MCP server {item['name']} has unsupported {unknown}")
         transport = item.get("transport", "stdio")
         if transport not in {"stdio", "sse", "http"}:
             raise ValueError(f"unsupported MCP transport: {transport}")
-        if item.get("harness", harness) not in RENDERERS:
+        if not set(item.get("harnesses", [])) <= RENDERERS.keys():
             raise ValueError(f"unknown MCP server harness: {item}")
-    return [item for item in declared if item.get("harness", harness) == harness]
+        if "oauth" in item and transport == "stdio":
+            raise ValueError(f"stdio MCP server {item['name']} cannot use OAuth")
+        required = "command" if transport == "stdio" else "url"
+        if required not in item:
+            raise ValueError(f"MCP server {item['name']} requires {required}")
+    return list(servers.values())
+
+
+def _headers(item: dict[str, Any]) -> dict[str, str]:
+    headers = dict(item.get("headers", {}))
+    if "bearer_token_env_var" in item:
+        headers["Authorization"] = f"Bearer ${{{item['bearer_token_env_var']}}}"
+    return headers
+
+
+def _oauth_callback(item: dict[str, Any]) -> str:
+    return f"http://localhost:{item['oauth']['callback_port']}/callback"
+
+
+def _pi_mcp_output(data: dict[str, Any]) -> str | None:
+    servers: dict[str, Any] = {}
+    for item in _declared_mcp(data, "pi"):
+        transport = item.get("transport", "stdio")
+        if transport == "sse":
+            raise ValueError(f"Pi does not support SSE MCP server {item['name']}")
+        if transport == "stdio":
+            server = {
+                key: item[key] for key in ("command", "args", "env") if key in item
+            }
+        else:
+            server = {"url": item["url"]}
+            headers = _headers(item)
+            if headers:
+                server["headers"] = headers
+            if "oauth" in item:
+                server["oauth"] = {
+                    "clientId": item["oauth"]["client_id"],
+                    "callbackUrl": _oauth_callback(item),
+                }
+        if "tool_timeout_sec" in item:
+            server["timeout"] = item["tool_timeout_sec"]
+        if "description" in item:
+            server["description"] = item["description"]
+        servers[item["name"]] = server
+    if not servers:
+        return None
+    return json.dumps({"mcpServers": servers}, indent=2, ensure_ascii=False) + "\n"
 
 
 def _claude_mcp_output(
@@ -189,12 +328,18 @@ def _claude_mcp_output(
                 **{key: item[key] for key in ("command", "args", "env") if key in item},
             }
         else:
-            server = {"type": transport, "url": item.get("url")}
-            headers = dict(item.get("headers", {}))
-            if "bearer_token_env_var" in item:
-                headers["Authorization"] = f"Bearer ${{{item['bearer_token_env_var']}}}"
+            server = {"type": transport, "url": item["url"]}
+            headers = _headers(item)
             if headers:
                 server["headers"] = headers
+            if "oauth" in item:
+                server["oauth"] = {
+                    "clientId": item["oauth"]["client_id"],
+                    "callbackPort": item["oauth"]["callback_port"],
+                    "callbackHost": "localhost",
+                }
+        if "tool_timeout_sec" in item:
+            server["timeout"] = item["tool_timeout_sec"] * 1000
         desired[item["name"]] = server
     target = _safe_target(home, ".claude.json")
     if target.is_symlink():
@@ -254,11 +399,17 @@ def _codex_mcp_config(
                 key: item[key] for key in ("command", "args", "env") if key in item
             }
         else:
-            server = {"url": item.get("url")}
+            server = {"url": item["url"]}
             if "headers" in item:
                 server["http_headers"] = item["headers"]
             if "bearer_token_env_var" in item:
                 server["bearer_token_env_var"] = item["bearer_token_env_var"]
+            # Codex parses a per-server callback_url but ignores it; the callback
+            # is the global mcp_oauth_callback_port, supplied at login instead.
+            if "oauth" in item:
+                server["oauth"] = {"client_id": item["oauth"]["client_id"]}
+        if "tool_timeout_sec" in item:
+            server["tool_timeout_sec"] = item["tool_timeout_sec"]
         desired[item["name"]] = server
     document = tomlkit.parse(config)
     if not desired and "mcp_servers" not in document:
@@ -486,11 +637,16 @@ def reconcile(
     if hostname not in HOST_CONFIGS:
         raise ValueError(f"unsupported agent configuration host: {hostname}")
     data = load_data(repo, hostname)
+    data["mcp_servers"] = _mcp_servers(home, data)
     harnesses = target_harnesses(repo, hostname)
     outputs = render_all(repo, home, hostname, data, secrets, harnesses)
     state_dir = home / ".cache/ansiblonomicon-harness/configuration"
     mcp_ownership = state_dir / "mcp-owned.json"
     previously_owned_mcp = _read_owned_names(mcp_ownership)
+    if "pi" in harnesses:
+        pi_mcp = _pi_mcp_output(data)
+        if pi_mcp:
+            outputs[".pi/agent/mcp.json"] = pi_mcp
     if "claude" in harnesses:
         mcp = _claude_mcp_output(home, data, previously_owned_mcp)
         if mcp:
@@ -672,9 +828,7 @@ def reconcile(
     }
     ownership.write_text(json.dumps(inventory, indent=2, sort_keys=True) + "\n")
     ownership.chmod(0o600)
-    declared_mcp = sorted(
-        item["name"] for item in data.get("mcp_servers", []) if isinstance(item, dict)
-    )
+    declared_mcp = sorted(item["name"] for item in data["mcp_servers"])
     mcp_ownership.write_text(json.dumps(declared_mcp, indent=2) + "\n")
     mcp_ownership.chmod(0o600)
     hook_ownership.write_text(json.dumps(owned_hooks, indent=2) + "\n")
