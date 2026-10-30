@@ -13,7 +13,6 @@ REVIEWER = (
     "Reviewer, bug-finder; cross-lab adversarial review; root-causing stubborn bugs"
 )
 EXPLORER = "Exploration subagent; digging for answers/explanations"
-ORACLE = "Read-only expert advisor for one specific, unresolved, high-impact question; its answer is advice to verify"
 
 
 def _scores(intelligence: int, taste: int, cost: int) -> str:
@@ -79,7 +78,6 @@ def _presets(profile: dict[str, str]) -> list[dict[str, Any]]:
             "effort": "low",
             "use": f"{EXPLORER} ({profile['explorer']})",
         },
-        {"harness": "claude", "agent": "oracle", "use": ORACLE},
         _pi(profile["pi_opus"], "high"),
         _pi(profile["pi_reviewer"], "high"),
     ]
