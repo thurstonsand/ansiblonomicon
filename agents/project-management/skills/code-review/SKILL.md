@@ -60,6 +60,12 @@ Each smell reads _what it is_ → _how to fix_; match it against the diff:
 
 ### 4. Spawn both reviewers
 
+Paste this shared risk guidance into **both reviewer prompts**:
+
+> For each finding, identify the triggering condition, the evidence that it can occur in supported use, and the consequence. Distinguish likelihood from confidence: an uncommon failure can be well established; a common-looking failure can be unproven. State material uncertainty rather than inventing a frequency. A short “Trigger → consequence; evidence” explanation is enough; use prose rather than numeric scores.
+>
+> For heuristic smells, explain the concrete maintenance or correctness cost in this change; naming the smell alone is insufficient. Omit concerns that depend solely on hypothetical future requirements or states already excluded by an enforced contract. Keep explicit spec and documented-standard violations visible even when their practical impact is small. Credible security or irreversible data-loss risks deserve attention even when uncommon.
+
 **Standards reviewer prompt** should include:
 
 - The full diff command and commit list.

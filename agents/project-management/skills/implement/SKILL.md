@@ -24,7 +24,11 @@ Tests verify behavior through public interfaces, not implementation details: cal
 
 **Keep** a test of a relation across a table's rows (a key present in two tables, a parent that exists), and a compile-time check in a `*.test-d.ts` file.
 
-Once done, use the `code-review` skill to review the work against the plan. Fix the findings you accept.
+Once done, use the `code-review` skill to review the work against the plan.
+
+Evaluate review findings against the actual callers, enforced contracts, and agreed scope before changing code. Fix established defects and contract violations. For discretionary hardening or refactoring, weigh the concrete risk or maintenance cost against the complexity and regression risk of the fix. Investigate uncertain, consequential findings before deciding.
+
+Briefly explain material findings left unchanged. Recheck fixes and their affected paths; revisit a rejected finding only when new evidence changes the decision. Keep deferred concerns in the handoff rather than automatically creating issues.
 
 Verify the predicate on the real surface, and say how far each claim got: pointed at the line, walked the failure through, ran it, or reproduced it in the running system. Anything short of running it is not settled. Hand the user something to look at rather than read: command output, a screenshot, the log lines that prove the path executed.
 
