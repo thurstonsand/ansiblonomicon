@@ -36,6 +36,7 @@ class Inventory:
     tools: dict[str, ToolEntry]
     sections: dict[str, dict[str, list[str]]]
     npm_links: dict[str, str]
+    uv_python: str | None
 
 
 def npm_package_name(spec: str) -> str:
@@ -167,6 +168,7 @@ def empty_inventory() -> Inventory:
             "gem": {"packages": []},
         },
         npm_links={},
+        uv_python=None,
     )
 
 
@@ -239,6 +241,13 @@ def read_source(path: Path) -> tuple[Inventory, bool]:
         )
         if section == "npm" and "links" in value:
             result.npm_links = npm_links(value.pop("links"), path)
+        if section == "uv" and "python" in value:
+            python = value.pop("python")
+            if not isinstance(python, str):
+                raise SystemExit(
+                    f"invalid inventory {path}: uv.python must be a string"
+                )
+            result.uv_python = python
         if set(value) - set(keys):
             raise SystemExit(f"invalid inventory {path}: malformed [{section}] table")
         for key, entries in value.items():
@@ -325,6 +334,7 @@ def load(paths: list[Path]) -> Inventory:
             result = empty_inventory()
         result.tools.update(data.tools)
         result.npm_links.update(data.npm_links)
+        result.uv_python = data.uv_python or result.uv_python
         for section, keys in LIST_SECTIONS.items():
             for key in keys:
                 result.sections[section][key].extend(data.sections[section][key])
@@ -404,6 +414,7 @@ def main() -> None:
                 "tools": inventory.tools,
                 "sections": inventory.sections,
                 "npm_links": inventory.npm_links,
+                "uv_python": inventory.uv_python,
             },
             sort_keys=True,
         ).encode()
@@ -476,8 +487,9 @@ def main() -> None:
             if (tool_dir / tool).exists():
                 run(["uv", "tool", "uninstall", tool], cwd=home)
     if due:
+        python = ["--python", inventory.uv_python] if inventory.uv_python else []
         for tool in inventory.sections["uv"]["packages"]:
-            run(["uv", "tool", "install", "--upgrade", tool], cwd=home)
+            run(["uv", "tool", "install", "--upgrade", *python, tool], cwd=home)
         for package in inventory.sections["bun"]["packages"]:
             run(["bun", "install", "--global", package], cwd=home)
         for tool in inventory.sections["go"]["packages"]:

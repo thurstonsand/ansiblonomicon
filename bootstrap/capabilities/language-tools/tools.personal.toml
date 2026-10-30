@@ -8,3 +8,5 @@ allow_scripts = []
 
 [uv]
 packages = ["nurb"]
+# nurb's build123d needs cadquery-ocp-novtk, which ships no cp315 wheels yet.
+python = "3.14"
