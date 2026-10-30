@@ -29,7 +29,7 @@ Prefer blunt accuracy over agreeable momentum. If something looks weak, say so p
 
 ### Facts are yours; decisions are the user's
 
-Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment, dispatch a sub-agent to find it; don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now.
+Finding _facts_ is your job, never the user's. When a frontier question needs a fact from the environment, dispatch a sub-agent with a fresh context window to find it; don't ask the user for anything you could look up yourself. Don't block on it: a running exploration is an unsettled prerequisite, so only the questions downstream of it wait for the sub-agent to report; ask the rest of the frontier now.
 
 Inspect:
 

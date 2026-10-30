@@ -79,6 +79,12 @@ Then update the table and add a log entry below.
 
 ## Import log
 
+### 2026-10-30, upstream PR #1341 `7739eae`
+
+A cherry-pick, not a full import, so the table's sync points stay put. Upstream now tells every skill that dispatches a subagent to start it with a fresh context window, because Codex forks the parent conversation by default (MultiAgentV2's `spawn_agent` treats an omitted `fork_turns` as `"all"`). Adopted with upstream's wording at every dispatch site we own: the `code-review` reviewers, the `improve-codebase-architecture` codebase walker and its `design-it-twice` sub-agents, both wayfinder research dispatches, both `grill-me` fact-finders, and the Oracle's own exploration subagents. `design-it-twice` also loses "using the Agent tool", the Claude-specific phrasing declined on 2026-08-20.
+
+Declined: upstream's repo-wide standard in `CLAUDE.md`, along with a global equivalent in our rendered `AGENTS.md`. Skipped on purpose: `claude/handoff`, which already starts a fresh agent, and `retro`, which names a reviewer but dispatches none.
+
 ### 2026-09-29, upstream `d81f3a1`
 
 Release v1.3. Upstream deleted `resolving-merge-conflicts` (`daa01d8`) with no replacement, so it leaves `include_skills` here too; the stale name had failed the scheduled Amp publish. Deleted our `wait-what` fork, no longer needed. Deleted our `reflect` fork of `pstack/reflect`, since `retro` covers the same ground.

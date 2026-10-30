@@ -126,7 +126,7 @@ Ruling something out of scope is a scoping act, not a step on the route. When a 
 
 ## Burn down research
 
-Research is AFK, so a session never stops to read: it dispatches a **subagent** per research ticket and carries on. Claim each ticket for the subagent before dispatching, so no other session picks it up.
+Research is AFK, so a session never stops to read: it dispatches a **subagent** with a fresh context window per research ticket and carries on. Claim each ticket for the subagent before dispatching, so no other session picks it up.
 
 The subagent investigates against **primary sources** (official docs, source code, specs, first-party APIs), never a secondary write-up of them, following every claim back to the source that owns it. It writes its findings to `docs/wayfinding/<effort-slug>/research/<slug>.md`, citing each claim's source, then appends the ticket's `## Resolution` linking that file, closes the ticket, and reports back. The dispatching session appends the Decisions-so-far line when the report arrives: the map has one writer.
 
@@ -144,7 +144,7 @@ User invokes with a loose idea.
 2. **Map the frontier.** Continue `/grill-me`, **breadth-first** this time: the design tree you are walking spans the whole effort, so fan out across it rather than going deep on any one thread, surfacing the open decisions and the first steps takeable now. Stay in Gate 1: charting surfaces decisions, it doesn't design them. **If this surfaces no fog** (the way to the destination is already clear, the whole journey small enough for one session) you don't need a map. Stop and ask the user how they'd like to proceed.
 3. **Create the map** at `docs/wayfinding/<effort-slug>/map.md`: Destination and Notes filled in, Decisions-so-far empty, the fog sketched into **Not yet specified**.
 4. **Create the tickets you can specify now** under `tickets/`, numbering them in creation order and wiring `blocked-by` as you go. Wiring sorts them into the frontier and the blocked; everything you can't yet specify stays in the fog: the **Not yet specified** section.
-5. **Fire the research subagents.** For each `research` ticket you just created, spin up a subagent to resolve it in parallel, and record their resolutions on the map as they report.
+5. **Fire the research subagents.** For each `research` ticket you just created, spin up a subagent with a fresh context window to resolve it in parallel, and record their resolutions on the map as they report.
 6. Stop. Charting the map is one session's work; do not also resolve the tickets a human has to answer.
 
 ### Work through the map
