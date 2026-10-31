@@ -621,6 +621,8 @@ target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV=omarchy-loadout
+# Omarchy's commands, and the package builds they start, expect the system's Python ahead of this repo's tools.
+export PATH="/usr/bin:$PATH"
 if [ -n "${usage_check:-}" ]; then
   exec mise -C "$target" run omarchy-loadout --check ${usage_update:+--update}
 fi
@@ -662,6 +664,8 @@ esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
+# Omarchy's commands, and the package builds they start, expect the system's Python ahead of this repo's tools.
+export PATH="/usr/bin:$PATH"
 tags="${usage_tags:-}"
 supported=" all omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config "
 unsupported=
