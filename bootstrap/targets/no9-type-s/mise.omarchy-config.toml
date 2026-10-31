@@ -84,6 +84,9 @@ for flags in ~/.config/chromium-flags.conf ~/.config/brave-origin-flags.conf ~/.
   [ -s "$flags" ] && [ -n "$(tail -c1 "$flags")" ] && echo >>"$flags"
   echo --force-renderer-accessibility >>"$flags"
 done
+# Register the linked launchers' MimeType lines, as omarchy-refresh-applications does; GIO and the desktop portal offer only
+# the handlers this cache lists.
+update-desktop-database ~/.local/share/applications
 # Carry a laptop still on Solitude or the retired Solitude Light over to its replacement; delete with the Solitude retirements.
 case $(cat ~/.local/state/omarchy/current/theme.name 2>/dev/null) in
   solitude) omarchy-theme-set city-ruins ;;
