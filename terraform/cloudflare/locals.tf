@@ -50,5 +50,6 @@ locals {
     "aig.${local.zone_name}",
     "doppelclaude-origin.${local.zone_name}",
     "doppelclaude.${local.zone_name}",
+    "pod153-mcp.${local.zone_name}",
   ]
 }
