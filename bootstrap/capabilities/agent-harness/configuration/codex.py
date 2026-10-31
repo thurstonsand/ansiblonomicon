@@ -96,9 +96,9 @@ def render(
         background = (
             background_path.read_text().strip() if background_path.exists() else "dark"
         )
-        tui_theme = f"solitude-{background}"
+        tui_theme = {"dark": "city-ruins", "light": "copied-city"}[background]
         chrome_path = (
-            repo / "bootstrap/capabilities/terminal-theme/solitude/codex-chrome.toml"
+            repo / "bootstrap/capabilities/terminal-theme/city-ruins/codex-chrome.toml"
         )
     overlay = cast(Container, tomlkit.document())
     overlay.update(

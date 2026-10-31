@@ -26,8 +26,8 @@ local function terminal_bg()
   return terminal_bg
 end
 
-local function apply_solitude()
-  vim.cmd.colorscheme("solitude-" .. terminal_bg())
+local function apply_city_ruins()
+  vim.cmd.colorscheme(terminal_bg() == "light" and "copied-city" or "city-ruins")
 end
 
 local terminal_bg_watcher = vim.uv.new_fs_event()
@@ -38,7 +38,7 @@ if terminal_bg_watcher then
         return
       end
       vim.schedule(function()
-        apply_solitude()
+        apply_city_ruins()
         terminal_bg_watcher:stop()
         watch_terminal_bg()
       end)
@@ -56,7 +56,7 @@ return {
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = apply_solitude,
+      colorscheme = apply_city_ruins,
     },
   },
 }

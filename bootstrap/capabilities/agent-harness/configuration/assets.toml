@@ -33,6 +33,18 @@ destination = '.pi/agent/interview-themes/gruvbox-dark-hard.css'
 [[absent]]
 destination = '.pi/agent/interview-themes/gruvbox-light-hard.css'
 
+[[absent]]
+destination = '.pi/agent/interview-themes/solitude-dark.css'
+
+[[absent]]
+destination = '.pi/agent/interview-themes/solitude-light.css'
+
+[[absent]]
+destination = '.codex/themes/solitude-dark.tmTheme'
+
+[[absent]]
+destination = '.codex/themes/solitude-light.tmTheme'
+
 [[files]]
 source = 'assets/oracle/config.json'
 destination = '.oracle/config.json'
@@ -87,14 +99,14 @@ harness = 'claude'
 mode = 'symlink'
 
 [[files]]
-source = '../../terminal-theme/solitude/claude-statusline-colors-dark.sh'
+source = '../../terminal-theme/city-ruins/claude-statusline-colors-dark.sh'
 destination = '.claude/scripts/statusline-colors-dark.sh'
 harness = 'claude'
 hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
-source = '../../terminal-theme/solitude/claude-statusline-colors-light.sh'
+source = '../../terminal-theme/city-ruins/claude-statusline-colors-light.sh'
 destination = '.claude/scripts/statusline-colors-light.sh'
 harness = 'claude'
 hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
@@ -492,29 +504,29 @@ harness = 'pi'
 mode = 'symlink'
 
 [[files]]
-source = 'assets/pi/interview-themes/solitude-dark.css'
-destination = '.pi/agent/interview-themes/solitude-dark.css'
+source = 'assets/pi/interview-themes/city-ruins.css'
+destination = '.pi/agent/interview-themes/city-ruins.css'
 harness = 'pi'
 hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
-source = 'assets/pi/interview-themes/solitude-light.css'
-destination = '.pi/agent/interview-themes/solitude-light.css'
+source = 'assets/pi/interview-themes/copied-city.css'
+destination = '.pi/agent/interview-themes/copied-city.css'
 harness = 'pi'
 hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
-source = 'assets/codex/themes/solitude-dark.tmTheme'
-destination = '.codex/themes/solitude-dark.tmTheme'
+source = 'assets/codex/themes/city-ruins.tmTheme'
+destination = '.codex/themes/city-ruins.tmTheme'
 harness = 'codex'
 hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'
 
 [[files]]
-source = 'assets/codex/themes/solitude-light.tmTheme'
-destination = '.codex/themes/solitude-light.tmTheme'
+source = 'assets/codex/themes/copied-city.tmTheme'
+destination = '.codex/themes/copied-city.tmTheme'
 harness = 'codex'
 hosts = ['ML-DFC6YK6VJQ', 'pod153', 'pod042']
 mode = 'symlink'

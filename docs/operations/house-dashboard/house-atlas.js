@@ -735,6 +735,7 @@ class HouseAtlas extends HTMLElement {
           --atlas-on-accent: var(--house-atlas-on-accent, var(--text-primary-color));
           --atlas-light: var(--house-atlas-light, var(--state-light-active-color));
           --atlas-error: var(--house-atlas-error, var(--error-color));
+          --atlas-warning: var(--house-atlas-warning, var(--warning-color));
           display: block; container-type: inline-size;
           position: relative; z-index: 0; isolation: isolate;
           background: var(--atlas-bg); color: var(--atlas-fg);
@@ -786,8 +787,9 @@ class HouseAtlas extends HTMLElement {
         .g-cell { min-width: 0; display: flex; align-items: center; gap: 14px; border: 1px solid var(--atlas-border); background: var(--atlas-surface); border-radius: 8px; padding: 10px 10px 10px 16px; }
         .g-cell[hidden] { display: none; }
         .g-cell ha-icon { color: var(--atlas-muted); flex: 0 0 auto; }
-        .g-cell.warn { border-color: var(--atlas-light); background: color-mix(in srgb, var(--atlas-light) 16%, var(--atlas-bg)); }
-        .g-lights ha-icon, .g-cell.warn ha-icon { color: var(--atlas-light); }
+        .g-cell.warn { border-color: var(--atlas-warning); background: color-mix(in srgb, var(--atlas-warning) 16%, var(--atlas-bg)); }
+        .g-lights ha-icon { color: var(--atlas-light); }
+        .g-cell.warn ha-icon { color: var(--atlas-warning); }
         .g-text { flex: 1; min-width: 0; }
         .g-text b { display: block; font-weight: 600; font-size: 14px; }
         .g-text small { display: block; font-size: 12px; color: var(--atlas-muted); margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -1092,8 +1094,8 @@ class HouseAtlas extends HTMLElement {
       .pickup.visible{display:inline}
       .pickup-bin{display:none}
       .pickup.garbage .garbage-bin,.pickup.recycling .recycling-bin{display:inline}
-      .garbage-bin{color:var(--house-atlas-secure,#79740e)}
-      .recycling-bin{color:#458588}
+      .garbage-bin{color:var(--house-atlas-garbage,#79740e)}
+      .recycling-bin{color:var(--house-atlas-recycling,#458588)}
       .pickup.garbage.recycling .recycling-bin{transform:translateX(32px)}
       .pickup-body{fill:currentColor}
       .pickup-lid{fill:currentColor;stroke:var(--atlas-bg);stroke-width:.5}

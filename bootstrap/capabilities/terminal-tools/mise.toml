@@ -5,8 +5,10 @@
 "~/.config/tmux/gruvbox-dark.conf" = { mode = "absent" }
 "~/.config/tmux/gruvbox-light.conf" = { mode = "absent" }
 "~/.config/ghostty/config.ghostty" = { source = "terminal-tools/ghostty/config.tera", mode = "template" }
-"~/.config/ghostty/themes/solitude-dark" = { source = "terminal-tools/ghostty/themes/solitude-dark", mode = "symlink" }
-"~/.config/ghostty/themes/solitude-light" = { source = "terminal-tools/ghostty/themes/solitude-light", mode = "symlink" }
+"~/.config/ghostty/themes/city-ruins" = { source = "terminal-tools/ghostty/themes/city-ruins", mode = "symlink" }
+"~/.config/ghostty/themes/copied-city" = { source = "terminal-tools/ghostty/themes/copied-city", mode = "symlink" }
+"~/.config/ghostty/themes/solitude-dark" = { mode = "absent" }
+"~/.config/ghostty/themes/solitude-light" = { mode = "absent" }
 
 [vars]
 terminal_tools_font_family = "BerkeleyMono Nerd Font Mono"

@@ -238,10 +238,10 @@ def _settings(
                 "mode": "auto",
                 "lightPath": "~/.local/state/omarchy/current/theme/pi-interview.css"
                 if hostname in OMARCHY_HOSTS
-                else "~/.pi/agent/interview-themes/solitude-light.css",
+                else "~/.pi/agent/interview-themes/copied-city.css",
                 "darkPath": "~/.local/state/omarchy/current/theme/pi-interview.css"
                 if hostname in OMARCHY_HOSTS
-                else "~/.pi/agent/interview-themes/solitude-dark.css",
+                else "~/.pi/agent/interview-themes/city-ruins.css",
                 "toggleHotkey": "alt+l",
             }
         },

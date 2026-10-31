@@ -1,9 +1,12 @@
--- Solitude: ashen.nvim as Omarchy pairs it in dark, and its OKLCH mirror in light.
+-- City Ruins and Copied City: ashen.nvim as Omarchy pairs it with Solitude in dark, its OKLCH
+-- mirror in light, and City Ruins' diff colors over both.
 local M = {}
 
-local light_palette = require("lib.ashen-solitude-light")
+local light_palette = require("lib.ashen-copied-city")
+local signals = require("lib.city-ruins-signals")
+local names = { dark = "city-ruins", light = "copied-city" }
 local dark_palette
-local group = vim.api.nvim_create_augroup("solitude", { clear = true })
+local group = vim.api.nvim_create_augroup("city-ruins", { clear = true })
 
 function M.apply(mode)
   vim.api.nvim_clear_autocmds({ group = group })
@@ -20,18 +23,21 @@ function M.apply(mode)
   end
   local ok, err = pcall(function()
     vim.o.background = mode
-    -- Not `:colorscheme ashen`: this runs inside the solitude colorschemes, and Neovim
+    -- Not `:colorscheme ashen`: this runs inside the City Ruins colorschemes, and Neovim
     -- silently ignores a colorscheme loaded from another.
     require("ashen").load()
   end)
   vim.api.nvim_command = nvim_command
   assert(ok, err)
+  for name, spec in pairs(signals[mode]) do
+    vim.api.nvim_set_hl(0, name, spec)
+  end
   -- ashen records itself; reloading that name would run the dark restore below.
-  vim.g.colors_name = "solitude-" .. mode
+  vim.g.colors_name = names[mode]
 
   if mode == "light" then
     -- ashen keeps the override for every later load, so a plain `:colorscheme ashen`,
-    -- such as Omarchy switching back to Solitude, would otherwise stay light.
+    -- such as Omarchy switching to its own Solitude, would otherwise stay light.
     vim.api.nvim_create_autocmd("ColorSchemePre", {
       group = group,
       pattern = "ashen",

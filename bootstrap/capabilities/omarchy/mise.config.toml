@@ -71,6 +71,11 @@ for flags in ~/.config/chromium-flags.conf ~/.config/brave-origin-flags.conf ~/.
   [ -s "$flags" ] && [ -n "$(tail -c1 "$flags")" ] && echo >>"$flags"
   echo --force-renderer-accessibility >>"$flags"
 done
+# Carry a laptop still on Solitude or the retired Solitude Light over to its replacement; delete with the Solitude retirements.
+case $(cat ~/.local/state/omarchy/current/theme.name 2>/dev/null) in
+  solitude) omarchy-theme-set city-ruins ;;
+  solitude-light) omarchy-theme-set copied-city ;;
+esac
 # Omarchy renders its templates and theme files only on a theme switch, so re-render when a source changed since the last one
 # or a consumer's copy is missing, as on a fresh home where the hooks first ran before agent-config created ~/.claude.
 changed=$(find -L ~/.config/omarchy/themed ~/.config/omarchy/themes -newer ~/.local/state/omarchy/current/theme.name -type f -print -quit)
@@ -94,12 +99,25 @@ fi
 "~/.config/omarchy/branding/about.txt" = { source = "omarchy/branding/about.txt", mode = "symlink" }
 "~/.config/omarchy/branding/screensaver.txt" = { source = "omarchy/branding/screensaver.txt", mode = "symlink" }
 # omarchy-theme-bg-next compares unresolved paths against bg-set's realpath, so a symlink stalls cycling.
-"~/.config/omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg", mode = "copy" }
-"~/.config/omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg", mode = "copy" }
-"~/.config/omarchy/backgrounds/solitude-light/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg", mode = "copy" }
-"~/.config/omarchy/backgrounds/solitude-light/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg", mode = "copy" }
-"~/.config/omarchy/themes/solitude-light" = { source = "omarchy/themes/solitude-light", mode = "symlink" }
-"~/.config/omarchy/themes/solitude" = { source = "omarchy/themes/solitude", mode = "symlink" }
+"~/.config/omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg", mode = "copy" }
+# City Ruins replaces Omarchy's Solitude, so it carries Solitude's own wallpapers too.
+"~/.config/omarchy/backgrounds/city-ruins/1-on-pole.webp" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/1-on-pole.webp", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/2-wreakage.webp" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/2-wreakage.webp", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/3-climb.jpg" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/3-climb.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/4-ether.webp" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/4-ether.webp", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/5-eyed.jpg" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/5-eyed.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/copied-city/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/copied-city/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg", mode = "copy" }
+"~/.config/omarchy/themes/city-ruins" = { source = "omarchy/themes/city-ruins", mode = "symlink" }
+"~/.config/omarchy/themes/copied-city" = { source = "omarchy/themes/copied-city", mode = "symlink" }
+# Retiring Solitude's overlay and Solitude Light, which City Ruins and Copied City replace.
+"~/.config/omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/solitude-light/wallhaven-odq5ml.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/solitude-light/wallhaven-y83x8g.jpg" = { mode = "absent" }
+"~/.config/omarchy/themes/solitude-light" = { mode = "absent" }
+"~/.config/omarchy/themes/solitude" = { mode = "absent" }
 "~/.config/omarchy/themed" = { source = "omarchy/themed", mode = "symlink-each" }
 "~/.config/omarchy/hooks/theme-set.d/codex" = { source = "omarchy/hooks/theme-set.d/codex", mode = "symlink" }
 "~/.config/omarchy/hooks/theme-set.d/bat" = { source = "omarchy/hooks/theme-set.d/bat", mode = "symlink" }

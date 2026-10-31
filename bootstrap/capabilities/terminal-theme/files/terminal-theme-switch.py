@@ -39,7 +39,7 @@ def update_terminal_bg(mode: Mode) -> None:
 
 
 def codex_theme_name(mode: Mode) -> str:
-    return f"solitude-{mode}"
+    return {Mode.DARK: "city-ruins", Mode.LIGHT: "copied-city"}[mode]
 
 
 def set_codex_tui_theme(text: str, mode: Mode) -> str:

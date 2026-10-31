@@ -3,7 +3,7 @@ return {
   {
     "LazyVim/LazyVim",
     opts = {
-      colorscheme = "solitude-light",
+      colorscheme = "copied-city",
     },
   },
 }
