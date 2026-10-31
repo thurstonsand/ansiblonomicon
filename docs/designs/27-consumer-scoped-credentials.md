@@ -6,7 +6,7 @@ Status: Accepted
 
 Every consumer requests only the credentials it needs. Agent-vault access uses the shared automation identity without desktop authorization. Private and corporate credentials retain desktop authentication, invoked only when a consumer actually needs them. Bootstrap enrollment and rotation of the shared automation token deliberately remain attended exceptions.
 
-Sourcegraph is the work-host exception. Its plugin accepts only an inherited `SOURCEGRAPH_TOKEN`, and Pi must remain usable from non-interactive scripts, so chezmoi resolves the token during attended reconciliation and renders it into the work host's zsh environment.
+The work code-host tokens are the work-host exception. Corporate 1Password authorizes `op` per terminal with Touch ID, and Pi sessions often run unattended in a fresh tmux pane, so a per-call read fails with nobody there to approve it. The shell task therefore resolves `SOURCEGRAPH_TOKEN`, `GITLAB_ACCESS_TOKEN` and `BITBUCKET_TOKEN` during attended reconciliation and renders them into the work host's zsh environment, where pi-librarian reads them through `tokenEnv`.
 
 This supersedes design 26's whole-host execution rule. The shared identity and provider isolation remain unchanged. Project-wide exports were subsequently retired; entering the repo no longer reads secrets.
 

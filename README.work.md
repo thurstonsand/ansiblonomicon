@@ -30,7 +30,7 @@ The untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/` holds 
 | `costsDashboardUrl`  | Native Pi renderer (`powerlineCustom.budget.costsUrl`)          |
 | `jiraBrowseUrl`      | Pi footer settings                                              |
 | `piWorkPackages`     | Pi packages prepended to the work set                           |
-| `piLibrarianSources` | pi-librarian's work code hosts, with `fnox-host` token commands |
+| `piLibrarianSources` | pi-librarian's work code hosts and their token variables        |
 | `[[mcp_servers]]`    | Claude, Codex, and Pi MCP registration                          |
 
 Keep credentials out of these files. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml`, and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` to preview changes without writing.
@@ -59,7 +59,7 @@ The work host declaration is `bootstrap/targets/ML-DFC6YK6VJQ/mise.agent-harness
 
 ## Shell Extras
 
-The shared startup files are owned by the native mise shell capability. They source `~/.zshenv.local` and `~/.zshrc.local`, which the ignored `bootstrap/targets/ML-DFC6YK6VJQ/mise.shell-work.local.toml` declares from `bootstrap/targets/ML-DFC6YK6VJQ/local/shell/`: the environment file is copied privately at mode 0600, the interactive file is linked. `SOURCEGRAPH_TOKEN`, `GENAIHUB_API_KEY`, and `GENAI_HUB_API_KEY` are the shell-wide exceptions: the Sourcegraph plugin requires inheritance and Pi may launch non-interactively, the IT-managed Codex provider reads `GENAIHUB_API_KEY` only from the environment, and every harness's work web-search MCP authenticates with `GENAI_HUB_API_KEY`, the name the web-search plugin expects, at startup without a 1Password prompt. Both carry the `ANTHROPIC_AUTH_TOKEN` SecretRef. The shell task resolves those values and its scoped sudo credential through `fnox-host` before rendering the private mode-0600 `.zshenv`; it does not perform a startup-time network read. Command-specific credentials continue to use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND`. Do not restore broad provider-token exports or global agent launch wrappers.
+The shared startup files are owned by the native mise shell capability. They source `~/.zshenv.local` and `~/.zshrc.local`, which the ignored `bootstrap/targets/ML-DFC6YK6VJQ/mise.shell-work.local.toml` declares from `bootstrap/targets/ML-DFC6YK6VJQ/local/shell/`: the environment file is copied privately at mode 0600, the interactive file is linked. `SOURCEGRAPH_TOKEN`, `GITLAB_ACCESS_TOKEN`, `BITBUCKET_TOKEN`, `GENAIHUB_API_KEY`, and `GENAI_HUB_API_KEY` are the shell-wide exceptions: pi-librarian reads the three code-host tokens from the environment because corporate 1Password needs Touch ID per terminal and Pi sessions often run unattended, the IT-managed Codex provider reads `GENAIHUB_API_KEY` only from the environment, and every harness's work web-search MCP authenticates with `GENAI_HUB_API_KEY`, the name the web-search plugin expects, at startup without a 1Password prompt. Both carry the `ANTHROPIC_AUTH_TOKEN` SecretRef. The shell task resolves those values and its scoped sudo credential through `fnox-host` before rendering the private mode-0600 `.zshenv`; it does not perform a startup-time network read. Command-specific credentials continue to use `scripts/fnox-host exec --secret NAME [--secret NAME ...] -- COMMAND`. Do not restore broad provider-token exports or global agent launch wrappers.
 
 ## Work-Local Machine Tasks
 

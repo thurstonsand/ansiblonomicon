@@ -30,6 +30,8 @@ export VISUAL="nvim"
 # 1Password SSH agent
 export SSH_AUTH_SOCK="$HOME/Library/Group Containers/2BUA8C4S2C.com.1password/t/agent.sock"
 export SOURCEGRAPH_TOKEN='{{ get_env(name="SOURCEGRAPH_TOKEN") }}'
+export GITLAB_ACCESS_TOKEN='{{ get_env(name="GITLAB_ACCESS_TOKEN") }}'
+export BITBUCKET_TOKEN='{{ get_env(name="BITBUCKET_TOKEN") }}'
 export GENAIHUB_API_KEY='{{ get_env(name="ANTHROPIC_AUTH_TOKEN") }}'
 export GENAI_HUB_API_KEY="$GENAIHUB_API_KEY"
 # The repo asks for Python 3.15, but PyYAML has no cp315 wheel for the work
