@@ -6,7 +6,7 @@
 ./scripts/bootstrap.sh                  # new Mac: Xcode CLI, Homebrew, mise, fnox, uv, 1Password CLI
 ```
 
-`mise trust` activates the venv and installs the commit hook on shell entry. The shared askpass helper is `scripts/sudo-askpass.sh`: it resolves the host's sudo password through fnox, so reconciliation tasks gain root without anyone at the keyboard. The work Mac's BeyondTrust sudo keeps no timestamp for a `sudo -A -v` to prime. On the Omarchy laptops, `sudo -A` authenticates through the password-only `sudo-unattended` PAM service instead of waiting on the fingerprint or security key that plain `sudo` asks for, and each use raises a desktop notification. Consumers resolve only their required credentials through fnox.
+`mise trust` activates the venv and installs the repo's tools and commit hook on shell entry. Automatic installs are off here, so neither a task nor a `--check` installs a host's global tools. The shared askpass helper is `scripts/sudo-askpass.sh`: it resolves the host's sudo password through fnox, so reconciliation tasks gain root without anyone at the keyboard. The work Mac's BeyondTrust sudo keeps no timestamp for a `sudo -A -v` to prime. On the Omarchy laptops, `sudo -A` authenticates through the password-only `sudo-unattended` PAM service instead of waiting on the fingerprint or security key that plain `sudo` asks for, and each use raises a desktop notification. Consumers resolve only their required credentials through fnox.
 
 ## Working here
 

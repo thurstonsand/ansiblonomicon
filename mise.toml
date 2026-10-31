@@ -5,6 +5,11 @@ config_roots = [
   "bootstrap/capabilities/software/sources/shp",
 ]
 
+# Automatic installs take every missing tool in scope, the host's global ones included, so even `mise <host> --check`
+# installed them. bootstrap:tools installs this repo's tools; each host's `mise` reconcile installs its global ones.
+[settings]
+auto_install = false
+
 [tools]
 python = "3.15"
 uv = "latest"
@@ -37,8 +42,18 @@ enter = "mise run --quiet bootstrap:git"
 description = "Install repo dependencies and the commit hook"
 depends = ["bootstrap:*"]
 
+[tasks."bootstrap:tools"]
+description = "Install this repo's tools"
+# Above the repo, mise would also find the global config as ~/.config/mise/config.toml, so the search stops at its parent.
+run = 'MISE_GLOBAL_CONFIG_FILE=/nonexistent MISE_CEILING_PATHS="{{ config_root | dirname }}" mise install --monorepo --quiet'
+# Shell entry runs this, and even a no-op install costs a second mise process, so it waits for a tool declaration to change.
+sources = ["mise.toml", "bootstrap/capabilities/software/sources/shp/mise.toml"]
+outputs = { auto = true }
+quiet = true
+
 [tasks."bootstrap:deps"]
 description = "Sync Python dependencies into .venv"
+depends = ["bootstrap:tools"]
 run = "uv sync --dev"
 # pyvenv.cfg is a source so that deleting .venv resyncs it: mise recreates the
 # venv during env resolution, and the fresh mtime invalidates the cache.
@@ -48,6 +63,7 @@ quiet = true
 
 [tasks."bootstrap:agent-deps"]
 description = "Install agent tooling development dependencies"
+depends = ["bootstrap:tools"]
 run = '''
 # The work machine skips the install: npm rewrites package-lock to the internal mirror.
 if [ "$(hostname -s 2>/dev/null || hostname)" != "ML-DFC6YK6VJQ" ]; then
@@ -83,6 +99,7 @@ quiet = true
 # mtime to show for it. Reapplying every entry costs about 8ms.
 [tasks."bootstrap:git"]
 description = "Install the hk commit hook and hide work-machine lockfile rewrites"
+depends = ["bootstrap:tools"]
 run = '''
 # git 2.54+ config hooks: hk registers hook.hk-pre-commit.command in .git/config
 # instead of dropping a shim in .git/hooks. Nothing here pins core.hooksPath any
