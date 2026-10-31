@@ -50,6 +50,10 @@ http://nest-events.thurstons.house {
 	respond 404
 }
 
+bazarr.thurstons.house {
+	import local_only bazarr:6767
+}
+
 dash.thurstons.house {
 	import local_only homepage:3000
 }

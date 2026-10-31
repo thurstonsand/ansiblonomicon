@@ -144,6 +144,11 @@ owner = "root"
 group = "docker"
 mode = "0750"
 
+[bootstrap.directories."/mnt/black-box/docker/arr-apps/bazarr/config"]
+owner = "thurstonsand"
+group = "media"
+mode = "0700"
+
 [bootstrap.directories."/mnt/black-box/docker/ddclient/ddclient/config"]
 owner = "thurstonsand"
 group = "media"

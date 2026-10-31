@@ -90,6 +90,28 @@ services:
       - ingress
     restart: unless-stopped
 
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    environment:
+      PUID: "1000"
+      PGID: "3000"
+      TZ: America/New_York
+    volumes:
+      - /mnt/black-box/docker/arr-apps/bazarr/config:/config
+      - /mnt/ark/media:/media
+    healthcheck:
+      test: ["CMD-SHELL", "curl --fail --silent http://127.0.0.1:6767/ping >/dev/null"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 45s
+    networks:
+      - default
+      - ingress
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    restart: unless-stopped
+
   neutarr:
     image: iampuid0/neutarr:latest
     environment:

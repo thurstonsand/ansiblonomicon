@@ -1,6 +1,7 @@
 locals {
   pod042_service_dns_names = toset([
     "anypod.thurstons.house",
+    "bazarr.thurstons.house",
     "blog.thurstons.house",
     "cli-proxy-api.thurstons.house",
     "dash.thurstons.house",
