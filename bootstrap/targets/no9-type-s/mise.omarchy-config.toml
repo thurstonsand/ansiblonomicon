@@ -28,6 +28,12 @@ owner = "root"
 group = "root"
 mode = "0644"
 
+[bootstrap.files."/etc/udev/rules.d/90-usb-wake.rules"]
+source = "omarchy/udev/90-usb-wake.rules"
+owner = "root"
+group = "root"
+mode = "0644"
+
 # Match Omarchy install/hardware/nvidia.sh early KMS configuration.
 [bootstrap.files."/etc/modprobe.d/nvidia.conf"]
 source = "omarchy/modprobe.d/nvidia.conf"
@@ -60,13 +66,14 @@ owner = "root"
 group = "root"
 mode = "0600"
 
-# NetworkManager and udev read their files from disk only on request. Reloading leaves the active connection up, and the trigger
-# reaches only an attached Dygma keyboard.
+# NetworkManager and udev read their files from disk only on request. Reloading leaves the active connection up, and the triggers
+# reach only an attached Dygma keyboard and the USB devices.
 [bootstrap.hooks.pre-repos]
 run = '''
 sudo -n nmcli connection reload
 sudo -n udevadm control --reload-rules
 sudo -n udevadm trigger --property-match=ID_VENDOR_ID=35ef
+sudo -n udevadm trigger --subsystem-match=usb --property-match=DEVTYPE=usb_device
 '''
 
 [bootstrap.hooks.post-dotfiles]
@@ -158,6 +165,9 @@ fi
 # setting changes. The post-dotfiles hook covers the rest of what it needs.
 "~/.config/environment.d/90-superwhisper-accessibility.conf" = { source = "omarchy/superwhisper-accessibility/environment.conf", mode = "copy" }
 "~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
+"~/.config/wireplumber/wireplumber.conf.d/mic-priority.conf" = { source = "omarchy/wireplumber/mic-priority.conf", mode = "symlink" }
+"~/.local/share/wireplumber/scripts/rank-sources-by-priority.lua" = { source = "omarchy/wireplumber/rank-sources-by-priority.lua", mode = "symlink" }
+"~/.config/pipewire/filter-chain.conf.d/hide-sonar-micro.conf" = { source = "omarchy/pipewire/hide-sonar-micro.conf", mode = "symlink" }
 # Directories, because ASM saves a file by renaming a temp file over it, which would replace a file symlink.
 "~/.config/arctis_manager/settings" = { source = "omarchy/arctis_manager/settings", mode = "symlink" }
 "~/.config/arctis_manager/profiles" = { source = "omarchy/arctis_manager/profiles", mode = "symlink" }

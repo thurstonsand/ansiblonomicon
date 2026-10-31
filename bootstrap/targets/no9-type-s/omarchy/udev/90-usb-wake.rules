@@ -1,0 +1,4 @@
+# The kernel starts every USB device with wake disabled, and usbhid enables it only on boot-protocol keyboards. A suspended hub
+# relays a downstream wake only when it may wake the system itself, so a docked keyboard needs its whole hub chain enabled too.
+# Opt out a device with a later rule matching its idVendor and idProduct that sets "disabled".
+ACTION!="remove", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", TEST=="power/wakeup", ATTR{power/wakeup}="enabled"
