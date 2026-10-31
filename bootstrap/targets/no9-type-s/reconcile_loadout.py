@@ -114,16 +114,16 @@ def package_installed(name: str) -> bool:
 
 
 def installed_themes() -> set[str]:
+    """Themes `omarchy theme install` cloned, by omarchy-theme-set's own test: a symlink to a
+    working copy, or a theme the user or Aether wrote, is theirs and has no source to declare."""
     themes_dir = Path.home() / ".config/omarchy/themes"
     if not themes_dir.is_dir():
         return set()
-    return {entry.name for entry in themes_dir.iterdir() if entry.is_dir()}
-
-
-def generated_themes() -> set[str]:
-    """Themes the Aether app writes for itself, which have no source to declare."""
-    themes_dir = Path.home() / ".config/omarchy/themes"
-    return {marker.parent.name for marker in themes_dir.glob("*/.aether-managed")}
+    return {
+        entry.name
+        for entry in themes_dir.iterdir()
+        if not entry.is_symlink() and (entry / ".git").is_dir()
+    }
 
 
 def installed_plugins() -> set[str]:
@@ -372,10 +372,7 @@ def reconcile(
                     )
                 )
             ),
-            *(
-                f"theme: {name}"
-                for name in sorted(themes - set(manifest.themes) - generated_themes())
-            ),
+            *(f"theme: {name}" for name in sorted(themes - set(manifest.themes))),
             *(f"plugin: {name}" for name in sorted(plugins - set(manifest.plugins))),
         ]
         for entry in undeclared:

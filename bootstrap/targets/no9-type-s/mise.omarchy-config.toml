@@ -113,17 +113,6 @@ fi
 "~/.config/omarchy/extensions/omarchy-menu.jsonc" = { source = "omarchy/extensions/omarchy-menu.jsonc", mode = "symlink" }
 "~/.config/omarchy/branding/about.txt" = { source = "omarchy/branding/about.txt", mode = "symlink" }
 "~/.config/omarchy/branding/screensaver.txt" = { source = "omarchy/branding/screensaver.txt", mode = "symlink" }
-# omarchy-theme-bg-next compares unresolved paths against bg-set's realpath, so a symlink stalls cycling.
-"~/.config/omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg", mode = "copy" }
-"~/.config/omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg", mode = "copy" }
-# City Ruins replaces Omarchy's Solitude, so it carries Solitude's own wallpapers too.
-"~/.config/omarchy/backgrounds/city-ruins/1-on-pole.webp" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/1-on-pole.webp", mode = "copy" }
-"~/.config/omarchy/backgrounds/city-ruins/2-wreakage.webp" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/2-wreakage.webp", mode = "copy" }
-"~/.config/omarchy/backgrounds/city-ruins/3-climb.jpg" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/3-climb.jpg", mode = "copy" }
-"~/.config/omarchy/backgrounds/city-ruins/4-ether.webp" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/4-ether.webp", mode = "copy" }
-"~/.config/omarchy/backgrounds/city-ruins/5-eyed.jpg" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/5-eyed.jpg", mode = "copy" }
-"~/.config/omarchy/backgrounds/copied-city/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg", mode = "copy" }
-"~/.config/omarchy/backgrounds/copied-city/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg", mode = "copy" }
 "~/.config/omarchy/themes/city-ruins" = { source = "omarchy/themes/city-ruins", mode = "symlink" }
 "~/.config/omarchy/themes/copied-city" = { source = "omarchy/themes/copied-city", mode = "symlink" }
 # Retiring Solitude's overlay and Solitude Light, which City Ruins and Copied City replace.
@@ -133,6 +122,17 @@ fi
 "~/.config/omarchy/backgrounds/solitude-light/wallhaven-y83x8g.jpg" = { mode = "absent" }
 "~/.config/omarchy/themes/solitude-light" = { mode = "absent" }
 "~/.config/omarchy/themes/solitude" = { mode = "absent" }
+# Retiring the user-background copies of the wallpapers the themes now carry in their own backgrounds/.
+"~/.config/omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/copied-city/wallhaven-odq5ml.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/copied-city/wallhaven-y83x8g.jpg" = { mode = "absent" }
+# Retiring Solitude's wallpapers from City Ruins, which carries only its own.
+"~/.config/omarchy/backgrounds/city-ruins/1-on-pole.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/city-ruins/2-wreakage.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/city-ruins/3-climb.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/city-ruins/4-ether.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/city-ruins/5-eyed.jpg" = { mode = "absent" }
 "~/.config/omarchy/themed" = { source = "omarchy/themed", mode = "symlink-each" }
 "~/.config/omarchy/hooks/theme-set.d/codex" = { source = "omarchy/hooks/theme-set.d/codex", mode = "symlink" }
 "~/.config/omarchy/hooks/theme-set.d/bat" = { source = "omarchy/hooks/theme-set.d/bat", mode = "symlink" }
