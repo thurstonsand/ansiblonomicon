@@ -1,1 +1,52 @@
-../../capabilities/omarchy/mise.amp-cli.toml
+# Amp's AUR package puts a root-owned binary in /usr/bin that Amp's self-update
+# cannot replace, so the CLI comes from Amp's own installer, as on pod042.
+# Restarts stay 10 seconds apart, so systemd's default start limit cannot strand the runner after an outage.
+[bootstrap.linux.systemd.units.amp-runner]
+description = "Amp runner for %l"
+exec_start_pre = ["/usr/bin/test -f %h/.local/share/amp/secrets.json", "/usr/bin/test -d %h/code"]
+exec_start = "~/.amp/bin/amp --no-tui --remote-control-terminal --discover-dirs --runner-id %l"
+working_directory = "~/code"
+environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin" }
+restart = "always"
+restart_sec = "10"
+
+[tasks.amp-cli]
+usage = 'flag "-c --check" help="Show Amp CLI and runner unit drift"'
+shell = "bash -c"
+run = '''
+set -euo pipefail
+export PATH="$HOME/.local/bin:$PATH"
+amp="$HOME/.amp/bin/amp"
+link="$HOME/.local/bin/amp"
+installer="$MISE_PROJECT_ROOT/../../capabilities/software/install-official"
+login="$HOME/.local/share/amp/secrets.json"
+code_dir="$HOME/code"
+
+if [ -n "${usage_check:-}" ]; then
+  [ -d "$code_dir" ] || echo "BLOCKED: Amp runner working directory is absent: $code_dir"
+  [ -f "$login" ] || echo "BLOCKED: Amp persisted login is absent: $login"
+  "$installer" "Amp CLI" "$amp" https://ampcode.com/install.sh --check
+  [ "$(readlink "$link" || true)" = "$amp" ] || echo "Amp CLI link would be updated at ~/.local/bin/amp"
+  exec mise bootstrap --only linux-systemd-units --dry-run
+fi
+
+[ -d "$code_dir" ] || { echo "Amp runner working directory is absent: $code_dir" >&2; exit 1; }
+[ -f "$login" ] || { echo "Amp persisted login is absent: $login" >&2; exit 1; }
+
+"$installer" "Amp CLI" "$amp" https://ampcode.com/install.sh
+ln -sfn "$amp" "$link"
+
+# A reconcile started from an Amp thread lives inside the runner it replaces or restarts, so the
+# swap runs in its own transient unit, logging to the journal rather than this task's pipes, and
+# finishes even when stopping the runner ends this task.
+unit="amp-runner-apply-$$"
+if ! systemd-run --user --quiet --collect --wait --unit "$unit" \
+  --working-directory "$MISE_PROJECT_ROOT" \
+  --setenv PATH="$PATH" --setenv MISE_CEILING_PATHS="${MISE_CEILING_PATHS:-}" \
+  --setenv MISE_TRUSTED_CONFIG_PATHS="${MISE_TRUSTED_CONFIG_PATHS:-}" --setenv MISE_ENV=amp-cli \
+  /bin/sh -c "exec mise bootstrap --only linux-systemd-units --yes"; then
+  journalctl --user -u "$unit" -n 40 --no-pager >&2
+  exit 1
+fi
+journalctl --user -u "$unit" -n 10 --no-pager -o cat
+'''

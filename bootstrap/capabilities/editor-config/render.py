@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render editor application content to stdout for native mise files."""
+"""Render Zed settings to stdout for native mise files."""
 
 import argparse
 import json
@@ -20,33 +20,6 @@ def read_jsonc(name: str) -> dict[str, Any]:
 def read_models(path: Path) -> dict[str, Any]:
     document = cast(dict[str, Any], yaml.safe_load(path.read_text()))
     return cast(dict[str, Any], document["models"])
-
-
-def omarchy_vscode_theme() -> str:
-    # Mirrors omarchy-theme-set-vscode so a reconcile keeps whatever theme Omarchy last applied.
-    descriptor = Path.home() / ".local/state/omarchy/current/theme/vscode.json"
-    if descriptor.exists():
-        return str(json.loads(descriptor.read_text())["name"])
-    return "Omarchy"
-
-
-def vscode_settings(args: argparse.Namespace) -> dict[str, Any]:
-    result = read_jsonc("vscode-settings.jsonc")
-    result["editor.fontFamily"] = args.proportional_font
-    result["editor.fontSize"] = args.font_size
-    result["terminal.integrated.fontFamily"] = args.monospace_font
-    result["terminal.integrated.fontSize"] = args.font_size
-    gopls = cast(dict[str, Any], result["gopls"])
-    gopls.pop("local", None)
-    gopls.pop("buildFlags", None)
-    result.pop("go.formatFlags", None)
-    if args.go_local_imports:
-        gopls["local"] = args.go_local_imports
-        result["go.formatFlags"] = ["-local", args.go_local_imports]
-    if args.gopls_build_flags:
-        gopls["buildFlags"] = [args.gopls_build_flags]
-    result["workbench.colorTheme"] = omarchy_vscode_theme()
-    return result
 
 
 def zed_settings(args: argparse.Namespace, catalogue: dict[str, Any]) -> dict[str, Any]:
@@ -121,7 +94,6 @@ def zed_settings(args: argparse.Namespace, catalogue: dict[str, Any]) -> dict[st
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("kind", choices=("zed", "vscode"))
     parser.add_argument("--models", type=Path, required=True)
     parser.add_argument(
         "--profile", choices=("personal", "work", "omarchy"), required=True
@@ -129,15 +101,13 @@ def main() -> None:
     parser.add_argument("--monospace-font", required=True)
     parser.add_argument("--proportional-font", required=True)
     parser.add_argument("--font-size", type=int, required=True)
-    parser.add_argument("--go-local-imports")
-    parser.add_argument("--gopls-build-flags")
     args = parser.parse_args()
-    catalogue = read_models(args.models)
-    if args.kind == "zed":
-        value: Any = zed_settings(args, catalogue)
-    else:
-        value = vscode_settings(args)
-    json.dump(value, sys.stdout, indent=2, ensure_ascii=False)
+    json.dump(
+        zed_settings(args, read_models(args.models)),
+        sys.stdout,
+        indent=2,
+        ensure_ascii=False,
+    )
     sys.stdout.write("\n")
 
 

@@ -24,7 +24,6 @@ import tomlkit
 import yaml
 
 HOST_CONFIGS = {
-    "type-a-no2": "bootstrap/targets/type-a-no2/mise.agent-harness.toml",
     "no9-type-s": "bootstrap/targets/no9-type-s/mise.agent-harness.toml",
     "pod153": "bootstrap/targets/pod153/mise.agent-harness.toml",
     "pod042": "bootstrap/targets/pod042/agent-harness/host.toml",
@@ -40,7 +39,6 @@ RENDERERS = {
 # Configures tools that span harnesses, so no harness name selects or validates them.
 CROSS_HARNESS_RENDERERS = ["swb"]
 SECRET_KEYS = {
-    "type-a-no2": {"ANTHROPIC_API_KEY"},
     "no9-type-s": {"ANTHROPIC_API_KEY"},
     WORK_HOST: {"ANTHROPIC_AUTH_TOKEN"},
     "pod153": {"ANTHROPIC_API_KEY"},

@@ -32,7 +32,7 @@ On the work Mac, `dark-notify` acts as the source of truth for terminal theme st
 
 Run `mise terminal-theme` for this capability alone, or add `--check` for a nonmutating preview. Regular laptop and pod042 reconciliation includes it and updates the standalone mise binary to latest stable when its last successful update is at least 24 hours old. Check mode skips upgrades. `mise laptop -t terminal-theme` runs only this capability. Both laptops reject unsupported tags before taking action.
 
-Shared Zsh startup files, the Omarchy laptops' bash startup files, and static Starship configuration are also native mise resources; use `mise run shell` or `mise run shell --check`. Work rendering resolves its shell-wide Sourcegraph token and scoped sudo credential at apply time; check mode and personal/pod042 reconciliation perform no work-secret lookup. This repo's environment uses mise; direnv remains installed with its automatic shell hook for external projects. See the [shell capability](bootstrap/capabilities/shell/README.md).
+Shared Zsh startup files, no9-type-s's bash startup files, and static Starship configuration are also native mise resources; use `mise run shell` or `mise run shell --check`. Work rendering resolves its shell-wide Sourcegraph token and scoped sudo credential at apply time; check mode and personal/pod042 reconciliation perform no work-secret lookup. This repo's environment uses mise; direnv remains installed with its automatic shell hook for external projects. See the [shell capability](bootstrap/capabilities/shell/README.md).
 
 The [terminal-tools capability](bootstrap/capabilities/terminal-tools/README.md) owns tmux configuration, Ghostty configuration and helpers, and personal-host TPM installation. Run `mise terminal-tools` or `mise laptop -t tmux`, adding `--check` for a preview. Full reconciliation supplies software prerequisites first; focused runs assume they are installed.
 
@@ -46,7 +46,7 @@ Run `mise vcs`, with `--check` for a preview. Regular laptop and pod042 reconcil
 
 ### Editor and Python indexes
 
-The [editor-config capability](bootstrap/capabilities/editor-config/README.md) is the source of truth for Zed on every laptop and for VS Code on the personal Mac and type-a-no2. `bootstrap/capabilities/agent-harness/models.yml` is the shared model catalogue. Run `mise editor-config` or add `--check`.
+The [editor-config capability](bootstrap/capabilities/editor-config/README.md) is the source of truth for Zed on every laptop. `bootstrap/capabilities/agent-harness/models.yml` is the shared model catalogue. Run `mise editor-config` or add `--check`.
 
 The [Neovim capability](bootstrap/capabilities/neovim/README.md) owns editor configuration and dependency setup. Run `mise neovim` (alias `mise nvim-deps`) or add `--check` to preview configuration without upgrading dependencies. Personal hosts write Lazy's lockfile back to the shared source; work receives its separate `lazy-lock.work.json` and restores those versions. Full reconciliation runs this after software prerequisites.
 
@@ -136,4 +136,4 @@ SSH aliases are configured by the [SSH client capability](bootstrap/capabilities
 - **Debian** (pod042) — Physical NAS reconciled locally or over SSH with native mise bootstrap resources
 - **Windows** (eve) — Registry settings, winget packages, and Git configuration through native mise
 - **TrueNAS** — Retired; historical migration notes only
-- **Arch Linux** (Omarchy: type-a-no2, no9-type-s) — Shared Omarchy capability with per-laptop host layers, through native mise and Omarchy's own commands
+- **Arch Linux** (Omarchy: no9-type-s) — Target-owned Omarchy capabilities, through native mise and Omarchy's own commands

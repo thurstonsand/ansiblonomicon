@@ -64,23 +64,9 @@ resource "unifi_client" "thurston_ipad" {
   allow_existing = true
 }
 
-# The Dell dual-boot presents a different address per partition. Omarchy's is
-# burned-in; Windows keeps a fixed random address per network, so this record
+# The Framework dual-boot presents a different address per partition. Omarchy's
+# is burned-in; Windows keeps a fixed random address per network, so its record
 # holds only while Windows stays on YoRHa with "Random hardware addresses" On.
-resource "unifi_client" "dell_omarchy" {
-  mac            = "84:08:3a:61:fe:81"
-  name           = "Dell Laptop - Omarchy"
-  allow_existing = true
-}
-
-resource "unifi_client" "dell_windows" {
-  mac            = "5a:d2:dd:96:5a:3a"
-  name           = "Dell Laptop - Windows"
-  allow_existing = true
-}
-
-# The Framework dual-boot repeats the Dell's arrangement, with the same caveat
-# for its Windows record.
 resource "unifi_client" "framework_omarchy" {
   mac            = "2c:ea:fc:6e:fc:9e"
   name           = "Framework Laptop - Omarchy"

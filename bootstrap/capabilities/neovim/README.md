@@ -8,7 +8,7 @@ Run `mise neovim` (alias `mise nvim-deps`) to apply configuration and then run t
 
 ## Omarchy
 
-On the Omarchy laptops, the repo shares `~/.config/nvim` with the config Omarchy seeds from `/usr/share/omarchy-nvim/config`, shadowing it in place. The repo owns `init.lua`, `lazyvim.json`, `stylua.toml`, `lua/config/*`, and its own plugin specs. Omarchy keeps the files only it ships (`all-themes.lua`, `theme.lua`, `omarchy-theme-hotreload.lua`, and friends). `remote_clipboard.lua` is vendored from Omarchy, so every host gets the same clipboard. `colorscheme.lua.tera` renders nothing under Omarchy, which leaves the colorscheme to Omarchy's theme engine. Elsewhere it renders gruvbox with the terminal-background watcher. Omarchy's plugin set differs from the shared pins, so it gets its own `lazy-lock.omarchy.json`.
+On no9-type-s, the repo shares `~/.config/nvim` with the config Omarchy seeds from `/usr/share/omarchy-nvim/config`, shadowing it in place. The repo owns `init.lua`, `lazyvim.json`, `stylua.toml`, `lua/config/*`, and its own plugin specs. Omarchy keeps the files only it ships (`all-themes.lua`, `theme.lua`, `omarchy-theme-hotreload.lua`, and friends). `remote_clipboard.lua` is vendored from Omarchy, so every host gets the same clipboard. `colorscheme.lua.tera` renders nothing under Omarchy, which leaves the colorscheme to Omarchy's theme engine. Elsewhere it renders gruvbox with the terminal-background watcher. Omarchy's plugin set differs from the shared pins, so it gets its own `lazy-lock.omarchy.json`.
 
 Omarchy edits its files in place through migrations, so `mise neovim` on that host also runs `neovim:omarchy-drift`, which exits 1 when:
 

@@ -1,7 +1,7 @@
 # Shared Mac language-tool inventory. Tool names are keys so reconciliation can
 # install/upgrade only this declared set rather than every global mise tool.
-# The Omarchy laptops declare the same set in their global mise config
-# (bootstrap/capabilities/omarchy/files/mise-global.toml), the Omarchy-native path.
+# no9-type-s declares the same set in its global mise config
+# (bootstrap/targets/no9-type-s/omarchy/mise-global.toml), the Omarchy-native path.
 [tools.node]
 version = "lts"
 

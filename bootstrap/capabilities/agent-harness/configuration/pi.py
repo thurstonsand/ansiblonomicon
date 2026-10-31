@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any, cast
 
 WORK_HOST = "ML-DFC6YK6VJQ"
-OMARCHY_HOSTS = {"type-a-no2", "no9-type-s"}
+OMARCHY_HOST = "no9-type-s"
 CHANGELOG_FALLBACK = "0.99.1"
 PERSONAL_PACKAGES = [
     "@thurstonsand/pi-permissions",
@@ -96,7 +96,7 @@ def _profile(
         )
     }
     packages = [f"npm:{npm}" for npm in PERSONAL_PACKAGES]
-    if hostname in OMARCHY_HOSTS:
+    if hostname == OMARCHY_HOST:
         packages[packages.index("npm:glimpseui")] = GLIMPSE_LINUX_FORK
     return {
         "provider": "doppelclaude",
@@ -237,10 +237,10 @@ def _settings(
             "theme": {
                 "mode": "auto",
                 "lightPath": "~/.local/state/omarchy/current/theme/pi-interview.css"
-                if hostname in OMARCHY_HOSTS
+                if hostname == OMARCHY_HOST
                 else "~/.pi/agent/interview-themes/copied-city.css",
                 "darkPath": "~/.local/state/omarchy/current/theme/pi-interview.css"
-                if hostname in OMARCHY_HOSTS
+                if hostname == OMARCHY_HOST
                 else "~/.pi/agent/interview-themes/city-ruins.css",
                 "toggleHotkey": "alt+l",
             }
@@ -308,7 +308,7 @@ def _settings(
         },
         "packages": profile["packages"],
         "hideThinkingBlock": True,
-        "theme": "omarchy-system" if hostname in OMARCHY_HOSTS else "system",
+        "theme": "omarchy-system" if hostname == OMARCHY_HOST else "system",
         "transport": "auto",
         "collapseChangelog": False,
         "quietStartup": True,
@@ -382,7 +382,7 @@ def render(
         }
     settings = _json(_settings(repo, home, hostname, data, models))
     auth_content = _json(auth)
-    if hostname in OMARCHY_HOSTS:
+    if hostname == OMARCHY_HOST:
         # Pi rewrites settings and auth without a final newline on this host.
         settings = settings.rstrip("\n")
         auth_content = auth_content.rstrip("\n")
@@ -413,7 +413,7 @@ def render(
     result[".pi/agent/extensions/glimpse-companion/companion/font-family.txt"] = (
         f"{data['fonts']['mono']}\n"
     )
-    if hostname not in OMARCHY_HOSTS:
+    if hostname != OMARCHY_HOST:
         result[".local/bin/pi"] = _executable(home, hostname)
     return result
 

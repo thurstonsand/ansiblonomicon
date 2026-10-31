@@ -1,1 +1,172 @@
-../../capabilities/omarchy/mise.config.toml
+[bootstrap.files."/etc/sudoers.d/ansiblonomicon"]
+source = "omarchy/sudoers.d/ansiblonomicon"
+owner = "root"
+group = "root"
+mode = "0440"
+
+[bootstrap.files."/etc/pam.d/sudo-unattended"]
+source = "omarchy/pam.d/sudo-unattended"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.directories."/usr/local/libexec"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/usr/local/libexec/sudo-unattended-notify"]
+source = "omarchy/libexec/sudo-unattended-notify"
+owner = "root"
+group = "root"
+mode = "0755"
+
+# Bazecor's own copy of these rules, byte for byte; any difference makes it offer to rewrite them through polkit at every launch.
+[bootstrap.files."/etc/udev/rules.d/60-dygma.rules"]
+source = "omarchy/udev/60-dygma.rules"
+owner = "root"
+group = "root"
+mode = "0644"
+
+# Match Omarchy install/hardware/nvidia.sh early KMS configuration.
+[bootstrap.files."/etc/modprobe.d/nvidia.conf"]
+source = "omarchy/modprobe.d/nvidia.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/mkinitcpio.conf.d/nvidia.conf"]
+source = "omarchy/mkinitcpio.conf.d/nvidia.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.secrets]
+yorha_passphrase = "YORHA_PASSPHRASE"
+lunar_tear_passphrase = "LUNAR_TEAR_PASSPHRASE"
+
+# YoRHa is home. Lunar Tear is for pairing smart home devices, joined by hand and never automatically.
+[bootstrap.files."/etc/NetworkManager/system-connections/YoRHa.nmconnection"]
+source = "omarchy/NetworkManager/YoRHa.nmconnection.tera"
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/NetworkManager/system-connections/Lunar Tear.nmconnection"]
+source = "omarchy/NetworkManager/lunar-tear.nmconnection.tera"
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
+# NetworkManager and udev read their files from disk only on request. Reloading leaves the active connection up, and the trigger
+# reaches only an attached Dygma keyboard.
+[bootstrap.hooks.pre-repos]
+run = '''
+sudo -n nmcli connection reload
+sudo -n udevadm control --reload-rules
+sudo -n udevadm trigger --property-match=ID_VENDOR_ID=35ef
+'''
+
+[bootstrap.hooks.post-dotfiles]
+run = '''
+# Superwhisper's installer also links its Omarchy panel, menu row, fcitx5 addon, and agent skill, and writes hypr/bindings.lua.
+"{{ config_root }}/omarchy/libexec/superwhisper-install"
+# bindings.lua dofile()s Superwhisper's generated shortcuts.lua, which stays out of git and so is missing on a fresh checkout.
+[ -f ~/.config/superwhisper/shortcuts.lua ] || ~/.local/bin/superwhisper shortcuts apply >/dev/null
+# The rest of what Superwhisper's auto-learned vocabulary needs, plus Brave Origin, which it skips. Only the flag line is owned here,
+# because Omarchy's migrations also append to these files.
+gsettings set org.gnome.desktop.interface toolkit-accessibility true
+for flags in ~/.config/chromium-flags.conf ~/.config/brave-origin-flags.conf ~/.config/obsidian/user-flags.conf; do
+  grep -qxF -- --force-renderer-accessibility "$flags" 2>/dev/null && continue
+  mkdir -p "$(dirname "$flags")"
+  [ -s "$flags" ] && [ -n "$(tail -c1 "$flags")" ] && echo >>"$flags"
+  echo --force-renderer-accessibility >>"$flags"
+done
+# Carry a laptop still on Solitude or the retired Solitude Light over to its replacement; delete with the Solitude retirements.
+case $(cat ~/.local/state/omarchy/current/theme.name 2>/dev/null) in
+  solitude) omarchy-theme-set city-ruins ;;
+  solitude-light) omarchy-theme-set copied-city ;;
+esac
+# Omarchy renders its templates and theme files only on a theme switch, so re-render when a source changed since the last one
+# or a consumer's copy is missing, as on a fresh home where the hooks first ran before agent-config created ~/.claude.
+changed=$(find -L ~/.config/omarchy/themed ~/.config/omarchy/themes -newer ~/.local/state/omarchy/current/theme.name -type f -print -quit)
+if [ -n "$changed" ] || [ ! -f ~/.codex/themes/omarchy.tmTheme ] || [ ! -f ~/.config/bat/themes/omarchy.tmTheme ] || [ ! -f ~/.claude/themes/omarchy.json ] || [ ! -f ~/.config/Sidra/custom-theme.json ]; then
+  omarchy-theme-refresh
+fi
+'''
+
+[dotfiles]
+"~/.config/hypr/monitors.lua" = { source = "omarchy/hypr/monitors.lua", mode = "symlink" }
+"~/.config/hypr/input.lua" = { source = "omarchy/hypr/input.lua", mode = "symlink" }
+"~/.config/hypr/hyprland.lua" = { source = "omarchy/hypr/hyprland.lua", mode = "symlink" }
+"~/.config/hypr/personal-bindings.lua" = { source = "omarchy/hypr/personal-bindings.lua", mode = "symlink" }
+"~/.config/hypr/looknfeel.lua" = { source = "omarchy/hypr/looknfeel.lua", mode = "symlink" }
+"~/.config/hypr/autostart.lua" = { source = "omarchy/hypr/autostart.lua", mode = "symlink" }
+"~/.config/hypr/hyprsunset.conf" = { source = "omarchy/hypr/hyprsunset.conf", mode = "symlink" }
+"~/.config/hypr/xdph.conf" = { source = "omarchy/hypr/xdph.conf", mode = "symlink" }
+"~/.config/hypr/.luarc.json" = { source = "omarchy/hypr/.luarc.json", mode = "symlink" }
+# The Mouse panel replaces this file on save, which would break a symlink.
+"~/.config/hypr/mouse.lua" = { source = "omarchy/hypr/mouse.lua", mode = "copy" }
+"~/.config/omarchy/shell.json" = { source = "omarchy/shell.json", mode = "symlink" }
+"~/.config/omarchy/extensions/omarchy-menu.jsonc" = { source = "omarchy/extensions/omarchy-menu.jsonc", mode = "symlink" }
+"~/.config/omarchy/branding/about.txt" = { source = "omarchy/branding/about.txt", mode = "symlink" }
+"~/.config/omarchy/branding/screensaver.txt" = { source = "omarchy/branding/screensaver.txt", mode = "symlink" }
+# omarchy-theme-bg-next compares unresolved paths against bg-set's realpath, so a symlink stalls cycling.
+"~/.config/omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg", mode = "copy" }
+# City Ruins replaces Omarchy's Solitude, so it carries Solitude's own wallpapers too.
+"~/.config/omarchy/backgrounds/city-ruins/1-on-pole.webp" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/1-on-pole.webp", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/2-wreakage.webp" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/2-wreakage.webp", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/3-climb.jpg" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/3-climb.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/4-ether.webp" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/4-ether.webp", mode = "copy" }
+"~/.config/omarchy/backgrounds/city-ruins/5-eyed.jpg" = { source = "~/.local/share/omarchy/themes/solitude/backgrounds/5-eyed.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/copied-city/wallhaven-odq5ml.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-odq5ml.jpg", mode = "copy" }
+"~/.config/omarchy/backgrounds/copied-city/wallhaven-y83x8g.jpg" = { source = "omarchy/backgrounds/city-ruins/wallhaven-y83x8g.jpg", mode = "copy" }
+"~/.config/omarchy/themes/city-ruins" = { source = "omarchy/themes/city-ruins", mode = "symlink" }
+"~/.config/omarchy/themes/copied-city" = { source = "omarchy/themes/copied-city", mode = "symlink" }
+# Retiring Solitude's overlay and Solitude Light, which City Ruins and Copied City replace.
+"~/.config/omarchy/backgrounds/solitude/wallhaven-odq5ml.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/solitude/wallhaven-y83x8g.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/solitude-light/wallhaven-odq5ml.jpg" = { mode = "absent" }
+"~/.config/omarchy/backgrounds/solitude-light/wallhaven-y83x8g.jpg" = { mode = "absent" }
+"~/.config/omarchy/themes/solitude-light" = { mode = "absent" }
+"~/.config/omarchy/themes/solitude" = { mode = "absent" }
+"~/.config/omarchy/themed" = { source = "omarchy/themed", mode = "symlink-each" }
+"~/.config/omarchy/hooks/theme-set.d/codex" = { source = "omarchy/hooks/theme-set.d/codex", mode = "symlink" }
+"~/.config/omarchy/hooks/theme-set.d/bat" = { source = "omarchy/hooks/theme-set.d/bat", mode = "symlink" }
+"~/.config/omarchy/hooks/theme-set.d/localsend-accent" = { source = "omarchy/hooks/theme-set.d/localsend-accent", mode = "symlink" }
+"~/.config/omarchy/hooks/theme-set.d/sidra" = { source = "omarchy/hooks/theme-set.d/sidra", mode = "symlink" }
+"~/.config/omarchy/hooks/theme-set.d/arctis-sound-manager" = { source = "omarchy/hooks/theme-set.d/arctis-sound-manager", mode = "symlink" }
+"~/.config/gtk-3.0/gtk.css" = { source = "omarchy/gtk-3.0/gtk.css", mode = "symlink" }
+"~/.config/bat/config" = { source = "omarchy/bat/config", mode = "symlink" }
+"~/.config/hunk/extensions/omarchy-theme.ts" = { source = "omarchy/hunk/omarchy-theme.ts", mode = "symlink" }
+# Hunk rewrites its config when a theme is picked in its selector, which would break a symlink.
+"~/.config/hunk/config.toml" = { source = "omarchy/hunk/config.toml", mode = "copy" }
+# LocalSend keeps its TLS identity and receive history beside these settings, so only these keys are owned.
+"~/.local/share/org.localsend.localsend_app/shared_preferences.json/settings" = { source = "omarchy/localsend/settings.json.tera", merge = true, template = "tera" }
+# LocalSend's own Autostart toggle reads and writes this path.
+"~/.config/autostart/localsend_app.desktop" = { source = "omarchy/autostart/localsend_app.desktop", mode = "symlink" }
+"~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }
+# Superwhisper replaces its files on save, which would break a file symlink; linking the directory keeps the replacement in the repo.
+"~/.config/superwhisper" = { source = "omarchy/superwhisper", mode = "symlink" }
+# Superwhisper's auto-learned vocabulary watches corrections over AT-SPI, and turning it on wrote this file, which it rewrites when the
+# setting changes. The post-dotfiles hook covers the rest of what it needs.
+"~/.config/environment.d/90-superwhisper-accessibility.conf" = { source = "omarchy/superwhisper-accessibility/environment.conf", mode = "copy" }
+"~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
+# Directories, because ASM saves a file by renaming a temp file over it, which would replace a file symlink.
+"~/.config/arctis_manager/settings" = { source = "omarchy/arctis_manager/settings", mode = "symlink" }
+"~/.config/arctis_manager/profiles" = { source = "omarchy/arctis_manager/profiles", mode = "symlink" }
+"~/.local/share/applications/Amp.desktop" = { source = "omarchy/applications/Amp.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/amp.png" = { source = "omarchy/icons/amp.png", mode = "symlink" }
+"~/.local/share/applications/bazecor.desktop" = { source = "omarchy/applications/bazecor.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/512x512/apps/bazecor.png" = { source = "omarchy/icons/bazecor.png", mode = "symlink" }
+"~/.local/share/applications/sidra.desktop" = { source = "omarchy/applications/sidra.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/sidra.png" = { source = "omarchy/icons/sidra.png", mode = "symlink" }
+# Selects the palette Sidra's theme-set hook writes, and leaves upgrades to mise instead of the AppImage's self-updater.
+"~/.config/Sidra/config.json/omarchy" = { source = "omarchy/sidra/config.json", merge = true }
+"~/.local/share/applications/dodosend.desktop" = { source = "omarchy/applications/dodosend.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/dodosend.png" = { source = "omarchy/icons/dodosend.png", mode = "symlink" }
+"~/.local/share/applications/pod042 Desktop.desktop" = { source = "omarchy/applications/pod042 Desktop.desktop", mode = "symlink" }
+"~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }
