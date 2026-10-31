@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+# Keeps Claude Code's access token fresh for the bar's Agents panel. Only a new login extends the ~4-week refresh token, so from
+# three days out this asks once a day for one, and clicking the notification starts it.
+set -euo pipefail
+
+claude="$HOME/.local/bin/claude"
+credentials="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json"
+stamp="${XDG_STATE_HOME:-$HOME/.local/state}/claude-auth-refresh/notified"
+
+# `auth status` refreshes an expired access token without inference, and exits 1 when signed out.
+if "$claude" auth status >/dev/null; then
+  status=0
+  expires_ms=$(jq -er .claudeAiOauth.refreshTokenExpiresAt "$credentials")
+  days_left=$(((expires_ms / 1000 - $(date +%s)) / 86400))
+  ((days_left < 3)) || exit 0
+  message="Your login expires in $days_left days."
+else
+  status=$?
+  message="You are signed out."
+fi
+
+if [ -z "$(find "$stamp" -mmin -1440 2>/dev/null)" ] && ! systemctl --user --quiet is-active claude-auth-renew; then
+  mkdir -p "$(dirname "$stamp")"
+  touch "$stamp"
+  # The prompt outlives this oneshot in its own unit, so an unanswered one never holds up the next refresh. Omarchy expires
+  # other urgencies within 30 seconds, which ends the click's action with them.
+  systemd-run --user --quiet --collect --unit claude-auth-renew ${CLAUDE_CONFIG_DIR:+--setenv "CLAUDE_CONFIG_DIR=$CLAUDE_CONFIG_DIR"} \
+    /bin/sh -c '[ "$(notify-send --app-name="Claude Code" --urgency=critical --action=default=Renew "Claude Code login" "$1 Click to renew.")" = default ] && exec "$0" auth login --claudeai' \
+    "$claude" "$message"
+fi
+exit "$status"

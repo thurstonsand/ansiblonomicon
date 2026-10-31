@@ -107,6 +107,20 @@ if [ -n "$changed" ] || [ ! -f ~/.codex/themes/omarchy.tmTheme ] || [ ! -f ~/.co
 fi
 '''
 
+# The bar's Agents panel reads Claude's limits from ~/.claude/.credentials.json but never refreshes its 8-hour access token, and
+# setup-token tokens lack the user:profile scope the usage endpoint needs. A calendar timer catches up on resume, where a
+# monotonic one would wait out its interval.
+[bootstrap.linux.systemd.units.claude-auth-refresh]
+description = "Refresh Claude Code's OAuth access token"
+type = "oneshot"
+exec_start = "{{ config_root }}/omarchy/libexec/claude-auth-refresh"
+start = false
+wanted_by = []
+
+[bootstrap.linux.systemd.units.claude-auth-refresh-timer]
+on_calendar = "*:0/10"
+unit = "claude-auth-refresh"
+
 [dotfiles]
 "~/.config/hypr/monitors.lua" = { source = "omarchy/hypr/monitors.lua", mode = "symlink" }
 "~/.config/hypr/input.lua" = { source = "omarchy/hypr/input.lua", mode = "symlink" }
