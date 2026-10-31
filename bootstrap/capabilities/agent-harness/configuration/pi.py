@@ -15,7 +15,6 @@ PERSONAL_PACKAGES = [
     "@thurstonsand/pi-wt",
     "@thurstonsand/pi-agent-switchboard",
     "pi-doppelclaude",
-    "@thurstonsand/pi-web-tools",
     "pi-powerline-footer",
     "glimpseui",
     "pi-interview",
@@ -192,6 +191,12 @@ def _settings(
 ) -> dict[str, Any]:
     profile = _profile(hostname, models, data)
     current = _read_object(home / ".pi/agent/settings.json", strict=False)
+    work = hostname == WORK_HOST
+    parallel = {
+        "parallel": {
+            "apiKeyCommand": '"$HOME/.local/bin/fnox-host" get PARALLEL_API_KEY'
+        }
+    }
     settings: dict[str, Any] = {
         "defaultProvider": profile["provider"],
         "defaultModel": profile["model"],
@@ -212,11 +217,8 @@ def _settings(
         },
         "images": {"autoResize": True, "blockImages": False},
         "paste": {"shortcut": "alt+v"},
-        "webTools": {
-            "parallel": {
-                "apiKeyCommand": '"$HOME/.local/bin/fnox-host" get PARALLEL_API_KEY'
-            }
-        },
+        # Work still runs pi-web-tools; pi-librarian 0.7 absorbed it everywhere else.
+        **({"webTools": parallel} if work else {}),
         "codex": {"fast": False, "verbosity": "low", "reasoningSummary": "auto"},
         "glimpse": {
             "companion": {
@@ -249,7 +251,7 @@ def _settings(
         "librarian": {
             "model": profile["librarian"],
             "thinkingLevel": "low",
-            "tools": ["web_search", "web_fetch"],
+            **({"tools": ["web_search", "web_fetch"]} if work else {"web": parallel}),
         },
         "sourcegraph": {
             "librarian": {"model": profile["librarian"], "thinkingLevel": "low"}
