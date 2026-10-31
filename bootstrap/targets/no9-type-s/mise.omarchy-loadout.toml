@@ -1,8 +1,38 @@
+# Arctis Sound Manager's signed repository, which its author recommends over the AUR. `omarchy refresh pacman` rewrites
+# /etc/pacman.conf, so Omarchy's own add-custom-repo hook puts the Include back before the refresh upgrades.
+[bootstrap.files."/etc/pacman.d/custom-repos.conf"]
+source = "omarchy/pacman.d/custom-repos.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+# The key's fingerprint is the one ASM's README pins.
+[bootstrap.hooks.pre-repos]
+run = '''
+fingerprint=76AA4ED4A738B4FF07E170A249F4994D14531BD4
+if ! sudo -n pacman-key --list-keys "$fingerprint" >/dev/null 2>&1; then
+  sudo -n pacman-key --add "{{ config_root }}/omarchy/pacman.d/arctis-sound-manager.key"
+  sudo -n pacman-key --lsign-key "$fingerprint"
+fi
+if ! grep -qxF 'Include = /etc/pacman.d/custom-repos.conf' /etc/pacman.conf; then
+  bash "{{ config_root }}/omarchy/hooks/pre-refresh-pacman.d/add-custom-repo"
+  # Arch syncs a new repository's database only along with an upgrade, which Omarchy runs through its own entrypoint.
+  omarchy-update-system-pkgs
+fi
+'''
+
+[dotfiles]
+"~/.config/omarchy/hooks/pre-refresh-pacman.d/add-custom-repo" = { source = "omarchy/hooks/pre-refresh-pacman.d/add-custom-repo", mode = "symlink" }
+
 [tasks.omarchy-loadout]
 usage = '''
 flag "-c --check" help="Show install changes and undeclared installs without applying them"
 flag "--update" help="Also update installed plugins, following rewritten remote history"
 '''
 run = '''
+set -e
+mode=--yes
+[ -z "${usage_check:-}" ] || mode=--dry-run
+mise bootstrap --only files,repos,dotfiles "$mode"
 python3 "{{config_root}}/reconcile_loadout.py" "{{config_root}}/loadout.toml" ${usage_check:+--check} ${usage_update:+--update}
 '''

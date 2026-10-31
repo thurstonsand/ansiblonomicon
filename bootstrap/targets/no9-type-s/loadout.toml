@@ -32,12 +32,11 @@ libva-nvidia-driver = "present"
 nvidia-open-dkms = "present"
 nvidia-utils = "present"
 
-# Arctis Sound Manager's ClearCast mic noise suppression.
+# Arctis Sound Manager, from its own repository in mise.omarchy-loadout.toml, and its ClearCast mic noise suppression.
+arctis-sound-manager = "present"
 noise-suppression-for-voice = "present"
 
-# The signed pacman repo would not survive `omarchy refresh pacman`, which rewrites /etc/pacman.conf.
 [aur]
-arctis-sound-manager = "present"
 beeper-bin = "present"
 
 [themes]
