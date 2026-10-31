@@ -713,7 +713,7 @@ exec "$MISE_PROJECT_ROOT/.venv/Scripts/python" "$MISE_PROJECT_ROOT/bootstrap/cap
 '''
 
 [tasks."windows-apps"]
-description = "Reconcile this Windows host's winget packages"
+description = "Reconcile this Windows host's winget packages and their configuration"
 usage = '''
 flag "-c --check" help="Show package changes without installing"
 flag "--update" help="Also upgrade declared packages"
@@ -727,7 +727,7 @@ export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV=windows-apps
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
-exec mise -C "$target" bootstrap --only packages "$mode" ${usage_update:+--update}
+exec mise -C "$target" bootstrap --only packages,dotfiles "$mode" ${usage_update:+--update}
 '''
 
 [tasks."reconcile:windows"]

@@ -2,7 +2,28 @@
 [bootstrap.packages]
 "winget:AgileBits.1Password" = "latest"
 "winget:AgileBits.1Password.CLI" = "latest"
+"winget:Beeper.Beeper" = "latest"
+"winget:Discord.Discord" = "latest"
 "winget:Git.Git" = "latest"
+"winget:Valve.Steam" = "latest"
 "winget:wez.wezterm" = "latest"
 # ChatGPT, from the Microsoft Store.
 "winget:9PLM9XGG6VKS" = "latest"
+
+# Hansker ships its mouse controller only from its own site, outside winget. The
+# installer requires administrator, so installing it asks for UAC once.
+[bootstrap.hooks.post-packages]
+run = '''
+set -eu
+if ! MSYS_NO_PATHCONV=1 reg query 'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Uninstall\{52B75E8C-FE86-4540-A2CD-C902714448C8}_is1' >/dev/null 2>&1; then
+  installer="$(mktemp -d)/hansker-controller-setup.exe"
+  curl -fsSL -o "$installer" 'https://cdn.shopify.com/s/files/1/0785/9670/2545/files/Hansker_Controller_Setup_v2.0_20240925.exe?v=1732910226'
+  echo "1874daefb1f108416c9be73f40b47664fa3ca27403fc3c95b229ca6d1bc13d1d  $installer" | sha256sum --check --quiet
+  INSTALLER="$(cygpath -w "$installer")" powershell.exe -NoProfile -NonInteractive -Command \
+    'exit (Start-Process $env:INSTALLER -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -Wait -PassThru).ExitCode'
+  rm -r "$(dirname "$installer")"
+fi
+'''
+
+[dotfiles]
+"~/.config/wezterm/wezterm.lua" = { source = "windows-apps/wezterm.lua", mode = "symlink" }
