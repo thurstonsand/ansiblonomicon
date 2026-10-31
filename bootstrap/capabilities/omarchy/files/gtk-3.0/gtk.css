@@ -1,0 +1,5 @@
+/* Tauri's tao draws its own Wayland header bar, wrapped in an event box that takes the titlebar class, and Hyprland
+   already moves, tiles, and closes the window. GTK apps that build their own header bar set it as the titlebar itself. */
+.titlebar > headerbar {
+  margin-top: -200px;
+}

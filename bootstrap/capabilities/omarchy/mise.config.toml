@@ -123,6 +123,7 @@ fi
 "~/.config/omarchy/hooks/theme-set.d/bat" = { source = "omarchy/hooks/theme-set.d/bat", mode = "symlink" }
 "~/.config/omarchy/hooks/theme-set.d/localsend-accent" = { source = "omarchy/hooks/theme-set.d/localsend-accent", mode = "symlink" }
 "~/.config/omarchy/hooks/theme-set.d/sidra" = { source = "omarchy/hooks/theme-set.d/sidra", mode = "symlink" }
+"~/.config/gtk-3.0/gtk.css" = { source = "omarchy/gtk-3.0/gtk.css", mode = "symlink" }
 "~/.config/bat/config" = { source = "omarchy/bat/config", mode = "symlink" }
 "~/.config/hunk/extensions/omarchy-theme.ts" = { source = "omarchy/hunk/omarchy-theme.ts", mode = "symlink" }
 # Hunk rewrites its config when a theme is picked in its selector, which would break a symlink.
