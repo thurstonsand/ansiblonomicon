@@ -1,0 +1,9 @@
+{
+  "name": "pod153",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "apps": "0.0.1-beta.116",
+    "@modelcontextprotocol/sdk": "^1.30.0"
+  }
+}
