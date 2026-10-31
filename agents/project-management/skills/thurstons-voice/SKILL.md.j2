@@ -9,7 +9,17 @@ description: Thurston's writing voice for messages sent in his name. Use when dr
 
 Either mode can end in a message he pastes. Show it as plain paragraphs, outside any quote or code block.
 {%- if hostname == "ML-DFC6YK6VJQ" %} Text selected from the terminal picks up wrap breaks and quote borders, so follow the message with the link that `${CLAUDE_SKILL_DIR}/scripts/copy-link.py <<'EOF'` prints for it; a click copies it exactly.
-{%- elif hostname == "no9-type-s" %} Text selected from the terminal picks up wrap breaks and quote borders, so also pipe the message through `wl-copy`.
+{%- elif hostname in ["no9-type-s", "amp-publish"] %} When `omarchy-notification-send` exists on this machine, text selected from the terminal picks up wrap breaks and quote borders, so after showing the message, hand it over as an Omarchy notification. Nothing reaches his clipboard until he clicks it or presses Super + Alt + comma within its 30 seconds; after that, Super + Shift + Alt + comma replays it. Put the message between the heredoc lines exactly as shown, unescaped, and name it in the headline:
+
+```bash
+msg=$(cat <<'END_OF_MESSAGE'
+the message
+END_OF_MESSAGE
+)
+omarchy-notification-send -g 󰅍 -t 30000 "Copy draft: Slack reply to Chris" "Copy with Super + Alt + , (or click this)" --exec omarchy-clipboard-paste-text --copy-only "$msg"
+```
+
+Send a new notification after every revision, and never write to the clipboard yourself.
 {%- endif +%}
 
 ### Check

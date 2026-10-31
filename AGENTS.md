@@ -23,13 +23,3 @@ I also wanted to capture the various AI agent harnesses in a unified and flexibl
 ## Development Guidelines
 
 See @DEV.md for style and commands.
-
-## Outstanding on no9-type-s
-
-The `thurstons-voice` skill hands drafts over as `clipcopy:` links, but only the work Mac has a handler for them: `ClipCopy.app`, described in `bootstrap/capabilities/terminal-tools/README.md`. On `no9-type-s`, tell Thurston this is outstanding before starting other work, and when he agrees:
-
-1. In `bootstrap/targets/no9-type-s/`, add a script under `omarchy/` that percent-decodes everything after `clipcopy:` and pipes it to `wl-copy`, plus a `.desktop` file under `omarchy/applications/` with `MimeType=x-scheme-handler/clipcopy;` whose `Exec` runs that script on `%u`. Link both from `mise.omarchy-config.toml`, and make the scheme's default handler the `.desktop` file with `xdg-mime`.
-2. Reconcile with `mise omarchy -t omarchy-config`. It passes when `xdg-open "clipcopy:<encoded>"` leaves an exact match in `wl-paste` for text with backticks, `$`, quotes, unicode, and blank lines, and when Thurston clicks such a link in pi and it copies without opening a window.
-3. In the skill's `SKILL.md.j2`, move the laptop's hostname into the `copy-link.py` branch and delete its `wl-copy` branch.
-
-Delete this section once it passes.
