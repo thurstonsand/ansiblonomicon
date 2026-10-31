@@ -1111,24 +1111,29 @@ run = "markdownlint-cli2 --fix"
 
 [tasks."python:lint"]
 description = "Report ruff lint findings"
+depends = ["bootstrap:deps"]
 run = "ruff check ."
 
 # Separate from `python:lint` because --unsafe-fixes rewrites code in ways worth
 # reading; it stays out of the commit path and off `check`.
 [tasks."python:lint:fix"]
 description = "Apply ruff lint fixes, including unsafe ones"
+depends = ["bootstrap:deps"]
 run = "ruff check --fix --unsafe-fixes ."
 
 [tasks."python:fmt"]
 description = "Format Python sources with ruff"
+depends = ["bootstrap:deps"]
 run = "ruff format ."
 
 [tasks."python:fmt:check"]
 description = "Report Python sources ruff would reformat"
+depends = ["bootstrap:deps"]
 run = "ruff format --check ."
 
 [tasks."python:typecheck"]
 description = "Type-check Python with basedpyright"
+depends = ["bootstrap:deps"]
 run = "basedpyright"
 
 [tasks."nvim:fmt"]
@@ -1157,10 +1162,12 @@ run = "wrangler deploy --dry-run"
 
 [tasks."pi:check"]
 description = "Lint and type-check the pi extensions"
+depends = ["bootstrap:agent-deps"]
 run = "./scripts/pi-lint.sh"
 
 [tasks."pi:fix"]
 description = "Format and autofix the pi extensions, then type-check"
+depends = ["bootstrap:agent-deps"]
 run = "./scripts/pi-lint.sh --format"
 
 [tasks."amp:guidance"]
