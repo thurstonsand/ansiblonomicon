@@ -12,6 +12,9 @@ golangci-lint = "latest"
 "github:steipete/CodexBar" = { version = "latest", asset_pattern = "CodexBarCLI-*-linux-x86_64.tar.gz" }
 # First-party release: skip mise's default 24h supply-chain cooling.
 "github:thurstonsand/agent-switchboard" = { version = "latest", minimum_release_age = "0s" }
+# The .deb's binary runs on the system WebKitGTK as a native Wayland client, so it scales per monitor; the AppImage forces
+# XWayland and ships a libwayland-client that breaks Mesa's EGL. Dodosend's in-app updater cannot replace it, so mise upgrades it.
+"github:trafargarlaw/dodosend-releases" = { version = "latest", asset_pattern = "Dodosend_*_amd64.deb", bin = "dodosend", postinstall = 'cd "$MISE_TOOL_INSTALL_PATH" && mv dodosend dodosend.deb && bsdtar -xOf dodosend.deb "data.tar.*" | bsdtar -xf - --strip-components 2 usr/bin/dodosend && rm dodosend.deb' }
 "github:wimpysworld/sidra" = { version = "latest", asset_pattern = "Sidra-linux-x86_64.AppImage", bin = "sidra" }
 node = "lts"
 "npm:agent-browser" = "latest"

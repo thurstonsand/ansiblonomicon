@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Dodosend
+Comment=Gmail client
+Exec=dodosend %U
+Terminal=false
+Type=Application
+Icon=dodosend
+StartupWMClass=dodosend
+MimeType=x-scheme-handler/dodosend;x-scheme-handler/mailto;
+Categories=Network;Email;

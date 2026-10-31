@@ -146,5 +146,7 @@ fi
 "~/.local/share/icons/hicolor/256x256/apps/sidra.png" = { source = "omarchy/icons/sidra.png", mode = "symlink" }
 # Selects the palette Sidra's theme-set hook writes, and leaves upgrades to mise instead of the AppImage's self-updater.
 "~/.config/Sidra/config.json/omarchy" = { source = "omarchy/sidra/config.json", merge = true }
+"~/.local/share/applications/dodosend.desktop" = { source = "omarchy/applications/dodosend.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/dodosend.png" = { source = "omarchy/icons/dodosend.png", mode = "symlink" }
 "~/.local/share/applications/pod042 Desktop.desktop" = { source = "omarchy/applications/pod042 Desktop.desktop", mode = "symlink" }
 "~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }
