@@ -22,6 +22,12 @@ resource "unifi_client" "kitchen_homepod" {
   allow_existing = true
 }
 
+resource "unifi_client" "homepod_mini" {
+  mac            = "40:ed:cf:b9:88:fb"
+  name           = "Apple HomePod mini"
+  allow_existing = true
+}
+
 resource "unifi_client" "google_nest_hub" {
   mac            = "1c:f2:9a:51:d5:b1"
   name           = "Google Nest Hub"
