@@ -541,7 +541,8 @@ host=$(hostname -s 2>/dev/null || hostname)
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" \
   MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=server \
-  exec mise -C "$target" run server ${usage_check:+--check}
+  exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret POD153_TUNNEL_TOKEN --secret REMCTL_MCP_TOKEN -- \
+  mise -C "$target" run server ${usage_check:+--check}
 '''
 
 [tasks.reconcile]

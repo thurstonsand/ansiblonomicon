@@ -23,6 +23,56 @@ program = "/usr/bin/open"
 args = ["-g", "-a", "ChatGPT"]
 run_at_load = true
 
+# executor.sh reaches these loopback-only MCP servers through the pod153 tunnel behind Cloudflare Access.
+[bootstrap.macos.launchd.agents."house.thurstons.remctl-mcp"]
+program = "~/bin/remctl"
+args = ["mcp", "serve", "--http"]
+run_at_load = true
+keep_alive = true
+stdout_path = "~/Library/Logs/remctl-mcp.log"
+stderr_path = "~/Library/Logs/remctl-mcp.log"
+
+[bootstrap.macos.launchd.agents."house.thurstons.messages-mcp"]
+program = "~/.local/bin/mcp-proxy"
+args = ["--host", "127.0.0.1", "--port", "7363", "--named-server", "messages", "/Users/thurstonsand/.local/bin/mac-messages-mcp"]
+run_at_load = true
+keep_alive = true
+stdout_path = "~/Library/Logs/messages-mcp.log"
+stderr_path = "~/Library/Logs/messages-mcp.log"
+
+[bootstrap.macos.launchd.agents."house.thurstons.cloudflared"]
+program = "/opt/homebrew/bin/cloudflared"
+args = ["tunnel", "run", "--token-file", "/Users/thurstonsand/.config/cloudflared/pod153.token"]
+run_at_load = true
+keep_alive = true
+stdout_path = "~/Library/Logs/cloudflared.log"
+stderr_path = "~/Library/Logs/cloudflared.log"
+
+[bootstrap.secrets]
+pod153_tunnel_token = "POD153_TUNNEL_TOKEN"
+remctl_mcp_token = "REMCTL_MCP_TOKEN"
+
+[bootstrap.directories."~/.config/cloudflared"]
+mode = "0700"
+
+[bootstrap.files."~/.config/cloudflared/pod153.token"]
+content = '''{{ secret(name="pod153_tunnel_token") | trim }}
+'''
+template = true
+mode = "0600"
+
+# Byte-for-byte what `remctl mcp serve --http` rewrites on start, so reconciles see no drift.
+[bootstrap.files."~/.config/remctl/mcp-http.json"]
+content = '''{
+  "version": 1,
+  "host": "127.0.0.1",
+  "port": 7362,
+  "token": "{{ secret(name="remctl_mcp_token") | trim }}"
+}
+'''
+template = true
+mode = "0600"
+
 [bootstrap.macos.launchd.agents."house.thurstons.reconcile"]
 program = "~/Develop/ansiblonomicon/scripts/reconcile-or-fix"
 working_directory = "~/Develop/ansiblonomicon"
@@ -80,6 +130,7 @@ run = '''
 set -eu
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
+python3 server/mac_mcp.py ${usage_check:+--check}
 mise bootstrap --only files,macos-launchd-agents "$mode"
 python3 server/reconcile.py ${usage_check:+--check}
 [ -z "${usage_check:-}" ] || exit 0
