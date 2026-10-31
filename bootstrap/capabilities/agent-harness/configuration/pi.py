@@ -27,7 +27,7 @@ WORK_PACKAGES = [
     "git:github.com/nicobailon/pi-powerline-footer",
     "git:github.com/thurstonsand/pi-permissions@downgrade",
     "git:github.com/thurstonsand/pi-sessions",
-    "git:@github.com/thurstonsand/pi-web-tools@downgrade",
+    "git:github.com/thurstonsand/pi-librarian@downgrade",
     "git:github.com/thurstonsand/wt",
     "git:github.com/thurstonsand/agent-switchboard@pi",
     "git:github.com/nicobailon/pi-interview-tool",
@@ -249,10 +249,7 @@ def _settings(
         "librarian": {
             "model": profile["librarian"],
             "thinkingLevel": "low",
-            **({"tools": ["web_search", "web_fetch"]} if work else {"web": parallel}),
-        },
-        "sourcegraph": {
-            "librarian": {"model": profile["librarian"], "thinkingLevel": "low"}
+            **({"sources": data["piLibrarianSources"]} if work else {"web": parallel}),
         },
         "enabledModels": profile["enabled"],
         "steeringMode": "all",

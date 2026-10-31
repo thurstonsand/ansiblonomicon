@@ -22,15 +22,16 @@ The untracked `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/` holds 
 
 `data.toml` fields:
 
-| Field                | Consumed by                                            |
-| -------------------- | ------------------------------------------------------ |
-| `[work_models]`      | Pi models/settings, Claude Code overlay                |
-| `[work_gateway]`     | Pi providers (endpoint and provider names)             |
-| `inferenceBudgetUrl` | Native Pi renderer (`powerlineCustom.budget.url`)      |
-| `costsDashboardUrl`  | Native Pi renderer (`powerlineCustom.budget.costsUrl`) |
-| `jiraBrowseUrl`      | Pi footer settings                                     |
-| `piWorkPackages`     | Pi packages prepended to the work set                  |
-| `[[mcp_servers]]`    | Claude, Codex, and Pi MCP registration                 |
+| Field                | Consumed by                                                     |
+| -------------------- | --------------------------------------------------------------- |
+| `[work_models]`      | Pi models/settings, Claude Code overlay                         |
+| `[work_gateway]`     | Pi providers (endpoint and provider names)                      |
+| `inferenceBudgetUrl` | Native Pi renderer (`powerlineCustom.budget.url`)               |
+| `costsDashboardUrl`  | Native Pi renderer (`powerlineCustom.budget.costsUrl`)          |
+| `jiraBrowseUrl`      | Pi footer settings                                              |
+| `piWorkPackages`     | Pi packages prepended to the work set                           |
+| `piLibrarianSources` | pi-librarian's work code hosts, with `fnox-host` token commands |
+| `[[mcp_servers]]`    | Claude, Codex, and Pi MCP registration                          |
 
 Keep credentials out of these files. `ANTHROPIC_AUTH_TOKEN` remains a SecretRef in `fnox.work.toml`, and `mise agent-config` resolves it only for rendering private mode-0600 outputs. Run `mise agent-config --check` to preview changes without writing.
 
