@@ -703,7 +703,7 @@ fi
 '''
 
 [tasks."windows-system"]
-description = "Reconcile Windows registry settings on this registered host"
+description = "Reconcile Windows time zone and registry settings on this registered host"
 usage = 'flag "-c --check" help="Show changes without applying them"'
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)

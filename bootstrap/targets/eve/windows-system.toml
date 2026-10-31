@@ -1,3 +1,6 @@
+# A Windows time zone ID, as listed by `tzutil /l`.
+timezone = "Eastern Standard Time"
+
 # Integers are REG_DWORD values; strings are REG_SZ.
 
 # Dual boot with Omarchy: Linux keeps the hardware clock in UTC, and Linux
@@ -10,6 +13,10 @@ HibernateEnabled = 0
 
 [registry.'HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\Power']
 HiberbootEnabled = 0
+
+# Smart App Control blocks mise.exe, which carries only a self-signed certificate.
+[registry.'HKLM\SYSTEM\CurrentControlSet\Control\CI\Policy']
+VerifiedAndReputablePolicyState = 0
 
 # Developer Mode lets git and mise create symlinks without elevation.
 [registry.'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\AppModelUnlock']

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reconcile declared Windows registry values, elevating once for machine keys."""
+"""Reconcile the declared Windows time zone and registry values, elevating once for machine keys."""
 
 import argparse
 import ctypes
@@ -36,9 +36,11 @@ class Value:
         return f"{self.hive}\\{self.key}\\{self.name}"
 
 
-def declarations(path: Path) -> list[Value]:
+def declarations(path: Path) -> tuple[str, list[Value]]:
     with path.open("rb") as source:
-        registry = cast(dict[str, dict[str, object]], tomllib.load(source)["registry"])
+        declared = tomllib.load(source)
+    timezone = cast(str, declared["timezone"])
+    registry = cast(dict[str, dict[str, object]], declared["registry"])
     values: list[Value] = []
     for location, entries in registry.items():
         hive, key = location.split("\\", 1)
@@ -48,7 +50,13 @@ def declarations(path: Path) -> list[Value]:
             if type(data) not in TYPES:
                 raise ValueError(f"{location}\\{name}: expected an integer or string")
             values.append(Value(hive, key, name, cast(int | str, data)))
-    return values
+    return timezone, values
+
+
+def current_timezone() -> str:
+    return subprocess.run(
+        ["tzutil", "/g"], capture_output=True, text=True, check=True
+    ).stdout.strip()
 
 
 def current(value: Value) -> tuple[object, int] | None:
@@ -105,12 +113,23 @@ def main() -> None:
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
     declared = cast(Path, args.declarations).resolve()
-    pending = drifted(declarations(declared))
+    timezone, values = declarations(declared)
+    zone = current_timezone()
+    if zone != timezone:
+        print(f"windows-system: time zone: {zone!r} -> {timezone!r}")
+    pending = drifted(values)
     for value in pending:
         before = current(value)
         shown = "unset" if before is None else repr(before[0])
         print(f"windows-system: {value}: {shown} -> {value.data!r}")
-    if args.check or not pending:
+    if args.check:
+        return
+    # Users hold the time zone privilege by default, so this needs no elevation.
+    if zone != timezone:
+        subprocess.run(["tzutil", "/s", timezone], check=True)
+        if current_timezone() != timezone:
+            raise RuntimeError(f"time zone is still {current_timezone()!r}")
+    if not pending:
         return
     if any(value.hive == "HKLM" for value in pending) and not (
         ctypes.windll.shell32.IsUserAnAdmin()
