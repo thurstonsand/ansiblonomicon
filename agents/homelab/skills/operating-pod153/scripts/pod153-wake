@@ -1,12 +1,13 @@
 #!/usr/bin/env python3
 """Drive pod153 from a FileVault pre-boot screen to a logged-in desktop.
 
-Run it under fnox so POD153_LOGIN_PASSWORD is set:
+Run it under fnox so POD153_LOGIN_PASSWORD is set, and HARK_WEBHOOK_URL_POD042 for watch:
   fnox-host exec --secret POD153_LOGIN_PASSWORD -- pod153-wake {status,wake,login,watch}
 """
 
 import argparse
 from datetime import datetime
+import json
 import os
 from pathlib import Path
 import re
@@ -14,10 +15,13 @@ import shlex
 import subprocess
 import sys
 import time
+import urllib.request
+import uuid
 
 HOST = "pod153"
 USER = "thurstonsand"
 PASSWORD = "POD153_LOGIN_PASSWORD"
+WEBHOOK = "HARK_WEBHOOK_URL_POD042"
 ASKPASS = "POD153_WAKE_ASKPASS"
 PROBE = ["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", HOST]
 CAPTURES = Path.home() / ".local/state/pod153-wake"
@@ -148,6 +152,35 @@ def log(message: str) -> None:
     print(message, flush=True)
 
 
+def alert(final: str) -> None:
+    """Push the stall to Hark. A failed push is only logged: crashing here would restart the
+    watcher and cut short the hour that keeps a wrong password from becoming a lockout."""
+    payload = {
+        "title": "pod042: pod153 wake stalled",
+        "body": f"pod153 is {final}. The watcher retries in an hour; "
+        "check journalctl --user -u dev.mise.pod153-wake on pod042.",
+    }
+    request = urllib.request.Request(
+        os.environ[WEBHOOK],
+        data=json.dumps(payload).encode(),
+        headers={
+            "Content-Type": "application/json",
+            "Idempotency-Key": str(uuid.uuid4()),
+            # Hark's Cloudflare front answers urllib's default User-Agent with 403.
+            "User-Agent": "pod153-wake",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            delivered = json.load(response).get("delivered")
+    except (OSError, ValueError) as error:
+        log(f"stall alert failed: {error}")
+        return
+    if not delivered:
+        log("stall alert reached Hark, but no phone accepted it")
+
+
 def main() -> None:
     if os.environ.get(ASKPASS):
         print(os.environ[PASSWORD])
@@ -166,6 +199,8 @@ def main() -> None:
     args = parser.parse_args()
     if args.command != "status" and not os.environ.get(PASSWORD):
         parser.error(f"{PASSWORD} is required; run under fnox-host exec")
+    if args.command == "watch" and not os.environ.get(WEBHOOK):
+        parser.error(f"{WEBHOOK} is required; run under fnox-host exec")
 
     if args.command == "status":
         log(state())
@@ -199,6 +234,7 @@ def main() -> None:
                     log(
                         "pod153 did not reach the desktop; waiting an hour before retrying"
                     )
+                    alert(final)
                     time.sleep(3600)
             time.sleep(30)
 
