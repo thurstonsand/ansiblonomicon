@@ -30,12 +30,17 @@ payload="$(jq -nc \
   '{body: $body} + (if $url == "" then {} else {url: $url} end)')"
 
 # Curl reads the credential URL from stdin, never from its argument list.
-if ! printf '%s' "$webhook_url" | jq -Rrs '"url = " + tojson' |
+if ! response="$(printf '%s' "$webhook_url" | jq -Rrs '"url = " + tojson' |
   curl -fs --config - --max-time 15 --retry 2 --retry-delay 3 \
     -H 'Content-Type: application/json' \
     -H "Idempotency-Key: $(date +%s)-$$" \
-    --data-binary "$payload" \
-    -o /dev/null; then
+    --data-binary "$payload")"; then
   echo "notify: delivery failed: ${body:0:60}" >&2
+  exit 1
+fi
+
+# Hark answers 200 even when no phone is registered; that is still a lost notification.
+if ! jq -e '.delivered >= 1' <<<"$response" >/dev/null; then
+  echo "notify: Hark accepted it, but no phone did: ${body:0:60}" >&2
   exit 1
 fi

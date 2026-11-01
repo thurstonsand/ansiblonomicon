@@ -86,6 +86,8 @@ def main() -> int:
             headers={
                 "Content-Type": "application/json",
                 "Idempotency-Key": str(uuid.uuid4()),
+                # Hark's Cloudflare front answers urllib's default User-Agent with 403.
+                "User-Agent": "pod042-storage-alert",
             },
             method="POST",
         )

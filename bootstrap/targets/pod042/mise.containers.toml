@@ -269,7 +269,7 @@ mode = "0600"
 
 [bootstrap.files."/etc/ansiblonomicon/containers/platform/.env"]
 content = '''
-WATCHTOWER_NOTIFICATION_URL="{{ secret(name="hark_webhook_url") | replace(from="https://", to="generic://") }}?template=json&messageKey=body&titleKey=title"
+WATCHTOWER_NOTIFICATION_URL="{{ secret(name="hark_webhook_url") | replace(from="https://", to="generic://") }}?template=json&messagekey=body&titlekey=title"
 '''
 template = true
 owner = "root"
