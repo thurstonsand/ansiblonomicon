@@ -38,9 +38,11 @@ def main() -> None:
         "datasources.yaml",
         "cpa_collector.py",
         "test_cpa_collector.py",
+        "usage_index.py",
+        "usage.html",
     ):
         shutil.copyfile(source / name, root / name)
-    for name in ("loki", "alloy", "cpa", "grafana", "bridge"):
+    for name in ("loki", "alloy", "cpa", "grafana", "usage", "bridge"):
         (root / name).mkdir(mode=0o700)
     (root / "key").write_text("fixture-key")
     (root / "key").chmod(0o600)
@@ -67,6 +69,7 @@ def main() -> None:
                             "output": 11,
                         },
                         "executions": [{"event": "query_reused", "queryId": "query-1"}],
+                        "version": "0.14.16",
                     }
                 )
                 + "\n"
@@ -81,7 +84,7 @@ def main() -> None:
         "services": {
             **{
                 name: {"user": user, "restart": "no"}
-                for name in ("loki", "alloy", "grafana", "cpa-collector")
+                for name in ("loki", "alloy", "grafana", "cpa-collector", "usage-index")
             },
             "loki": {"user": user, "restart": "no", "ports": ["127.0.0.1:0:3100"]},
             "cpa-fixture": {
@@ -108,6 +111,17 @@ def main() -> None:
         "CPA_USAGE_URL": "http://cpa-fixture:8317/usage?count=1000",
         "OBSERVABILITY_INGRESS_NETWORK": f"{project}-fixture",
         "GRAFANA_PORT": "0",
+        "USAGE_PORT": "0",
+        **dict.fromkeys(
+            (
+                "LOKI_FILES",
+                "ALLOY_FILES",
+                "CPA_COLLECTOR_FILES",
+                "USAGE_INDEX_FILES",
+                "GRAFANA_FILES",
+            ),
+            "smoke",
+        ),
     }
 
     def compose(*arguments: str) -> str:
@@ -235,14 +249,35 @@ def main() -> None:
         assert not {"thread_id", "runtime_id", "request_id", "filename"}.intersection(
             labels
         ), labels
+        usage = f"http://{compose('port', 'usage-index', '8080')}"
+        deadline = time.monotonic() + 90
+        smoke_lane = [3, 0, 0, 6, 2740, 260, 33, 0, 0]
+        while True:
+            view = get_json(usage + "/api/view")
+            lanes = view.get("lanes", {})
+            # n, unknown, errors, uncached, read, written, output, rewritten, cold
+            if lanes.get("amp", {}).get("a") == smoke_lane:
+                break
+            if time.monotonic() > deadline:
+                raise AssertionError(f"usage index never matched Loki: {lanes}")
+            time.sleep(2)
+        assert lanes["cpa_shared"]["a"] == [2, 0, 0, 6, 160, 34, 54, 0, 0], lanes
+        assert [release[0] for release in view["releases"]] == ["0.14.16"], view
+        release = get_json(usage + "/api/view?a=v:0.14.16")
+        assert release["lanes"]["amp"]["a"] == smoke_lane, release
+        with urlopen(usage + "/", timeout=10) as response:
+            assert b"Cache usage" in response.read()
         print(
             "PASS: restart + rotation retained three bridge records and collected a second CPA execution"
+        )
+        print(
+            "PASS: usage index rolled up the same tokens from Loki, by day and by release, and served the page"
         )
         print(
             "PASS: 2,740 bridge cache reads / 260 writes; CPA 3 uncached / 80 read / 17 write / 27 output"
         )
         print("PASS: secrets and prompt dictionary excluded; IDs are not index labels")
-        print(f"Grafana: {grafana}; Loki: {loki}")
+        print(f"Grafana: {grafana}; Loki: {loki}; usage page: {usage}")
         if args.keep:
             print(f"Synthetic preview retained: {root}")
             print(f"Cleanup: docker compose -p {project} -f {root}/resolved.json down")

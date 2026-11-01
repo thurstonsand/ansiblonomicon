@@ -89,3 +89,7 @@ sonarr.thurstons.house {
 torrent.thurstons.house {
 	import local_only qbittorrent:80
 }
+
+usage.thurstons.house {
+	import local_only usage-index:8080
+}

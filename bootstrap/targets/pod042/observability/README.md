@@ -1,6 +1,6 @@
 # Observability on pod042
 
-The `observability` capability owns collection, Loki storage, and Grafana. Native mise Compose resources deploy it; it does not own the inference services or change their requests. Netdata still owns host/service health monitoring.
+The `observability` capability owns collection, Loki storage, the usage page, and Grafana. Native mise Compose resources deploy it; it does not own the inference services or change their requests. Netdata still owns host/service health monitoring.
 
 ```diagram
 ┌─────────────────────────┐
@@ -11,15 +11,19 @@ The `observability` capability owns collection, Loki storage, and Grafana. Nativ
 │ CLIProxyAPI usage queue │──▶│ Sanitizing poller │─▶│ Alloy │──▶│ Loki │◀──│ Grafana │
 └─────────────────────────┘   └───────────────────┘  └───────┘   └──────┘   └─────────┘
                                   records.jsonl       positions    WAL      Loopback
+                                                                     ▲
+                                                               ┌─────┴───────┐
+                                                               │ Usage index │◀── Amp thread titles (CLI, every 15 min)
+                                                               └─────────────┘ SQLite rollups, usage.thurstons.house
 ```
 
-Only the CPA adapter is custom code. Alloy tails JSONL, attaches structured metadata, and sends it to Loki. Loki's index labels are `host` and `service_name`; thread/request/runtime IDs remain structured metadata, not unbounded index labels. Other applications can join through another source in `config.alloy` without changing the inference services.
+Only the CPA adapter and the usage index are custom code. Alloy tails JSONL, attaches structured metadata, and sends it to Loki. Loki's index labels are `host` and `service_name`; thread/request/runtime IDs remain structured metadata, not unbounded index labels. Other applications can join through another source in `config.alloy` without changing the inference services.
 
 ## Collected evidence
 
 | Source | Evidence | What it can answer |
 | --- | --- | --- |
-| Bridge `request_complete` | Request/thread/runtime IDs, request kind, requested/served model, duration, outcome, four usage buckets | Which identified threads or anonymous calls dominate observed tokens? Which models are actually served? |
+| Bridge `request_complete` | Request/thread/runtime IDs, request kind, requested/served model, release version, duration, outcome, four usage buckets | Which identified threads or anonymous calls dominate observed tokens? Which models are actually served? Did a release change cache reuse? |
 | Bridge nested `executions` and diagnostics | Existing query spawn/reuse/rebuild reasons, configuration fingerprints, SDK result observations | Does a cache-read drop coincide with a lifecycle or configuration change? A rebuild alone is not a cache miss. |
 | CPA `usage` | Execution/request/session/parent IDs, provider/model, hashed client key, latency/TTFT, outcome, validated token breakdown | Which callers/models dominate proxy usage? Does an explicitly identified session cache well? |
 | CPA collector notices | Starts, five-minute successful-poll heartbeat, errors/recovery, rejected record count | Was collection running? Is a quiet period trustworthy or potentially a gap? |
@@ -38,9 +42,21 @@ Prerequisites: the Docker/ingress and doppelclaude capabilities, UID/GID 3456, m
 
 From the repository root, `mise pod042 observability --check` previews only this capability. After approval, `mise pod042 observability` installs `/etc/ansiblonomicon/observability/` and the Compose project. The driver resolves only `CLI_PROXY_API_MANAGEMENT_KEY` from fnox; its rendered file is private to UID 3456. It does not restart doppelclaude or CPA.
 
-State lives under `/mnt/black-box/docker/observability/{loki,alloy,cpa,grafana}`. The files and state use the bridge's service UID so Alloy can read its private rotating log without relaxing permissions. Alloy mounts the diagnostics directory read-only but selects **only `records.jsonl`**, never `prompts.jsonl`. CPA uses an allowlist: no prompts, email bodies, response bodies/headers, IP addresses, OAuth tokens, or raw API keys. Client keys become SHA-256 fingerprints. Do not add broad Docker stdout collection without reviewing each service's log contents.
+State lives under `/mnt/black-box/docker/observability/{loki,alloy,cpa,grafana,usage}`. The files and state use the bridge's service UID so Alloy can read its private rotating log without relaxing permissions. Alloy mounts the diagnostics directory read-only but selects **only `records.jsonl`**, never `prompts.jsonl`. CPA uses an allowlist: no prompts, email bodies, response bodies/headers, IP addresses, OAuth tokens, or raw API keys. Client keys become SHA-256 fingerprints. Do not add broad Docker stdout collection without reviewing each service's log contents.
 
 Grafana listens on pod042 loopback port **3030**, with anonymous **Editor** access for Explore and saved dashboards. It is trusted-local access, not an authentication boundary: any local user can query the data and edit dashboards. There is no initial admin, public listener, Caddy route, or Cloudflare route. Reach it with `ssh -N -L 3030:127.0.0.1:3030 pod042`, then open `http://localhost:3030/explore`. Add authentication before exposing it beyond loopback. Loki and Alloy have no host ports. Grafana's bundled plugins are used without background plugin upgrades.
+
+The usage page is at `https://usage.thurstons.house/`, a Caddy `local_only` route like the other pod042 services, and on pod042 loopback port **3031**. It has the same trusted-local model: anyone who reaches it can read the data and add or delete notes.
+
+## Usage page
+
+`usage_index.py` reads both services from Loki every 15 seconds, re-reading the last hour each poll and the last two days hourly and after a Loki error, so a late Alloy delivery still lands; a backlog older than two days needs a rebuild. It keeps a SQLite index in the `usage` state directory. For each bridge thread it records the idle gap since the previous request with usage, whether the request went cold (read less than half of the prefix that request left), and which runtime close or bridge restart fell between them; a late record recomputes the rest of its thread. It then rebuilds day and hour rollups for the days it touched. The page loads one `/api/view` response computed from those rollups, plus one conversation's requests when you drill in, so its cost follows the number of days and conversations, not requests.
+
+Each request has one cause: a changed configuration fingerprint first, then the bridge's sync reason. **Rewrites** are cache writes caused by a reopened runtime, a configuration change, diverged history, or a retry after failure; writes for new turns and first requests are expected. CLIProxyAPI cannot know why it wrote to the cache, so its requests have no cause and the page leaves their rewritten share blank. Requests without usage count as unknown, never zero. Requests without a thread pool by request kind, as `anonymous` or `opencode_one_shot`.
+
+Bridge records carry the daemon's release `version` from the first release after 0.14.15; earlier records have none. Each release is a marker on the timeline, and clicking it compares that release with the one before it. The `amp-titles` user timer sends every Amp thread title from `amp threads list` to `POST /api/titles` every 15 minutes, because only the signed-in CLI can list them. OpenCode titles stay on the machine that ran OpenCode, and derived conversations have none.
+
+The indexer validates records at ingestion and exits on anything it cannot classify, such as a new bridge reason or request kind; Compose restarts it into the same error until the classification is added here. Except for notes and titles, the index is derived from Loki. Bump `SCHEMA_VERSION` when a change alters what it derives; the next start drops the derived tables and rebuilds them from `--since`, which takes seconds, and keeps notes and titles. Inbox Zero is attributed by the key fingerprint in `compose.yaml`; on rotation, add the new fingerprint as another `--inbox-zero-key-hash` and keep the old one.
 
 ## Reading cache behavior
 
@@ -88,7 +104,7 @@ Compute cache hit ratio as **sum(cache_read) / sum(input + cache_read + cache_cr
 - Alloy retries transient Loki failures indefinitely while running. Its position checkpoint is **not** a durable delivery acknowledgement, and this setup does not enable Alloy's experimental write WAL. An Alloy crash can lose buffered entries even though the original spool survives. Loki's own WAL protects accepted records; that does not provide end-to-end exactly-once delivery. Permanent rejections (for example oversized/too-far-out-of-order entries) still require operator attention in Alloy logs.
 - Loki disables old-sample age rejection, but its per-stream out-of-order window still applies. Don't replay old archives into an already-current stream and assume they were accepted. No replay tool is included yet.
 - Historical queries include unflushed ingester data. Single-binary filesystem mode needs both `querier.query_ingesters_within: 0s` and `ingester.query_store_max_look_back_period: -1ns`; Loki tests the latter against exactly minus one nanosecond, not any negative duration. Without these, freshly ingested old records can stay invisible until chunks flush. After changing mounted Loki configuration, reconcile the capability and restart only `observability-loki-1` to load it.
-- Loki has no automatic deletion in this initial collection phase. Watch disk usage and choose retention before treating this as unattended long-term storage; the bounded source spools are not permanent backups.
+- Loki intentionally retains data indefinitely while growth remains modest. Watch disk usage as traffic grows; the bounded source spools are not permanent backups.
 
 ## Verification
 
@@ -99,7 +115,7 @@ mise -C bootstrap/targets/pod042 -E observability run observability:test
 mise -C bootstrap/targets/pod042 -E observability run observability:smoke
 ```
 
-The unit tests invoke the collector CLI against a fake destructive HTTP queue, asserting token values, privacy, failure behavior, and unknown accounting. The smoke test runs the actual Compose stack with separate temporary state, a fake CPA endpoint, and synthetic bridge records, including a six-hour-old record that must be immediately queryable. It queries Loki through Grafana, restarts the collectors and Loki, rotates the bridge log, and checks exact record/token counts and index-label privacy. By default it removes its containers/state; run `python3 bootstrap/targets/pod042/observability/smoke.py --keep` to retain an isolated preview. Its randomly assigned ports are loopback-only and it prints the cleanup command.
+The unit tests invoke the collector CLI against a fake destructive HTTP queue, asserting token values, privacy, failure behavior, and unknown accounting. The index tests check rewrite classification, unknown usage, that late records re-annotate their thread, release comparison, and that a schema rebuild keeps notes and titles. The smoke test runs the actual Compose stack with separate temporary state, a fake CPA endpoint, and synthetic bridge records, including a six-hour-old record that must be immediately queryable. It queries Loki through Grafana, restarts the collectors and Loki, rotates the bridge log, checks exact record/token counts and index-label privacy, and checks that the usage index rolls up the same tokens by day and by release and serves the page. By default it removes its containers/state; run `python3 bootstrap/targets/pod042/observability/smoke.py --keep` to retain an isolated preview. Its randomly assigned ports are loopback-only and it prints the cleanup command.
 
 ## Upstream contracts
 

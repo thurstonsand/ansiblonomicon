@@ -17,6 +17,7 @@ locals {
     "sonarr.thurstons.house",
     "thurstons.house",
     "torrent.thurstons.house",
+    "usage.thurstons.house",
     "www.thurstons.house",
   ])
 }

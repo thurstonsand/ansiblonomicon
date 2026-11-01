@@ -1,0 +1,591 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cache usage</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+:root {
+  --paper: #eef0ec; --sheet: #fbfbf9; --ink: #1f2a2e; --ink-2: #56636a; --ink-3: #8a959b; --rule: #d5dad4;
+  --read: #e9a23b; --write: #2f62c9; --uncached: #8b4fbf; --output: #3f8a5f; --unknown: #8b949a; --focus: #2f62c9;
+  font-family: "Schibsted Grotesk", system-ui, sans-serif; color: var(--ink); background: var(--paper);
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-size: 15px; line-height: 1.45; }
+h2, p { margin: 0; }
+h2 { font-size: 19px; line-height: 1.2; font-weight: 650; letter-spacing: -0.01em; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+a { color: inherit; }
+svg { display: block; width: 100%; height: auto; overflow: visible; }
+svg text { font-family: inherit; }
+.id { font-family: "IBM Plex Mono", monospace; font-size: 13px; letter-spacing: -0.01em; }
+.tiny { font-size: 12.5px; color: var(--ink-2); }
+.page { max-width: 1440px; margin: 0 auto; padding: 28px 48px 56px; }
+.sheet, .panel { background: var(--sheet); border-radius: 16px; }
+.nav { padding: 16px 28px 10px; }
+.navbar { display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; }
+.wins, .seg { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.win { border: 0; background: none; padding: 4px 10px; border-radius: 8px; cursor: pointer; font-size: 14px; }
+.win.a { background: var(--ink); color: #fff; font-weight: 600; }
+.win.b { outline: 1.5px dashed var(--ink-2); color: var(--ink-2); }
+.win.b[aria-pressed="true"] { outline-color: var(--focus); color: var(--focus); }
+.vs { color: var(--ink-3); font-size: 13px; }
+.hero { display: inline-flex; align-items: baseline; gap: 6px; margin-right: 12px; }
+.hero b { font-size: 30px; line-height: 1; font-weight: 650; letter-spacing: -0.02em; }
+.hero .lbl { font-size: 14px; color: var(--ink-2); }
+.hero .unk { display: inline-flex; align-items: center; gap: 6px; margin-left: 8px; font-size: 13px; color: var(--ink-2); }
+.hero .unk svg { width: 10px; height: 10px; }
+.win.b .of { margin-left: 6px; }
+.navbar > .seg { margin-left: auto; }
+.seg button, .presets button { border: 1px solid var(--rule); background: var(--sheet); border-radius: 999px; padding: 3px 11px; font-size: 13px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.presets { display: flex; gap: 4px; margin-left: 8px; }
+.presets button { border-color: transparent; color: var(--ink-2); }
+.seg .note { border-style: dashed; color: var(--ink-2); background: none; }
+form.note[hidden] { display: none; }
+form.note { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; font-size: 13px; }
+form.note input { border: 1px solid var(--rule); border-radius: 6px; padding: 3px 8px; background: #fff; }
+form.note input[name="text"] { flex: 1; min-width: 240px; }
+form.note button { border: 1px solid var(--ink); background: var(--ink); color: #fff; border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+form.note button[type="button"] { background: none; color: var(--ink); }
+#status:empty { display: none; }
+#status { margin-top: 8px; }
+#nav { cursor: crosshair; touch-action: none; user-select: none; }
+.field { margin-top: 16px; padding: 14px 0 8px; }
+.legend { display: flex; gap: 22px; padding: 4px 28px 10px; font-size: 13px; color: var(--ink-2); align-items: center; flex-wrap: wrap; }
+.swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.row { display: grid; gap: 24px; margin-top: 24px; }
+.row.two { grid-template-columns: 1fr 1fr; }
+.row.drill { grid-template-columns: minmax(0, 1fr) 470px; }
+.panel { padding: 22px 26px; border-radius: 14px; }
+.panel > svg { margin-top: 12px; }
+.ckey { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12.5px; color: var(--ink-2); margin-top: 12px; align-items: center; }
+.legend > span, .ckey > span { display: inline-flex; align-items: center; gap: 6px; }
+.legend svg, .ckey svg { width: 10px; height: 10px; flex: none; overflow: visible; }
+.ckey .break { flex-basis: 100%; height: 0; }
+.ckey .lead { color: var(--ink-3); }
+#field circle[data-id], #requests, #nav .release { cursor: pointer; }
+.detail { display: flex; flex-wrap: wrap; gap: 4px 20px; font-size: 13px; color: var(--ink-2); margin-top: 12px; padding: 10px 12px; background: #f1f3ef; border-radius: 8px; }
+.detail b { color: var(--ink); font-weight: 600; }
+.detail:empty { display: none; }
+table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+th { text-align: right; font-weight: 500; font-size: 12px; color: var(--ink-3); padding: 6px; }
+td { padding: 8px 6px; border-top: 1px solid var(--rule); font-size: 13.5px; vertical-align: middle; text-align: right; font-variant-numeric: tabular-nums; }
+td:first-child, td:nth-child(2) { text-align: left; }
+td svg { display: inline-block; width: 150px; height: 10px; }
+td.name { max-width: 190px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: #f3f4f1; }
+tr.sel td { background: #f3eef2; }
+.nav, .field { overflow-x: auto; }
+#nav, #field { min-width: 1100px; }
+@media (max-width: 1100px) {
+  .page { padding: 16px; }
+  .row.two, .row.drill { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <rect width="5" height="5" fill="#eef0ec"/><line x1="0" y1="0" x2="0" y2="5" stroke="#8b949a" stroke-width="2"/>
+  </pattern>
+</defs></svg>
+<main class="page">
+  <section class="sheet nav" aria-label="Time window">
+    <div class="navbar">
+      <div class="wins">
+        <span class="hero" id="hero"></span>
+        <button class="win a" id="winA" title="Drag across the timeline to choose"></button>
+        <span class="vs">against</span>
+        <button class="win b" id="winB" aria-pressed="false" title="Click, then drag across the timeline to choose the comparison"></button>
+        <span class="presets" id="presets"><button data-days="1">1 day</button><button data-days="3">3 days</button><button data-days="7">7 days</button><button data-days="30">30 days</button></span>
+      </div>
+      <div class="seg"><span class="seg" id="models"></span><button class="note" id="addNote">Add note</button></div>
+    </div>
+    <form class="note" id="noteForm" hidden>
+      <input name="text" maxlength="200" required placeholder="What happened" aria-label="Note">
+      <input name="start" type="datetime-local" required aria-label="From">
+      <input name="end" type="datetime-local" required aria-label="To">
+      <button>Save note</button><button type="button" id="cancelNote">Cancel</button>
+    </form>
+    <p class="tiny" id="status" role="status"></p>
+    <svg id="nav" viewBox="0 0 1288 142" role="img" aria-label="Input tokens per period, coloured by cache reuse"></svg>
+  </section>
+
+  <section class="sheet field" aria-label="Conversations in the selected window">
+    <div class="legend" id="legend"></div>
+    <svg id="field" viewBox="0 0 1344 600" role="img" aria-label="Conversations by size and rewritten share"></svg>
+  </section>
+
+  <div class="row two">
+    <section class="panel"><h2 id="whyTitle">Why, every day</h2><svg id="why" viewBox="0 0 590 240" role="img" aria-label="Rewritten tokens by cause"></svg></section>
+    <section class="panel"><h2>How long before it came back</h2><svg id="gaps" viewBox="0 0 590 240" role="img" aria-label="Idle time before each cold reopening"></svg><div class="ckey" id="gapKey"></div></section>
+  </div>
+
+  <div class="row drill">
+    <section class="panel" id="inspect"></section>
+    <section class="panel" id="writers"></section>
+  </div>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const NS = "http://www.w3.org/2000/svg";
+const T = { n: 0, unknown: 1, errors: 2, input: 3, read: 4, write: 5, output: 6, rw: 7, cold: 8 };
+const REWRITE = ["new_context", "config", "history_diverged", "previous_request_failed"];
+const CAUSE = {
+  new_context: ["Runtime reopened", "#b4235a"],
+  config: ["Configuration changed", "#5b4bc4"],
+  history_diverged: ["History diverged", "#1b8a7a"],
+  previous_request_failed: ["Retry after failure", "#c79a3a"],
+  first_request: ["First request", "#d6dbe0"],
+  compatible: ["New turns", "#d6dbe0"],
+  unrecorded: ["Cause not recorded", "url(#hatch)"],
+};
+const CAUSE_ORDER = [...REWRITE, "first_request", "compatible", "unrecorded"];
+const LANES = [["amp", "Amp threads"], ["opencode", "OpenCode sessions"], ["derived", "Derived conversations"], ["anonymous", "Anonymous requests"], ["inbox_zero", "Inbox Zero"], ["cpa_shared", "CLIProxyAPI, unattributed"]];
+const BIG = new Set(["amp", "opencode", "derived"]);
+const PROXY = new Set(["inbox_zero", "cpa_shared"]);
+const BANDS = [[0.5, "#2f62c9"], [0.9, "#8fa9de"], [0.95, "#f3d29a"], [0.98, "#eeb455"], [1.01, "#c97d12"]];
+const reuseColor = (hit) => BANDS.find(([limit]) => hit < limit)[1];
+
+const state = { a: null, b: null, models: null, focus: null, picking: "a" };
+let V = null, C = null, selectedRow = null;
+
+const fmt = (n) => {
+  if (n == null) return "unknown";
+  const a = Math.abs(n);
+  if (a >= 1e9) return (n / 1e9).toFixed(a >= 1e10 ? 1 : 2) + "B";
+  if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e8 ? 0 : 1) + "M";
+  if (a >= 1e3) return (n / 1e3).toFixed(a >= 1e5 ? 0 : 1) + "k";
+  return String(Math.round(n));
+};
+const pct = (x, d = 1) => (x == null ? "unknown" : (x * 100).toFixed(d) + "%");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const duration = (s) => s == null ? "first request" : s < 60 ? Math.round(s) + " s" : s < 3600 ? Math.round(s / 60) + " min" : s < 86400 ? (s / 3600).toFixed(1) + " h" : (s / 86400).toFixed(1) + " days";
+const inputOf = (t) => t[T.input] + t[T.read] + t[T.write];
+const shareOf = (t) => { const d = inputOf(t); return d ? t[T.rw] / d : null; };
+const modelName = (m) => m === "unknown" ? "Not reported" : !m.startsWith("claude-") ? m : m.replace(/^claude-/, "").replace(/^(\w)/, (x) => x.toUpperCase()).replace(/-(\d+)-(\d+)$/, " $1.$2");
+const AXIS = ["1", "10", "100", "1k", "10k", "100k", "1M", "10M", "100M", "1B", "10B"];
+const addDays = (day, n) => new Date(Date.parse(day + "T00:00Z") + n * 864e5).toISOString().slice(0, 10);
+const dayLabel = (day, opts) => new Date(day + "T12:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", ...opts });
+const fmtDay = (day) => dayLabel(day, { day: "numeric", month: "short" });
+const fmtWin = ([a, b]) => a === b ? fmtDay(a) : `${fmtDay(a)} – ${fmtDay(b)}`;
+const winLabel = (w) => w.version ? "v" + w.version : fmtWin(w.days);
+const nameHtml = (id, title) => title ? esc(title) : `<span class="id">${esc(id)}</span>`;
+const fmtTime = (t) => new Date(t * 1000).toLocaleString("en-GB", { timeZone: V.tz, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const svgPoint = (svg, event) => { const p = svg.createSVGPoint(); p.x = event.clientX; p.y = event.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+
+const lastDay = () => V.calendar[V.calendar.length - 2][0];
+const days = () => V.calendar.slice(0, -1).map(([day]) => day);
+
+// ---- state and loading
+function readHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  state.a = p.get("a"); state.b = p.get("b"); state.models = p.get("models"); state.focus = p.get("c");
+}
+function writeHash() {
+  const p = new URLSearchParams();
+  p.set("a", state.a); p.set("b", state.b);
+  if (state.models) p.set("models", state.models);
+  if (state.focus) p.set("c", state.focus);
+  history.replaceState(null, "", "#" + p.toString());
+}
+function status(text) { $("status").textContent = text; }
+
+async function load() {
+  const q = new URLSearchParams();
+  for (const key of ["a", "b", "models"]) if (state[key]) q.set(key, state[key]);
+  const response = await fetch("/api/view?" + q);
+  if (!response.ok) { status(`The view could not load: ${await response.text()}`); return; }
+  V = await response.json();
+  if (V.empty) { status("No usage is indexed yet. The indexer is still reading Loki; reload in a minute."); return; }
+  status(state.picking === "b" ? "Drag across the timeline to choose the comparison." : "");
+  state.a = V.a.id; state.b = V.b.id;
+  renderControls(); renderNav(); renderField(); renderWhy(); renderGaps(); renderWriters();
+  if (!state.focus) state.focus = leaders()[0]?.[0] ?? null;
+  writeHash();
+  await loadConversation();
+}
+
+async function loadConversation() {
+  if (!state.focus) { $("inspect").innerHTML = ""; return; }
+  const q = new URLSearchParams({ id: state.focus, through: V.a.days[1] });
+  if (state.models) q.set("models", state.models);
+  const response = await fetch("/api/conversation?" + q);
+  if (!response.ok) { status(`The conversation could not load: ${await response.text()}`); return; }
+  C = await response.json();
+  selectedRow = null;
+  renderDrill(); renderWriters();
+}
+
+function focusOn(id) { state.focus = id; writeHash(); loadConversation(); }
+
+// ---- controls
+const reuseOf = (w) => {
+  let read = 0, input = 0;
+  for (const lane of Object.values(V.lanes)) if (lane[w]) { read += lane[w][T.read]; input += inputOf(lane[w]); }
+  return input ? read / input : null;
+};
+function renderControls() {
+  const unknown = Object.entries(V.lanes).reduce((n, [k, lane]) => n + (k === "unlabelled" ? 0 : lane.a?.[T.unknown] ?? 0), 0);
+  const unlabelled = V.lanes.unlabelled?.a?.[T.n] ?? 0;
+  const gaps = [unknown && `${unknown} not reported`, unlabelled && `${unlabelled} failed unlabelled`].filter(Boolean).join(" · ");
+  $("hero").innerHTML = `<b>${pct(reuseOf("a"))}</b><span class="lbl">reuse</span>${gaps ? `<span class="unk" title="Requests whose token usage is unknown, so the reuse figure leaves them out">${keyIcon('<rect width="10" height="10" fill="url(#hatch)" stroke="#8b949a"/>')}${gaps}</span>` : ""}`;
+  $("winA").textContent = winLabel(V.a);
+  $("winB").innerHTML = `${esc(winLabel(V.b))}<span class="of">${pct(reuseOf("b"))}</span>`;
+  $("winB").setAttribute("aria-pressed", String(state.picking === "b"));
+  const chosen = state.models ? new Set(state.models.split(",")) : null;
+  $("models").innerHTML = V.models.map(([m]) => `<button data-model="${esc(m)}" aria-pressed="${!chosen || chosen.has(m)}">${esc(modelName(m))}</button>`).join("");
+}
+$("winB").addEventListener("click", () => {
+  state.picking = state.picking === "b" ? "a" : "b";
+  $("winB").setAttribute("aria-pressed", String(state.picking === "b"));
+  status(state.picking === "b" ? "Drag across the timeline to choose the comparison." : "");
+});
+$("presets").addEventListener("click", (event) => {
+  const n = Number(event.target.dataset?.days);
+  if (!n || !V) return;
+  state.a = `${addDays(lastDay(), 1 - n)}..${lastDay()}`; state.b = null; state.picking = "a";
+  load();
+});
+$("models").addEventListener("click", (event) => {
+  const model = event.target.closest("button")?.dataset.model;
+  if (!model) return;
+  const all = V.models.map(([m]) => m);
+  const chosen = new Set(state.models ? state.models.split(",") : all);
+  chosen.has(model) ? chosen.delete(model) : chosen.add(model);
+  if (!chosen.size) return;
+  state.models = chosen.size === all.length ? null : all.filter((m) => chosen.has(m)).join(",");
+  load();
+});
+
+// ---- notes
+const localInput = (t) => { const d = new Date(t * 1000); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+$("addNote").addEventListener("click", () => {
+  const form = $("noteForm"), [from, to] = V.a.span;
+  form.start.value = localInput(from); form.end.value = localInput(to);
+  form.hidden = false; form.text.focus();
+});
+$("cancelNote").addEventListener("click", () => { $("noteForm").hidden = true; });
+$("noteForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const response = await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: form.text.value, start: Date.parse(form.start.value) / 1000, end: Date.parse(form.end.value) / 1000 }) });
+  if (!response.ok) { status(`The note was not saved: ${await response.text()}`); return; }
+  form.reset(); form.hidden = true; load();
+});
+async function deleteNote(id, text) {
+  if (!confirm(`Delete the note "${text}"?`)) return;
+  await fetch(`/api/notes/${id}`, { method: "DELETE" });
+  load();
+}
+
+// ---- timeline navigator: whole history, chooses the windows
+function renderNav() {
+  const svg = $("nav"), W = 1288, L = 4, top = 30, base = 100;
+  const t0 = V.calendar[0][1], t1 = V.calendar[V.calendar.length - 1][1];
+  const x = (t) => L + ((Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0)) * (W - 2 * L);
+  const rows = V.timeline.rows, unit = V.timeline.unit;
+  const maxIn = Math.max(1, ...rows.map((r) => r[3]));
+  let s = "", labels = "";
+  const [a0, a1] = V.a.span, [b0, b1] = V.b.span;
+  s += `<rect x="${x(a0)}" y="${top - 10}" width="${Math.max(3, x(a1) - x(a0))}" height="${base - top + 10}" fill="#e3e7e1" rx="4"/>`;
+  if (b1 > t0) s += `<rect x="${x(b0)}" y="${top - 10}" width="${Math.max(3, x(b1) - x(b0))}" height="${base - top + 10}" fill="none" stroke="#56636a" stroke-dasharray="4 3" rx="4"/>`;
+  for (const [id, start, end, text] of V.notes) {
+    if (end < t0 || start > t1) continue;
+    const nx = x(start), nw = Math.max(3, x(end) - nx);
+    s += `<g class="note" data-note="${id}" style="cursor:pointer"><title>${esc(text)}</title><rect x="${nx}" y="${top - 10}" width="${nw}" height="${base - top + 10}" fill="#f3ecc9" opacity="0.92"/></g>`;
+    if (nw > 70) labels += `<text pointer-events="none" x="${nx + nw / 2}" y="${top + 8}" font-size="12" text-anchor="middle" fill="#6a5a1d" font-style="italic" stroke="#f3ecc9" stroke-width="5" paint-order="stroke">${esc(text.length > nw / 6.5 ? text.slice(0, Math.floor(nw / 6.5) - 1) + "…" : text)}</text>`;
+  }
+  rows.forEach(([t, n, unknown, input, read], i) => {
+    const w = Math.max(1, x((rows[i + 1]?.[0] ?? t + (unit === "hour" ? 3600 : 86400))) - x(t) - 0.6);
+    const width = unit === "hour" ? Math.max(1, x(t + 3600) - x(t) - 0.6) : w;
+    if (!input) { if (n) s += `<rect x="${x(t)}" y="${top - 10}" width="${Math.max(2, width)}" height="${base - top + 10}" fill="url(#hatch)" opacity="0.55"><title>${fmtTime(t)}: ${n} requests, usage not reported</title></rect>`; return; }
+    const h = Math.max(2, Math.sqrt(input / maxIn) * (base - top));
+    s += `<rect x="${x(t)}" y="${base - h}" width="${width}" height="${h}" fill="${reuseColor(read / input)}"><title>${fmtTime(t)}: reuse ${pct(read / input)}${unknown ? `, ${unknown} without usage` : ""}</title></rect>`;
+  });
+  s += labels;
+  let labelEnd = -Infinity;
+  for (const [version, first] of V.releases) {
+    if (first < t0 || first > t1) continue;
+    const rx = x(first), label = rx > labelEnd;
+    s += `<g class="release" data-version="${esc(version)}"><title>v${esc(version)}: compare with the release before it</title><line x1="${rx}" x2="${rx}" y1="${top - 26}" y2="${base}" stroke="#1f2a2e" stroke-dasharray="2 2"/><rect x="${rx - 4}" y="${top - 30}" width="${label ? 60 : 8}" height="${base - top + 30}" fill="transparent"/>`;
+    if (label) { s += `<text x="${rx + 4}" y="${top - 17}" font-size="11.5" font-weight="600" fill="#1f2a2e">v${esc(version)}</text>`; labelEnd = rx + 64; }
+    s += `</g>`;
+  }
+  for (const [t, kind] of V.coverage) s += `<g><title>${fmtTime(t)}: CLIProxyAPI collector reported a ${kind === "gap" ? "gap" : "possible gap"}</title><rect x="${x(t) - 1}" y="${top - 10}" width="2" height="${base - top + 10}" fill="#b58a1b"/><path d="M${x(t)} ${base + 2} l-4 7 h8 z" fill="#b58a1b"/></g>`;
+  const all = days(), monthly = all.length > 31;
+  for (const [day, t] of V.calendar.slice(0, -1)) {
+    if (monthly && !day.endsWith("-01") && day !== all[0]) continue;
+    s += `<line x1="${x(t)}" x2="${x(t)}" y1="${base}" y2="${base + 5}" stroke="#8a959b"/><text x="${x(t) + 4}" y="${base + 20}" font-size="12" fill="#56636a">${monthly ? dayLabel(day, { month: "short", year: "numeric" }) : dayLabel(day, { weekday: "short", day: "numeric" })}</text>`;
+  }
+  s += `<line x1="${L}" x2="${W - L}" y1="${base}" y2="${base}" stroke="#1f2a2e"/>`;
+  s += `<g transform="translate(${W - 150},${base + 38})"><text font-size="12" fill="#8a959b">reuse</text>${BANDS.map(([, c], i) => `<rect x="${38 + i * 20}" y="-9" width="18" height="9" fill="${c}"/>`).join("")}</g>`;
+  s += `<rect id="dragRect" y="${top - 10}" height="${base - top + 10}" fill="rgba(47,98,201,0.12)" stroke="#2f62c9" width="0" visibility="hidden"/>`;
+  svg.innerHTML = s;
+  svg.onpointerdown = (event) => {
+    if (event.target.closest(".note, .release")) return;
+    const startX = svgPoint(svg, event).x, rect = $("dragRect");
+    svg.setPointerCapture(event.pointerId);
+    svg.onpointermove = (move) => {
+      const nowX = svgPoint(svg, move).x;
+      rect.setAttribute("x", Math.min(startX, nowX)); rect.setAttribute("width", Math.abs(nowX - startX)); rect.setAttribute("visibility", "visible");
+    };
+    svg.onpointerup = (up) => {
+      svg.onpointermove = svg.onpointerup = null;
+      const endX = svgPoint(svg, up).x;
+      const toDay = (px) => { const t = t0 + ((px - L) / (W - 2 * L)) * (t1 - t0); let found = all[0]; for (const [day, start] of V.calendar.slice(0, -1)) if (start <= t) found = day; return found; };
+      const [lo, hi] = [toDay(Math.min(startX, endX)), toDay(Math.max(startX, endX))];
+      if (state.picking === "b") { state.b = `${lo}..${hi}`; state.picking = "a"; }
+      else { state.a = `${lo}..${hi}`; state.b = null; }
+      load();
+    };
+  };
+  svg.onclick = (event) => {
+    const release = event.target.closest(".release");
+    if (release) { state.a = "v:" + release.dataset.version; state.b = null; state.picking = "a"; load(); return; }
+    const note = event.target.closest(".note");
+    if (!note) return;
+    const found = V.notes.find(([id]) => String(id) === note.dataset.note);
+    deleteNote(found[0], found[3]);
+  };
+}
+
+// ---- conversation field for window A, lanes compared with window B
+const dominant = (causes) => REWRITE.filter((k) => causes[k]).sort((p, q) => causes[q] - causes[p])[0];
+function renderField() {
+  $("legend").innerHTML = REWRITE.map((k) => `<span><i class="swatch" style="background:${CAUSE[k][1]}"></i>${CAUSE[k][0]}</span>`).join("") +
+    `<span><i class="swatch" style="background:#d6dbe0"></i>Not rewritten</span>
+    <span>${keyIcon('<circle cx="5" cy="5" r="4.5" fill="url(#hatch)" stroke="#8b949a"/>')}Usage not reported</span>`;
+  const W = 1344, LEFT = 240, RIGHT = 330, UNK = 66, PLOT = W - LEFT - RIGHT;
+  const consumers = V.consumers;
+  const maxTokens = Math.max(1e5, ...consumers.map((c) => inputOf(c.slice(2)) + c[2 + T.output]));
+  const lo = 2, hi = Math.max(6, Math.ceil(Math.log10(maxTokens) * 5) / 5 + 0.2);
+  const xs = (v) => LEFT + UNK + ((Math.log10(Math.max(v, 100)) - lo) / (hi - lo)) * (PLOT - UNK - 10);
+  const rad = (n) => Math.min(26, 2 + Math.sqrt(n) * 0.5);
+  const shares = LANES.flatMap(([k]) => ["a", "b"].map((w) => V.lanes[k]?.[w] && !PROXY.has(k) ? shareOf(V.lanes[k][w]) : null)).filter((v) => v != null);
+  const sMax = Math.max(0.01, ...shares) * 1.25;
+  const allDays = days();
+  let y = 40, s = "";
+  for (let p = lo; p <= hi; p++) s += `<text x="${xs(10 ** p)}" y="24" text-anchor="middle" font-size="12" fill="#8a959b">${AXIS[p]}</text>`;
+  s += `<text x="${LEFT + 14}" y="24" font-size="12" fill="#8a959b" text-anchor="middle">none</text>`;
+  s += `<text x="${W - RIGHT + 24}" y="24" font-size="12" fill="#8a959b">Rewritten share</text><text x="${W - 40}" y="24" font-size="12" fill="#8a959b" text-anchor="end">every day</text>`;
+  for (const [key, name] of LANES) {
+    const big = BIG.has(key), LH = big ? 160 : 58, pad = 12, top = y, bot = y + LH;
+    const baseY = bot - pad - 6, upTop = top + pad + 4, upBot = baseY - 18;
+    const ys = (m) => upBot - ((Math.log10(Math.min(1, Math.max(m, 0.001))) + 3) / 3) * (upBot - upTop);
+    s += `<line x1="28" x2="${W - 28}" y1="${top}" y2="${top}" stroke="#e3e6e1"/>`;
+    if (big) {
+      for (const g of [0.001, 0.01, 0.1, 1]) s += `<line x1="${LEFT + UNK - 6}" x2="${W - RIGHT}" y1="${ys(g)}" y2="${ys(g)}" stroke="#eceeea"/><text x="${LEFT + UNK - 10}" y="${ys(g) + 4}" font-size="11" text-anchor="end" fill="#8a959b">${g >= 0.01 ? g * 100 : 0.1}%</text>`;
+      s += `<line x1="${LEFT + UNK - 6}" x2="${W - RIGHT}" y1="${baseY}" y2="${baseY}" stroke="#eceeea"/><text x="${LEFT + UNK - 10}" y="${baseY + 4}" font-size="11" text-anchor="end" fill="#8a959b">none</text>`;
+    }
+    for (let p = lo; p <= hi; p++) s += `<line x1="${xs(10 ** p)}" x2="${xs(10 ** p)}" y1="${top + 4}" y2="${bot - 4}" stroke="#f0f1ee"/>`;
+    s += `<text x="28" y="${top + LH / 2 + 5}" font-size="15" font-weight="650" fill="#1f2a2e">${name}</text>`;
+    const lane = consumers.filter((c) => c[1] === key).sort((p, q) => q[2] - p[2]);
+    const baseline = [];
+    for (const c of lane) {
+      const t = c.slice(2, 11), input = inputOf(t);
+      if (!input) continue;
+      const cx = xs(input + t[T.output]), r = rad(t[T.n]), id = esc(c[0]), focused = c[0] === state.focus;
+      const tip = `<title>${esc(V.titles[c[0]] ?? c[0])}: ${t[T.n]} requests, ${PROXY.has(key) ? "" : `${pct(shareOf(t), 2)} rewritten (${fmt(t[T.rw])}), `}reuse ${pct(t[T.read] / input)}</title>`;
+      if (PROXY.has(key)) {
+        s += `<circle data-id="${id}" cx="${cx}" cy="${top + LH / 2 + 2}" r="${r}" fill="#fbfbf9" stroke="${focused ? "#1f2a2e" : "#8a959b"}" stroke-width="${focused ? 2.5 : 1.3}">${tip}</circle>`;
+        if (!t[T.read]) s += `<text x="${cx + r + 8}" y="${top + LH / 2 + 6}" font-size="12" fill="#1f2a2e">nothing read back</text>`;
+        continue;
+      }
+      const share = shareOf(t);
+      let cy;
+      if (!share) {
+        let dy = 0;
+        for (let k = 0; k < 24; k++) { dy = -Math.ceil(k / 2) * 3; if (!baseline.some((p) => (p.x - cx) ** 2 + (p.y - (baseY + dy)) ** 2 < (p.r + r + 0.5) ** 2)) break; }
+        cy = baseY + dy; baseline.push({ x: cx, y: cy, r });
+      } else cy = big ? ys(share) : baseY;
+      const fill = share ? CAUSE[dominant(c[11])][1] : "#d6dbe0";
+      s += `<circle data-id="${id}" cx="${cx}" cy="${cy}" r="${r}" fill="${fill}" fill-opacity="0.9" stroke="${focused ? "#1f2a2e" : "#fbfbf9"}" stroke-width="${focused ? 2.5 : 0.8}">${tip}</circle>`;
+    }
+    const la = V.lanes[key]?.a, lb = V.lanes[key]?.b;
+    if (la?.[T.unknown]) { const r = 2 + Math.sqrt(la[T.unknown]) * 0.9; s += `<circle cx="${LEFT + 14}" cy="${top + LH / 2}" r="${Math.min(r, 20)}" fill="url(#hatch)" stroke="#8b949a"><title>${la[T.unknown]} requests reported no usage</title></circle><text x="${LEFT + 14}" y="${top + LH / 2 + Math.min(r, 20) + 13}" font-size="11" text-anchor="middle" fill="#8a959b">${la[T.unknown]}</text>`; }
+    const gx = W - RIGHT + 24, gy = top + LH / 2 - 14, bw = 120;
+    const bar = (v, yy, dashed) => v == null ? `<rect y="${yy}" width="40" height="9" fill="url(#hatch)"/>` : `<rect y="${yy}" width="${Math.max(1.5, (v / sMax) * bw)}" height="9" fill="${dashed ? "none" : "#b4235a"}" stroke="${dashed ? "#56636a" : "none"}" stroke-dasharray="${dashed ? "3 2" : ""}"/><text x="${(v / sMax) * bw + 6}" y="${yy + 9}" font-size="12" fill="${dashed ? "#56636a" : "#1f2a2e"}" font-weight="${dashed ? 400 : 650}">${pct(v)}</text>`;
+    s += `<g transform="translate(${gx},${gy})">`;
+    if (!PROXY.has(key)) s += (la ? bar(shareOf(la), 0) : "") + (lb ? bar(shareOf(lb), 14, true) : "");
+    if (!PROXY.has(key) && allDays.length > 1) {
+      const sx = 186, sw = 104, sh = 26;
+      const byDay = new Map(V.daily.filter((r) => r[1] === key).map((r) => [r[0], r]));
+      const pts = allDays.map((d) => { const r = byDay.get(d); return r ? { share: r[2] ? r[3] / r[2] : null, n: r[4] } : null; });
+      const ymax = Math.max(0.01, ...pts.map((p) => p?.share ?? 0));
+      const px = (i) => sx + (i / (allDays.length - 1)) * sw, py = (v) => sh - (v / ymax) * sh;
+      const ia = allDays.indexOf(V.a.days[0]), ib = allDays.indexOf(V.a.days[1]);
+      if (ia >= 0 && ib >= ia) s += `<rect x="${px(ia) - 1}" y="-4" width="${px(ib) - px(ia) + 2}" height="${sh + 4}" fill="#e8ebe6"/>`;
+      let path = "", pen = false;
+      pts.forEach((p, i) => { if (p?.share == null) { pen = false; if (p?.n) s += `<rect x="${px(i) - 3}" y="${sh - 6}" width="6" height="6" fill="url(#hatch)"/>`; return; } path += `${pen ? "L" : "M"}${px(i).toFixed(1)},${py(p.share).toFixed(1)}`; pen = true; });
+      s += `<path d="${path}" fill="none" stroke="#b4235a" stroke-width="1.5"/><line x1="${sx}" x2="${sx + sw}" y1="${sh}" y2="${sh}" stroke="#d5dad4"/>`;
+    }
+    s += `</g>`;
+    y += LH;
+  }
+  const svg = $("field");
+  svg.setAttribute("viewBox", `0 0 ${W} ${y + 8}`);
+  svg.innerHTML = s;
+  svg.onclick = (event) => { const id = event.target.closest("circle[data-id]")?.dataset.id; if (id) focusOn(id); };
+}
+
+// ---- why, every day: rewritten tokens by cause across all history
+function renderWhy() {
+  const W = 590, L = 44, base = 196, top = 14;
+  let all = days();
+  const weekly = all.length > 62;
+  const bucketOf = (day) => weekly ? addDays(day, -((new Date(day + "T12:00Z").getUTCDay() + 6) % 7)) : day;
+  const buckets = [...new Set(all.map(bucketOf))];
+  const sums = new Map(buckets.map((b) => [b, { causes: {}, n: 0, unknown: 0 }]));
+  for (const [day, cause, write] of V.daily_causes) { const b = sums.get(bucketOf(day)); b.causes[cause] = (b.causes[cause] || 0) + write; }
+  for (const [day, source, , , n, unknown] of V.daily) if (!PROXY.has(source)) { const b = sums.get(bucketOf(day)); b.n += n; b.unknown += unknown; }
+  const total = (b) => REWRITE.reduce((a, k) => a + (b.causes[k] || 0), 0);
+  const max = Math.max(1, ...[...sums.values()].map(total));
+  const step = 10 ** Math.floor(Math.log10(max / 3)), tick = [1, 2, 5, 10].map((m) => m * step).find((v) => max / v <= 4);
+  const cw = (W - L) / buckets.length, yv = (v) => base - (v / max) * (base - top);
+  let s = "";
+  for (let g = tick; g < max * 1.02; g += tick) s += `<line x1="${L}" x2="${W}" y1="${yv(g)}" y2="${yv(g)}" stroke="#eceeea"/><text x="${L - 6}" y="${yv(g) + 4}" font-size="11" text-anchor="end" fill="#8a959b">${fmt(g)}</text>`;
+  const band = ([from, to], dashed) => {
+    const idx = buckets.map((b, i) => [b, i]).filter(([b]) => (weekly ? addDays(b, 6) : b) >= from && b <= to).map(([, i]) => i);
+    if (!idx.length) return "";
+    return `<rect x="${L + idx[0] * cw}" y="${top - 6}" width="${(idx[idx.length - 1] - idx[0] + 1) * cw}" height="${base - top + 6}" ${dashed ? 'fill="none" stroke="#8a959b" stroke-dasharray="3 3"' : 'fill="#e8ebe6"'}/>`;
+  };
+  s += band(V.a.days, false) + band(V.b.days, true);
+  const every = Math.ceil(buckets.length / 12);
+  buckets.forEach((key, i) => {
+    const b = sums.get(key), x = L + i * cw + Math.min(6, cw * 0.15), w = cw - 2 * Math.min(6, cw * 0.15);
+    let yy = base;
+    for (const k of REWRITE) { const h = ((b.causes[k] || 0) / max) * (base - top); if (h) s += `<rect x="${x}" y="${yy - h}" width="${w}" height="${h}" fill="${CAUSE[k][1]}"><title>${fmtDay(key)}: ${CAUSE[k][0]}, ${fmt(b.causes[k])}</title></rect>`; yy -= h; }
+    if (b.n && b.unknown === b.n) s += `<rect x="${x}" y="${top}" width="${w}" height="${base - top}" fill="url(#hatch)" opacity="0.55"><title>${fmtDay(key)}: ${b.n} requests, usage not reported</title></rect>`;
+    if (i % every === 0) s += `<text x="${x + w / 2}" y="${base + 18}" font-size="12" text-anchor="middle" fill="#56636a">${weekly ? fmtDay(key) : dayLabel(key, { weekday: "short" }).slice(0, 2) + " " + Number(key.slice(8))}</text>`;
+  });
+  s += `<line x1="${L}" x2="${W}" y1="${base}" y2="${base}" stroke="#1f2a2e"/>`;
+  $("whyTitle").textContent = weekly ? "Why, every week" : "Why, every day";
+  $("why").innerHTML = s;
+}
+
+// ---- how long before it came back: idle time before each cold reopening
+function renderGaps() {
+  const W = 590, L = 30, mid = 112, room = 92;
+  const lo = 0, hi = Math.log10(60 * 24 * 7), bins = 90;
+  const bin = (g) => Math.floor(((Math.log10(Math.max(g, 60) / 60) - lo) / (hi - lo)) * bins);
+  const bx = (i) => L + ((i + 0.5) / bins) * (W - L), xm = (min) => L + ((Math.log10(min) - lo) / (hi - lo)) * (W - L);
+  const stack = (rows) => { const m = new Map(); for (const [g] of rows) { const i = bin(g); if (i < bins) m.set(i, (m.get(i) || 0) + 1); } return m; };
+  const sa = stack(V.gaps.a), sb = stack(V.gaps.b);
+  const tallest = Math.max(1, ...sa.values(), ...sb.values());
+  const step = Math.min(7, room / tallest), r = Math.max(0.8, Math.min(2.9, step * 0.42));
+  let s = `<rect x="${xm(60)}" y="4" width="${W - xm(60)}" height="228" fill="#f6eef1"/><line x1="${xm(60)}" x2="${xm(60)}" y1="4" y2="232" stroke="#b4235a" stroke-width="1.5"/><text x="${xm(60) + 6}" y="18" font-size="12" fill="#b4235a" font-weight="600">runtime and cache expire</text>`;
+  for (const [i, n] of sa) for (let k = 0; k < n; k++) s += `<circle cx="${bx(i)}" cy="${mid - 7 - k * step}" r="${r}" fill="#1f2a2e"/>`;
+  for (const [i, n] of sb) for (let k = 0; k < n; k++) s += `<circle cx="${bx(i)}" cy="${mid + 30 + k * step}" r="${r * 0.93}" fill="none" stroke="#56636a" stroke-width="1.1"/>`;
+  const edge = (i) => Math.round(10 ** (lo + (i / bins) * (hi - lo)));
+  const peak = (m) => [...m].filter(([i]) => bx(i) > xm(70)).sort((p, q) => q[1] - p[1])[0];
+  const pa = peak(sa), pb = peak(sb);
+  if (pa) s += `<text x="${bx(pa[0])}" y="${mid - 16 - (pa[1] - 1) * step}" font-size="12" text-anchor="middle" fill="#1f2a2e" font-weight="600">${edge(pa[0])}–${edge(pa[0] + 1)} min</text>`;
+  if (pb) s += `<text x="${bx(pb[0])}" y="${mid + 48 + (pb[1] - 1) * step}" font-size="12" text-anchor="middle" fill="#56636a">${edge(pb[0])}–${edge(pb[0] + 1)} min</text>`;
+  for (const [m, l] of [[1, "1 min"], [5, "5"], [15, "15"], [60, "1 h"], [240, "4 h"], [1440, "1 day"], [10080, "7 days"]]) s += `<line x1="${xm(m)}" x2="${xm(m)}" y1="${mid}" y2="${mid + 5}" stroke="#8a959b"/><text x="${xm(m)}" y="${mid + 17}" font-size="12" text-anchor="${m === 10080 ? "end" : "middle"}" fill="#56636a">${l}</text>`;
+  s += `<line x1="${L}" x2="${W}" y1="${mid}" y2="${mid}" stroke="#1f2a2e"/>`;
+  $("gaps").innerHTML = s;
+  const over = [...V.gaps.a, ...V.gaps.b].filter(([g]) => bin(g) >= bins).length;
+  $("gapKey").innerHTML = `<span>${keyIcon('<circle cx="5" cy="5" r="3.5" fill="#1f2a2e"/>')}${winLabel(V.a)}, ${V.gaps.a.length} cold reopenings</span><span>${keyIcon('<circle cx="5" cy="5" r="3.5" fill="none" stroke="#56636a"/>')}${winLabel(V.b)}, ${V.gaps.b.length}</span>${over ? `<span>${over} after more than a week not shown</span>` : ""}`;
+}
+
+// ---- one conversation's requests, in order, with window A shaded
+const closeShape = (why, cx, cy, fill) => /idle/.test(why) ? `<circle cx="${cx}" cy="${cy}" r="3.2" fill="${fill}"/>`
+  : /shutdown|restart/.test(why) ? `<rect x="${cx - 3}" y="${cy - 3}" width="6" height="6" fill="${fill}"/>`
+  : /eviction/.test(why) ? `<path d="M${cx} ${cy - 3.5} l3.5 6.5 h-7 z" fill="${fill}"/>`
+  : `<circle cx="${cx}" cy="${cy}" r="3" fill="#fbfbf9" stroke="${fill}" stroke-width="1.3"/>`;
+function renderDrill() {
+  const rows = C.rows, W = 760, base = 214;
+  const ctx = (r) => r[3] == null ? 0 : r[3] + r[4] + r[5];
+  const maxC = Math.max(1, ...rows.map(ctx)), bw = W / Math.max(rows.length, 1);
+  const [a0] = V.a.span;
+  let s = "";
+  const ia = rows.findIndex((r) => r[0] >= a0);
+  if (ia >= 0) s += `<rect x="${ia * bw}" y="8" width="${W - ia * bw}" height="${base - 8}" fill="#e8ebe6"/>`;
+  const step = 10 ** Math.floor(Math.log10(maxC / 3)), tick = [1, 2, 5, 10].map((m) => m * step).find((v) => maxC / v <= 4);
+  for (let g = tick; g <= maxC; g += tick) { const gy = base - (g / maxC) * (base - 20); s += `<line x1="0" x2="${W}" y1="${gy}" y2="${gy}" stroke="#dfe3de"/><text x="${W + 4}" y="${gy + 4}" font-size="11" fill="#8a959b">${fmt(g)}</text>`; }
+  let lastDayLabel = "", labelled = 0;
+  const dayCount = new Set(rows.map((r) => new Date(r[0] * 1000).toLocaleDateString("en-CA", { timeZone: V.tz }))).size, everyDay = Math.ceil(dayCount / 10);
+  rows.forEach((r, i) => {
+    const x = i * bw, [, cause, , input, read, write] = r;
+    if (input == null) { s += `<rect x="${x}" y="${base - 10}" width="${Math.max(1, bw)}" height="10" fill="url(#hatch)"/>`; }
+    else {
+      const hr = (read / maxC) * (base - 20), hw = ((write + input) / maxC) * (base - 20), w = r[7] ? Math.max(2, Math.min(4, bw)) : Math.max(0.8, bw - 0.3);
+      s += `<rect x="${x}" y="${base - hr}" width="${w}" height="${hr}" fill="var(--read)"/><rect x="${x}" y="${base - hr - hw}" width="${w}" height="${Math.max(hw, 0.6)}" fill="var(--write)"/>`;
+    }
+    if (cause === "new_context" && r[7] === 1) s += closeShape(r[9] || "", x + 1.5, base + 12, "#b4235a");
+    if (cause === "config") s += `<rect x="${x + 0.5}" y="${base + 20}" width="5" height="5" fill="#5b4bc4" transform="rotate(45 ${x + 3} ${base + 22.5})"/>`;
+    const day = new Date(r[0] * 1000).toLocaleDateString("en-CA", { timeZone: V.tz });
+    if (day !== lastDayLabel) { if (labelled++ % everyDay === 0) s += `<line x1="${x}" x2="${x}" y1="${base + 28}" y2="${base + 34}" stroke="#8a959b"/><text x="${x + 3}" y="${base + 44}" font-size="11.5" fill="#56636a">${dayLabel(day, { weekday: "short", day: "numeric" })}</text>`; lastDayLabel = day; }
+  });
+  if (selectedRow != null) s += `<line x1="${selectedRow * bw + 1}" x2="${selectedRow * bw + 1}" y1="8" y2="${base}" stroke="#1f2a2e" stroke-width="1.5"/>`;
+  s += `<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="#1f2a2e"/><rect id="hit" x="0" y="0" width="${W}" height="${base + 30}" fill="transparent"/>`;
+  const known = rows.filter((r) => r[3] != null);
+  const written = known.reduce((a, r) => a + r[5], 0), rewritten = known.filter((r) => REWRITE.includes(r[1])).reduce((a, r) => a + r[5], 0);
+  const id = C.id, name = nameHtml(id, C.title);
+  const link = id.startsWith("T-") ? `<a href="https://ampcode.com/threads/${encodeURIComponent(id)}" target="_blank" rel="noreferrer" title="${esc(id)}">${name}</a>` : name;
+  $("inspect").innerHTML = `<h2>${link}</h2>
+    <p style="margin-top:8px">${C.limited ? "Last " : ""}${rows.length.toLocaleString()} requests through ${fmtDay(V.a.days[1])}.${PROXY.has(id) ? "" : ` ${fmt(rewritten)} of ${fmt(written)} written was rewritten.`}</p>
+    <svg id="requests" viewBox="0 0 ${W + 40} ${base + 52}" role="img" aria-label="Input per request, in request order">${s}</svg>
+    <div class="ckey"><span><i class="swatch" style="background:var(--read)"></i>read</span><span><i class="swatch" style="background:var(--write)"></i>written or uncached</span>
+      <span>${keyIcon('<rect x="2.5" y="2.5" width="5" height="5" fill="#5b4bc4" transform="rotate(45 5 5)"/>')}configuration changed</span><span class="break"></span>
+      <span class="lead">reopened after</span>
+      <span>${closeKey("idle")}idle expiry</span><span>${closeKey("shutdown")}shutdown or restart</span><span>${closeKey("eviction")}eviction</span><span>${closeKey("")}no close recorded</span></div>
+    <div class="detail" id="detail">${selectedRow == null ? "" : detail(rows[selectedRow])}</div>`;
+  $("requests").onclick = (event) => {
+    const i = Math.floor(svgPoint($("requests"), event).x / bw);
+    if (i < 0 || i >= rows.length) return;
+    selectedRow = i; renderDrill();
+  };
+}
+const keyIcon = (shape) => `<svg viewBox="0 0 10 10" aria-hidden="true">${shape}</svg>`;
+const closeKey = (why) => keyIcon(closeShape(why, 5, 5, "#b4235a"));
+function detail(r) {
+  const [t, cause, outcome, input, read, write, output, cold, gapSeconds, closed, model, extra] = r;
+  const facts = [["", fmtTime(t)], ["", modelName(model)]];
+  if (cause) facts.push(["", CAUSE[cause][0]]);
+  if (input == null) facts.push(["usage", "not reported"]);
+  else facts.push(["read", read.toLocaleString()], ["written", write.toLocaleString()], ["uncached", input.toLocaleString()], ["output", output.toLocaleString()]);
+  if (cold != null) facts.push(["", cold ? "went cold" : "stayed warm"]);
+  if (gapSeconds != null) facts.push(["idle", duration(gapSeconds)]);
+  if (closed) facts.push(["closed by", closed.replace(/^HTTP /, "")]);
+  for (const [key, label] of [["sync", "sync"], ["lane", "lane"], ["context", "rebuilt from"], ["forced", "forced by"], ["messages", "messages"], ["latency_ms", "latency ms"], ["status", "HTTP"], ["error", "error"], ["accounting", "accounting"]]) if (extra[key] != null) facts.push([label, String(extra[key]).replace(/^HTTP /, "")]);
+  if (extra.changed) facts.push(["changed", extra.changed.join(", ")]);
+  if (extra.duration_ms != null) facts.push(["took", (extra.duration_ms / 1000).toFixed(1) + " s"]);
+  if (outcome !== "success") facts.push(["outcome", outcome]);
+  return facts.map(([k, v]) => `<span>${k ? k + " " : ""}<b>${esc(v)}</b></span>`).join("");
+}
+
+// ---- biggest rewriters in window A
+const leaders = () => V.consumers.filter((c) => !PROXY.has(c[1]) && c[2 + T.rw] > 0).sort((p, q) => q[2 + T.rw] - p[2 + T.rw]).slice(0, 9);
+function causeBar(causes) {
+  const total = Object.values(causes).reduce((a, v) => a + v, 0);
+  let x = 0;
+  return `<svg viewBox="0 0 150 10" preserveAspectRatio="none">${CAUSE_ORDER.filter((c) => causes[c]).map((c) => { const w = (causes[c] / total) * 150; const r = `<rect x="${x}" width="${w}" height="10" fill="${CAUSE[c][1]}" stroke="#fbfbf9" stroke-width="0.6"><title>${CAUSE[c][0]}, ${fmt(causes[c])}</title></rect>`; x += w; return r; }).join("")}</svg>`;
+}
+function renderWriters() {
+  if (!V) return;
+  const top = leaders();
+  const unrecorded = top.some((c) => c[11].unrecorded);
+  $("writers").innerHTML = `<h2>Biggest rewriters, ${winLabel(V.a)}</h2>
+    <table><thead><tr><th></th><th></th><th>Rewritten</th><th>Reuse</th></tr></thead><tbody>
+    ${top.map((c) => `<tr data-id="${esc(c[0])}" tabindex="0" class="${c[0] === state.focus ? "sel" : ""}"><td class="name" title="${esc(c[0])}">${nameHtml(c[0], V.titles[c[0]])}</td><td>${causeBar(c[11])}</td><td><b>${fmt(c[2 + T.rw])}</b></td><td>${pct(c[2 + T.read] / inputOf(c.slice(2)))}</td></tr>`).join("")}
+    </tbody></table>
+    ${unrecorded ? `<div class="ckey"><span><i class="swatch" style="background:${CAUSE.unrecorded[1]};outline:1px solid #8b949a"></i>${CAUSE.unrecorded[0]}</span></div>` : ""}`;
+  const pick = (event) => { const id = event.target.closest("tr[data-id]")?.dataset.id; if (id) focusOn(id); };
+  $("writers").onclick = pick;
+  $("writers").onkeydown = (event) => { if (event.key === "Enter") pick(event); };
+}
+
+readHash();
+load();
+</script>
+</body>
+</html>

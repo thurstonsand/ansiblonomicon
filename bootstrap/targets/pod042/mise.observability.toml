@@ -32,6 +32,11 @@ owner = "doppelclaude"
 group = "doppelclaude"
 mode = "0700"
 
+[bootstrap.directories."/mnt/black-box/docker/observability/usage"]
+owner = "doppelclaude"
+group = "doppelclaude"
+mode = "0700"
+
 [bootstrap.files."/etc/ansiblonomicon/observability/compose.yaml"]
 source = "observability/compose.yaml"
 owner = "root"
@@ -62,6 +67,33 @@ owner = "root"
 group = "root"
 mode = "0644"
 
+[bootstrap.files."/etc/ansiblonomicon/observability/usage_index.py"]
+source = "observability/usage_index.py"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/ansiblonomicon/observability/usage.html"]
+source = "observability/usage.html"
+owner = "root"
+group = "root"
+mode = "0644"
+
+# Compose recreates a container only when its definition changes, and a single-file bind mount
+# keeps the file it was created with, so each service's label carries the hash of what it mounts.
+[bootstrap.files."/etc/ansiblonomicon/observability/.env"]
+content = '''
+LOKI_FILES={{ [config_root, "observability/loki.yaml"] | join_path | hash_file(len=16) }}
+ALLOY_FILES={{ [config_root, "observability/config.alloy"] | join_path | hash_file(len=16) }}
+CPA_COLLECTOR_FILES={{ [config_root, "observability/cpa_collector.py"] | join_path | hash_file(len=16) }}
+USAGE_INDEX_FILES={{ [config_root, "observability/usage_index.py"] | join_path | hash_file(len=16) }}-{{ [config_root, "observability/usage.html"] | join_path | hash_file(len=16) }}
+GRAFANA_FILES={{ [config_root, "observability/datasources.yaml"] | join_path | hash_file(len=16) }}
+'''
+template = true
+owner = "root"
+group = "root"
+mode = "0600"
+
 [bootstrap.files."/etc/ansiblonomicon/observability/cpa-management-key"]
 content = '{{ secret(name="cpa_management_key") }}'
 template = true
@@ -72,6 +104,7 @@ mode = "0600"
 [bootstrap.compose.observability]
 project_dir = "/etc/ansiblonomicon/observability"
 files = ["compose.yaml"]
+env_files = [".env"]
 project_name = "observability"
 state = "running"
 sudo = true
@@ -80,8 +113,23 @@ wait = true
 wait_timeout = 180
 remove_orphans = true
 
+# Amp lists thread titles only to its signed-in CLI, so the usage index receives them from here.
+[bootstrap.linux.systemd.units.amp-titles]
+description = "Send Amp thread titles to the usage index"
+exec_start = "%h/code/ansiblonomicon/bootstrap/targets/pod042/observability/amp_titles.py http://127.0.0.1:3031/api/titles"
+working_directory = "~"
+environment = { PATH = "/home/thurstonsand/.local/bin:/usr/local/bin:/usr/bin:/bin" }
+type = "oneshot"
+start = false
+wanted_by = []
+
+[bootstrap.linux.systemd.units.amp-titles-refresh]
+description = "Refresh Amp thread titles for the usage index"
+unit = "dev.mise.amp-titles.service"
+on_calendar = "*:0/15"
+
 [tasks."observability:test"]
-description = "Test usage collection against a disposable HTTP queue"
+description = "Test usage collection and indexing without production sources"
 run = "python3 -m unittest discover -s observability -p 'test_*.py'"
 
 [tasks."observability:smoke"]

@@ -7,6 +7,8 @@ services:
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
+    labels:
+      dev.ansiblonomicon.mounted-files: ${LOKI_FILES:?required}
     volumes:
       - ./loki.yaml:/etc/loki/config.yaml:ro
       - type: bind
@@ -25,6 +27,8 @@ services:
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
+    labels:
+      dev.ansiblonomicon.mounted-files: ${ALLOY_FILES:?required}
     volumes:
       - ./config.alloy:/etc/alloy/config.alloy:ro
       - type: bind
@@ -55,6 +59,8 @@ services:
     read_only: true
     cap_drop: [ALL]
     security_opt: [no-new-privileges:true]
+    labels:
+      dev.ansiblonomicon.mounted-files: ${CPA_COLLECTOR_FILES:?required}
     volumes:
       - ./cpa_collector.py:/app/cpa_collector.py:ro
       - type: bind
@@ -69,6 +75,48 @@ services:
         bind:
           create_host_path: false
     networks: [ingress]
+
+  usage-index:
+    image: python:3.13-alpine
+    user: "3456:3456"
+    init: true
+    command:
+      - python
+      - -B
+      - /app/usage_index.py
+      - --loki=http://loki:3100
+      - --database=/var/lib/usage/index.sqlite3
+      - --page=/app/usage.html
+      - --listen=0.0.0.0:8080
+      - --since=2026-10-01
+      - --timezone=America/New_York
+      # SHA-256 of Inbox Zero's dedicated CLIProxyAPI key; on rotation, add the new one.
+      - --inbox-zero-key-hash=81d13a717ce9067b297422704526f6c3daf0cd566f4626fc84e43716a1f22729
+    restart: unless-stopped
+    read_only: true
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    depends_on: [loki]
+    ports:
+      - "127.0.0.1:${USAGE_PORT:-3031}:8080"
+    labels:
+      dev.ansiblonomicon.mounted-files: ${USAGE_INDEX_FILES:?required}
+    volumes:
+      - ./usage_index.py:/app/usage_index.py:ro
+      - ./usage.html:/app/usage.html:ro
+      - type: bind
+        source: ${OBSERVABILITY_STATE_DIR:-/mnt/black-box/docker/observability}/usage
+        target: /var/lib/usage
+        bind:
+          create_host_path: false
+    tmpfs: [/tmp]
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+    # Caddy serves it at usage.thurstons.house.
+    networks: [telemetry, ingress]
 
   grafana:
     image: grafana/grafana:13.3.0
@@ -90,6 +138,8 @@ services:
       GF_PLUGINS_PREINSTALL_AUTO_UPDATE: "false"
     ports:
       - "127.0.0.1:${GRAFANA_PORT:-3030}:3000"
+    labels:
+      dev.ansiblonomicon.mounted-files: ${GRAFANA_FILES:?required}
     volumes:
       - ./datasources.yaml:/etc/grafana/provisioning/datasources/loki.yaml:ro
       - type: bind
