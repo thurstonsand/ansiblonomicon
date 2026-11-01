@@ -17,6 +17,7 @@ INBOX_ZERO_EMAIL_ENCRYPT_SALT = { provider = "agent", value = "op://agent/7o2mdv
 INBOX_ZERO_INTERNAL_API_KEY = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/internal api key" }
 INBOX_ZERO_API_KEY_SALT = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/api key salt" }
 INBOX_ZERO_CRON_SECRET = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/cron secret" }
+INBOX_ZERO_CLI_PROXY_API_KEY = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/cli proxy api key" }
 INBOX_ZERO_REDIS_HTTP_TOKEN = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/redis http token" }
 INBOX_ZERO_POSTGRES_PASSWORD = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/postgres password" }
 INBOX_ZERO_GOOGLE_CLIENT_ID = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/google client id" }

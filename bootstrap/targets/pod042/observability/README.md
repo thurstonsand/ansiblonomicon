@@ -28,7 +28,9 @@ Both sources use `usage.input` (uncached), `usage.cache_read`, `usage.cache_crea
 
 The bridge source is the HTTP daemon's existing content-free record log, **not every Pi/Claude process on the host**. It includes failures/disconnects, but these often lack final token usage. Nested SDK results overlap response usage; never add the two. This collector preserves the current evidence, not a complete upstream-attempt ledger. Independent late SDK events, Pi-local events, quota sampling, API-price estimates, parent inference, and historical rotated-file backfill are not implemented here.
 
-CPA client-key hashes distinguish applications only if they use different keys. A shared key does not identify Inbox Zero. Give it a dedicated key before claiming application-specific totals. CPA exports a normalized session identifier; it need not be the original Amp thread ID. Preserve unknown attribution rather than guessing from timing.
+CPA client-key hashes distinguish applications only if they use different keys. Inbox Zero uses the dedicated `INBOX_ZERO_CLI_PROXY_API_KEY` secret; historical traffic on the shared key remains unattributed. CPA exports a normalized session identifier; it need not be the original Amp thread ID. Preserve unknown attribution rather than guessing from timing.
+
+The dedicated key lives in the Agent vault's Inbox Zero item, field `cli proxy api key`. The containers capability supplies it as Inbox Zero's `ANTHROPIC_API_KEY`. CPA's application-managed access list must also contain it: read `/v8/management/config/access/api-keys`, then PUT the existing list plus the dedicated key with the returned ETag in `If-Match`. This preserves other clients and reloads CPA without restarting it. Recreating only Inbox Zero's application container picks up a changed key. Do not reuse this key in other applications or introduce a per-user key override in Inbox Zero if its traffic should remain attributable here.
 
 ## Deployment and access
 
@@ -60,6 +62,15 @@ CPA execution events, including failed executions and incomplete accounting:
 ```logql
 {service_name="cli-proxy-api"} | json | event="usage"
 ```
+
+Inbox Zero executions on its dedicated key:
+
+```logql
+{service_name="cli-proxy-api"} | json | event="usage"
+  | client_key_hash="81d13a717ce9067b297422704526f6c3daf0cd566f4626fc84e43716a1f22729"
+```
+
+This is the key's SHA-256 fingerprint, not the credential. On rotation, preserve the old fingerprint for historical queries and add the new one; do not relabel older shared-key traffic as Inbox Zero.
 
 For CPA numeric totals, additionally filter `accounting_quality="complete"`. Always show incomplete/error counts alongside totals. To investigate collection coverage:
 
