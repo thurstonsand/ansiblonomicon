@@ -86,7 +86,8 @@ services:
       - /app/usage_index.py
       - --loki=http://loki:3100
       - --database=/var/lib/usage/index.sqlite3
-      - --page=/app/usage.html
+      - --page=/=/app/usage.html
+      - --page=/alt=/app/ledger.html
       - --listen=0.0.0.0:8080
       - --since=2026-10-01
       - --timezone=America/New_York
@@ -104,6 +105,7 @@ services:
     volumes:
       - ./usage_index.py:/app/usage_index.py:ro
       - ./usage.html:/app/usage.html:ro
+      - ./ledger.html:/app/ledger.html:ro
       - type: bind
         source: ${OBSERVABILITY_STATE_DIR:-/mnt/black-box/docker/observability}/usage
         target: /var/lib/usage

@@ -40,6 +40,7 @@ def main() -> None:
         "test_cpa_collector.py",
         "usage_index.py",
         "usage.html",
+        "ledger.html",
     ):
         shutil.copyfile(source / name, root / name)
     for name in ("loki", "alloy", "cpa", "grafana", "usage", "bridge"):
@@ -266,12 +267,15 @@ def main() -> None:
         release = get_json(usage + "/api/view?a=v:0.14.16")
         assert release["lanes"]["amp"]["a"] == smoke_lane, release
         with urlopen(usage + "/", timeout=10) as response:
-            assert b"Cache usage" in response.read()
+            page = response.read()
+            assert b"Cache usage" in page and b"Ledger" not in page
+        with urlopen(usage + "/alt", timeout=10) as response:
+            assert b"Cache usage \xc2\xb7 Ledger" in response.read()
         print(
             "PASS: restart + rotation retained three bridge records and collected a second CPA execution"
         )
         print(
-            "PASS: usage index rolled up the same tokens from Loki, by day and by release, and served the page"
+            "PASS: usage index rolled up the same tokens from Loki, by day and by release, and served both pages"
         )
         print(
             "PASS: 2,740 bridge cache reads / 260 writes; CPA 3 uncached / 80 read / 17 write / 27 output"

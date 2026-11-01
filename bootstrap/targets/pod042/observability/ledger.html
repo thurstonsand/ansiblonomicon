@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cache usage · Ledger</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400&display=swap">
+<style>
+:root {
+  --ground: #0e1114; --raised: #161b21; --row-sel: #1f262e; --band-a: #1a222b; --rule: #232a31;
+  --ink: #e8ecef; --ink-2: #a3adb7; --ink-3: #6c7782; --dash: #7c8792;
+  font-family: "IBM Plex Sans", system-ui, sans-serif; color: var(--ink); background: var(--ground);
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-size: 13px; line-height: 1.4; font-variant-numeric: tabular-nums; }
+button, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid #fff; outline-offset: 2px; }
+a { color: inherit; }
+svg { display: block; overflow: visible; }
+svg text { font-family: inherit; }
+.id { font-family: "IBM Plex Mono", monospace; font-size: 12px; }
+.page { max-width: 1440px; margin: 0 auto; padding: 28px 32px 40px; display: grid; grid-template-columns: 864px 480px; gap: 32px; align-items: stretch; }
+.left { display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+#grid, #strip { width: 864px; }
+.controls { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; min-height: 28px; }
+.controls .grp { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.controls button { border: 1px solid var(--rule); background: none; border-radius: 999px; padding: 2px 10px; font-size: 12.5px; color: var(--ink-2); cursor: pointer; }
+.controls button[aria-pressed="true"] { background: var(--ink); border-color: var(--ink); color: var(--ground); }
+.controls .presets button { border-color: transparent; }
+.controls .note { border-style: dashed; }
+#status { color: var(--ink-2); font-size: 12.5px; }
+form.note[hidden] { display: none; }
+form.note { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; font-size: 12.5px; }
+form.note input { border: 1px solid var(--rule); border-radius: 6px; padding: 3px 8px; background: var(--raised); color-scheme: dark; }
+form.note input[name="text"] { flex: 1; min-width: 220px; }
+form.note button { border: 1px solid var(--ink); background: var(--ink); color: var(--ground); border-radius: 6px; padding: 3px 10px; cursor: pointer; }
+form.note button[type="button"] { background: none; color: var(--ink); }
+#strip { cursor: crosshair; touch-action: none; user-select: none; }
+.panel { background: var(--raised); border-radius: 14px; padding: 20px; display: flex; flex-direction: column; gap: 18px; min-width: 0; }
+.phead { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; font-size: 15px; font-weight: 600; }
+.phead .sw { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+.phead .tot { font-size: 15px; }
+.key { font-size: 12px; color: var(--ink-2); display: flex; gap: 6px 14px; flex-wrap: wrap; align-items: center; }
+.key svg { width: 10px; height: 10px; }
+.key span { display: inline-flex; gap: 6px; align-items: center; }
+table { width: 100%; border-collapse: collapse; }
+td { padding: 6px 6px; font-size: 12.5px; vertical-align: middle; text-align: right; }
+td:first-child { text-align: left; max-width: 170px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-left: 8px; }
+td.r { color: var(--ink-2); width: 48px; }
+td svg { display: inline-block; width: 110px; height: 8px; }
+tbody tr { cursor: pointer; }
+tbody tr:hover td { background: #1b2128; }
+tr.sel td { background: var(--row-sel); }
+tr.sel td:first-child, tbody tr:hover td:first-child { border-radius: 6px 0 0 6px; }
+tr.sel td:last-child, tbody tr:hover td:last-child { border-radius: 0 6px 6px 0; }
+.more { border: 0; background: none; color: var(--ink-2); cursor: pointer; padding: 6px 8px; font-size: 12.5px; }
+.drill h3 { margin: 0; font-size: 14px; font-weight: 600; }
+.drill p { margin: 6px 0 0; color: var(--ink-2); font-size: 12.5px; }
+.drill > svg { margin-top: 12px; width: 440px; cursor: pointer; }
+.detail { display: flex; flex-wrap: wrap; gap: 3px 16px; font-size: 12px; color: var(--ink-2); margin-top: 10px; padding: 8px 10px; background: var(--ground); border-radius: 8px; }
+.detail:empty { display: none; }
+.detail b { color: var(--ink); font-weight: 500; }
+#grid .cell { cursor: pointer; }
+#grid .hit { cursor: pointer; }
+#grid.hovering circle.b { opacity: 0.35; }
+#grid.hovering circle.b.on { opacity: 1; stroke: #fff; stroke-width: 1.5; }
+@media (max-width: 1100px) {
+  .page { grid-template-columns: 1fr; padding: 16px; }
+  .left { overflow-x: auto; }
+  .panel { display: grid; grid-template-columns: 1fr 1fr; }
+  .panel .phead, .panel .drill { grid-column: 1 / -1; }
+  .drill > svg { width: 100%; }
+}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
+  <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+    <line x1="0" y1="0" x2="0" y2="5" stroke="#6f7a85" stroke-width="1.5"/>
+  </pattern>
+</defs></svg>
+<main class="page">
+  <div class="left">
+    <svg id="grid" viewBox="0 0 864 600" role="img" aria-label="Rewritten tokens by source and cause, one bubble per conversation"></svg>
+    <div class="controls">
+      <span class="grp presets" id="presets"><button data-days="1">1 day</button><button data-days="3">3 days</button><button data-days="7">7 days</button><button data-days="30">30 days</button><span id="status" role="status"></span></span>
+      <span class="grp"><span class="grp" id="models"></span><button class="note" id="addNote">Add note</button></span>
+    </div>
+    <form class="note" id="noteForm" hidden>
+      <input name="text" maxlength="200" required placeholder="What happened" aria-label="Note">
+      <input name="start" type="datetime-local" required aria-label="From">
+      <input name="end" type="datetime-local" required aria-label="To">
+      <button>Save note</button><button type="button" id="cancelNote">Cancel</button>
+    </form>
+    <svg id="strip" viewBox="0 0 864 166" role="img" aria-label="Daily rewrites by cause above, hourly volume by reuse below"></svg>
+  </div>
+  <aside class="panel" id="panel">
+    <div class="phead" id="phead"></div>
+    <div id="idle"></div>
+    <div id="list"></div>
+    <div class="drill" id="drill"></div>
+  </aside>
+</main>
+<script>
+"use strict";
+const $ = (id) => document.getElementById(id);
+const T = { n: 0, unknown: 1, errors: 2, input: 3, read: 4, write: 5, output: 6, rw: 7, cold: 8 };
+const PROXY = new Set(["inbox_zero", "cpa_shared"]);
+const REWRITE = ["new_context", "config", "history_diverged", "previous_request_failed"];
+const SOURCES = [["amp", "Amp threads"], ["opencode", "OpenCode sessions"], ["derived", "Derived"], ["anonymous", "Anonymous"], ["inbox_zero", "Inbox Zero"], ["cpa_shared", "CLIProxyAPI"]];
+const SRC_NAME = Object.fromEntries(SOURCES);
+const COLS = [
+  { k: "new_context", name: ["Runtime", "reopened"], label: "Runtime reopened", color: "#ff5f7e", x: 176, w: 112 },
+  { k: "config", name: ["Configuration", "changed"], label: "Configuration changed", color: "#6f8cff", x: 288, w: 112 },
+  { k: "history_diverged", name: ["History", "diverged"], label: "History diverged", color: "#2ec4a6", x: 400, w: 112 },
+  { k: "previous_request_failed", name: ["Retry after", "failure"], label: "Retry after failure", color: "#f0b44c", x: 512, w: 112 },
+  { k: "unknown", name: ["Cause not", "recorded"], label: "Cause not recorded", color: "url(#hatch)", x: 640, w: 96 },
+  { k: "expected", name: ["New turns,", "first requests"], label: "New turns and first requests", color: "#39434d", x: 752, w: 112 },
+];
+const COL = Object.fromEntries(COLS.map((c) => [c.k, c]));
+const CAUSE_COLOR = { new_context: "#ff5f7e", config: "#6f8cff", history_diverged: "#2ec4a6", previous_request_failed: "#f0b44c", first_request: "#9aa5b1", compatible: "#9aa5b1", unrecorded: "url(#hatch)" };
+const CAUSE_NAME = { new_context: "Runtime reopened", config: "Configuration changed", history_diverged: "History diverged", previous_request_failed: "Retry after failure", first_request: "First request", compatible: "New turns", unrecorded: "Cause not recorded" };
+const REUSE = [[0.5, "#ffffff"], [0.9, "#c3cbd3"], [0.95, "#7d8995"], [0.98, "#46515c"], [1.01, "#2a323a"]];
+const reuseColor = (hit) => REUSE.find(([limit]) => hit < limit)[1];
+
+const state = { a: null, b: null, models: null, focus: null, picking: "a", cause: "all", src: "all", more: false };
+let V = null, VB = null, C = null, selectedRow = null, K = 0, loads = 0;
+
+const fmt = (n) => {
+  if (n == null) return "unknown";
+  const a = Math.abs(n);
+  if (a >= 1e9) return (n / 1e9).toFixed(a >= 1e10 ? 1 : 2) + "B";
+  if (a >= 1e6) return (n / 1e6).toFixed(a >= 1e8 ? 0 : 1) + "M";
+  if (a >= 1e3) return (n / 1e3).toFixed(a >= 1e5 ? 0 : 1) + "k";
+  return String(Math.round(n));
+};
+const pct = (x, d = 1) => (x == null ? "unknown" : (x * 100).toFixed(d) + "%");
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const duration = (s) => s == null ? "first request" : s < 60 ? Math.round(s) + " s" : s < 3600 ? Math.round(s / 60) + " min" : s < 86400 ? (s / 3600).toFixed(1) + " h" : (s / 86400).toFixed(1) + " days";
+const totalIn = (t) => t[T.input] + t[T.read] + t[T.write];
+const modelName = (m) => m === "unknown" ? "Not reported" : !m.startsWith("claude-") ? m : m.replace(/^claude-/, "").replace(/^(\w)/, (x) => x.toUpperCase()).replace(/-(\d+)-(\d+)$/, " $1.$2");
+const addDays = (day, n) => new Date(Date.parse(day + "T00:00Z") + n * 864e5).toISOString().slice(0, 10);
+const dayLabel = (day, opts) => new Date(day + "T12:00Z").toLocaleDateString("en-GB", { timeZone: "UTC", ...opts });
+const fmtDay = (day) => dayLabel(day, { day: "numeric", month: "short" });
+const fmtWin = ([a, b]) => a === b ? fmtDay(a) : `${fmtDay(a)} – ${fmtDay(b)}`;
+const winLabel = (w) => w.version ? "v" + w.version : fmtWin(w.days);
+const nameHtml = (id, title) => title ? esc(title) : `<span class="id">${esc(id)}</span>`;
+const fmtTime = (t) => new Date(t * 1000).toLocaleString("en-GB", { timeZone: V.tz, day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+const svgPoint = (svg, event) => { const p = svg.createSVGPoint(); p.x = event.clientX; p.y = event.clientY; return p.matrixTransform(svg.getScreenCTM().inverse()); };
+const keyIcon = (shape) => `<svg viewBox="0 0 10 10" aria-hidden="true">${shape}</svg>`;
+const lastDay = () => V.calendar[V.calendar.length - 2][0];
+const days = () => V.calendar.slice(0, -1).map(([day]) => day);
+
+// tokens a consumer contributes to a column; CLIProxyAPI writes have no cause, so they count as "not recorded"
+function tokensIn(c, k) {
+  const proxy = PROXY.has(c[1]), causes = c[11];
+  if (k === "expected") return proxy ? 0 : (causes.first_request || 0) + (causes.compatible || 0);
+  if (k === "unknown") return proxy ? c[2 + T.write] : causes.unrecorded || 0;
+  return causes[k] || 0;
+}
+function laneTokens(view, src, k) {
+  const lane = view?.lanes[src];
+  if (!lane?.a) return 0;
+  if (PROXY.has(src)) return k === "unknown" ? lane.a[T.write] : 0;
+  const causes = lane.causes || {};
+  if (k === "expected") return (causes.first_request || 0) + (causes.compatible || 0);
+  if (k === "unknown") return causes.unrecorded || 0;
+  return causes[k] || 0;
+}
+const rewrittenOf = (view, w) => SOURCES.reduce((n, [src]) => n + (PROXY.has(src) ? 0 : view?.lanes[src]?.[w]?.[T.rw] ?? 0), 0);
+
+// ---- state and loading
+function readHash() {
+  const p = new URLSearchParams(location.hash.slice(1));
+  state.a = p.get("a"); state.b = p.get("b"); state.models = p.get("models"); state.focus = p.get("c");
+  const [cause, src] = (p.get("s") || "all:all").split(":");
+  state.cause = cause; state.src = src || "all";
+}
+function writeHash() {
+  const p = new URLSearchParams();
+  p.set("a", state.a); p.set("b", state.b);
+  if (state.models) p.set("models", state.models);
+  if (state.focus) p.set("c", state.focus);
+  p.set("s", `${state.cause}:${state.src}`);
+  history.replaceState(null, "", "#" + p.toString());
+}
+const status = (text) => { $("status").textContent = text; $("presets").querySelectorAll("button").forEach((b) => { b.hidden = !!text; }); };
+
+async function load() {
+  const run = ++loads;
+  const q = new URLSearchParams();
+  for (const key of ["a", "b", "models"]) if (state[key]) q.set(key, state[key]);
+  const response = await fetch("/api/view?" + q);
+  if (run !== loads) return;
+  if (!response.ok) { status(`The view could not load: ${await response.text()}`); return; }
+  V = await response.json(); VB = null;
+  if (V.empty) { status("No usage is indexed yet."); return; }
+  status(state.picking === "b" ? "Drag across the timeline to choose the comparison." : "");
+  state.a = V.a.id; state.b = V.b.id;
+  if (!state.focus || !V.consumers.some((c) => c[0] === state.focus)) state.focus = ranked("all", "all")[0]?.[0] ?? null;
+  writeHash();
+  renderControls(); renderGrid(); renderStrip(); renderPanel();
+  loadConversation();
+  const qb = new URLSearchParams({ a: V.b.id, b: V.b.id });
+  if (state.models) qb.set("models", state.models);
+  const rb = await fetch("/api/view?" + qb);
+  if (run !== loads) return;
+  if (!rb.ok) { status(`The comparison could not load: ${await rb.text()}`); return; }
+  VB = await rb.json(); renderGrid();
+}
+async function loadConversation() {
+  if (!state.focus) { $("drill").innerHTML = ""; return; }
+  const q = new URLSearchParams({ id: state.focus, through: V.a.days[1] });
+  if (state.models) q.set("models", state.models);
+  const response = await fetch("/api/conversation?" + q);
+  if (!response.ok) { status(`The conversation could not load: ${await response.text()}`); return; }
+  C = await response.json(); selectedRow = null;
+  renderDrill();
+}
+function select(cause, src) { state.cause = cause; state.src = src; state.more = false; writeHash(); renderGrid(); renderStrip(); renderPanel(); }
+function focusOn(id) { state.focus = id; writeHash(); renderGrid(); renderList(); loadConversation(); }
+
+// ---- controls
+function renderControls() {
+  const chosen = state.models ? new Set(state.models.split(",")) : null;
+  $("models").innerHTML = V.models.map(([m]) => `<button data-model="${esc(m)}" aria-pressed="${!chosen || chosen.has(m)}">${esc(modelName(m))}</button>`).join("");
+}
+$("presets").addEventListener("click", (event) => {
+  const n = Number(event.target.dataset?.days);
+  if (!n || !V) return;
+  state.a = `${addDays(lastDay(), 1 - n)}..${lastDay()}`; state.b = null; state.picking = "a";
+  load();
+});
+$("models").addEventListener("click", (event) => {
+  const model = event.target.closest("button")?.dataset.model;
+  if (!model) return;
+  const all = V.models.map(([m]) => m);
+  const chosen = new Set(state.models ? state.models.split(",") : all);
+  chosen.has(model) ? chosen.delete(model) : chosen.add(model);
+  if (!chosen.size) return;
+  state.models = chosen.size === all.length ? null : all.filter((m) => chosen.has(m)).join(",");
+  load();
+});
+const localInput = (t) => { const d = new Date(t * 1000); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
+$("addNote").addEventListener("click", () => {
+  const form = $("noteForm"), [from, to] = V.a.span;
+  form.start.value = localInput(from); form.end.value = localInput(to);
+  form.hidden = false; form.text.focus();
+});
+$("cancelNote").addEventListener("click", () => { $("noteForm").hidden = true; });
+$("noteForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = event.target;
+  const response = await fetch("/api/notes", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: form.text.value, start: Date.parse(form.start.value) / 1000, end: Date.parse(form.end.value) / 1000 }) });
+  if (!response.ok) { status(`The note was not saved: ${await response.text()}`); return; }
+  form.reset(); form.hidden = true; load();
+});
+async function deleteNote(id, text) {
+  if (!confirm(`Delete the note "${text}"?`)) return;
+  await fetch(`/api/notes/${id}`, { method: "DELETE" });
+  load();
+}
+
+// ---- the ledger: sources by causes, one bubble per conversation
+function packCell(items) {
+  const placed = [];
+  for (const it of items) {
+    let th = 0, x = 0, y = 0;
+    for (let s = 0; s < 4000; s++) {
+      const rho = 0.6 * th;
+      x = rho * Math.cos(th); y = rho * Math.sin(th);
+      if (!placed.some((p) => (p.x - x) ** 2 + (p.y - y) ** 2 < (p.r + it.r + 0.8) ** 2)) break;
+      th += 2 / Math.max(2, rho);
+    }
+    placed.push({ ...it, x, y });
+  }
+  const ext = (f) => placed.length ? f(...placed.map((p) => p)) : 0;
+  return { placed, w: 2 * ext((...ps) => Math.max(...ps.map((p) => Math.abs(p.x) + p.r))), h: 2 * ext((...ps) => Math.max(...ps.map((p) => Math.abs(p.y) + p.r))) };
+}
+function layoutCells() {
+  const cells = {};
+  let maxSum = 1;
+  for (const [src] of SOURCES) for (const col of COLS) {
+    const items = V.consumers.filter((c) => c[1] === src).map((c) => ({ c, t: tokensIn(c, col.k) })).filter((i) => i.t > 0).sort((p, q) => q.t - p.t);
+    cells[src + ":" + col.k] = { items };
+    maxSum = Math.max(maxSum, items.reduce((n, i) => n + i.t, 0));
+  }
+  let k = (0.6 * Math.PI * 50 * 50) / maxSum;
+  for (let round = 0; round < 4; round++) {
+    let worst = 0;
+    for (const [key, cell] of Object.entries(cells)) {
+      const col = COL[key.split(":")[1]];
+      cell.pack = packCell(cell.items.map((i) => ({ ...i, r: Math.max(1.5, Math.sqrt((k * i.t) / Math.PI)) })));
+      worst = Math.max(worst, cell.pack.w / (col.w - 8));
+    }
+    if (worst <= 1) break;
+    k /= worst * worst;
+  }
+  return { cells, k };
+}
+function renderGrid() {
+  const { cells, k } = layoutCells();
+  K = k;
+  const HEAD = 84, W = 864;
+  let s = "", y = HEAD, hits = "";
+  const aCol = (key) => SOURCES.reduce((n, [src]) => n + laneTokens(V, src, key), 0);
+  const bCol = (key) => VB ? SOURCES.reduce((n, [src]) => n + laneTokens(VB, src, key), 0) : null;
+  const headMax = Math.max(1, ...COLS.flatMap((c) => [aCol(c.k), bCol(c.k) ?? 0]));
+  const hbar = (x, yy, v, color, dashed) => v == null
+    ? `<rect x="${x}" y="${yy}" width="24" height="6" fill="url(#hatch)"><title>Comparison not loaded</title></rect>`
+    : `<rect x="${x}" y="${yy}" width="${Math.max(1.5, (v / headMax) * 58)}" height="6" fill="${dashed ? "none" : color}" stroke="${dashed ? "#7c8792" : color === "url(#hatch)" ? "#8a95a0" : "none"}" stroke-dasharray="${dashed ? "3 2" : ""}"/><text x="${x + Math.max(1.5, (v / headMax) * 58) + 5}" y="${yy + 6}" font-size="11" fill="${dashed ? "#6c7782" : "#a3adb7"}">${fmt(v)}</text>`;
+
+  const rwA = rewrittenOf(V, "a"), rwB = VB ? rewrittenOf(VB, "a") : null;
+  const allSel = state.cause === "all" && state.src === "all";
+  s += `<g class="cell" data-sel="all:all"><rect x="0" y="0" width="168" height="${HEAD - 8}" fill="${allSel ? "#161b21" : "transparent"}" rx="8"/>
+    <text x="8" y="38" font-size="40" font-weight="600" letter-spacing="-0.8" fill="#e8ecef">${fmt(rwA)}</text>
+    <text x="8" y="56" font-size="12.5" fill="#a3adb7">rewritten, ${esc(winLabel(V.a))}</text></g>
+    <g id="pickB" style="cursor:pointer"><title>Click, then drag across the timeline to choose the comparison</title><rect x="0" y="62" width="168" height="18" fill="transparent"/>
+    <line x1="8" x2="20" y1="71" y2="71" stroke="${state.picking === "b" ? "#fff" : "#7c8792"}" stroke-dasharray="3 2"/>
+    <text x="26" y="75" font-size="12" fill="${state.picking === "b" ? "#fff" : "#6c7782"}">${rwB == null ? "…" : fmt(rwB)} ${esc(winLabel(V.b))}</text></g>`;
+  for (const col of COLS) {
+    const sel = state.cause === col.k && state.src === "all";
+    const swatch = col.k === "unknown" ? `<rect x="${col.x + 8}" y="9" width="9" height="9" fill="url(#hatch)" stroke="#8a95a0"/>` : `<circle cx="${col.x + 12.5}" cy="13.5" r="4.5" fill="${col.color}"/>`;
+    s += `<g class="cell" data-sel="${col.k}:all"><rect x="${col.x}" y="0" width="${col.w}" height="${HEAD - 8}" fill="${sel ? "#161b21" : "transparent"}" rx="8"/>${swatch}
+      <text x="${col.x + 22}" y="18" font-size="12" fill="#e8ecef">${col.name[0]}</text><text x="${col.x + 22}" y="33" font-size="12" fill="#e8ecef">${col.name[1]}</text>
+      ${hbar(col.x + 8, 46, aCol(col.k), col.color, false)}${hbar(col.x + 8, 60, bCol(col.k), col.color, true)}</g>`;
+  }
+  const rowMax = Math.max(1, ...SOURCES.flatMap(([src]) => ["a", "b"].map((w) => PROXY.has(src) ? 0 : V.lanes[src]?.[w]?.[T.rw] ?? 0)));
+  for (const [src, name] of SOURCES) {
+    const la = V.lanes[src]?.a, lb = V.lanes[src]?.b, proxy = PROXY.has(src);
+    const unknownLine = (la?.[T.unknown] || lb?.[T.unknown]) ? 18 : 0;
+    const clusterH = Math.max(0, ...COLS.map((c) => cells[src + ":" + c.k].pack.h));
+    const labelH = 20 + 30 + unknownLine + 8;
+    const H = Math.max(56, Math.ceil(clusterH) + 20, labelH);
+    const top = y, mid = y + H / 2, showReuse = H >= 96 && la && !proxy;
+    s += `<line x1="0" x2="${W}" y1="${top}" y2="${top}" stroke="#232a31"/>`;
+    const rowSel = state.src === src && state.cause === "all";
+    s += `<g class="cell" data-sel="all:${src}"><rect x="0" y="${top + 1}" width="168" height="${H - 2}" fill="${rowSel ? "#161b21" : "transparent"}" rx="8"/>
+      <text x="8" y="${top + 22}" font-size="15" font-weight="600" fill="${la || lb ? "#e8ecef" : "#6c7782"}">${name}</text>`;
+    if (proxy) s += `<text x="8" y="${top + 40}" font-size="11.5" fill="#a3adb7">${la ? la[T.n] : 0} requests · ${lb ? lb[T.n] : "—"}</text>`;
+    else {
+      const rb = (v, yy, dashed) => v == null ? `<rect x="8" y="${yy}" width="16" height="6" fill="url(#hatch)"/><text x="30" y="${yy + 6}" font-size="11" fill="#6c7782">—</text>` : `<rect x="8" y="${yy}" width="${Math.max(1.5, (v / rowMax) * 96)}" height="6" fill="${dashed ? "none" : "#e8ecef"}" stroke="${dashed ? "#7c8792" : "none"}" stroke-dasharray="${dashed ? "3 2" : ""}"/><text x="${8 + Math.max(1.5, (v / rowMax) * 96) + 5}" y="${yy + 6}" font-size="11" fill="${dashed ? "#6c7782" : "#a3adb7"}">${fmt(v)}</text>`;
+      s += rb(la ? la[T.rw] : 0, top + 32, false) + rb(lb ? lb[T.rw] : null, top + 44, true);
+    }
+    if (unknownLine) s += `<rect x="8" y="${top + 58}" width="9" height="9" fill="url(#hatch)" stroke="#6f7a85"/><text x="22" y="${top + 66}" font-size="11.5" fill="#a3adb7">${la?.[T.unknown] ?? 0} · ${lb?.[T.unknown] ?? 0} no usage</text>`;
+    if (showReuse && top + 66 + unknownLine + 12 < top + H) s += `<text x="8" y="${top + 66 + unknownLine}" font-size="11.5" fill="#6c7782">reuse ${pct(la[T.read] / totalIn(la))}${lb ? " · " + pct(lb[T.read] / totalIn(lb)) : ""}</text>`;
+    s += `<title>${name}: ${la?.[T.n] ?? 0} requests, ${la?.[T.errors] ?? 0} errors, ${la?.[T.cold] ?? 0} cold reopenings</title></g>`;
+    if (proxy) {
+      const cov = V.coverage.filter(([t]) => t >= V.a.span[0] && t < V.a.span[1]).length;
+      const label = `no cause recorded · ${la?.[T.read] ? "reuse " + pct(la[T.read] / totalIn(la)) : "nothing read back"}${cov ? ` · ${cov} possible gap${cov > 1 ? "s" : ""}` : ""}`;
+      const lw = label.length * 6.1 + 16;
+      s += `<rect x="184" y="${mid - 10}" width="432" height="20" fill="url(#hatch)" opacity="0.8"/><rect x="${400 - lw / 2}" y="${mid - 9}" width="${lw}" height="18" fill="#0e1114" rx="4"/><text x="400" y="${mid + 4}" font-size="11.5" text-anchor="middle" fill="#a3adb7">${label}</text>`;
+    }
+    for (const col of COLS) {
+      const cell = cells[src + ":" + col.k], cx = col.x + col.w / 2, sel = state.cause === col.k && state.src === src;
+      if (proxy && REWRITE.includes(col.k)) continue;
+      s += `<g class="cell" data-sel="${col.k}:${src}"><rect x="${col.x + 2}" y="${top + 2}" width="${col.w - 4}" height="${H - 4}" fill="${sel ? "#161b21" : "transparent"}" rx="8"/></g>`;
+      const bTok = VB ? laneTokens(VB, src, col.k) : 0;
+      if (bTok) {
+        const clip = `clip-${src}-${col.k}`;
+        s += `<clipPath id="${clip}"><rect x="${col.x + 2}" y="${top + 2}" width="${col.w - 4}" height="${H - 4}"/></clipPath><circle cx="${cx}" cy="${mid}" r="${Math.sqrt((k * bTok) / (0.62 * Math.PI))}" fill="none" stroke="#7c8792" stroke-dasharray="3 2" clip-path="url(#${clip})" pointer-events="none"><title>${winLabel(V.b)}: ${fmt(bTok)}</title></circle>`;
+      }
+      const fill = col.k === "expected" ? "#39434d" : col.color;
+      for (const p of cell.pack.placed) {
+        const focused = p.c[0] === state.focus;
+        s += `<circle class="b" data-id="${esc(p.c[0])}" cx="${(cx + p.x).toFixed(1)}" cy="${(mid + p.y).toFixed(1)}" r="${p.r.toFixed(2)}" fill="${fill}" stroke="${focused ? "#fff" : col.k === "unknown" ? "#8a95a0" : "#0e1114"}" stroke-width="${focused ? 2 : 1}" pointer-events="none"/>`;
+      }
+      for (const p of [...cell.pack.placed].sort((a, b) => b.r - a.r)) {
+        const t = p.c.slice(2, 11), title = V.titles[p.c[0]] ?? p.c[0];
+        hits += `<circle class="hit" data-id="${esc(p.c[0])}" data-sel="${col.k}:${src}" cx="${(cx + p.x).toFixed(1)}" cy="${(mid + p.y).toFixed(1)}" r="${Math.max(p.r, 5).toFixed(1)}" fill="transparent"><title>${esc(title)}\n${col.label}: ${fmt(p.t)}\n${t[T.n]} requests, reuse ${pct(t[T.read] / totalIn(t))}</title></circle>`;
+      }
+    }
+    y += H;
+  }
+  s += `<line x1="0" x2="${W}" y1="${y}" y2="${y}" stroke="#232a31"/>`;
+  const ua = V.lanes.unlabelled?.a?.[T.n] ?? 0, ub = V.lanes.unlabelled?.b?.[T.n] ?? 0;
+  if (ua || ub) { s += `<rect x="8" y="${y + 11}" width="9" height="9" fill="url(#hatch)" stroke="#6f7a85"/><text x="22" y="${y + 19}" font-size="11.5" fill="#a3adb7">${ua} failed request${ua === 1 ? "" : "s"} carried no source · ${ub}</text>`; y += 28; }
+  const svg = $("grid");
+  svg.setAttribute("viewBox", `0 0 ${W} ${y + 4}`);
+  svg.style.height = `${y + 4}px`;
+  svg.innerHTML = s + hits;
+  svg.onclick = (event) => {
+    if (event.target.closest("#pickB")) { state.picking = state.picking === "b" ? "a" : "b"; status(state.picking === "b" ? "Drag across the timeline to choose the comparison." : ""); renderGrid(); return; }
+    const hit = event.target.closest(".hit");
+    const sel = (hit || event.target.closest(".cell"))?.dataset.sel;
+    if (!sel) return;
+    const [cause, src] = sel.split(":");
+    select(cause, src);
+    if (hit) focusOn(hit.dataset.id);
+  };
+  svg.onmouseover = (event) => {
+    const id = event.target.closest(".hit")?.dataset.id;
+    svg.classList.toggle("hovering", !!id);
+    svg.querySelectorAll("circle.b.on").forEach((c) => c.classList.remove("on"));
+    if (id) svg.querySelectorAll(`circle.b[data-id="${CSS.escape(id)}"]`).forEach((c) => c.classList.add("on"));
+  };
+  svg.onmouseleave = () => svg.classList.remove("hovering");
+}
+
+// ---- time strip: daily rewrites by cause above the baseline, hourly volume by reuse below
+function renderStrip() {
+  const svg = $("strip"), W = 864, L = 0, top = 22, base = 108, low = 130;
+  const t0 = V.calendar[0][1], t1 = V.calendar[V.calendar.length - 1][1];
+  const x = (t) => L + ((Math.min(Math.max(t, t0), t1) - t0) / (t1 - t0)) * (W - 2 * L);
+  const all = days(), weekly = all.length > 62;
+  const dayStart = Object.fromEntries(V.calendar);
+  const bucketOf = (day) => weekly ? addDays(day, -((new Date(day + "T12:00Z").getUTCDay() + 6) % 7)) : day;
+  const sums = new Map();
+  for (const day of all) if (!sums.has(bucketOf(day))) sums.set(bucketOf(day), { causes: {}, n: 0, unknown: 0, src: 0, start: dayStart[day] });
+  for (const [day, cause, tok] of V.daily_causes) { const b = sums.get(bucketOf(day)); if (b) b.causes[cause] = (b.causes[cause] || 0) + tok; }
+  for (const [day, src, , rewritten, n, unknown] of V.daily) { const b = sums.get(bucketOf(day)); if (!b || PROXY.has(src)) continue; b.n += n; b.unknown += unknown; if (src === state.src) b.src += rewritten; }
+  const total = (b) => REWRITE.reduce((a, k) => a + (b.causes[k] || 0), 0);
+  const max = Math.max(1, ...[...sums.values()].map(total));
+  const yv = (v) => base - (v / max) * (base - top);
+  let s = "", labels = "";
+  const [a0, a1] = V.a.span, [b0, b1] = V.b.span;
+  s += `<rect x="${x(a0)}" y="${top - 18}" width="${Math.max(3, x(a1) - x(a0))}" height="${low - top + 18}" fill="#1a222b" rx="4"/>`;
+  if (b1 > t0) s += `<rect x="${x(b0)}" y="${top - 18}" width="${Math.max(3, x(b1) - x(b0))}" height="${low - top + 18}" fill="none" stroke="#7c8792" stroke-dasharray="4 3" rx="4"/>`;
+  for (const [id, start, end, text] of V.notes) {
+    if (end < t0 || start > t1) continue;
+    const nx = x(start), nw = Math.max(3, x(end) - nx);
+    s += `<g class="note" data-note="${id}" style="cursor:pointer"><title>${esc(text)}</title><rect x="${nx}" y="${top - 18}" width="${nw}" height="${low - top + 18}" fill="#2a2616" opacity="0.9"/></g>`;
+    if (nw > 60) labels += `<text pointer-events="none" x="${nx + 5}" y="${top - 6}" font-size="11" fill="#d9c78f" font-style="italic">${esc(text.length > nw / 6 ? text.slice(0, Math.floor(nw / 6) - 1) + "…" : text)}</text>`;
+  }
+  const step = 10 ** Math.floor(Math.log10(max / 2)), tick = [1, 2, 5, 10].map((m) => m * step).find((v) => max / v <= 2.5);
+  s += `<line x1="0" x2="${W}" y1="${yv(tick)}" y2="${yv(tick)}" stroke="#232a31" stroke-dasharray="3 3"/><text x="2" y="${yv(tick) - 4}" font-size="11" fill="#6c7782">${fmt(tick)}</text>`;
+  const keys = [...sums.keys()];
+  keys.forEach((key, i) => {
+    const b = sums.get(key), xs = x(b.start), xe = i + 1 < keys.length ? x(sums.get(keys[i + 1]).start) : x(t1);
+    const pad = Math.min(5, (xe - xs) * 0.18), bx = xs + pad, bw = xe - xs - 2 * pad;
+    if (b.n && b.unknown === b.n) { s += `<rect x="${bx}" y="${base - 12}" width="${bw}" height="12" fill="url(#hatch)"><title>${fmtDay(key)}: ${b.n} requests, usage not reported</title></rect>`; return; }
+    let yy = base;
+    for (const k of REWRITE) {
+      const h = ((b.causes[k] || 0) / max) * (base - top);
+      if (!h) continue;
+      const dim = state.cause !== "all" && state.cause !== k;
+      s += `<rect x="${bx}" y="${yy - h}" width="${bw}" height="${h}" fill="${COL[k].color}" opacity="${dim ? 0.25 : 1}"><title>${fmtDay(key)}: ${COL[k].label}, ${fmt(b.causes[k])}</title></rect>`;
+      yy -= h;
+    }
+  });
+  if (state.src !== "all" && !PROXY.has(state.src)) {
+    let path = "";
+    keys.forEach((key, i) => { const b = sums.get(key), xs = x(b.start), xe = i + 1 < keys.length ? x(sums.get(keys[i + 1]).start) : x(t1); path += `${i ? "L" : "M"}${xs.toFixed(1)},${yv(b.src).toFixed(1)}L${xe.toFixed(1)},${yv(b.src).toFixed(1)}`; });
+    s += `<path d="${path}" fill="none" stroke="#e8ecef" stroke-width="1.25"><title>${SRC_NAME[state.src]}, rewritten per day</title></path>`;
+  }
+  const rows = V.timeline.rows, unit = V.timeline.unit, maxIn = Math.max(1, ...rows.map((r) => r[3]));
+  rows.forEach(([t, n, unknown, input, read], i) => {
+    const w = Math.max(1, x(unit === "hour" ? t + 3600 : rows[i + 1]?.[0] ?? t + 86400) - x(t) - 0.4);
+    if (!input) { if (n) s += `<rect x="${x(t)}" y="${base + 1}" width="${Math.max(2, w)}" height="${low - base - 1}" fill="url(#hatch)"><title>${fmtTime(t)}: ${n} requests, usage not reported</title></rect>`; return; }
+    const h = Math.max(1.5, Math.sqrt(input / maxIn) * (low - base - 2));
+    s += `<rect x="${x(t)}" y="${base + 1}" width="${w}" height="${h}" fill="${reuseColor(read / input)}"><title>${fmtTime(t)}: reuse ${pct(read / input)}${unknown ? `, ${unknown} without usage` : ""}</title></rect>`;
+    if (unknown) s += `<rect x="${x(t)}" y="${low - 3}" width="${Math.max(2, w)}" height="3" fill="url(#hatch)"/>`;
+  });
+  s += labels;
+  for (const [version, first] of V.releases) {
+    if (first < t0 || first > t1) continue;
+    s += `<g class="release" data-version="${esc(version)}" style="cursor:pointer"><title>v${esc(version)}: compare with the release before it</title><line x1="${x(first)}" x2="${x(first)}" y1="${top - 18}" y2="${low}" stroke="#a3adb7" stroke-dasharray="2 2"/><text x="${x(first) + 4}" y="${top - 6}" font-size="11" fill="#a3adb7">v${esc(version)}</text></g>`;
+  }
+  for (const [t, kind] of V.coverage) s += `<path d="M${x(t)} ${low + 2} l-4 7 h8 z" fill="none" stroke="#a3adb7"><title>${fmtTime(t)}: CLIProxyAPI collector reported a ${kind === "gap" ? "gap" : "possible gap"}</title></path>`;
+  s += `<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="#a3adb7"/>`;
+  const monthly = all.length > 31;
+  for (const [day, t] of V.calendar.slice(0, -1)) {
+    if (monthly && !day.endsWith("-01") && day !== all[0]) continue;
+    s += `<text x="${x(t) + 3}" y="${low + 20}" font-size="11" fill="#6c7782">${monthly ? dayLabel(day, { month: "short", year: "numeric" }) : dayLabel(day, { weekday: "short", day: "numeric" })}</text>`;
+  }
+  s += `<g transform="translate(${W - 128},${low + 26})"><text font-size="11" fill="#6c7782" y="9">reuse</text>${[...REUSE].reverse().map(([, c], i) => `<rect x="${36 + i * 18}" y="1" width="16" height="8" fill="${c}"/>`).join("")}</g>`;
+  s += `<rect id="dragRect" y="${top - 18}" height="${low - top + 18}" fill="rgba(255,255,255,0.08)" stroke="#e8ecef" width="0" visibility="hidden"/>`;
+  svg.style.height = "166px";
+  svg.innerHTML = s;
+  svg.onpointerdown = (event) => {
+    if (event.target.closest(".note, .release")) return;
+    const startX = svgPoint(svg, event).x, rect = $("dragRect");
+    svg.setPointerCapture(event.pointerId);
+    svg.onpointermove = (move) => { const nowX = svgPoint(svg, move).x; rect.setAttribute("x", Math.min(startX, nowX)); rect.setAttribute("width", Math.abs(nowX - startX)); rect.setAttribute("visibility", "visible"); };
+    svg.onpointerup = (up) => {
+      svg.onpointermove = svg.onpointerup = null;
+      const endX = svgPoint(svg, up).x;
+      const toDay = (px) => { const t = t0 + ((px - L) / (W - 2 * L)) * (t1 - t0); let found = all[0]; for (const [day, start] of V.calendar.slice(0, -1)) if (start <= t) found = day; return found; };
+      const [lo, hi] = [toDay(Math.min(startX, endX)), toDay(Math.max(startX, endX))];
+      if (state.picking === "b") { state.b = `${lo}..${hi}`; state.picking = "a"; } else { state.a = `${lo}..${hi}`; state.b = null; }
+      load();
+    };
+  };
+  svg.onclick = (event) => {
+    const release = event.target.closest(".release");
+    if (release) { state.a = "v:" + release.dataset.version; state.b = null; state.picking = "a"; load(); return; }
+    const note = event.target.closest(".note");
+    if (!note) return;
+    const found = V.notes.find(([id]) => String(id) === note.dataset.note);
+    deleteNote(found[0], found[3]);
+  };
+}
+
+// ---- panel: the selection, its conversations, then one conversation
+function selTokens(c, cause, src) {
+  if (src !== "all" && c[1] !== src) return 0;
+  if (cause === "all") return PROXY.has(c[1]) ? (src === c[1] ? c[2 + T.write] : 0) : c[2 + T.rw];
+  return tokensIn(c, cause);
+}
+const ranked = (cause, src) => V.consumers.map((c) => [c[0], selTokens(c, cause, src), c]).filter(([, t]) => t > 0).sort((p, q) => q[1] - p[1]);
+function renderPanel() {
+  const list = ranked(state.cause, state.src), total = list.reduce((n, [, t]) => n + t, 0);
+  const causeName = state.cause === "all" ? (state.src === "all" ? "All rewrites" : "all causes") : COL[state.cause].label;
+  const title = state.src === "all" ? (state.cause === "all" ? causeName : `${causeName}, all sources`) : `${SRC_NAME[state.src]}${state.cause === "all" ? ", all causes" : ""}`;
+  const head = state.src !== "all" && state.cause !== "all" ? `${COL[state.cause].label}, ${SRC_NAME[state.src]}` : title;
+  const color = state.cause === "all" ? "#e8ecef" : state.cause === "unknown" ? "repeating-linear-gradient(45deg, #6f7a85 0 1.5px, transparent 1.5px 3.5px)" : state.cause === "expected" ? "#39434d" : COL[state.cause].color;
+  $("phead").innerHTML = `<span><i class="sw" style="background:${color}${state.cause === "unknown" ? ";border-radius:0;outline:1px solid #8a95a0" : ""}"></i>${esc(head)}</span><span class="tot">${fmt(total)}</span>`;
+  renderIdle(); renderList(list);
+  if (C) renderDrill();
+}
+function renderIdle() {
+  if (state.cause !== "all" && state.cause !== "new_context") { $("idle").innerHTML = ""; return; }
+  const W = 440, L = 4, mid = 52, lo = 0, hi = Math.log10(60 * 24 * 7), bins = 80;
+  const pick = (rows) => rows.filter(([, src]) => state.src === "all" || src === state.src);
+  const ga = pick(V.gaps.a), gb = pick(V.gaps.b);
+  const bin = (g) => Math.floor(((Math.log10(Math.max(g, 60) / 60) - lo) / (hi - lo)) * bins);
+  const bx = (i) => L + ((i + 0.5) / bins) * (W - 2 * L), xm = (min) => L + ((Math.log10(min) - lo) / (hi - lo)) * (W - 2 * L);
+  const stack = (rows) => { const m = new Map(); for (const [g] of rows) { const i = bin(g); if (i < bins) m.set(i, (m.get(i) || 0) + 1); } return m; };
+  const sa = stack(ga), sb = stack(gb), tallest = Math.max(1, ...sa.values(), ...sb.values());
+  const step = Math.min(5, 34 / tallest), r = Math.max(0.8, Math.min(2.2, step * 0.45));
+  let s = `<line x1="${xm(60)}" x2="${xm(60)}" y1="0" y2="96" stroke="#ff5f7e" stroke-opacity="0.6"/><text x="${xm(60) - 5}" y="10" font-size="11" text-anchor="end" fill="#ff5f7e">runtime and cache expire</text>`;
+  for (const [i, n] of sa) for (let k = 0; k < n; k++) s += `<circle cx="${bx(i)}" cy="${mid - 5 - k * step}" r="${r}" fill="#e8ecef"/>`;
+  for (const [i, n] of sb) for (let k = 0; k < n; k++) s += `<circle cx="${bx(i)}" cy="${mid + 25 + k * step}" r="${r}" fill="none" stroke="#7c8792"/>`;
+  const edge = (i) => Math.round(10 ** (lo + (i / bins) * (hi - lo)));
+  const pa = [...sa].filter(([i]) => bx(i) > xm(70)).sort((p, q) => q[1] - p[1])[0];
+  if (pa) s += `<text x="${bx(pa[0])}" y="${mid - 12 - (pa[1] - 1) * step}" font-size="11" text-anchor="middle" fill="#e8ecef">${edge(pa[0])}–${edge(pa[0] + 1)} min</text>`;
+  for (const [m, l] of [[1, "1 min"], [15, "15"], [60, "1 h"], [240, "4 h"], [1440, "1 day"], [10080, "7 d"]]) s += `<text x="${m === 60 ? xm(m) + 4 : xm(m)}" y="${mid + 13}" font-size="11" text-anchor="${m === 10080 ? "end" : m === 1 || m === 60 ? "start" : "middle"}" fill="#6c7782">${l}</text>`;
+  s += `<line x1="0" x2="${W}" y1="${mid}" y2="${mid}" stroke="#a3adb7"/>`;
+  const over = [...ga, ...gb].filter(([g]) => bin(g) >= bins).length;
+  $("idle").innerHTML = `<svg viewBox="0 0 ${W} 96" width="100%" role="img" aria-label="Idle time before each cold reopening">${s}</svg>
+    <div class="key" style="margin-top:6px"><span>${keyIcon('<circle cx="5" cy="5" r="3" fill="#e8ecef"/>')}${ga.length} cold reopenings</span><span>${keyIcon('<circle cx="5" cy="5" r="3" fill="none" stroke="#7c8792"/>')}${gb.length}, ${esc(winLabel(V.b))}</span>${over ? `<span>${over} after more than a week not shown</span>` : ""}</div>`;
+}
+function causeBar(causes) {
+  const order = [...REWRITE, "unrecorded", "first_request", "compatible"];
+  const total = Object.values(causes).reduce((a, v) => a + v, 0) || 1;
+  const inSel = (c) => state.cause === "all" ? REWRITE.includes(c) : state.cause === "expected" ? c === "first_request" || c === "compatible" : state.cause === "unknown" ? c === "unrecorded" : c === state.cause;
+  let x = 0;
+  return `<svg viewBox="0 0 110 8" preserveAspectRatio="none">${order.filter((c) => causes[c]).map((c) => { const w = (causes[c] / total) * 110; const r = `<rect x="${x}" width="${w}" height="8" fill="${c === "first_request" || c === "compatible" ? "#39434d" : CAUSE_COLOR[c]}" opacity="${inSel(c) ? 1 : 0.3}"><title>${CAUSE_NAME[c]}, ${fmt(causes[c])}</title></rect>`; x += w; return r; }).join("")}</svg>`;
+}
+function renderList(list = ranked(state.cause, state.src)) {
+  const shown = state.more ? list : list.slice(0, 6);
+  $("list").innerHTML = `<table><tbody>${shown.map(([id, t, c]) => {
+    const tt = c.slice(2, 11), bar = PROXY.has(c[1]) ? `<svg viewBox="0 0 110 8"><rect width="110" height="8" fill="url(#hatch)"/></svg>` : causeBar(c[11]);
+    return `<tr data-id="${esc(id)}" tabindex="0" class="${id === state.focus ? "sel" : ""}"><td title="${esc(id)}">${nameHtml(id, V.titles[id])}</td><td>${bar}</td><td><b>${fmt(t)}</b></td><td class="r">${pct(tt[T.read] / totalIn(tt))}</td></tr>`;
+  }).join("")}</tbody></table>${!state.more && list.length > 6 ? `<button class="more" id="more">+ ${list.length - 6} more</button>` : ""}${list.length ? "" : `<p style="color:var(--ink-3);margin:0">Nothing in this selection.</p>`}`;
+  const pick = (event) => { const id = event.target.closest("tr[data-id]")?.dataset.id; if (id) focusOn(id); };
+  $("list").onclick = (event) => { if (event.target.id === "more") { state.more = true; renderList(); return; } pick(event); };
+  $("list").onkeydown = (event) => { if (event.key === "Enter") pick(event); };
+}
+const closeShape = (why, cx, cy, fill) => /idle/.test(why) ? `<circle cx="${cx}" cy="${cy}" r="2.8" fill="${fill}"/>`
+  : /shutdown|restart/.test(why) ? `<rect x="${cx - 2.6}" y="${cy - 2.6}" width="5.2" height="5.2" fill="${fill}"/>`
+  : /eviction/.test(why) ? `<path d="M${cx} ${cy - 3} l3 5.6 h-6 z" fill="${fill}"/>`
+  : `<circle cx="${cx}" cy="${cy}" r="2.6" fill="none" stroke="${fill}" stroke-width="1.2"/>`;
+function renderDrill() {
+  // the chart takes whatever height the left column leaves, so the panel never ends in an empty band
+  const wide = matchMedia("(min-width: 1101px)").matches;
+  const room = $("strip").getBoundingClientRect().bottom - $("drill").getBoundingClientRect().top - 20 - 120;
+  const rows = C.rows, W = 440, base = wide ? Math.min(460, Math.max(150, Math.floor(room))) : 170, top = 14;
+  const nb = Math.min(rows.length, W), per = rows.length / Math.max(nb, 1), bw = W / Math.max(nb, 1);
+  const bins = Array.from({ length: nb }, (_, i) => { const group = rows.slice(Math.floor(i * per), Math.max(Math.floor((i + 1) * per), Math.floor(i * per) + 1)); return group.reduce((best, r) => (r[5] ?? -1) > (best[5] ?? -1) ? r : best, group[0]); });
+  const ctx = (r) => r[3] == null ? 0 : r[3] + r[4] + r[5];
+  const maxC = Math.max(1, ...rows.map(ctx)), yh = (v) => (v / maxC) * (base - top);
+  let s = "";
+  const ia = bins.findIndex((r) => r[0] >= V.a.span[0]);
+  if (ia >= 0) s += `<rect x="${ia * bw}" y="0" width="${W - ia * bw}" height="${base}" fill="#1a222b"/>`;
+  for (const [, start, end, text] of V.notes) {
+    const i0 = bins.findIndex((r) => r[0] >= start), i1 = bins.findLastIndex((r) => r[0] <= end);
+    if (i0 >= 0 && i1 >= i0) s += `<rect x="${i0 * bw}" y="0" width="${(i1 - i0 + 1) * bw}" height="${base}" fill="#2a2616"/><text x="${i0 * bw + 4}" y="11" font-size="11" fill="#d9c78f" font-style="italic">${esc(text)}</text>`;
+  }
+  bins.forEach((r, i) => {
+    const x = i * bw, w = Math.max(0.8, bw - (bw > 2 ? 0.4 : 0));
+    if (r[3] == null) { s += `<rect x="${x}" y="${base - 10}" width="${w}" height="10" fill="url(#hatch)"/>`; return; }
+    const hr = yh(r[4]), hw = Math.max(0.6, yh(r[5] + r[3]));
+    s += `<rect x="${x}" y="${base - hr}" width="${w}" height="${hr}" fill="#34404b"/><rect x="${x}" y="${base - hr - hw}" width="${w}" height="${hw}" fill="${r[1] ? CAUSE_COLOR[r[1]] : "url(#hatch)"}"/>`;
+    if (r[1] === "new_context" && r[7] === 1) s += closeShape(r[9] || "", x + bw / 2, base + 9, "#ff5f7e");
+  });
+  for (const [version, first] of V.releases) {
+    const i = bins.findIndex((r) => r[0] >= first);
+    if (i > 0) s += `<line x1="${i * bw}" x2="${i * bw}" y1="0" y2="${base}" stroke="#a3adb7" stroke-dasharray="2 2"/><text x="${i * bw + 3}" y="24" font-size="11" fill="#a3adb7">v${esc(version)}</text>`;
+  }
+  let lastDay = "", labelled = 0;
+  const dayCount = new Set(rows.map((r) => new Date(r[0] * 1000).toLocaleDateString("en-CA", { timeZone: V.tz }))).size, every = Math.ceil(dayCount / 6);
+  bins.forEach((r, i) => { const day = new Date(r[0] * 1000).toLocaleDateString("en-CA", { timeZone: V.tz }); if (day !== lastDay) { if (labelled++ % every === 0 && i * bw < W - 40) s += `<text x="${i * bw + 2}" y="${base + 30}" font-size="11" fill="#6c7782">${dayLabel(day, { weekday: "short", day: "numeric" })}</text>`; lastDay = day; } });
+  if (selectedRow != null) s += `<line x1="${selectedRow * bw + bw / 2}" x2="${selectedRow * bw + bw / 2}" y1="0" y2="${base}" stroke="#fff" stroke-width="1.25"/>`;
+  s += `<line x1="0" x2="${W}" y1="${base}" y2="${base}" stroke="#a3adb7"/>`;
+  const known = rows.filter((r) => r[3] != null);
+  const written = known.reduce((a, r) => a + r[5], 0), rewritten = known.filter((r) => REWRITE.includes(r[1])).reduce((a, r) => a + r[5], 0);
+  const name = nameHtml(C.id, C.title);
+  const link = C.id.startsWith("T-") ? `<a href="https://ampcode.com/threads/${encodeURIComponent(C.id)}" target="_blank" rel="noreferrer">${name}</a>` : name;
+  const shapes = new Set(rows.filter((r) => r[1] === "new_context" && r[7] === 1).map((r) => /idle/.test(r[9] || "") ? "idle" : /shutdown|restart/.test(r[9] || "") ? "shutdown" : /eviction/.test(r[9] || "") ? "eviction" : ""));
+  const shapeKey = [["idle", "idle expiry"], ["shutdown", "shutdown or restart"], ["eviction", "eviction"], ["", "no close recorded"]].filter(([k]) => shapes.has(k)).map(([k, l]) => `<span>${keyIcon(closeShape(k, 5, 5, "#ff5f7e"))}${l}</span>`).join("");
+  $("drill").innerHTML = `<h3>${link}</h3>
+    <p>${C.limited ? "Last " : ""}${rows.length.toLocaleString()} requests through ${fmtDay(V.a.days[1])}.${PROXY.has(C.id) ? "" : ` ${fmt(rewritten)} of ${fmt(written)} written was rewritten.`}</p>
+    <svg id="requests" viewBox="0 0 ${W} ${base + 36}" role="img" aria-label="Input per request, in request order">${s}</svg>
+    ${shapeKey ? `<div class="key" style="margin-top:4px"><span style="color:var(--ink-3)">reopened after</span>${shapeKey}</div>` : ""}
+    <div class="detail">${selectedRow == null ? "" : detail(bins[selectedRow])}</div>`;
+  $("requests").onclick = (event) => { const i = Math.floor(svgPoint($("requests"), event).x / bw); if (i >= 0 && i < bins.length) { selectedRow = i; renderDrill(); } };
+}
+function detail(r) {
+  const [t, cause, outcome, input, read, write, output, cold, gapSeconds, closed, model, extra] = r;
+  const facts = [["", fmtTime(t)], ["", modelName(model)]];
+  if (cause) facts.push(["", CAUSE_NAME[cause]]);
+  if (input == null) facts.push(["usage", "not reported"]);
+  else facts.push(["read", read.toLocaleString()], ["written", write.toLocaleString()], ["uncached", input.toLocaleString()], ["output", output.toLocaleString()]);
+  if (cold != null) facts.push(["", cold ? "went cold" : "stayed warm"]);
+  if (gapSeconds != null) facts.push(["idle", duration(gapSeconds)]);
+  if (closed) facts.push(["closed by", closed.replace(/^HTTP /, "")]);
+  for (const [key, label] of [["sync", "sync"], ["lane", "lane"], ["context", "rebuilt from"], ["forced", "forced by"], ["messages", "messages"], ["status", "HTTP"], ["error", "error"]]) if (extra[key] != null) facts.push([label, String(extra[key])]);
+  if (extra.changed) facts.push(["changed", extra.changed.join(", ")]);
+  if (outcome !== "success") facts.push(["outcome", outcome]);
+  return facts.map(([k, v]) => `<span>${k ? k + " " : ""}<b>${esc(v)}</b></span>`).join("");
+}
+
+readHash();
+load();
+</script>
+</body>
+</html>

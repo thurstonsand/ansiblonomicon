@@ -79,6 +79,12 @@ owner = "root"
 group = "root"
 mode = "0644"
 
+[bootstrap.files."/etc/ansiblonomicon/observability/ledger.html"]
+source = "observability/ledger.html"
+owner = "root"
+group = "root"
+mode = "0644"
+
 # Compose recreates a container only when its definition changes, and a single-file bind mount
 # keeps the file it was created with, so each service's label carries the hash of what it mounts.
 [bootstrap.files."/etc/ansiblonomicon/observability/.env"]
@@ -86,7 +92,7 @@ content = '''
 LOKI_FILES={{ [config_root, "observability/loki.yaml"] | join_path | hash_file(len=16) }}
 ALLOY_FILES={{ [config_root, "observability/config.alloy"] | join_path | hash_file(len=16) }}
 CPA_COLLECTOR_FILES={{ [config_root, "observability/cpa_collector.py"] | join_path | hash_file(len=16) }}
-USAGE_INDEX_FILES={{ [config_root, "observability/usage_index.py"] | join_path | hash_file(len=16) }}-{{ [config_root, "observability/usage.html"] | join_path | hash_file(len=16) }}
+USAGE_INDEX_FILES={{ [config_root, "observability/usage_index.py"] | join_path | hash_file(len=16) }}-{{ [config_root, "observability/usage.html"] | join_path | hash_file(len=16) }}-{{ [config_root, "observability/ledger.html"] | join_path | hash_file(len=16) }}
 GRAFANA_FILES={{ [config_root, "observability/datasources.yaml"] | join_path | hash_file(len=16) }}
 '''
 template = true

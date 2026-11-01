@@ -834,11 +834,15 @@ def index_forever(index: Index, loki: Loki, since: int, interval: float) -> None
 
 class Server(ThreadingHTTPServer):
     def __init__(
-        self, address: tuple[str, int], database: Path, page: Path, zone: ZoneInfo
+        self,
+        address: tuple[str, int],
+        database: Path,
+        pages: dict[str, Path],
+        zone: ZoneInfo,
     ) -> None:
         super().__init__(address, Handler)
         self.database = database
-        self.page = page
+        self.pages = pages
         self.zone = zone
 
 
@@ -852,8 +856,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         url = urlsplit(self.path)
         query = {key: values[-1] for key, values in parse_qs(url.query).items()}
-        if url.path == "/":
-            self.send(200, "text/html; charset=utf-8", self.app().page.read_bytes())
+        page = self.app().pages.get(url.path)
+        if page:
+            self.send(200, "text/html; charset=utf-8", page.read_bytes())
             return
         self.api(url.path, query)
 
@@ -930,11 +935,25 @@ class Handler(BaseHTTPRequestHandler):
         pass
 
 
+def parse_page(value: str) -> tuple[str, Path]:
+    route, separator, file = value.partition("=")
+    if not separator or not route.startswith("/"):
+        raise argparse.ArgumentTypeError(f"expected /ROUTE=FILE, got {value!r}")
+    return route, Path(file)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--loki", required=True)
     parser.add_argument("--database", type=Path, required=True)
-    parser.add_argument("--page", type=Path, required=True)
+    parser.add_argument(
+        "--page",
+        type=parse_page,
+        action="append",
+        required=True,
+        metavar="ROUTE=FILE",
+        help="serve FILE at ROUTE; repeat for each page",
+    )
     parser.add_argument("--listen", required=True, help="HOST:PORT")
     parser.add_argument("--since", type=date.fromisoformat, required=True)
     parser.add_argument("--timezone", type=ZoneInfo, required=True)
@@ -954,7 +973,8 @@ def main() -> None:
         daemon=True,
     ).start()
     host, port = cast(str, args.listen).rsplit(":", 1)
-    Server((host, int(port)), args.database, args.page, zone).serve_forever()
+    pages = dict(cast(list[tuple[str, Path]], args.page))
+    Server((host, int(port)), args.database, pages, zone).serve_forever()
 
 
 if __name__ == "__main__":
