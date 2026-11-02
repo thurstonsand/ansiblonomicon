@@ -37,6 +37,24 @@ if [[ ${#PACKAGE_DIRS[@]} -eq 0 ]]; then
 fi
 
 for dir in "${PACKAGE_DIRS[@]}"; do
+  # The work mirror rewrites every resolved URL, so its lockfiles never match the committed ones.
+  if [[ "$(hostname -s 2>/dev/null || hostname)" != "$WORK_HOSTNAME" ]]; then
+    echo "==> lockfile $MODE $dir"
+    (
+      cd "$dir"
+      # `npm ci` accepts a lockfile the registry can no longer resolve; re-resolving it catches that.
+      committed=$(mktemp)
+      trap 'rm -f "$committed"' EXIT
+      cp package-lock.json "$committed"
+      npm install --package-lock-only --ignore-scripts --no-audit --no-fund --loglevel=error
+      if [[ "$MODE" == "check" ]] && ! cmp -s "$committed" package-lock.json; then
+        diff -u "$committed" package-lock.json | head -40 || true
+        cp "$committed" package-lock.json
+        echo "$dir/package-lock.json no longer resolves as committed; run mise run pi:fix" >&2
+        exit 1
+      fi
+    )
+  fi
   echo "==> biome $MODE $dir"
   (
     cd "$dir"
