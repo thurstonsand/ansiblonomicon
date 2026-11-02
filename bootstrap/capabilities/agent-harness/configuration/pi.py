@@ -307,6 +307,10 @@ def _settings(
             "editorEnd": None,
         },
         "packages": profile["packages"],
+        # Every host installs Pi through mise, so `pi update` goes through it too.
+        "selfUpdateCommand": ["mise", "-C", str(repo), "run", "pi"]
+        if work
+        else ["mise", "-C", str(home), "upgrade", "--yes", "pi"],
         "hideThinkingBlock": True,
         "theme": "omarchy-system" if hostname == OMARCHY_HOST else "system",
         "transport": "auto",
@@ -413,18 +417,12 @@ def render(
     result[".pi/agent/extensions/glimpse-companion/companion/font-family.txt"] = (
         f"{data['fonts']['mono']}\n"
     )
-    if hostname != OMARCHY_HOST:
-        result[".local/bin/pi"] = _executable(home, hostname)
+    if hostname == WORK_HOST:
+        result[".local/bin/pi"] = _executable(home)
     return result
 
 
-def _executable(home: Path, hostname: str) -> str:
-    work = hostname == WORK_HOST
-    command = (
-        'pi_bin="$HOME/.local/libexec/pi"\npi_command=("$pi_bin")'
-        if work
-        else 'pi_bin="${pi_node%/*}/pi"\npi_command=("$pi_node" "$pi_bin")'
-    )
+def _executable(home: Path) -> str:
     return f'''#!/usr/bin/env bash
 set -euo pipefail
 pi_node="${{PI_NODE:-$(mise which -C "{home}" node)}}"
@@ -433,10 +431,10 @@ if [[ ! -x "$pi_node" ]]; then
   exit 127
 fi
 PATH="${{pi_node%/*}}:$PATH"
-{command}
+pi_bin="$HOME/.local/libexec/pi"
 if [[ ! -e "$pi_bin" ]]; then
   echo "pi: pi binary not found: $pi_bin" >&2
   exit 127
 fi
-exec "${{pi_command[@]}}" "$@"
+exec "$pi_bin" "$@"
 '''
