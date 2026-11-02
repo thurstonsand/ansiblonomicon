@@ -131,7 +131,7 @@
     {
       "description": "@types/node describes the runtime, so it tracks the Node these packages run on rather than the newest DefinitelyTyped release. Types from a later major describe APIs that are not there and hide ones that were removed, and tsc believes them either way. Raise the ceiling when the toolchain in mise.toml moves.",
       "matchPackageNames": ["@types/node"],
-      "allowedVersions": "<25"
+      "allowedVersions": "<27"
     },
     {
       "description": "Pi hands extensions its own bundled typebox at runtime, so the extensions pin typebox to exactly the version Pi depends on. scripts/ts-package-deps.sh owns that pin and moves it with each Pi release; any typebox Renovate offers on its own breaks the match.",
