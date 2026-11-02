@@ -1,0 +1,6 @@
+[dotfiles]
+"~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "symlink" }
+
+# gofumpt moved from `go install` to the global mise config; delete once pod153 converges.
+[bootstrap.files."/Users/thurstonsand/go/bin/gofumpt"]
+state = "absent"

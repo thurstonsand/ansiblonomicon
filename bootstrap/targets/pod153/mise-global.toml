@@ -1,0 +1,23 @@
+[tools]
+"aqua:modem-dev/hunk" = "latest"
+fnox = "latest"
+gofumpt = "latest"
+golangci-lint = "latest"
+# First-party release: skip mise's default 24h supply-chain cooling.
+"github:thurstonsand/agent-switchboard" = { version = "latest", minimum_release_age = "0s" }
+node = "lts"
+npm = "latest"
+"npm:agent-browser" = "latest"
+# Reviewed 2026-10-05: @pierre/theme lost npm provenance when a co-maintainer took
+# over publishing at 1.1.0; 2.0.0 is script-free, dependency-free theme JSON.
+# Drop the exclusion once @pierre/theme publishes with provenance again; a newer
+# unprovenanced release fails the install and needs its own review.
+"npm:sideshow" = { version = "latest", allow_low_downloads = true, trust_policy_excludes = ["@pierre/theme@2.0.0"] }
+"npm:tuistory" = "latest"
+# Pi is exempt from the supply-chain cooling; `pi update` upgrades it through mise.
+pi = { version = "latest", minimum_release_age = "0s" }
+pnpm = { version = "latest", postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"' }
+python = "3.15"
+
+[settings.upgrade]
+auto_prune = false

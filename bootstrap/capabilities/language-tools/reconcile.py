@@ -18,7 +18,7 @@ from typing import TypeAlias, TypeGuard, cast
 
 INTERVAL = 86400
 LIST_SECTIONS = {
-    "npm": ("packages", "allow_scripts"),
+    "npm": ("packages", "allow_scripts", "retired"),
     "uv": ("packages", "retired"),
     "bun": ("packages",),
     "go": ("packages",),
@@ -160,7 +160,7 @@ def empty_inventory() -> Inventory:
     return Inventory(
         tools={},
         sections={
-            "npm": {"packages": [], "allow_scripts": []},
+            "npm": {"packages": [], "allow_scripts": [], "retired": []},
             "uv": {"packages": [], "retired": []},
             "bun": {"packages": []},
             "go": {"packages": []},
@@ -194,28 +194,17 @@ def string_list(value: object, message: str) -> list[str]:
     return cast(list[str], raw)
 
 
-def read_source(path: Path) -> tuple[Inventory, bool]:
+def read_source(path: Path) -> Inventory:
     try:
         parsed = tomllib.loads(path.read_text())
     except (OSError, tomllib.TOMLDecodeError) as error:
         raise SystemExit(f"invalid inventory {path}: {error}") from error
     data: dict[str, object] = parsed
-    allowed = {"inventory", "tools", *LIST_SECTIONS}
+    allowed = {"tools", *LIST_SECTIONS}
     unknown = set(data) - allowed
     if unknown:
         raise SystemExit(
             f"invalid inventory {path}: unknown sections {sorted(unknown)}"
-        )
-    inventory_options = table(
-        data.get("inventory", {}),
-        f"invalid inventory {path}: [inventory] must contain only boolean replace_shared",
-    )
-    replace_shared = inventory_options.get("replace_shared", False)
-    if set(inventory_options) - {"replace_shared"} or not isinstance(
-        replace_shared, bool
-    ):
-        raise SystemExit(
-            f"invalid inventory {path}: [inventory] must contain only boolean replace_shared"
         )
     result = empty_inventory()
     tools = table(
@@ -255,7 +244,7 @@ def read_source(path: Path) -> tuple[Inventory, bool]:
                 entries,
                 f"invalid inventory {path}: {section}.{key} must be a string array",
             )
-    return result, replace_shared
+    return result
 
 
 def npm_links(value: object, path: Path) -> dict[str, str]:
@@ -329,9 +318,7 @@ def validate_tool_entry(value: dict[str, object], key: str, path: Path) -> ToolE
 def load(paths: list[Path]) -> Inventory:
     result = empty_inventory()
     for path in paths:
-        data, replace_shared = read_source(path)
-        if replace_shared:
-            result = empty_inventory()
+        data = read_source(path)
         result.tools.update(data.tools)
         result.npm_links.update(data.npm_links)
         result.uv_python = data.uv_python or result.uv_python
@@ -375,7 +362,7 @@ def main() -> None:
         )
     if args.extension is not None and not args.extension.is_file():
         raise SystemExit(f"inventory does not exist: {args.extension}")
-    sources = [root / "tools.toml", root / f"tools.{args.profile}.toml"] + (
+    sources = [root / f"tools.{args.profile}.toml"] + (
         [args.extension] if args.extension else []
     )
     inventory = load(sources)
@@ -386,6 +373,7 @@ def main() -> None:
     )
     npm_script = root / "npm-globals.py"
     packages = inventory.sections["npm"]["packages"]
+    retired = inventory.sections["npm"]["retired"]
     allow_scripts = ",".join(sorted(set(inventory.sections["npm"]["allow_scripts"])))
     postinstall = (
         'PATH="$MISE_TOOL_INSTALL_PATH/bin:$PATH" '
@@ -433,6 +421,8 @@ def main() -> None:
         print(
             f"language-tools: ensure installed {', '.join(specs) if specs else 'none'}"
         )
+        if retired:
+            print(f"language-tools: retire npm globals {', '.join(retired)}")
         if inventory.npm_links:
             print(f"language-tools: link npm globals {', '.join(inventory.npm_links)}")
         print(
@@ -444,7 +434,9 @@ def main() -> None:
 
     mise = os.environ.get("MISE_BIN", str(home / ".local/bin/mise"))
     pending = home / ".cache/ansiblonomicon/npm-globals.pending.json"
-    capture_npm_extras(mise, pending, packages, set(inventory.npm_links), home)
+    capture_npm_extras(
+        mise, pending, [*packages, *retired], set(inventory.npm_links), home
+    )
     config.parent.mkdir(parents=True, exist_ok=True)
     if not config.exists():
         config.touch()
@@ -479,6 +471,12 @@ def main() -> None:
     ]
     if packages:
         run(npm_exec, cwd=home)
+    if retired:
+        npm_root = Path(run([npm, "root", "-g"], cwd=home, capture=True))
+        installed = [name for name in retired if (npm_root / name).exists()]
+        if installed:
+            run([npm, "uninstall", "-g", *installed], cwd=home)
+            run([mise, "reshim"], cwd=home)
     restore_npm_extras(pending, npm, home)
     link_npm_globals(inventory.npm_links, npm, home)
     if inventory.sections["uv"]["retired"]:

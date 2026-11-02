@@ -181,7 +181,16 @@ run = '''
 set -e
 set --
 case "$(hostname -s 2>/dev/null || hostname)" in
-  pod153) profile=personal ;;
+  pod153)
+    profile=personal
+    target="$MISE_PROJECT_ROOT/bootstrap/targets/pod153"
+    mode=--yes
+    [ -z "${usage_check:-}" ] || mode=--dry-run
+    MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=language-tools \
+      mise -C "$target" bootstrap --only files,dotfiles --force-dotfiles "$mode"
+    mise -C "$HOME" bootstrap --only tools "$mode"
+    mise -C "$HOME" upgrade "$mode"
+    ;;
   ML-DFC6YK6VJQ)
     profile=work
     set -- --extension "$MISE_PROJECT_ROOT/bootstrap/targets/ML-DFC6YK6VJQ/language-tools.local.toml"

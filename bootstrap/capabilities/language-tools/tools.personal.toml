@@ -1,10 +1,15 @@
-[tools.pnpm]
-version = "latest"
-postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"'
+# pod153's runtimes and CLIs live in its global mise config (bootstrap/targets/pod153/mise-global.toml),
+# as on every other personal host. This inventory keeps only what the language package managers still own.
 
+# Installed beside Node before mise owned them; delete once pod153 converges.
 [npm]
-packages = []
-allow_scripts = []
+retired = [
+  "@earendil-works/pi-coding-agent",
+  "agent-browser",
+  "hunkdiff",
+  "sideshow",
+  "tuistory",
+]
 
 [uv]
 packages = []
