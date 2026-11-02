@@ -34,16 +34,12 @@ brew "gh"
 brew "git"
 brew "git-delta"
 
-# Languages
-brew "oven-sh/bun/bun", trusted: true
+# Languages; the runtimes mise can supply live in pod153's global mise config
 brew "cmake"
-brew "go"
 brew "ruby"
 brew "rustup"
 brew "swiftformat"
 brew "swiftlint"
-brew "uv"
-brew "zig@0.15"
 
 # Infra/Cloud
 brew "caddy"
