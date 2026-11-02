@@ -49,23 +49,9 @@ function ensureClone(): void {
   });
 }
 
-// Pi assembles the prompt in a fixed order and only lets extensions hand back a finished
-// string, so both sections are spliced onto markers instead of appended at the end. The docs
-// marker is the section's closing tag: pi rewords the docs prose between releases, not its tags.
-const FIRST_PARAGRAPH_END = "\n\n";
-const DOCS_BLOCK_END = "\n</docs>";
-
-function insertBefore(prompt: string, marker: string, section: string): string {
-  const at = prompt.indexOf(marker);
-  if (at < 0) return prompt + section;
-  return prompt.slice(0, at) + section + prompt.slice(at);
-}
-
 function sourceSection(): string {
   const packages = path.join(CHECKOUT_DIR, "packages");
-  return `
-
-Pi v${VERSION} source — read when the docs do not cover pi's internals (tools, agent loop, AI providers, TUI): ${packages}/{coding-agent,agent,ai,tui}/src
+  return `Pi v${VERSION} source — read when the docs do not cover pi's internals (tools, agent loop, AI providers, TUI): ${packages}/{coding-agent,agent,ai,tui}/src
 - The exact TypeScript source of the running binary. Read it and follow imports before implementing rather than guessing.`;
 }
 
@@ -73,18 +59,13 @@ export default function (pi: ExtensionAPI): void {
   if (VERSION === "0.0.0") return;
   ensureClone();
 
-  pi.on("before_agent_start", async (event, ctx) => {
+  // Each addition is its own named section. Returning `systemPrompt` would force the whole
+  // prompt, so sections that later extensions add would never reach the model.
+  pi.on("before_agent_start", (event, ctx) => {
     ensureClone();
+    const { sections } = event.systemPromptOptions;
+    sections.pi_source = sourceSection();
     const model = ctx.model;
-    const withSource = insertBefore(event.systemPrompt, DOCS_BLOCK_END, sourceSection());
-    if (!model) return { systemPrompt: withSource };
-
-    return {
-      systemPrompt: insertBefore(
-        withSource,
-        FIRST_PARAGRAPH_END,
-        `\n\nYou are the model ${model.provider}/${model.id}.`,
-      ),
-    };
+    if (model) sections.active_model = `You are the model ${model.provider}/${model.id}.`;
   });
 }
