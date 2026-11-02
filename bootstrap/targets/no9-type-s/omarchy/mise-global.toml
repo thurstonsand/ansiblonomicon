@@ -28,6 +28,3 @@ node = "lts"
 pi = { version = "latest", minimum_release_age = "0s" }
 pnpm = { version = "latest", postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"' }
 uv = "latest"
-
-[settings.upgrade]
-auto_prune = false
