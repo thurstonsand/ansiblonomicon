@@ -12,6 +12,23 @@ Host pod042-kvm
   HostKeyAlias pod042-kvm
   IdentityFile ~/.ssh/id_ecdsa_glkvm
 
+Host pod153-kvm
+  HostName 10.10.10.35
+
+Host pod153-kvm-ts
+  HostName 100.81.37.67
+
+Host pod153-kvm pod153-kvm-ts
+  User root
+  HostKeyAlias pod153-kvm
+  UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/pod153.known_hosts
+{% if vars.ssh_client_host == "pod042" or vars.ssh_client_host == "pod153" %}
+  IdentityFile ~/.ssh/id_ed25519_git
+{% else %}
+  IdentityFile ~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub
+{% endif %}
+  IdentitiesOnly yes
+
 Host haos
   ForwardAgent yes
   User root

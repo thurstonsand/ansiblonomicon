@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Control pod042-kvm through its local HTTP and WebSocket APIs."""
+"""Control a host's GL KVM through its HTTP and WebSocket APIs."""
 
 import argparse
 from collections.abc import Sequence
@@ -26,10 +26,9 @@ from fnox_host import TOKEN_PATH, ConfigurationError, read_token
 import httpx
 from websockets.sync.client import ClientConnection, connect
 
-DEFAULT_URL = "https://10.10.10.34"
+KVM_URLS = {"pod042": "https://10.10.10.34", "pod153": "https://10.10.10.35"}
 # Must match internal_tunnel_apps in terraform/cloudflare/locals.tf.
 CLOUDFLARE_HOST = "pod042-kvm.thurstons.house"
-OP_ITEM = "egtxppxa5funfi2o4biznocznm"
 OP_VAULT = "agent"
 SCREENSHOT_ATTEMPTS = 60
 
@@ -116,13 +115,13 @@ def endpoint_headers(
     return {}
 
 
-def op_field(field: str) -> str:
+def op_field(item: str, field: str) -> str:
     result = subprocess.run(
         [
             "op",
             "item",
             "get",
-            OP_ITEM,
+            item,
             "--vault",
             OP_VAULT,
             "--fields",
@@ -161,10 +160,12 @@ class KvmClient:
     def __init__(
         self,
         base_url: str,
+        item: str,
         verify_tls: bool = True,
         headers: dict[str, str] | None = None,
     ) -> None:
         self.base_url = base_url.rstrip("/")
+        self.item = item
         self.verify_tls = verify_tls
         self.access_headers = headers or {}
         self.http = httpx.Client(
@@ -176,8 +177,8 @@ class KvmClient:
         self.token = ""
 
     def __enter__(self) -> KvmClient:
-        username = op_field("username")
-        password = op_field("password")
+        username = op_field(self.item, "username")
+        password = op_field(self.item, "password")
         result = response_result(
             self.http.post(
                 "/api/auth/login",
@@ -373,14 +374,15 @@ def send_chord(connection: BinarySender, keys: Sequence[str], delay: float) -> N
             time.sleep(delay)
 
 
-def default_screenshot_path() -> Path:
+def default_screenshot_path(host: str) -> Path:
     timestamp = datetime.now().astimezone().strftime("%Y%m%d-%H%M%S")
-    return Path(tempfile.gettempdir()) / f"pod042-kvm-{timestamp}.jpg"
+    return Path(tempfile.gettempdir()) / f"{host}-kvm-{timestamp}.jpg"
 
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--url", default=DEFAULT_URL)
+    parser.add_argument("host", choices=KVM_URLS)
+    parser.add_argument("--url", help="Override the selected KVM's LAN URL")
     parser.add_argument(
         "--insecure",
         action="store_false",
@@ -428,10 +430,13 @@ def build_parser() -> argparse.ArgumentParser:
 
 def run(argv: Sequence[str]) -> int:
     args = build_parser().parse_args(argv)
-    headers = endpoint_headers(args.url, args.verify_tls, dict(os.environ))
-    with KvmClient(args.url, verify_tls=args.verify_tls, headers=headers) as client:
+    url = args.url or KVM_URLS[args.host]
+    headers = endpoint_headers(url, args.verify_tls, dict(os.environ))
+    with KvmClient(
+        url, f"{args.host}-kvm", verify_tls=args.verify_tls, headers=headers
+    ) as client:
         if args.command == "screenshot":
-            path = args.path or default_screenshot_path()
+            path = args.path or default_screenshot_path(args.host)
             path.write_bytes(client.screenshot())
             print(path)
         elif args.command == "text":
@@ -478,7 +483,7 @@ def main() -> int:
     try:
         return run(sys.argv[1:])
     except (KvmError, httpx.HTTPError, subprocess.CalledProcessError) as error:
-        print(f"pod042-kvm: {error}", file=sys.stderr)
+        print(f"kvm: {error}", file=sys.stderr)
         return 1
 
 

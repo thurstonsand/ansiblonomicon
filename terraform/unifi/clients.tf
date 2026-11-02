@@ -251,6 +251,14 @@ resource "unifi_client" "pod042_kvm" {
   allow_existing   = true
 }
 
+resource "unifi_client" "pod153_kvm" {
+  mac              = "94:83:c4:c4:9b:04"
+  name             = "pod153-kvm"
+  fixed_ip         = "10.10.10.35"
+  local_dns_record = "pod153-kvm"
+  allow_existing   = true
+}
+
 resource "unifi_client" "pod042" {
   mac              = "a0:36:bc:28:37:41"
   name             = "pod042"
@@ -259,9 +267,8 @@ resource "unifi_client" "pod042" {
   allow_existing   = true
 }
 
-# The MAC is macOS's fixed private address for the Bunker SSID; move it to the USB Ethernet dongle's once wired.
 resource "unifi_client" "pod153" {
-  mac              = "32:0e:96:b9:72:12"
+  mac              = "6c:6e:07:2a:90:e9"
   name             = "pod153"
   fixed_ip         = "10.10.10.53"
   local_dns_record = "pod153"

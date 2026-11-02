@@ -4,6 +4,7 @@
 		"tag:codex":   ["autogroup:admin"],
 		"tag:pod042":  ["autogroup:admin"],
 		"tag:pod153":  ["autogroup:admin"],
+		"tag:pod153-kvm": ["autogroup:admin"],
 	},
 
 	"acls": [

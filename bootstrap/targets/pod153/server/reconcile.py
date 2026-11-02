@@ -90,6 +90,19 @@ def main() -> None:
             "server: Screen Sharing is off; turn it on in System Settings > General > Sharing"
         )
 
+    if not output("networksetup", "-getairportpower", "en0").strip().endswith("Off"):
+        ethernet = output("ifconfig", "en10")
+        if "status: active" not in ethernet or "inet 10.10.10.53 " not in ethernet:
+            raise SystemExit(
+                "server: restore Ethernet at 10.10.10.53 before disabling Wi-Fi"
+            )
+        changes.append(
+            (
+                "Wi-Fi off",
+                [["sudo", "-n", "networksetup", "-setairportpower", "en0", "off"]],
+            )
+        )
+
     current = ac_power()
     drift = {key: value for key, value in AC_POWER.items() if current.get(key) != value}
     if drift:

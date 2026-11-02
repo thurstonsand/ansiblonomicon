@@ -136,6 +136,14 @@ check "pdu_outlet_names" {
     ]) == "UDM Pro"
     error_message = "PDU outlet 7 should be named \"UDM Pro\"."
   }
+
+  assert {
+    condition = one([
+      for o in unifi_device.power_distribution_pro.outlet_overrides : o.name
+      if o.index == 18
+    ]) == "pod153 charger"
+    error_message = "PDU outlet 18 should be named \"pod153 charger\"."
+  }
 }
 
 # Both APs hold fixed, non-overlapping channels: 80 MHz on 5 GHz in the two
@@ -229,6 +237,20 @@ resource "unifi_device" "pro_max_24_poe" {
     index           = 3
     name            = "SuperLink Gateway"
     poe_mode        = "auto"
+    port_profile_id = unifi_port_profile.bunker_access.id
+  }
+
+  port_override {
+    index           = 7
+    name            = "pod153-kvm"
+    poe_mode        = "auto"
+    port_profile_id = unifi_port_profile.bunker_access.id
+  }
+
+  port_override {
+    index           = 18
+    name            = "pod153"
+    poe_mode        = "off"
     port_profile_id = unifi_port_profile.bunker_access.id
   }
 
