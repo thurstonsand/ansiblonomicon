@@ -41,7 +41,7 @@ stdout_path = "~/Library/Logs/messages-mcp.log"
 stderr_path = "~/Library/Logs/messages-mcp.log"
 
 # nurb's engine serves its MCP endpoint, workbench, and API on loopback only; Caddy carries
-# them onto the tailnet and Bunker.
+# them onto the tailnet and Bunker, and the tunnel carries Caddy's front to the internet.
 [bootstrap.macos.launchd.agents."house.thurstons.nurb"]
 program = "~/.local/share/nurb/env/bin/python"
 args = ["-m", "nurb.serve", "--port", "7373"]
