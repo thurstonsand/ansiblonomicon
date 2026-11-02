@@ -71,7 +71,7 @@ The NAS reborn as a plain Debian 13 host (substrate decided in ticket 05; "Proxm
 
 ## Not yet specified
 
-- Device backup restart (Time Machine for the Macs, maybe Windows): the old backups were stale and have been deleted; whether/how the Bunker serves as a backup target again is undecided until someone wants it.
+- Device backup restart (Time Machine for the Macs, maybe Windows): the old backups were stale and have been deleted. Since 2026-11-02 pod153 backs up to a `timemachine` SMB share on `ark/timemachine`, capped at 1T, because nurb's database lives only there; other devices remain undecided.
 
 ## Out of scope
 

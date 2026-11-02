@@ -10,6 +10,11 @@ owner = "root"
 group = "root"
 mode = "0700"
 
+[bootstrap.directories."/mnt/ark/timemachine"]
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0700"
+
 [bootstrap.files."/etc/samba/smb.conf"]
 source = "sharing/smb.conf"
 owner = "root"

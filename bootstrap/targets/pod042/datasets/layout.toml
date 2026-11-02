@@ -22,6 +22,10 @@ encryption = "off"
 mountpoint = "/mnt/ark/media"
 shared = true
 
+[datasets."ark/timemachine"]
+mountpoint = "/mnt/ark/timemachine"
+shared = false
+
 [datasets."black-box/docker"]
 mountpoint = "/mnt/black-box/docker"
 shared = false

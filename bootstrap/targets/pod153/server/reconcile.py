@@ -3,6 +3,8 @@
 
 import argparse
 import os
+from pathlib import Path
+import plistlib
 import re
 import subprocess
 
@@ -18,6 +20,10 @@ AC_POWER = {
 # Bunker gets no mDNS reflection, so the queue names the printer instead of
 # browsing for it. Plain IPP, because its self-signed certificate fails IPPS.
 PRINTER = ("Canon_MF650C_Series", "ipp://printer.thurstons.house/ipp/print")
+TIME_MACHINE = "smb://thurstonsand@pod042.thurstons.house/timemachine"
+# Time Machine copies a changed file whole, so the running BlueBubbles VM's disk
+# image would go over every hour; the rest are regenerable caches.
+TIME_MACHINE_SKIPPED = [str(Path.home() / name) for name in (".tart", ".cache", ".npm")]
 SYSTEM_DAEMONS = {
     "Remote Login": ("com.openssh.sshd", "/System/Library/LaunchDaemons/ssh.plist"),
     "Tailscale": (
@@ -63,6 +69,11 @@ def screen_lock_on() -> bool:
 
 def login_password() -> str:
     return output(os.environ["SUDO_ASKPASS"]).strip()
+
+
+def samba_password() -> str:
+    fnox_host = Path(__file__).resolve().parents[4] / "scripts/fnox-host"
+    return output(str(fnox_host), "get", "SAMBA_MEDIA_PASSWORD").strip()
 
 
 def main() -> None:
@@ -147,6 +158,50 @@ def main() -> None:
                 [["lpadmin", "-p", printer, "-E", "-v", uri, *driver]],
             )
         )
+    # Through cfprefsd, because tmutil's writes reach the plist file only later.
+    time_machine = plistlib.loads(
+        output(
+            "defaults", "export", "/Library/Preferences/com.apple.TimeMachine", "-"
+        ).encode()
+    )
+    destinations = {
+        destination["DestinationID"]: destination.get("NetworkURL")
+        for destination in time_machine.get("Destinations", [])
+    }
+    if list(destinations.values()) != [TIME_MACHINE]:
+        changes.append(
+            (
+                f"Time Machine destination {TIME_MACHINE}",
+                [
+                    *(
+                        ["sudo", "-n", "tmutil", "removedestination", destination]
+                        for destination in destinations
+                    ),
+                    ["sudo", "-n", "tmutil", "setdestination", "-p", TIME_MACHINE],
+                ],
+            )
+        )
+    if not time_machine.get("AutoBackup"):
+        changes.append(
+            ("Time Machine automatic backups", [["sudo", "-n", "tmutil", "enable"]])
+        )
+    skipped = set(time_machine.get("SkipPaths", []))
+    if skipped != set(TIME_MACHINE_SKIPPED):
+        changes.append(
+            (
+                f"Time Machine exclusions {TIME_MACHINE_SKIPPED}",
+                [
+                    *(
+                        ["sudo", "-n", "tmutil", "removeexclusion", "-p", path]
+                        for path in sorted(skipped - set(TIME_MACHINE_SKIPPED))
+                    ),
+                    *(
+                        ["sudo", "-n", "tmutil", "addexclusion", "-p", path]
+                        for path in sorted(set(TIME_MACHINE_SKIPPED) - skipped)
+                    ),
+                ],
+            )
+        )
     if "DOES NOT REQUIRE" not in output("automationmodetool"):
         changes.append(
             (
@@ -171,6 +226,11 @@ def main() -> None:
             if command[:2] == ["sysadminctl", "-screenLock"]:
                 subprocess.run(
                     command, input=login_password() + "\n", text=True, check=True
+                )
+            # tmutil keeps the share's password in the System keychain for backupd.
+            elif command[:4] == ["sudo", "-n", "tmutil", "setdestination"]:
+                subprocess.run(
+                    command, input=samba_password() + "\n", text=True, check=True
                 )
             else:
                 subprocess.run(command, check=True)
