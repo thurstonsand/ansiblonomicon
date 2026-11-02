@@ -35,6 +35,26 @@ const resource = (type, text) => ({
   location: `data:${type},${encodeURIComponent(text)}`,
   cache: true,
 });
+// Hue Icons by arallsopp, CC BY-NC-SA 4.0, revision 4604f9ad40f251f829da9ac27a82dac74666742c.
+// https://github.com/arallsopp/hass-hue-icons — unchanged paths; no icon-pack installation required.
+const FIXTURE_PATHS = {
+  "house:floor-lamp-full-shade":
+    "M7 2H17V22H7Z M8 6V7H16V6Z M8 11V12H16V11Z M8 16V17H16V16Z",
+  "house:homepod":
+    "M5 6C5 1 19 1 19 6V18C19 23 5 23 5 18ZM7 6C7 8.5 17 8.5 17 6C17 3.5 7 3.5 7 6Z",
+  "house:nest-hub":
+    "M3 3H21Q23 3 23 5V16Q23 18 21 18H3Q1 18 1 16V5Q1 3 3 3ZM3 5V15H21V5ZM8 19H16L18 22H6Z",
+  "hue:floor-spot":
+    "M16.31,10.71c-0.89,0.32-2.1-0.77-2.68-2.43c-0.59-1.66-0.34-3.26,0.56-3.57c0.89-0.32,2.09,0.77,2.68,2.43 C17.46,8.8,17.21,10.4,16.31,10.71 M18.28,6.64c-0.88-2.43-2.67-4.02-4-3.56L5.37,7.22c-1.02,0.39-1.16,2.4-0.32,4.48 c0.84,2.08,2.57,3.56,3.59,3.17l1.12-0.41v2.81c-2.2,0.08-3.96,0.53-4.39,1.11c-0.07,0.09-0.11,0.19-0.11,0.28v0.94 c0,0.78,2.35,1.41,5.25,1.41s5.25-0.63,5.25-1.41v-0.94c0-0.71-1.96-1.29-4.5-1.39v-3.31l6.18-2.07 C18.78,11.42,19.15,9.07,18.28,6.64",
+  "hue:iris":
+    "M19.2,13.75c-1.15-0.38-2.85-1.48-5.14-3.78c-1.84-1.84-3.29-3.88-3.76-5.12c-0.1-0.27,0.14-0.54,0.43-0.49 c0.29,0.05,0.69,0.18,1.2,0.42c1.39,0.64,2.66,1.48,4.25,3.07c1.59,1.59,2.43,2.86,3.07,4.25c0.25,0.52,0.37,0.93,0.42,1.22 C19.72,13.59,19.46,13.83,19.2,13.75 M16.53,16.88c-0.05,0.16-0.2,0.26-0.36,0.26c-0.04,0-0.08,0-0.11-0.02 c-1.03-0.34-2.32-1.17-3.77-2.44c-1.72,0.95-4.54,2.06-4.47,2.54c0.14,0.92-0.41,1.43-1.45,0.39c-1.04-1.04-0.53-1.59,0.39-1.45 c0.48,0.07,1.61-2.78,2.55-4.5C8.18,10.32,7.29,8.96,6.93,8C6.85,7.8,6.95,7.59,7.14,7.52c0.19-0.07,0.41,0.02,0.48,0.22 C8.1,9,9.57,11,11.3,12.73c2.53,2.53,4.11,3.4,4.99,3.68C16.48,16.47,16.59,16.68,16.53,16.88 M20.43,11.8 c-1.44-3.09-5.12-6.8-8.18-8.24C11,2.97,10.08,2.87,9.51,3.16C9.44,3.2,9.38,3.25,9.3,3.29c-0.75,0.5-1.48,1.08-2.16,1.75 c-4.23,4.22-5.9,9.4-1.73,13.57c4.12,4.11,9.36,2.5,13.59-1.72c0.67-0.67,1.24-1.39,1.73-2.12c0.03-0.05,0.06-0.09,0.09-0.14 C21.14,14.06,21.04,13.09,20.43,11.8",
+  "hue:signe-gradient-floor":
+    "M12.2,13V1.4c0-0.3-0.2-0.5-0.5-0.5H9.8H9.2c-0.3,0-0.5,0.2-0.5,0.5v12.5c-0.3,0.3-0.6,0.6-0.6,1v0.3v6.3 c0,0.1,0,0.1,0,0.2c0.2,1.1,2.2,1.7,4.1,1.7s3.9-0.6,4.1-1.7c0-0.1,0-0.1,0-0.2v-6.3v-0.3C16.5,13.5,14.3,12.9,12.2,13z M11.2,14 c0,0.1-0.2,0.3-0.5,0.3s-0.5-0.2-0.5-0.3V1.9h1V14z",
+  "hue:signe-gradient-table":
+    "M11.6,15.5V1.4c0-0.3-0.2-0.5-0.5-0.5H8.4H7.5C7.2,0.9,7,1.1,7,1.4v15.3C6.5,17,6.2,17.4,6.2,18v2.6 c0,1.7,2.9,2.5,5.8,2.5s5.8-0.9,5.8-2.5V18C17.8,16.2,14.6,15.4,11.6,15.5z M10.6,16.8c0,0.1-0.1,0.5-0.8,0.5 c-0.7,0-0.8-0.4-0.8-0.5V1.9h1.7V16.8z",
+  "hue:table-shade":
+    "M14.16,5.77c-1.18,0.3-3.12,0.3-4.3,0C8.7,5.47,8.73,4.99,9.91,4.71c1.16-0.29,3.03-0.29,4.19,0 C15.28,4.99,15.32,5.47,14.16,5.77 M18.71,11.2l-2.03-6.93L16.66,4.2c-0.19-0.43-1.11-0.85-2.75-1.07c-1.25-0.17-2.52-0.17-3.77,0 C8.51,3.35,7.59,3.76,7.41,4.2L7.37,4.31L5.29,11.2c-0.03,0.1-0.05,0.2-0.04,0.3c0.17,1.14,2.23,2.06,6,2.17v3.6 c-1.83,0.1-3.3,0.54-3.66,1.11c-0.06,0.09-0.09,0.19-0.09,0.28v0.94 c0,0.78,2.02,1.41,4.5,1.41c2.48,0,4.5-0.63,4.5-1.41v-0.94 c0-0.7-1.62-1.27-3.75-1.39v-3.6c3.77-0.11,5.82-1.03,5.99-2.17C18.76,11.4,18.74,11.3,18.71,11.2",
+};
 // Top-down silhouettes drawn to scale at 1 unit = 40mm, nose toward -y, rendered rotated to face the bays.
 const CAR_SHAPES = {
   beetle: `<path class="car-wheel" d="M-27 -39.7H-19V-23.7H-27ZM19 -39.7H27V-23.7H19ZM-27 23.7H-19V39.7H-27ZM19 23.7H27V39.7H19Z"/><path class="car-body" d="M-22 -15L-27 -13.5V-9.5L-22 -8.5ZM22 -15L27 -13.5V-9.5L22 -8.5Z"/><path class="car-body" d="M0 -53.5C11 -53.5 19.5 -50.5 22.5 -44C24.2 -39 24.6 -33 24.6 -27C24.6 -18 23.8 -8 23.8 2C23.8 12 24.8 20 24.8 29C24.8 38 24 46 20 50.5C16 53.2 9 53.5 0 53.5C-9 53.5 -16 53.2 -20 50.5C-24 46 -24.8 38 -24.8 29C-24.8 20 -23.8 12 -23.8 2C-23.8 -8 -24.6 -18 -24.6 -27C-24.6 -33 -24.2 -39 -22.5 -44C-19.5 -50.5 -11 -53.5 0 -53.5Z"/><path class="car-glass" d="M-15 -23.5C-5 -24.5 5 -24.5 15 -23.5C17.5 -20 19 -15.5 19.5 -11H-19.5C-19 -15.5 -17.5 -20 -15 -23.5Z"/><path class="car-glass" d="M-19.2 7H19.2C18.8 12 17.5 17 15 20.5C6 21.5 -6 21.5 -15 20.5C-17.5 17 -18.8 12 -19.2 7Z"/>`,
@@ -47,6 +67,7 @@ class HouseAtlas extends HTMLElement {
     this.attachShadow({ mode: "open" });
     this.floorId = "main";
     this.roomId = null;
+    this.deviceId = null;
     this.listMode = false;
     this.controlRoom = false;
     this.pendingTargets = new Map();
@@ -55,38 +76,62 @@ class HouseAtlas extends HTMLElement {
     this.polaroids = new Map();
     this.mobile = false;
     this.keyboardNavigation = false;
-    this.addEventListener(
-      "pointerdown",
-      () => {
-        this.keyboardNavigation = false;
-      },
-      { capture: true },
-    );
-    this.addEventListener(
-      "keydown",
-      () => {
-        this.keyboardNavigation = true;
-      },
-      { capture: true },
-    );
     this.resizeObserver = new ResizeObserver(([entry]) => {
-      const mobile = entry.contentRect.width <= 900;
+      const mobile = entry.contentRect.width <= 1000;
       if (mobile !== this.mobile) {
         this.mobile = mobile;
-        if (this.helpers) this.renderDetails();
+        if (this.helpers) this.renderSceneDocks();
       }
+      this.positionDevices();
+      this.positionFloorDevices();
     });
   }
 
   connectedCallback() {
+    this.inputEvents = new AbortController();
+    this.ownerDocument.addEventListener(
+      "pointerdown",
+      () => {
+        this.keyboardNavigation = false;
+        this.removeAttribute("keyboard-navigation");
+      },
+      { capture: true, signal: this.inputEvents.signal },
+    );
+    this.ownerDocument.addEventListener(
+      "keydown",
+      (event) => {
+        if (
+          !event.altKey &&
+          !event.metaKey &&
+          [
+            "Tab",
+            "Enter",
+            " ",
+            "ArrowUp",
+            "ArrowDown",
+            "ArrowLeft",
+            "ArrowRight",
+            "ContextMenu",
+            "F10",
+          ].includes(event.key)
+        ) {
+          this.keyboardNavigation = true;
+          this.setAttribute("keyboard-navigation", "");
+        }
+      },
+      { capture: true, signal: this.inputEvents.signal },
+    );
+    this.mobile = this.getBoundingClientRect().width <= 1000;
     this.resizeObserver.observe(this);
     if (this.helpers) this.renderDetails();
   }
 
   disconnectedCallback() {
+    this.inputEvents.abort();
     this.resizeObserver.disconnect();
-    const sheet = this.shadowRoot.querySelector("ha-bottom-sheet");
-    if (sheet) sheet.open = false;
+    this.shadowRoot
+      .querySelectorAll("dialog[open]")
+      .forEach((dialog) => dialog.close());
   }
 
   setConfig(config) {
@@ -109,6 +154,56 @@ class HouseAtlas extends HTMLElement {
     }
     if (!config.override?.startsWith("input_boolean."))
       throw new Error("House Atlas requires an input_boolean override.");
+    for (const [entity, point] of Object.entries(config.placements || {})) {
+      const floor = config.floors.find((floor) => floor.id === point.floor);
+      if (
+        !/^(light|lock|cover|camera|climate|media_player|switch)\.[a-z0-9_]+$/.test(
+          entity,
+        ) ||
+        !floor?.rooms.some((room) => room.id === point.room) ||
+        !Number.isFinite(point.x) ||
+        !Number.isFinite(point.y) ||
+        point.x < 0 ||
+        point.x > floor.width ||
+        point.y < 0 ||
+        point.y > floor.height
+      )
+        throw new Error(`Invalid placement for "${entity}".`);
+      if (
+        point.door !== undefined &&
+        !(
+          (point.door === "front" && entity.startsWith("lock.")) ||
+          (point.door === "garage" && entity.startsWith("cover."))
+        )
+      )
+        throw new Error(`Invalid door for "${entity}".`);
+      if (
+        entity.startsWith("light.") &&
+        (!point.icon ||
+          (!/^mdi:[a-z0-9-]+$/.test(point.icon) && !FIXTURE_PATHS[point.icon]))
+      )
+        throw new Error(`Choose a fixture icon for "${entity}".`);
+      if (
+        point.glowPercent !== undefined &&
+        (!Number.isFinite(point.glowPercent) ||
+          point.glowPercent < 0 ||
+          point.glowPercent > 100)
+      )
+        throw new Error(
+          `glowPercent must be between 0 and 100 for "${entity}".`,
+        );
+      if (
+        point.fallbackColor !== undefined &&
+        (!Array.isArray(point.fallbackColor) ||
+          point.fallbackColor.length !== 3 ||
+          point.fallbackColor.some(
+            (value) => !Number.isInteger(value) || value < 0 || value > 255,
+          ))
+      )
+        throw new Error(
+          `fallbackColor must be three RGB bytes for "${entity}".`,
+        );
+    }
     if (
       !config.thermostats?.length ||
       config.thermostats.some(
@@ -149,6 +244,7 @@ class HouseAtlas extends HTMLElement {
           .loadCardHelpers()
           .then((helpers) => {
             this.helpers = helpers;
+            helpers.importMoreInfoControl("light");
             this.renderMap();
             this.renderDetails();
             this.renderLamps();
@@ -167,6 +263,7 @@ class HouseAtlas extends HTMLElement {
     }
     if (this.map) this.map.hass = hass;
     for (const card of [...this.cards, ...this.lampCards]) card.hass = hass;
+    this.updateRoomDevices();
     this.updateSummary();
     this.updateList();
     this.updateLockButtons();
@@ -178,6 +275,37 @@ class HouseAtlas extends HTMLElement {
   }
   get room() {
     return this.floor.rooms.find((room) => room.id === this.roomId);
+  }
+
+  get roomPlacements() {
+    return Object.entries(this.config.placements || {}).filter(
+      ([, point]) => point.floor === this.floorId && point.room === this.roomId,
+    );
+  }
+
+  get roomFocus() {
+    return (
+      !this.listMode && !this.controlRoom && this.roomPlacements.length > 0
+    );
+  }
+
+  hasDevices(room) {
+    return !!(
+      room.lights?.length ||
+      room.entity ||
+      room.appliances?.length ||
+      Object.values(this.config.placements || {}).some(
+        (p) => p.room === room.id,
+      )
+    );
+  }
+
+  get visiblePlacements() {
+    return Object.entries(this.config.placements || {}).filter(
+      ([, point]) =>
+        point.floor === this.floorId &&
+        (!this.roomFocus || point.room === this.roomId),
+    );
   }
 
   get rooms() {
@@ -195,6 +323,38 @@ class HouseAtlas extends HTMLElement {
         ...this.lamps.map((lamp) => lamp.entity),
       ]),
     ];
+  }
+
+  lightControl(entity) {
+    const room = this.rooms.find((room) => room.lights?.includes(entity));
+    return (
+      room?.controls?.find(
+        (control) =>
+          control.entity === entity ||
+          this._hass.states[control.entity]?.attributes.entity_id?.includes(
+            entity,
+          ),
+      )?.entity ||
+      room?.group ||
+      entity
+    );
+  }
+
+  roomLightTargets(room) {
+    return room.group
+      ? [room.group]
+      : [...new Set(room.lights.map((entity) => this.lightControl(entity)))];
+  }
+
+  toggleRoomLights(room) {
+    const on = room.lights.some((id) => this._hass.states[id]?.state === "on");
+    const scene = this.currentScene(room.hold?.scenes || []);
+    if (!on && scene) return this.activateScene(scene.entity);
+    const targets = this.roomLightTargets(room).filter((id) =>
+      ["on", "off"].includes(this._hass.states[id]?.state),
+    );
+    if (targets.length)
+      return this.perform("light", on ? "turn_off" : "turn_on", targets);
   }
 
   perimeter() {
@@ -223,7 +383,7 @@ class HouseAtlas extends HTMLElement {
     const on = (id) => this._hass.states[id]?.state === "on";
     const lit = this.houseLights().filter(on).length;
     const lights = root.querySelector(".g-lights");
-    lights.hidden = !lit;
+    lights.hidden = !!this.room || !lit;
     lights.querySelector("b").textContent =
       `${lit} ${lit === 1 ? "light" : "lights"} on`;
     lights.querySelector("small").textContent = [
@@ -625,6 +785,9 @@ class HouseAtlas extends HTMLElement {
     dialog.querySelector(".live").addEventListener("click", () => {
       dialog.close();
       this.selectRoom(room.id);
+      this.shadowRoot
+        .querySelector(".detail-host")
+        .scrollIntoView({ block: "nearest" });
     });
     dialog.querySelector(".dismiss").addEventListener("click", () => {
       dialog.close();
@@ -736,6 +899,7 @@ class HouseAtlas extends HTMLElement {
           --atlas-light: var(--house-atlas-light, var(--state-light-active-color));
           --atlas-error: var(--house-atlas-error, var(--error-color));
           --atlas-warning: var(--house-atlas-warning, var(--warning-color));
+          --atlas-secure: var(--house-atlas-secure, var(--success-color));
           display: block; container-type: inline-size;
           position: relative; z-index: 0; isolation: isolate;
           background: var(--atlas-bg); color: var(--atlas-fg);
@@ -744,8 +908,9 @@ class HouseAtlas extends HTMLElement {
         }
         * { box-sizing: border-box; }
         [hidden] { display: none !important; }
-        button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; min-height: 48px; }
+        button { font: inherit; color: inherit; cursor: pointer; touch-action: manipulation; min-height: 48px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
         button:focus-visible { outline: 3px solid var(--atlas-accent); outline-offset: 3px; }
+        :host(:not([keyboard-navigation])) button:focus-visible { outline: none; }
         button:disabled { opacity: .45; cursor: default; }
         button:active { transform: translateY(1px); }
         .atlas { max-width: 1440px; margin: auto; padding: 22px 26px 30px; }
@@ -757,17 +922,75 @@ class HouseAtlas extends HTMLElement {
         .floors { display: flex; gap: 4px; margin: 12px 0 18px; border-bottom: 1px solid var(--atlas-border); }
         .floors button { flex: 1; background: none; border: 0; border-bottom: 3px solid transparent; padding: 12px 8px; }
         .floors button[aria-current=true] { border-color: var(--atlas-accent); color: var(--atlas-accent); font-weight: 600; }
-        .layout { display: grid; grid-template-columns: minmax(0,1fr) 360px; gap: 32px; align-items: start; }
+        .layout { display: block; }
         .detail-host:empty { display: none; }
         .map-panel { min-width: 0; }
-        .map-wrap { width: min(100%,calc((100dvh - 360px) * var(--floor-ratio))); min-width: min(100%,320px); margin: auto; }
-        .detail-host { position: sticky; top: 76px; }
-        aside.details { border: 1px solid var(--atlas-border); background: var(--atlas-bg); border-radius: 10px; max-height: calc(100dvh - 275px); overflow: auto; overscroll-behavior: contain; }
-        ha-bottom-sheet { --ha-bottom-sheet-max-height: 75dvh; --ha-bottom-sheet-max-width: 720px; --ha-bottom-sheet-surface-background: var(--atlas-bg); --ha-bottom-sheet-scrim-color: #28282866; --ha-bottom-sheet-border-radius: 18px; }
+        .map-wrap { width: 100%; margin: auto; }
+        .map-wrap.focused { max-width: 800px; }
+        .floor-stage { position: relative; width: min(100%,680px); aspect-ratio: var(--floor-ratio); margin: auto; }
+        .floor-stage > floorplan-card { display: block; width: 100%; height: 100%; }
+        .light-map { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+        .light-field { isolation: isolate; opacity: .55; }
+        .glow { mix-blend-mode: screen; }
+        .scene-dock { width: 100%; margin: 16px auto 0; }
+        .scene-dock .scenes { gap: 4px; }
+        .scene-dock .scene { background: transparent; padding: 0 10px; font-size: 12px; }
+        .atlas-dialog { padding: 16px; color: var(--atlas-fg); background: var(--atlas-bg); border: 1px solid var(--atlas-border); border-radius: 12px; width: 340px; max-width: calc(100vw - 24px); max-height: calc(100dvh - 24px); overflow: auto; box-shadow: 0 12px 48px #0005; }
+        .atlas-dialog:focus { outline: none; }
+        .atlas-dialog::backdrop { background: #0003; }
+        .atlas-dialog header { display: flex; align-items: center; gap: 8px; }
+        .atlas-dialog h2 { margin: 0; flex: 1; font: 400 23px Georgia,serif; }
+        .dialog-body { display: grid; gap: 10px; }
+        .dialog-body label { font-size: 13px; }
+        .dialog-body output { float: right; color: var(--atlas-muted); }
+        .dialog-body input { display: block; width: 100%; min-height: 48px; accent-color: var(--atlas-accent); }
+        .dialog-body ha-hs-color-picker { display: block; width: min(100%,240px, max(140px,calc(100dvh - 420px))); margin: auto; aspect-ratio: 1; touch-action: none; }
+        .dialog-body ha-hs-color-picker:not(:defined) { display: none; }
+        .dialog-body ha-hs-color-picker:defined + .wheel-loading { display: none; }
+        .white-control input { accent-color: #dfb67e; background: linear-gradient(90deg,#ffa757,#fff4df,#b9d8ff); border-radius: 24px; }
+        .white-control > span { display: flex; justify-content: space-between; font-size: 12px; color: var(--atlas-muted); }
+        .focus-heading { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
+        .focus-heading h2 { font: 400 28px/1.2 Georgia,serif; margin: 0; }
+        .room-stage { position: relative; height: clamp(300px,52dvh,520px); overflow: hidden; border: 1px solid var(--atlas-border); border-radius: 10px; background: var(--atlas-bg); }
+        .map-wrap, .atlas-dialog { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+        .focus-map, .fixture-layer { position: absolute; inset: 0; width: 100%; height: 100%; }
+        .focus-map .room-outline { fill: var(--atlas-surface); stroke: var(--atlas-accent); stroke-width: 1.5; }
+        .focus-map .neighbor { fill: none; stroke: var(--atlas-border); opacity: .35; }
+        .focus-map .opening { fill: none; stroke: var(--atlas-bg); stroke-width: 4; }
+        .partitions { fill: none; stroke: var(--atlas-wall); stroke-width: 1.6; pointer-events: none; }
+        .fixture-layer { pointer-events: none; }
+        .room-power { position: absolute; width: 44px; height: 44px; min-height: 44px; padding: 8px; translate: -50% -50%; pointer-events: auto; border: 0; background: transparent; color: var(--atlas-muted); }
+        .room-power svg { width: 28px; height: 20px; }
+        .room-power[aria-pressed="true"] { color: var(--atlas-accent); }
+        .room-power .switch-thumb { cx: 8px; }
+        .room-power[aria-pressed="true"] .switch-thumb { cx: 20px; }
+        .room-power:disabled { opacity: .4; }
+        .fixture { position: absolute; width: 56px; height: 56px; min-height: 56px; padding: 10px; translate: -50% -50%; border-radius: 50%; background: transparent; border: 0; pointer-events: auto; display: grid; place-items: center; color: var(--fixture-color,var(--atlas-muted)); -webkit-touch-callout: none; -webkit-user-select: none; user-select: none; }
+        .fixture > svg, .fixture > ha-icon { width: 26px; height: 26px; filter: drop-shadow(0 1px 1px var(--atlas-bg)); }
+        .fixture > * { pointer-events: none; }
+        .fixture.door { border-radius: 4px; padding: 0; }
+        .fixture.door > svg { position: absolute; left: 50%; top: 50%; translate: -50% -50%; overflow: visible; }
+        .fixture.garage > svg { overflow: hidden; }
+        .door-structure { color: var(--atlas-fg); fill: var(--atlas-bg); stroke: currentColor; stroke-width: 1.5; }
+        .door-swing { fill: none; stroke-dasharray: 3 3; opacity: .5; }
+        .door-state { position: absolute; width: 22px; height: 22px; background: var(--atlas-bg); border-radius: 4px; display: grid; place-items: center; pointer-events: auto; }
+        .door-state svg { width: 16px; height: 16px; }
+        .door.garage .door-state { left: calc(50% - 11px); top: calc(50% - 11px); }
+        .door.front .door-state { left: calc(50% - 11px); top: 100%; }
+        .atlas-dialog.local-zoom { padding: 0; margin: 0; border-radius: 50%; overflow: hidden; }
+        .local-zoom::backdrop { background: transparent; }
+        .local-zoom .dialog-body, .zoom-stage { width: 100%; height: 100%; }
+        .zoom-stage { position: relative; overflow: hidden; background: var(--atlas-bg); }
+        .zoom-background { position: absolute; inset: 0; pointer-events: none; }
+        .zoom-stage .fixture span { position: absolute; top: 48px; left: 50%; translate: -50% 0; width: 96px; color: var(--atlas-fg); font-size: 11px; line-height: 14px; }
+        .fixture.selected { outline: 2px solid var(--atlas-accent); }
+        .fixture.unavailable { border: 1px dashed var(--atlas-error); }
+        .details { max-width: 800px; margin: 16px auto 0; }
         .detail-heading { position: sticky; top: 0; background: var(--atlas-bg); z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 22px 20px 16px; border-bottom: 1px solid var(--atlas-border); }
         .detail-heading h2 { font: 400 27px/1.15 Georgia,serif; margin: 0; }
         .close { flex: 0 0 48px; width: 48px; background: none; border: 0; font-size: 28px; font-weight: 300; }
-        .detail-body { padding: 16px; display: grid; gap: 12px; }
+        .detail-body { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 12px; }
+        .detail-body > hui-picture-entity-card, .detail-body > .lock-actions { grid-column: 1/-1; }
         .status { font-size: 12px; margin: 8px 0 0; color: var(--atlas-muted); }
         .scenes { display: flex; flex-wrap: wrap; gap: 8px; }
         .scene { background: var(--atlas-selected); border: 1px solid var(--atlas-border); border-radius: 6px; padding: 0 14px; font-size: 13px; }
@@ -865,7 +1088,7 @@ class HouseAtlas extends HTMLElement {
         @keyframes age { to { filter: sepia(.75) contrast(.8) brightness(1.1); opacity: .5; } }
         @keyframes thunk { from { transform: rotate(-11deg) scale(1.8); opacity: 0; } }
         @keyframes nudge { 25% { transform: rotate(-6deg) translateX(10px); } 60% { transform: rotate(-14deg) translateX(-4px); } }
-        @container(max-width:900px) {
+        @container(max-width:1000px) {
           .atlas { display: flex; flex-direction: column; padding: 16px 12px 24px; }
           .strip { order: 1; grid-auto-flow: row; grid-auto-columns: auto; gap: 8px; margin-top: 16px; }
           .atlas > .error { order: 2; }
@@ -876,10 +1099,15 @@ class HouseAtlas extends HTMLElement {
           .mode { padding: 0 10px; }
           .layout { display: block; }
           .map-wrap { width: 100%; min-width: 0; max-width: 520px; }
+          .floor-stage { width: 100%; min-width: 0; }
+          .atlas-dialog:not(.local-zoom) { position: fixed; inset: auto 0 12px !important; margin: 0 auto !important; width: min(520px,calc(100% - 24px)); }
           .floors { margin-bottom: 12px; }
           .detail-heading { padding: 24px 18px 12px; }
           .detail-heading h2 { font-size: 26px; }
-          .detail-body { padding: 14px 16px 20px; }
+          .detail-body { grid-template-columns: minmax(0,1fr); }
+          .focus-heading { gap: 12px; }
+          .focus-heading h2 { font-size: 24px; }
+          .room-stage { height: 360px; }
           .desk-title { margin: 16px 0 12px; }
           .desk { grid-template-columns: minmax(0,1fr); gap: 12px; }
           .instrument { padding: 14px 16px 16px; }
@@ -918,6 +1146,7 @@ class HouseAtlas extends HTMLElement {
       button.addEventListener("click", () => {
         this.floorId = button.dataset.floor;
         this.roomId = null;
+        this.deviceId = null;
         this.shadowRoot
           .querySelectorAll("[data-floor]")
           .forEach((tab) =>
@@ -936,6 +1165,7 @@ class HouseAtlas extends HTMLElement {
         const listMode = this.controlRoom || !this.listMode;
         this.setControlRoom(false);
         this.listMode = listMode;
+        this.selectRoom(null);
         this.updateMode();
       });
     this.shadowRoot
@@ -944,7 +1174,12 @@ class HouseAtlas extends HTMLElement {
     this.shadowRoot
       .querySelector(".g-lights button")
       .addEventListener("click", () =>
-        this.perform("light", "turn_off", this.houseLights()),
+        this.perform("light", "turn_off", [
+          ...this.rooms
+            .filter((room) => room.lights?.length)
+            .flatMap((room) => this.roomLightTargets(room)),
+          ...this.lamps.map((lamp) => lamp.entity),
+        ]),
       );
     this.shadowRoot
       .querySelector(".g-secure button")
@@ -1051,12 +1286,20 @@ class HouseAtlas extends HTMLElement {
   }
 
   selectRoom(id) {
-    if (id && !this.floor.rooms.some((room) => room.id === id)) return;
+    if (
+      id &&
+      !this.floor.rooms.some((room) => room.id === id && this.hasDevices(room))
+    )
+      return;
     this.roomId = id;
+    this.deviceId = null;
+    if (id && this.roomPlacements.length) this.listMode = false;
     this.renderMap();
     this.renderDetails();
     if (id && this.keyboardNavigation)
-      this.shadowRoot.querySelector(".close")?.focus({ preventScroll: true });
+      this.shadowRoot
+        .querySelector(".back-floor, .detail-body button")
+        ?.focus({ preventScroll: true });
     else if (!id && this.keyboardNavigation)
       this.shadowRoot
         .querySelector(`[data-floor="${this.floorId}"]`)
@@ -1066,27 +1309,37 @@ class HouseAtlas extends HTMLElement {
 
   renderMap() {
     if (!this.helpers || !this._hass) return;
+    this.updateGlobal();
+    this.shadowRoot
+      .querySelector(".layout")
+      .classList.toggle("focused", this.roomFocus);
+    this.shadowRoot
+      .querySelector(".map-wrap")
+      .classList.toggle("focused", this.roomFocus);
+    if (this.roomFocus) {
+      this.updateMode();
+      this.renderRoomMap();
+      return;
+    }
     const floor = this.floor;
     const styles = `
       svg{font-family:Arial,sans-serif;color:var(--atlas-fg);background:var(--atlas-bg);-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
       /* Floorplan forces ":host svg *{pointer-events:all!important}"; overlays inside rooms must pass presses through. */
-      svg g.vehicle *,svg g.pickup *,svg g.stairs *{pointer-events:none!important}
+      svg g.vehicle *,svg g.pickup *,svg g.stairs *,svg .partitions{pointer-events:none!important}
       .room.held .wall{animation:held .6s ease-out}
       @keyframes held{40%{fill:var(--atlas-light);stroke:var(--atlas-accent);stroke-width:4}}
-      .room{cursor:pointer;outline:none}
+      .room{outline:none}
+      .room.connected{cursor:pointer}
       .wall{stroke:var(--atlas-wall);stroke-width:1.6;stroke-linejoin:round;fill:var(--atlas-bg)}
+      .partitions{fill:none;stroke:var(--atlas-wall);stroke-width:1.6}
       .room.connected .wall{fill:var(--atlas-surface)}
       .room.outdoor .wall{fill:url(#deck);stroke-dasharray:5 3}
       .room:focus-visible .wall,.room.selected .wall{fill:var(--atlas-selected);stroke:var(--atlas-accent);stroke-width:2.5}
       .room.outdoor:focus-visible .wall,.room.outdoor.selected .wall{fill:url(#deck)}
-      @media(hover:hover){.room:hover .wall{fill:var(--atlas-selected);stroke:var(--atlas-accent);stroke-width:2.5}.room.outdoor:hover .wall{fill:url(#deck)}}
+      @media(hover:hover){.room.connected:hover .wall{fill:var(--atlas-selected);stroke:var(--atlas-accent);stroke-width:2.5}.room.outdoor.connected:hover .wall{fill:url(#deck)}}
       .opening{stroke:var(--atlas-bg);stroke-width:5;fill:none;pointer-events:none}
       .label{fill:var(--atlas-fg);font-size:13px;text-anchor:middle;pointer-events:none}
       .status{fill:var(--atlas-muted);font-size:10px;text-anchor:middle;pointer-events:none}
-      .indicator{fill:var(--atlas-light);pointer-events:none}
-      .off{fill:var(--atlas-bg);stroke:var(--atlas-muted);stroke-width:1}
-      .active{fill:var(--atlas-light);stroke:none}
-      .unavailable{fill:var(--atlas-error);stroke:var(--atlas-bg);stroke-width:1;stroke-dasharray:2 2}
       .context{fill:url(#hatch);stroke:var(--atlas-border);stroke-width:1}
       .context-label{fill:var(--atlas-muted);font-size:11px;text-anchor:middle}
       .stairs{stroke:var(--atlas-wall);stroke-width:1;fill:none;pointer-events:none}
@@ -1110,15 +1363,10 @@ class HouseAtlas extends HTMLElement {
     `;
     const rooms = floor.rooms
       .map((room) => {
-        const connected = !!(
-          room.lights ||
-          room.entity ||
-          room.appliances ||
-          room.note
-        );
+        const connected = this.hasDevices(room);
         const [x, y] = room.label;
         const lines = room.lines || [room.name];
-        return `<g id="room-${room.id}" data-room="${room.id}" class="room ${connected ? "connected" : ""} ${room.outdoor ? "outdoor" : ""} ${this.roomId === room.id ? "selected" : ""}" tabindex="0" role="button" aria-label="${escapeXml(room.name)}" aria-pressed="${this.roomId === room.id}"><path class="wall" d="${escapeXml(room.path)}"/><text class="label">${lines.map((line, i) => `<tspan x="${x}" y="${y + i * 17}">${escapeXml(line)}</tspan>`).join("")}</text>${connected ? `<text id="status-${room.id}" class="status" x="${x}" y="${y + lines.length * 17 + 5}">${escapeXml(room.lights ? `${room.lights.length} lights` : room.mapNote || "")}</text>` : ""}${room.lights ? `<circle id="dot-${room.id}" class="indicator" cx="${x}" cy="${y - 20}" r="3.5"/>` : ""}</g>`;
+        return `<g id="room-${room.id}" data-room="${room.id}" class="room ${connected ? "connected" : ""} ${room.outdoor ? "outdoor" : ""}" ${connected ? 'tabindex="0" role="button"' : 'role="group"'} aria-label="${escapeXml(room.name)}"><path class="wall" d="${escapeXml(room.path)}"/>${room.partitions ? `<path class="partitions" d="${escapeXml(room.partitions)}"/>` : ""}<text class="label">${lines.map((line, i) => `<tspan x="${x}" y="${y + i * 17}">${escapeXml(line)}</tspan>`).join("")}</text>${connected && !room.lights ? `<text id="status-${room.id}" class="status" x="${x}" y="${y + lines.length * 17 + 5}">${escapeXml(room.mapNote || "")}</text>` : ""}</g>`;
       })
       .join("");
     const openings = (floor.openings || [])
@@ -1150,14 +1398,16 @@ class HouseAtlas extends HTMLElement {
       )
       .join("");
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${floor.width} ${floor.height}" role="group" aria-label="${escapeXml(floor.name)} floor rooms"><defs><pattern id="hatch" patternUnits="userSpaceOnUse" width="6" height="6"><path d="M0 6L6 0" stroke="var(--atlas-border)" stroke-width=".6"/></pattern><pattern id="deck" patternUnits="userSpaceOnUse" width="12" height="12"><rect width="12" height="12" fill="var(--atlas-surface)"/><path d="M0 11H12" stroke="var(--atlas-border)" stroke-width=".7"/></pattern></defs>${floor.context || ""}${rooms}${floor.stairs || ""}${openings}${pickups}${vehicles}</svg>`;
-    const rules = floor.rooms.map((room) => ({
-      element: `room-${room.id}`,
-      tap_action: { action: "fire-dom-event", atlas_room: room.id },
-      hold_action: room.hold
-        ? { action: "fire-dom-event", atlas_hold: room.id }
-        : { action: "none" },
-      double_tap_action: false,
-    }));
+    const rules = floor.rooms
+      .filter((room) => this.hasDevices(room))
+      .map((room) => ({
+        element: `room-${room.id}`,
+        tap_action: { action: "fire-dom-event", atlas_room: room.id },
+        hold_action: room.hold
+          ? { action: "fire-dom-event", atlas_hold: room.id }
+          : { action: "none" },
+        double_tap_action: false,
+      }));
     for (const room of floor.rooms) {
       if (room.pickup) {
         rules.push({
@@ -1207,31 +1457,7 @@ class HouseAtlas extends HTMLElement {
           },
         });
       }
-      if (room.lights) {
-        const ids = JSON.stringify(room.lights);
-        rules.push({
-          entities: room.lights,
-          element: `dot-${room.id}`,
-          state_action: {
-            action: "call-service",
-            service: "floorplan.class_set",
-            service_data: {
-              class: `> const values = ${ids}.map(id => entities[id] && entities[id].state); return values.some(s => s === 'on') ? 'indicator active' : values.some(s => s === 'unavailable' || s === 'unknown' || !s) ? 'indicator unavailable' : 'indicator off';`,
-            },
-          },
-        });
-        rules.push({
-          entities: room.lights,
-          element: `status-${room.id}`,
-          state_action: {
-            action: "call-service",
-            service: "floorplan.text_set",
-            service_data: {
-              text: `> const values = ${ids}.map(id => entities[id] && entities[id].state || 'unavailable'); const missing = values.filter(s => s === 'unavailable').length; const unknown = values.filter(s => s === 'unknown').length; return '${room.lights.length} lights' + (missing ? ' · ' + missing + ' offline' : '') + (unknown ? ' · ' + unknown + ' unknown' : '');`,
-            },
-          },
-        });
-      } else if (room.entity) {
+      if (room.entity && !room.lights) {
         rules.push({
           entity: room.entity,
           element: `status-${room.id}`,
@@ -1262,9 +1488,760 @@ class HouseAtlas extends HTMLElement {
     mapWrap.style.setProperty("--floor-ratio", floor.width / floor.height);
     const pins = document.createElement("div");
     pins.className = "pins";
-    mapWrap.replaceChildren(card, pins);
+    const stage = document.createElement("div");
+    stage.className = "floor-stage";
+    stage.innerHTML = `<svg class="light-map" viewBox="0 0 ${floor.width} ${floor.height}" aria-hidden="true">${this.lightFields()}</svg><div class="fixture-layer"></div>`;
+    stage.prepend(card);
+    stage.append(pins);
+    mapWrap.replaceChildren(stage);
+    this.positionFloorDevices();
+    this.renderSceneDocks();
     this.renderPolaroids();
     this.updateMode();
+  }
+
+  deviceName(entity) {
+    const room = this.rooms.find(
+      (r) => r.id === this.config.placements[entity]?.room,
+    );
+    const name = this._hass.states[entity]?.attributes.friendly_name;
+    return name
+      ? name.replace(`${room?.name} `, "")
+      : entity.split(".")[1].replace(`${room?.id}_`, "").replaceAll("_", " ");
+  }
+
+  lightFields(prefix = "") {
+    return this.floor.rooms
+      .filter((room) => !this.roomFocus || room.id === this.roomId)
+      .map(
+        (room) =>
+          `<defs><clipPath id="${prefix}clip-${room.id}"><path d="${escapeXml(room.path)}"/></clipPath></defs><g class="light-field" clip-path="url(#${prefix}clip-${room.id})">${this.visiblePlacements
+            .map(([entity, point], i) =>
+              entity.startsWith("light.") && point.room === room.id
+                ? `<radialGradient id="${prefix}glow-${i}"><stop offset="0"/><stop offset=".35" stop-opacity=".6"/><stop offset="1" stop-opacity="0"/></radialGradient><circle class="glow" data-glow="${entity}" cx="${point.x}" cy="${point.y}" r="65" fill="url(#${prefix}glow-${i})"/>`
+                : "",
+            )
+            .join("")}</g>`,
+      )
+      .join("");
+  }
+
+  fixtureIcon(entity) {
+    const icon =
+      this.config.placements[entity].icon ||
+      {
+        lock: "mdi:lock-outline",
+        cover: "mdi:garage",
+        camera: "mdi:cctv",
+        climate: "mdi:thermostat",
+        media_player: "mdi:speaker",
+        switch: "mdi:power-socket-us",
+      }[entity.split(".")[0]];
+    return FIXTURE_PATHS[icon]
+      ? `<svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" fill-rule="evenodd" d="${FIXTURE_PATHS[icon]}"/></svg>`
+      : `<ha-icon icon="${escapeXml(icon)}" aria-hidden="true"></ha-icon>`;
+  }
+
+  fixtureButton(entity, choose) {
+    const button = document.createElement("button");
+    button.className = "fixture";
+    button.dataset.device = entity;
+    button.innerHTML = this.fixtureIcon(entity);
+    const door = this.config.placements[entity].door;
+    if (door && !choose) {
+      button.classList.add("door", door);
+      button.innerHTML =
+        door === "front"
+          ? '<svg viewBox="0 0 60 36" aria-hidden="true"><g class="door-structure"><path d="M0 28H60" stroke-width="5"/><path d="M4 28H29V32H4Z"/><path d="M56 28L39 7L36 10L53 31Z"/><path class="door-swing" d="M30 28A26 26 0 0 1 39 7"/></g></svg>'
+          : '<svg aria-hidden="true"><g class="door-structure garage-panel"></g></svg>';
+      button.innerHTML += '<span class="door-state" aria-hidden="true"></span>';
+    }
+    const activate = (event, adjust) => {
+      event.stopPropagation();
+      if (choose) choose(entity, adjust);
+      else this.resolveFixture(event, entity, button, adjust);
+    };
+    let timer,
+      origin,
+      scrolling,
+      suppressClick = false;
+    const cancel = () => {
+      clearTimeout(timer);
+      origin = null;
+      scrolling?.abort();
+    };
+    button.onpointerdown = (event) => {
+      if (event.button !== 0) return;
+      suppressClick = false;
+      origin = [event.clientX, event.clientY];
+      scrolling = new AbortController();
+      window.addEventListener(
+        "scroll",
+        () => {
+          suppressClick = true;
+          cancel();
+        },
+        { capture: true, passive: true, signal: scrolling.signal },
+      );
+      timer = setTimeout(() => {
+        suppressClick = true;
+        cancel();
+        if (button.isConnected) activate(event, true);
+      }, 450);
+    };
+    button.onpointermove = (event) => {
+      if (
+        origin &&
+        Math.hypot(event.clientX - origin[0], event.clientY - origin[1]) > 8
+      ) {
+        suppressClick = true;
+        cancel();
+      }
+    };
+    button.onpointerup = cancel;
+    button.onpointerleave = cancel;
+    button.onpointercancel = () => {
+      suppressClick = true;
+      cancel();
+    };
+    button.oncontextmenu = (event) => {
+      event.preventDefault();
+      cancel();
+      suppressClick = true;
+      activate(event, true);
+    };
+    button.onkeydown = (event) => {
+      if (
+        event.key === "ContextMenu" ||
+        (event.shiftKey && event.key === "F10")
+      ) {
+        event.preventDefault();
+        activate(event, true);
+      }
+    };
+    button.onclick = (event) => {
+      if (suppressClick && event.detail !== 0) {
+        suppressClick = false;
+        return;
+      }
+      activate(event, false);
+    };
+    return button;
+  }
+
+  activateFixture(entity, anchor, adjust) {
+    const domain = entity.split(".")[0];
+    const state = this._hass.states[entity]?.state;
+    if (
+      adjust ||
+      !["light", "lock", "cover"].includes(domain) ||
+      (domain === "lock" && this.config.placements[entity].door !== "front")
+    ) {
+      this.openDevice(entity, anchor);
+    } else if (![undefined, "unknown", "unavailable"].includes(state)) {
+      if (domain === "lock") {
+        if (["locked", "unlocked"].includes(state))
+          this.perform(domain, state === "locked" ? "unlock" : "lock", entity);
+      } else
+        this.perform(
+          domain,
+          "toggle",
+          domain === "light" ? this.lightControl(entity) : entity,
+        );
+    }
+  }
+
+  resolveFixture(event, entity, anchor, adjust) {
+    // Keyboard and assistive activation already identify one specific device.
+    if (
+      event instanceof KeyboardEvent ||
+      (event.type === "click" && event.detail === 0)
+    ) {
+      this.activateFixture(entity, anchor, adjust);
+      return;
+    }
+    const stage = anchor.closest(".room-stage, .floor-stage");
+    const svg = stage.querySelector(".focus-map, .light-map");
+    const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(
+      svg.getScreenCTM().inverse(),
+    );
+    const room = this.floor.rooms.find((room) =>
+      svg.querySelector(`#clip-${room.id} path`)?.isPointInFill(point),
+    );
+    const candidates = [...stage.querySelectorAll("[data-device]")].filter(
+      (button) => {
+        return [button, button.querySelector(".door-state")]
+          .filter(Boolean)
+          .some((target) => {
+            const rect = target.getBoundingClientRect();
+            return (
+              event.clientX >= rect.left &&
+              event.clientX <= rect.right &&
+              event.clientY >= rect.top &&
+              event.clientY <= rect.bottom
+            );
+          });
+      },
+    );
+    const sameLightGroup =
+      !adjust &&
+      candidates.length > 1 &&
+      candidates.every((button) =>
+        button.dataset.device.startsWith("light."),
+      ) &&
+      new Set(
+        candidates.map((button) => this.lightControl(button.dataset.device)),
+      ).size === 1;
+    if (candidates.length === 1 || sameLightGroup)
+      this.activateFixture(candidates[0].dataset.device, candidates[0], adjust);
+    else if (candidates.length > 1)
+      this.openLocalZoom(candidates, anchor, adjust);
+    else if (!adjust && room && this.hasDevices(room)) this.selectRoom(room.id);
+  }
+
+  openLocalZoom(candidates, anchor, adjust) {
+    const entries = candidates.map((button) => [
+      button.dataset.device,
+      this.config.placements[button.dataset.device],
+    ]);
+    const rooms = this.rooms.filter((room) =>
+      entries.some(([, point]) => point.room === room.id),
+    );
+    const multipleRooms = rooms.length > 1;
+    const dialog = this.openDialog(
+      multipleRooms ? "Choose a device" : rooms[0].name,
+      anchor,
+    );
+    dialog.classList.add("local-zoom");
+    dialog.querySelector("header").remove();
+    const diameter = Math.min(300, innerWidth - 24, innerHeight - 24);
+    dialog.style.width = `${diameter}px`;
+    dialog.style.height = `${diameter}px`;
+    const body = dialog.querySelector(".dialog-body");
+    body.innerHTML = `<div class="zoom-stage"><div class="zoom-background" inert></div><svg class="light-map" aria-hidden="true">${this.lightFields("zoom-")}</svg><div class="fixture-layer"></div></div>`;
+    const stage = body.querySelector(".zoom-stage");
+    const size = stage.clientWidth;
+    const xs = entries.map(([, p]) => p.x),
+      ys = entries.map(([, p]) => p.y);
+    const cx = (Math.min(...xs) + Math.max(...xs)) / 2,
+      cy = (Math.min(...ys) + Math.max(...ys)) / 2;
+    let separation = Infinity;
+    for (let i = 0; i < entries.length; i++)
+      for (let j = i + 1; j < entries.length; j++)
+        separation = Math.min(
+          separation,
+          Math.max(Math.abs(xs[i] - xs[j]), Math.abs(ys[i] - ys[j])),
+        );
+    const radius = Math.max(
+      ...entries.map(([, p]) => Math.hypot(p.x - cx, p.y - cy)),
+    );
+    const scale = Math.min(16, 80 / separation, (size / 2 - 64) / radius);
+    const viewBox = `${cx - size / scale / 2} ${cy - size / scale / 2} ${size / scale} ${size / scale}`;
+    const mapStage = anchor.closest(".room-stage, .floor-stage");
+    const source = this.roomFocus
+      ? mapStage.querySelector(".focus-map")
+      : this.map.shadowRoot
+          .querySelector("floorplan-element")
+          .shadowRoot.querySelector("svg");
+    const background = source.cloneNode(true);
+    // Copy the rendered SVG styles so the lens matches Floorplan's stateful map,
+    // including deck patterns, stairs and parked cars, without duplicating its renderer.
+    const originals = [source, ...source.querySelectorAll("*")];
+    const copies = [background, ...background.querySelectorAll("*")];
+    originals.forEach((original, i) => {
+      const style = getComputedStyle(original);
+      for (const property of [
+        "fill",
+        "stroke",
+        "stroke-width",
+        "stroke-dasharray",
+        "opacity",
+        "display",
+        "color",
+        "font-family",
+        "font-size",
+        "text-anchor",
+        "transform",
+      ])
+        copies[i].style.setProperty(property, style.getPropertyValue(property));
+      copies[i].removeAttribute("tabindex");
+    });
+    background
+      .querySelectorAll(".light-field")
+      .forEach((field) => field.remove());
+    background.setAttribute("viewBox", viewBox);
+    background.setAttribute("aria-hidden", "true");
+    background.style.width = "100%";
+    background.style.height = "100%";
+    stage
+      .querySelector(".zoom-background")
+      .attachShadow({ mode: "open" })
+      .append(background);
+    stage.querySelector(".light-map").setAttribute("viewBox", viewBox);
+    const center = new DOMPoint(cx, cy).matrixTransform(
+      mapStage.querySelector(".focus-map, .light-map").getScreenCTM(),
+    );
+    dialog.style.left = `${Math.max(12, Math.min(innerWidth - diameter - 12, center.x - diameter / 2))}px`;
+    dialog.style.top = `${Math.max(12, Math.min(innerHeight - diameter - 12, center.y - diameter / 2))}px`;
+    const separated = separation * scale >= 64;
+    const layer = stage.querySelector(".fixture-layer");
+    for (const [index, [entity, point]] of entries.entries()) {
+      const original = candidates.find(
+        (button) => button.dataset.device === entity,
+      );
+      const button = this.fixtureButton(entity, (selected, held) => {
+        dialog.close();
+        this.activateFixture(selected, original, adjust || held);
+      });
+      if (separated) {
+        button.style.left = `${size / 2 + (point.x - cx) * scale}px`;
+        button.style.top = `${size / 2 + (point.y - cy) * scale}px`;
+      } else {
+        const angle = (index * 2 * Math.PI) / entries.length;
+        button.style.left = `${size / 2 + Math.cos(angle) * (size / 2 - 64)}px`;
+        button.style.top = `${size / 2 + Math.sin(angle) * (size / 2 - 64)}px`;
+        button.innerHTML += `<span>${escapeXml(this.deviceName(entity))}</span>`;
+      }
+      const roomName = multipleRooms
+        ? rooms.find((room) => room.id === point.room).name
+        : "";
+      button.dataset.roomName = roomName;
+      layer.append(button);
+    }
+    this.updateRoomDevices();
+    if (this.keyboardNavigation)
+      layer.querySelector("button").focus({ preventScroll: true });
+  }
+
+  positionFloorDevices() {
+    const stage = this.shadowRoot.querySelector(".floor-stage");
+    if (!stage || !this.isConnected) return;
+    const rect = stage.getBoundingClientRect();
+    if (!rect.width) return;
+    const layer = stage.querySelector(".fixture-layer");
+    const signature = `${rect.width}:${rect.height}`;
+    if (layer.dataset.size === signature) return;
+    layer.dataset.size = signature;
+    layer.replaceChildren(
+      ...this.visiblePlacements.map(([entity]) => this.fixtureButton(entity)),
+      ...this.roomPowerButtons(),
+    );
+    this.positionDevices();
+    this.updateRoomDevices();
+  }
+
+  roomPowerButtons() {
+    return this.floor.rooms
+      .filter(
+        (room) =>
+          room.lights?.length && (!this.roomFocus || room.id === this.roomId),
+      )
+      .map((room) => {
+        const button = document.createElement("button");
+        button.className = "room-power";
+        button.dataset.powerRoom = room.id;
+        button.innerHTML =
+          '<svg viewBox="0 0 28 20" aria-hidden="true"><rect x="1" y="3" width="26" height="14" rx="7" fill="none" stroke="currentColor" stroke-width="1.5"/><circle class="switch-thumb" cy="10" r="4" fill="currentColor"/></svg>';
+        button.onclick = (event) => {
+          event.stopPropagation();
+          this.toggleRoomLights(room);
+        };
+        return button;
+      });
+  }
+
+  garageWidth(entity) {
+    const state = this._hass.states[entity];
+    const position =
+      state?.state === "closed"
+        ? 0
+        : (state?.attributes.current_position ??
+          (state?.state === "open" ? 100 : 0));
+    return 6 + Math.max(0, Math.min(100, position)) * 0.94;
+  }
+
+  renderRoomMap() {
+    this.map = null;
+    const room = this.room;
+    const devices = this.roomPlacements;
+    const wrap = this.shadowRoot.querySelector(".map-wrap");
+    const outlines = this.floor.rooms
+      .map(
+        (r) =>
+          `<path class="${r.id === room.id ? "room-outline" : "neighbor"}" d="${escapeXml(r.path)}"/>${r.partitions ? `<path class="partitions" d="${escapeXml(r.partitions)}"/>` : ""}`,
+      )
+      .join("");
+    const openings = (this.floor.openings || [])
+      .map(({ path }) => `<path class="opening" d="${escapeXml(path)}"/>`)
+      .join("");
+    wrap.innerHTML = `<header class="focus-heading"><button class="mode back-floor">← ${escapeXml(this.floor.name)}</button><h2>${escapeXml(room.name)}</h2></header><div class="room-stage"><svg class="focus-map" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="${escapeXml(room.name)} device locations">${outlines}${this.lightFields()}${openings}</svg><div class="fixture-layer"></div></div>`;
+    wrap.querySelector(".back-floor").onclick = () => this.selectRoom(null);
+    const svg = wrap.querySelector(".focus-map");
+    const box = svg.querySelector(".room-outline").getBBox();
+    const left = Math.min(box.x, ...devices.map(([, p]) => p.x)) - 24;
+    const top = Math.min(box.y, ...devices.map(([, p]) => p.y)) - 24;
+    const right =
+      Math.max(box.x + box.width, ...devices.map(([, p]) => p.x)) + 24;
+    const bottom =
+      Math.max(box.y + box.height, ...devices.map(([, p]) => p.y)) + 24;
+    svg.setAttribute(
+      "viewBox",
+      `${left} ${top} ${right - left} ${bottom - top}`,
+    );
+    wrap
+      .querySelector(".fixture-layer")
+      .replaceChildren(
+        ...devices.map(([entity]) => this.fixtureButton(entity)),
+        ...this.roomPowerButtons(),
+      );
+    this.updateRoomDevices();
+    this.positionDevices();
+    this.renderSceneDocks();
+  }
+
+  positionDevices() {
+    const stage = this.shadowRoot.querySelector(".room-stage, .floor-stage");
+    if (!stage || !this.isConnected) return;
+    const svg = stage.querySelector(".focus-map, .light-map");
+    const rect = stage.getBoundingClientRect();
+    const matrix = svg.getScreenCTM();
+    if (!matrix || !rect.width) return;
+    this.visiblePlacements.forEach(([entity, point]) => {
+      const button = stage.querySelector(`[data-device="${entity}"]`);
+      if (!button) return;
+      const anchor = new DOMPoint(point.x, point.y).matrixTransform(matrix);
+      button.style.left = `${anchor.x - rect.left}px`;
+      button.style.top = `${anchor.y - rect.top}px`;
+      if (point.door) {
+        const width =
+          (point.door === "front" ? 34 : this.garageWidth(entity)) * matrix.a;
+        const height = (point.door === "front" ? 20.4 : 132) * matrix.d;
+        if (point.door === "garage")
+          button.style.left = `${anchor.x - rect.left + width / 2}px`;
+        button.style.width = `${Math.max(56, width)}px`;
+        button.style.height = `${Math.max(56, height)}px`;
+        button.querySelector("svg").style.width = `${width}px`;
+        button.querySelector("svg").style.height = `${height}px`;
+      }
+    });
+    for (const button of stage.querySelectorAll("[data-power-room]")) {
+      const room = this.floor.rooms.find(
+        (room) => room.id === button.dataset.powerRoom,
+      );
+      const [x, y] = room.power || [room.label[0], room.label[1] - 26];
+      const anchor = new DOMPoint(x, y).matrixTransform(matrix);
+      button.style.left = `${anchor.x - rect.left}px`;
+      button.style.top = `${anchor.y - rect.top}px`;
+    }
+  }
+
+  updateRoomDevices() {
+    const stage = this.shadowRoot.querySelector(".room-stage, .floor-stage");
+    if (!stage) return;
+    this.visiblePlacements.forEach(([entity, point]) => {
+      const domain = entity.split(".")[0];
+      const state = this._hass.states[entity];
+      const available =
+        state && !["unavailable", "unknown"].includes(state.state);
+      const active =
+        available &&
+        ["on", "playing", "open", "unlocked"].includes(state.state);
+      const color = !available
+        ? "var(--atlas-error)"
+        : domain === "light" && active
+          ? state.attributes.rgb_color
+            ? `rgb(${state.attributes.rgb_color.join(",")})`
+            : point.fallbackColor
+              ? `rgb(${point.fallbackColor.join(",")})`
+              : "#d5d2ca"
+          : ["lock", "cover"].includes(domain)
+            ? state.state === (domain === "lock" ? "locked" : "closed")
+              ? "var(--atlas-secure)"
+              : "var(--atlas-warning)"
+            : active
+              ? "var(--atlas-accent)"
+              : "var(--atlas-muted)";
+      let status = available ? state.state.replaceAll("_", " ") : "Unavailable";
+      if (
+        domain === "light" &&
+        active &&
+        state.attributes.brightness !== undefined
+      )
+        status = `${Math.round((state.attributes.brightness / 255) * 100)}%`;
+      const name = this.deviceName(entity);
+      for (const button of this.shadowRoot.querySelectorAll(
+        `[data-device="${entity}"]`,
+      )) {
+        if (domain === "light")
+          button.setAttribute("aria-pressed", String(!!active));
+        button.classList.toggle("unavailable", !available);
+        button.classList.toggle("selected", entity === this.deviceId);
+        const label = button.dataset.roomName
+          ? `${name} · ${button.dataset.roomName}`
+          : name;
+        button.setAttribute("aria-label", `${label} · ${status}`);
+        button.title = `${label} · ${status}${domain === "light" ? " · Hold for controls" : ""}`;
+        button.style.setProperty("--fixture-color", color);
+        const panel = button.querySelector(".garage-panel");
+        if (panel) {
+          const width = this.garageWidth(entity);
+          panel.parentElement.setAttribute("viewBox", `0 0 ${width} 132`);
+          panel.setAttribute("transform", `translate(${width - 100} 0)`);
+          panel.innerHTML =
+            '<rect x="1" y="3" width="98" height="126" rx="1"/><path d="M25 3V129M50 3V129M75 3V129" opacity=".45"/>';
+        }
+        const indicator = button.querySelector(".door-state");
+        if (indicator) {
+          const path = !available
+            ? "M12 4V14M12 18V20"
+            : domain === "lock"
+              ? `${state.state === "locked" ? "M7 11V8A5 5 0 0 1 17 8V11" : "M7 11V8A5 5 0 0 1 17 8"}M5 11H19V21H5ZM12 15V18`
+              : state.state === "closed"
+                ? "M4 5H20V21H4ZM4 10H20M4 15H20"
+                : state.state === "open"
+                  ? "M4 21V3H20V21M8 9L12 5L16 9"
+                  : state.state === "opening"
+                    ? "M5 15L12 8L19 15M5 9L12 2L19 9"
+                    : state.state === "closing"
+                      ? "M5 9L12 16L19 9M5 15L12 22L19 15"
+                      : "M12 4V14M12 18V20";
+          indicator.innerHTML = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="${path}"/></svg>`;
+        }
+      }
+      for (const glow of this.shadowRoot.querySelectorAll(
+        `[data-glow="${entity}"]`,
+      )) {
+        glow.style.opacity = active
+          ? ((state.attributes.brightness ?? 255) / 255) *
+            ((point.glowPercent ?? 100) / 100)
+          : 0;
+        glow.previousElementSibling
+          .querySelectorAll("stop")
+          .forEach((stop) => stop.setAttribute("stop-color", color));
+      }
+    });
+    for (const button of stage.querySelectorAll("[data-power-room]")) {
+      const room = this.floor.rooms.find(
+        (room) => room.id === button.dataset.powerRoom,
+      );
+      const on = room.lights.some(
+        (id) => this._hass.states[id]?.state === "on",
+      );
+      button.disabled = !room.lights.some((id) =>
+        ["on", "off"].includes(this._hass.states[id]?.state),
+      );
+      button.setAttribute("aria-pressed", String(on));
+      button.setAttribute(
+        "aria-label",
+        `${room.name}: turn ${on ? "off" : "on"} all lights`,
+      );
+      button.title = button.getAttribute("aria-label");
+    }
+    this.positionDevices();
+    const doorDialog = this.shadowRoot.querySelector("[data-door][open]");
+    if (doorDialog) {
+      for (const card of doorDialog.cards) card.hass = this._hass;
+      const state = this._hass.states[doorDialog.dataset.door]?.state;
+      for (const button of doorDialog.querySelectorAll("[data-lock-action]"))
+        button.disabled =
+          !["locked", "unlocked"].includes(state) ||
+          state === `${button.dataset.lockAction}ed`;
+    }
+    this.updateDeviceDialog();
+  }
+
+  openDialog(title, anchor) {
+    this.shadowRoot.querySelector(".atlas-dialog[open]")?.close();
+    const dialog = document.createElement("dialog");
+    dialog.className = "atlas-dialog";
+    dialog.tabIndex = -1;
+    dialog.setAttribute("aria-label", title);
+    dialog.innerHTML = `<header><h2>${escapeXml(title)}</h2><button class="close" aria-label="Close controls">×</button></header><div class="dialog-body"></div><p class="error" role="alert"></p>`;
+    this.shadowRoot.append(dialog);
+    dialog.querySelector(".close").onclick = () => dialog.close();
+    let outside = false;
+    dialog.onpointerdown = (e) => {
+      outside = e.target === dialog;
+    };
+    dialog.onclick = (e) => {
+      if (outside && e.target === dialog) dialog.close();
+    };
+    dialog.onkeydown = (e) => e.stopPropagation();
+    dialog.onclose = () => {
+      dialog.remove();
+      if (this.deviceId === dialog.dataset.light) this.deviceId = null;
+      this.updateRoomDevices();
+      if (anchor?.isConnected && !this.shadowRoot.querySelector("dialog[open]"))
+        anchor.focus({ preventScroll: true });
+    };
+    dialog.showModal();
+    if (!this.keyboardNavigation) dialog.focus({ preventScroll: true });
+    if (!this.mobile && anchor) {
+      const rect = anchor.getBoundingClientRect();
+      dialog.style.margin = "0";
+      dialog.style.left = `${Math.max(12, Math.min(innerWidth - 352, rect.right + 12))}px`;
+      dialog.style.top = `${Math.max(12, Math.min(innerHeight - dialog.offsetHeight - 12, rect.top))}px`;
+    }
+    return dialog;
+  }
+
+  moreInfo(entity) {
+    this.dispatchEvent(
+      new CustomEvent("hass-more-info", {
+        detail: { entityId: entity },
+        bubbles: true,
+        composed: true,
+      }),
+    );
+  }
+
+  openDevice(entity, anchor) {
+    const room = this.rooms.find(
+      (room) => room.entity === entity && room.doorbell,
+    );
+    if (room) {
+      const dialog = this.openDialog(this.deviceName(entity), anchor);
+      dialog.dataset.door = entity;
+      dialog.cards = [];
+      const body = dialog.querySelector(".dialog-body");
+      for (const config of [
+        {
+          type: "picture-entity",
+          entity: room.doorbell.camera,
+          camera_view: "live",
+          show_name: false,
+          show_state: false,
+        },
+        {
+          type: "tile",
+          entity,
+          tap_action: { action: "more-info" },
+          icon_tap_action: { action: "more-info" },
+        },
+      ]) {
+        const card = this.helpers.createCardElement(config);
+        card.hass = this._hass;
+        dialog.cards.push(card);
+        body.append(card);
+      }
+      const actions = document.createElement("div");
+      actions.className = "lock-actions";
+      for (const action of ["lock", "unlock"]) {
+        const button = document.createElement("button");
+        button.className = "lock-action secondary";
+        button.dataset.lockAction = action;
+        button.textContent = action === "lock" ? "Lock" : "Unlock";
+        button.onclick = () => this.perform("lock", action, entity);
+        actions.append(button);
+      }
+      body.append(actions);
+      this.updateRoomDevices();
+      if (!this.mobile && anchor)
+        dialog.style.top = `${Math.max(12, Math.min(innerHeight - dialog.offsetHeight - 12, anchor.getBoundingClientRect().top))}px`;
+      return;
+    }
+    if (!entity.startsWith("light.")) {
+      this.moreInfo(entity);
+      return;
+    }
+    if (
+      this.deviceId === entity &&
+      this.shadowRoot.querySelector(".atlas-dialog")
+    )
+      return;
+    const dialog = this.openDialog(this.deviceName(entity), anchor);
+    this.deviceId = entity;
+    dialog.dataset.light = entity;
+    const body = dialog.querySelector(".dialog-body");
+    const attrs = this._hass.states[entity]?.attributes || {};
+    const modes = attrs.supported_color_modes || [];
+    body.innerHTML = `<button class="scene light-power"></button>`;
+    if (modes.some((mode) => !["onoff", "unknown"].includes(mode)))
+      body.innerHTML +=
+        '<label>Brightness <output></output><input aria-label="Brightness" type="range" min="0" max="100" data-light-value="brightness"></label>';
+    if (
+      modes.some((mode) => ["hs", "xy", "rgb", "rgbw", "rgbww"].includes(mode))
+    )
+      body.innerHTML +=
+        '<ha-hs-color-picker aria-label="Light color"></ha-hs-color-picker><p class="muted wheel-loading">Loading color wheel… More controls also opens Home Assistant’s picker.</p>';
+    if (
+      modes.includes("color_temp") &&
+      attrs.min_color_temp_kelvin &&
+      attrs.max_color_temp_kelvin
+    )
+      body.innerHTML += `<label class="white-control">White light<input aria-label="White temperature" type="range" min="${attrs.min_color_temp_kelvin}" max="${attrs.max_color_temp_kelvin}" step="1" data-light-value="color_temp_kelvin"><span><span>Warm</span><span>Cool</span></span></label>`;
+    body.innerHTML += '<button class="mode more-info">More controls</button>';
+    const wheel = body.querySelector("ha-hs-color-picker");
+    if (wheel) {
+      wheel.addEventListener("cursor-moved", (event) => {
+        wheel.dataset.dragging = String(event.detail.value !== undefined);
+      });
+      wheel.addEventListener("value-changed", (event) => {
+        const [hue, saturation] = event.detail.value;
+        this.perform("light", "turn_on", entity, {
+          hs_color: [hue, saturation * 100],
+        });
+      });
+    }
+    body.querySelector(".light-power").onclick = () =>
+      this.perform("light", "toggle", entity);
+    body.querySelector(".more-info").onclick = () => {
+      dialog.close();
+      this.moreInfo(entity);
+    };
+    for (const input of body.querySelectorAll("input")) {
+      input.oninput = () => {
+        if (input.dataset.lightValue === "brightness")
+          body.querySelector("output").textContent = `${input.value}%`;
+      };
+      input.onchange = () => {
+        const key = input.dataset.lightValue;
+        const value =
+          key === "brightness"
+            ? Math.round((Number(input.value) * 255) / 100)
+            : Number(input.value);
+        this.perform("light", "turn_on", entity, { [key]: value });
+      };
+    }
+    this.updateRoomDevices();
+    if (!this.mobile && anchor)
+      dialog.style.top = `${Math.max(12, Math.min(innerHeight - dialog.offsetHeight - 12, anchor.getBoundingClientRect().top))}px`;
+  }
+
+  updateDeviceDialog() {
+    const dialog = this.shadowRoot.querySelector("[data-light]");
+    if (!dialog) return;
+    const state = this._hass.states[dialog.dataset.light];
+    const available =
+      state && !["unknown", "unavailable"].includes(state.state);
+    const power = dialog.querySelector(".light-power");
+    power.disabled = !available;
+    power.textContent = available
+      ? state.state === "on"
+        ? "Turn off"
+        : "Turn on"
+      : "Unavailable";
+    const wheel = dialog.querySelector("ha-hs-color-picker");
+    if (wheel) {
+      wheel.disabled = !available;
+      if (available && wheel.dataset.dragging !== "true") {
+        const [hue, saturation] = state.attributes.hs_color || [0, 0];
+        wheel.value = [hue, saturation / 100];
+      }
+    }
+    for (const input of dialog.querySelectorAll("input")) {
+      input.disabled = !available;
+      if (!available || this.shadowRoot.activeElement === input) continue;
+      const key = input.dataset.lightValue;
+      if (key === "brightness") {
+        input.value =
+          state.state === "off"
+            ? 0
+            : Math.round(((state.attributes.brightness ?? 255) * 100) / 255);
+        dialog.querySelector("output").textContent = `${input.value}%`;
+      } else if (state.attributes[key] != null)
+        input.value = state.attributes[key];
+    }
   }
 
   updateList() {
@@ -1276,6 +2253,7 @@ class HouseAtlas extends HTMLElement {
           const button = document.createElement("button");
           button.className = "room-row";
           button.dataset.id = room.id;
+          button.disabled = !this.hasDevices(room);
           button.innerHTML = `<span>${escapeXml(room.name)}<small></small></span>`;
           button.addEventListener("click", () => this.selectRoom(room.id));
           return button;
@@ -1332,33 +2310,18 @@ class HouseAtlas extends HTMLElement {
     this.cards = [];
     host.replaceChildren();
     if (!room) return;
-    const details = document.createElement(
-      this.mobile ? "ha-bottom-sheet" : "aside",
-    );
+    const details = document.createElement("section");
     details.className = "details";
     details.setAttribute("aria-label", "Room controls");
     host.append(details);
-    details.innerHTML = `<header class="detail-heading"><div><h2>${escapeXml(room.name)}</h2><p class="status"></p></div><button class="close" aria-label="Close room controls">×</button></header><div class="detail-body"></div>`;
-    if (this.mobile) {
-      details.querySelector("header").slot = "header";
-      details.flexContent = true;
-      details.open = true;
-      details.addEventListener("closed", (event) => {
-        if (event.target === details && details.isConnected)
-          this.selectRoom(null);
-      });
-    }
-    this.shadowRoot.querySelector(".close").addEventListener("click", () => {
-      if (this.mobile) details.open = false;
-      else this.selectRoom(null);
-    });
-    this.updateSummary();
+    details.innerHTML = '<div class="detail-body"></div>';
+    details.onkeydown = (e) => e.stopPropagation();
     const body = details.querySelector(".detail-body");
-    const add = (config) => {
+    const add = (config, target = body) => {
       const card = this.helpers.createCardElement(config);
       card.hass = this._hass;
       this.cards.push(card);
-      body.append(card);
+      target.append(card);
     };
     if (room.doorbell)
       add({
@@ -1368,27 +2331,15 @@ class HouseAtlas extends HTMLElement {
         show_name: false,
         show_state: false,
       });
-    if (room.group)
-      add({
-        type: "tile",
-        entity: room.group,
-        name: "Room lighting",
-        color: "amber",
-        tap_action: { action: "more-info" },
-        icon_tap_action: { action: "toggle" },
-        features: [{ type: "light-brightness" }],
-      });
     if (room.lights) {
-      const controls =
-        room.controls ||
-        room.lights.map((entity) => ({
-          entity,
-          name:
-            this._hass.states[entity]?.attributes.friendly_name?.replace(
-              `${room.name} `,
-              "",
-            ) || entity,
-        }));
+      const controls = [
+        ...(room.group ? [{ entity: room.group, name: "Room lighting" }] : []),
+        ...(room.controls ||
+          room.lights.map((entity) => ({
+            entity,
+            name: this.deviceName(entity),
+          }))),
+      ];
       controls.forEach(({ entity, name }) =>
         add({
           type: "tile",
@@ -1436,7 +2387,12 @@ class HouseAtlas extends HTMLElement {
         tap_action: toggle,
         icon_tap_action: toggle,
       });
-    } else if (!room.lights && !room.entity && !room.appliances) {
+    } else if (
+      !room.lights &&
+      !room.entity &&
+      !room.appliances &&
+      !this.roomFocus
+    ) {
       const text = document.createElement("p");
       text.className = "muted";
       text.textContent = room.note || "No connected devices in this room yet.";
@@ -1462,7 +2418,7 @@ class HouseAtlas extends HTMLElement {
         tap_action: { action: "more-info" },
         icon_tap_action: { action: "toggle" },
       });
-    if (room.scenes || room.hueScenes) {
+    if (!this.roomFocus && (room.scenes || room.hueScenes)) {
       const scenes = document.createElement("section");
       scenes.className = "hue-scenes";
       body.append(scenes);
@@ -1474,7 +2430,40 @@ class HouseAtlas extends HTMLElement {
     body.append(error);
   }
 
+  renderSceneDocks() {
+    const wrap = this.shadowRoot.querySelector(".map-wrap");
+    if (!wrap || !this._hass) return;
+    wrap.querySelectorAll(".scene-dock").forEach((dock) => dock.remove());
+    if (!this.roomFocus || !(this.room.scenes || this.room.hueScenes)) return;
+    const dock = document.createElement("section");
+    dock.className = "scene-dock";
+    dock.setAttribute("aria-label", `${this.room.name} scenes`);
+    dock.dataset.sceneRoom = this.roomId;
+    wrap.append(dock);
+    this.updateScenes();
+  }
+
+  roomScenes(room) {
+    return room.scenes
+      ? room.scenes.map(({ entity, name }) => ({
+          entity,
+          name,
+          unavailable: [undefined, "unknown", "unavailable"].includes(
+            this._hass.states[entity]?.state,
+          ),
+        }))
+      : room.hueScenes
+        ? this.hueScenes(room.id)
+        : [];
+  }
+
   updateScenes() {
+    for (const container of this.shadowRoot.querySelectorAll(
+      "[data-scene-room]",
+    )) {
+      const room = this.rooms.find((r) => r.id === container.dataset.sceneRoom);
+      this.fillScenes(container, "", this.roomScenes(room), "");
+    }
     for (const container of this.shadowRoot.querySelectorAll(".lamp-scenes"))
       this.fillScenes(
         container,
@@ -1487,15 +2476,7 @@ class HouseAtlas extends HTMLElement {
     this.fillScenes(
       container,
       this.room.scenes ? "Scenes" : "Hue scenes",
-      this.room.scenes
-        ? this.room.scenes.map(({ entity, name }) => ({
-            entity,
-            name,
-            unavailable: [undefined, "unavailable"].includes(
-              this._hass.states[entity]?.state,
-            ),
-          }))
-        : this.hueScenes(this.room.id),
+      this.roomScenes(this.room),
       "No Hue scenes in this room.",
     );
   }
@@ -1504,18 +2485,53 @@ class HouseAtlas extends HTMLElement {
     const signature = JSON.stringify(scenes);
     if (container.dataset.scenes === signature) return;
     container.dataset.scenes = signature;
-    container.innerHTML = `<p class="section-label">${label}</p><div class="scenes"></div>`;
-    for (const scene of scenes) {
+    container.innerHTML = `${label ? `<p class="section-label">${label}</p>` : ""}<div class="scenes"></div>`;
+    const compact = container.hasAttribute("data-scene-room");
+    for (const scene of compact ? scenes.slice(0, 3) : scenes) {
       const button = document.createElement("button");
       button.className = "scene";
       button.textContent = scene.name;
       button.disabled = scene.unavailable;
-      button.addEventListener("click", () =>
-        this.perform(scene.entity.split(".")[0], "turn_on", scene.entity),
-      );
+      button.addEventListener("click", async () => {
+        button.disabled = true;
+        button.setAttribute("aria-busy", "true");
+        await this.activateScene(scene.entity);
+        button.removeAttribute("aria-busy");
+        button.disabled = scene.unavailable;
+      });
       container.querySelector(".scenes").append(button);
     }
-    if (!scenes.length) container.innerHTML += `<p class="muted">${empty}</p>`;
+    if (compact && scenes.length > 3) {
+      const more = document.createElement("button");
+      more.className = "scene";
+      more.textContent = "⋯";
+      more.setAttribute("aria-label", "More scenes");
+      more.onclick = () => {
+        const room = this.rooms.find(
+          (r) => r.id === container.dataset.sceneRoom,
+        );
+        const dialog = this.openDialog(`${room.name} scenes`, more);
+        this.fillScenes(
+          dialog.querySelector(".dialog-body"),
+          "",
+          this.roomScenes(room),
+          "",
+        );
+      };
+      container.querySelector(".scenes").append(more);
+    }
+    if (!scenes.length && empty)
+      container.innerHTML += `<p class="muted">${empty}</p>`;
+  }
+
+  activateScene(entity) {
+    const hue = this._hass.entities?.[entity]?.platform === "hue";
+    return this.perform(
+      hue ? "hue" : entity.split(".")[0],
+      hue ? "activate_scene" : "turn_on",
+      entity,
+      hue ? { dynamic: true } : {},
+    );
   }
 
   hueScenes(area) {
@@ -1565,11 +2581,7 @@ class HouseAtlas extends HTMLElement {
       return this.perform("cover", "toggle", room.entity);
     if (room.hold.action === "lock")
       return this.perform("lock", "lock", room.entity);
-    if (room.lights.some((light) => this._hass.states[light]?.state === "on"))
-      return this.perform("light", "turn_off", room.lights);
-    const scene = this.currentScene(room.hold.scenes || []);
-    if (!scene) return this.perform("light", "turn_on", room.lights);
-    return this.perform(scene.entity.split(".")[0], "turn_on", scene.entity);
+    return this.toggleRoomLights(room);
   }
 
   // Each entry starts at `from`, house time, and runs until the next; the latest one carries past midnight.
@@ -1600,7 +2612,10 @@ class HouseAtlas extends HTMLElement {
   }
 
   async perform(domain, service, entity, data = {}) {
-    const error = this.shadowRoot.querySelector(".details .error");
+    const error =
+      this.shadowRoot.querySelector(
+        ".atlas-dialog[open] .error, .details .error",
+      ) || this.shadowRoot.querySelector(".atlas > .error");
     if (error) error.textContent = "";
     try {
       await this._hass.callService(domain, service, {
@@ -1614,8 +2629,9 @@ class HouseAtlas extends HTMLElement {
 
   showError(error) {
     const target =
-      this.shadowRoot.querySelector(".details .error") ||
-      this.shadowRoot.querySelector(".atlas > .error");
+      this.shadowRoot.querySelector(
+        ".atlas-dialog[open] .error, .details .error",
+      ) || this.shadowRoot.querySelector(".atlas > .error");
     if (target) target.textContent = error.message || String(error);
   }
 }

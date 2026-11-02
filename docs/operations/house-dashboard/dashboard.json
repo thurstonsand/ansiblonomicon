@@ -9,6 +9,261 @@
         {
           "type": "custom:house-atlas-card",
           "override": "input_boolean.door_automations_override",
+          "placements": {
+            "climate.foyer_main_floor_thermostat": {
+              "floor": "main",
+              "room": "foyer",
+              "x": 188.3,
+              "y": 227.1
+            },
+            "climate.landing_second_floor_thermostat": {
+              "floor": "second",
+              "room": "landing",
+              "x": 177,
+              "y": 181.4
+            },
+            "cover.garage_door": {
+              "door": "garage",
+              "floor": "main",
+              "room": "garage",
+              "x": 10,
+              "y": 421
+            },
+            "light.breakfast_nook_blue_lamp": {
+              "icon": "mdi:floor-lamp-torchiere",
+              "floor": "main",
+              "room": "breakfast_nook",
+              "x": 385.9,
+              "y": 485.7
+            },
+            "light.breakfast_nook_yellow_lamp": {
+              "icon": "mdi:floor-lamp-torchiere",
+              "floor": "main",
+              "room": "breakfast_nook",
+              "x": 255.7,
+              "y": 475.8
+            },
+            "light.basement_entryway_front_bulb": {
+              "icon": "mdi:lightbulb",
+              "floor": "basement",
+              "room": "basement",
+              "x": 159.2,
+              "y": 427.6
+            },
+            "light.basement_entryway_rear_bulb": {
+              "icon": "mdi:lightbulb",
+              "floor": "basement",
+              "room": "basement",
+              "x": 201.8,
+              "y": 306.8
+            },
+            "light.living_room_floor_light_left": {
+              "icon": "hue:signe-gradient-floor",
+              "glowPercent": 45,
+              "floor": "main",
+              "room": "living_room",
+              "x": 189.4,
+              "y": 205.8
+            },
+            "light.living_room_floor_light_right": {
+              "icon": "hue:signe-gradient-floor",
+              "glowPercent": 45,
+              "floor": "main",
+              "room": "living_room",
+              "x": 189.4,
+              "y": 89
+            },
+            "light.living_room_front_right_floor_lamp": {
+              "icon": "house:floor-lamp-full-shade",
+              "fallbackColor": [255, 221, 176],
+              "floor": "main",
+              "room": "living_room",
+              "x": 339.4,
+              "y": 205.8
+            },
+            "light.living_room_rear_center_floor_lamp": {
+              "icon": "house:floor-lamp-full-shade",
+              "fallbackColor": [255, 221, 176],
+              "floor": "main",
+              "room": "living_room",
+              "x": 238.3,
+              "y": 89
+            },
+            "light.living_room_wall_wash_right": {
+              "icon": "hue:floor-spot",
+              "floor": "main",
+              "room": "living_room",
+              "x": 339.4,
+              "y": 89
+            },
+            "light.main_bath_tub_light": {
+              "icon": "mdi:chandelier",
+              "floor": "main",
+              "room": "main_bath",
+              "x": 21.2,
+              "y": 289.1
+            },
+            "light.main_bath_vanity_lights": {
+              "icon": "mdi:vanity-light",
+              "floor": "main",
+              "room": "main_bath",
+              "x": 68,
+              "y": 313.4
+            },
+            "light.main_bedroom_cloud_painting": {
+              "icon": "mdi:image-frame",
+              "floor": "main",
+              "room": "main_bedroom",
+              "x": 85.4,
+              "y": 209.7
+            },
+            "light.main_bedroom_fluff_floor_lamp": {
+              "icon": "mdi:floor-lamp",
+              "floor": "main",
+              "room": "main_bedroom",
+              "x": 167.9,
+              "y": 189.9
+            },
+            "light.main_bedroom_thurston_fluff_lamp": {
+              "icon": "hue:table-shade",
+              "floor": "main",
+              "room": "main_bedroom",
+              "x": 26,
+              "y": 209.7
+            },
+            "light.main_bedroom_yanie_fluff_lamp": {
+              "icon": "hue:table-shade",
+              "floor": "main",
+              "room": "main_bedroom",
+              "x": 26,
+              "y": 90.4
+            },
+            "light.main_floor_w_i_c_lights": {
+              "icon": "mdi:light-recessed",
+              "floor": "main",
+              "room": "main_floor_w_i_c",
+              "x": 144.1,
+              "y": 288.6
+            },
+            "light.screened_porch_string_lights": {
+              "icon": "mdi:string-lights",
+              "floor": "main",
+              "room": "screened_porch",
+              "x": 162.1,
+              "y": 43.1
+            },
+            "light.thurston_office_desk_lamp_left": {
+              "icon": "mdi:lamp",
+              "floor": "second",
+              "room": "thurston_office",
+              "x": 17.5,
+              "y": 257.1
+            },
+            "light.thurston_office_desk_lamp_right": {
+              "icon": "hue:signe-gradient-table",
+              "floor": "second",
+              "room": "thurston_office",
+              "x": 82.1,
+              "y": 295.6
+            },
+            "light.thurston_office_iris": {
+              "icon": "hue:iris",
+              "floor": "second",
+              "room": "thurston_office",
+              "x": 57.1,
+              "y": 295.6
+            },
+            "light.thurston_office_wall_wash_left": {
+              "icon": "hue:floor-spot",
+              "floor": "second",
+              "room": "thurston_office",
+              "x": 17.5,
+              "y": 379.7
+            },
+            "light.thurston_office_wall_wash_right": {
+              "icon": "hue:floor-spot",
+              "floor": "second",
+              "room": "thurston_office",
+              "x": 97,
+              "y": 379.7
+            },
+            "light.basement_under_kitchen_front_bulb": {
+              "icon": "mdi:lightbulb",
+              "floor": "basement",
+              "room": "basement",
+              "x": 322.8,
+              "y": 425
+            },
+            "light.basement_under_kitchen_rear_bulb": {
+              "icon": "mdi:lightbulb",
+              "floor": "basement",
+              "room": "basement",
+              "x": 322.8,
+              "y": 314.3
+            },
+            "light.basement_under_living_room_left_bulb": {
+              "icon": "mdi:lightbulb",
+              "floor": "basement",
+              "room": "basement",
+              "x": 214.7,
+              "y": 172.7
+            },
+            "light.basement_under_living_room_right_bulb": {
+              "icon": "mdi:lightbulb",
+              "floor": "basement",
+              "room": "basement",
+              "x": 337,
+              "y": 172.7
+            },
+            "light.basement_under_main_bedroom_front_bulb": {
+              "icon": "mdi:lightbulb",
+              "floor": "basement",
+              "room": "basement",
+              "x": 92.9,
+              "y": 269.6
+            },
+            "light.basement_under_main_bedroom_rear_bulb": {
+              "icon": "mdi:lightbulb",
+              "floor": "basement",
+              "room": "basement",
+              "x": 92.9,
+              "y": 153
+            },
+            "lock.foyer_front_door": {
+              "door": "front",
+              "floor": "main",
+              "room": "foyer",
+              "x": 215,
+              "y": 494.3
+            },
+            "lock.basement_door": {
+              "floor": "basement",
+              "room": "basement",
+              "x": 339.2,
+              "y": 98
+            },
+            "media_player.kitchen_display": {
+              "icon": "house:nest-hub",
+              "floor": "main",
+              "room": "kitchen",
+              "x": 364.4,
+              "y": 403.2
+            },
+            "media_player.main_bedroom_homepod": {
+              "icon": "house:homepod",
+              "floor": "main",
+              "room": "main_bedroom",
+              "x": 31.7,
+              "y": 209.9
+            },
+            "switch.espresso_machine_power": {
+              "icon": "mdi:coffee-maker",
+              "floor": "main",
+              "room": "kitchen",
+              "x": 321.2,
+              "y": 370.9
+            }
+          },
           "thermostats": [
             {
               "name": "Main · Foyer",
@@ -44,70 +299,43 @@
                   "outdoor": true
                 },
                 {
-                  "id": "under_main_bedroom",
-                  "name": "Under Main Bedroom",
-                  "path": "M10 95h170v205h-170Z",
-                  "label": [95.0, 189.5],
-                  "lines": ["Under", "Main Bedroom"],
-                  "lights": [
-                    "light.under_main_bedroom_front_bulb",
-                    "light.under_main_bedroom_rear_bulb"
-                  ],
-                  "hueScenes": true,
-                  "hold": {
-                    "action": "lights"
-                  }
-                },
-                {
-                  "id": "under_living_room",
-                  "name": "Under Living Room",
-                  "path": "M180 95h210v165h-210Z",
-                  "label": [285.0, 171.5],
-                  "lines": ["Under Living Room"],
-                  "entity": "lock.under_living_room_basement_door",
+                  "id": "basement",
+                  "name": "Basement",
+                  "path": "M10 95H390V470H10Z",
+                  "partitions": "M180 95V300H10M180 260H390M260 260V390H180V470M220 390V300H260",
+                  "label": [285, 225],
+                  "power": [285, 198],
+                  "entity": "lock.basement_door",
                   "mapNote": "Basement Door",
+                  "group": "light.basement",
                   "lights": [
-                    "light.under_living_room_left_bulb",
-                    "light.under_living_room_right_bulb"
+                    "light.basement_under_main_bedroom_front_bulb",
+                    "light.basement_under_main_bedroom_rear_bulb",
+                    "light.basement_under_living_room_left_bulb",
+                    "light.basement_under_living_room_right_bulb",
+                    "light.basement_entryway_front_bulb",
+                    "light.basement_entryway_rear_bulb",
+                    "light.basement_under_kitchen_front_bulb",
+                    "light.basement_under_kitchen_rear_bulb"
                   ],
-                  "hueScenes": true,
-                  "hold": {
-                    "action": "lock"
-                  }
-                },
-                {
-                  "id": "entryway",
-                  "name": "Entryway",
-                  "path": "M180 260H260V300H220V390H180V470H10V300H180Z",
-                  "label": [114, 386],
-                  "lines": ["Entryway"],
-                  "lights": [
-                    "light.entryway_front_bulb",
-                    "light.entryway_rear_bulb"
+                  "controls": [
+                    {
+                      "entity": "light.basement_under_main_bedroom",
+                      "name": "Under Main Bedroom"
+                    },
+                    {
+                      "entity": "light.basement_under_living_room",
+                      "name": "Under Living Room"
+                    },
+                    {
+                      "entity": "light.basement_entryway",
+                      "name": "Entryway"
+                    },
+                    {
+                      "entity": "light.basement_under_kitchen",
+                      "name": "Under Kitchen"
+                    }
                   ],
-                  "hueScenes": true,
-                  "hold": {
-                    "action": "lights"
-                  }
-                },
-                {
-                  "id": "little_room",
-                  "name": "Little Room",
-                  "path": "M220 300H260V390H220Z",
-                  "label": [240, 337],
-                  "lines": ["Little", "Room"]
-                },
-                {
-                  "id": "under_kitchen",
-                  "name": "Under Kitchen",
-                  "lines": ["Under Kitchen"],
-                  "label": [325, 377],
-                  "path": "M260 260H390V470H180V390H260Z",
-                  "lights": [
-                    "light.under_kitchen_front_bulb",
-                    "light.under_kitchen_rear_bulb"
-                  ],
-                  "hueScenes": true,
                   "hold": {
                     "action": "lights"
                   }
@@ -115,23 +343,19 @@
               ],
               "openings": [
                 {
-                  "between": ["under_main_bedroom", "entryway"],
                   "path": "M180 270V292"
                 },
                 {
-                  "between": ["under_living_room", "entryway"],
                   "path": "M198 260H236"
                 },
                 {
-                  "between": ["little_room", "entryway"],
                   "path": "M220 356V379"
                 },
                 {
-                  "between": ["under_kitchen", "entryway"],
                   "path": "M180 421V447"
                 },
                 {
-                  "between": ["under_living_room", "outside"],
+                  "between": ["basement", "outside"],
                   "path": "M325 95H354"
                 }
               ]
@@ -147,7 +371,8 @@
                   "id": "screened_porch",
                   "name": "Screened Porch",
                   "path": "M10 10h220v70h-220Z",
-                  "label": [120.0, 45.0],
+                  "label": [85, 45],
+                  "power": [85, 24],
                   "lines": ["Screened Porch"],
                   "outdoor": true,
                   "lights": ["light.screened_porch_string_lights"],
@@ -175,6 +400,7 @@
                   "name": "Main Bedroom",
                   "path": "M10 80H180V260H150V220H10Z",
                   "label": [95.0, 144.0],
+                  "power": [95, 117],
                   "lines": ["Main Bedroom"],
                   "lights": [
                     "light.main_bedroom_fluff_floor_lamp",
@@ -206,6 +432,7 @@
                   "name": "Living Room",
                   "path": "M180 80h170v140h-170Z",
                   "label": [265.0, 144.0],
+                  "power": [265, 176],
                   "lines": ["Living Room"],
                   "lights": [
                     "light.living_room_floor_light_left",
@@ -261,6 +488,7 @@
                   "name": "Main Bath",
                   "path": "M10 220h85v100h-85Z",
                   "label": [52.5, 262.0],
+                  "power": [52, 238],
                   "lines": ["Main", "Bath"],
                   "lights": [
                     "light.main_bath_vanity_lights",
@@ -275,6 +503,7 @@
                   "name": "Main Floor W.I.C.",
                   "path": "M95 220H150V260H180V320H95Z",
                   "label": [137.5, 270.0],
+                  "power": [136, 244],
                   "lines": ["W.I.C."],
                   "lights": ["light.main_floor_w_i_c_lights"],
                   "hold": {
@@ -364,6 +593,7 @@
                   "name": "Breakfast Nook",
                   "path": "M250 410h140v90h-140Z",
                   "label": [320.0, 455.0],
+                  "power": [320, 430],
                   "lines": ["Breakfast Nook"],
                   "lights": [
                     "light.breakfast_nook_blue_lamp",
@@ -464,6 +694,8 @@
                   "name": "Thurston Office",
                   "path": "M10 180h95v210h-95Z",
                   "label": [57.5, 271.0],
+                  "power": [58, 210],
+                  "group": "light.thurston_office",
                   "lines": ["Thurston", "Office"],
                   "lights": [
                     "light.thurston_office_desk_lamp_left",

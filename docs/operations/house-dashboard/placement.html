@@ -1,0 +1,749 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>House · Placement studio</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #ecf1f4;
+        --surface: #e0e5e8;
+        --fg: #252727;
+        --muted: #696c6d;
+        --border: #a6aaac;
+        --accent: #9f4718;
+        --on-accent: #fff;
+        --secure: #316a4e;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #101315;
+          --surface: #1b1e20;
+          --fg: #cacccc;
+          --muted: #8b8d8e;
+          --border: #515455;
+          --accent: #e5a72a;
+          --on-accent: #101315;
+          --secure: #629c7d;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          15px/1.5 system-ui,
+          sans-serif;
+      }
+      button,
+      select {
+        font: inherit;
+        color: inherit;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 7px;
+        min-height: 44px;
+        padding: 9px 14px;
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      button:focus-visible,
+      select:focus-visible,
+      svg:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+      }
+      button.primary {
+        background: var(--accent);
+        color: var(--on-accent);
+        border-color: var(--accent);
+      }
+      button[aria-pressed="true"] {
+        border-color: var(--accent);
+        box-shadow: inset 0 -2px var(--accent);
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 20px;
+        padding: 24px 32px;
+        border-bottom: 1px solid var(--border);
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        line-height: 1.15;
+        margin: 4px 0 10px;
+      }
+      h1 {
+        font-size: 32px;
+      }
+      h2 {
+        font-size: 28px;
+      }
+      p {
+        margin: 5px 0;
+      }
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .muted,
+      small {
+        color: var(--muted);
+      }
+      small {
+        display: block;
+        font-size: 12px;
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      #save-state {
+        width: 100%;
+        font-size: 12px;
+        text-align: right;
+      }
+      main {
+        max-width: 1440px;
+        margin: auto;
+        padding: 24px 32px;
+      }
+      nav {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin-bottom: 24px;
+      }
+      .workspace {
+        display: grid;
+        grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+        gap: 24px;
+        align-items: start;
+      }
+      aside {
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 20px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 6px;
+      }
+      select {
+        width: 100%;
+        margin-bottom: 16px;
+      }
+      #devices {
+        display: grid;
+        gap: 7px;
+        margin-top: 16px;
+      }
+      .device {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        text-align: left;
+      }
+      .device .number {
+        display: grid;
+        place-items: center;
+        width: 28px;
+        height: 28px;
+        border: 1px solid var(--border);
+        border-radius: 50%;
+        flex-shrink: 0;
+        font-size: 12px;
+      }
+      .device.placed .number {
+        background: var(--secure);
+        color: var(--bg);
+        border-color: var(--secure);
+      }
+      .device .name {
+        flex: 1;
+      }
+      .device .check {
+        color: var(--secure);
+      }
+      .map-heading {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 12px;
+      }
+      .map-wrap {
+        position: relative;
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        overflow: hidden;
+        background: var(--surface);
+      }
+      svg {
+        width: 100%;
+        height: min(58vh, 560px);
+        min-height: 320px;
+        display: block;
+        touch-action: none;
+      }
+      .wall {
+        fill: var(--bg);
+        stroke: var(--border);
+        stroke-width: 1;
+      }
+      .room.selected .wall {
+        stroke: var(--accent);
+        stroke-width: 1.5;
+      }
+      .focused .room:not(.selected) {
+        opacity: 0.45;
+      }
+      .room-label {
+        fill: var(--muted);
+        font: 9px system-ui;
+        text-anchor: middle;
+        pointer-events: none;
+      }
+      .opening {
+        stroke: var(--surface);
+        stroke-width: 4;
+        pointer-events: none;
+      }
+      .pin {
+        cursor: grab;
+      }
+      .pin circle {
+        fill: var(--secure);
+        stroke: var(--bg);
+        stroke-width: 2;
+      }
+      .pin.selected circle {
+        fill: var(--accent);
+      }
+      .pin text {
+        fill: var(--bg);
+        text-anchor: middle;
+        dominant-baseline: central;
+        font: bold 11px system-ui;
+        pointer-events: none;
+      }
+      .pin.selected text {
+        fill: var(--on-accent);
+      }
+      .map-caption {
+        padding: 12px 16px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+      }
+      .selection {
+        padding: 16px 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      #entity {
+        font:
+          11px ui-monospace,
+          monospace;
+        overflow-wrap: anywhere;
+        color: var(--muted);
+      }
+      #message {
+        min-height: 24px;
+        color: var(--accent);
+      }
+      footer {
+        font-size: 12px;
+        color: var(--muted);
+        padding-top: 14px;
+        border-top: 1px solid var(--border);
+      }
+      @media (max-width: 700px) {
+        header {
+          padding: 18px;
+          flex-wrap: wrap;
+        }
+        h1 {
+          font-size: 27px;
+        }
+        header > .actions {
+          width: 100%;
+        }
+        #save-state {
+          text-align: left;
+        }
+        main {
+          padding: 18px;
+        }
+        nav {
+          gap: 5px;
+          margin-bottom: 18px;
+        }
+        nav button {
+          padding: 8px 10px;
+        }
+        .workspace {
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+        aside {
+          padding: 14px;
+        }
+        #devices {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .device {
+          padding: 8px;
+          gap: 7px;
+          font-size: 13px;
+        }
+        .device small {
+          font-size: 11px;
+        }
+        .check {
+          display: none;
+        }
+        svg {
+          height: 360px;
+          min-height: 0;
+        }
+        .selection {
+          flex-wrap: wrap;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <div class="eyebrow">Loch Highland / House Atlas</div>
+        <h1>Placement studio</h1>
+        <p class="muted">Show me where things actually live.</p>
+      </div>
+      <div class="actions">
+        <button id="download" disabled>Download JSON</button
+        ><button id="save" class="primary" disabled>Save placements</button
+        ><span id="save-state" role="status">Loading…</span>
+      </div>
+    </header>
+    <main>
+      <nav id="floors" aria-label="Floor"></nav>
+      <div class="workspace">
+        <aside>
+          <label for="room">Room</label
+          ><select id="room"></select>
+          <div class="eyebrow">1 / Choose a device</div>
+          <p id="progress"></p>
+          <small
+            >Place individual fixtures. We can group their controls
+            later.</small
+          >
+          <div id="devices"></div>
+        </aside>
+        <section>
+          <div class="map-heading">
+            <div>
+              <div class="eyebrow">2 / Tap its location</div>
+              <h2 id="title">Loading floor plan…</h2>
+            </div>
+            <button id="view" disabled>Whole floor</button>
+          </div>
+          <div class="map-wrap">
+            <svg
+              id="map"
+              xmlns="http://www.w3.org/2000/svg"
+              tabindex="0"
+              role="group"
+              aria-label="Device placement map"
+            ></svg>
+            <div class="map-caption">
+              Same orientation as House. Tap to place; drag a numbered pin to
+              adjust. Arrow keys nudge the selected pin.
+            </div>
+          </div>
+          <div class="selection">
+            <div>
+              <strong id="selected-name"></strong>
+              <div id="entity"></div>
+              <small id="coordinates"></small>
+            </div>
+            <div class="actions">
+              <button id="remove" disabled>Unplace</button
+              ><button id="undo" disabled>Undo</button
+              ><button id="next" disabled>Next unplaced →</button>
+            </div>
+          </div>
+          <p id="message" role="status"></p>
+          <footer>
+            Layout only. No lights, locks, or other devices are operated. Save
+            writes a shared file on pod042 for this thread; partial progress is
+            welcome.
+          </footer>
+        </section>
+      </div>
+    </main>
+    <script type="module">
+      const $ = (id) => document.getElementById(id);
+      const svgNS = "http://www.w3.org/2000/svg";
+      let floors, devices, placements, revision, floor, room, selected;
+      let wholeFloor = false,
+        savedText = "",
+        saving = false,
+        history = [],
+        drag = null;
+      const text = () => JSON.stringify(placements);
+      const roomDevices = () => devices.filter((d) => d.room === room.id);
+      const dirty = () => text() !== savedText;
+      function svgElement(tag, attrs, parent = $("map")) {
+        const el = document.createElementNS(svgNS, tag);
+        for (const [key, value] of Object.entries(attrs))
+          el.setAttribute(key, value);
+        parent.append(el);
+        return el;
+      }
+      function remember() {
+        history.push(text());
+      }
+      function update() {
+        $("save").disabled = saving || !dirty();
+        $("save-state").textContent = saving
+          ? "Saving…"
+          : dirty()
+            ? "Unsaved placements"
+            : "Saved on pod042";
+        $("undo").disabled = !history.length;
+        $("remove").disabled = !placements[selected];
+        $("download").disabled = false;
+        $("next").disabled = !roomDevices().some((d) => !placements[d.entity]);
+        const placed = roomDevices().filter((d) => placements[d.entity]).length;
+        $("progress").textContent =
+          `${placed} of ${roomDevices().length} placed here · ${Object.keys(placements).length} of ${devices.length} overall`;
+        const device = devices.find((d) => d.entity === selected);
+        $("selected-name").textContent =
+          device?.name || "No mapped devices in this room";
+        $("entity").textContent =
+          selected || "Choose another room to continue.";
+        const point = placements[selected];
+        $("coordinates").textContent = point
+          ? `Floor coordinates: ${point.x}, ${point.y}`
+          : device
+            ? "Not placed yet — tap the map."
+            : "";
+        for (const button of $("devices").children) {
+          const active = button.dataset.entity === selected;
+          const placed = !!placements[button.dataset.entity];
+          button.setAttribute("aria-pressed", active);
+          button.classList.toggle("placed", placed);
+          button.querySelector("small").textContent = placed
+            ? "Placed · select to move"
+            : "Not placed";
+          button.querySelector(".check").textContent = placed ? "✓" : "";
+        }
+        renderPins();
+      }
+      function renderPins() {
+        $("pins")?.remove();
+        if (wholeFloor) return;
+        const pins = svgElement("g", { id: "pins" });
+        const scale = 1 / $("map").getScreenCTM().a;
+        devices
+          .filter(
+            (d) =>
+              d.floor === floor.id &&
+              placements[d.entity] &&
+              d.room === room.id,
+          )
+          .forEach((d) => {
+            const point = placements[d.entity];
+            const pin = svgElement(
+              "g",
+              {
+                class: `pin ${d.entity === selected ? "selected" : ""}`,
+                "data-entity": d.entity,
+                transform: `translate(${point.x} ${point.y}) scale(${scale})`,
+              },
+              pins,
+            );
+            svgElement("circle", { r: 22 }, pin);
+            svgElement("text", {}, pin).textContent =
+              devices
+                .filter((x) => x.room === d.room)
+                .findIndex((x) => x.entity === d.entity) + 1;
+            svgElement("title", {}, pin).textContent = d.name;
+          });
+      }
+      function renderMap() {
+        $("map").replaceChildren();
+        $("map").classList.toggle("focused", !wholeFloor);
+        floor.rooms.forEach((r) => {
+          const group = svgElement("g", {
+            class: `room ${r.id === room.id ? "selected" : ""}`,
+            "data-room": r.id,
+          });
+          svgElement("path", { d: r.path, class: "wall" }, group);
+          if (wholeFloor) {
+            const label = svgElement("text", { class: "room-label" }, group);
+            const lines = r.lines || [r.name];
+            lines.forEach((line, index) => {
+              svgElement(
+                "tspan",
+                {
+                  x: r.label[0],
+                  y: r.label[1] + (index - (lines.length - 1) / 2) * 11,
+                },
+                label,
+              ).textContent = line;
+            });
+          }
+        });
+        (floor.openings || []).forEach((opening) =>
+          svgElement("path", { d: opening.path, class: "opening" }),
+        );
+        const box = $("map").querySelector(".room.selected path").getBBox();
+        $("map").setAttribute(
+          "viewBox",
+          wholeFloor
+            ? `0 0 ${floor.width} ${floor.height}`
+            : `${box.x - 18} ${box.y - 18} ${box.width + 36} ${box.height + 36}`,
+        );
+        $("view").textContent = wholeFloor ? "Focus room" : "Whole floor";
+        $("view").disabled = false;
+        $("title").textContent = wholeFloor ? floor.name : room.name;
+        document.querySelector(".map-caption").textContent = wholeFloor
+          ? "Choose a room on the floor plan to place its fixtures."
+          : "Same orientation as House. Tap to place; drag a numbered pin to adjust. Arrow keys nudge the selected pin.";
+        renderPins();
+      }
+      function selectRoom(id) {
+        room = floor.rooms.find((r) => r.id === id);
+        $("room").value = id;
+        selected =
+          roomDevices().find((d) => !placements[d.entity])?.entity ||
+          roomDevices()[0]?.entity;
+        $("devices").replaceChildren();
+        roomDevices().forEach((device, index) => {
+          const button = document.createElement("button");
+          button.className = "device";
+          button.dataset.entity = device.entity;
+          button.innerHTML = `<span class="number">${index + 1}</span><span class="name"></span><span class="check"></span>`;
+          button
+            .querySelector(".name")
+            .append(
+              document.createTextNode(device.name),
+              document.createElement("small"),
+            );
+          button.onclick = () => {
+            selected = device.entity;
+            $("message").textContent = "";
+            update();
+          };
+          $("devices").append(button);
+        });
+        renderMap();
+        update();
+      }
+      function selectFloor(id) {
+        floor = floors.find((f) => f.id === id);
+        for (const button of $("floors").children)
+          button.setAttribute("aria-pressed", button.dataset.floor === id);
+        $("room").replaceChildren(
+          ...floor.rooms.map((r) => new Option(r.name, r.id)),
+        );
+        selectRoom(
+          floor.rooms.find((r) => devices.some((d) => d.room === r.id))?.id ||
+            floor.rooms[0].id,
+        );
+      }
+      function mapPoint(event) {
+        const point = new DOMPoint(
+          event.clientX,
+          event.clientY,
+        ).matrixTransform($("map").getScreenCTM().inverse());
+        return {
+          floor: floor.id,
+          room: room.id,
+          x: Math.round(Math.max(0, Math.min(floor.width, point.x)) * 10) / 10,
+          y: Math.round(Math.max(0, Math.min(floor.height, point.y)) * 10) / 10,
+        };
+      }
+      $("map").addEventListener("pointerdown", (event) => {
+        if (event.button !== 0 || drag) return;
+        const pin = event.target.closest(".pin");
+        if (pin) {
+          const device = devices.find((d) => d.entity === pin.dataset.entity);
+          if (device.room !== room.id) selectRoom(device.room);
+          selected = device.entity;
+          drag = { id: event.pointerId, before: text(), moved: false };
+          $("map").setPointerCapture(event.pointerId);
+          update();
+        }
+      });
+      $("map").addEventListener("pointermove", (event) => {
+        if (!drag || drag.id !== event.pointerId) return;
+        drag.moved = true;
+        placements[selected] = mapPoint(event);
+        update();
+      });
+      $("map").addEventListener("pointerup", (event) => {
+        if (drag) {
+          if (drag.id !== event.pointerId) return;
+          if (drag.moved && drag.before !== text()) history.push(drag.before);
+          drag = null;
+          update();
+          return;
+        }
+        if (wholeFloor) {
+          const target = event.target.closest(".room");
+          if (target) {
+            wholeFloor = false;
+            selectRoom(target.dataset.room);
+          }
+        } else if (selected) {
+          remember();
+          placements[selected] = mapPoint(event);
+          update();
+        }
+      });
+      $("map").addEventListener("pointercancel", () => {
+        if (drag) {
+          placements = JSON.parse(drag.before);
+          drag = null;
+          update();
+        }
+      });
+      $("map").addEventListener("keydown", (event) => {
+        const delta = {
+          ArrowLeft: [-1, 0],
+          ArrowRight: [1, 0],
+          ArrowUp: [0, -1],
+          ArrowDown: [0, 1],
+        }[event.key];
+        if (!delta || !selected) return;
+        event.preventDefault();
+        remember();
+        const point = placements[selected] || {
+          floor: floor.id,
+          room: room.id,
+          x: room.label[0],
+          y: room.label[1],
+        };
+        const step = event.shiftKey ? 5 : 1;
+        placements[selected] = {
+          ...point,
+          x: Math.max(0, Math.min(floor.width, point.x + delta[0] * step)),
+          y: Math.max(0, Math.min(floor.height, point.y + delta[1] * step)),
+        };
+        update();
+      });
+      $("room").onchange = () => {
+        wholeFloor = false;
+        selectRoom($("room").value);
+      };
+      $("view").onclick = () => {
+        wholeFloor = !wholeFloor;
+        renderMap();
+      };
+      $("remove").onclick = () => {
+        remember();
+        delete placements[selected];
+        update();
+      };
+      $("undo").onclick = () => {
+        placements = JSON.parse(history.pop());
+        update();
+      };
+      $("next").onclick = () => {
+        selected =
+          roomDevices().find((d) => !placements[d.entity])?.entity || selected;
+        update();
+      };
+      $("download").onclick = () => {
+        const url = URL.createObjectURL(
+          new Blob([JSON.stringify(placements, null, 2) + "\n"], {
+            type: "application/json",
+          }),
+        );
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "house-atlas-placements.json";
+        link.click();
+        URL.revokeObjectURL(url);
+      };
+      $("save").onclick = async () => {
+        const snapshot = text();
+        saving = true;
+        update();
+        try {
+          const response = await fetch("/api", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              revision,
+              placements: JSON.parse(snapshot),
+            }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result);
+          revision = result.revision;
+          savedText = snapshot;
+          $("message").textContent =
+            "Saved. I can read these positions from the thread now.";
+        } catch (error) {
+          $("message").textContent =
+            `Save failed: ${error.message}. Your draft is still here; Download JSON keeps a copy.`;
+        } finally {
+          saving = false;
+          update();
+        }
+      };
+      window.addEventListener("beforeunload", (event) => {
+        if (placements && dirty()) event.preventDefault();
+      });
+      new ResizeObserver(() => {
+        if (floor) renderPins();
+      }).observe($("map"));
+      try {
+        const response = await fetch("/api");
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        ({ floors, devices, placements, revision } = await response.json());
+        savedText = text();
+        floors.forEach((f) => {
+          const button = document.createElement("button");
+          button.textContent = f.name;
+          button.dataset.floor = f.id;
+          button.onclick = () => {
+            wholeFloor = false;
+            selectFloor(f.id);
+          };
+          $("floors").append(button);
+        });
+        selectFloor("main");
+        selectRoom("living_room");
+      } catch (error) {
+        $("save-state").textContent = "Could not load";
+        $("message").textContent = error.message;
+      }
+    </script>
+  </body>
+</html>

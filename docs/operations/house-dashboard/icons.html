@@ -1,0 +1,703 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>House · Icon studio</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #101315;
+        --surface: #26292b;
+        --fg: #cacccc;
+        --muted: #8b8d8e;
+        --border: #515455;
+        --accent: #9cc4dd;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--fg);
+        font:
+          14px/1.5 system-ui,
+          sans-serif;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+        color: inherit;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 9px 12px;
+        min-height: 44px;
+      }
+      button {
+        cursor: pointer;
+      }
+      button:disabled {
+        opacity: 0.45;
+        cursor: default;
+      }
+      button[aria-pressed="true"] {
+        border-color: var(--accent);
+        background: var(--surface);
+      }
+      :focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 3px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        flex-wrap: wrap;
+        padding: 20px 28px;
+        border-bottom: 1px solid var(--border);
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        font-weight: 400;
+        margin: 0;
+      }
+      h1 {
+        font-size: 32px;
+      }
+      h2 {
+        font-size: 24px;
+      }
+      p {
+        margin: 6px 0;
+      }
+      small,
+      .muted {
+        color: var(--muted);
+      }
+      small {
+        display: block;
+      }
+      .eyebrow {
+        text-transform: uppercase;
+        letter-spacing: 0.18em;
+        font-size: 10px;
+        color: var(--muted);
+      }
+      .actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        align-items: center;
+      }
+      #status {
+        flex-basis: 100%;
+        text-align: right;
+        font-size: 12px;
+      }
+      #save {
+        background: var(--accent);
+        color: var(--bg);
+        border-color: var(--accent);
+      }
+      main {
+        max-width: 1440px;
+        margin: auto;
+        padding: 24px 28px;
+        display: grid;
+        grid-template-columns: 250px minmax(0, 1fr);
+        gap: 24px;
+      }
+      aside {
+        align-self: start;
+        position: sticky;
+        top: 16px;
+      }
+      label {
+        display: block;
+        margin: 0 0 5px;
+        color: var(--muted);
+        font-size: 12px;
+      }
+      aside select {
+        width: 100%;
+        margin-bottom: 12px;
+      }
+      #devices {
+        display: grid;
+        gap: 6px;
+        margin-top: 12px;
+      }
+      .device {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        text-align: left;
+      }
+      .device svg {
+        width: 28px;
+        height: 28px;
+        flex-shrink: 0;
+      }
+      .device span {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .overview {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 220px;
+        gap: 20px;
+        margin-bottom: 22px;
+        align-items: center;
+      }
+      #map {
+        width: 100%;
+        height: 260px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: var(--bg);
+      }
+      #map .wall {
+        fill: var(--surface);
+        stroke: var(--border);
+        stroke-width: 1;
+      }
+      #map .neighbor {
+        fill: none;
+        opacity: 0.3;
+      }
+      #map .opening {
+        fill: none;
+        stroke: var(--bg);
+        stroke-width: 4;
+      }
+      #map .pin {
+        cursor: pointer;
+        color: var(--fg);
+      }
+      #map .pin[aria-pressed="true"] {
+        color: var(--accent);
+      }
+      #map .pin circle {
+        fill: var(--bg);
+        stroke: currentColor;
+        stroke-width: 1;
+      }
+      #map .pin[aria-pressed="true"] circle {
+        stroke-width: 2;
+      }
+      #preview {
+        display: flex;
+        align-items: center;
+        gap: 22px;
+        padding: 15px 0;
+      }
+      #preview svg:first-child {
+        width: 64px;
+        height: 64px;
+      }
+      #preview svg:last-child {
+        width: 24px;
+        height: 24px;
+      }
+      #entity,
+      #assigned {
+        overflow-wrap: anywhere;
+        font-size: 11px;
+      }
+      .search {
+        display: flex;
+        gap: 10px;
+        margin: 12px 0 8px;
+      }
+      .search input {
+        flex: 1;
+        width: 0;
+        min-width: 100px;
+      }
+      #gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+        gap: 8px;
+        margin: 12px 0;
+      }
+      .icon {
+        min-height: 96px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        font-size: 11px;
+        overflow-wrap: anywhere;
+        padding: 10px 5px;
+      }
+      .icon svg {
+        width: 34px;
+        height: 34px;
+      }
+      .icon span {
+        max-width: 100%;
+      }
+      #message {
+        min-height: 22px;
+        color: var(--accent);
+      }
+      footer {
+        margin: 24px 0 0;
+        padding-top: 16px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-size: 11px;
+      }
+      a {
+        color: var(--accent);
+      }
+      #credits {
+        margin-top: 10px;
+      }
+      @media (max-width: 700px) {
+        header {
+          padding: 16px;
+        }
+        main {
+          padding: 16px;
+          grid-template-columns: 1fr;
+          gap: 18px;
+        }
+        aside {
+          position: static;
+        }
+        #devices {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+        .device {
+          font-size: 12px;
+          padding: 8px;
+        }
+        .overview {
+          grid-template-columns: minmax(0, 1fr) 150px;
+          gap: 12px;
+        }
+        #map {
+          height: 230px;
+        }
+        #preview {
+          gap: 16px;
+        }
+        #preview svg:first-child {
+          width: 44px;
+          height: 44px;
+        }
+        #status {
+          text-align: left;
+        }
+        #gallery {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .search {
+          flex-wrap: wrap;
+        }
+        .search input {
+          flex-basis: 100%;
+        }
+        h2 {
+          font-size: 22px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div>
+        <div class="eyebrow">Loch Highland / House Atlas</div>
+        <h1>Icon studio</h1>
+        <p class="muted">Choose the fixture, not another bulb.</p>
+      </div>
+      <div class="actions">
+        <button id="download" disabled>Download JSON</button
+        ><button id="save" disabled>Save icons</button
+        ><span id="status" role="status">Loading…</span>
+      </div>
+    </header>
+    <main>
+      <aside>
+        <label for="floor">Floor</label
+        ><select id="floor"></select
+        ><label for="room">Room</label
+        ><select id="room"></select>
+        <p id="progress"></p>
+        <div id="devices" aria-label="Devices"></div>
+      </aside>
+      <section>
+        <div class="overview">
+          <svg
+            id="map"
+            role="group"
+            aria-label="Choose a device on the room map"
+          ></svg>
+          <div>
+            <h2 id="name">Loading…</h2>
+            <small id="entity"></small>
+            <div id="preview"></div>
+            <p id="assigned"></p>
+            <small id="basis"></small>
+            <div class="actions">
+              <button id="clear" disabled>Clear</button
+              ><button id="next" disabled>Next light →</button>
+            </div>
+          </div>
+        </div>
+        <div class="eyebrow">
+          Choose a symbol · previewed at large and actual size
+        </div>
+        <div class="search">
+          <input
+            id="search"
+            type="search"
+            aria-label="Search icons"
+            placeholder="Filter light shapes…"
+          /><button id="undo" disabled>Undo</button>
+        </div>
+        <small id="results"></small>
+        <div id="gallery" aria-label="Icon choices"></div>
+        <p id="message" role="status"></p>
+        <footer>
+          Choices only. This editor never connects to HA or operates devices.
+          Positions are read-only and use the aligned map. Save writes a
+          separate file on pod042. Initial choices are best-effort suggestions,
+          not confirmed fixture shapes. Change any that look wrong.
+          <div id="credits"></div>
+        </footer>
+      </section>
+    </main>
+    <script type="module">
+      const $ = (id) => document.getElementById(id),
+        NS = "http://www.w3.org/2000/svg";
+      let data,
+        catalogue,
+        choices,
+        saved,
+        revision,
+        floor,
+        room,
+        selected,
+        saving = false;
+      const history = [];
+      const text = () => JSON.stringify(choices);
+      const devices = () =>
+        data.devices.filter((d) => d.floor === floor.id && d.room === room.id);
+      function svgElement(tag, attrs, parent) {
+        const e = document.createElementNS(NS, tag);
+        for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+        parent?.append(e);
+        return e;
+      }
+      function symbol(name) {
+        const svg = svgElement("svg", {
+          viewBox: "0 0 24 24",
+          "aria-hidden": "true",
+        });
+        if (name)
+          for (const element of catalogue.icons[name].elements)
+            svgElement(element.tag, element.attributes, svg);
+        else {
+          svgElement(
+            "circle",
+            {
+              cx: 12,
+              cy: 12,
+              r: 10,
+              fill: "none",
+              stroke: "currentColor",
+              "stroke-dasharray": "2 2",
+            },
+            svg,
+          );
+          svgElement(
+            "text",
+            {
+              x: 12,
+              y: 17,
+              "text-anchor": "middle",
+              fill: "currentColor",
+              "font-size": 15,
+            },
+            svg,
+          ).textContent = "?";
+        }
+        return svg;
+      }
+      function map() {
+        const svg = $("map");
+        svg.replaceChildren();
+        for (const r of floor.rooms)
+          svgElement(
+            "path",
+            { d: r.path, class: r.id === room.id ? "wall" : "wall neighbor" },
+            svg,
+          );
+        for (const o of floor.openings || [])
+          svgElement("path", { d: o.path, class: "opening" }, svg);
+        const b = svg.querySelector(".wall:not(.neighbor)").getBBox();
+        const points = devices()
+          .map((d) => data.placements[d.entity])
+          .filter(Boolean);
+        const left = Math.min(b.x, ...points.map((p) => p.x)) - 20,
+          top = Math.min(b.y, ...points.map((p) => p.y)) - 20;
+        const right = Math.max(b.x + b.width, ...points.map((p) => p.x)) + 20,
+          bottom = Math.max(b.y + b.height, ...points.map((p) => p.y)) + 20;
+        svg.setAttribute(
+          "viewBox",
+          `${left} ${top} ${right - left} ${bottom - top}`,
+        );
+        const scale = 1 / svg.getScreenCTM().a;
+        for (const device of devices()) {
+          const p = data.placements[device.entity];
+          if (!p) continue;
+          const g = svgElement(
+            "g",
+            {
+              class: "pin",
+              role: "button",
+              tabindex: 0,
+              "aria-label": device.name,
+              "aria-pressed": device.entity === selected,
+              transform: `translate(${p.x} ${p.y}) scale(${scale})`,
+            },
+            svg,
+          );
+          svgElement("circle", { r: 24 }, g);
+          const icon = symbol(choices[device.entity]);
+          icon.setAttribute("x", -12);
+          icon.setAttribute("y", -12);
+          icon.setAttribute("width", 24);
+          icon.setAttribute("height", 24);
+          g.append(icon);
+          svgElement("title", {}, g).textContent = device.name;
+          g.onclick = () => selectDevice(device.entity);
+          g.onkeydown = (e) => {
+            if (["Enter", " "].includes(e.key)) {
+              e.preventDefault();
+              selectDevice(device.entity);
+            }
+          };
+        }
+      }
+      function update() {
+        $("save").disabled = saving || text() === saved;
+        $("download").disabled = false;
+        $("status").textContent = saving
+          ? "Saving…"
+          : text() === saved
+            ? "Saved on pod042"
+            : "Unsaved choices";
+        $("progress").textContent =
+          `${Object.keys(choices).length} / ${data.devices.length} assigned`;
+        $("clear").disabled = !choices[selected];
+        $("undo").disabled = !history.length;
+        $("next").disabled = !data.devices.length;
+        $("assigned").textContent = choices[selected] || "No icon assigned";
+        $("preview").replaceChildren(
+          symbol(choices[selected]),
+          symbol(choices[selected]),
+        );
+        for (const b of $("devices").children) {
+          b.setAttribute("aria-pressed", b.dataset.entity === selected);
+          b.querySelector("svg").replaceWith(symbol(choices[b.dataset.entity]));
+          b.querySelector("small").textContent = choices[b.dataset.entity]
+            ? "Assigned"
+            : "Unassigned";
+        }
+        for (const b of $("gallery").children)
+          b.setAttribute("aria-pressed", b.dataset.icon === choices[selected]);
+        map();
+      }
+      function selectDevice(entity) {
+        selected = entity;
+        const d = data.devices.find((d) => d.entity === entity);
+        $("name").textContent = d?.name || "No devices";
+        $("entity").textContent = entity || "";
+        $("basis").textContent = catalogue.lights[entity]?.basis || "";
+        $("search").value = "";
+        $("message").textContent = "";
+        update();
+        gallery();
+      }
+      function selectRoom(id) {
+        room = floor.rooms.find((r) => r.id === id);
+        $("room").value = id;
+        $("devices").replaceChildren();
+        for (const d of devices()) {
+          const b = document.createElement("button");
+          b.className = "device";
+          b.dataset.entity = d.entity;
+          const label = document.createElement("span");
+          label.append(
+            document.createTextNode(d.name),
+            document.createElement("small"),
+          );
+          b.append(symbol(choices[d.entity]), label);
+          b.onclick = () => selectDevice(d.entity);
+          $("devices").append(b);
+        }
+        selectDevice(
+          devices().find((d) => !choices[d.entity])?.entity ||
+            devices()[0]?.entity,
+        );
+      }
+      function selectFloor(id) {
+        floor = data.floors.find((f) => f.id === id);
+        $("floor").value = id;
+        $("room").replaceChildren(
+          ...floor.rooms.map((r) => new Option(r.name, r.id)),
+        );
+        selectRoom(
+          floor.rooms.find((r) =>
+            data.devices.some((d) => d.room === r.id && d.floor === id),
+          )?.id || floor.rooms[0].id,
+        );
+      }
+      function gallery() {
+        const q = $("search").value.trim().toLowerCase().replaceAll("-", " ");
+        const names = Object.keys(catalogue.icons).filter((name) =>
+          q
+            .split(/\s+/)
+            .every((word) =>
+              (
+                name.replaceAll("-", " ") +
+                " " +
+                catalogue.icons[name].keywords.join(" ")
+              ).includes(word),
+            ),
+        );
+        $("results").textContent =
+          `${names.length} light shapes · selected icon outlined`;
+        $("gallery").replaceChildren();
+        for (const name of names) {
+          const b = document.createElement("button");
+          b.className = "icon";
+          b.dataset.icon = name;
+          b.setAttribute("aria-label", name);
+          b.setAttribute("aria-pressed", name === choices[selected]);
+          b.disabled = !selected;
+          const label = document.createElement("span");
+          label.textContent = name.split(":")[1].replaceAll("-", " ");
+          b.title = name;
+          b.append(symbol(name), label);
+          b.onclick = () => {
+            history.push(text());
+            choices[selected] = name;
+            update();
+          };
+          $("gallery").append(b);
+        }
+      }
+      $("search").oninput = gallery;
+      $("floor").onchange = () => selectFloor($("floor").value);
+      $("room").onchange = () => selectRoom($("room").value);
+      $("clear").onclick = () => {
+        history.push(text());
+        delete choices[selected];
+        update();
+      };
+      $("undo").onclick = () => {
+        choices = JSON.parse(history.pop());
+        update();
+      };
+      $("next").onclick = () => {
+        const index = data.devices.findIndex((d) => d.entity === selected);
+        const d = data.devices[(index + 1) % data.devices.length];
+        if (d) {
+          selectFloor(d.floor);
+          selectRoom(d.room);
+          selectDevice(d.entity);
+        }
+      };
+      $("download").onclick = () => {
+        const url = URL.createObjectURL(
+          new Blob([JSON.stringify(choices, null, 2) + "\n"], {
+            type: "application/json",
+          }),
+        );
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "house-atlas-icons.json";
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+      $("save").onclick = async () => {
+        const snapshot = text();
+        saving = true;
+        update();
+        try {
+          const response = await fetch("/api/icons", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ revision, icons: JSON.parse(snapshot) }),
+          });
+          const result = await response.json();
+          if (!response.ok) throw Error(result);
+          revision = result.revision;
+          saved = snapshot;
+          $("message").textContent =
+            "Saved. Your choices are ready for this thread.";
+        } catch (error) {
+          $("message").textContent =
+            `Save failed: ${error.message}. Download JSON keeps your draft.`;
+        } finally {
+          saving = false;
+          update();
+        }
+      };
+      window.addEventListener("beforeunload", (e) => {
+        if (choices && text() !== saved) e.preventDefault();
+      });
+      new ResizeObserver(() => {
+        if (room) map();
+      }).observe($("map"));
+      try {
+        const responses = await Promise.all([
+          fetch("/api/icons"),
+          fetch("/api/icon-catalogue"),
+        ]);
+        for (const r of responses) if (!r.ok) throw Error(`HTTP ${r.status}`);
+        [data, catalogue] = await Promise.all(responses.map((r) => r.json()));
+        data.devices = data.devices.filter((d) => d.entity in catalogue.lights);
+        data.floors = data.floors
+          .map((f) => ({
+            ...f,
+            rooms: f.rooms.filter((r) =>
+              data.devices.some((d) => d.floor === f.id && d.room === r.id),
+            ),
+          }))
+          .filter((f) => f.rooms.length);
+        choices = data.icons;
+        revision = data.revision;
+        saved = text();
+        $("floor").replaceChildren(
+          ...data.floors.map((f) => new Option(f.name, f.id)),
+        );
+        selectFloor("main");
+        selectRoom("living_room");
+        for (const source of catalogue.sources) {
+          const row = document.createElement("div"),
+            a = document.createElement("a"),
+            license = document.createElement("a");
+          a.href = source.url;
+          a.textContent = source.name;
+          license.href = source.license_url;
+          license.textContent = source.license;
+          row.append(a, " · ", license, " · SVG paths unchanged");
+          $("credits").append(row);
+        }
+      } catch (error) {
+        $("status").textContent = "Could not load";
+        $("message").textContent = error.message;
+      }
+    </script>
+  </body>
+</html>
