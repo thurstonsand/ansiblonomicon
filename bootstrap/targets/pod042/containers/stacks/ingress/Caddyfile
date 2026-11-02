@@ -66,6 +66,10 @@ neutarr.thurstons.house {
 	import local_only neutarr:9705
 }
 
+nurb.thurstons.house {
+	import local_only 10.10.10.53:7373
+}
+
 plex.thurstons.house {
 	import local_only host.docker.internal:32400
 }

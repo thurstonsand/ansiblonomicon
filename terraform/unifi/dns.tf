@@ -8,6 +8,7 @@ locals {
     "inbox.thurstons.house",
     "netdata.thurstons.house",
     "neutarr.thurstons.house",
+    "nurb.thurstons.house",
     "plex.thurstons.house",
     "pod042.thurstons.house",
     "prowlarr.thurstons.house",

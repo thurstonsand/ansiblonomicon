@@ -46,6 +46,7 @@ brew "uv"
 brew "zig@0.15"
 
 # Infra/Cloud
+brew "caddy"
 brew "cloudflared"
 brew "sshpass"
 brew "openai/tools/tart", trusted: true

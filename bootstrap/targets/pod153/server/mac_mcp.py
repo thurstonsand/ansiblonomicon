@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install the Messages and Reminders MCP servers that pod153 serves to executor.sh, and pod153's Python."""
+"""Install the Messages and Reminders MCP servers that pod153 serves to executor.sh, nurb's engine, and pod153's Python."""
 
 import argparse
 from datetime import UTC, datetime, timedelta
@@ -9,6 +9,7 @@ import os
 from pathlib import Path
 import plistlib
 import re
+import shutil
 import subprocess
 import tempfile
 import urllib.request
@@ -34,14 +35,22 @@ MESSAGES_ENV = HOME / ".local/share/uv/tools" / MESSAGES_TOOL
 # A patch release replaces the interpreter in place, so the environment looks unchanged
 # while the running server still holds the old one; this records the Python it started on.
 MESSAGES_STARTED_ON = HOME / ".local/state/ansiblonomicon/messages-mcp.python"
+# nurb ships as a desktop app whose engine wheel carries no workbench page, since the app
+# shows its own copy, so the serve is built from the release's source, page included.
+NURB_REPO = "https://github.com/Shpigford/nurb"
+NURB = HOME / ".local/share/nurb"
+NURB_ENV = NURB / "env"
+# What the desktop app provisions the engine on.
+NURB_PYTHON = "3.13"
 AGENTS = {
     "remctl": "dev.mise.house.thurstons.remctl-mcp",
     "messages": "dev.mise.house.thurstons.messages-mcp",
+    "nurb": "dev.mise.house.thurstons.nurb",
 }
 
 
-def latest_remctl() -> str:
-    with urllib.request.urlopen(f"{REMCTL_RELEASES}/latest", timeout=60) as response:
+def latest_release(releases: str) -> str:
+    with urllib.request.urlopen(f"{releases}/latest", timeout=60) as response:
         return response.url.rsplit("/v", 1)[1]
 
 
@@ -91,6 +100,106 @@ def install_remctl() -> None:
             )
         finally:
             subprocess.run(["hdiutil", "detach", mount, "-quiet"], check=True)
+
+
+def installed_nurb() -> str | None:
+    python = NURB_ENV / "bin/python"
+    if not python.exists():
+        return None
+    return subprocess.run(
+        [python, "-c", "import importlib.metadata as m; print(m.version('nurb'))"],
+        check=True,
+        text=True,
+        capture_output=True,
+    ).stdout.strip()
+
+
+def install_nurb(version: str) -> None:
+    env = NURB / version
+    python = env / "bin/python"
+    with tempfile.TemporaryDirectory(prefix="ansiblonomicon-nurb.") as tmp:
+        source = Path(tmp) / "nurb"
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "advice.detachedHead=false",
+                "clone",
+                "--quiet",
+                "--depth",
+                "1",
+                "--branch",
+                f"v{version}",
+                NURB_REPO,
+                source,
+            ],
+            check=True,
+        )
+        # Vite writes the page into the engine package, which the install then carries.
+        workbench = ["--workspace", "packages/workbench"]
+        subprocess.run(
+            ["npm", "ci", *workbench, "--no-fund", "--no-audit", "--loglevel=error"],
+            cwd=source,
+            check=True,
+        )
+        subprocess.run(
+            ["npm", "run", "build", *workbench, "--silent", "--", "--logLevel=error"],
+            cwd=source,
+            check=True,
+        )
+        requirements = Path(tmp) / "requirements.txt"
+        subprocess.run(
+            [
+                "uv",
+                "export",
+                "--project",
+                source / "engine",
+                "--frozen",
+                "--no-dev",
+                "--no-emit-project",
+                "--quiet",
+                "--output-file",
+                requirements,
+            ],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "uv",
+                "venv",
+                "--quiet",
+                "--clear",
+                "--python",
+                NURB_PYTHON,
+                "--managed-python",
+                env,
+            ],
+            check=True,
+        )
+        subprocess.run(
+            ["uv", "pip", "sync", "--quiet", "--python", python, requirements],
+            check=True,
+        )
+        subprocess.run(
+            [
+                "uv",
+                "pip",
+                "install",
+                "--quiet",
+                "--no-deps",
+                "--python",
+                python,
+                source / "engine",
+            ],
+            check=True,
+        )
+    staged = NURB_ENV.with_name(".env.new")
+    staged.unlink(missing_ok=True)
+    staged.symlink_to(version)
+    staged.replace(NURB_ENV)
+    for old in NURB.iterdir():
+        if old.is_dir() and not old.is_symlink() and old.name != version:
+            shutil.rmtree(old)
 
 
 def fetch_json(url: str) -> list[dict[str, str]]:
@@ -222,7 +331,7 @@ def main() -> None:
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
-    installed, latest = installed_remctl(), latest_remctl()
+    installed, latest = installed_remctl(), latest_release(REMCTL_RELEASES)
     if installed != latest:
         if args.check:
             print(f"server: would install RemCTL {latest} (have {installed})")
@@ -230,6 +339,15 @@ def main() -> None:
             install_remctl()
             restart("remctl")
             print(f"server: installed RemCTL {latest}")
+
+    installed, latest = installed_nurb(), latest_release(f"{NURB_REPO}/releases")
+    if installed != latest:
+        if args.check:
+            print(f"server: would install nurb {latest} (have {installed})")
+        else:
+            install_nurb(latest)
+            restart("nurb")
+            print(f"server: installed nurb {latest}")
 
     python, release = latest_python()
     if not installed_python(python):

@@ -1,0 +1,15 @@
+{
+	admin off
+	auto_https off
+}
+
+# nurb's serve binds loopback and refuses any other Host, and any page Origin but its own loopback
+# one. Only nurb's own addresses are rewritten, so a page on another origin stays unable to write,
+# and a rebound DNS name still never reaches it. pod042's ingress serves nurb.thurstons.house.
+http://100.97.62.24:7373, http://10.10.10.53:7373, http://nurb.thurstons.house:7373 {
+	bind 100.97.62.24 10.10.10.53
+	reverse_proxy 127.0.0.1:7373 {
+		header_up Host {upstream_hostport}
+		header_up Origin ^(http://(100\.97\.62\.24|10\.10\.10\.53):7373|https://nurb\.thurstons\.house)$ http://127.0.0.1:7373
+	}
+}

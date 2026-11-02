@@ -40,6 +40,24 @@ keep_alive = true
 stdout_path = "~/Library/Logs/messages-mcp.log"
 stderr_path = "~/Library/Logs/messages-mcp.log"
 
+# nurb's engine serves its MCP endpoint, workbench, and API on loopback only; Caddy carries
+# them onto the tailnet and Bunker.
+[bootstrap.macos.launchd.agents."house.thurstons.nurb"]
+program = "~/.local/share/nurb/env/bin/python"
+args = ["-m", "nurb.serve", "--port", "7373"]
+run_at_load = true
+keep_alive = true
+stdout_path = "~/Library/Logs/nurb.log"
+stderr_path = "~/Library/Logs/nurb.log"
+
+[bootstrap.macos.launchd.agents."house.thurstons.nurb-tailnet"]
+program = "/opt/homebrew/bin/caddy"
+args = ["run", "--adapter", "caddyfile", "--config", "/Users/thurstonsand/Develop/ansiblonomicon/bootstrap/targets/pod153/server/nurb.Caddyfile", "--watch"]
+run_at_load = true
+keep_alive = true
+stdout_path = "~/Library/Logs/nurb-tailnet.log"
+stderr_path = "~/Library/Logs/nurb-tailnet.log"
+
 [bootstrap.macos.launchd.agents."house.thurstons.cloudflared"]
 program = "/opt/homebrew/bin/cloudflared"
 args = ["tunnel", "run", "--token-file", "/Users/thurstonsand/.config/cloudflared/pod153.token"]
@@ -51,6 +69,7 @@ stderr_path = "~/Library/Logs/cloudflared.log"
 [bootstrap.secrets]
 pod153_tunnel_token = "POD153_TUNNEL_TOKEN"
 remctl_mcp_token = "REMCTL_MCP_TOKEN"
+nurb_mcp_token = "NURB_MCP_TOKEN"
 
 [bootstrap.directories."~/.config/cloudflared"]
 mode = "0700"
@@ -70,6 +89,15 @@ content = '''{
   "token": "{{ secret(name="remctl_mcp_token") | trim }}"
 }
 '''
+template = true
+mode = "0600"
+
+[bootstrap.directories."~/.config/nurb"]
+mode = "0700"
+
+# Byte-for-byte what nurb's serve rewrites on start, so its MCP token is the one in 1Password.
+[bootstrap.files."~/.config/nurb/connect.json"]
+content = '''{"token": "{{ secret(name="nurb_mcp_token") | trim }}", "port": 7373}'''
 template = true
 mode = "0600"
 

@@ -98,6 +98,9 @@
     - CLI Proxy API:
         href: https://cli-proxy-api.thurstons.house
         icon: mdi-api
+    - nurb:
+        href: https://nurb.thurstons.house
+        icon: mdi-printer-3d
     - iSponsorBlockTV:
         icon: mdi-skip-next
         server: docker-proxy
