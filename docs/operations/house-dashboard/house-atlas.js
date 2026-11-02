@@ -1634,7 +1634,7 @@ class HouseAtlas extends HTMLElement {
     const state = this._hass.states[entity]?.state;
     if (
       adjust ||
-      !["light", "lock", "cover"].includes(domain) ||
+      !["light", "switch", "lock", "cover"].includes(domain) ||
       (domain === "lock" && this.config.placements[entity].door !== "front")
     ) {
       this.openDevice(entity, anchor);
@@ -1972,7 +1972,7 @@ class HouseAtlas extends HTMLElement {
       for (const button of this.shadowRoot.querySelectorAll(
         `[data-device="${entity}"]`,
       )) {
-        if (domain === "light")
+        if (["light", "switch"].includes(domain))
           button.setAttribute("aria-pressed", String(!!active));
         button.classList.toggle("unavailable", !available);
         button.classList.toggle("selected", entity === this.deviceId);
@@ -2283,8 +2283,10 @@ class HouseAtlas extends HTMLElement {
         entity,
         name,
         color: "amber",
-        tap_action: { action: "more-info" },
+        tap_action: { action: "toggle" },
         icon_tap_action: { action: "toggle" },
+        hold_action: { action: "more-info" },
+        icon_hold_action: { action: "more-info" },
         features: [{ type: "light-brightness" }],
       });
       card.hass = this._hass;
@@ -2346,8 +2348,10 @@ class HouseAtlas extends HTMLElement {
           entity,
           name,
           color: "amber",
-          tap_action: { action: "more-info" },
+          tap_action: { action: "toggle" },
           icon_tap_action: { action: "toggle" },
+          hold_action: { action: "more-info" },
+          icon_hold_action: { action: "more-info" },
           features: [{ type: "light-brightness" }],
         }),
       );
@@ -2386,6 +2390,8 @@ class HouseAtlas extends HTMLElement {
         name: "Garage Door",
         tap_action: toggle,
         icon_tap_action: toggle,
+        hold_action: { action: "more-info" },
+        icon_hold_action: { action: "more-info" },
       });
     } else if (
       !room.lights &&
@@ -2415,8 +2421,10 @@ class HouseAtlas extends HTMLElement {
         type: "tile",
         entity,
         name,
-        tap_action: { action: "more-info" },
+        tap_action: { action: "toggle" },
         icon_tap_action: { action: "toggle" },
+        hold_action: { action: "more-info" },
+        icon_hold_action: { action: "more-info" },
       });
     if (!this.roomFocus && (room.scenes || room.hueScenes)) {
       const scenes = document.createElement("section");

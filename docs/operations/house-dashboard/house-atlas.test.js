@@ -501,6 +501,49 @@ export async function checkMapControls(card, hass) {
         JSON.stringify(["cover", "toggle", { entity_id: "cover.garage_door" }]),
       "The wide garage control uses cover.toggle, including while moving",
     );
+    const espresso = root.querySelector(
+      '.fixture[data-device="switch.espresso_machine_power"]',
+    );
+    const details = [];
+    const opened = (event) => details.push(event.detail.entityId);
+    card.addEventListener("hass-more-info", opened);
+    try {
+      for (const state of ["off", "on"]) {
+        fixture.states["switch.espresso_machine_power"].state = state;
+        card.hass = { ...fixture };
+        event(espresso, "click", { detail: 1 });
+        assert(
+          JSON.stringify(calls.pop()) ===
+            JSON.stringify([
+              "switch",
+              "toggle",
+              { entity_id: "switch.espresso_machine_power" },
+            ]) && !details.length,
+          `Espresso tap toggles power from ${state} without opening details`,
+        );
+      }
+      event(espresso, "pointerdown");
+      await pause(500);
+      event(espresso, "pointerup");
+      event(espresso, "click", { detail: 1 });
+      assert(
+        details.pop() === "switch.espresso_machine_power" &&
+          !details.length &&
+          !calls.length,
+        "Espresso hold opens details once and release never toggles power",
+      );
+      event(espresso, "contextmenu", { cancelable: true });
+      assert(
+        details.pop() === "switch.espresso_machine_power" && !calls.length,
+        "Espresso right-click opens details without toggling power",
+      );
+      fixture.states["switch.espresso_machine_power"].state = "unavailable";
+      card.hass = { ...fixture };
+      espresso.click();
+      assert(!calls.length, "Unavailable espresso machine cannot toggle");
+    } finally {
+      card.removeEventListener("hass-more-info", opened);
+    }
     for (const [floor, entity, target] of [
       [
         "Main",
@@ -615,7 +658,7 @@ export async function checkMapControls(card, hass) {
         ]),
       "Room power recalls native Hue scenes with dynamic playback",
     );
-    return "PASS: original lighting groups, individual hold controls, room power on/off/mixed/unavailable, pointer vs keyboard focus, unified basement with four groups, overhead garage closed/partial/open, chrome-free circular lens, tap/hold/cancel, brightness/wheel, scenes, cross-room ambiguity, lock/unlock, camera-first context";
+    return "PASS: original lighting groups, individual hold controls, room power on/off/mixed/unavailable, pointer vs keyboard focus, unified basement with four groups, overhead garage closed/partial/open, chrome-free circular lens, tap/hold/cancel, brightness/wheel, scenes, cross-room ambiguity, lock/unlock, camera-first context, espresso tap on/off and hold/right-click without toggling";
   } finally {
     root.querySelector("dialog[open]")?.close();
     card.hass = hass;
