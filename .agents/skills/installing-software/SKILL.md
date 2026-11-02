@@ -10,7 +10,7 @@ Manage host software through this repo's desired state. Use the host's existing 
 ## macOS
 
 - Homebrew and Mac App Store apps: `bootstrap/capabilities/mac-apps/Brewfile`, with `Brewfile.work` for work; reconcile through `mise mac-apps`. Work's private additions go in an ignored `Brewfile.work.*` beside it.
-- Runtime and global-package inventories: `bootstrap/capabilities/language-tools/`; work's private inventory lives in its native target. Reconcile through `mise language-tools`.
+- Runtimes and global CLIs: pod153's global mise config, `bootstrap/targets/pod153/mise-global.toml`; work's in the inventories under `bootstrap/capabilities/language-tools/`, with its private additions in its native target. Packages that only a language package manager can install also go in those inventories. Reconcile through `mise language-tools`.
 - Reconciliation: `mise laptop` runs every registered native capability. Work's private files belong to the `work-local` capability.
 - Claude Code, shp, and uvc-util: `bootstrap/capabilities/software/`, registered under the Mac targets. Go and UVC overlay sources live in its `sources/` directory. Use the matching root task with `--check` before applying; UVC reconciliation builds but never runs camera settings.
 
@@ -32,7 +32,7 @@ Native capabilities live under `bootstrap/targets/udmp/`. Use `mise udmp` for OS
 
 ## Pi extensions and packages
 
-Work's Pi release is declared in `bootstrap/targets/ML-DFC6YK6VJQ/mise.pi.toml` and reconciled through `mise pi`; personal Pi belongs to the language-tool npm inventory. Native agent configuration owns Pi settings, extensions, and package declarations.
+Work's Pi release is declared in `bootstrap/targets/ML-DFC6YK6VJQ/mise.pi.toml` and reconciled through `mise pi`; personal hosts declare `pi` in their global mise config. Native agent configuration owns Pi settings, extensions, and package declarations.
 
 - Config renderer and package declarations: `bootstrap/capabilities/agent-harness/configuration/pi.py` and `assets.toml`.
 - Local extension sources: `bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/`.
