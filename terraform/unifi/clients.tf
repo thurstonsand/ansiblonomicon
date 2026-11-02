@@ -40,6 +40,7 @@ resource "unifi_client" "nest_doorbell" {
   allow_existing = true
 }
 
+# pod153's private address on YoRHa, which it falls back to when Wi-Fi skips Bunker; delete once its USB Ethernet is wired.
 resource "unifi_client" "thurston_mbp" {
   mac            = "0a:e0:d0:07:0a:37"
   name           = "Thurston's M4 Pro MBP"
@@ -260,7 +261,7 @@ resource "unifi_client" "pod042" {
 
 # The MAC is macOS's fixed private address for the Bunker SSID; move it to the USB Ethernet dongle's once wired.
 resource "unifi_client" "pod153" {
-  mac              = "32:a7:b5:72:32:59"
+  mac              = "32:0e:96:b9:72:12"
   name             = "pod153"
   fixed_ip         = "10.10.10.53"
   local_dns_record = "pod153"
