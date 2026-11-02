@@ -204,3 +204,8 @@ unit = "claude-auth-refresh"
 "~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }
 "~/.local/share/applications/pod153 Desktop.desktop" = { source = "omarchy/applications/pod153 Desktop.desktop", mode = "symlink" }
 "~/.local/bin/pod153-desktop" = { source = "omarchy/bin/pod153-desktop", mode = "symlink" }
+
+# Omarchy 4.0's setup wrote this launcher; it ran `mise use -g pi`, which writes into the repo's linked global config and
+# never moves past an installed version. Omarchy 4.5 removes it for the mise shim too. Delete once no9-type-s converges.
+[bootstrap.files."/home/thurstonsand/.local/bin/pi"]
+state = "absent"

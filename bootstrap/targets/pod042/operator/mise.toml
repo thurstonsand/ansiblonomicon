@@ -9,8 +9,9 @@ npm = "latest"
 "npm:sideshow" = { version = "latest", allow_low_downloads = true, trust_policy_excludes = ["@pierre/theme@2.0.0"] }
 "npm:tuistory" = "latest"
 "aqua:modem-dev/hunk" = "latest"
-# Pi is exempt from the supply-chain cooling; `pi update` upgrades it through mise.
-pi = { version = "latest", minimum_release_age = "0s" }
+# Pi is exempt from the supply-chain cooling. `latest` keeps whichever version is installed, so a launch upgrades it once
+# every 4h, as Omarchy declares its agent CLIs; `pi update` upgrades it through mise too.
+pi = { version = "latest", minimum_release_age = "0s", auto_update = "4h" }
 python = "3.15"
 uv = "latest"
 bun = "latest"
