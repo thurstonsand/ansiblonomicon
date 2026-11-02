@@ -100,10 +100,10 @@
       "allowedVersions": "<9"
     },
     {
-      "description": "The work Mac stays on Python 3.14 while every other host runs 3.15: its mirror's wheel-only lock resolve finds no cp315 PyYAML wheel. README.work.md covers the override; lift this ceiling when the mirror serves one, together with the work .zshenv export and pyproject.toml.",
+      "description": "The work Mac stays on Python 3.14 while every other host runs 3.15: its mirror's wheel-only lock resolve finds no cp315 PyYAML wheel. README.work.md covers the override; lift this ceiling when the mirror serves one, together with the work .zshenv export and pyproject.toml. The mise manager looks Python up as python/cpython on GitHub tags, so that is the name to match.",
       "matchManagers": ["mise"],
       "matchFileNames": ["bootstrap/targets/ML-DFC6YK6VJQ/mise.toml"],
-      "matchPackageNames": ["python"],
+      "matchPackageNames": ["python/cpython"],
       "allowedVersions": "<3.15"
     },
     {
@@ -137,6 +137,11 @@
       "description": "Pi hands extensions its own bundled typebox at runtime, so the extensions pin typebox to exactly the version Pi depends on. scripts/ts-package-deps.sh owns that pin and moves it with each Pi release; any typebox Renovate offers on its own breaks the match.",
       "matchPackageNames": ["typebox"],
       "enabled": false
+    },
+    {
+      "description": "The executor.sh app SDK ships as `apps` under the `beta` dist-tag only. The package's `latest` tag still points at 0.8.3, a 2014 app.json manifest library published under the same name, which Renovate would otherwise offer as an upgrade.",
+      "matchPackageNames": ["apps"],
+      "followTag": "beta"
     }
   ]
 }
