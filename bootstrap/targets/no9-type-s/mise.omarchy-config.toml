@@ -197,3 +197,5 @@ unit = "claude-auth-refresh"
 "~/.local/share/icons/hicolor/256x256/apps/dodosend.png" = { source = "omarchy/icons/dodosend.png", mode = "symlink" }
 "~/.local/share/applications/pod042 Desktop.desktop" = { source = "omarchy/applications/pod042 Desktop.desktop", mode = "symlink" }
 "~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }
+"~/.local/share/applications/pod153 Desktop.desktop" = { source = "omarchy/applications/pod153 Desktop.desktop", mode = "symlink" }
+"~/.local/bin/pod153-desktop" = { source = "omarchy/bin/pod153-desktop", mode = "symlink" }

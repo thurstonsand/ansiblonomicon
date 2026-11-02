@@ -1,0 +1,36 @@
+#!/bin/bash
+set -euo pipefail
+
+socket="$XDG_RUNTIME_DIR/pod153-desktop.sock"
+password=$(fnox-host get POD153_LOGIN_PASSWORD)
+read -r width height < <(hyprctl monitors -j | jq -r '.[] | select(.focused) | "\(.width) \(.height)"')
+
+# Screen Sharing ignores VNC resize requests. Choose a native Retina mode that fits without scaling the viewer's pixels.
+ssh -T pod153 swift - "$width" "$height" <<'SWIFT'
+import CoreGraphics
+
+let width = Int(CommandLine.arguments[1])!
+let height = Int(CommandLine.arguments[2])!
+let display = CGMainDisplayID()
+let options = [kCGDisplayShowDuplicateLowResolutionModes: true] as CFDictionary
+let modes = CGDisplayCopyAllDisplayModes(display, options) as! [CGDisplayMode]
+let fitting = modes.filter {
+    $0.pixelWidth == $0.width * 2 && $0.pixelWidth <= width && $0.pixelHeight <= height
+}
+guard let mode = fitting.max(by: { $0.pixelWidth * $0.pixelHeight < $1.pixelWidth * $1.pixelHeight }) else {
+    fatalError("No Retina display mode fits \(width)x\(height)")
+}
+if CGDisplayCopyDisplayMode(display)!.ioDisplayModeID != mode.ioDisplayModeID {
+    var config: CGDisplayConfigRef?
+    guard CGBeginDisplayConfiguration(&config) == .success,
+          CGConfigureDisplayWithDisplayMode(config, display, mode, nil) == .success,
+          CGCompleteDisplayConfiguration(config, .forSession) == .success else {
+        fatalError("Setting display mode failed")
+    }
+}
+print("pod153 desktop: \(mode.pixelWidth)x\(mode.pixelHeight) Retina")
+SWIFT
+
+ssh -T -f -o ExitOnForwardFailure=yes -o StreamLocalBindUnlink=yes -L "$socket:localhost:5900" pod153 \
+  'exec sleep 10'
+VNC_USERNAME=thurstonsand VNC_PASSWORD="$password" exec vncviewer -FullScreen -Shared -SecurityTypes DH "$socket"

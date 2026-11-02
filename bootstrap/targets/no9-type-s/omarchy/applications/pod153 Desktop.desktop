@@ -1,0 +1,9 @@
+[Desktop Entry]
+Version=1.0
+Name=pod153 Desktop
+Comment=pod153's macOS desktop
+Exec=pod153-desktop
+Terminal=false
+Type=Application
+Icon=tigervnc
+StartupNotify=true
