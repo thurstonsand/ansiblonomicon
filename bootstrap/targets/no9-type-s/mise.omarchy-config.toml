@@ -78,6 +78,11 @@ sudo -n udevadm trigger --subsystem-match=usb --property-match=DEVTYPE=usb_devic
 
 [bootstrap.hooks.post-dotfiles]
 run = '''
+# Omarchy supplies CUPS. Keep a persistent queue so the printer's sleepy mDNS responder is not needed for discovery.
+if ! LC_ALL=C lpstat -v | grep -qxF 'device for Canon_MF650C: ipp://printer.thurstons.house/ipp/print'; then
+  sudo -n lpadmin -p Canon_MF650C -E -v ipp://printer.thurstons.house/ipp/print -m everywhere \
+    -D 'Canon MF650C Series' -o printer-is-shared=false
+fi
 # Superwhisper's installer also links its Omarchy panel, menu row, fcitx5 addon, and agent skill, and writes hypr/bindings.lua.
 "{{ config_root }}/omarchy/libexec/superwhisper-install"
 # bindings.lua dofile()s Superwhisper's generated shortcuts.lua, which stays out of git and so is missing on a fresh checkout.
