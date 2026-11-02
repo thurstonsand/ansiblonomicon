@@ -349,7 +349,10 @@ def resolved_output(invocation: FnoxCommand, *, name: str | None = None) -> str:
     )
     if result.returncode:
         label = f" for {name}" if name is not None else ""
-        raise ConfigurationError(f"secret resolution failed{label}")
+        detail = result.stderr.strip()
+        raise ConfigurationError(
+            f"secret resolution failed{label}" + (f": {detail}" if detail else "")
+        )
     return result.stdout
 
 
