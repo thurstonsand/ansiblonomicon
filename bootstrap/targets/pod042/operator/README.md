@@ -6,7 +6,7 @@ Base owns the zsh package and the operator's `/usr/bin/zsh` login shell; the dri
 
 The remaining installation steps are named mise tasks, ordered through dependencies:
 
-1. `operator:tools`: install and update the inventory, reconcile npm globals beside Node, and refresh shims.
+1. `operator:tools`: install and update the inventory, retire the npm globals it replaced, and refresh shims.
 2. `operator:agents`: install missing vendor-native agent CLIs and reconcile T3's standalone release.
 
 Terminal configuration, TPM, and plugins are owned by the `terminal-tools` capability, which runs after the prerequisite bootstrap during a full reconciliation.
