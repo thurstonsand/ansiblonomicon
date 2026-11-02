@@ -75,8 +75,7 @@ node_bin=$(dirname "$(mise which node)")
 python3 /home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042/operator/node_packages.py "$node_bin/npm"
 mise reshim
 ''',
-  # nurb's build123d needs cadquery-ocp-novtk, which ships no cp315 wheels yet.
-  "uv tool install --upgrade --python 3.14 nurb",
+  'if [ -d "$(uv tool dir)/nurb" ]; then uv tool uninstall nurb; fi',
 ]
 
 [tasks."operator:agents"]

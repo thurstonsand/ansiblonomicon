@@ -25,7 +25,6 @@ node = "lts"
 "npm:sideshow" = { version = "latest", allow_low_downloads = true, trust_policy_excludes = ["@pierre/theme@2.0.0"] }
 "npm:tuistory" = "latest"
 pi = "latest"
-"pipx:nurb" = "latest"
 pnpm = { version = "latest", postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"' }
 uv = "latest"
 
