@@ -50,22 +50,15 @@ function ensureClone(): void {
 }
 
 // Pi assembles the prompt in a fixed order and only lets extensions hand back a finished
-// string, so both sections are spliced onto markers instead of appended at the end.
+// string, so both sections are spliced onto markers instead of appended at the end. The docs
+// marker is the section's closing tag: pi rewords the docs prose between releases, not its tags.
 const FIRST_PARAGRAPH_END = "\n\n";
-const DOCS_BLOCK_END =
-  "- Always read pi .md files completely and follow links to related docs (e.g., tui.md for TUI API details)";
+const DOCS_BLOCK_END = "\n</docs>";
 
 function insertBefore(prompt: string, marker: string, section: string): string {
   const at = prompt.indexOf(marker);
   if (at < 0) return prompt + section;
   return prompt.slice(0, at) + section + prompt.slice(at);
-}
-
-function insertAfter(prompt: string, marker: string, section: string): string {
-  const at = prompt.indexOf(marker);
-  if (at < 0) return prompt + section;
-  const end = at + marker.length;
-  return prompt.slice(0, end) + section + prompt.slice(end);
 }
 
 function sourceSection(): string {
@@ -83,7 +76,7 @@ export default function (pi: ExtensionAPI): void {
   pi.on("before_agent_start", async (event, ctx) => {
     ensureClone();
     const model = ctx.model;
-    const withSource = insertAfter(event.systemPrompt, DOCS_BLOCK_END, sourceSection());
+    const withSource = insertBefore(event.systemPrompt, DOCS_BLOCK_END, sourceSection());
     if (!model) return { systemPrompt: withSource };
 
     return {
