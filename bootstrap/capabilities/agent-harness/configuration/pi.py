@@ -246,6 +246,8 @@ def _settings(
             }
         },
         "lastChangelogVersion": current.get("lastChangelogVersion", CHANGELOG_FALLBACK),
+        # Pi records each package's last shown version here and shows nothing for a package it has no record of.
+        "extensionChangelogVersions": current.get("extensionChangelogVersions", {}),
         "librarian": {
             "model": profile["librarian"],
             "thinkingLevel": "low",
