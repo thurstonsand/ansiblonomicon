@@ -26,6 +26,9 @@ PYTHON_TEAM = "BMM5U3QVKW"
 PYTHON_FRAMEWORK = Path("/Library/Frameworks/Python.framework/Versions")
 # A new minor waits this long for its first bug fixes and for wheels to catch up.
 PYTHON_MINOR_GRACE = timedelta(days=14)
+# The framework ships no CA bundle; the package's Install Certificates command, which a
+# framework-only install skips, would add certifi's. macOS keeps its own bundle current.
+SYSTEM_CA_BUNDLE = Path("/etc/ssl/cert.pem")
 MESSAGES_TOOL = "mac-messages-mcp"
 # Releases trail main by months, and main carries contact-scoped search, conversation
 # listing, and paging, so track main.
@@ -302,6 +305,21 @@ def install_python(version: str, release: str) -> None:
         )
 
 
+def link_ca_bundles(check: bool) -> None:
+    for framework in PYTHON_FRAMEWORK.iterdir():
+        bundle = framework / "etc/openssl/cert.pem"
+        if framework.is_symlink() or (
+            bundle.is_symlink() and bundle.readlink() == SYSTEM_CA_BUNDLE
+        ):
+            continue
+        if check:
+            print(f"server: would link {bundle} to {SYSTEM_CA_BUNDLE}")
+        else:
+            bundle.unlink(missing_ok=True)
+            bundle.symlink_to(SYSTEM_CA_BUNDLE)
+            print(f"server: linked {bundle} to {SYSTEM_CA_BUNDLE}")
+
+
 def messages_versions() -> str | None:
     python = MESSAGES_ENV / "bin/python"
     if not python.exists():
@@ -331,6 +349,8 @@ def main() -> None:
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
+    # Before any download: this script runs on the framework's python3.
+    link_ca_bundles(args.check)
     installed, latest = installed_remctl(), latest_release(REMCTL_RELEASES)
     if installed != latest:
         if args.check:
@@ -355,6 +375,7 @@ def main() -> None:
             print(f"server: would install Python {python}")
         else:
             install_python(python, release)
+            link_ca_bundles(args.check)
             print(f"server: installed Python {python}")
 
     if args.check:
