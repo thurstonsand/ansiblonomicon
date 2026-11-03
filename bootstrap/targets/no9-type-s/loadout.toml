@@ -37,6 +37,7 @@ arctis-sound-manager = "present"
 noise-suppression-for-voice = "present"
 
 [aur]
+amp-desktop-bin = "present"
 beeper-bin = "present"
 
 [themes]

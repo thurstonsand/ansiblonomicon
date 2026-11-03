@@ -1,6 +1,6 @@
 [Desktop Entry]
 Version=1.0
-Name=Amp
+Name=Amp (Web)
 Comment=Amp
 Exec=omarchy-launch-webapp "https://ampcode.com/"
 Terminal=false
