@@ -20,17 +20,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "pod153" {
   ]
 
   config {
-    # Both servers reject Host headers other than their loopback address.
-    ingress_rule {
-      hostname = "pod153-mcp.${local.zone_name}"
-      path     = "^/servers/messages/"
-      service  = "http://127.0.0.1:7363"
-
-      origin_request {
-        http_host_header = "127.0.0.1:7363"
-      }
-    }
-
+    # RemCTL rejects Host headers other than its loopback address.
     ingress_rule {
       hostname = "pod153-mcp.${local.zone_name}"
       path     = "^/reminders$"
@@ -39,6 +29,13 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "pod153" {
       origin_request {
         http_host_header = "127.0.0.1:7362"
       }
+    }
+
+    # imsgbus in cupertino, the Messages VM that only pod153 reaches.
+    ingress_rule {
+      hostname = "pod153-mcp.${local.zone_name}"
+      path     = "^/imessage$"
+      service  = "http://cupertino.local:7380"
     }
 
     # nurb's whole serve, through the Caddy front that rewrites Host and Origin for this name.

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Install the Messages and Reminders MCP servers that pod153 serves to executor.sh, nurb's engine, and pod153's Python."""
+"""Install the Reminders MCP server that pod153 serves to executor.sh, nurb's engine, and pod153's Python."""
 
 import argparse
 from datetime import UTC, datetime, timedelta
@@ -17,8 +17,8 @@ import urllib.request
 HOME = Path.home()
 REMCTL = HOME / "bin/remctl"
 REMCTL_RELEASES = "https://github.com/viticci/remctl/releases"
-# The scheduled reconcile and the Messages server need Full Disk Access and Automation, and
-# macOS keys both grants to the Python binary they run on. python.org signs its builds with
+# The scheduled reconcile needs Full Disk Access and Automation, and macOS keys both grants to
+# the Python binary it runs on. python.org signs its builds with
 # the PSF's Developer ID, so the grants survive upgrades; Homebrew's ad-hoc signed Python
 # lost them on every release.
 PYTHON_API = "https://www.python.org/api/v2/downloads"
@@ -29,15 +29,11 @@ PYTHON_MINOR_GRACE = timedelta(days=14)
 # The framework ships no CA bundle; the package's Install Certificates command, which a
 # framework-only install skips, would add certifi's. macOS keeps its own bundle current.
 SYSTEM_CA_BUNDLE = Path("/etc/ssl/cert.pem")
-MESSAGES_TOOL = "mac-messages-mcp"
-# Releases trail main by months, and main carries contact-scoped search, conversation
-# listing, and paging, so track main.
-MESSAGES_REPO = "https://github.com/carterlasalle/mac_messages_mcp"
-MESSAGES_SOURCE = f"{MESSAGES_TOOL} @ git+{MESSAGES_REPO}"
-MESSAGES_ENV = HOME / ".local/share/uv/tools" / MESSAGES_TOOL
-# A patch release replaces the interpreter in place, so the environment looks unchanged
-# while the running server still holds the old one; this records the Python it started on.
-MESSAGES_STARTED_ON = HOME / ".local/state/ansiblonomicon/messages-mcp.python"
+# imsgbus in cupertino replaced mac-messages-mcp; delete these once pod153 converges.
+RETIRED_MESSAGES_TOOL = "mac-messages-mcp"
+RETIRED_MESSAGES_ENV = HOME / ".local/share/uv/tools" / RETIRED_MESSAGES_TOOL
+RETIRED_MESSAGES_STATE = HOME / ".local/state/ansiblonomicon/messages-mcp.python"
+RETIRED_MESSAGES_AGENT = "dev.mise.house.thurstons.messages-mcp"
 # nurb ships as a desktop app whose engine wheel carries no workbench page, since the app
 # shows its own copy, so the serve is built from the release's source, page included.
 NURB_REPO = "https://github.com/Shpigford/nurb"
@@ -47,7 +43,6 @@ NURB_ENV = NURB / "env"
 NURB_PYTHON = "3.13"
 AGENTS = {
     "remctl": "dev.mise.house.thurstons.remctl-mcp",
-    "messages": "dev.mise.house.thurstons.messages-mcp",
     "nurb": "dev.mise.house.thurstons.nurb",
 }
 
@@ -320,21 +315,6 @@ def link_ca_bundles(check: bool) -> None:
             print(f"server: linked {bundle} to {SYSTEM_CA_BUNDLE}")
 
 
-def messages_versions() -> str | None:
-    python = MESSAGES_ENV / "bin/python"
-    if not python.exists():
-        return None
-    return (
-        f"{python.resolve()}\n"
-        + subprocess.run(
-            ["uv", "pip", "freeze", "--python", python],
-            check=True,
-            text=True,
-            capture_output=True,
-        ).stdout
-    )
-
-
 def restart(agent: str) -> None:
     label = f"gui/{os.getuid()}/{AGENTS[agent]}"
     if (
@@ -378,50 +358,19 @@ def main() -> None:
             link_ca_bundles(args.check)
             print(f"server: installed Python {python}")
 
-    if args.check:
-        head = subprocess.run(
-            ["git", "ls-remote", MESSAGES_REPO, "HEAD"],
-            check=True,
-            text=True,
-            capture_output=True,
-        ).stdout.split()[0]
-        installed = messages_versions() or ""
-        if f"{MESSAGES_REPO}@{head}" not in installed or not installed.startswith(
-            f"{python_binary(python)}\n"
-        ):
-            print(
-                f"server: would install {MESSAGES_TOOL} {head[:7]} on Python {python}"
+    if RETIRED_MESSAGES_ENV.exists():
+        if args.check:
+            print(f"server: would retire {RETIRED_MESSAGES_TOOL}")
+        else:
+            # The plist goes with the files step; a job outlives its plist until it is booted out.
+            subprocess.run(
+                ["launchctl", "bootout", f"gui/{os.getuid()}/{RETIRED_MESSAGES_AGENT}"]
             )
-        elif (
-            not MESSAGES_STARTED_ON.exists()
-            or MESSAGES_STARTED_ON.read_text() != python
-        ):
-            print(f"server: would restart {MESSAGES_TOOL} on Python {python}")
-        return
-    before = messages_versions()
-    subprocess.run(
-        [
-            "uv",
-            "tool",
-            "install",
-            "--upgrade",
-            "--quiet",
-            "--python",
-            python_binary(python),
-            MESSAGES_SOURCE,
-            "--with-executables-from",
-            "mcp-proxy",
-        ],
-        check=True,
-    )
-    started_on = (
-        MESSAGES_STARTED_ON.read_text() if MESSAGES_STARTED_ON.exists() else None
-    )
-    if started_on != python or messages_versions() != before:
-        restart("messages")
-        MESSAGES_STARTED_ON.parent.mkdir(parents=True, exist_ok=True)
-        MESSAGES_STARTED_ON.write_text(python)
-        print(f"server: restarted {MESSAGES_TOOL} on Python {python}")
+            subprocess.run(
+                ["uv", "tool", "uninstall", RETIRED_MESSAGES_TOOL], check=True
+            )
+            RETIRED_MESSAGES_STATE.unlink(missing_ok=True)
+            print(f"server: retired {RETIRED_MESSAGES_TOOL}")
 
 
 if __name__ == "__main__":

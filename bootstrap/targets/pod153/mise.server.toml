@@ -32,14 +32,6 @@ keep_alive = true
 stdout_path = "~/Library/Logs/remctl-mcp.log"
 stderr_path = "~/Library/Logs/remctl-mcp.log"
 
-[bootstrap.macos.launchd.agents."house.thurstons.messages-mcp"]
-program = "~/.local/bin/mcp-proxy"
-args = ["--host", "127.0.0.1", "--port", "7363", "--named-server", "messages", "/Users/thurstonsand/.local/bin/mac-messages-mcp"]
-run_at_load = true
-keep_alive = true
-stdout_path = "~/Library/Logs/messages-mcp.log"
-stderr_path = "~/Library/Logs/messages-mcp.log"
-
 # nurb's engine serves its MCP endpoint, workbench, and API on loopback only; Caddy carries
 # them onto the tailnet and Bunker, and the tunnel carries Caddy's front to the internet.
 [bootstrap.macos.launchd.agents."house.thurstons.nurb"]
@@ -185,6 +177,10 @@ fi
 sudo -n /opt/homebrew/bin/tailscale up --reset --hostname=pod153 --accept-dns=false --accept-routes=false --advertise-tags=tag:pod153 --advertise-routes= --advertise-exit-node=false --exit-node= --exit-node-allow-lan-access=false --report-posture=false --ssh=true
 sudo -n /opt/homebrew/bin/tailscale wait --timeout=15s
 '''
+
+# Retired for imsgbus in cupertino; server/mac_mcp.py boots the job out. Delete once pod153 converges.
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/dev.mise.house.thurstons.messages-mcp.plist"]
+state = "absent"
 
 # Retiring the desktop apps' background jobs; delete these once pod153 converges.
 [bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/com.github.domt4.homebrew-autoupdate.plist"]

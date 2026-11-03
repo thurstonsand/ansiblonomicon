@@ -9,23 +9,24 @@ const pod153 = defineProvider({
   hosts: ["pod153-mcp.thurstons.house"],
   auth: {
     serviceToken: secrets({
-      // The BlueBubbles field is unused, but changing the fields orphans the connected account.
-      label: "Cloudflare Access service token, RemCTL token, and BlueBubbles password",
+      label: "Cloudflare Access service token, RemCTL token, and imsgbus MCP token",
       fields: object({
         cf_access_client_id: string({ minLength: 1 }),
         cf_access_client_secret: string({ minLength: 1 }),
         remctl_token: string({ minLength: 1 }),
-        bluebubbles_password: string({ minLength: 1 }),
+        imsgbus_token: string({ minLength: 1 }),
       }),
     }),
   },
 });
 
-// Anything that sends, schedules, deletes, or runs an arbitrary command asks a person first.
+// Anything that sends, changes what others see, deletes, or runs an arbitrary command asks a person first.
 const GUARDED = new Set([
-  "tool_send_message",
-  "tool_schedule_message",
-  "tool_create_contact",
+  "send_message",
+  "tapback",
+  "edit_message",
+  "unsend_message",
+  "mark_read",
   "delete_reminder",
   "run",
 ]);
@@ -40,7 +41,12 @@ export default defineApp({ app: { accounts: { pod153 } } }, async ({ app, signal
   return {
     tools: router({
       messages: withApprovals(
-        await mcpRouter({ url: `${BASE}/servers/messages/mcp`, account, headers: access, signal }),
+        await mcpRouter({
+          url: `${BASE}/imessage`,
+          account,
+          headers: { ...access, Authorization: `Bearer ${account.fields.imsgbus_token}` },
+          signal,
+        }),
         guard,
       ),
       reminders: withApprovals(
