@@ -22,7 +22,7 @@ AC_POWER = {
 # browsing for it. Plain IPP, because its self-signed certificate fails IPPS.
 PRINTER = ("Canon_MF650C_Series", "ipp://printer.thurstons.house/ipp/print")
 TIME_MACHINE = "smb://thurstonsand@pod042.thurstons.house/timemachine"
-# Time Machine copies a changed file whole, so the running BlueBubbles VM's disk
+# Time Machine copies a changed file whole, so a running Tart VM's disk
 # image would go over every hour; the rest are regenerable caches.
 TIME_MACHINE_SKIPPED = [str(Path.home() / name) for name in (".tart", ".cache", ".npm")]
 SYSTEM_DAEMONS = {

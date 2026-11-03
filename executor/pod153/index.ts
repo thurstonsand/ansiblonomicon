@@ -9,11 +9,13 @@ const pod153 = defineProvider({
   hosts: ["pod153-mcp.thurstons.house"],
   auth: {
     serviceToken: secrets({
-      label: "Cloudflare Access service token and RemCTL token",
+      // The BlueBubbles field is unused, but changing the fields orphans the connected account.
+      label: "Cloudflare Access service token, RemCTL token, and BlueBubbles password",
       fields: object({
         cf_access_client_id: string({ minLength: 1 }),
         cf_access_client_secret: string({ minLength: 1 }),
         remctl_token: string({ minLength: 1 }),
+        bluebubbles_password: string({ minLength: 1 }),
       }),
     }),
   },
