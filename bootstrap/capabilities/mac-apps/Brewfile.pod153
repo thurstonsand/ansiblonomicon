@@ -49,7 +49,8 @@ brew "openai/tools/tart", trusted: true
 # The open-source tailscaled, unlike the App Store app, runs before login and serves Tailscale SSH.
 brew "tailscale"
 
-cask "gcloud-cli"
+# It updates itself, so only a greedy upgrade installs the Python formula its cask switches to.
+cask "gcloud-cli", greedy: true
 cask "orbstack"
 
 # Editors/Terminals
