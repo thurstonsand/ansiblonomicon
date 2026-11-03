@@ -32,7 +32,7 @@ appservice:
     public_address: null
     hostname: 0.0.0.0
     port: 4000
-    id: 9352d7c6-f893-40ff-a55e-b4f92ee12002
+    id: 4a1868f9-4a38-4e0c-b889-6299eb82c062
     bot:
         username: sh-imsgbusbot
     as_token: "{{ secret(name="as_token") | trim }}"
