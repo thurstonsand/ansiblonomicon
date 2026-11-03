@@ -48,7 +48,8 @@ services:
         target: /var/lib/alloy
         bind:
           create_host_path: false
-    networks: [telemetry]
+    # Caddy forwards other hosts' log pushes to it at logs.thurstons.house.
+    networks: [telemetry, ingress]
 
   cpa-collector:
     image: python:3.13-alpine

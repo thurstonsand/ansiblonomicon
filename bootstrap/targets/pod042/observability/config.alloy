@@ -46,6 +46,16 @@ loki.process "usage" {
   forward_to = [loki.write.local.receiver]
 }
 
+// Other hosts' Alloy pushes their own processed streams here, through Caddy at logs.thurstons.house.
+loki.source.api "remote" {
+  http {
+    listen_address = "0.0.0.0"
+    listen_port    = 3500
+  }
+  use_incoming_timestamp = true
+  forward_to             = [loki.write.local.receiver]
+}
+
 loki.write "local" {
   endpoint {
     url = "http://loki:3100/loki/api/v1/push"

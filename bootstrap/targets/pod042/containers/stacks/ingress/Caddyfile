@@ -58,6 +58,13 @@ dash.thurstons.house {
 	import local_only homepage:3000
 }
 
+# Log pushes from cupertino, pod153's Messages VM, which reaches the LAN as pod153.
+logs.thurstons.house {
+	@outside not remote_ip 10.10.10.53
+	respond @outside 403
+	reverse_proxy alloy:3500
+}
+
 netdata.thurstons.house {
 	import local_only host.docker.internal:19999
 }
