@@ -1,3 +1,4 @@
+external_output_device: ALC285 Analog
 micro_input_source: __manual__
 oled_display_order: [sonar_mode, profile, eq, eq_chat, media, weather]
 oled_show_battery: true
