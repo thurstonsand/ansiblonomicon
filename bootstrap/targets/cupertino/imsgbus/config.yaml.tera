@@ -2,7 +2,7 @@
 # `bbctl config --type bridgev2 sh-imsgbus` generated to register the bridge with Beeper. imsgbus runs with
 # --no-update, so it never rewrites this file.
 bridge:
-    private_chat_portal_meta: false
+    private_chat_portal_meta: true
     split_portals: true
     bridge_status_notices: none
     tag_only_on_create: false
