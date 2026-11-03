@@ -225,12 +225,6 @@ resource "unifi_client" "breville_oracle_dual_boiler" {
   allow_existing = true
 }
 
-resource "unifi_client" "meta_ray_ban_gen_3" {
-  mac            = "e6:bc:56:cc:9b:2f"
-  name           = "Meta Ray-Ban Gen 3"
-  allow_existing = true
-}
-
 resource "unifi_client" "nintendo_switch_2" {
   mac            = "e0:ef:bf:51:76:c0"
   name           = "Nintendo Switch 2"
