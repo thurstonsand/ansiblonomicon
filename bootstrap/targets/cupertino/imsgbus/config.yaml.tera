@@ -56,12 +56,9 @@ backfill:
     queue:
         enabled: true
         batch_size: 50
-        max_batches: 0
-        max_batches_override:
-            channel: 10
-            supergroup: 10
-            dm: -1
-            group_dm: -1
+        # Per-room-type overrides only apply to connectors that implement GetBackfillMaxBatchCount, which
+        # imsgbus doesn't, so this is every chat's limit: all of its history.
+        max_batches: -1
 double_puppet:
     servers:
         beeper.com: https://matrix.beeper.com/_hungryserv/thurstonsand
