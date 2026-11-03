@@ -39,6 +39,7 @@ noise-suppression-for-voice = "present"
 [aur]
 amp-desktop-bin = "present"
 beeper-bin = "present"
+google-chrome = "present"
 
 [themes]
 fire-and-shadow = { source = "https://github.com/mattbbia/fire-and-shadow.git" }

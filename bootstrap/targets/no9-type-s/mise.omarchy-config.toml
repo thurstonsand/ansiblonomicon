@@ -1,3 +1,13 @@
+[tasks.omarchy-config]
+usage = 'flag "-c --check" help="Show configuration changes and check saved Chrome shortcuts without applying changes"'
+run = '''
+set -e
+mode=--yes
+[ -z "${usage_check:-}" ] || mode=--dry-run
+mise bootstrap --only files,repos,dotfiles --force-dotfiles "$mode"
+bash "{{config_root}}/omarchy/libexec/check-chrome-shortcuts"
+'''
+
 [bootstrap.files."/etc/sudoers.d/ansiblonomicon"]
 source = "omarchy/sudoers.d/ansiblonomicon"
 owner = "root"
@@ -87,10 +97,15 @@ fi
 "{{ config_root }}/omarchy/libexec/superwhisper-install"
 # bindings.lua dofile()s Superwhisper's generated shortcuts.lua, which stays out of git and so is missing on a fresh checkout.
 [ -f ~/.config/superwhisper/shortcuts.lua ] || ~/.local/bin/superwhisper shortcuts apply >/dev/null
+# Amp, WhatsApp, and the other Omarchy web apps follow the default browser. Profile-local extension setup is in docs/chrome.md.
+if [ "$(omarchy default browser)" != chrome ]; then
+  omarchy default browser chrome
+fi
+omarchy-install-chromium-copy-url
 # The rest of what Superwhisper's auto-learned vocabulary needs, plus Brave Origin, which it skips. Only the flag line is owned here,
 # because Omarchy's migrations also append to these files.
 gsettings set org.gnome.desktop.interface toolkit-accessibility true
-for flags in ~/.config/chromium-flags.conf ~/.config/brave-origin-flags.conf ~/.config/obsidian/user-flags.conf; do
+for flags in ~/.config/chromium-flags.conf ~/.config/chrome-flags.conf ~/.config/brave-origin-flags.conf ~/.config/obsidian/user-flags.conf; do
   grep -qxF -- --force-renderer-accessibility "$flags" 2>/dev/null && continue
   mkdir -p "$(dirname "$flags")"
   [ -s "$flags" ] && [ -n "$(tail -c1 "$flags")" ] && echo >>"$flags"

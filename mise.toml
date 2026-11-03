@@ -712,7 +712,7 @@ if selected omarchy-config; then
   hypr_before=$(sha256sum "$HOME"/.config/hypr/*.lua 2>/dev/null || true)
   PATH="$MISE_PROJECT_ROOT/scripts/askpass-sudo:$PATH" MISE_ENV=omarchy-config \
     "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD --secret YORHA_PASSPHRASE --secret LUNAR_TEAR_PASSPHRASE -- \
-    mise -C "$target" bootstrap --only files,repos,dotfiles --force-dotfiles "$mode" || exit "$?"
+    mise -C "$target" run omarchy-config ${usage_check:+--check} || exit "$?"
   if [ -z "${usage_check:-}" ]; then
     hypr_after=$(sha256sum "$HOME"/.config/hypr/*.lua)
     [ "$hypr_before" = "$hypr_after" ] || hyprctl reload || exit "$?"

@@ -66,6 +66,10 @@ Full laptop reconciliation ensures and maintains the standalone mise binary befo
 
 The [macOS system capability](bootstrap/capabilities/macos-system/README.md) owns typed preferences, sudo authentication, and pod153's hostname. Run `mise sysconfig` or `mise laptop -t dock,finder`, adding `--check` for a preview. Apps restart only when their preferences change; work hostname and existing work `pam_reattach` lines remain unmanaged.
 
+### Chrome on Omarchy
+
+Chrome is no9-type-s's default browser, including Amp and WhatsApp web apps. Native reconciliation owns the package, default-browser selection, and Omarchy's clipboard helper; Chrome Sync owns supported profile settings. See [Chrome setup](docs/chrome.md) for loading Copy URL and restoring Ctrl-Shift-C and Tab Flick's Ctrl-Tab / Ctrl-Shift-Tab bindings in each profile.
+
 ### Agent catalogue
 
 On both Macs, `mise agent-harness` reconciles skills, subagents, and hook fragments through the [native catalogue capability](bootstrap/capabilities/agent-harness/README.md). `--check` compares cached sources without refreshing them; `--cached` applies those same cached sources. Normal apply refreshes declared Git sources at most once per day. Exact-file ownership preserves independently installed skills, Claude's `synced/` tree, and existing parent-directory permissions.

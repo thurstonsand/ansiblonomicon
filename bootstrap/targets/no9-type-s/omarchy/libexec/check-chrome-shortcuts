@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+preferences="$HOME/.config/google-chrome/Default/Preferences"
+guide="https://github.com/thurstonsand/ansiblonomicon/blob/main/docs/chrome.md#restore-a-profile"
+
+if mismatches=$(jq -er '
+  .extensions.commands as $commands |
+  [[
+    ["linux:Ctrl+Shift+C", "bgpiichlckmfanooecilcjemknkcpngb", "copy-url"],
+    ["linux:Ctrl+Tab", "kdddoanokjocdkbkmgnkkcemjepknlgm", "next-tab"],
+    ["linux:Ctrl+Shift+Tab", "kdddoanokjocdkbkmgnkkcemjepknlgm", "prev-tab"]
+  ][] |
+  . as [$key, $extension, $command] |
+  $commands[$key] as $actual |
+  select($actual.extension != $extension or $actual.command_name != $command or $actual.global != false) |
+  "  \($key): expected \($extension) / \($command) (Chrome scope)"] | join("\n")
+' "$preferences"); then
+  if [ -z "$mismatches" ]; then
+    echo "Chrome Default: all three saved extension shortcuts match."
+    exit 0
+  fi
+  printf 'Chrome Default extension shortcuts need manual setup:\n%s\n' "$mismatches" >&2
+else
+  echo "Cannot check Chrome Default extension shortcuts: $preferences" >&2
+fi
+
+printf 'Follow the manual setup instructions: %s\n' "$guide" >&2
+echo 'After applying them, fully exit Chrome (including web apps) to save the preferences, then rerun reconciliation.' >&2
+exit 1
