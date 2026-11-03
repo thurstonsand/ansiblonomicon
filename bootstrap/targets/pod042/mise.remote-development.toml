@@ -194,6 +194,7 @@ mode = "0755"
 
 [dotfiles]
 "/home/thurstonsand/.config/t3code/npmrc" = { source = "remote-development/t3.npmrc", mode = "symlink" }
+"/home/thurstonsand/.config/herdr/config.toml" = { source = "remote-development/herdr.toml", mode = "symlink" }
 "/home/thurstonsand/.config/labwc/autostart" = { source = "remote-development/desktop/labwc/autostart", mode = "symlink" }
 "/home/thurstonsand/.config/labwc/environment" = { source = "remote-development/desktop/labwc/environment", mode = "symlink" }
 "/home/thurstonsand/.config/labwc/rc.xml" = { source = "remote-development/desktop/labwc/rc.xml", mode = "symlink" }

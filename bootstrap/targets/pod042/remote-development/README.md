@@ -24,6 +24,8 @@ Herdr is the reason the unit exists rather than the convenience of a boot start.
 
 That only holds while systemd owns the socket, so the unit sets `Restart=always` and `services.py` stops any server it does not own before starting the unit. Both cost the running panes. Stop the server for real with `systemctl --user stop dev.mise.herdr.service`, never `herdr server stop`, which the restart undoes 30 seconds later. Herdr's own `herdr update` is equally unwelcome: mise owns the binary, so upgrade through `operator:tools` and let reconciliation notice `server_binary_stale` and restart the unit.
 
+`herdr.toml` is the server's config. Its four `ctrl+h/j/k/l` custom commands run GhosttyKit's `gty herdr navigate`, which moves between Neovim windows, Herdr panes, and, under `gty herdr attach`, the local Ghostty splits. Custom commands belong to the server, so a laptop client viewing pod042 as a saved machine gets them too and they override its local bindings for those keys; `herdr --remote` with its default local keybindings does not. Apply an edit with `herdr server reload-config`.
+
 T3 alone selects `~/.config/t3code/npmrc` through `NPM_CONFIG_USERCONFIG`. Its `allow-scripts=node-pty` permission lets npm 12 build the native terminal module in vendor-managed runtime installs and updates. Project-scoped npm installs reject the equivalent CLI/environment allowlist; other npm consumers keep their own policy. A runtime installed before this permission needs a one-time `npm --prefix <runtime> rebuild node-pty` with this config selected, followed by a real PTY test. The CLI prefix carries its own built copy, which does not validate the vendor runtime's separate one.
 
 ## Initial human enrollment

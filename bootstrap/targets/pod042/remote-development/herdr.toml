@@ -1,0 +1,29 @@
+onboarding = false
+
+[theme]
+name = "gruvbox"
+auto_switch = false
+
+[[keys.command]]
+key = "ctrl+h"
+type = "shell"
+command = 'exec "${XDG_DATA_HOME:-$HOME/.local/share}/ghosttykit/bin/gty" herdr navigate left'
+description = "navigate left"
+
+[[keys.command]]
+key = "ctrl+j"
+type = "shell"
+command = 'exec "${XDG_DATA_HOME:-$HOME/.local/share}/ghosttykit/bin/gty" herdr navigate down'
+description = "navigate down"
+
+[[keys.command]]
+key = "ctrl+k"
+type = "shell"
+command = 'exec "${XDG_DATA_HOME:-$HOME/.local/share}/ghosttykit/bin/gty" herdr navigate up'
+description = "navigate up"
+
+[[keys.command]]
+key = "ctrl+l"
+type = "shell"
+command = 'exec "${XDG_DATA_HOME:-$HOME/.local/share}/ghosttykit/bin/gty" herdr navigate right'
+description = "navigate right"
