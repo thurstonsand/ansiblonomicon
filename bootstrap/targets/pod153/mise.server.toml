@@ -162,6 +162,8 @@ python3 server/mac_mcp.py ${usage_check:+--check}
 mise bootstrap --only files,macos-launchd-agents "$mode"
 python3 server/reconcile.py ${usage_check:+--check}
 [ -z "${usage_check:-}" ] || exit 0
+# A tailscaled that server/reconcile.py just restarted onto a new binary is still starting up.
+/opt/homebrew/bin/tailscale wait --timeout=30s >/dev/null 2>&1 || :
 state=$(/opt/homebrew/bin/tailscale status --json | python3 -c 'import json, sys; print(json.load(sys.stdin)["BackendState"])')
 if [ "$state" != Running ]; then
   echo "server: Tailscale is $state; enroll once with: sudo tailscale up --hostname=pod153 --advertise-tags=tag:pod153 --ssh" >&2

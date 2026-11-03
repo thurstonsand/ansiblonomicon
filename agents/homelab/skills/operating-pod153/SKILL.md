@@ -95,7 +95,7 @@ Claude Remote Control needs the full-scope login in the keychain, which lapses a
 | Service | Declared in |
 | --- | --- |
 | Cua Driver daemon, Claude Remote Control rooted at `~/Develop`, daily reconcile, the `tailscaled` LaunchDaemon and its `tailscale up` settings | `bootstrap/targets/pod153/mise.server.toml` |
-| Power (no sleep, lid-closed awake, restart after freeze), Wi-Fi off after verifying Ethernet, display and screen lock, Remote Login, Screen Sharing, Automation Mode, Time Machine to pod042's `timemachine` share and its exclusions | `bootstrap/targets/pod153/server/reconcile.py` |
+| Power (no sleep, lid-closed awake, restart after freeze), Wi-Fi off after verifying Ethernet, display and screen lock, Remote Login, Screen Sharing, Automation Mode, restarting services whose executable was replaced while they ran, Time Machine to pod042's `timemachine` share and its exclusions | `bootstrap/targets/pod153/server/reconcile.py` |
 | Amp runner | `bootstrap/targets/pod153/mise.amp-cli.toml` |
 | Apps | `bootstrap/capabilities/mac-apps/Brewfile.pod153` |
 

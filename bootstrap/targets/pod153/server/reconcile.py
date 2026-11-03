@@ -2,6 +2,7 @@
 """Keep pod153 awake, reachable, and automatable with nobody at the keyboard."""
 
 import argparse
+from datetime import datetime
 import os
 from pathlib import Path
 import plistlib
@@ -65,6 +66,35 @@ def screen_lock_on() -> bool:
         ["sysadminctl", "-screenLock", "status"], text=True, capture_output=True
     )
     return "screenLock delay is" in status.stderr
+
+
+def replaced_since_start(job: str) -> bool:
+    """Whether a running launchd job's executable was replaced after the job started.
+
+    Homebrew and self-updaters swap binaries under running services, which keep the old
+    code until restarted. Extraction sets a fresh ctime even when a bottle preserves mtime.
+    """
+    listing = subprocess.run(
+        ["launchctl", "print", job], text=True, capture_output=True
+    ).stdout
+    pid = re.search(r"^\tpid = (\d+)$", listing, re.MULTILINE)
+    if not pid:
+        return False
+    executable = Path(output("ps", "-o", "comm=", "-p", pid[1]).strip()).resolve()
+    started = datetime.strptime(
+        subprocess.run(
+            ["ps", "-o", "lstart=", "-p", pid[1]],
+            check=True,
+            text=True,
+            capture_output=True,
+            env={**os.environ, "LC_ALL": "C"},
+        ).stdout.strip(),
+        "%a %b %d %H:%M:%S %Y",
+    )
+    return (
+        not executable.exists()
+        or datetime.fromtimestamp(executable.stat().st_ctime) > started
+    )
 
 
 def login_password() -> str:
@@ -157,6 +187,24 @@ def main() -> None:
                         ["sudo", "-n", "launchctl", "enable", f"system/{label}"],
                         ["sudo", "-n", "launchctl", "bootstrap", "system", plist],
                     ],
+                )
+            )
+        elif replaced_since_start(f"system/{label}"):
+            changes.append(
+                (
+                    f"{name} on its updated executable",
+                    [["sudo", "-n", "launchctl", "kickstart", "-k", f"system/{label}"]],
+                )
+            )
+    for plist in sorted(
+        (Path.home() / "Library/LaunchAgents").glob("dev.mise.*.plist")
+    ):
+        job = f"gui/{os.getuid()}/{plist.stem}"
+        if replaced_since_start(job):
+            changes.append(
+                (
+                    f"{plist.stem} on its updated executable",
+                    [["launchctl", "kickstart", "-k", job]],
                 )
             )
     printer, uri = PRINTER
