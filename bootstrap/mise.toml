@@ -11,6 +11,14 @@ mise_env = ["base", "network", "repositories", "storage", "alerting", "container
 tags = ["storage"]
 remote_mise = "/usr/local/bin/mise"
 
+[bootstrap.remote.hosts.cupertino]
+host = "cupertino"
+user = "admin"
+source = "targets/cupertino"
+mise_env = ["system", "imsgbus", "log-shipping"]
+ssh_options = ["SendEnv=IMSGBUS_*"]
+remote_mise = "/Users/admin/.local/bin/mise"
+
 [bootstrap.remote.hosts.udmp]
 host = "10.10.20.1"
 user = "root"

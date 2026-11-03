@@ -853,7 +853,7 @@ sysconfig_sections="dock finder nsglobaldomain menubar desktop-services hotkeys 
 case "$profile" in
   server)
     software_capabilities="$software_capabilities claude-code cua-driver t3 shp uvc-util docker-context amp-cli"
-    config_capabilities="$config_capabilities ssh-client server"
+    config_capabilities="$config_capabilities ssh-client server cupertino"
     sysconfig_sections="$sysconfig_sections hostname"
     ;;
   work)
@@ -915,6 +915,15 @@ for native_capability in $config_capabilities; do
   mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
 done
 '''
+
+[tasks."reconcile:cupertino"]
+description = "Reconcile cupertino, pod153's Messages VM"
+alias = "cupertino"
+usage = '''
+flag "-c --check" help="Dry-run mode (no changes made)"
+flag "--update-mise" help="Install this machine's mise version on cupertino"
+'''
+run = "./scripts/fnox-host exec --secret IMSGBUS_AS_TOKEN --secret IMSGBUS_HS_TOKEN --secret IMSGBUS_PROVISIONING_SECRET --secret IMSGBUS_PUBLIC_MEDIA_SIGNING_KEY --secret IMSGBUS_DIRECT_MEDIA_SERVER_KEY --secret IMSGBUS_DOUBLE_PUPPET_SECRET --secret IMSGBUS_MCP_TOKEN -- mise -C bootstrap bootstrap remote cupertino --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/Users/admin/.local/bin/mise}"
 
 [tasks."reconcile:udmp"]
 description = "Reconcile the UDM Pro router"

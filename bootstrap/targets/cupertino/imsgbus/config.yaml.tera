@@ -1,0 +1,104 @@
+# imsgbus bridge config: only what differs from imsgbus's defaults, which it starts from. Most of it is what
+# `bbctl config --type bridgev2 sh-imsgbus` generated to register the bridge with Beeper. imsgbus runs with
+# --no-update, so it never rewrites this file.
+bridge:
+    private_chat_portal_meta: false
+    split_portals: true
+    bridge_status_notices: none
+    tag_only_on_create: false
+    cross_room_replies: true
+    cleanup_on_logout:
+        enabled: true
+        manual:
+            private: delete
+            relayed: delete
+            shared_no_users: delete
+            shared_has_users: delete
+    permissions:
+        '@thurstonsand:beeper.com': admin
+database:
+    type: sqlite3-fk-wal
+    uri: file:sh-imsgbus.db?_txlock=immediate
+    max_idle_conns: 2
+homeserver:
+    address: https://matrix.beeper.com/_hungryserv/thurstonsand
+    domain: beeper.local
+    software: hungry
+    async_media: true
+    websocket: true
+    ping_interval_seconds: 180
+appservice:
+    address: irrelevant
+    public_address: null
+    hostname: 0.0.0.0
+    port: 4000
+    id: 9352d7c6-f893-40ff-a55e-b4f92ee12002
+    bot:
+        username: sh-imsgbusbot
+    as_token: "{{ secret(name="as_token") | trim }}"
+    hs_token: "{{ secret(name="hs_token") | trim }}"
+    username_template: "{% raw %}sh-imsgbus_{{.}}{% endraw %}"
+matrix:
+    message_status_events: true
+    message_error_notices: false
+    sync_direct_chat_list: false
+    federate_rooms: false
+provisioning:
+    prefix: /_matrix/provision
+    shared_secret: "{{ secret(name="provisioning_secret") | trim }}"
+    debug_endpoints: true
+public_media:
+    signing_key: "{{ secret(name="public_media_signing_key") | trim }}"
+direct_media:
+    server_key: "{{ secret(name="direct_media_server_key") | trim }}"
+backfill:
+    enabled: true
+    queue:
+        enabled: true
+        batch_size: 50
+        max_batches: 0
+        max_batches_override:
+            channel: 10
+            supergroup: 10
+            dm: -1
+            group_dm: -1
+double_puppet:
+    servers:
+        beeper.com: https://matrix.beeper.com/_hungryserv/thurstonsand
+    secrets:
+        beeper.com: "{{ secret(name="double_puppet_secret") | trim }}"
+encryption:
+    allow: true
+    default: true
+    appservice: true
+    pickle_key: bbctl
+    delete_keys:
+        delete_outbound_on_ack: true
+        ratchet_on_decrypt: true
+        delete_fully_used_on_decrypt: true
+        delete_prev_on_new_session: true
+        delete_on_device_delete: true
+        periodically_delete_expired: true
+    verification_levels:
+        receive: cross-signed-tofu
+        send: cross-signed-tofu
+    rotation:
+        enable_custom: true
+        milliseconds: 2592000000
+        messages: 10000
+        disable_device_change_key_rotation: true
+    require: true
+network:
+    mcp:
+        listen: 0.0.0.0:7380
+        token: "{{ secret(name="mcp_token") | trim }}"
+    imsg_path: /Users/admin/.local/share/mise/shims/imsg
+logging:
+    min_level: debug
+    writers:
+    -   type: file
+        format: json
+        filename: ./logs/bridge.log
+        max_size: 100
+        max_backups: 10
+        compress: false

@@ -18,6 +18,7 @@
 - **Work machine**: The corporate laptop. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions.
 - **pod042**: The NAS — plain Debian 13 server.
 - **pod153**: The MacBook Pro, retired from desktop use into an always-on headless server beside pod042.
+- **cupertino**: pod153's Tart VM signed in to Messages, where imsgbus serves iMessage to Beeper and to agents.
 - **no9-type-s**: The Framework laptop's Omarchy side, the personal Omarchy laptop, dual-booting with eve.
 - **eve**: The Framework laptop's Windows side, dual-booting with Omarchy.
 - **Home Assistant**: An appliance managed outside the scope of this repo, aside from management of the VM itself via Incus on pod042. All other management is done through the `home-assistant` mcp.

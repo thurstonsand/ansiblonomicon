@@ -1,0 +1,13 @@
+#!/bin/sh
+# Restarts a LaunchAgent when any file it runs from changed since this last restarted it, since
+# file resources only notify system services.
+set -eu
+label=$1
+shift
+stamp="$HOME/.local/state/ansiblonomicon/$label.sha256"
+sum=$(cat "$@" | shasum -a 256)
+[ "$sum" = "$(cat "$stamp" 2>/dev/null)" ] && exit 0
+launchctl kickstart -k "gui/$(id -u)/dev.mise.$label"
+mkdir -p "$(dirname "$stamp")"
+printf '%s\n' "$sum" >"$stamp"
+echo "restarted $label"

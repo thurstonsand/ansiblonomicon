@@ -66,6 +66,19 @@ keep_alive = true
 stdout_path = "~/Library/Logs/cloudflared.log"
 stderr_path = "~/Library/Logs/cloudflared.log"
 
+# cupertino, the Messages VM that imsgbus runs in; it reconciles as its own target. The VM writes
+# its bridge's backups to the shared folder, since Time Machine skips ~/.tart.
+[bootstrap.directories."~/Backups/cupertino"]
+mode = "0700"
+
+[bootstrap.macos.launchd.agents."house.thurstons.cupertino"]
+program = "/opt/homebrew/bin/tart"
+args = ["run", "--no-graphics", "--dir=backup:/Users/thurstonsand/Backups/cupertino", "cupertino"]
+run_at_load = true
+keep_alive = true
+stdout_path = "~/Library/Logs/cupertino.log"
+stderr_path = "~/Library/Logs/cupertino.log"
+
 [bootstrap.secrets]
 pod153_tunnel_token = "POD153_TUNNEL_TOKEN"
 remctl_mcp_token = "REMCTL_MCP_TOKEN"

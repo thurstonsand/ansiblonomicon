@@ -1,0 +1,49 @@
+[bootstrap.secrets]
+as_token = "IMSGBUS_AS_TOKEN"
+hs_token = "IMSGBUS_HS_TOKEN"
+provisioning_secret = "IMSGBUS_PROVISIONING_SECRET"
+public_media_signing_key = "IMSGBUS_PUBLIC_MEDIA_SIGNING_KEY"
+direct_media_server_key = "IMSGBUS_DIRECT_MEDIA_SERVER_KEY"
+double_puppet_secret = "IMSGBUS_DOUBLE_PUPPET_SECRET"
+mcp_token = "IMSGBUS_MCP_TOKEN"
+
+# The bridge's database, search index and logs live beside its config.
+[bootstrap.directories."~/imsgbus"]
+mode = "0700"
+
+[bootstrap.files."~/imsgbus/config.yaml"]
+source = "imsgbus/config.yaml.tera"
+template = true
+mode = "0600"
+
+# Messages belongs to the logged-in GUI session, so imsgbus runs as an agent in it.
+[bootstrap.macos.launchd.agents."house.thurstons.imsgbus"]
+program = "~/.local/share/mise/shims/imsgbus"
+args = ["-c", "config.yaml", "--no-update"]
+working_directory = "~/imsgbus"
+run_at_load = true
+keep_alive = true
+# The log itself goes to logs/bridge.log; this catches what imsgbus prints when it dies.
+stdout_path = "~/imsgbus/stdout.log"
+stderr_path = "~/imsgbus/stdout.log"
+
+# What `imsg launch --install-agent` would install: puts imsg's helper into Messages at login, and
+# again within 5 minutes of Messages restarting without it.
+[bootstrap.macos.launchd.agents."house.thurstons.imsg-bridge"]
+program = "~/.local/share/mise/shims/imsg"
+args = ["launch"]
+run_at_load = true
+start_interval = 300
+process_type = "Background"
+stdout_path = "~/Library/Logs/imsg-bridge.log"
+stderr_path = "~/Library/Logs/imsg-bridge.log"
+
+# Time Machine skips pod153's VMs, so the bridge's database goes daily to the folder pod153 shares
+# into the VM, which Time Machine does back up. The search index rebuilds itself from Messages.
+[bootstrap.macos.launchd.agents."house.thurstons.imsgbus-backup"]
+program = "/usr/bin/sqlite3"
+args = ["/Users/admin/imsgbus/sh-imsgbus.db", ".backup '/Volumes/My Shared Files/backup/sh-imsgbus.db'"]
+start_calendar_interval = { hour = 3, minute = 30 }
+process_type = "Background"
+stdout_path = "~/Library/Logs/imsgbus-backup.log"
+stderr_path = "~/Library/Logs/imsgbus-backup.log"

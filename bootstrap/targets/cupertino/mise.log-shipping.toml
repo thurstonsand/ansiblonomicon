@@ -1,0 +1,14 @@
+[dotfiles]
+"~/.config/alloy/config.alloy" = { source = "log-shipping/config.alloy", mode = "copy" }
+
+# Alloy's read positions, so a restart resumes the log where it left off.
+[bootstrap.directories."~/.local/state/alloy"]
+mode = "0700"
+
+[bootstrap.macos.launchd.agents."house.thurstons.alloy"]
+program = "~/.local/share/mise/shims/alloy"
+args = ["run", "--disable-reporting", "--storage.path=/Users/admin/.local/state/alloy", "--server.http.listen-addr=127.0.0.1:12345", "/Users/admin/.config/alloy/config.alloy"]
+run_at_load = true
+keep_alive = true
+stdout_path = "~/Library/Logs/alloy.log"
+stderr_path = "~/Library/Logs/alloy.log"

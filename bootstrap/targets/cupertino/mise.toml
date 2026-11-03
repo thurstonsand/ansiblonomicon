@@ -1,0 +1,15 @@
+min_version = "2026.9.11"
+
+# Every capability's agents run their tools through these shims.
+[dotfiles]
+"~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "copy" }
+
+[bootstrap.hooks.final]
+run = [
+  # pod153 reaches the VM as cupertino.local.
+  '[ "$(scutil --get LocalHostName)" = cupertino ] || { sudo -n scutil --set ComputerName cupertino && sudo -n scutil --set LocalHostName cupertino && sudo -n scutil --set HostName cupertino; }',
+  # imsg's typing feed fails until this file exists; its helper in Messages only appends to it.
+  "touch ~/Library/Containers/com.apple.MobileSMS/Data/.imsg-events.jsonl",
+  './restart-on-change house.thurstons.imsgbus ~/imsgbus/config.yaml "$(/Users/admin/.local/bin/mise which imsgbus)" "$(/Users/admin/.local/bin/mise which imsg)"',
+  './restart-on-change house.thurstons.alloy ~/.config/alloy/config.alloy "$(/Users/admin/.local/bin/mise which alloy)"',
+]

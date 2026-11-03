@@ -1,0 +1,26 @@
+# Reconciles and their hooks need root unattended. Only pod153's key logs in, and only pod153 can
+# reach the VM.
+[bootstrap.files."/etc/sudoers.d/admin"]
+content = "admin ALL=(ALL) NOPASSWD: ALL\n"
+owner = "root"
+group = "wheel"
+mode = "0440"
+
+# Sorts before macOS's 100-macos.conf, so these settings take precedence over it. Reconciles pass the
+# bridge's secrets as IMSGBUS_* variables.
+[bootstrap.files."/etc/ssh/sshd_config.d/00-ansiblonomicon.conf"]
+content = """
+AcceptEnv IMSGBUS_*
+PasswordAuthentication no
+KbdInteractiveAuthentication no
+"""
+owner = "root"
+group = "wheel"
+mode = "0644"
+
+[bootstrap.directories."~/.ssh"]
+mode = "0700"
+
+[bootstrap.files."~/.ssh/authorized_keys"]
+source = "system/authorized_keys"
+mode = "0600"

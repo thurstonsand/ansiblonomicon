@@ -58,6 +58,15 @@ Host pod042-ts
   IdentityFile ~/.ssh/id_ed25519_git
   IdentitiesOnly yes
   RequestTTY yes
+
+# The Messages VM; Tart's network reaches it only from pod153.
+Host cupertino
+  HostName cupertino.local
+  User admin
+  HostKeyAlias cupertino
+  UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/pod153.known_hosts
+  IdentityFile ~/.ssh/id_ed25519_git
+  IdentitiesOnly yes
 {% elif vars.ssh_client_host == "pod042" %}
 
 Host pod153

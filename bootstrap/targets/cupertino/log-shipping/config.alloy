@@ -1,0 +1,47 @@
+logging {
+  level = "info"
+}
+
+// Tail the active file, not the rotation glob: renaming a file must not ingest it twice.
+loki.source.file "imsgbus" {
+  targets = [
+    {__path__ = "/Users/admin/imsgbus/logs/bridge.log", service_name = "imsgbus", host = "cupertino"},
+  ]
+  forward_to = [loki.process.imsgbus.receiver]
+}
+
+// Loki indexes only host and service_name; the fields imsgbus's README lists stay in the line, and
+// the few every query filters on ride along as structured metadata.
+loki.process "imsgbus" {
+  stage.json {
+    expressions = {
+      time      = "time",
+      level     = "level",
+      event     = "event",
+      component = "component",
+    }
+  }
+  stage.timestamp {
+    source = "time"
+    format = "RFC3339Nano"
+  }
+  stage.structured_metadata {
+    values = {
+      level     = "",
+      event     = "",
+      component = "",
+    }
+  }
+  stage.label_drop {
+    values = ["filename"]
+  }
+  forward_to = [loki.write.pod042.receiver]
+}
+
+loki.write "pod042" {
+  endpoint {
+    url = "https://logs.thurstons.house/loki/api/v1/push"
+    // Retry until pod042 is back; the log file and its positions are the replay source.
+    max_backoff_retries = 0
+  }
+}
