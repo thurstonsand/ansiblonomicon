@@ -79,6 +79,10 @@ Background jobs never raise a TCC prompt; a denied check hangs or fails with "Op
 
 To restore a grant, unlock with the login password from fnox (`HOMEBREW_SUDO_ASKPASS_PASS`); fill the sheet's password field with `set_value` on its element rather than typed keys. A binary that was denied Full Disk Access usually already appears in Privacy & Security → Full Disk Access, switched off; otherwise add its path with **+** and Go to Folder (⌘⇧G). Automation has no **+**, but a job started with `launchctl submit` raises its alert: `launchctl submit -l tcc-probe -- <python> -c 'import subprocess; subprocess.run(["osascript", "-e", "tell application \"Messages\" to count chats"])'`, press Allow on the `UserNotificationCenter` alert, then `launchctl remove tcc-probe`. Only a command Messages must answer prompts; AppleScript resolves `get name` without asking it. Restart the server with `launchctl kickstart -k gui/$(id -u)/dev.mise.house.thurstons.messages-mcp`. `sudo log show --predicate 'process == "tccd"' --info` names the denied identity as its `responsible_path`.
 
+An app running without a window, such as a headless server started by a LaunchAgent, gets its prompts held: the log shows tccd `Delaying prompt`, and the app's request never returns. Run the app with a window, bring it to the front, and make the request again from inside the app. Some alerts never show up in `list_windows`. Find them in a `get_desktop_state` screenshot and click them with a desktop target and `delivery_mode: "foreground"`. Desktop pixels are screen points × 2.
+
+A service that needs local network access may need its Local Network prompt approved, even when it runs in the background. Until then its connections to LAN addresses fail with `no route to host`.
+
 Codex and the ChatGPT app use their own computer use. Claude Code, Amp, and Pi use Cua.
 
 ## Renewing Claude's login
