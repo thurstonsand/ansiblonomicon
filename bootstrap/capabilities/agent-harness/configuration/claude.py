@@ -67,6 +67,9 @@ def _base_settings(
             raise ValueError(
                 "ANTHROPIC_AUTH_TOKEN is required on the work host"
             ) from error
+        # The gateway can't serve auto mode's server-side classifier yet;
+        # this silences the per-session ineligibility notice until it can.
+        env["CLAUDE_CODE_AUTO_MODE_SERVER"] = "0"
     hooks: dict[str, Any] = {
         "SessionStart": [
             {
