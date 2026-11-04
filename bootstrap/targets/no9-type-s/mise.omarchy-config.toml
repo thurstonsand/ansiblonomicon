@@ -4,9 +4,20 @@ run = '''
 set -e
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
-mise bootstrap --only files,repos,dotfiles --force-dotfiles "$mode"
+mise bootstrap --only files,services,repos,dotfiles --force-dotfiles "$mode"
 bash "{{config_root}}/omarchy/libexec/check-chrome-shortcuts"
 '''
+
+[bootstrap.files."/etc/illuminanced.toml"]
+source = "omarchy/illuminanced.toml"
+notify = ["illuminanced"]
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.services.illuminanced]
+enabled = true
+on_change = "restart"
 
 [bootstrap.files."/etc/sudoers.d/ansiblonomicon"]
 source = "omarchy/sudoers.d/ansiblonomicon"
@@ -97,6 +108,8 @@ fi
 "{{ config_root }}/omarchy/libexec/superwhisper-install"
 # bindings.lua dofile()s Superwhisper's generated shortcuts.lua, which stays out of git and so is missing on a fresh checkout.
 [ -f ~/.config/superwhisper/shortcuts.lua ] || ~/.local/bin/superwhisper shortcuts apply >/dev/null
+# Flea owns the folder handler, Show in folder service, shortcuts, and file chooser routing.
+flea --default
 # Amp, WhatsApp, and the other Omarchy web apps follow the default browser. Profile-local extension setup is in docs/chrome.md.
 if [ "$(omarchy default browser)" != chrome ]; then
   omarchy default browser chrome
@@ -201,6 +214,10 @@ unit = "claude-auth-refresh"
 "~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
 "~/.config/wireplumber/wireplumber.conf.d/mic-priority.conf" = { source = "omarchy/wireplumber/mic-priority.conf", mode = "symlink" }
 "~/.local/share/wireplumber/scripts/rank-sources-by-priority.lua" = { source = "omarchy/wireplumber/rank-sources-by-priority.lua", mode = "symlink" }
+"~/.config/wireplumber/wireplumber.conf.d/framework-speakers.conf" = { source = "omarchy/wireplumber/framework-speakers.conf", mode = "symlink" }
+"~/.local/share/wireplumber/scripts/framework-speakers.lua" = { source = "omarchy/wireplumber/framework-speakers.lua", mode = "symlink" }
+"~/.config/pipewire/pipewire.conf.d/framework-speakers.conf" = { source = "omarchy/pipewire/framework-speakers.conf", mode = "symlink" }
+"~/.config/pipewire/pipewire.conf.d/framework-speakers.irs" = { source = "omarchy/pipewire/framework-speakers.irs", mode = "symlink" }
 "~/.config/pipewire/filter-chain.conf.d/hide-sonar-micro.conf" = { source = "omarchy/pipewire/hide-sonar-micro.conf", mode = "symlink" }
 # Directories, because ASM saves a file by renaming a temp file over it, which would replace a file symlink.
 "~/.config/arctis_manager/settings" = { source = "omarchy/arctis_manager/settings", mode = "symlink" }

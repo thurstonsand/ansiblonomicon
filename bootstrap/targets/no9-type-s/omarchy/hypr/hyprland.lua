@@ -23,10 +23,12 @@ require("hypr.mouse")
 require("hypr.personal-bindings")
 -- With Omarchy's `o` visible, Superwhisper's hook reports Right Alt to its daemon as Omarchy's push-to-talk key, and the
 -- daemon then stops any recording started while Right Alt is down, which breaks the double-tap latch in personal-bindings.
+-- Load its guarded hook first, hiding `o` only there; other bindings, including Flea's, need Omarchy's helpers.
 local omarchy = o
 o = nil
-require("hypr.bindings")
+dofile(os.getenv("HOME") .. "/.config/superwhisper/shortcuts.lua")
 o = omarchy
+require("hypr.bindings")
 require("hypr.looknfeel")
 require("hypr.autostart")
 

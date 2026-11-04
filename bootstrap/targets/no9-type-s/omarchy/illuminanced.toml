@@ -1,0 +1,39 @@
+[daemonize]
+log_to = "syslog"
+pid_file = "/run/illuminanced.pid"
+log_level = "INFO"
+
+[general]
+check_period_in_seconds = 1
+# illuminanced divides the backlight range into light_steps - 1 intervals.
+light_steps = 101
+min_backlight = 0
+step_barrier = 0.1
+max_backlight_file = "/sys/class/backlight/intel_backlight/max_brightness"
+backlight_file = "/sys/class/backlight/intel_backlight/brightness"
+illuminance_file = "/sys/bus/iio/devices/iio:device*/in_illuminance_raw"
+event_device_mask = "/dev/input/event*"
+event_device_name = "AT Translated Set 2 keyboard"
+enable_max_brightness_mode = false
+switch_key_code = 560
+
+[kalman]
+q = 1.0
+r = 20.0
+covariance = 10.0
+
+# A starting curve, not panel calibration: lux to percent of the backlight range.
+[light]
+points_count = 6
+illuminance_0 = 0
+light_0 = 5
+illuminance_1 = 20
+light_1 = 20
+illuminance_2 = 100
+light_2 = 35
+illuminance_3 = 300
+light_3 = 50
+illuminance_4 = 1000
+light_4 = 75
+illuminance_5 = 5000
+light_5 = 100
