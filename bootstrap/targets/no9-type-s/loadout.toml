@@ -1,31 +1,45 @@
 [packages]
 1password = "present"
 1password-cli = "present"
+chromium = "absent"
+cliamp = "absent"
 cloudflared = "present"
 direnv = "present"
 flea = "present"
+foot = "absent"
 ghostty = "present"
 git-delta = "present"
 github-cli = "present"
 illuminanced = "present"
 jujutsu = "present"
+kdenlive = "absent"
 lilv-tools = "present"
 lsp-plugins-lv2 = "present"
 minisign = "present"
 nautilus = "absent"
 nautilus-python = "absent"
+obs-studio = "absent"
+obsidian = "absent"
 omarchy-zsh = "absent"
 omazed = "present"
 openbsd-netcat = "present"
 openai-codex-desktop = "present"
+papers = "absent"
+pinta = "absent"
 rust = "present"
 sushi = "absent"
 t3code-bin = "present"
 tigervnc = "present"
 "webkitgtk-6.0" = "absent"
 wev = "present"
+xournalpp = "absent"
 zed = "present"
 zsh-autosuggestions = "absent"
+
+# Kdenlive used to retain these optional libraries; pinentry-qt and qv4l2 link them directly.
+kguiaddons = "present"
+kwindowsystem = "present"
+qt6-5compat = "present"
 
 # What omarchy-setup-security-fingerprint installed for the Goodix reader.
 fprintd = "present"
@@ -40,6 +54,8 @@ nvidia-utils = "present"
 
 # Arctis Sound Manager, from its own repository in mise.omarchy-loadout.toml, and its ClearCast mic noise suppression.
 arctis-sound-manager = "present"
+# Optional to pacman, required by Arctis clip capture's Opus encoder.
+gst-plugins-base = "present"
 noise-suppression-for-voice = "present"
 
 [aur]

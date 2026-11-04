@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=Dodosend
 Comment=Gmail client
+Keywords=email;
 Exec=dodosend %U
 Terminal=false
 Type=Application

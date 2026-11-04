@@ -232,10 +232,25 @@ unit = "claude-auth-refresh"
 "~/.config/Sidra/config.json/omarchy" = { source = "omarchy/sidra/config.json", merge = true }
 "~/.local/share/applications/dodosend.desktop" = { source = "omarchy/applications/dodosend.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/dodosend.png" = { source = "omarchy/icons/dodosend.png", mode = "symlink" }
+"~/.config/mimeapps.list/mail" = { source = "omarchy/mimeapps.list", merge = true, format = "ini" }
 "~/.local/share/applications/pod042 Desktop.desktop" = { source = "omarchy/applications/pod042 Desktop.desktop", mode = "symlink" }
 "~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }
 "~/.local/share/applications/pod153 Desktop.desktop" = { source = "omarchy/applications/pod153 Desktop.desktop", mode = "symlink" }
 "~/.local/bin/pod153-desktop" = { source = "omarchy/bin/pod153-desktop", mode = "symlink" }
+
+# Omarchy already hides the other admin/dependency launchers. Keep FLTK for TigerVNC, but hide its GUI designer.
+"~/.local/share/applications/fluid1.3.desktop" = { content = "[Desktop Entry]\nType=Application\nName=FLUID\nHidden=true\n" }
+# Omarchy's refresh-applications copies these launchers back; reconciliation retires them again.
+"~/.local/share/applications/foot.desktop" = { mode = "absent" }
+"~/.local/share/applications/Basecamp.desktop" = { mode = "absent" }
+"~/.local/share/applications/HEY.desktop" = { mode = "absent" }
+"~/.local/share/applications/Google Messages.desktop" = { mode = "absent" }
+"~/.local/share/applications/Google Contacts.desktop" = { mode = "absent" }
+"~/.local/share/applications/Google Maps.desktop" = { mode = "absent" }
+"~/.local/share/applications/Google Photos.desktop" = { mode = "absent" }
+"~/.local/share/applications/X.desktop" = { mode = "absent" }
+"~/.local/share/applications/YouTube.desktop" = { mode = "absent" }
+"~/.local/share/applications/Zoom.desktop" = { mode = "absent" }
 
 # Omarchy 4.0's setup wrote this launcher; it ran `mise use -g pi`, which writes into the repo's linked global config and
 # never moves past an installed version. Omarchy 4.5 removes it for the mise shim too. Delete once no9-type-s converges.

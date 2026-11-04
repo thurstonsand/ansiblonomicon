@@ -28,6 +28,21 @@
 -- o.bind("SUPER + H", nil, "voxtype record toggle")
 -- o.bind("SUPER + PERIOD", nil, "omarchy-shell shell toggle omarchy.emojis")
 
+-- Retired apps and web shortcuts; keep the other preinstalled bindings.
+hl.unbind("SUPER + SHIFT + ALT + M") -- cliamp
+hl.unbind("SUPER + SHIFT + O") -- Obsidian
+hl.unbind("SUPER + SHIFT + A") -- ChatGPT
+hl.unbind("SUPER + SHIFT + ALT + A") -- Grok
+hl.unbind("SUPER + SHIFT + C") -- HEY Calendar
+hl.unbind("SUPER + SHIFT + E") -- HEY
+hl.unbind("SUPER + SHIFT + ALT + E") -- HEY compose
+hl.unbind("SUPER + SHIFT + Y") -- YouTube
+hl.unbind("SUPER + SHIFT + CTRL + G") -- Google Messages
+hl.unbind("SUPER + SHIFT + P") -- Google Photos
+hl.unbind("SUPER + SHIFT + S") -- Google Maps
+hl.unbind("SUPER + SHIFT + X") -- X
+hl.unbind("SUPER + SHIFT + ALT + X") -- X compose
+
 -- macOS-style line deletion in any text field. Terminals get readline's
 -- ctrl+u/ctrl+k; everything else selects to the line edge and deletes the
 -- selection. Key injection mirrors Omarchy's universal clipboard

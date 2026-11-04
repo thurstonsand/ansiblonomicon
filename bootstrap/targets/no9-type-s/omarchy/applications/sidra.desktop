@@ -1,6 +1,7 @@
 [Desktop Entry]
 Name=Sidra
 Comment=Apple Music
+Keywords=music;
 Exec=sidra %U
 Terminal=false
 Type=Application
