@@ -38,6 +38,7 @@ def _declared(*, model: str, is_work: bool, tui_theme: str) -> dict[str, Any]:
             "web_search": "live",
         }
     declared["features"] = {
+        "hooks": True,
         "prevent_idle_sleep": True,
         "memories": True,
         "default_mode_request_user_input": True,
@@ -119,6 +120,21 @@ def render(
             merged["model"] = live_model
     else:
         merged = overlay
+    hooks = cast(dict[str, Any], merged.setdefault("hooks", tomlkit.table()))
+    for event, matcher, command in (
+        ("PreToolUse", "^Bash$", "python3 ~/.codex/hooks/command-timing.py codex"),
+        ("PostToolUse", "^Bash$", "python3 ~/.codex/hooks/command-timing.py codex"),
+        ("PreToolUse", "^apply_patch$", "python3 ~/.codex/hooks/no-chat-comments.py"),
+    ):
+        groups = hooks.setdefault(event, tomlkit.aot())
+        handler = {"type": "command", "command": command, "timeout": 5}
+        for group in groups:
+            if len(group["hooks"]) == 1 and group["hooks"][0].get("command") == command:
+                group["matcher"] = matcher
+                group["hooks"][0].update(handler)
+                break
+        else:
+            groups.append({"matcher": matcher, "hooks": [handler]})
     # A Codex role cannot switch provider, so its oracle runs on an OpenAI model.
     oracle = tomlkit.parse(
         (repo / "agents/project-management/agents/oracle.toml").read_text()

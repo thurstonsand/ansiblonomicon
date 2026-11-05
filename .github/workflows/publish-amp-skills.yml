@@ -1,4 +1,4 @@
-name: Publish Amp Skills
+name: Publish Amp Skills and Plugins
 
 on:
   push:
@@ -8,6 +8,7 @@ on:
       - agents/**
       - bootstrap/capabilities/agent-harness/**
       - pyproject.toml
+      - scripts/publish-amp-plugins.sh
       - scripts/publish-amp-skills.sh
       - uv.lock
   schedule:
@@ -40,6 +41,19 @@ jobs:
 
       - name: Install dependencies
         run: uv sync --locked --no-dev
+
+      - name: Install Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+
+      - name: Test Amp plugins and publishing
+        run: |
+          node --test bootstrap/capabilities/agent-harness/configuration/tests/amp-hooks.test.mjs
+          uv run --no-sync python -m unittest discover -s bootstrap/capabilities/agent-harness/configuration/tests -v
+
+      - name: Publish Amp plugins
+        run: scripts/publish-amp-plugins.sh
 
       - name: Publish Amp skills
         run: scripts/publish-amp-skills.sh

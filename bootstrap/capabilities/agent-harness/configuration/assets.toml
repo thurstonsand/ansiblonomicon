@@ -59,6 +59,42 @@ hosts = ['pod153', 'pod042', 'no9-type-s']
 mode = 'symlink'
 
 [[files]]
+source = 'assets/command-timing.py'
+destination = '.claude/hooks/command-timing.py'
+harness = 'claude'
+mode = 'symlink'
+
+[[files]]
+source = 'assets/command-timing.py'
+destination = '.codex/hooks/command-timing.py'
+harness = 'codex'
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/command-timing.ts'
+destination = '.pi/agent/extensions/command-timing.ts'
+harness = 'pi'
+mode = 'symlink'
+
+[[files]]
+source = 'assets/no-chat-comments.py'
+destination = '.claude/hooks/no-chat-comments.py'
+harness = 'claude'
+mode = 'symlink'
+
+[[files]]
+source = 'assets/no-chat-comments.py'
+destination = '.codex/hooks/no-chat-comments.py'
+harness = 'codex'
+mode = 'symlink'
+
+[[files]]
+source = 'assets/pi/extensions/no-chat-comments.ts'
+destination = '.pi/agent/extensions/no-chat-comments.ts'
+harness = 'pi'
+mode = 'symlink'
+
+[[files]]
 source = 'assets/claude/hooks/_config.pyi'
 destination = '.claude/hooks/_config.pyi'
 harness = 'claude'

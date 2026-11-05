@@ -82,6 +82,31 @@ def _base_settings(
             },
         ],
     }
+    for event in ("PreToolUse", "PostToolUse", "PostToolUseFailure"):
+        hooks[event] = [
+            {
+                "matcher": "^Bash$",
+                "hooks": [
+                    {
+                        "type": "command",
+                        "command": "python3 ~/.claude/hooks/command-timing.py claude",
+                        "timeout": 5,
+                    }
+                ],
+            }
+        ]
+    hooks["PreToolUse"].append(
+        {
+            "matcher": "^(Edit|Write|MultiEdit)$",
+            "hooks": [
+                {
+                    "type": "command",
+                    "command": "python3 ~/.claude/hooks/no-chat-comments.py",
+                    "timeout": 5,
+                }
+            ],
+        }
+    )
     if hostname != "ML-DFC6YK6VJQ":
         hooks["UserPromptSubmit"] = [
             {"hooks": [{"type": "command", "command": "~/.claude/hooks/set-title.py"}]}

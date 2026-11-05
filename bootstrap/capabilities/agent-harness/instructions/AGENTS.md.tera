@@ -74,6 +74,8 @@ I like the philosophy that "every change should be easy". If we have a new featu
 
 The vast majority of the time, code is clear enough to speak for itself. We should reserve comments very specifically for situations where we had to make a non-obvious decision, or in a particularly complex or obtuse, but necessary, piece of code, especially if it captures information that's otherwise unavailable in the repo.
 
+Write comments and maintainer-facing prose, including pull request descriptions, for readers who haven't seen our conversation. Explain current behavior and rationale; don't leak our prompts or iteration history into them.
+
 ### Write straightforward code
 
 I always prefer direct declarations over derived/clever indirection. I don't like executing metaprogramming in my head to understand what's going on. This means I tend to avoid derived types, dynamic attribute magic, reflection, and other kinds of metaprogramming. For one example, TypeScript's `ReturnType<>`, `Pick<>`, etc types are almost always more trouble than they're worth. However, there are, as always, exceptions to the rule. Sometimes, that's just how a library is setup and that's the idiomatic/expected way; in those cases, it's fine, but justify your inclusion of any such magic when you decide it is the exception to the rule.
