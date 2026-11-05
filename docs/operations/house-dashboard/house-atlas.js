@@ -1501,13 +1501,8 @@ class HouseAtlas extends HTMLElement {
   }
 
   deviceName(entity) {
-    const room = this.rooms.find(
-      (r) => r.id === this.config.placements[entity]?.room,
-    );
-    const name = this._hass.states[entity]?.attributes.friendly_name;
-    return name
-      ? name.replace(`${room?.name} `, "")
-      : entity.split(".")[1].replace(`${room?.id}_`, "").replaceAll("_", " ");
+    const state = this._hass.states[entity];
+    return state ? this._hass.formatEntityName(state) : entity;
   }
 
   lightFields(prefix = "") {
@@ -2556,8 +2551,10 @@ class HouseAtlas extends HTMLElement {
       })
       .map((entity) => ({
         entity: entity.entity_id,
-        name:
-          entity.name || this._hass.states[entity.entity_id].attributes.name,
+        name: this._hass.formatEntityName(
+          this._hass.states[entity.entity_id],
+          { type: "entity" },
+        ),
         unavailable:
           this._hass.states[entity.entity_id].state === "unavailable",
       }))

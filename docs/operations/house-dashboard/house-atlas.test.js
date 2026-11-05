@@ -62,6 +62,11 @@ export async function checkMapControls(card, hass) {
       root.querySelector(".room-stage"),
       "Room selection opens focus directly",
     );
+    await Promise.all(
+      [...root.querySelector(".detail-body").children].map(
+        (element) => element.updateComplete,
+      ),
+    );
     const controlsText = [...root.querySelector(".detail-body").children]
       .map((element) => element.shadowRoot?.textContent || element.textContent)
       .join(" ");
@@ -75,6 +80,18 @@ export async function checkMapControls(card, hass) {
       root.querySelector(".g-lights").hidden,
       "House-wide off is absent in a room",
     );
+    const leftLight = fixture.states["light.living_room_floor_light_left"];
+    const oldFriendlyName = leftLight.attributes.friendly_name;
+    leftLight.attributes.friendly_name = "Obsolete compatibility name";
+    card.hass = { ...fixture };
+    assert(
+      root
+        .querySelector('[data-device="light.living_room_floor_light_left"]')
+        .getAttribute("aria-label")
+        .startsWith("Floor Light Left ·"),
+      "Fixture labels use registry names, not compatibility friendly names",
+    );
+    leftLight.attributes.friendly_name = oldFriendlyName;
     button("Living Room: turn off all lights").click();
     assert(
       JSON.stringify(calls.pop()) ===
@@ -652,7 +669,7 @@ export async function checkMapControls(card, hass) {
           "hue",
           "activate_scene",
           {
-            entity_id: "scene.main_bedroom_main_bedroom_pensive",
+            entity_id: "scene.main_bedroom_pensive",
             dynamic: true,
           },
         ]),

@@ -19,6 +19,16 @@ pod042's host namespace cannot reach the VM over its macvlan. Pick the vantage b
 - Files, logs or the `ha` CLI: `incus exec home-assistant -- ...`. The appliance shell is BusyBox, and the Core container has no `python3`.
 - A quick authenticated check from anywhere: the Nabu Casa URL.
 
+## Naming
+
+Follow [Home Assistant's contextual naming](https://www.home-assistant.io/docs/configuration/customizing-entities/): name the device for the object, the entity for its function, and supply location through area and floor assignments. `Desk Lamp Left` belongs to `Thurston Office`; its entities need names such as `Connectivity`, not copies of the device or room name. Mark the primary control **Main entity of the device** rather than copying the device name into it.
+
+Keep meaningful distinctions: `Under Kitchen` identifies a position within Basement, and a robot's or thermostat's service floor need not be its physical room. Preserve distinct area names where multiple rooms share a function. Leave mobile and whole-house objects without a fixed area when that reflects their use.
+
+Use HA-specific display overrides when a vendor's room or device name serves a different context. For a separately named load on a multi-output device, give its entity an explicit area so its name stands alone; use integration-provided child devices when supported, rather than inventing them. Keep existing entity IDs when tidying names, and retain old voice names as aliases for exposed entities.
+
+Dashboard-only wording belongs on the card. Custom cards use `hass.formatEntityName(state)`; pass `{ type: "entity" }` when the surrounding UI already supplies the device context. Templates compose the needed parts with `entity_name()`, `device_name()`, and `area_name()`. Audit `friendly_name` consumers before bulk renames: display changes can affect text and name-based matching even though entity-ID references keep working.
+
 ## Renaming or removing entities and devices
 
 An entity ID belongs to every system that stores it, not only to Home Assistant. `ha_set_entity` and `ha_set_device` rewrite the registry and nothing else. Their docstrings list a few of the consumers they leave alone, not all of them.
@@ -34,7 +44,7 @@ Before changing an ID, find every consumer:
 | YAML configuration, templates and themes | `ha_read_file` over `configuration.yaml`, `automations.yaml`, `scripts.yaml`, `scenes.yaml`, and every file `ha_list_files` finds under `packages/`, `custom_templates/`, `themes/` and `dashboards/` |
 | Apple Home and Google Home | invisible from here; see below |
 
-Put the consequences in front of the user before acting. HomeKit identifies an accessory by its entity ID. A new ID makes Apple Home see a new accessory, so its room, scenes and automations there need redoing by hand. Changing a display name only is safe for every consumer.
+Put the consequences in front of the user before acting. HomeKit identifies an accessory by its entity ID. A new ID makes Apple Home see a new accessory, so its room, scenes and automations there need redoing by hand. Display-name changes preserve identity; check name-dependent consumers as described above.
 
 After the rename, update each consumer you found, rerun the sweep for the old ID, and confirm the new entities report state.
 

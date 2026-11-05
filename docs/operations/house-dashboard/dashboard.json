@@ -422,7 +422,7 @@
                     "scenes": [
                       {
                         "from": "00:00",
-                        "entity": "scene.main_bedroom_main_bedroom_pensive"
+                        "entity": "scene.main_bedroom_pensive"
                       }
                     ]
                   }
