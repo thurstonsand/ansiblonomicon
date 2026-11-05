@@ -1,6 +1,6 @@
 [tools]
 # First-party release: skip mise's default 24h supply-chain cooling.
-"github:thurstonsand/imsgbus" = { version = "0.2.4", minimum_release_age = "0s" }
+"github:thurstonsand/imsgbus" = { version = "0.2.5", minimum_release_age = "0s" }
 # imsgbus speaks imsg's 0.x RPC, so imsg upgrades deliberately, together with imsgbus.
 "github:openclaw/imsg" = "0.20.0"
 "github:grafana/alloy" = { version = "1.21.3", rename_exe = "alloy" }
