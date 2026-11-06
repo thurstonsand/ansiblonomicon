@@ -1,6 +1,6 @@
 # Home Assistant
 
-Imports selected scripts from Home Assistant's native MCP server at `https://ha.thurstons.house/api/mcp/assist`. Each caller connects their own long-lived HA access token through Executor's account form. Credentials are restricted to that host and the bearer header. Every exported command asks for approval. The account check validates the token through HA's authenticated REST API; MCP discovery checks the actual command endpoint without generating failed-login alerts from unauthenticated health probes.
+Imports selected scripts from Home Assistant's native MCP server at `https://ha.thurstons.house/api/mcp/assist`. Each caller connects their own long-lived HA access token through Executor's account form. Credentials are restricted to that host and the bearer header. Navigation runs without Executor approval; other exported commands require approval by default. The account check validates the token through HA's authenticated REST API; MCP discovery checks the actual command endpoint without generating failed-login alerts from unauthenticated health probes.
 
 The MCP integration enables only the Assist API, requires an administrator, and permits writes. The broader third-party HA administration MCP is not used. The HA token itself has broader permissions than this app: `EXPORTED_TOOLS` restricts both discovery and invocation through Executor, not direct use of the token.
 

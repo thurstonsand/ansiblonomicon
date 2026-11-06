@@ -1,6 +1,6 @@
 import { bearer, decodeJson, defineApp, defineProvider, object, renameTools, router, secrets, string, withApprovals } from "apps";
 import { mcpRouter } from "apps/mcp";
-import { always } from "apps/operations/approval";
+import { always, never } from "apps/operations/approval";
 
 const URL = "https://ha.thurstons.house/api/mcp/assist";
 
@@ -41,7 +41,7 @@ export default defineApp({ user: { accounts: { homeAssistant } } }, async ({ use
         }),
         (name) => EXPORTED_TOOLS.get(name),
       ),
-      () => always(),
+      (_, name) => name === "send_destination" ? never() : always(),
     ),
   };
 });
