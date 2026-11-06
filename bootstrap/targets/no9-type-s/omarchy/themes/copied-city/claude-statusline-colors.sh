@@ -9,6 +9,6 @@ STYLE_PALETTE=(
   "$(rgb_fg '#077045')"
   "$(rgb_fg '#8c5a00')"
   "$(rgb_fg '#9e272f')"
-  "$(rgb_fg '#322d22')"
+  "$(rgb_fg '#706416')"
   "$(rgb_fg '#9f4718')"
 )

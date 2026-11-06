@@ -185,18 +185,26 @@ def oklch(lightness: float, chroma: float, hue: float) -> str:
 # Placed per mode rather than mirrored: amber cannot be dark without turning
 # brown, and a mirror of the dark accent lands too close to the text. Ember is
 # Solitude's own bright_red in both modes. Recycling only marks House Atlas's bin.
+# Teal, mauve, and sand give the remaining ANSI slots a hue of their own, set
+# apart from the signals by hue or, for sand beside amber, by lightness.
 SIGNALS = {
     "dark": {
         "accent": oklch(0.80, 0.055, 235),
         "amber": ASHEN["orange_golden"],
         "green": oklch(0.72, 0.12, 158),
         "recycling": oklch(0.70, 0.11, 252),
+        "teal": oklch(0.76, 0.08, 195),
+        "mauve": oklch(0.74, 0.085, 320),
+        "sand": oklch(0.86, 0.07, 95),
     },
     "light": {
         "accent": oklch(0.45, 0.075, 238),
         "amber": oklch(0.51, 0.13, 72),
         "green": oklch(0.48, 0.11, 158),
         "recycling": oklch(0.50, 0.13, 255),
+        "teal": oklch(0.50, 0.08, 195),
+        "mauve": oklch(0.48, 0.10, 320),
+        "sand": oklch(0.50, 0.095, 100),
     },
 }
 
@@ -217,7 +225,7 @@ def solitude_mode(solitude: Mapping[str, str], mode: str) -> Palette:
 
 
 def city_ruins(base: Mapping[str, str], signals: Mapping[str, str]) -> Palette:
-    """One mode of Solitude with the steel accent, and each signal hue in the ANSI slots that carry it."""
+    """One mode of Solitude with the steel accent, and a hue in every ANSI slot that is not black or white."""
     accent = signals["accent"]
     return dict(base) | {
         "accent": accent,
@@ -229,6 +237,11 @@ def city_ruins(base: Mapping[str, str], signals: Mapping[str, str]) -> Palette:
         "yellow": signals["amber"],
         "green": signals["green"],
         "bright_green": signals["green"],
+        "bright_yellow": signals["sand"],
+        "cyan": signals["teal"],
+        "bright_cyan": signals["teal"],
+        "magenta": signals["mauve"],
+        "bright_magenta": signals["mauve"],
     }
 
 
