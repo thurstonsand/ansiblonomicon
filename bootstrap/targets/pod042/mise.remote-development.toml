@@ -265,7 +265,7 @@ run = "python3 remote-development/services.py plan"
 
 [tasks."remote-development:waymote"]
 description = "Build pinned Waymote with 120 Hz output refresh across viewer resizes"
-tools = { zig = "0.16.0", go = "1.26.5" }
+tools = { zig = "0.16.0", go = "1.27.3" }
 sources = ["mise.remote-development.toml", "remote-development/desktop/build-waymote", "remote-development/desktop/waymote-refresh.patch", "/home/thurstonsand/.cache/ansiblonomicon/waymote/upstream/.git/HEAD"]
 outputs = ["/home/thurstonsand/.local/libexec/waymote/waymote-gateway", "/home/thurstonsand/.local/libexec/waymote/waymote-streamd"]
 run = "bash remote-development/desktop/build-waymote"
