@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+set -euo pipefail
+patch_file="$(realpath "$(dirname "$0")/waymote-refresh.patch")"
+cache="$HOME/.cache/ansiblonomicon/waymote"
+build=$(mktemp -d "$cache/build.XXXXXX")
+trap 'rm -rf "$build"' EXIT
+git -C "$cache/upstream" archive HEAD | tar -xf - -C "$build"
+cd "$build"
+git apply "$patch_file"
+zig build test -Doptimize=ReleaseSafe
+zig build install -Doptimize=ReleaseSafe -Dversion=0.1.7-pod042-60fps
+destination="$HOME/.local/libexec/waymote"
+mkdir -p "$destination"
+for binary in waymote-gateway waymote-streamd; do
+  install -m 0755 "zig-out/bin/$binary" "$destination/$binary.next"
+  mv "$destination/$binary.next" "$destination/$binary"
+done

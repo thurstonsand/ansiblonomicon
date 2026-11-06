@@ -1,0 +1,15 @@
+diff --git a/main.zig b/main.zig
+--- a/main.zig
++++ b/main.zig
+@@ -464,9 +464,10 @@ fn setOutputMode(self: *Stream, mode: OutputMode) !void {
+         self.output_name,
+         mode.width,
+         mode.height,
+         mode.scale,
+-        self.options.frame_rate * 1000,
++        // Keep the headless output at 120 Hz after viewer resizes, independently of encoding.
++        120_000,
+     ) catch |err| {
+         try self.requestFrame();
+         return err;
+     };

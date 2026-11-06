@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+set -euo pipefail
+gateway="$HOME/.local/libexec/waymote/waymote-gateway"
+case "${1:-}" in
+  -version|--version|-h|-help|--help) exec "$gateway" "$@" ;;
+esac
+wlr-randr --output HEADLESS-1 --custom-mode 2560x1440@120Hz --scale 2
+# Override Amp's 4 Mbps/30 fps arguments; 120 Hz supplies enough capture opportunities for 60 fps.
+exec "$gateway" "$@" -bitrate 12000 -frame-rate 60

@@ -6,6 +6,8 @@
 "apt:labwc" = "latest"
 "apt:wlr-randr" = "latest"
 "apt:ffmpeg" = "latest"
+"apt:libwayland-dev" = "latest"
+"apt:libxkbcommon-dev" = "latest"
 "apt:chromium" = "latest"
 "apt:swaybg" = "latest"
 "apt:xsettingsd" = "latest"
@@ -24,6 +26,12 @@
 "apt:tigervnc-viewer" = "latest"
 "apt:xdotool" = "latest"
 "apt:wayvnc" = "latest"
+
+[bootstrap.repos]
+"/home/thurstonsand/.cache/ansiblonomicon/waymote/upstream" = { url = "https://github.com/rockorager/waymote.git", ref = "d7cb1199227478ef4e4b5b86916c12a339f2e17a" }
+
+[bootstrap.hooks.post-repos]
+run = ["mise install zig@0.16.0 go@1.26.5", "mise -E remote-development run remote-development:waymote"]
 
 [bootstrap.files."/etc/chromium/policies/managed/chatgpt.json"]
 state = "absent"
@@ -206,6 +214,8 @@ mode = "0755"
 "/home/thurstonsand/.config/foot/foot.ini" = { source = "remote-development/desktop/foot.ini", mode = "symlink" }
 "/home/thurstonsand/.config/fuzzel/fuzzel.ini" = { source = "remote-development/desktop/fuzzel.ini", mode = "symlink" }
 "/home/thurstonsand/.config/xdg-desktop-portal/portals.conf" = { source = "remote-development/desktop/portals.conf", mode = "symlink" }
+"/home/thurstonsand/.local/bin/waymote-gateway" = { source = "remote-development/desktop/waymote-gateway", mode = "symlink" }
+"/home/thurstonsand/.local/bin/waymote-streamd" = { source = "/home/thurstonsand/.local/libexec/waymote/waymote-streamd", mode = "symlink" }
 "/home/thurstonsand/.local/bin/desktop-chromium" = { source = "remote-development/desktop/desktop-chromium", mode = "symlink" }
 "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.openai.codexextension.json" = { source = "/home/thurstonsand/.config/chromium/NativeMessagingHosts/com.openai.codexextension.json", mode = "symlink" }
 "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.1password.1password.json" = { source = "remote-development/desktop/1password-native-messaging.json", mode = "symlink" }
@@ -252,3 +262,10 @@ run = "python3 remote-development/services.py status"
 
 [tasks."remote-development:plan"]
 run = "python3 remote-development/services.py plan"
+
+[tasks."remote-development:waymote"]
+description = "Build pinned Waymote with 120 Hz output refresh across viewer resizes"
+tools = { zig = "0.16.0", go = "1.26.5" }
+sources = ["mise.remote-development.toml", "remote-development/desktop/build-waymote", "remote-development/desktop/waymote-refresh.patch", "/home/thurstonsand/.cache/ansiblonomicon/waymote/upstream/.git/HEAD"]
+outputs = ["/home/thurstonsand/.local/libexec/waymote/waymote-gateway", "/home/thurstonsand/.local/libexec/waymote/waymote-streamd"]
+run = "bash remote-development/desktop/build-waymote"

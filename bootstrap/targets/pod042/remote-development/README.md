@@ -60,6 +60,16 @@ Claude Remote Control needs the full-scope claude.ai login, not the `setup-token
 
 Verify T3 appears online in the T3 client, then open an Amp remote terminal on runner `pod042` and confirm `amp runner dirs list` names every checkout under `~/code`. Test again after closing SSH and after a reboot. A systemd active state does not prove either authenticated relay is usable. Inspect failures with `journalctl --user -u dev.mise.amp-remote.service -u t3code.service`; T3's vendor status also prints its application log path.
 
+## Desktop streaming
+
+pod042 overrides Amp's default Waymote download with locally built binaries on `PATH`. Native repositories pin Waymote v0.1.7 at `d7cb1199227478ef4e4b5b86916c12a339f2e17a`; the post-repos hook installs its Zig 0.16.0 and Go 1.26.5 build tools and runs `remote-development:waymote`. The task applies `desktop/waymote-refresh.patch` to a disposable copy, runs the upstream native and gateway tests, and installs the binaries under `~/.local/libexec/waymote`. The upstream checkout stays clean. Unchanged inputs and existing outputs skip the build.
+
+Encoding keeps upstream's H.264 Baseline (`yuv420p`) and matching `avc1.42E034` declaration. High 4:4:4 preserves more coloured-text detail but is rejected by the native macOS Amp viewer, so compatibility takes priority. The `waymote-gateway` launcher starts the output at 2560×1440, scale 2, at 120 Hz and overrides Amp's arguments with a 12 Mbps / 60 fps target. The patch preserves 120 Hz when viewers resize the output; adaptive encoding quality still works independently. TigerVNC remains a separate viewing path. Amp's self-updates do not update this source pin, so review it when Amp changes its desktop protocol.
+
+The 120 Hz virtual output supplies enough capture opportunities to sustain a 60-fps stream: the wired trial measured about 55 fps with a 60 Hz output and 60 fps with 120 Hz. A paced diagnostic browser viewer painted 59.3–59.8 frames/s at 1440p, but that does not establish Amp's own viewer performance. Verify the active mode with `wlr-randr`, the gateway's `-frame-rate 60` argument, and the viewer's actual presentation rate after deployment and resizing.
+
+Reconcile through `mise pod042 remote-development`. After changing the patch or launcher, restart `dev.mise.amp-remote.service` to use it; this recreates the compositor and closes its desktop applications, so coordinate with anyone using the runner. ChatGPT and 1Password remain on their separate Xvfb displays. Do not edit Amp's generated `start-session` or cached release binaries: regeneration replaces them.
+
 ## Vendor lifecycle evidence
 
 Upstream source inspected 2026-09-06:
