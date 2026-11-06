@@ -79,7 +79,7 @@ mode = "0755"
 [bootstrap.linux.systemd.units.amp-remote]
 description = "Amp outbound remote development for pod042"
 exec_start_pre = ["/usr/bin/test -f %h/.local/share/amp/secrets.json"]
-exec_start = "~/.amp/bin/amp --no-tui --remote-control-terminal --discover-dirs --desktop --runner-id pod042"
+exec_start = "~/.amp/bin/amp --no-tui --remote-control-terminal --remote-control-portals --discover-dirs --desktop --runner-id pod042"
 working_directory = "~/code"
 environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin" }
 restart = "always"

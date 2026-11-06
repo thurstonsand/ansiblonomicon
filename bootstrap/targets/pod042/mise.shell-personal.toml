@@ -1,2 +1,3 @@
 [dotfiles]
 "~/.zshenv" = { source = "shell/zshenv.tera", mode = "template" }
+"~/.profile" = { source = "shell/profile", mode = "symlink" }

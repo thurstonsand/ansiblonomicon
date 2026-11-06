@@ -5,12 +5,13 @@ runnerID = "pod153"
 runnerDiscoverFolders = ["/Users/thurstonsand/Develop/"]
 runnerRemoteTerminalEnabled = true
 runnerRemoteDesktopEnabled = true
+runnerPortalsEnabled = true
 runnerShareNetworkEnabled = true
 runnerShareBrowserEnabled = true
 "keepAwake.whileRunnerOn" = true
 
 [tasks.amp-cli]
-usage = 'flag "-c --check" help="Show Amp CLI and app runner setting drift"'
+usage = 'flag "-c --check" help="Show Amp CLI, app update, and app runner setting drift"'
 shell = "bash -c"
 run = '''
 set -euo pipefail
@@ -18,14 +19,39 @@ amp="$HOME/.amp/bin/amp"
 installer="$MISE_PROJECT_ROOT/../../capabilities/software/install-official"
 login="$HOME/.local/share/amp/secrets.json"
 
+# Sparkle downloads each Amp.app update and installs it only when the app quits, which it never does on
+# a server, and downloads nothing newer while one waits. Its waiting Autoupdate process marks the update.
+staged_update() {
+  local pid
+  for pid in $(pgrep -x Autoupdate || true); do
+    case "$(ps -o args= -p "$pid")" in
+      */Autoupdate\ com.ampcode.amp.macos\ *) echo "$pid"; return ;;
+    esac
+  done
+}
+
 if [ -n "${usage_check:-}" ]; then
   [ -f "$login" ] || echo "BLOCKED: Amp persisted login is absent: $login"
   "$installer" "Amp CLI" "$amp" https://ampcode.com/install.sh --check
+  [ -z "$(staged_update)" ] || echo "Amp.app: would restart it, and its runner, to install a staged update"
   exec mise bootstrap macos defaults apply --dry-run
 fi
 
 [ -f "$login" ] || { echo "Amp persisted login is absent: $login" >&2; exit 1; }
 
 "$installer" "Amp CLI" "$amp" https://ampcode.com/install.sh
-exec mise bootstrap macos defaults apply --yes
+mise bootstrap macos defaults apply --yes
+
+updater=$(staged_update)
+[ -n "$updater" ] || exit 0
+# SIGTERM quits Amp without an Automation grant; Amp stops its runner, interrupting the runner's threads.
+app=$(pgrep -x Amp || true)
+[ -z "$app" ] || kill -TERM "$app"
+for _ in $(seq 1 120); do
+  kill -0 "$updater" 2>/dev/null || break
+  sleep 1
+done
+! kill -0 "$updater" 2>/dev/null || { echo "Amp.app: Sparkle did not finish installing its update" >&2; exit 1; }
+open -g /Applications/Amp.app
+echo "Amp.app: installed build $(defaults read /Applications/Amp.app/Contents/Info CFBundleVersion) and restarted it"
 '''

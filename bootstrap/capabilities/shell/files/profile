@@ -1,0 +1,8 @@
+# ~/.profile: login shells other than zsh. Amp's runner portal proxy runs `node` from a `bash -lc`,
+# so login bash needs the mise shims that .zshenv gives zsh.
+
+if [ -n "$BASH_VERSION" ] && [ -f "$HOME/.bashrc" ]; then
+	. "$HOME/.bashrc"
+fi
+
+PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
