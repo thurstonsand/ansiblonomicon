@@ -1,5 +1,5 @@
 import { bearer, decodeJson, defineApp, defineProvider, header, object, renameTools, router, secrets, string, withApprovals } from "apps";
-import { mcpHealth, mcpRouter } from "apps/mcp";
+import { mcpRouter } from "apps/mcp";
 import { always, never } from "apps/operations/approval";
 
 const URL = "https://ha.thurstons.house/api/mcp/assist";
@@ -34,7 +34,6 @@ const googleMaps = defineProvider({
       request: ({ key }) => header("X-Goog-Api-Key", key),
     }),
   },
-  health: (check) => mcpHealth(check, { url: MAPS_URL, headers: check.account.headers() }),
 });
 
 const EXPORTED_TOOLS = new Map([
