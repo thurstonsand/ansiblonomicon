@@ -1,6 +1,6 @@
 ---
 name: operating-pod153
-description: Operates pod153, the always-on headless MacBook server, through native mise, SSH, Cua Driver, and its independent KVM. Use before changing its host state, restarting it, recovering it after a reboot, or answering a macOS permission prompt on it.
+description: Operates pod153, the always-on headless MacBook server, through native mise, SSH, Cua Driver, and its independent KVM. Use before changing its host state, restarting it, recovering it after a reboot, or answering a macOS permission or authentication prompt on it.
 ---
 
 # Operating pod153
@@ -12,7 +12,7 @@ pod153 is a MacBook Pro running as a server next to pod042. Nobody sits at it, s
 - SSH host: `pod153` (`10.10.10.53` on Bunker). Key login only after boot; pod042 and pod153 share the `id_ed25519_git` file key, the laptops use the operator key from 1Password.
 - Tailnet: `pod153-ts` (`pod153.tail5f024.ts.net`, `tag:pod153`). The Homebrew `tailscaled` LaunchDaemon serves Tailscale SSH from the login window on, but not in FileVault pre-boot. The tailnet policy in `terraform/tailscale/policy.hujson` lets pod042 and pod153 reach each other, and Thurston's devices through a `check` re-authentication.
 - Reconciliation: `mise reconcile [--check] [-t tags]` on pod153 itself. `mise run reconcile:tags` lists the tags. A LaunchAgent runs `scripts/reconcile-or-fix` daily at 04:30: it pulls main and reconciles, logging to `~/.local/state/ansiblonomicon/reconcile.log`. It commits and pushes the `lazy-lock.json` that the plugin sync rewrites. Uncommitted work rides along through an autostash and is deployed with main. On failure, including incoming commits that conflict with that work, it starts an Amp thread labeled `reconcile-failure` that sets aside any unfinished work behind the failure, fixes, finishes the reconcile, and pushes, notifying Thurston only for a true conflict or a decision he must make.
-- Secrets: `scripts/fnox-host get NAME`. The `agent` provider uses the service-account token, so it never prompts. Never route unattended work through the 1Password app or its SSH agent; it is locked whenever nobody is at the Mac.
+- Secrets: `scripts/fnox-host get NAME`. The `agent` provider uses the service-account token, so it never prompts. Resolve unattended credentials through fnox rather than depending on the 1Password app's unlock state or its SSH agent.
 - Screen Sharing: `vnc://pod153` with the account name and password, through a client that speaks Apple's authentication (macOS Screen Sharing, Remmina, RealVNC, vncdotool). Only the System Settings → General → Sharing toggle grants it screen capture and input; started through `launchctl`, it authenticates but streams black and drops every key.
 - T3 Code: the vendor LaunchAgent `com.t3tools.t3code.service` serves `*:3773` on the LAN and T3 Connect through its relay; `t3 connect status --json` reports reachability.
 - Hardware console: `pod153-kvm` (`10.10.10.35`) locally or `pod153-kvm-ts` (`100.81.37.67`) through Tailscale. See recovery below when host SSH or Cua cannot reach the screen.
@@ -84,6 +84,15 @@ An app running without a window, such as a headless server started by a LaunchAg
 A service that needs local network access may need its Local Network prompt approved, even when it runs in the background. Until then its connections to LAN addresses fail with `no route to host`, including cupertino's `192.168.64.x`. Its alert, "Allow “Python” to find devices on local networks?", is a `UserNotificationCenter` window; a `launchctl submit` probe that runs `/usr/bin/ssh admin@cupertino true` under the reconcile's Python raises it.
 
 Codex and the ChatGPT app use their own computer use. Claude Code, Amp, and Pi use Cua.
+
+### Passkeys with the lid closed
+
+macOS can verify a passkey with the Mac account password when Touch ID is unavailable. A 1Password spinner or a clamshell Touch ID warning is not proof that physical presence is required: password dialogs can belong to `coreautha`, be missing from app-name window discovery, and sit behind `UserNotificationCenter` alerts.
+
+1. Find `coreautha` and its executable identity with `ps -axo pid,comm`, then call `cua-driver list_windows` with its explicit `pid`. Read each candidate with `get_window_state` using both `pid` and `window_id`; inspect the desktop screenshot for obscuring alerts. Verify the requesting app, site, and account before entering a credential. Handle unrelated privacy requests only within the task's authorization.
+2. For an authorized Mac-password prompt, resolve `HOMEBREW_SUDO_ASKPASS_PASS` through `scripts/fnox-host` in process memory. Confirm recording is disabled with `cua-driver recording status` before entry. Pass the secret as JSON on stdin to `cua-driver call set_value`, targeting the exact dialog and a fresh password-field `element_token`; suppress captured output and keep the value out of command arguments, the clipboard, logs, and screenshots. This password is not the 1Password account password.
+3. Submit that dialog's **OK** button with `run_steps`, using its own `pid` and `window_id`. Rediscover windows and tokens after UI changes rather than reusing old identifiers. Exact-window AX targeting can work without foreground typing; parent-app targeting can fail with `element_outside_target_window`.
+4. Confirm the dialog closes and check `coreauthd` logs for successful completion. Then verify the requesting app separately: local password acceptance, website sign-in, Desktop authorization, and rendered frames/input are distinct outcomes. If a completed sign-in exposes a decoder error, investigate codec compatibility rather than repeating authentication.
 
 ## Renewing Claude's login
 
