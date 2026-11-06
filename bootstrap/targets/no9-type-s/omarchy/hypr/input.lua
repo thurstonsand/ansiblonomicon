@@ -59,6 +59,7 @@ hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 -- Use natural (inverse) scrolling on the touchpad.
 hl.config({
   input = {
+    kb_options = "compose:caps,shift:both_capslock_cancel",
     touchpad = {
       natural_scroll = true,
     },
