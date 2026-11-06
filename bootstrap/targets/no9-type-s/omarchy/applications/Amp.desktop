@@ -3,6 +3,7 @@ Version=1.0
 Name=Amp (Web)
 Comment=Amp
 Exec=omarchy-launch-webapp "https://ampcode.com/"
+StartupWMClass=chrome-ampcode.com__-Default
 Terminal=false
 Type=Application
 Icon=amp

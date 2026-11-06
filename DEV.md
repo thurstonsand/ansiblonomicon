@@ -90,6 +90,10 @@ Software missing from Omarchy's repositories uses its vendor's installer instead
 
 `omarchy-config` declares the NetworkManager Wi-Fi profiles as templated keyfiles with fnox passphrases, so a reconcile reverts changes made through `nmcli` or the network panel.
 
+Closing the undocked lid starts suspend-then-hibernate: hibernate after 36 hours asleep, or earlier when systemd detects a low battery. Docked lid closure keeps logind's default of staying awake. The shell's separate `idle.suspend` timeout controls when an open, idle laptop suspends; it is not the hibernation delay. `sleep-diagnostics.conf` enables kernel suspend/wake and xHCI port-event logging at boot; inspect `journalctl -b -k` (or `-b -1` after a reboot) when sleep fails.
+
+USB wake is opt-in through `omarchy/udev/90-usb-wake.rules`: external hubs, the Dygma Defy, and the Apple Magic Keyboard with Touch ID. Root hubs stay disabled because their connect/disconnect wake catches the internal webcam's suspend transition and immediately wakes the laptop. Keyboard wake through an attached dock still works; attaching a dock to a sleeping laptop is not guaranteed to wake it. Add another keyboard by its USB vendor/product IDs rather than enabling every device.
+
 ## Windows
 
 `eve` is the Framework laptop's Windows side, dual-booting with Omarchy, reconciled natively by `mise windows`; `-t windows-system` and friends narrow it. Tasks run under Git Bash, selected by the global mise config the `mise` tag links, so the target never assumes WSL. `windows-apps` declares winget packages in `[bootstrap.packages]`, and `windows-system` owns the registry values in the target's `windows-system.toml`, asking UAC once when a machine-wide value differs. `vcs` turns off Git for Windows' CRLF conversion and turns on symlinks. `amp-cli` runs the Amp runner as the `mise\amp-runner` Scheduled Task at logon, windowless under a headless conhost, with `amp-runner.ps1` restarting it and taking it down with the task.

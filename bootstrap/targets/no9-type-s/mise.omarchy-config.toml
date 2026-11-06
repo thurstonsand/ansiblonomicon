@@ -55,6 +55,32 @@ owner = "root"
 group = "root"
 mode = "0644"
 
+[bootstrap.files."/etc/systemd/logind.conf.d/30-lid-sleep.conf"]
+content = "[Login]\nHandleLidSwitch=suspend-then-hibernate\n"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.directories."/etc/systemd/sleep.conf.d"]
+owner = "root"
+group = "root"
+mode = "0755"
+
+[bootstrap.files."/etc/systemd/sleep.conf.d/30-hibernate-delay.conf"]
+content = "[Sleep]\nHibernateDelaySec=36h\n"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/tmpfiles.d/sleep-diagnostics.conf"]
+content = """
+w /sys/power/pm_debug_messages - - - - 1
+w /sys/kernel/debug/dynamic_debug/control - - - - func handle_port_status +p
+"""
+owner = "root"
+group = "root"
+mode = "0644"
+
 # Match Omarchy install/hardware/nvidia.sh early KMS configuration.
 [bootstrap.files."/etc/modprobe.d/nvidia.conf"]
 source = "omarchy/modprobe.d/nvidia.conf"
@@ -87,14 +113,15 @@ owner = "root"
 group = "root"
 mode = "0600"
 
-# NetworkManager and udev read their files from disk only on request. Reloading leaves the active connection up, and the triggers
-# reach only an attached Dygma keyboard and the USB devices.
+# Reload without restarting logind or disconnecting the network; the udev triggers reach only an attached Dygma keyboard and USB.
 [bootstrap.hooks.pre-repos]
 run = '''
 sudo -n nmcli connection reload
 sudo -n udevadm control --reload-rules
 sudo -n udevadm trigger --property-match=ID_VENDOR_ID=35ef
 sudo -n udevadm trigger --subsystem-match=usb --property-match=DEVTYPE=usb_device
+sudo -n systemctl reload systemd-logind
+sudo -n systemd-tmpfiles --create /etc/tmpfiles.d/sleep-diagnostics.conf
 '''
 
 [bootstrap.hooks.post-dotfiles]

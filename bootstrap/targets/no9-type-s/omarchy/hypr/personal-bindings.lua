@@ -28,6 +28,9 @@
 -- o.bind("SUPER + H", nil, "voxtype record toggle")
 -- o.bind("SUPER + PERIOD", nil, "omarchy-shell shell toggle omarchy.emojis")
 
+-- A wake-time power-button event must not open the menu behind the lock screen.
+o.rebind("XF86PowerOff", "Power menu", { menu = "system" })
+
 -- Retired apps and web shortcuts; keep the other preinstalled bindings.
 hl.unbind("SUPER + SHIFT + ALT + M") -- cliamp
 hl.unbind("SUPER + SHIFT + O") -- Obsidian

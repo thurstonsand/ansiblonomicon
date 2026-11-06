@@ -1,10 +1,6 @@
 [tools]
-"aqua:modem-dev/hunk" = "latest"
 bun = "latest"
-claude = "latest"
-codex = "latest"
 fnox = "latest"
-gh = "latest"
 go = "latest"
 gofumpt = "latest"
 golangci-lint = "latest"
@@ -24,8 +20,5 @@ node = "lts"
 # unprovenanced release fails the install and needs its own review.
 "npm:sideshow" = { version = "latest", allow_low_downloads = true, trust_policy_excludes = ["@pierre/theme@2.0.0"] }
 "npm:tuistory" = "latest"
-# Pi is exempt from the supply-chain cooling. `latest` keeps whichever version is installed, so a launch upgrades it once
-# every 4h, as Omarchy declares its agent CLIs; `pi update` upgrades it through mise too.
-pi = { version = "latest", minimum_release_age = "0s", auto_update = "4h" }
 pnpm = { version = "latest", postinstall = 'rm -f "$MISE_TOOL_INSTALL_PATH/pn"' }
 uv = "latest"

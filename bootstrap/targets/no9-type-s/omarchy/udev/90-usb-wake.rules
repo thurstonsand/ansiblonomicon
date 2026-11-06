@@ -1,4 +1,7 @@
-# The kernel starts every USB device with wake disabled, and usbhid enables it only on boot-protocol keyboards. A suspended hub
-# relays a downstream wake only when it may wake the system itself, so a docked keyboard needs its whole hub chain enabled too.
-# Opt out a device with a later rule matching its idVendor and idProduct that sets "disabled".
-ACTION!="remove", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", TEST=="power/wakeup", ATTR{power/wakeup}="enabled"
+# Root-hub wake also arms connect/disconnect events: the internal webcam's suspend transition immediately wakes this laptop.
+# External hubs can still relay keyboard wake with root-hub wake disabled.
+ACTION!="remove", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", TEST=="power/wakeup", ATTR{power/wakeup}="disabled"
+ACTION!="remove", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", KERNEL!="usb*", ATTR{bDeviceClass}=="09", TEST=="power/wakeup", ATTR{power/wakeup}="enabled"
+# Dygma Defy and Apple Magic Keyboard with Touch ID.
+ACTION!="remove", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="35ef", ATTR{idProduct}=="0012", TEST=="power/wakeup", ATTR{power/wakeup}="enabled"
+ACTION!="remove", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="05ac", ATTR{idProduct}=="029a", TEST=="power/wakeup", ATTR{power/wakeup}="enabled"
