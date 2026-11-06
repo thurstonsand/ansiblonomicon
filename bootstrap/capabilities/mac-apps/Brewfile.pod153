@@ -100,3 +100,6 @@ cask "font-mononoki-nerd-font"
 # =============================================================================
 brew "smartmontools"
 cask "prusaslicer"
+# A loopback input for driving dictation apps with `say`: the lid is closed, so there is no mic.
+# A fresh install appears only once coreaudiod restarts.
+cask "blackhole-2ch"
