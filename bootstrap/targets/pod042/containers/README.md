@@ -2,6 +2,12 @@
 
 Docker plus one compose project per stack under `/etc/ansiblonomicon/containers/<stack>`, each declared as a `[bootstrap.compose.*]` resource in `mise.containers.toml` and ordered after `service:docker`. `finalize.py` fixes up the group memberships that package installation creates. Netdata reaches Docker only through the read-only socket proxy.
 
+## PON monitor shutdown
+
+Docker's live restore keeps containers running after the daemon stops, including during host shutdown. `pon-monitor-shutdown.service` stops the monitor before Docker and `networking.service` stop, so tearing down the host's network does not produce a false WAN outage. The monitor uses Docker's init process to handle termination and `restart: always` so this explicit stop does not leave it disabled after the next boot. A manual container stop therefore lasts only until Docker restarts. Ordinary Docker daemon restarts still leave the monitor running through live restore.
+
+WAN probes, event captures and queued alerts are unchanged; genuine failures still capture after two failed samples, even immediately after boot. The external Healthchecks heartbeat still reports a prolonged absence of the monitor.
+
 ## Subtitles
 
 Bazarr runs in `arr-apps`, with a LAN-only interface at <https://bazarr.thurstons.house>. It reads the TV library from Sonarr at `http://sonarr:8989`, shares its `/media` paths, and refreshes Plex through `http://host.docker.internal:32400` after subtitle changes. Settings, credentials, language profiles and history live under `/mnt/black-box/docker/arr-apps/bazarr/config`; subtitles live beside the videos and appear in Plex's subtitle selector. It does not change anyone's Plex language preferences.

@@ -4,7 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     pull_policy: build
-    restart: unless-stopped
+    restart: always
+    init: true
     user: "1000:3000"
     labels:
       com.centurylinklabs.watchtower.enable: "false"

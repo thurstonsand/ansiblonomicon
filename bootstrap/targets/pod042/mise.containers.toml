@@ -212,6 +212,12 @@ group = "root"
 mode = "0644"
 notify = ["netdata"]
 
+[bootstrap.files."/etc/systemd/system/pon-monitor-shutdown.service"]
+source = "containers/config/pon-monitor-shutdown.service"
+owner = "root"
+group = "root"
+mode = "0644"
+
 [bootstrap.files."/etc/netdata/netdata.conf"]
 source = "containers/config/netdata.conf"
 owner = "root"
@@ -589,6 +595,10 @@ on_change = "restart"
 [bootstrap.services.netdata]
 enabled = true
 on_change = "restart"
+
+[bootstrap.services."pon-monitor-shutdown"]
+enabled = true
+state = "running"
 
 [bootstrap.compose.platform]
 project_dir = "/etc/ansiblonomicon/containers/platform"
