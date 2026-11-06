@@ -27,6 +27,7 @@ def _declared(*, model: str, is_work: bool, tui_theme: str) -> dict[str, Any]:
     declared: dict[str, Any] = {
         "model_reasoning_effort": "medium",
         "model_reasoning_summary": "auto",
+        "suppress_unstable_features_warning": True,
     }
     if not is_work:
         declared |= {
@@ -35,16 +36,16 @@ def _declared(*, model: str, is_work: bool, tui_theme: str) -> dict[str, Any]:
             "approval_policy": "never",
             "approvals_reviewer": "user",
             "sandbox_mode": "danger-full-access",
-            "web_search": "live",
         }
-    declared["features"] = {
+    features = {
         "hooks": True,
         "prevent_idle_sleep": True,
         "memories": True,
         "default_mode_request_user_input": True,
-        "chronicle": not is_work,
-        "artifact": not is_work,
     }
+    if not is_work:
+        features["artifact"] = True
+    declared["features"] = features
     declared["tui"] = {
         "theme": tui_theme,
         "status_line": [
@@ -116,6 +117,8 @@ def render(
         merged = cast(Container, tomlkit.parse(target.read_text()))
         live_model = merged.get("model")
         _merge(merged, overlay)
+        # Replaced rather than merged, so flags Codex retires and /experimental toggles do not pile up.
+        merged["features"] = overlay["features"]
         if isinstance(live_model, str):
             merged["model"] = live_model
     else:
