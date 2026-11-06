@@ -192,11 +192,6 @@ def _settings(
     profile = _profile(hostname, models, data)
     current = _read_object(home / ".pi/agent/settings.json", strict=False)
     work = hostname == WORK_HOST
-    parallel = {
-        "parallel": {
-            "apiKeyCommand": '"$HOME/.local/bin/fnox-host" get PARALLEL_API_KEY'
-        }
-    }
     settings: dict[str, Any] = {
         "defaultProvider": profile["provider"],
         "defaultModel": profile["model"],
@@ -248,11 +243,6 @@ def _settings(
         "lastChangelogVersion": current.get("lastChangelogVersion", CHANGELOG_FALLBACK),
         # Pi records each package's last shown version here and shows nothing for a package it has no record of.
         "extensionChangelogVersions": current.get("extensionChangelogVersions", {}),
-        "librarian": {
-            "model": profile["librarian"],
-            "thinkingLevel": "low",
-            **({"sources": data["piLibrarianSources"]} if work else {"web": parallel}),
-        },
         "enabledModels": profile["enabled"],
         "steeringMode": "all",
         "followUpMode": "all",
@@ -368,6 +358,29 @@ def _settings(
     return settings
 
 
+def _librarian(
+    hostname: str, data: Mapping[str, Any], models: Mapping[str, Any]
+) -> dict[str, Any]:
+    pi = {
+        "model": _profile(hostname, models, data)["librarian"],
+        "thinkingLevel": "low",
+    }
+    if hostname == WORK_HOST:
+        return {"sources": data["piLibrarianSources"], "pi": pi}
+    return {
+        "web": {
+            "parallel": {
+                "apiKeyCommand": '"$HOME/.local/bin/fnox-host" get PARALLEL_API_KEY'
+            }
+        },
+        "pi": pi,
+        "codex": {
+            "model": models["openai"]["gpt_sol"]["version"],
+            "reasoningEffort": "low",
+        },
+    }
+
+
 def render(
     *,
     repo: Path,
@@ -393,6 +406,9 @@ def render(
         settings = settings.rstrip("\n")
         auth_content = auth_content.rstrip("\n")
     result = {
+        ".config/agents/librarian/config.json": _json(
+            _librarian(hostname, data, models)
+        ),
         ".pi/agent/settings.json": settings,
         ".pi/agent/auth.json": auth_content,
         ".pi/agent/models.json": _json(

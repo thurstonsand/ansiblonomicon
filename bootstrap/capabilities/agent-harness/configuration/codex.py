@@ -57,6 +57,13 @@ def _declared(*, model: str, is_work: bool, tui_theme: str) -> dict[str, Any]:
     }
     if not is_work:
         declared["projects"] = {"/": {"trust_level": "trusted"}}
+        declared["marketplaces"] = {
+            "pi-librarian": {
+                "source_type": "git",
+                "source": "https://github.com/thurstonsand/pi-librarian.git",
+            }
+        }
+        declared["plugins"] = {"librarian@pi-librarian": {"enabled": True}}
     declared["desktop"] = {
         "followUpQueueMode": "steer",
         "mac-menu-bar-enabled": False,

@@ -122,7 +122,7 @@ def _base_settings(
                 ]
             }
         ]
-    return {
+    settings: dict[str, Any] = {
         "$schema": "https://json.schemastore.org/claude-code-settings.json",
         "cleanupPeriodDays": 99999,
         "env": env,
@@ -152,6 +152,13 @@ def _base_settings(
             }
         },
     }
+    if hostname != "ML-DFC6YK6VJQ":
+        settings["extraKnownMarketplaces"]["pi-librarian"] = {
+            "source": {"source": "github", "repo": "thurstonsand/pi-librarian"},
+            "autoUpdate": True,
+        }
+        settings["enabledPlugins"] = {"librarian@pi-librarian": True}
+    return settings
 
 
 def _overlay(repo: Path, hostname: str, data: dict[str, Any]) -> dict[str, Any]:
