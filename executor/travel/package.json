@@ -1,5 +1,5 @@
 {
-  "name": "home-assistant",
+  "name": "travel",
   "private": true,
   "type": "module",
   "dependencies": {
