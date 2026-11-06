@@ -1,6 +1,6 @@
 ---
 name: deploying-executor-apps
-description: Deploys the executor.sh apps under `executor/` through the Executor MCP. Use when changing, deploying, or checking drift of an app such as `executor/pod153`.
+description: Deploys the executor.sh apps under `executor/` through the Executor MCP. Use when changing, deploying, or checking drift of an executor app.
 ---
 
 # Deploying executor apps
@@ -9,14 +9,12 @@ description: Deploys the executor.sh apps under `executor/` through the Executor
 
 ## Deploy
 
-1. Commit the change to `executor/<slug>/` in this repo.
-2. Find the app's ID with `appManagement.list` by slug, then read its working source with `appManagement.source` and note `revision.commit`.
-3. Save the repo's files with `appManagement.commit`, passing that commit as `expected` and every file under `executor/<slug>/`. Check `removed` against what the repo change deleted.
-4. Deploy that commit with `appManagement.deploy` and `{ commit }`.
-5. Verify: `apps.source` reports the new deployment with `sourceCommit` equal to your commit, `search` lists the app's tools under `tools.<slug>.`, and one read-only tool call returns real data.
+Push the change to `executor/<slug>/` to main. The Deploy Executor Apps workflow runs `scripts/deploy-executor-apps.sh`, which commits each app's directory to its hosted Git and deploys that commit; `workflow_dispatch` reruns it. It authenticates with the `EXECUTOR_ACCESS_TOKEN` secret, Thurston's personal access token scoped to the organization.
 
-Always deploy a commit. A deploy from loose files leaves the hosted Git behind what runs, and the next deploy from Git silently brings the old app back.
+Verify through the Executor MCP: `apps.source` reports the new deployment with `sourceCommit` equal to the workflow's commit, `search` lists the app's tools under `tools.<slug>.`, and one read-only tool call returns real data.
+
+Every deploy goes through a commit. A deploy from loose files leaves the hosted Git behind what runs, and the next deploy from Git silently brings the old app back.
 
 ## Drift
 
-`apps.source` is what runs; `appManagement.source` is the hosted Git. Both should equal `executor/<slug>/` byte for byte, and the active deployment's `sourceCommit` should be the hosted Git's commit. When they differ, the repo wins: run the deploy steps from step 2.
+`apps.source` is what runs; `appManagement.source` is the hosted Git. Both should equal `executor/<slug>/` byte for byte, and the active deployment's `sourceCommit` should be the hosted Git's commit. When they differ, the repo wins: rerun the workflow.

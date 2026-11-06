@@ -1,0 +1,35 @@
+name: Deploy Executor Apps
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/deploy-executor-apps.yml
+      - executor/**
+      - scripts/deploy-executor-apps.sh
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-executor-apps
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      EXECUTOR_ACCESS_TOKEN: ${{ secrets.EXECUTOR_ACCESS_TOKEN }}
+      EXECUTOR_ORGANIZATION: 6e26c3df-cc7f-4ee6-923b-e9c3672a3442
+      EXECUTOR_CLI_VERSION: 2.0.0-beta.37
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Install Node
+        uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: "24"
+
+      - name: Deploy
+        run: scripts/deploy-executor-apps.sh
