@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping
+import json
 from pathlib import Path
+import subprocess
+import tempfile
 from typing import Any, cast
 
 import tomlkit
@@ -57,13 +60,6 @@ def _declared(*, model: str, is_work: bool, tui_theme: str) -> dict[str, Any]:
     }
     if not is_work:
         declared["projects"] = {"/": {"trust_level": "trusted"}}
-        declared["marketplaces"] = {
-            "pi-librarian": {
-                "source_type": "git",
-                "source": "https://github.com/thurstonsand/pi-librarian.git",
-            }
-        }
-        declared["plugins"] = {"librarian@pi-librarian": {"enabled": True}}
     declared["desktop"] = {
         "followUpQueueMode": "steer",
         "mac-menu-bar-enabled": False,
@@ -154,7 +150,80 @@ def render(
         if hostname == WORK_HOST
         else models["openai"]["gpt_astra"]["version"]
     )
+    cli = _librarian_cli(home, hostname)
     return {
         ".codex/config.toml": tomlkit.dumps(merged),
         ".codex/agents/oracle.toml": tomlkit.dumps(oracle),
+        **_librarian_role(
+            home,
+            cli,
+            None
+            if hostname == WORK_HOST
+            else {
+                "model": models["openai"]["gpt_sol"]["version"],
+                "reasoningEffort": "low",
+            },
+        ),
+        ".local/bin/librarian": _librarian_executable(home, cli),
     }
+
+
+# Pi installs the librarian package, so Codex runs that same copy rather than a second install
+# that the work mirror may not serve.
+def _librarian_cli(home: Path, hostname: str) -> Path:
+    package = (
+        home / ".pi/agent/git/github.com/thurstonsand/pi-librarian"
+        if hostname == WORK_HOST
+        else home / ".pi/agent/npm/node_modules/@thurstonsand/pi-librarian"
+    )
+    cli = package / "dist/cli/librarian.js"
+    if not cli.is_file():
+        raise ValueError(f"{cli} is missing; start pi once so it installs pi-librarian")
+    return cli
+
+
+# The librarian writes its own role and rule, so they track its releases. It runs in an empty
+# home: the codex settings arrive in a throwaway settings file, and the empty pi directory keeps
+# its migration from moving the real pi settings.
+def _librarian_role(
+    home: Path, cli: Path, codex: dict[str, str] | None
+) -> dict[str, str]:
+    node = subprocess.run(
+        ["mise", "which", "-C", str(home), "node"],
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    with tempfile.TemporaryDirectory(prefix="librarian-role-") as temporary:
+        root = Path(temporary)
+        settings = root / "config/agents/librarian/config.json"
+        settings.parent.mkdir(parents=True)
+        settings.write_text(json.dumps({"codex": codex} if codex else {}))
+        subprocess.run(
+            [node, str(cli), "codex", "setup"],
+            check=True,
+            capture_output=True,
+            env={
+                "HOME": str(root),
+                "PATH": "",
+                "CODEX_HOME": str(root / "codex"),
+                "XDG_CONFIG_HOME": str(root / "config"),
+                "XDG_CACHE_HOME": str(root / "cache"),
+                "XDG_STATE_HOME": str(root / "state"),
+                "PI_CODING_AGENT_DIR": str(root / "pi"),
+            },
+        )
+        return {
+            relative: (root / "codex" / relative.removeprefix(".codex/")).read_text()
+            for relative in (
+                ".codex/agents/librarian.toml",
+                ".codex/rules/librarian.rules",
+            )
+        }
+
+
+def _librarian_executable(home: Path, cli: Path) -> str:
+    return f'''#!/usr/bin/env bash
+set -euo pipefail
+exec "$(mise which -C "{home}" node)" "{cli}" "$@"
+'''

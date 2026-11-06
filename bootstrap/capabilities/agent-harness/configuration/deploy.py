@@ -51,7 +51,7 @@ PRIVATE = {
     ".pi/agent/models.json",
     ".codex/config.toml",
 }
-EXECUTABLE = {".local/bin/pi"}
+EXECUTABLE = {".local/bin/pi", ".local/bin/librarian"}
 MCP_FIELDS = {
     "name",
     "transport",

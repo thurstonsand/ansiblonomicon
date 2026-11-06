@@ -374,10 +374,6 @@ def _librarian(
             }
         },
         "pi": pi,
-        "codex": {
-            "model": models["openai"]["gpt_sol"]["version"],
-            "reasoningEffort": "low",
-        },
     }
 
 
