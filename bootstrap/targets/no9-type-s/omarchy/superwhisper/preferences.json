@@ -11,6 +11,7 @@
   "linux": {
     "asrBackend": "auto",
     "cleanupGpuLayers": 99,
+    "mousePushToTalkShortcut": "",
     "saveRecordingAudio": true,
     "vocabularyBackend": "auto"
   },
