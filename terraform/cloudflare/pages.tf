@@ -9,3 +9,12 @@ resource "cloudflare_pages_domain" "tesla" {
   project_name = cloudflare_pages_project.tesla.name
   domain       = "tesla.${local.zone_name}"
 }
+
+resource "cloudflare_record" "tesla" {
+  zone_id = local.zone_id
+  name    = "tesla"
+  type    = "CNAME"
+  content = cloudflare_pages_project.tesla.subdomain
+  proxied = true
+  ttl     = 1
+}
