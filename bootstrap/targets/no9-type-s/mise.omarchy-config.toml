@@ -131,9 +131,15 @@ if ! LC_ALL=C lpstat -v | grep -qxF 'device for Canon_MF650C: ipp://printer.thur
   sudo -n lpadmin -p Canon_MF650C -E -v ipp://printer.thurstons.house/ipp/print -m everywhere \
     -D 'Canon MF650C Series' -o printer-is-shared=false
 fi
-# Superwhisper's installer also links its Omarchy panel, menu row, fcitx5 addon, and agent skill, and writes hypr/bindings.lua.
-"{{ config_root }}/omarchy/libexec/superwhisper-install"
-# bindings.lua dofile()s Superwhisper's generated shortcuts.lua, which stays out of git and so is missing on a fresh checkout.
+# Omarchy installs the self-updating AppImage and theme before removing the old T3 Code packages.
+if [ ! -x ~/.local/share/t3code/T3-Code.AppImage ] || omarchy pkg present t3code-bin || omarchy pkg present t3code-nightly-bin; then
+  omarchy install ai t3-code stable --no-launch
+fi
+# The packaged setup adopts an existing vendor install, preserving its settings, models, and integrations.
+if ! omarchy pkg present superwhisper-bin || [ "$(readlink ~/.local/share/superwhisper/app/current)" != /opt/superwhisper ] || [ "$(omarchy default dictation 2>/dev/null)" != superwhisper ]; then
+  omarchy install dictation superwhisper --background
+fi
+# Hyprland loads Superwhisper's generated shortcuts.lua, which stays out of git and so is missing on a fresh checkout.
 [ -f ~/.config/superwhisper/shortcuts.lua ] || ~/.local/bin/superwhisper shortcuts apply >/dev/null
 # Flea owns the folder handler, Show in folder service, shortcuts, and file chooser routing.
 flea --default
@@ -267,8 +273,9 @@ unit = "claude-auth-refresh"
 
 # Omarchy already hides the other admin/dependency launchers. Keep FLTK for TigerVNC, but hide its GUI designer.
 "~/.local/share/applications/fluid1.3.desktop" = { content = "[Desktop Entry]\nType=Application\nName=FLUID\nHidden=true\n" }
+# Superwhisper requires Foot for its TUI; Ghostty remains the default terminal.
+"~/.local/share/applications/foot.desktop" = { content = "[Desktop Entry]\nType=Application\nName=Foot\nHidden=true\n" }
 # Omarchy's refresh-applications copies these launchers back; reconciliation retires them again.
-"~/.local/share/applications/foot.desktop" = { mode = "absent" }
 "~/.local/share/applications/Basecamp.desktop" = { mode = "absent" }
 "~/.local/share/applications/HEY.desktop" = { mode = "absent" }
 "~/.local/share/applications/Google Messages.desktop" = { mode = "absent" }

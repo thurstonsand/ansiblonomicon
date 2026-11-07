@@ -10,6 +10,13 @@ dofile((os.getenv("OMARCHY_PATH") or "/usr/share/omarchy") .. "/default/hypr/boo
 -- keeping core window-manager bindings:
 -- omarchy_preinstalled_bindings = false
 
+-- Load Superwhisper's guarded hook before Omarchy's backend loader, without `o`: its Right Alt edge reporting would
+-- otherwise stop the custom double-tap latch on release. Other bindings still need Omarchy's helpers.
+local omarchy = o
+o = nil
+dofile(os.getenv("HOME") .. "/.config/superwhisper/shortcuts.lua")
+o = omarchy
+
 -- Load Omarchy defaults.
 require("default.hypr.omarchy")
 
@@ -19,15 +26,8 @@ require("default.hypr.omarchy")
 require("hypr.monitors")
 require("hypr.input")
 require("hypr.mouse")
--- Superwhisper replaces bindings.lua whenever it saves its shortcuts, which would break a symlink, so personal bindings live beside it.
+-- Keep personal bindings separate from installer-owned integrations in bindings.lua.
 require("hypr.personal-bindings")
--- With Omarchy's `o` visible, Superwhisper's hook reports Right Alt to its daemon as Omarchy's push-to-talk key, and the
--- daemon then stops any recording started while Right Alt is down, which breaks the double-tap latch in personal-bindings.
--- Load its guarded hook first, hiding `o` only there; other bindings, including Flea's, need Omarchy's helpers.
-local omarchy = o
-o = nil
-dofile(os.getenv("HOME") .. "/.config/superwhisper/shortcuts.lua")
-o = omarchy
 require("hypr.bindings")
 require("hypr.looknfeel")
 require("hypr.autostart")
