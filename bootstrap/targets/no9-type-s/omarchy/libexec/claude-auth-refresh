@@ -3,7 +3,7 @@
 # three days out this asks once a day for one, and clicking the notification starts it.
 set -euo pipefail
 
-claude="$HOME/.local/bin/claude"
+claude="$HOME/.local/share/mise/shims/claude"
 credentials="${CLAUDE_CONFIG_DIR:-$HOME/.claude}/.credentials.json"
 stamp="${XDG_STATE_HOME:-$HOME/.local/state}/claude-auth-refresh/notified"
 
@@ -16,6 +16,7 @@ if "$claude" auth status >/dev/null; then
   message="Your login expires in $days_left days."
 else
   status=$?
+  ((status == 1)) || exit "$status"
   message="You are signed out."
 fi
 
