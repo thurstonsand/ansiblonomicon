@@ -93,8 +93,22 @@ local dictation_hold_ms = 200
 local dictation_double_tap_ms = 300
 local dictation = { state = "idle", held = false, generation = 0 }
 
+local function dictation_log(event)
+	hl.exec_cmd(
+		"logger -t omarchy-dictation "
+			.. o.shell_quote("event=" .. event .. " state=" .. dictation.state .. " held=" .. tostring(dictation.held))
+	)
+end
+
 local function dictation_send(command)
-	hl.exec_cmd("superwhisper " .. command)
+	dictation_log("command-" .. command)
+	hl.exec_cmd(
+		"superwhisper "
+			.. command
+			.. " >/dev/null; result=$?; logger -t omarchy-dictation command="
+			.. command
+			.. ' exit=$result; exit "$result"'
+	)
 end
 
 local function dictation_after(ms, callback)
@@ -108,6 +122,7 @@ local function dictation_after(ms, callback)
 end
 
 local function dictation_press()
+	dictation_log("press")
 	if dictation.state == "idle" then
 		dictation_send("start")
 		dictation.state = "first_press"
@@ -127,6 +142,7 @@ local function dictation_press()
 end
 
 local function dictation_release()
+	dictation_log("release")
 	local state = dictation.state
 	if state == "stopping" then
 		dictation.state = "idle"
@@ -146,7 +162,19 @@ local function dictation_release()
 	end
 end
 
-o.bind("Alt_R", "Dictation (hold, or double-tap to latch)", dictation_press)
--- Alt may or may not still count as held when Alt_R comes up.
-o.bind("Alt_R", nil, dictation_release, { release = true })
-o.bind("ALT + Alt_R", nil, dictation_release, { release = true })
+-- Only Right Alt's physical edges, never typed text. Hyprland uses XKB codes (evdev 100 + 8).
+hl.on("input.keyboard.key", function(code, _, state)
+	if code == 108 and (state == 0 or state == 1) then
+		dictation_log(state == 1 and "key-down" or "key-up")
+	end
+end)
+
+-- Omarchy binds this once a dictation backend is selected; replace its plain hold gesture.
+hl.unbind("ALT + Alt_R")
+o.bind_hold(
+	"Alt_R",
+	"Dictation (hold, or double-tap to latch)",
+	dictation_press,
+	"Dictation release",
+	dictation_release
+)
