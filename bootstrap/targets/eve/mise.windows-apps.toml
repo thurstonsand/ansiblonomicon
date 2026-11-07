@@ -7,6 +7,7 @@
 "winget:Discord.Discord" = "latest"
 "winget:Git.Git" = "latest"
 "winget:M2Team.NanaZip" = "latest"
+"winget:SteelSeries.GG" = "latest"
 "winget:Valve.Steam" = "latest"
 "winget:wez.wezterm" = "latest"
 # ChatGPT, from the Microsoft Store.
@@ -25,6 +26,7 @@ if ! MSYS_NO_PATHCONV=1 reg query 'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\C
     'exit (Start-Process $env:INSTALLER -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -Wait -PassThru).ExitCode'
   rm -r "$(dirname "$installer")"
 fi
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File windows-apps/magic-trackpad.ps1
 '''
 
 [dotfiles]

@@ -17,6 +17,7 @@ if sys.platform != "win32":
 
 HIVES = {"HKLM": winreg.HKEY_LOCAL_MACHINE, "HKCU": winreg.HKEY_CURRENT_USER}
 TYPES = {int: winreg.REG_DWORD, str: winreg.REG_SZ}
+KEYBOARD_RESPONSE = r"Control Panel\Accessibility\Keyboard Response"
 ELEVATE = """
 $process = Start-Process -FilePath $env:WINDOWS_SYSTEM_PYTHON `
   -ArgumentList $env:WINDOWS_SYSTEM_ARGUMENTS -Verb RunAs -WindowStyle Hidden `
@@ -76,6 +77,15 @@ def drifted(values: list[Value]) -> list[Value]:
 
 
 def write(value: Value) -> None:
+    if value.hive == "HKCU" and value.key.casefold() == r"control panel\keyboard":
+        actions = {"KeyboardDelay": 0x0017, "KeyboardSpeed": 0x000B}
+        if value.name in actions:
+            # Update the live session and user profile; registry writes alone need a new login.
+            if not ctypes.windll.user32.SystemParametersInfoW(
+                actions[value.name], int(value.data), None, 0x3
+            ):
+                raise ctypes.WinError()
+            return
     with winreg.CreateKeyEx(
         HIVES[value.hive], value.key, 0, winreg.KEY_SET_VALUE
     ) as key:
@@ -105,6 +115,34 @@ def announce_environment() -> None:
     ctypes.windll.user32.SendMessageTimeoutW(
         hwnd_broadcast, wm_settingchange, 0, "Environment", smto_abortifhung, 5000, None
     )
+
+
+class FilterKeys(ctypes.Structure):
+    _fields_ = [
+        ("size", ctypes.c_uint32),
+        ("flags", ctypes.c_uint32),
+        ("wait_ms", ctypes.c_uint32),
+        ("delay_ms", ctypes.c_uint32),
+        ("repeat_ms", ctypes.c_uint32),
+        ("bounce_ms", ctypes.c_uint32),
+    ]
+
+
+def apply_keyboard_response() -> None:
+    with winreg.OpenKey(winreg.HKEY_CURRENT_USER, KEYBOARD_RESPONSE) as key:
+        settings = FilterKeys(
+            ctypes.sizeof(FilterKeys),
+            int(winreg.QueryValueEx(key, "Flags")[0]),
+            int(winreg.QueryValueEx(key, "DelayBeforeAcceptance")[0]),
+            int(winreg.QueryValueEx(key, "AutoRepeatDelay")[0]),
+            int(winreg.QueryValueEx(key, "AutoRepeatRate")[0]),
+            int(winreg.QueryValueEx(key, "BounceTime")[0]),
+        )
+    # SPI_SETFILTERKEYS applies all timings together and broadcasts the change.
+    if not ctypes.windll.user32.SystemParametersInfoW(
+        0x0033, settings.size, ctypes.byref(settings), 0x3
+    ):
+        raise ctypes.WinError()
 
 
 def main() -> None:
@@ -138,6 +176,11 @@ def main() -> None:
     else:
         for value in pending:
             write(value)
+    if any(
+        value.hive == "HKCU" and value.key.casefold() == KEYBOARD_RESPONSE.casefold()
+        for value in pending
+    ):
+        apply_keyboard_response()
     if remaining := drifted(pending):
         raise RuntimeError("still differs: " + ", ".join(map(str, remaining)))
     if any(value.key.casefold() == "environment" for value in pending):

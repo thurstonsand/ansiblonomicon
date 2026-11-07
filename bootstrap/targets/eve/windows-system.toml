@@ -29,3 +29,28 @@ HOME = 'C:\Users\thurs'
 # Restricted, the default, refuses every script, including a PowerShell profile.
 [registry.'HKCU\Software\Microsoft\PowerShell\1\ShellIds\Microsoft.PowerShell']
 ExecutionPolicy = "RemoteSigned"
+
+# Shortest repeat delay (~250 ms), fastest standard repeat rate (~30/second).
+[registry.'HKCU\Control Panel\Keyboard']
+KeyboardDelay = "0"
+KeyboardSpeed = "31"
+
+# RepeatKeys overrides the standard rate. Enable it without sounds or the hotkey;
+# accept presses immediately and do not filter closely spaced presses.
+[registry.'HKCU\Control Panel\Accessibility\Keyboard Response']
+Flags = "3"
+AutoRepeatDelay = "250"
+AutoRepeatRate = "15"
+DelayBeforeAcceptance = "0"
+BounceTime = "0"
+
+# One-finger dragging and the driver's Light haptic feedback preset.
+[registry.'HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\WUDF\Services\AmtPtpDeviceUsbUm\Parameters']
+IgnoreButtonFinger = 0
+FeedbackClick = 0x040415
+FeedbackRelease = 0x000010
+
+[registry.'HKLM\SYSTEM\CurrentControlSet\Services\AmtPtpHidFilter\Parameters']
+IgnoreButtonFinger = 0
+FeedbackClick = 0x040415
+FeedbackRelease = 0x000010
