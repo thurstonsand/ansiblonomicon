@@ -79,7 +79,7 @@ services:
         wait
 
   inbox-zero-db:
-    image: postgres:16
+    image: postgres:18
     restart: unless-stopped
     environment:
       POSTGRES_USER: inboxzero
@@ -95,7 +95,7 @@ services:
       - /mnt/black-box/docker/inbox-zero/postgres:/var/lib/postgresql/data
 
   inbox-zero-redis:
-    image: redis:7
+    image: redis:8
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
