@@ -659,6 +659,8 @@ def reconcile(
     data = load_data(repo, hostname)
     data["mcp_servers"] = _mcp_servers(home, data)
     harnesses = target_harnesses(repo, hostname)
+    if "codex" in harnesses and not check:
+        _load_module(Path(__file__).parent, "codex").update_librarian(home, hostname)
     outputs = render_all(repo, home, hostname, data, secrets, harnesses)
     state_dir = home / ".cache/ansiblonomicon-harness/configuration"
     mcp_ownership = state_dir / "mcp-owned.json"

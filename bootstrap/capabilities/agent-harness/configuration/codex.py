@@ -168,6 +168,31 @@ def render(
     }
 
 
+# Pi only installs a missing package and never updates one on its own, so the reconcile keeps
+# the copy Codex runs on the librarian's latest release.
+def update_librarian(home: Path, hostname: str) -> None:
+    source = (
+        "git:github.com/thurstonsand/pi-librarian@downgrade"
+        if hostname == WORK_HOST
+        else "npm:@thurstonsand/pi-librarian"
+    )
+    subprocess.run(
+        [
+            "mise",
+            "-C",
+            str(home),
+            "exec",
+            "--",
+            "pi",
+            "update",
+            "--extension",
+            source,
+            "--no-approve",
+        ],
+        check=True,
+    )
+
+
 # Pi installs the librarian package, so Codex runs that same copy rather than a second install
 # that the work mirror may not serve.
 def _librarian_cli(home: Path, hostname: str) -> Path:
