@@ -31,3 +31,4 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File windows-
 
 [dotfiles]
 "~/.config/wezterm/wezterm.lua" = { source = "windows-apps/wezterm.lua", mode = "symlink" }
+"~/.config/wezterm/colors/city-ruins.toml" = { source = "../../capabilities/terminal-theme/city-ruins/wezterm.toml", mode = "symlink" }

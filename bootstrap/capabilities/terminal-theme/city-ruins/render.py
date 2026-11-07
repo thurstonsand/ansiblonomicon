@@ -384,6 +384,79 @@ def ghostty(colors: Mapping[str, str]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def wezterm(colors: Mapping[str, str], label: str) -> str:
+    ansi = [
+        "background",
+        "red",
+        "green",
+        "yellow",
+        "blue",
+        "magenta",
+        "cyan",
+        "foreground",
+    ]
+    brights = [
+        "muted",
+        "bright_red",
+        "bright_green",
+        "bright_yellow",
+        "bright_blue",
+        "bright_magenta",
+        "bright_cyan",
+        "bright_foreground",
+    ]
+    lines = [
+        f"# {GENERATED}",
+        "[metadata]",
+        f'name = "{label}"',
+        "[colors]",
+        f'background = "{colors["background"]}"',
+        f'foreground = "{colors["foreground"]}"',
+        f'cursor_bg = "{colors["bright_foreground"]}"',
+        f'cursor_fg = "{colors["background"]}"',
+        f'cursor_border = "{colors["bright_foreground"]}"',
+        f'selection_bg = "{colors["selection"]}"',
+        f'selection_fg = "{colors["bright_foreground"]}"',
+        f"ansi = {json.dumps([colors[key] for key in ansi])}",
+        f"brights = {json.dumps([colors[key] for key in brights])}",
+        "[colors.tab_bar]",
+        f'background = "{colors["dark_background"]}"',
+        "[colors.tab_bar.active_tab]",
+        f'bg_color = "{colors["accent"]}"',
+        f'fg_color = "{colors["background"]}"',
+        "[colors.tab_bar.inactive_tab]",
+        f'bg_color = "{colors["selection"]}"',
+        f'fg_color = "{colors["foreground"]}"',
+        "[colors.tab_bar.new_tab]",
+        f'bg_color = "{colors["dark_background"]}"',
+        f'fg_color = "{colors["foreground"]}"',
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def windows_theme(colors: Mapping[str, str], label: str) -> str:
+    return f"""; {GENERATED}
+[Theme]
+DisplayName={label}
+
+[Control Panel\\Desktop]
+TileWallpaper=0
+WallpaperStyle=10
+
+[VisualStyles]
+Path=%SystemRoot%\\resources\\Themes\\Aero\\Aero.msstyles
+ColorStyle=NormalColor
+Size=NormalSize
+AutoColorization=0
+ColorizationColor=0XC4{colors["accent"][1:].upper()}
+SystemMode={colors["mode"].title()}
+AppMode={colors["mode"].title()}
+
+[MasterThemeSelector]
+MTSM=RJSPBS
+"""
+
+
 def tmux(p: Mapping[str, str], label: str) -> str:
     style = "nobold,noitalics,nounderscore"
     pill = f"#[bg={p['accent']},fg={p['bg']},bold,noitalics,nounderscore]"
@@ -792,6 +865,8 @@ def main() -> None:
     names = {"dark": "city-ruins", "light": "copied-city"}
 
     outputs: dict[Path, str] = {
+        HERE / "windows.theme": windows_theme(themes["dark"], labels["dark"]),
+        HERE / "wezterm.toml": wezterm(themes["dark"], labels["dark"]),
         HERE / "codex-chrome.toml": codex_chrome(palettes["light"], palettes["dark"]),
         CAPABILITIES / "neovim/files/nvim/lua/lib/ashen-copied-city.lua": ashen_light(ashens["light"]),
         CAPABILITIES / "neovim/files/nvim/lua/lib/city-ruins-signals.lua": neovim_signals(palettes),
@@ -822,7 +897,7 @@ def main() -> None:
 
     for path, content in outputs.items():
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content)
+        path.write_text(content, encoding="utf-8", newline="\n")
         print(path.relative_to(CAPABILITIES.parent.parent))
 
 

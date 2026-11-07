@@ -8,7 +8,9 @@ City Ruins is the dark theme and Copied City the light one. Both start from Omar
 
 On Omarchy, everything follows the active Omarchy theme instead. City Ruins and Copied City are user themes whose `colors.toml` the script writes into `bootstrap/targets/no9-type-s/omarchy/themes/`, beside Neovim specs for the matching colorschemes, so Omarchy renders Ghostty, tmux, Hyprland, and the rest of its apps from them. Each carries its own wallpapers in `backgrounds/`, and Omarchy's theme menu previews the first, so Copied City carries only the rainy one of City Ruins' two. City Ruins also keeps Solitude's icon theme. The same renderers, fed Omarchy `{{ key }}` placeholders instead of hex values, write `omarchy/themed/*.tpl`, which Omarchy fills from whichever theme is active; City Ruins and Copied City carry exact copies that take precedence. Claude's statusline, Pi's interview, and a Hunk extension read the rendered files in place; `theme-set` hooks copy Codex's theme and chrome into `~/.codex` and cache the same `.tmTheme` as bat's `omarchy` theme, which bat and the delta wrapper select. Codex desktop's code blocks stay on its built-in `vercel`, the only kind of theme it accepts, and an open Hunk reads the new theme on restart. Omarchy renders only on a theme switch, so `omarchy-config` refreshes the current theme when any of these sources changed or a consumer's copy is missing.
 
-Run the focused reconciliation on a registered host:
+On Windows, Eve stays on City Ruins. The same generator writes `city-ruins/windows.theme` for native dark app/system modes and the steel-blue accent, and `city-ruins/wezterm.toml` for the full terminal palette, cursor, selection and tabs. `windows-system` applies the native theme with the target's selected wallpaper; `windows-apps` links the WezTerm scheme. Use `mise windows -t windows-system,windows-apps` to reconcile them. Neither installs an appearance watcher. Renderer contract tests run with `python -m unittest discover -s bootstrap/capabilities/terminal-theme/city-ruins -p test_render.py`.
+
+Run the focused terminal-theme reconciliation on a registered Unix host:
 
 ```sh
 mise terminal-theme

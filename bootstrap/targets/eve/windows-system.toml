@@ -1,6 +1,11 @@
 # A Windows time zone ID, as listed by `tzutil /l`.
 timezone = "Eastern Standard Time"
 
+[theme]
+name = "city-ruins.theme"
+source = "../../capabilities/terminal-theme/city-ruins/windows.theme"
+wallpaper = "../no9-type-s/omarchy/themes/city-ruins/backgrounds/wallhaven-y83x8g.jpg"
+
 # Integers are REG_DWORD values; strings are REG_SZ.
 
 # Dual boot with Omarchy: Linux keeps the hardware clock in UTC, and Linux

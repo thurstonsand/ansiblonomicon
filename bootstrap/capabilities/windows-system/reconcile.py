@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
-"""Reconcile the declared Windows time zone and registry values, elevating once for machine keys."""
+"""Reconcile Windows appearance, time zone and registry values, elevating once for machine keys."""
 
 import argparse
+import configparser
 import ctypes
 from dataclasses import dataclass
+import io
 import os
 from pathlib import Path
 import subprocess
 import sys
+import time
 import tomllib
 from typing import cast
 import winreg
@@ -145,6 +148,77 @@ def apply_keyboard_response() -> None:
         raise ctypes.WinError()
 
 
+def reconcile_theme(declared: Path, *, check: bool) -> None:
+    with declared.open("rb") as stream:
+        settings = cast(dict[str, str] | None, tomllib.load(stream).get("theme"))
+    if settings is None:
+        return
+    source = (declared.parent / settings["source"]).resolve(strict=True)
+    wallpaper = (declared.parent / settings["wallpaper"]).resolve(strict=True)
+    theme = configparser.ConfigParser(interpolation=None)
+    theme.optionxform = lambda optionstr: optionstr
+    theme.read_string(source.read_text(encoding="utf-8"))
+    theme[r"Control Panel\Desktop"]["Wallpaper"] = str(wallpaper)
+    rendered = io.StringIO()
+    theme.write(rendered, space_around_delimiters=False)
+    content = rendered.getvalue()
+    destination = (
+        Path(os.environ["LOCALAPPDATA"]) / "Microsoft/Windows/Themes" / settings["name"]
+    )
+    styles = theme["VisualStyles"]
+    personalize = r"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize"
+    expected = [
+        Value(
+            "HKCU", personalize, "AppsUseLightTheme", int(styles["AppMode"] == "Light")
+        ),
+        Value(
+            "HKCU",
+            personalize,
+            "SystemUsesLightTheme",
+            int(styles["SystemMode"] == "Light"),
+        ),
+        Value(
+            "HKCU",
+            r"Software\Microsoft\Windows\DWM",
+            "ColorizationColor",
+            int(styles["ColorizationColor"], 16),
+        ),
+        Value(
+            "HKCU",
+            r"Software\Microsoft\Windows\CurrentVersion\Explorer\Wallpapers",
+            "BackgroundType",
+            0,
+        ),
+        *(
+            Value(
+                "HKCU",
+                r"Control Panel\Desktop",
+                key,
+                theme[r"Control Panel\Desktop"][key],
+            )
+            for key in ("Wallpaper", "WallpaperStyle", "TileWallpaper")
+        ),
+    ]
+    if (
+        destination.exists()
+        and destination.read_text(encoding="utf-16") == content
+        and not drifted(expected)
+    ):
+        return
+    print(f"windows-system: theme: {theme['Theme']['DisplayName']} ({wallpaper.name})")
+    if check:
+        return
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    destination.write_text(content, encoding="utf-16")
+    # Let Windows derive its accent shades and notify apps; registry writes alone leave cached colours stale.
+    os.startfile(destination)
+    deadline = time.monotonic() + 30
+    while remaining := drifted(expected):
+        if time.monotonic() >= deadline:
+            raise RuntimeError("theme still differs: " + ", ".join(map(str, remaining)))
+        time.sleep(0.25)
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--declarations", type=Path, required=True)
@@ -152,6 +226,7 @@ def main() -> None:
     args = parser.parse_args()
     declared = cast(Path, args.declarations).resolve()
     timezone, values = declarations(declared)
+    reconcile_theme(declared, check=args.check)
     zone = current_timezone()
     if zone != timezone:
         print(f"windows-system: time zone: {zone!r} -> {timezone!r}")
