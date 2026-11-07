@@ -23,6 +23,9 @@ resource "unifi_wlan" "yorha" {
   # once more than one device here speaks Wi-Fi 7, with a 30-second capture of
   # udp/5353 on a legacy-side client as the verdict.
   mlo_enabled = false
+  # U7 Pro Max 8.7.11 drops broadcast ARP toward clients while unicast works.
+  # Let the AP answer address lookups so local transfers do not depend on it.
+  proxy_arp = true
 
   lifecycle {
     ignore_changes = [ap_group_ids]

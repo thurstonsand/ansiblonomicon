@@ -9,7 +9,7 @@ OpenTofu owns:
 - Bunker, YoRHa, Lunar Tear, Scanners, and The Village networks, VLANs, DHCP, and IPv6 state
 - Bunker, YoRHa, Lunar Tear, Scanners, and The Village firewall zones
 - the named one-way zone policies
-- the YoRHa WPA3 Personal SSID, including PMF, 2.4 and 5 GHz, and MLO
+- the YoRHa WPA3 Personal SSID, including PMF, 2.4 and 5 GHz, MLO, and Proxy ARP
 - the temporary Bunker WPA2 Personal SSID that carries pod153 until it is wired
 - the Lunar Tear and Scanners WPA2/WPA3 transition SSIDs on 2.4 and 5 GHz
 - The Village WPA2 Personal SSID on 2.4 GHz
@@ -61,6 +61,7 @@ Shared R2 state moved from `registry.opentofu.org/ubiquiti-community/unifi` to t
 
 Known sharp edges:
 
+- YoRHa enables Proxy ARP to work around failed broadcast address resolution toward clients on the U7 Pro Max running 8.7.11. Unicast probes worked while broadcast probes missed clients; enabling Proxy ARP restored ordinary address resolution and LocalSend HTTPS access. Recheck broadcast delivery before removing the workaround after a firmware update.
 - The provider exposes both `unifi_network.firewall_zone_id` and `unifi_firewall_zone.network_ids`, which fight when both own membership. This module deliberately leaves `firewall_zone_id` unset; zones alone own membership here.
 - mDNS membership is owned solely by `unifi_setting.site`'s `enabled_for_network_ids`. The controller writes it through a v2 endpoint and recomputes `unifi_network.multicast_dns` from it, so that attribute is computed-only as of 0.56.0-ansiblonomicon.7 and setting it is a plan error. Add a network to the list here, never to the network resource.
 - policy ordering is read-only. Confirm named allows precede named/default blocks in the UI after import or creation.
