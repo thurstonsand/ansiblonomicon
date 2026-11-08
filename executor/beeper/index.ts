@@ -100,6 +100,7 @@ const Attachment = object({
 const Message = object({
   id: string(),
   chatID: string(),
+  senderID: string(),
   senderName: string().optional(),
   timestamp: string(),
   type: string().optional(),
@@ -196,7 +197,8 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
     const names = new Map((chat?.participants.items ?? []).map((p) => [p.id, p.isSelf ? "me" : person(p).name]));
     return {
       id: message.id,
-      from: message.isSender ? "me" : (message.senderName ?? "unknown"),
+      // iMessage senders often carry their Matrix id as senderName; the chat's participants know their names.
+      from: message.isSender ? "me" : (names.get(message.senderID) ?? message.senderName ?? "unknown"),
       time: message.timestamp,
       ...(message.type && message.type !== "TEXT" && { type: message.type.toLowerCase() }),
       ...(message.text && { text: message.text }),
@@ -243,9 +245,18 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
     return expanded;
   }
 
-  async function latestMessages(call: Call, c: ChatValue) {
-    const page = await api(call, `/v1/chats/${path(c.id)}/messages`, Page(Message));
-    return page.items.filter(visible).reverse();
+  // A page counts room notices too, so a chat's unread messages can reach back several pages.
+  async function unreadMessages(call: Call, c: ChatValue) {
+    const unread: MessageValue[] = [];
+    let params = "";
+    for (let pages = 0; pages < 5 && unread.length < c.unreadCount; pages++) {
+      const page = await api(call, `/v1/chats/${path(c.id)}/messages${params}`, Page(Message));
+      unread.push(...page.items.filter((m) => visible(m) && m.isUnread));
+      const older = cursor(page.oldestCursor);
+      if (!page.hasMore || !older) break;
+      params = `?${new URLSearchParams({ cursor: older, direction: "before" })}`;
+    }
+    return unread.reverse();
   }
 
   const listChats = query(
@@ -270,7 +281,7 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
       }),
     },
     async (call, input) => {
-      const params = new URLSearchParams({ limit: String(Math.min(input.limit ?? 20, 100)) });
+      const params = new URLSearchParams({ limit: String(Math.max(1, Math.min(input.limit ?? 20, 100))) });
       if (input.query) {
         params.set("query", input.query);
         params.set("scope", input.by_title ? "titles" : "participants");
@@ -287,7 +298,6 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
       const chats = (await expand(call, page.items)).filter(
         (c) =>
           (!input.network || names.get(c.accountID)?.toLowerCase() === input.network.toLowerCase()) &&
-          (!input.type || c.type === input.type) &&
           (!input.unread_only || c.unreadCount > 0) &&
           (input.include_archived || input.query || !c.isArchived) &&
           (input.include_low_priority || input.query || !c.isLowPriority),
@@ -296,9 +306,7 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
         chats.map(async (c) => ({
           ...shapeChat(c, names),
           ...(input.unread_only && {
-            unread_messages: (await latestMessages(call, c))
-              .filter((m) => m.isUnread)
-              .map((m) => shapeMessage(m, c)),
+            unread_messages: (await unreadMessages(call, c)).map((m) => shapeMessage(m, c)),
           }),
         })),
       );
@@ -310,20 +318,15 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
     {
       description:
         "Read a chat's messages, oldest to newest, with reactions, replies, attachments and transcriptions. " +
-        `${CHAT_ID} Without a cursor, returns the latest messages. older is the "older" cursor from a previous call, ` +
-        'to read further back; newer is the "newer" cursor, to read forward from there.',
-      input: object({ chat: string(), older: string().optional(), newer: string().optional() }),
+        `${CHAT_ID} Without a cursor, returns the latest messages; older is the "older" cursor from a previous call, ` +
+        "to read further back.",
+      input: object({ chat: string(), older: string().optional() }),
     },
     async (call, input) => {
-      if (input.older && input.newer) throw new Error("Pass older or newer, not both.");
       const params = new URLSearchParams();
       if (input.older) {
         params.set("cursor", input.older);
         params.set("direction", "before");
-      }
-      if (input.newer) {
-        params.set("cursor", input.newer);
-        params.set("direction", "after");
       }
       const [c, page, names] = await Promise.all([
         chat(call, input.chat),
@@ -333,8 +336,7 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
       return {
         chat: shapeChat(c, names),
         messages: page.items.filter(visible).reverse().map((m) => shapeMessage(m, c)),
-        older: input.newer || page.hasMore ? cursor(page.oldestCursor) : null,
-        newer: cursor(page.newestCursor),
+        older: page.hasMore ? cursor(page.oldestCursor) : null,
       };
     },
   );
@@ -360,7 +362,7 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
     },
     async (call, input) => {
       const params = new URLSearchParams({
-        limit: String(Math.min(input.limit ?? 20, 20)),
+        limit: String(Math.max(1, Math.min(input.limit ?? 20, 20))),
         excludeLowPriority: "false",
       });
       if (input.query) params.set("query", input.query);
@@ -381,7 +383,7 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
       const chats = new Map<string, ChatValue>();
       for (const [id, raw] of Object.entries(page.chats as Record<string, unknown>)) chats.set(id, Chat.parse(raw));
       return {
-        messages: page.items.map((m) => {
+        messages: page.items.filter(visible).map((m) => {
           const c = chats.get(m.chatID);
           return { chat: c ? shapeChat(c, names) : { id: m.chatID }, ...shapeMessage(m, c) };
         }),
@@ -394,7 +396,7 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
     {
       description:
         "Get an image from a message as a URL, scaled to at most 1568 px and stripped of metadata, valid for ten minutes. " +
-        "Open the URL with an image viewing tool to see it. For a video, returns its preview frame. " +
+        "Open the URL with an image viewing tool to see it. For a video, returns its preview frame when the network sent one. " +
         `${CHAT_ID} message is its id; index picks one of the message's attachments (default 0).`,
       input: object({ chat: string(), message: string(), index: number().optional() }),
     },
