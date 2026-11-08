@@ -85,6 +85,7 @@ cask "google-drive"
 
 cask "1password"
 cask "1password-cli"
+cask "beeper" # serves the Beeper Desktop API and MCP to agents
 cask "localsend"
 
 mas "Parcel", id: 375589283

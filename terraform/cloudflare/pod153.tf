@@ -16,6 +16,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "pod153" {
   tunnel_id  = cloudflare_zero_trust_tunnel_cloudflared.pod153.id
   depends_on = [
     cloudflare_zero_trust_access_application.pod153_mcp,
+    cloudflare_zero_trust_access_application.pod153_images,
     cloudflare_zero_trust_access_application.pod153_nurb,
   ]
 
@@ -36,6 +37,20 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "pod153" {
       hostname = "pod153-mcp.${local.zone_name}"
       path     = "^/imessage$"
       service  = "http://cupertino.local:7380"
+    }
+
+    # Beeper Desktop's API for its chats, messages and accounts; not its setup or file routes.
+    ingress_rule {
+      hostname = "pod153-mcp.${local.zone_name}"
+      path     = "^/v1/(accounts|chats|messages)(/.*)?$"
+      service  = "http://127.0.0.1:23373"
+    }
+
+    # server/beeper_images.py: the Access-guarded request for an image URL, and the URLs it hands out.
+    ingress_rule {
+      hostname = "pod153-mcp.${local.zone_name}"
+      path     = "^/(beeper/images$|img/)"
+      service  = "http://127.0.0.1:7364"
     }
 
     # nurb's whole serve, through the Caddy front that rewrites Host and Origin for this name.
@@ -97,6 +112,31 @@ resource "cloudflare_zero_trust_access_application" "pod153_mcp" {
   type                 = "self_hosted"
   app_launcher_visible = false
   policies             = [cloudflare_zero_trust_access_policy.executor_service_auth.id]
+}
+
+# An image URL is its own credential: an unguessable token that expires ten minutes after
+# server/beeper_images.py issues it, like a presigned URL, so an agent's image viewer can fetch it.
+resource "cloudflare_zero_trust_access_policy" "everyone_bypass" {
+  account_id = local.account_id
+  name       = "Everyone Bypass"
+  decision   = "bypass"
+
+  include {
+    everyone = true
+  }
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "cloudflare_zero_trust_access_application" "pod153_images" {
+  account_id           = local.account_id
+  name                 = "pod153 Beeper images"
+  domain               = "pod153-mcp.${local.zone_name}/img"
+  type                 = "self_hosted"
+  app_launcher_visible = false
+  policies             = [cloudflare_zero_trust_access_policy.everyone_bypass.id]
 }
 
 # nurb runs whatever Python its parts say and its /api has no auth of its own, so Access admits
