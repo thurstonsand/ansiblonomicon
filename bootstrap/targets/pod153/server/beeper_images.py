@@ -53,30 +53,15 @@ def beeper(path: str, authorization: str) -> bytes:
         raise Failure(
             error.code, f"Beeper answered {error.code} for {path.split('?')[0]}"
         ) from error
+    except urllib.error.URLError as error:
+        raise Failure(
+            HTTPStatus.SERVICE_UNAVAILABLE, f"Beeper Desktop is not answering: {error}"
+        ) from error
 
 
-def shrink(original: bytes, out: Path) -> tuple[int, int]:
-    with tempfile.TemporaryDirectory() as scratch:
-        source, flat = Path(scratch, "original"), Path(scratch, "flat.bmp")
-        source.write_bytes(original)
-        # By way of a bitmap, which holds no EXIF, so the public copy keeps no location or camera
-        # details, and its orientation is applied to the pixels.
-        for args in (
-            [
-                "-s",
-                "format",
-                "bmp",
-                "-Z",
-                str(LONG_EDGE),
-                str(source),
-                "--out",
-                str(flat),
-            ],
-            ["-s", "format", "jpeg", str(flat), "--out", str(out)],
-        ):
-            subprocess.run(["/usr/bin/sips", *args], check=True, capture_output=True)
+def size(image: Path) -> tuple[int, int]:
     report = subprocess.run(
-        ["/usr/bin/sips", "-g", "pixelWidth", "-g", "pixelHeight", str(out)],
+        ["/usr/bin/sips", "-g", "pixelWidth", "-g", "pixelHeight", str(image)],
         check=True,
         capture_output=True,
         text=True,
@@ -84,7 +69,37 @@ def shrink(original: bytes, out: Path) -> tuple[int, int]:
     values = dict(
         line.strip().split(": ") for line in report.split("\n")[1:] if ": " in line
     )
+    # sips reports an unreadable image as <nil> and still exits 0.
+    if not values.get("pixelWidth", "").isdigit():
+        raise Failure(
+            HTTPStatus.UNPROCESSABLE_ENTITY,
+            "the attachment is not an image sips can read",
+        )
     return int(values["pixelWidth"]), int(values["pixelHeight"])
+
+
+def shrink(original: bytes, out: Path) -> tuple[int, int]:
+    with tempfile.TemporaryDirectory() as scratch:
+        source, flat = Path(scratch, "original"), Path(scratch, "flat.bmp")
+        source.write_bytes(original)
+        try:
+            # -Z scales up as readily as down, so only a large image gets it.
+            fit = ["-Z", str(LONG_EDGE)] if max(size(source)) > LONG_EDGE else []
+            # By way of a bitmap, which holds no EXIF, so the public copy keeps no location or
+            # camera details, and its orientation is applied to the pixels.
+            for args in (
+                ["-s", "format", "bmp", *fit, str(source), "--out", str(flat)],
+                ["-s", "format", "jpeg", str(flat), "--out", str(out)],
+            ):
+                subprocess.run(
+                    ["/usr/bin/sips", *args], check=True, capture_output=True
+                )
+        except subprocess.CalledProcessError as error:
+            raise Failure(
+                HTTPStatus.UNPROCESSABLE_ENTITY,
+                f"sips could not read the attachment: {error.stderr.decode().strip()}",
+            ) from error
+    return size(out)
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -125,7 +140,13 @@ class Handler(BaseHTTPRequestHandler):
             if attachment["type"] not in ("img", "video") or not source:
                 raise Failure(
                     HTTPStatus.UNPROCESSABLE_ENTITY,
-                    f"attachment {index} is {attachment['type']}, not an image",
+                    f"attachment {index} is {attachment['type']} with no image",
+                )
+            # Beeper also serves file:// URLs, which would publish whatever local file a sender named.
+            if not source.startswith(("mxc://", "localmxc://")):
+                raise Failure(
+                    HTTPStatus.UNPROCESSABLE_ENTITY,
+                    f"attachment {index} is not a Matrix asset",
                 )
             original = beeper(
                 f"/v1/assets/serve?{urllib.parse.urlencode({'url': source})}",

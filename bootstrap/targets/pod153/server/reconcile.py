@@ -69,11 +69,12 @@ def screen_lock_on() -> bool:
     return "screenLock delay is" in status.stderr
 
 
-def replaced_since_start(job: str) -> bool:
-    """Whether a running launchd job's executable was replaced after the job started.
+def replaced_since_start(job: str, plist: Path) -> bool:
+    """Whether a running launchd job's executable, or a file its arguments name, changed after it started.
 
-    Homebrew and self-updaters swap binaries under running services, which keep the old
-    code until restarted. Extraction sets a fresh ctime even when a bottle preserves mtime.
+    Homebrew and self-updaters swap binaries under running services, and a pull rewrites the
+    scripts some jobs run; either way the job keeps the old code until restarted. Extraction
+    sets a fresh ctime even when a bottle preserves mtime.
     """
     listing = subprocess.run(
         ["launchctl", "print", job], text=True, capture_output=True
@@ -92,9 +93,13 @@ def replaced_since_start(job: str) -> bool:
         ).stdout.strip(),
         "%a %b %d %H:%M:%S %Y",
     )
-    return (
-        not executable.exists()
-        or datetime.fromtimestamp(executable.stat().st_ctime) > started
+    if not executable.exists():
+        return True
+    arguments = plistlib.loads(plist.read_bytes()).get("ProgramArguments", [])
+    files = [executable, *(Path(a) for a in arguments[1:] if Path(a).is_absolute())]
+    return any(
+        file.is_file() and datetime.fromtimestamp(file.stat().st_ctime) > started
+        for file in files
     )
 
 
@@ -214,10 +219,10 @@ def main() -> None:
                     ],
                 )
             )
-        elif replaced_since_start(f"system/{label}"):
+        elif replaced_since_start(f"system/{label}", Path(plist)):
             changes.append(
                 (
-                    f"{name} on its updated executable",
+                    f"{name} on its updated code",
                     [["sudo", "-n", "launchctl", "kickstart", "-k", f"system/{label}"]],
                 )
             )
@@ -225,10 +230,10 @@ def main() -> None:
         (Path.home() / "Library/LaunchAgents").glob("dev.mise.*.plist")
     ):
         job = f"gui/{os.getuid()}/{plist.stem}"
-        if replaced_since_start(job):
+        if replaced_since_start(job, plist):
             changes.append(
                 (
-                    f"{plist.stem} on its updated executable",
+                    f"{plist.stem} on its updated code",
                     [["launchctl", "kickstart", "-k", job]],
                 )
             )
