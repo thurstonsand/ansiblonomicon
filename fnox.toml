@@ -41,3 +41,5 @@ NEST_EVENTS_TOKEN = { provider = "agent", value = "op://agent/jqo5a3yi2b6noqgchv
 INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN = { provider = "agent", value = "op://agent/7o2mdvdfdeiwth52z7ofoapj6u/pubsub verification token" }
 NURB_MCP_TOKEN = { provider = "agent", value = "op://agent/yepuncd223mealzleq4jnrniha/nurb_token" }
 SAMBA_MEDIA_PASSWORD = { provider = "agent", value = "op://agent/rqdlvwpivnndduj4wyhxqwqa4a/password" }
+KAGI_API_KEY = { provider = "agent", value = "op://agent/lsu7wrxh2rlobvdus3mj2uuhnq/v1 apikey" }
+OPENAI_API_KEY = { provider = "agent", value = "op://agent/ztqf4pfwuett4julc5ubeks6km/credential" }

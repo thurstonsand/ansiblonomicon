@@ -1,0 +1,23 @@
+[
+  {
+    "id": 1,
+    "priority": 2,
+    "action": { "type": "allow" },
+    "condition": { "urlFilter": "||kagi.com/search?*lucky=off", "resourceTypes": ["main_frame"] }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "regexSubstitution": "chrome-extension://plnpnoncepmnejjhhmbkjhccfegdlecn/go.html?\\1"
+      }
+    },
+    "condition": {
+      "regexFilter": "^https://kagi\\.com/search\\?(.*)$",
+      "excludedInitiatorDomains": ["kagi.com"],
+      "resourceTypes": ["main_frame"]
+    }
+  }
+]

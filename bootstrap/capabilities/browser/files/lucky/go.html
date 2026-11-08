@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="color-scheme" content="dark light" />
+    <title>Lucky</title>
+    <style>
+      body {
+        display: grid;
+        place-content: center;
+        min-height: 100vh;
+        margin: 0;
+        font: 16px system-ui, sans-serif;
+        text-align: center;
+      }
+      #query {
+        font-size: 1.5rem;
+        margin: 0 0 0.5rem;
+      }
+      #status,
+      kbd {
+        opacity: 0.6;
+      }
+      .failed #status {
+        opacity: 1;
+        color: #e5484d;
+        max-width: 60ch;
+        white-space: pre-wrap;
+      }
+    </style>
+    <script type="module" src="go.js"></script>
+  </head>
+  <body>
+    <p id="query"></p>
+    <p id="status">Feeling lucky…</p>
+    <p><kbd>Esc</kbd> for Kagi results</p>
+  </body>
+</html>

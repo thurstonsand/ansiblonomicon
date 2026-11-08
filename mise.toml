@@ -380,6 +380,25 @@ fi
 exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environments" "$mode"
 '''
 
+[tasks.browser]
+description = "Reconcile the Lucky browser extension's keys on this registered host"
+usage = '''
+flag "-c --check" help="Show changes without writing"
+'''
+run = '''
+host=$(hostname -s 2>/dev/null || hostname)
+case "$host" in
+  no9-type-s|pod042) ;;
+  *) echo "Unregistered browser host" >&2; exit 1 ;;
+esac
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+mode=--yes
+[ -z "${usage_check:-}" ] || mode=--dry-run
+exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret KAGI_API_KEY --secret OPENAI_API_KEY -- \
+  env MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=browser \
+  mise -C "$target" bootstrap --only dotfiles "$mode"
+'''
+
 [tasks.neovim]
 description = "Reconcile Neovim configuration and dependencies on this registered host"
 alias = "nvim-deps"
@@ -676,7 +695,7 @@ export MISE_TRUSTED_CONFIG_PATHS="$target"
 # Omarchy's commands, and the package builds they start, expect the system's Python ahead of this repo's tools.
 export PATH="/usr/bin:$PATH"
 tags="${usage_tags:-}"
-supported=" all omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli agent-harness agent-config "
+supported=" all omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli browser agent-harness agent-config "
 unsupported=
 for tag in $(printf '%s' "$tags" | tr ',' ' '); do
   case "$supported" in
@@ -722,7 +741,7 @@ fi
 if selected mise; then
   mise -C "$HOME" bootstrap --only tools "$mode" || exit "$?"
 fi
-for native_capability in shell terminal-tools editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli; do
+for native_capability in shell terminal-tools editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli browser; do
   if selected "$native_capability" || { [ "$native_capability" = terminal-tools ] && selected tmux; }; then
     mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
   fi
@@ -1105,6 +1124,7 @@ depends = [
   "workers:typecheck",
   "pi:check",
   "sudoers:check",
+  "browser:test",
   "//bootstrap/capabilities/software/sources/...:check",
 ]
 
@@ -1177,6 +1197,10 @@ run = "wrangler deploy --dry-run"
 description = "Type-check the Doppelclaude Worker via a wrangler dry run"
 dir = "wrangler/doppelclaude"
 run = "wrangler deploy --dry-run"
+
+[tasks."browser:test"]
+description = "Test the Lucky browser extension's query routing and destination choice"
+run = "node --test bootstrap/capabilities/browser/"
 
 [tasks."pi:check"]
 description = "Lint and type-check the pi extensions"

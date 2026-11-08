@@ -54,6 +54,10 @@ Close DevTools before testing:
 
 Fully exit Chrome, including its web-app windows, so it saves the changed preferences. Then rerun `mise omarchy -t omarchy-config --check`. While Chrome is running, the file may lag behind its current shortcuts.
 
+## Lucky
+
+The `browser` tag renders the keys for Lucky, the address-bar "I'm Feeling Lucky" extension. Make Kagi the default search engine and load it unpacked as [its README](../bootstrap/capabilities/browser/README.md) describes.
+
 ## Web apps follow the default browser
 
 `Amp.desktop`, `WhatsApp.desktop`, and the other Omarchy web-app launchers call `omarchy-launch-webapp`, which selects Chrome when it is the default. WhatsApp is `https://web.whatsapp.com/` in an app window, not a separate native client. No per-launcher browser override is necessary.
