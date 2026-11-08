@@ -193,11 +193,31 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
     };
   }
 
-  function shapeMessage(message: MessageValue, chat: ChatValue | undefined) {
-    const names = new Map((chat?.participants.items ?? []).map((p) => [p.id, p.isSelf ? "me" : person(p).name]));
+  // Beeper names only a chat's current participants, and gives anyone who has left as their Matrix id;
+  // their Matrix profile still has their name.
+  async function namesFor(call: Call, chats: readonly ChatValue[], messages: readonly MessageValue[]) {
+    const names = new Map<string, string>(
+      chats.flatMap((c) => c.participants.items.map((p) => [p.id, p.isSelf ? "me" : person(p).name] as const)),
+    );
+    const people = messages.flatMap((m) => [m.senderID, ...(m.reactions ?? []).map((r) => r.participantID)]);
+    const unknown = [...new Set(people)].filter((id) => !names.has(id));
+    await Promise.all(
+      unknown.map(async (id) => {
+        const response = await call.fetch(`${BASE}/_matrix/client/v3/profile/${encodeURIComponent(id)}`, {
+          headers,
+          signal: call.signal,
+        });
+        if (!response.ok) return;
+        const profile = await decodeJson(response, object({ displayname: string().optional() }));
+        if (profile.displayname) names.set(id, profile.displayname);
+      }),
+    );
+    return names;
+  }
+
+  function shapeMessage(message: MessageValue, names: Map<string, string>) {
     return {
       id: message.id,
-      // iMessage senders often carry their Matrix id as senderName; the chat's participants know their names.
       from: message.isSender ? "me" : (names.get(message.senderID) ?? message.senderName ?? "unknown"),
       time: message.timestamp,
       ...(message.type && message.type !== "TEXT" && { type: message.type.toLowerCase() }),
@@ -303,12 +323,12 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
           (input.include_low_priority || input.query || !c.isLowPriority),
       );
       const shaped = await Promise.all(
-        chats.map(async (c) => ({
-          ...shapeChat(c, names),
-          ...(input.unread_only && {
-            unread_messages: (await unreadMessages(call, c)).map((m) => shapeMessage(m, c)),
-          }),
-        })),
+        chats.map(async (c) => {
+          if (!input.unread_only) return shapeChat(c, names);
+          const unread = await unreadMessages(call, c);
+          const people = await namesFor(call, [c], unread);
+          return { ...shapeChat(c, names), unread_messages: unread.map((m) => shapeMessage(m, people)) };
+        }),
       );
       return { chats: shaped, older: page.hasMore ? cursor(page.oldestCursor) : null };
     },
@@ -333,9 +353,11 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
         api(call, `/v1/chats/${path(input.chat)}/messages?${params}`, Page(Message)),
         networks(call),
       ]);
+      const messages = page.items.filter(visible).reverse();
+      const people = await namesFor(call, [c], messages);
       return {
         chat: shapeChat(c, names),
-        messages: page.items.filter(visible).reverse().map((m) => shapeMessage(m, c)),
+        messages: messages.map((m) => shapeMessage(m, people)),
         older: page.hasMore ? cursor(page.oldestCursor) : null,
       };
     },
@@ -382,10 +404,12 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
       ]);
       const chats = new Map<string, ChatValue>();
       for (const [id, raw] of Object.entries(page.chats as Record<string, unknown>)) chats.set(id, Chat.parse(raw));
+      const messages = page.items.filter(visible);
+      const people = await namesFor(call, [...chats.values()], messages);
       return {
-        messages: page.items.filter(visible).map((m) => {
+        messages: messages.map((m) => {
           const c = chats.get(m.chatID);
-          return { chat: c ? shapeChat(c, names) : { id: m.chatID }, ...shapeMessage(m, c) };
+          return { chat: c ? shapeChat(c, names) : { id: m.chatID }, ...shapeMessage(m, people) };
         }),
         older: page.hasMore ? cursor(page.oldestCursor) : null,
       };

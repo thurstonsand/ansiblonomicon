@@ -46,6 +46,13 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "pod153" {
       service  = "http://127.0.0.1:23373"
     }
 
+    # A sender's Matrix profile, for the Beeper app to name people who have left a chat.
+    ingress_rule {
+      hostname = "pod153-mcp.${local.zone_name}"
+      path     = "^/_matrix/client/v3/profile/[^/]+$"
+      service  = "http://127.0.0.1:23373"
+    }
+
     # server/beeper_images.py: the Access-guarded request for an image URL, and the URLs it hands out.
     ingress_rule {
       hostname = "pod153-mcp.${local.zone_name}"
