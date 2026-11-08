@@ -11,7 +11,7 @@ repo = "vercel-labs/agent-browser"
 excluded_on = ["work"]
 [[sources.plugins]]
 name = "agent-browser"
-target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "pi"] }
+remove = true
 
 [[sources]]
 repo = "modem-dev/hunk"

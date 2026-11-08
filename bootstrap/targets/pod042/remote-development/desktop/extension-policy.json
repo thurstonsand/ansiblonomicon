@@ -7,6 +7,10 @@
     "aeblfdkhhhdcdjpifhhbdiojplfjncoa": {
       "installation_mode": "normal_installed",
       "update_url": "https://clients2.google.com/service/update2/crx"
+    },
+    "mfnicocicmmlkpjnaffgihfjhdgjkdjg": {
+      "installation_mode": "normal_installed",
+      "update_url": "https://clients2.google.com/service/update2/crx"
     }
   }
 }

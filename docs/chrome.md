@@ -58,6 +58,10 @@ Fully exit Chrome, including its web-app windows, so it saves the changed prefer
 
 The `browser` tag renders the keys for Lucky, the address-bar "I'm Feeling Lucky" extension. Make Kagi the default search engine and load it unpacked as [its README](../bootstrap/capabilities/browser/README.md) describes.
 
+## Agent browsing
+
+Browse drives the signed-in Chrome profile for coding agents. Mise installs its CLI, while Chrome Sync owns its Web Store extension. Pair each profile with the local relay once, following [Browser automation](../bootstrap/capabilities/agent-harness/README.md#browser-automation). The `browsing` skill supplies the agent workflow; passkey prompts still need native desktop interaction or a user handoff.
+
 ## Web apps follow the default browser
 
 `Amp.desktop`, `WhatsApp.desktop`, and the other Omarchy web-app launchers call `omarchy-launch-webapp`, which selects Chrome when it is the default. WhatsApp is `https://web.whatsapp.com/` in an app window, not a separate native client. No per-launcher browser override is necessary.

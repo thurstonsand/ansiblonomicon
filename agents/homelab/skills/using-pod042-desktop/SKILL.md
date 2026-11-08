@@ -5,7 +5,7 @@ description: Drives pod042's shared Desktop tab with browser automation, Wayland
 
 # Using pod042's desktop
 
-Run on pod042 as `thurstonsand`. Each Amp thread's Desktop tab streams the runner's labwc Wayland session: the windows you drive are the windows the user watches. Control it with agent-browser on CDP 9222 for pages, and `wlrctl`, `wtype`, `wl-clipboard`, and `grim` for everything else. For service changes, use `operating-pod042` and read `bootstrap/targets/pod042/remote-development/README.md` in ansiblonomicon. The ChatGPT app on Xvfb `:42` and 1Password on `:43` are separate persistent apps holding login state; touch them only when the task names them.
+Run on pod042 as `thurstonsand`. Each Amp thread's Desktop tab streams the runner's labwc Wayland session: the windows you drive are the windows the user watches. Control it with Browse for pages, and `wlrctl`, `wtype`, `wl-clipboard`, and `grim` for everything else. For service changes, use `operating-pod042` and read `bootstrap/targets/pod042/remote-development/README.md` in ansiblonomicon. The ChatGPT app on Xvfb `:42` and 1Password on `:43` are separate persistent apps holding login state; touch them only when the task names them.
 
 Runner restarts, including Amp's self-updates, recreate the Desktop tab's compositor: Chromium reopens its tabs and every other app on it closes.
 
@@ -68,23 +68,15 @@ The viewer can resize and rescale the output at any time, so check `wlr-randr` a
 
 ## Browser
 
-Chromium runs a dedicated profile with DevTools on CDP 9222. Use the `agent-browser` skill for page commands, with one session name per task and `--cdp 9222` on every call:
+Chromium runs a dedicated profile paired with Browse. Load `browsing`, then use one named session per task:
 
 ```sh
-curl -fsS --max-time 5 http://127.0.0.1:9222/json/version
-S="agent-browser --session my-task --cdp 9222"
-$S --pin-tab open https://example.com   # first call: opens your own tab and waits for the page
-$S snapshot -i
-$S open https://example.org          # later navigation stays in that tab
+browse status --json
+browse session new my-task
+browse execute --session my-task 'await page.goto("https://example.com"); return await snapshot()'
 ```
 
-Make the pinned `open` the session's first call; starting with `tab` or `tab new` leaves an extra blank tab, and `tab new <url>` returns while the page is still `about:blank`. Read a field back after `fill`: on time, date, and other native pickers it reports success and sets nothing. Type those natively instead, in the field's display segments. `$S click` moves Chromium's keyboard focus into the page; `$S focus` sets only DOM focus, so keys still reach the address bar if it had them:
-
-```sh
-wlrctl toplevel focus app_id:chromium
-$S click 'input[type=time]'
-wtype 0745P                          # 19:45
-```
+Browse opens its own background tabs. Adopt a user's tab only after they lend it with the toolbar button. Read fields back after filling them and verify the resulting page state. For pairing or extension installation, follow the Browser automation section of `bootstrap/capabilities/agent-harness/README.md` in ansiblonomicon.
 
 Browser chrome (address bar, bookmark dialogs, extension popups, permission prompts) sits outside the page; drive it with `grim` and the pointer, or Chromium's keyboard shortcuts. Typing into the address bar triggers inline autocomplete from history, so Return can land on a different page; paste the URL instead:
 
@@ -93,6 +85,8 @@ printf %s 'https://example.com/' | wl-copy >/dev/null 2>&1
 wtype -M ctrl l -m ctrl -s 200 -M ctrl v -m ctrl -s 200 -k Return   # -s waits ms; without them a new tab drops the paste
 ```
 
-Close only the tabs you opened (`$S tab close`) and leave the user's. `agent-browser --session my-task close`, without `--cdp`, disconnects your session and leaves Chromium running.
+Browse removes password-manager overlays from controlled pages and cannot operate 1Password's passkey UI. When authorized to perform a login with native desktop controls, use a fresh tab outside Browse's control, complete and verify the login there, then resume Browse in a new tab. Otherwise hand the login to the user.
 
-If the CDP probe fails while the environment's Wayland socket exists, check `pgrep -af 'chromium.*chromium-desktop'`. With no browser running, start `setsid ~/.local/bin/desktop-chromium >/dev/null 2>&1 </dev/null &` and retry the probe for 15 seconds. A running browser without CDP needs its launch arguments and logs inspected before anything else; leave its process and profile locks alone. A missing environment file or socket is a runner fault: diagnose it through `operating-pod042`. Restarting `dev.mise.amp-remote.service` interrupts every runner thread.
+Close only your task's tabs with `browse session delete my-task`; leave other sessions and the user's tabs alone. Do not run global tab cleanup on this shared browser.
+
+If Browse reports no browser, run `browse doctor` and check `pgrep -af 'chromium.*chromium-desktop'`. With no browser running, start `setsid ~/.local/bin/desktop-chromium >/dev/null 2>&1 </dev/null &` and check status again. A running browser may need its extension paired or reconnected; leave its process and profile locks alone. A missing environment file or Wayland socket is a runner fault: diagnose it through `operating-pod042`. Restarting `dev.mise.amp-remote.service` interrupts every runner thread.

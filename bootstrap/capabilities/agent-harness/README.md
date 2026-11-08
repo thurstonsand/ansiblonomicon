@@ -49,6 +49,18 @@ The ownership manifest is atomically expanded before native apply and narrowed o
 
 Run `mise agent-harness [--check|--cached]` on any registered system. pod042 retains its hostname, UID, GID, and home guard.
 
+## Browser automation
+
+The `browsing` skill selects Browse on personal hosts and the preinstalled agent-browser in Amp orbs. It loads each CLI's own version-matched guide instead of maintaining a second copy. Work receives neither skill nor CLI. Claude Code, Codex, and Pi receive the skill through host reconciliation; Amp receives it through User Skills publication, including on eve, which has no native agent-harness profile.
+
+pod042, pod153, no9-type-s, and eve declare `npm:@opencode/browse` in their global mise configs. Mise owns CLI upgrades; `OPENCODE_BROWSER_AUTO_UPDATE=off` prevents Browse from installing an unmanaged npm-global copy. Reconcile the host's tool and agent-harness capabilities before using it; eve installs its tools with `mise windows -t mise`. Old agent-browser skills are explicitly retired. On hosts that had it, Browse's install hook prunes unused agent-browser versions while retaining any still used by a project or running agent. Amp's orb image is unchanged.
+
+Each browser profile needs the official [Browse extension](https://chromewebstore.google.com/detail/mfnicocicmmlkpjnaffgihfjhdgjkdjg) and a one-time local pairing. pod042's Chromium policy installs it alongside ChatGPT and 1Password; reload `chrome://policy` after applying that policy. Other personal Chrome profiles use the Web Store and Chrome Sync. Browser profiles and pairing credentials stay out of the repo.
+
+For CLI-only pairing, run `browse pair`, open the extension's Options, enter the displayed code under **Pairing code**, and connect to `localhost:19988`. Finish with `browse doctor` and a named-session navigation. Avoid `browse install`: it autodetects the calling harness and writes MCP configuration that this repo already owns. Even `browse install --help` runs the installer in 0.0.10. The CLI is sufficient for Pi and the other harnesses; no MCP registration is needed.
+
+Browse cannot operate 1Password's extension UI. Existing website sessions remain useful, but a new passkey login requires a user handoff or separately authorized native desktop interaction outside a Browse-controlled tab. On shared browsers, delete only the task's session rather than running Browse's global tab cleanup.
+
 ## Publishing Amp User Skills and Plugins
 
 `publish_amp_skills.py --repo . --output DIR` renders the `amp_publish` profile through the same `render_files` path the hosts use, with `trim_blocks` on, and writes only the Amp skills tree into an empty `DIR`: Git sources are cloned fresh into a throwaway cache (or `--cache DIR`, with `--cached` to skip the refresh), hook fragments are never emitted, and nothing under the operator home is read or written. `scripts/publish-amp-skills.sh` runs it and syncs the result into the hosted User Skills repository; the GitHub workflow does the same on push.
