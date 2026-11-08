@@ -122,6 +122,9 @@ mode = "0600"
 # Pre-boot SSH reads nothing from the locked data volume, so FileVault unlock keeps its password login.
 [bootstrap.files."/etc/ssh/sshd_config.d/00-ansiblonomicon.conf"]
 content = """
+ClientAliveInterval 60
+ClientAliveCountMax 3
+PermitRootLogin no
 PasswordAuthentication no
 KbdInteractiveAuthentication no
 """

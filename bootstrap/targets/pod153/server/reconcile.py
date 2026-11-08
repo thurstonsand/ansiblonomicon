@@ -18,6 +18,7 @@ AC_POWER = {
     "powernap": "0",
     "womp": "1",
 }
+CHARGE_LIMIT = 80
 # Bunker gets no mDNS reflection, so the queue names the printer instead of
 # browsing for it. Plain IPP, because its self-signed certificate fails IPPS.
 PRINTER = ("Canon_MF650C_Series", "ipp://printer.thurstons.house/ipp/print")
@@ -120,6 +121,17 @@ def main() -> None:
             "server: Screen Sharing is off; turn it on in System Settings > General > Sharing"
         )
 
+    sshd = output("sudo", "-n", "/usr/sbin/sshd", "-T").lower().splitlines()
+    for setting in (
+        "clientaliveinterval 60",
+        "clientalivecountmax 3",
+        "permitrootlogin no",
+        "passwordauthentication no",
+        "kbdinteractiveauthentication no",
+    ):
+        if setting not in sshd:
+            raise SystemExit(f"server: effective SSH setting missing: {setting}")
+
     if not output("networksetup", "-getairportpower", "en0").strip().endswith("Off"):
         ethernet = output("ifconfig", "en10")
         if "status: active" not in ethernet or "inet 10.10.10.53 " not in ethernet:
@@ -138,6 +150,19 @@ def main() -> None:
     if drift:
         flags = [item for pair in drift.items() for item in pair]
         changes.append((f"AC power {drift}", [["sudo", "-n", "pmset", "-c", *flags]]))
+    charge_limit = [
+        "/usr/bin/osascript",
+        "-l",
+        "JavaScript",
+        str(Path(__file__).with_name("charge_limit.js")),
+    ]
+    if int(output(*charge_limit)) != CHARGE_LIMIT:
+        changes.append(
+            (
+                f"battery charge limit {CHARGE_LIMIT}%",
+                [[*charge_limit, str(CHARGE_LIMIT)]],
+            )
+        )
     if not re.search(r"^\s*SleepDisabled\s+1$", output("pmset", "-g"), re.MULTILINE):
         changes.append(
             ("sleep disabled", [["sudo", "-n", "pmset", "-a", "disablesleep", "1"]])
