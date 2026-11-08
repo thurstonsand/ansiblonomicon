@@ -1,0 +1,81 @@
+---
+name: browsing
+description: Automates browsers with Browse on personal hosts and agent-browser in Amp orbs. Use for navigating websites, filling forms, authenticated workflows, screenshots, browser testing, and recording browser behavior.
+---
+
+# Browsing
+
+Choose by where the browser runs, not by which agent harness is calling it:
+
+- **Personal hosts:** use the Browse CLI. Run `browse skill` and follow that installed version's guide before the first browser command. `browse doctor` diagnoses an unavailable relay or extension. Mise owns CLI installation and upgrades (`mise upgrade npm:@opencode/browse`); the browser owns extension updates. Use CLI-only setup rather than adding MCP servers to harness-managed configuration.
+- **Amp orbs:** use their preinstalled agent-browser. Run `agent-browser skills get core` before the first browser command, then load specialized guides with `agent-browser skills get <name>` when needed. No Browse extension or personal browser pairing is required in an orb.
+- **Work:** neither tool is configured. Keep its browser workflow separate.
+
+Browse requires a running Chromium-family browser with its extension installed and paired. If setup is incomplete, report that boundary rather than silently switching tools. On pod042, load `using-pod042-desktop` for the shared browser and native desktop controls.
+
+Give each task its own named session. At completion, delete only that session; Browse's `tabs cleanup` affects other agents' sessions too.
+
+Browse cannot drive browser chrome or other extensions, including 1Password's passkey UI. Use separately authorized native desktop controls or hand those interactions to the user; do not weaken Browse's guardrails or assume a page click completed authentication. Verify the resulting page state.
+{% if hostname == "no9-type-s" %}
+
+## Browsing on no9-type-s
+
+Use these window-placement instructions when the browser runs on no9-type-s. Continue to run `browse skill` for the installed version's page-automation guide; this host supplement changes window placement and tab selection, not the upstream guide or its security boundaries.
+
+### One task, one window, one special workspace
+
+Keep the task's selected tab in a dedicated Chrome window, in the existing paired profile. Put that window on a unique Hyprland special workspace such as `special:browse-<task>-<unique-suffix>`. Other agents own their own windows and workspaces; the user's regular Chrome windows stay where they are.
+
+On this host, Browse screenshots of inactive tabs can return only the page's background colour even while DOM reads succeed. A selected tab can render fresh screenshots with its window hidden on another workspace. This was reproduced with Chrome 157 and Browse 0.0.10; it is not a missing permission. Disabling tab grouping alone did not fix it.
+
+The window is separate, not the profile: cookies, logins, extensions, and website state remain shared. Keep website actions within the user's authorization. Browse's browser-chrome and password-manager boundaries still apply.
+
+### Set up the task window
+
+The verified setup below uses foreground Chrome menus and temporarily interrupts the user's desktop. Ask before taking focus or revealing a special workspace, including later tab selection. Permission to browse is not permission to take over the viewport. If an interruption is not approved, keep to background DOM inspection or report that screenshot setup is blocked.
+
+1. Record `hyprctl activewindow -j`, `hyprctl monitors -j`, and `hyprctl clients -j` so you can restore the user's focus and distinguish a new window from existing ones. Choose a unique ASCII session name and use it for the special workspace too.
+2. Create the named Browse session with the task's domain allowlist. Initialize its page with `browse execute --session "$session" 'return page.url()'`. Keep the existing Browse settings; its separate-window option uses a shared agent window, not one window per task.
+3. Using native desktop controls, open the context menu on **this session's** Chrome tab group and choose **Move group to new window**. This preserves both the paired profile and Browse's ownership of its tabs. If grouping is disabled, use the task tab's **Move tab to new window** menu instead. Move only tabs belonging to this task.
+4. Compare `hyprctl clients -j` with the earlier list. Record the new Chrome window's exact address, and confirm the intended tab is selected and its group expanded. Use that address for every window operation, never a class-wide Chrome match.
+5. Set the task window's `focus_on_activate` property to false, then move it silently to its special workspace. Omarchy otherwise honors Chrome's activation requests, and a page click can reveal the hidden window. This is a per-window property, not a global configuration change.
+
+With `window` set to the observed address and `session` to your unique name:
+
+```bash
+hyprctl dispatch "hl.dsp.window.set_prop({window='address:$window', prop='focus_on_activate', value='false'})"
+hyprctl dispatch "hl.dsp.window.move({window='address:$window', workspace='special:$session', follow=false})"
+```
+
+Restore the previously focused window by its recorded address:
+
+```bash
+hyprctl dispatch "hl.dsp.focus({window='address:$previous_window'})"
+```
+
+Check `hyprctl clients -j`: only your window should be on `special:$session`. Check `hyprctl monitors -j` and `hyprctl activewindow -j`: your special workspace must not be displayed, and the user's original focus must be restored. If it was another special workspace, restore that one rather than closing it indiscriminately.
+
+### Native desktop controls
+
+Focus a specific window with `hl.dsp.focus` as above. Inspect a fresh `grim -s 1` screenshot before choosing coordinates; use logical pixels, matching that capture's scale. Move and click with Hyprland's native dispatchers:
+
+```bash
+hyprctl dispatch "hl.dsp.cursor.move({x=$x, y=$y})"
+hyprctl dispatch 'hl.dsp.send_shortcut({mods="", key="mouse:273"})' # context menu
+hyprctl dispatch 'hl.dsp.send_shortcut({mods="", key="mouse:272"})' # left click
+```
+
+Use `wtype` for keyboard input. For URLs, copy with `wl-copy`, then use Ctrl-L and Ctrl-V with a short settle between them; rapid character-by-character typing can race Chrome's address completion. Confirm the focused window before sending keys. Native controls are for the task's window management, tab selection, and separately authorized browser UI; ordinary webpage actions belong in Browse.
+
+### Work while the workspace stays hidden
+
+Use the same named Browse session for navigation, inspection, and screenshots. Keep the page you capture **selected inside its window**. Opening a new page or popup does not prove it became the selected tab. If you need to select another task tab, obtain permission for the interruption, temporarily reveal your special workspace with `hl.dsp.workspace.toggle_special`, select it with native controls, then restore the user's previous focus and verify the workspace is hidden again. Check that newly opened task windows also receive the per-window activation setting and stay on your workspace.
+
+Inspect screenshots, not just their file sizes. To check that a hidden capture is fresh, exercise a visible page change and confirm that change in the image. Read the resulting URL and page state as well. A solid-colour screenshot is a failed capture even when the command succeeds. Verify that page clicks have not revealed your special workspace or stolen the user's focus.
+
+If a session opens a tab in another window, move only that session's tab back into its task window using native Chrome controls, with permission for the interruption. Leave other sessions' tabs and the user's tabs alone. Do not change Browse's global placement settings to repair one task.
+
+### Finish
+
+Delete only the named Browse session. Its owned tabs should close, and a window with no remaining tabs should disappear. Verify the task window is gone with `hyprctl clients -j`; close a leftover window by its exact address only after checking it contains nothing outside the task. Empty special workspaces disappear automatically. Leave the paired profile, relay, other windows, and other sessions running.
+{% endif %}

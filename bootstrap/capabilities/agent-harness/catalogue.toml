@@ -80,3 +80,8 @@ excluded_on = ["work"]
 name = "homelab"
 target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex", "pi"] }
 exclude_data = ["__pycache__", "*.pyc"]
+[[sources.plugins]]
+name = "homelab"
+included_on = ["omarchy"]
+target_agents = ["amp"]
+include_skills = ["browsing"]
