@@ -11,9 +11,11 @@
   "linux": {
     "asrBackend": "auto",
     "cleanupGpuLayers": 99,
+    "languageModelID": "s1-mini",
     "mousePushToTalkShortcut": "",
     "saveRecordingAudio": true,
-    "vocabularyBackend": "auto"
+    "vocabularyBackend": "auto",
+    "voiceModelID": "cohere-transcribe-q4"
   },
   "p2t": false,
   "priorityInputDevices": {},

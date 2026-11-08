@@ -99,7 +99,10 @@
           "id": "omarchy.power",
           "showPercentage": true
         }
-      ]
+      ],
+      "centerBegin": [],
+      "centerEnd": [],
+      "tray": []
     }
   },
   "plugins": [
