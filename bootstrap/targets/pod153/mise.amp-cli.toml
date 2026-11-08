@@ -44,8 +44,14 @@ mise bootstrap macos defaults apply --yes
 
 updater=$(staged_update)
 [ -n "$updater" ] || exit 0
+app=$(pgrep -ax Amp || true)
+# pgrep omits its own ancestors, so only -a finds Amp when this runs inside Amp's runner, where quitting
+# Amp would end this reconcile with it.
+if [ -n "$app" ] && [ -z "$(pgrep -x Amp || true)" ]; then
+  echo "Amp.app: leaving its staged update to a reconcile that does not run inside its runner"
+  exit 0
+fi
 # SIGTERM quits Amp without an Automation grant; Amp stops its runner, interrupting the runner's threads.
-app=$(pgrep -x Amp || true)
 [ -z "$app" ] || kill -TERM "$app"
 for _ in $(seq 1 120); do
   kill -0 "$updater" 2>/dev/null || break
