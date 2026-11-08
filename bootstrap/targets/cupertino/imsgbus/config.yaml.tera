@@ -7,6 +7,8 @@ bridge:
     bridge_status_notices: none
     tag_only_on_create: false
     cross_room_replies: true
+    # Beeper shows a contact by their phone number rather than an email when both are known.
+    phone_numbers_in_profile: true
     cleanup_on_logout:
         enabled: true
         manual:
