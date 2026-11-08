@@ -4,6 +4,8 @@ import { always } from "apps/operations/approval";
 
 const BASE = "https://pod153-mcp.thurstons.house";
 
+// The iMessage app declares this provider too, field for field, so both share its one account;
+// the imsgbus token is that app's.
 const pod153 = defineProvider({
   name: "pod153",
   hosts: ["pod153-mcp.thurstons.house"],
@@ -20,16 +22,8 @@ const pod153 = defineProvider({
   },
 });
 
-// Anything that sends, changes what others see, deletes, or runs an arbitrary command asks a person first.
-const GUARDED = new Set([
-  "send_message",
-  "tapback",
-  "edit_message",
-  "unsend_message",
-  "mark_read",
-  "delete_reminder",
-  "run",
-]);
+// Anything that deletes or runs an arbitrary command asks a person first.
+const GUARDED = new Set(["delete_reminder", "run"]);
 
 export default defineApp({ app: { accounts: { pod153 } } }, async ({ app, signal }) => {
   const account = app.accounts.pod153;
@@ -40,15 +34,6 @@ export default defineApp({ app: { accounts: { pod153 } } }, async ({ app, signal
   const guard = (_: unknown, name: string) => (GUARDED.has(name) ? always() : undefined);
   return {
     tools: router({
-      messages: withApprovals(
-        await mcpRouter({
-          url: `${BASE}/imessage`,
-          account,
-          headers: { ...access, Authorization: `Bearer ${account.fields.imsgbus_token}` },
-          signal,
-        }),
-        guard,
-      ),
       reminders: withApprovals(
         await mcpRouter({
           url: `${BASE}/reminders`,
