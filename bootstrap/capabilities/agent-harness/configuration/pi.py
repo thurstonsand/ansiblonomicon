@@ -277,14 +277,20 @@ def _settings(
             "workingVibes": {"color": "accent"},
             "layout": {
                 "left": [
+                    "custom:swb",
+                    "custom:session-index",
                     "custom:model_display",
                     "custom:workspace_folder",
                     "custom:workspace_branch",
                 ],
-                "right": ["custom:context_gauge"],
-                "secondary": [],
+                "right": ["custom:context_gauge", "custom:stash"],
+                "secondary": ["extension_statuses"],
             },
+            "hiddenExtensionStatusKeys": ["permissions", "sideshow"],
             "customItems": [
+                {"id": "swb", "selfColorize": True},
+                {"id": "session-index", "color": "warning"},
+                {"id": "stash"},
                 {"id": "model_display", "hideWhenMissing": False},
                 {"id": "workspace_folder", "hideWhenMissing": False},
                 {"id": "workspace_branch"},
@@ -344,7 +350,8 @@ def _settings(
         custom["budget"] = {"url": data["inferenceBudgetUrl"]}
         if data.get("costsDashboardUrl"):
             custom["budget"]["costsUrl"] = data["costsDashboardUrl"]
-        settings["powerline"]["layout"]["right"].append("custom:cost_budget")
+        right = settings["powerline"]["layout"]["right"]
+        right.insert(right.index("custom:stash"), "custom:cost_budget")
         settings["powerline"]["customItems"].append(
             {"id": "cost_budget", "hideWhenMissing": True}
         )
