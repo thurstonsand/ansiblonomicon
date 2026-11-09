@@ -140,6 +140,11 @@ printf '%s\n' \
   | sudo -n /usr/bin/debconf-set-selections
 '''
 
+# Unattended upgrades never remove packages; reconciliation does, once every
+# capability's packages are installed. APT keeps the running and newest kernels.
+[bootstrap.hooks.post-packages]
+run = "sudo -n env DEBIAN_FRONTEND=noninteractive /usr/bin/apt-get autoremove --yes"
+
 [tasks.bootstrap]
 run = [
   "base/scripts/install-system-mise",
