@@ -308,8 +308,8 @@ target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 case "$host" in
-  pod042) export MISE_ENV=terminal-theme; parts=dotfiles ;;
-  pod153) export MISE_ENV=terminal-theme,terminal-theme-macos,terminal-theme-files; parts=files,dotfiles ;;
+  pod042) export MISE_ENV=terminal-theme,terminal-theme-personal; parts=dotfiles ;;
+  pod153) export MISE_ENV=terminal-theme,terminal-theme-personal,terminal-theme-macos,terminal-theme-files; parts=files,dotfiles ;;
   *) export MISE_ENV=terminal-theme,terminal-theme-macos,terminal-theme-files; parts=files,dotfiles,macos-launchd-agents ;;
 esac
 if [ -n "${usage_check:-}" ]; then

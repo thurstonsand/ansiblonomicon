@@ -6,7 +6,5 @@
 "~/.local/bin/terminal-theme-init.py" = { source = "terminal-theme/terminal-theme-init.py", mode = "symlink" }
 "~/.config/zsh/terminal-theme.zsh" = { source = "terminal-theme/terminal-theme.zsh", mode = "symlink" }
 
-"~/.config/hunk/config.toml" = { source = "terminal-theme/hunk-config.toml.tera", mode = "template" }
-
 [bootstrap.hooks.pre-dotfiles]
 run = "{{ config_root }}/terminal-theme/terminal-theme-init.py {{ vars.terminal_theme_profile }}"

@@ -84,6 +84,7 @@ FULL_CAPABILITIES = (
     "shell-personal",
     "user-tools-personal",
     "neovim-personal",
+    "terminal-theme-personal",
     "ssh-client-pod042",
     "agent-instructions",
 )
@@ -141,7 +142,7 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
             "remote-development",
         )
     if capability == "terminal-theme":
-        return ("terminal-theme",)
+        return ("terminal-theme", "terminal-theme-personal")
     if capability == "shell":
         return ("shell", "shell-personal")
     if capability == "user-tools":
@@ -198,6 +199,7 @@ def run_local(capability: str | None, check_mode: bool) -> None:
         "ssh-client",
         "ssh-client-pod042",
         "terminal-theme",
+        "terminal-theme-personal",
         "shell",
         "shell-personal",
         "user-tools",

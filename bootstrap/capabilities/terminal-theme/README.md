@@ -1,6 +1,6 @@
 # Terminal theme capability
 
-This native mise capability installs the shared Python runtime and zsh helper as source symlinks, renders Hunk's runtime-mutated config as a real native dotfile, and manages the macOS appearance watcher as a LaunchAgent. The detector seeds a missing `.terminal-bg` from macOS appearance; mirrors default a missing state to dark. Runtime state and SSH leases remain outside the repository. Both native rendering and Python runtime switching read the same light/dark TOML palettes.
+This native mise capability installs the shared Python runtime and zsh helper as source symlinks, renders Hunk's runtime-mutated config as a real native dotfile on the hosts that have Hunk (`mise.personal.toml`, pod042 and pod153), and manages the macOS appearance watcher as a LaunchAgent. The detector seeds a missing `.terminal-bg` from macOS appearance; mirrors default a missing state to dark. Runtime state and SSH leases remain outside the repository. Both native rendering and Python runtime switching read the same light/dark TOML palettes.
 
 ## City Ruins and Copied City
 
