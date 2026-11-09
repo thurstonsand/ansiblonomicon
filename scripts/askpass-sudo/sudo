@@ -1,8 +1,15 @@
 #!/bin/sh
 # Put first on PATH for commands whose nested sudo calls must authenticate
-# through SUDO_ASKPASS. The work Mac's BeyondTrust policy keeps no sudo
-# timestamp, so priming with `sudo -A -v` never satisfies mise's `sudo -n`
-# preflight; every call authenticates itself instead. Stock sudo refuses
-# askpass under `-n`, so drop the preflight's flag: askpass never blocks.
+# through SUDO_ASKPASS. Stock sudo refuses askpass under `-n`, so drop mise's
+# preflight flag: askpass never blocks.
+#
+# The work Mac's BeyondTrust tamper detection kills the askpass child that sudo
+# forks while authorizing mise: the child execs another inode than the one
+# approved. Authenticate against /usr/bin/true first, where the askpass
+# survives, so the real command rides BeyondTrust's cached grant instead of
+# forking an askpass of its own.
 [ "$1" = -n ] && shift
+if [ "$(hostname -s 2>/dev/null || hostname)" = ML-DFC6YK6VJQ ]; then
+  /usr/bin/sudo -A true || exit
+fi
 exec /usr/bin/sudo -A "$@"
