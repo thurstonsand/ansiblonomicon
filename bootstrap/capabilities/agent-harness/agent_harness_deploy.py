@@ -77,7 +77,8 @@ def sync_sources(
         ):
             print(f"Updating {origin}", flush=True)
             subprocess.run(
-                ["git", "-C", str(checkout), "pull", "--ff-only"], check=True
+                ["git", "-C", str(checkout), "pull", "--ff-only", "--quiet"],
+                check=True,
             )
             stamp.touch()
 

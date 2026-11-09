@@ -39,7 +39,7 @@ ln -sfn "$amp" "$link"
 # A reconcile started from an Amp thread lives inside the runner it replaces or restarts, so the
 # swap runs in its own transient unit, logging to the journal rather than this task's pipes, and
 # finishes even when stopping the runner ends this task.
-unit="amp-runner-apply-$$"
+unit="amp-runner-apply-$$.service"
 if ! systemd-run --user --quiet --collect --wait --unit "$unit" \
   --working-directory "$MISE_PROJECT_ROOT" \
   --setenv PATH="$PATH" --setenv MISE_CEILING_PATHS="${MISE_CEILING_PATHS:-}" \
@@ -48,5 +48,5 @@ if ! systemd-run --user --quiet --collect --wait --unit "$unit" \
   journalctl --user -u "$unit" -n 40 --no-pager >&2
   exit 1
 fi
-journalctl --user -u "$unit" -n 10 --no-pager -o cat
+journalctl --user _SYSTEMD_USER_UNIT="$unit" -n 10 --no-pager -o cat
 '''
