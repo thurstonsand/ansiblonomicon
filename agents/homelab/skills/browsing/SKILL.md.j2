@@ -1,15 +1,36 @@
 ---
 name: browsing
+{% if hostname == "ML-DFC6YK6VJQ" %}
+description: Automates Thurston's Chrome with the Chrome DevTools MCP server. Use for navigating websites, filling forms, authenticated workflows, screenshots, browser testing, and inspecting console or network activity.
+{% elif hostname in ["pod042", "pod153"] %}
+description: Automates the browser with the Browse CLI. Use for navigating websites, filling forms, authenticated workflows, screenshots, browser testing, and recording browser behavior.
+{% elif hostname == "no9-type-s" %}
+description: Automates Thurston's Chrome with the Browse CLI, each task in its own hidden Hyprland workspace. Use for navigating websites, filling forms, authenticated workflows, screenshots, browser testing, and recording browser behavior.
+{% else %}
 description: Automates browsers with Browse on personal hosts and agent-browser in Amp orbs. Use for navigating websites, filling forms, authenticated workflows, screenshots, browser testing, and recording browser behavior.
+{% endif %}
 ---
 
 # Browsing
+{% if hostname == "ML-DFC6YK6VJQ" %}
+
+Use the Chrome DevTools MCP server `plugin_chrome-devtools_shim`, the PRODSEC-approved shim from CrowdStrike's ai-plugin-marketplace. Its tools are {% if harness == "claude" %}`mcp__plugin_chrome-devtools_shim__*`{% elif harness == "pi" %}`mcp__plugin_chrome_devtools_shim__*`, reached through codemode{% else %}`mcp__plugin_chrome_devtools_shim.*`{% endif %}. A session started before the server was configured does not see them; start a new one.
+
+The server attaches to Thurston's running Chrome, so its pages share his profile: cookies, logins, and extensions. Chrome asks him to allow each new connection. If Chrome is not running or he declines, report it rather than reaching for another browser.
+
+- **Your own work goes in background tabs.** Open every page with `new_page` and `background: true`, never bring a page to the front, and close the pages you opened when the task is done. His tabs are his: do not select, navigate, or close them unless he asks.
+- **Helping with his tab.** When he asks for help with something he has open, find it with `list_pages` and work in that page.
+- **Clean-slate tests.** For a logged-out or cookie-free test, pass `isolatedContext` to `new_page`. Pages in that context share nothing with his profile.
+- **File paths.** Screenshots and other files land only inside the client's MCP roots, so pass an absolute path {% if harness == "claude" %}inside the working directory{% else %}inside `$TMPDIR`, not `/tmp`{% endif %}.
+{% if harness != "claude" %}
+- **Other skills' tool names.** Raven's `validating-in-browser` skill spells the tools as Claude Code does, `mcp__plugin_chrome-devtools_shim__*`; use this harness's names instead.
+{% endif %}
+{% else %}
 
 Choose by where the browser runs, not by which agent harness is calling it:
 
 - **Personal hosts:** use the Browse CLI. Run `browse skill` and follow that installed version's guide before the first browser command. `browse doctor` diagnoses an unavailable relay or extension. Mise owns CLI installation and upgrades (`mise upgrade npm:@opencode/browse`); the browser owns extension updates. Use CLI-only setup rather than adding MCP servers to harness-managed configuration.
 - **Amp orbs:** use their preinstalled agent-browser. Run `agent-browser skills get core` before the first browser command, then load specialized guides with `agent-browser skills get <name>` when needed. No Browse extension or personal browser pairing is required in an orb.
-- **Work:** neither tool is configured. Keep its browser workflow separate.
 
 Browse requires a running Chromium-family browser with its extension installed and paired. If setup is incomplete, report that boundary rather than silently switching tools. On pod042, load `using-pod042-desktop` for the shared browser and native desktop controls.
 
@@ -78,4 +99,5 @@ If a session opens a tab in another window, move only that session's tab back in
 ### Finish
 
 Delete only the named Browse session. Its owned tabs should close, and a window with no remaining tabs should disappear. Verify the task window is gone with `hyprctl clients -j`; close a leftover window by its exact address only after checking it contains nothing outside the task. Empty special workspaces disappear automatically. Leave the paired profile, relay, other windows, and other sessions running.
+{% endif %}
 {% endif %}

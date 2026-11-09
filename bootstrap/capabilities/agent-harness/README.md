@@ -51,7 +51,7 @@ Run `mise agent-harness [--check|--cached]` on any registered system. pod042 ret
 
 ## Browser automation
 
-The `browsing` skill selects Browse on personal hosts and the preinstalled agent-browser in Amp orbs. It loads each CLI's own version-matched guide instead of maintaining a second copy. Work receives neither skill nor CLI. Claude Code, Codex, and Pi receive the skill through host reconciliation; Amp receives it through User Skills publication, including on eve, which has no native agent-harness profile.
+The `browsing` skill selects Browse on personal hosts and the preinstalled agent-browser in Amp orbs. It loads each CLI's own version-matched guide instead of maintaining a second copy. Work receives only the skill, rendered for the Chrome DevTools MCP server that its local overlay attaches to the running Chrome. Claude Code, Codex, and Pi receive the skill through host reconciliation; Amp receives it through User Skills publication, including on eve, which has no native agent-harness profile.
 
 pod042, pod153, no9-type-s, and eve declare `npm:@opencode/browse` in their global mise configs. Mise owns CLI upgrades; `OPENCODE_BROWSER_AUTO_UPDATE=off` prevents Browse from installing an unmanaged npm-global copy. Reconcile the host's tool and agent-harness capabilities before using it; eve installs its tools with `mise windows -t mise`. Old agent-browser skills are explicitly retired. On hosts that had it, Browse's install hook prunes unused agent-browser versions while retaining any still used by a project or running agent. Amp's orb image is unchanged.
 
