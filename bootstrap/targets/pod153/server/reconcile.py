@@ -2,7 +2,7 @@
 """Keep pod153 awake, reachable, and automatable with nobody at the keyboard."""
 
 import argparse
-from datetime import datetime
+from datetime import UTC, datetime, timedelta
 import os
 from pathlib import Path
 import plistlib
@@ -23,9 +23,22 @@ CHARGE_LIMIT = 80
 # browsing for it. Plain IPP, because its self-signed certificate fails IPPS.
 PRINTER = ("Canon_MF650C_Series", "ipp://printer.thurstons.house/ipp/print")
 TIME_MACHINE = "smb://thurstonsand@pod042.thurstons.house/timemachine"
-# Time Machine copies a changed file whole, so a running Tart VM's disk
-# image would go over every hour; the rest are regenerable caches.
-TIME_MACHINE_SKIPPED = [str(Path.home() / name) for name in (".tart", ".cache", ".npm")]
+# Time Machine copies a changed file whole, so a running Tart VM's disk image
+# would go over every hour. Beeper's and Photos' databases change as often and
+# both download again from their services; the rest are regenerable caches.
+TIME_MACHINE_SKIPPED = [
+    str(Path.home() / name)
+    for name in (
+        ".tart",
+        ".cache",
+        ".npm",
+        "Library/Application Support/BeeperTexts",
+        "Pictures/Photos Library.photoslibrary",
+        "Library/Photos/Libraries/Syndication.photoslibrary",
+    )
+]
+# Backups run hourly; the daily reconcile failing is what tells someone they stopped.
+TIME_MACHINE_STALE = timedelta(days=1)
 SYSTEM_DAEMONS = {
     "Remote Login": ("com.openssh.sshd", "/System/Library/LaunchDaemons/ssh.plist"),
     "Tailscale": (
@@ -253,13 +266,21 @@ def main() -> None:
     time_machine = plistlib.loads(
         output(
             "defaults", "export", "/Library/Preferences/com.apple.TimeMachine", "-"
-        ).encode()
+        ).encode(),
+        aware_datetime=True,
     )
     destinations = {
         destination["DestinationID"]: destination.get("NetworkURL")
         for destination in time_machine.get("Destinations", [])
     }
-    if list(destinations.values()) != [TIME_MACHINE]:
+    stale_backup = None
+    if list(destinations.values()) == [TIME_MACHINE]:
+        latest = max(
+            time_machine["Destinations"][0].get("SnapshotDates", []), default=None
+        )
+        if latest is None or datetime.now(UTC) - latest > TIME_MACHINE_STALE:
+            stale_backup = f"server: Time Machine's last completed backup is {latest or 'none'}; see `tmutil status` and backupd's log"
+    else:
         changes.append(
             (
                 f"Time Machine destination {TIME_MACHINE}",
@@ -326,6 +347,8 @@ def main() -> None:
             else:
                 subprocess.run(command, check=True)
         print(f"server: set {name}")
+    if stale_backup:
+        raise SystemExit(stale_backup)
 
 
 if __name__ == "__main__":
