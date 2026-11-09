@@ -353,7 +353,11 @@ def render_files(
                     content = asset.read_bytes()
                     transformed_asset = False
                     if asset.suffix == ".j2":
-                        content = env.from_string(content.decode()).render().encode()
+                        content = (
+                            env.from_string(content.decode())
+                            .render(harness=target)
+                            .encode()
+                        )
                         transformed_asset = True
                     if output.name == "SKILL.md":
                         transformed = filters.agent_harness_transform_skill_content(

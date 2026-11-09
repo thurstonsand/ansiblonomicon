@@ -8,7 +8,9 @@ description: Thurston's writing voice for messages sent in his name. Use when dr
 ## Two modes
 
 Either mode can end in a message he pastes. Show it as plain paragraphs, outside any quote or code block.
-{%- if hostname == "ML-DFC6YK6VJQ" %} Text selected from the terminal picks up wrap breaks and quote borders, so follow the message with the link that `${CLAUDE_SKILL_DIR}/scripts/copy-link.py <<'EOF'` prints for it; a click copies it exactly.
+{#- Codex does not make clipcopy: links clickable, so it wins over the host. #}
+{%- if harness == "codex" %} Put explanations, optional additions, and word-level diffs in commentary, then put only the paste-ready message in the final response. `/copy` copies that response exactly; mention the command in commentary when useful.
+{%- elif hostname == "ML-DFC6YK6VJQ" %} Text selected from the terminal picks up wrap breaks and quote borders, so follow the message with the link that `${CLAUDE_SKILL_DIR}/scripts/copy-link.py <<'EOF'` prints for it; a click copies it exactly.
 {%- elif hostname in ["no9-type-s", "amp-publish"] %} When `omarchy-notification-send` exists on this machine, text selected from the terminal picks up wrap breaks and quote borders, so after showing the message, hand it over as an Omarchy notification. Nothing reaches his clipboard until he clicks it or presses Super + Alt + comma within its 30 seconds; after that, Super + Shift + Alt + comma replays it. Put the message between the heredoc lines exactly as shown, unescaped, and name it in the headline:
 
 ```bash
@@ -28,7 +30,7 @@ He wrote it and asks "how does this sound", "is this accurate", "how about this"
 
 1. Verify every claim against the evidence at hand: the thread, the code, the session.
 2. If it is accurate, say so in one line and stop. "Accurate, send it." is a complete answer.
-3. If something is wrong, name the error in one sentence, then hand his message back with only the wrong words changed. Everything else stays exactly as he wrote it: casing, hedges, caps, ellipses, comma splices, length. The message itself is clean and ready to paste; on a longer message, add a word-level diff (~~old~~ **new**) below it to show the changes.
+3. If something is wrong, name the error in one sentence, then hand his message back with only the wrong words changed. Everything else stays exactly as he wrote it: casing, hedges, caps, ellipses, comma splices, length. The message itself is clean and ready to paste; on a longer message, add a word-level diff (~~old~~ **new**) {{ "in commentary" if harness == "codex" else "below it" }} to show the changes.
 4. An addition you think is worth making goes on its own line as an option, outside his message.
 
 He folds your factual corrections into his own wording and discards your phrasing, so the fix is the deliverable.
