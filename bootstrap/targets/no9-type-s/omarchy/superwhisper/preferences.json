@@ -25,7 +25,7 @@
   "selectedDeviceID": "",
   "showRecordingIndicator": true,
   "toggleRecordingShortcut": "Ctrl+Alt+Space",
-  "tone": "casual",
+  "tone": "semi-casual",
   "useDefaultAudioDevice": true,
   "useDefaultInputDevice": true,
   "userExcludedInputDevices": {}
