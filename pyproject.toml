@@ -21,6 +21,11 @@ dev = [
 ]
 
 # Ruff configuration
+[tool.uv]
+# Resolve only releases at least 3 days old, like Renovate's minimumReleaseAge, which Renovate
+# does not pass to uv when it refreshes uv.lock.
+exclude-newer = "3 days"
+
 [tool.ruff]
 line-length = 88
 target-version = "py314"
