@@ -56,7 +56,7 @@ Fully exit Chrome, including its web-app windows, so it saves the changed prefer
 
 ## Lucky
 
-The `browser` tag renders the keys for Lucky, the address-bar "I'm Feeling Lucky" extension. Make Kagi the default search engine and load it unpacked as [its README](../bootstrap/capabilities/browser/README.md) describes.
+The `browser` tag renders the config for Lucky, the address-bar "I'm Feeling Lucky" extension. Make Kagi the default search engine and load it unpacked as [its README](../bootstrap/capabilities/browser/README.md) describes.
 
 ## Agent browsing
 

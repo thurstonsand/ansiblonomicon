@@ -381,7 +381,7 @@ exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environ
 '''
 
 [tasks.browser]
-description = "Reconcile the Lucky browser extension's keys on this registered host"
+description = "Reconcile the Lucky browser extension's config on this registered host"
 usage = '''
 flag "-c --check" help="Show changes without writing"
 '''
@@ -396,6 +396,7 @@ mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
 exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret KAGI_API_KEY --secret OPENAI_API_KEY -- \
   env MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=browser \
+  LUCKY_PYTHON="$MISE_PROJECT_ROOT/.venv/bin/python" LUCKY_MODELS="$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/models.yml" \
   mise -C "$target" bootstrap --only dotfiles "$mode"
 '''
 

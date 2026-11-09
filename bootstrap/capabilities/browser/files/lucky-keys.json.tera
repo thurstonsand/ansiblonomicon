@@ -1,1 +1,0 @@
-{"kagi": "{{ secret(name="kagi_api_key") | trim }}", "openai": "{{ secret(name="openai_api_key") | trim }}"}

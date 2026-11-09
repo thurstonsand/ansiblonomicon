@@ -1,0 +1,1 @@
+{"kagi": "{{ secret(name="kagi_api_key") | trim }}", "openai": "{{ secret(name="openai_api_key") | trim }}", "models": {{ exec(command=env.LUCKY_PYTHON | quote ~ ` -c 'import json, sys, yaml; m = yaml.safe_load(open(sys.argv[1]))["models"]["openai"]; print(json.dumps({"decide": m["gpt_luna"]["version"], "notes": m["gpt_sol"]["version"]}))' ` ~ env.LUCKY_MODELS | quote) | trim }}}

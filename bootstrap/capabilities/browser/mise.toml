@@ -2,10 +2,15 @@
 kagi_api_key = "KAGI_API_KEY"
 openai_api_key = "OPENAI_API_KEY"
 
-# Chrome loads Lucky unpacked from the repo, so its keys render beside the source,
+# Chrome loads Lucky unpacked from the repo, so its config renders beside the source,
 # privately and ignored by Git; the variant target is the only path that follows the checkout.
-[dotfiles."lucky-keys"]
-source = "browser/lucky-keys.json.tera"
+[dotfiles."lucky-config"]
+source = "browser/lucky-config.json.tera"
 mode = "template"
 permissions = "0600"
+variants = [{ default = true, target = "{{ config_root }}/browser/lucky/config.json" }]
+
+# Retired for config.json; delete once no9-type-s and pod042 converge.
+[dotfiles."lucky-keys"]
+mode = "absent"
 variants = [{ default = true, target = "{{ config_root }}/browser/lucky/keys.json" }]

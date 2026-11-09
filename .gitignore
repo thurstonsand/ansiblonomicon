@@ -38,6 +38,7 @@ mise.local.toml
 *.local.toml
 bootstrap/targets/*/local/
 bootstrap/capabilities/agent-harness/local/
+bootstrap/capabilities/browser/files/lucky/config.json
 bootstrap/capabilities/browser/files/lucky/keys.json
 bootstrap/capabilities/browser/files/lucky/_metadata/
 

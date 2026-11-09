@@ -4,8 +4,9 @@
   "description": "Address-bar searches go straight to the page an AI picks from Kagi's results.",
   "version": "0.1.0",
   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEArv4TWq0g8+I8YiRFnO3/lDB7+mIfjdljk0HTvA86hd/hxtjuiXLnrc9tPNU5dix9uQlo30KqLq9VZG3cHhaW6VLYSuis5cD/9/lRjOCl86KSRDUzyvh3ezez2IPkakrOp1cKex658Bxd9W3LyghjIKP1ihktmRvs5Un0nr4oB65YzEfcqbd4BzQbBhZYutbA6uTHPZg87vjWkZ5XsT7WSfX/ebC2l8uFCri6FoZxTYrhvfsprcxH9cnIdKhdY1qSqVDo6/NB0tAwOIsMmIqoBlcyv0KeY/+AVlsJdklzbmQrLY1mccpFnDZo7rKxUIABBxLGh4HIkOBV9rWRpB6IJQIDAQAB",
-  "permissions": ["declarativeNetRequestWithHostAccess", "storage"],
+  "permissions": ["declarativeNetRequestWithHostAccess", "storage", "history", "favicon"],
   "host_permissions": ["https://kagi.com/*", "https://api.openai.com/*"],
+  "action": { "default_title": "Wrong page: show Kagi\u2019s results for the last lucky search in this tab" },
   "background": { "service_worker": "background.js", "type": "module" },
   "declarative_net_request": {
     "rule_resources": [{ "id": "address-bar", "enabled": true, "path": "rules.json" }]

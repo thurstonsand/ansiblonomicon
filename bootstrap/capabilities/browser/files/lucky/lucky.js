@@ -1,5 +1,4 @@
 export const RESULT_LIMIT = 10;
-export const MODEL = "gpt-6-luna";
 export const CONFIDENCE_THRESHOLD = 0.5;
 export const ESCAPE_PREFIX = ",";
 export const SHOW_RESULTS = "show_results";
@@ -11,15 +10,18 @@ Choose ${SHOW_RESULTS} when no result is a good destination or the query needs s
 export const SHOW_RESULTS_DESCRIPTION =
   "Show the full search results list instead of picking one page.";
 
+// `via` names why a search skips Lucky: the escape prefix, a Kagi bang, a trailing "?", or no query.
 export function route(query) {
   const trimmed = query.trim();
   if (trimmed.startsWith(ESCAPE_PREFIX)) {
-    return { lucky: false, query: trimmed.slice(ESCAPE_PREFIX.length).trim() };
+    return { lucky: false, via: "escape", query: trimmed.slice(ESCAPE_PREFIX.length).trim() };
   }
   // Kagi bangs, such as !w or !gh, already name their destination,
   // and a trailing "?" already asks Kagi for its Quick Answer.
-  const hasBang = /(^|\s)![^\s!]/.test(trimmed);
-  return { lucky: trimmed !== "" && !hasBang && !trimmed.endsWith("?"), query: trimmed };
+  if (/(^|\s)![^\s!]/.test(trimmed)) return { lucky: false, via: "bang", query: trimmed };
+  if (trimmed.endsWith("?")) return { lucky: false, via: "question", query: trimmed };
+  if (trimmed === "") return { lucky: false, via: "empty", query: trimmed };
+  return { lucky: true, via: "lucky", query: trimmed };
 }
 
 export function resultsUrl(query) {
@@ -34,8 +36,16 @@ export function quickAnswerUrl(query) {
   return resultsUrl(`${query}?`);
 }
 
-// Kagi highlights matched terms with <strong> and similar markup.
-const stripTags = (html) => html.replace(/<[^>]*>/g, "");
+const ENTITIES = { amp: "&", lt: "<", gt: ">", quot: '"', apos: "'" };
+
+// Kagi highlights matched terms with <strong> and similar markup, and escapes the text as HTML.
+export const stripTags = (html) =>
+  html
+    .replace(/<[^>]*>/g, "")
+    .replace(/&(#x[\da-f]+|#\d+|\w+);/gi, (entity, name) => {
+      if (name[0] !== "#") return ENTITIES[name.toLowerCase()] ?? entity;
+      return String.fromCodePoint(name[1].toLowerCase() === "x" ? parseInt(name.slice(2), 16) : Number(name.slice(1)));
+    });
 
 export async function search(query, key, signal) {
   const response = await fetch("https://kagi.com/api/v1/search", {
@@ -60,9 +70,9 @@ export async function search(query, key, signal) {
   return [...results.values()];
 }
 
-export function decisionRequest(query, results) {
+export function decisionRequest(model, query, results) {
   return {
-    model: MODEL,
+    model,
     input: `Address bar query: ${query}`,
     questions: [
       {
@@ -81,11 +91,11 @@ export function decisionRequest(query, results) {
   };
 }
 
-export async function decide(query, results, key, signal) {
+export async function decide(query, results, key, model, signal) {
   const response = await fetch("https://api.openai.com/v1/decisions", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-    body: JSON.stringify(decisionRequest(query, results)),
+    body: JSON.stringify(decisionRequest(model, query, results)),
     signal,
   });
   const body = await response.json();
