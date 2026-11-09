@@ -8,18 +8,26 @@ on:
     # Daily safety net at 6 AM UTC
     - cron: "0 6 * * *"
 
+permissions:
+  contents: read
+
+# An apply runs to completion; the next one waits for it rather than racing it on the state.
+concurrency:
+  group: ddns-tofu-apply
+
 jobs:
   apply:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     defaults:
       run:
         working-directory: terraform/cloudflare
     steps:
       - name: Checkout
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Setup OpenTofu
-        uses: opentofu/setup-opentofu@v2
+        uses: opentofu/setup-opentofu@a1320f892987e89d278cc92dc5adc984fb93aca4 # v2.0.2
         with:
           tofu_version: v1.13.1
 

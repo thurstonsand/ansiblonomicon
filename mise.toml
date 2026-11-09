@@ -21,6 +21,10 @@ opentofu = "1.13.2"
 gcloud = "587.0.0"
 hk = "2.10.0"
 markdownlint-cli2 = "0.24.0"
+# hk's actions step runs jactionlint, which runs shellcheck over every `run:` script. Renovate does
+# not know mise's `jactionlint` shorthand, so the backend is spelled out.
+"aqua:jdx/jactionlint" = "2.5.0"
+shellcheck = "0.11.0"
 fnox = "latest"
 "npm:mcp-remote" = "latest"
 "npm:wrangler" = "latest"
@@ -1119,6 +1123,7 @@ run = '"{{config_root}}/scripts/fnox-host" exec --secret CLOUDFLARE_API_TOKEN --
 [tasks.check]
 description = "Run every non-mutating check across the repo"
 depends = [
+  "actions:lint",
   "docs:lint",
   "python:fmt:check",
   "python:lint",
@@ -1134,6 +1139,7 @@ depends = [
 [tasks.fix]
 description = "Run every mutating formatter and autofixer across the repo"
 depends = [
+  "actions:fix",
   "docs:lint:fix",
   "python:fmt",
   "python:lint:fix",
@@ -1141,6 +1147,14 @@ depends = [
   "pi:fix",
   "//bootstrap/capabilities/software/sources/...:fmt",
 ]
+
+[tasks."actions:lint"]
+description = "Lint GitHub Actions workflows"
+run = "hk check --all --step jactionlint"
+
+[tasks."actions:fix"]
+description = "Apply jactionlint's safe fixes to GitHub Actions workflows"
+run = "hk fix --all --step jactionlint"
 
 [tasks."docs:lint"]
 description = "Lint Markdown"

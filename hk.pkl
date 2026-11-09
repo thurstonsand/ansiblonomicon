@@ -58,6 +58,8 @@ local linters = new Mapping<String, Step> {
 
   // Each Go subproject carries a go.mod, so workspace_indicator fans these out per
   // project without naming its path.
+  ["jactionlint"] = Builtins.jactionlint
+
   ["go-fmt"] = (Builtins.go_fmt) {}
   ["go-lint"] = (Builtins.golangci_lint) {}
 }

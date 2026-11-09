@@ -18,9 +18,14 @@ on:
 permissions:
   contents: read
 
+# A publish runs to completion; the next one waits for it rather than racing it on the hosted state.
+concurrency:
+  group: publish-amp-skills
+
 jobs:
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     env:
       AMP_API_KEY: ${{ secrets.AMP_API_KEY }}
     steps:
@@ -35,6 +40,7 @@ jobs:
           python-version: "3.15"
 
       - name: Install Amp
+        shell: bash
         run: |
           curl -fsSL https://ampcode.com/install.sh | bash
           echo "$HOME/.amp/bin" >> "$GITHUB_PATH"

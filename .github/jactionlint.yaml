@@ -1,0 +1,9 @@
+ignores:
+  - rule: unverified-download
+    file: .github/workflows/publish-amp-skills.yml
+    job: publish
+    step: Install Amp
+    reason: >-
+      Amp ships its CLI through this installer, which checks the sha256 of the binary it downloads.
+      The script itself changes with each Amp release, so pinning its checksum would break every
+      run after one.
