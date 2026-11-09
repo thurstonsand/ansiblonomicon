@@ -81,15 +81,24 @@ owner = "root"
 group = "root"
 mode = "0644"
 
-# Match Omarchy install/hardware/nvidia.sh early KMS configuration.
 [bootstrap.files."/etc/modprobe.d/nvidia.conf"]
 source = "omarchy/modprobe.d/nvidia.conf"
 owner = "root"
 group = "root"
 mode = "0644"
 
+# The NVIDIA GPU is an eGPU, so it loads once Thunderbolt has settled instead of from the initramfs, unlike Omarchy's nvidia.sh.
 [bootstrap.files."/etc/mkinitcpio.conf.d/nvidia.conf"]
-source = "omarchy/mkinitcpio.conf.d/nvidia.conf"
+state = "absent"
+
+[bootstrap.files."/etc/limine-entry-tool.d/egpu.conf"]
+source = "omarchy/limine-entry-tool.d/egpu.conf"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/limine-entry-tool.d/crash-diagnostics.conf"]
+source = "omarchy/limine-entry-tool.d/crash-diagnostics.conf"
 owner = "root"
 group = "root"
 mode = "0644"
@@ -122,6 +131,10 @@ sudo -n udevadm trigger --property-match=ID_VENDOR_ID=35ef
 sudo -n udevadm trigger --subsystem-match=usb --property-match=DEVTYPE=usb_device
 sudo -n systemctl reload systemd-logind
 sudo -n systemd-tmpfiles --create /etc/tmpfiles.d/sleep-diagnostics.conf
+# Initramfs and kernel command line changes only reach the next boot through a rebuilt UKI; a removed file shows as a newer directory.
+if [ -n "$(sudo -n find /etc/mkinitcpio.conf.d /etc/modprobe.d /etc/limine-entry-tool.d -newer /boot/EFI/Linux/omarchy_linux-omarchy.efi -print -quit)" ]; then
+  sudo -n limine-update
+fi
 '''
 
 [bootstrap.hooks.post-dotfiles]
@@ -141,6 +154,11 @@ if ! omarchy pkg present superwhisper-bin || [ "$(readlink ~/.local/share/superw
 fi
 # Hyprland loads Superwhisper's generated shortcuts.lua, which stays out of git and so is missing on a fresh checkout.
 [ -f ~/.config/superwhisper/shortcuts.lua ] || ~/.local/bin/superwhisper shortcuts apply >/dev/null
+# Superwhisper's workers pick their GPU at start, so a changed drop-in needs the daemon restarted, not only reloaded.
+if [ "$(systemctl --user show superwhisper -p NeedDaemonReload --value)" = yes ]; then
+  systemctl --user daemon-reload
+  systemctl --user try-restart superwhisper
+fi
 # Flea owns the folder handler, Show in folder service, shortcuts, and file chooser routing.
 flea --default
 # Amp, WhatsApp, and the other Omarchy web apps follow the default browser. Profile-local extension setup is in docs/chrome.md.
@@ -196,6 +214,7 @@ unit = "claude-auth-refresh"
 "~/.config/hypr/autostart.lua" = { source = "omarchy/hypr/autostart.lua", mode = "symlink" }
 "~/.config/hypr/hyprsunset.conf" = { source = "omarchy/hypr/hyprsunset.conf", mode = "symlink" }
 "~/.config/hypr/xdph.conf" = { source = "omarchy/hypr/xdph.conf", mode = "symlink" }
+"~/.config/uwsm/env.d/egpu" = { source = "omarchy/uwsm/egpu", mode = "symlink" }
 "~/.config/hypr/.luarc.json" = { source = "omarchy/hypr/.luarc.json", mode = "symlink" }
 # The Mouse panel replaces this file on save, which would break a symlink.
 "~/.config/hypr/mouse.lua" = { source = "omarchy/hypr/mouse.lua", mode = "copy" }
@@ -244,6 +263,8 @@ unit = "claude-auth-refresh"
 # Superwhisper's auto-learned vocabulary watches corrections over AT-SPI, and turning it on wrote this file, which it rewrites when the
 # setting changes. The post-dotfiles hook covers the rest of what it needs.
 "~/.config/environment.d/90-superwhisper-accessibility.conf" = { source = "omarchy/superwhisper-accessibility/environment.conf", mode = "copy" }
+# Superwhisper has no GPU setting and otherwise loads its models onto the eGPU whenever it starts with one attached.
+"~/.config/systemd/user/superwhisper.service.d/integrated-gpu.conf" = { content = "[Service]\nEnvironment=VK_DRIVER_FILES=/usr/share/vulkan/icd.d/intel_icd.json\n" }
 "~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
 "~/.config/wireplumber/wireplumber.conf.d/mic-priority.conf" = { source = "omarchy/wireplumber/mic-priority.conf", mode = "symlink" }
 "~/.local/share/wireplumber/scripts/rank-sources-by-priority.lua" = { source = "omarchy/wireplumber/rank-sources-by-priority.lua", mode = "symlink" }

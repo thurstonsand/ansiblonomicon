@@ -1,0 +1,11 @@
+# Hyprland renders on the first GPU in AQ_DRM_DEVICES and copies every frame across to a monitor on any other, so render on
+# the eGPU whenever it is attached at login. Card numbers can change between boots, so resolve them each session.
+for card in /sys/class/drm/card*; do
+  [ -e "$card/device/driver" ] || continue
+  case "$(basename "$(readlink -f "$card/device/driver")")" in
+    nvidia) egpu="/dev/dri/${card##*/}" ;;
+    xe) igpu="/dev/dri/${card##*/}" ;;
+  esac
+done
+[ -z "${egpu:-}" ] || export AQ_DRM_DEVICES="$egpu:$igpu"
+unset card egpu igpu
