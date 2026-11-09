@@ -66,7 +66,7 @@ def strings(value: object) -> list[str]:
 
 def environment(repo: Path, home: Path, hostname: str) -> jinja2.Environment:
     env = jinja2.Environment(
-        undefined=jinja2.StrictUndefined, keep_trailing_newline=True
+        undefined=jinja2.StrictUndefined, keep_trailing_newline=True, trim_blocks=True
     )
 
     def matches(value: str, pattern: str) -> bool:
@@ -254,7 +254,6 @@ def render_files(
     profile: str,
     hostname: str,
     *,
-    trim_blocks: bool,
     metadata: dict[Path, FileMetadata] | None = None,
     sources_override: list[SourceConfig] | None = None,
     allow_missing_selections: set[str] | None = None,
@@ -262,7 +261,6 @@ def render_files(
     env, selected_profile, layouts, sources = declarations(
         repo, home, profile, hostname
     )
-    env.trim_blocks = trim_blocks
     if sources_override is not None:
         sources = sources_override
     resources = filters.agent_harness_build_plugin_resources(

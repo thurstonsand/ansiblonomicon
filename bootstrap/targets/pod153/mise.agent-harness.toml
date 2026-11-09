@@ -1,6 +1,5 @@
 [agent_harness]
 profile = "pod153"
 hostname = "pod153"
-trim_blocks = true
 update = "86400s"
 manifest = "macos-managed-files.json"

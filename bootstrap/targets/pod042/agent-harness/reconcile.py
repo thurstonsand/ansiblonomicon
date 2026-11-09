@@ -40,7 +40,6 @@ def main() -> None:
         cached=args.cached,
         update=host.update,
         manifest_name=host.manifest,
-        trim_blocks=host.trim_blocks,
     )
 
 

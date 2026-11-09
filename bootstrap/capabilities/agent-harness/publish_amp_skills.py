@@ -31,9 +31,7 @@ def render(repo: Path, root: Path, *, cached: bool) -> dict[Path, tuple[bytes, i
         engine.require_cached_sources(sources, checkouts)
     else:
         engine.sync_sources(sources, checkouts, time.time(), update="always")
-    files = catalogue.render_files(
-        repo, root, checkouts, PROFILE, HOSTNAME, trim_blocks=True
-    )
+    files = catalogue.render_files(repo, root, checkouts, PROFILE, HOSTNAME)
     return {
         path.relative_to(skills_root): payload
         for path, payload in files.items()

@@ -101,7 +101,6 @@ def require_cached_sources(sources: list[SourceConfig], cache: Path) -> None:
 class HostConfig:
     profile: str
     hostname: str
-    trim_blocks: bool
     update: str
     manifest: str
 
@@ -114,7 +113,6 @@ def load_host(path: Path) -> HostConfig:
     required = {
         "profile": str,
         "hostname": str,
-        "trim_blocks": bool,
         "update": str,
         "manifest": str,
     }
@@ -124,7 +122,6 @@ def load_host(path: Path) -> HostConfig:
     return HostConfig(
         profile=cast(str, values["profile"]),
         hostname=cast(str, values["hostname"]),
-        trim_blocks=cast(bool, values["trim_blocks"]),
         update=cast(str, values["update"]),
         manifest=cast(str, values["manifest"]),
     )
@@ -354,7 +351,6 @@ def reconcile(
     cached: bool,
     manifest_name: str,
     update: str = "86400s",
-    trim_blocks: bool | None = None,
 ) -> None:
     repo, home, cache = map(Path.resolve, (repo, home, cache))
     if not cache.is_relative_to(home):
@@ -410,7 +406,6 @@ def reconcile(
         cache,
         profile,
         hostname,
-        trim_blocks=(profile == "pod153") if trim_blocks is None else trim_blocks,
         metadata=metadata,
         allow_missing_selections=allowed_missing,
     )
@@ -480,7 +475,6 @@ def reconcile(
             cache,
             profile,
             hostname,
-            trim_blocks=(profile == "pod153") if trim_blocks is None else trim_blocks,
             metadata=remove_metadata,
             sources_override=[unresolved_source],
         )
@@ -633,7 +627,6 @@ def main() -> None:
         cached=args.cached,
         update=host.update,
         manifest_name=host.manifest,
-        trim_blocks=host.trim_blocks,
     )
 
 
