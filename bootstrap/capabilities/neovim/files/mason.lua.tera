@@ -112,6 +112,9 @@ return {
     opts = {
       ensure_installed = mason_tools,
       auto_update = true,
+      -- `nvim -l` scripts exit mid-install, aborting whatever the startup check began;
+      -- the reconcile's tools step installs and updates through MasonToolsUpdateSync instead.
+      run_on_start = not vim.tbl_contains(vim.v.argv, "-l"),
     },
   },
   {

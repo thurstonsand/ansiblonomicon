@@ -2,6 +2,11 @@
 -- `-l` exits 1 on a Lua error and terminates echoed output with a newline.
 local step, mode = _G.arg[1], _G.arg[2]
 
+-- noice captures print() messages, even headless, so report straight to stdout.
+local function report(line)
+  io.stdout:write(line, "\n")
+end
+
 local function plugins()
   local Config = require("lazy.core.config")
   local lazy = require("lazy")
@@ -27,24 +32,24 @@ local function plugins()
     local updated = plugin._.updated
     if plugin._.cloned then
       changes = changes + 1
-      print(("lazy: installed %s"):format(name))
+      report(("lazy: installed %s"):format(name))
     elseif updated and updated.from ~= updated.to then
       changes = changes + 1
-      print(("lazy: updated %s %s..%s"):format(name, updated.from:sub(1, 7), updated.to:sub(1, 7)))
+      report(("lazy: updated %s %s..%s"):format(name, updated.from:sub(1, 7), updated.to:sub(1, 7)))
     end
     for _, task in ipairs(plugin._.tasks or {}) do
       if task:has_errors() then
         failed = true
-        print(("lazy: %s %s failed:\n%s"):format(name, task.name, task:output()))
+        report(("lazy: %s %s failed:\n%s"):format(name, task.name, task:output()))
       end
     end
   end
   for _, name in ipairs(cleaned) do
     changes = changes + 1
-    print(("lazy: removed %s"):format(name))
+    report(("lazy: removed %s"):format(name))
   end
   if changes == 0 and not failed then
-    print(("lazy: %d plugins unchanged"):format(#names))
+    report(("lazy: %d plugins unchanged"):format(#names))
   end
   if failed then
     os.exit(1)
@@ -57,7 +62,7 @@ end
 
 local function parsers()
   if not require("nvim-treesitter").update(nil, { summary = true }):wait(600000) then
-    print("treesitter: parser update failed")
+    report("treesitter: parser update failed")
     os.exit(1)
   end
 end
