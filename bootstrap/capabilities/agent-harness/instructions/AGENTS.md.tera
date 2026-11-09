@@ -108,6 +108,12 @@ I treat it as a forcing function for correct application hierarchy. Nothing says
 
 Just use soft wrap, my editor knows how to handle long lines.
 
+{% if amp -%}
+### Executor
+
+My messages on every network (iMessage, WhatsApp, Signal and the rest, through Beeper) and my Apple Reminders are Executor apps. When a task touches either, start with Executor's `skills({})`.
+
+{% endif -%}
 {% if not amp -%}
 ### Delegation and model selection
 

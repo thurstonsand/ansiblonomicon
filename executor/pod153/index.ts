@@ -34,14 +34,22 @@ export default defineApp({ app: { accounts: { pod153 } } }, async ({ app, signal
   const guard = (_: unknown, name: string) => (GUARDED.has(name) ? always() : undefined);
   return {
     tools: router({
-      reminders: withApprovals(
-        await mcpRouter({
-          url: `${BASE}/reminders`,
-          account,
-          headers: { ...access, Authorization: `Bearer ${account.fields.remctl_token}` },
-          signal,
-        }),
-        guard,
+      // RemCTL's own instructions stay; its description, "RemCTL Reminders", is all agents see in a skills listing.
+      reminders: router(
+        withApprovals(
+          await mcpRouter({
+            url: `${BASE}/reminders`,
+            account,
+            headers: { ...access, Authorization: `Bearer ${account.fields.remctl_token}` },
+            signal,
+          }),
+          guard,
+        ),
+        {
+          title: "Reminders",
+          description:
+            "Thurston's Apple Reminders: read, search, create, update, complete, delete and restore reminders and lists.",
+        },
       ),
     }),
   };
