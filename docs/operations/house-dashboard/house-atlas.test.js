@@ -478,6 +478,14 @@ export async function checkMapControls(card, hass) {
     const garageGlyph = garage
       .querySelector(".door-state")
       .getBoundingClientRect();
+    const map = root
+      .querySelector("floorplan-card")
+      .shadowRoot.querySelector("floorplan-element").shadowRoot;
+    assert(
+      !map.querySelector("#status-garage") &&
+        map.querySelector("#status-foyer"),
+      "Garage visualization replaces its map caption without hiding lock status",
+    );
     assert(
       openPanel.width > closedPanel.width * 5 &&
         Math.abs(openPanel.left - closedPanel.left) < 1,

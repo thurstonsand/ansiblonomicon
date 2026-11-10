@@ -546,20 +546,20 @@
                   "mapNote": "Garage Door",
                   "pickup": {
                     "entity": "sensor.trash_pickup_reminder",
-                    "position": [34, 332]
+                    "position": [34, 466]
                   },
                   "vehicles": [
                     {
                       "id": "beetle",
                       "name": "Beetle",
                       "entity": "binary_sensor.garage_beetle_parked",
-                      "position": [106.5, 462.4]
+                      "position": [106.5, 438.4]
                     },
                     {
                       "id": "model3",
                       "name": "Model 3",
                       "entity": "binary_sensor.garage_tesla_parked",
-                      "position": [101.3, 399.2]
+                      "position": [101.3, 375.2]
                     }
                   ],
                   "hold": {

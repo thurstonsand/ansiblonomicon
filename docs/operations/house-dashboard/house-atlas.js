@@ -1366,7 +1366,11 @@ class HouseAtlas extends HTMLElement {
         const connected = this.hasDevices(room);
         const [x, y] = room.label;
         const lines = room.lines || [room.name];
-        return `<g id="room-${room.id}" data-room="${room.id}" class="room ${connected ? "connected" : ""} ${room.outdoor ? "outdoor" : ""}" ${connected ? 'tabindex="0" role="button"' : 'role="group"'} aria-label="${escapeXml(room.name)}"><path class="wall" d="${escapeXml(room.path)}"/>${room.partitions ? `<path class="partitions" d="${escapeXml(room.partitions)}"/>` : ""}<text class="label">${lines.map((line, i) => `<tspan x="${x}" y="${y + i * 17}">${escapeXml(line)}</tspan>`).join("")}</text>${connected && !room.lights ? `<text id="status-${room.id}" class="status" x="${x}" y="${y + lines.length * 17 + 5}">${escapeXml(room.mapNote || "")}</text>` : ""}</g>`;
+        const showStatus =
+          connected &&
+          !room.lights &&
+          this.config.placements?.[room.entity]?.door !== "garage";
+        return `<g id="room-${room.id}" data-room="${room.id}" class="room ${connected ? "connected" : ""} ${room.outdoor ? "outdoor" : ""}" ${connected ? 'tabindex="0" role="button"' : 'role="group"'} aria-label="${escapeXml(room.name)}"><path class="wall" d="${escapeXml(room.path)}"/>${room.partitions ? `<path class="partitions" d="${escapeXml(room.partitions)}"/>` : ""}<text class="label">${lines.map((line, i) => `<tspan x="${x}" y="${y + i * 17}">${escapeXml(line)}</tspan>`).join("")}</text>${showStatus ? `<text id="status-${room.id}" class="status" x="${x}" y="${y + lines.length * 17 + 5}">${escapeXml(room.mapNote || "")}</text>` : ""}</g>`;
       })
       .join("");
     const openings = (floor.openings || [])
@@ -1457,7 +1461,11 @@ class HouseAtlas extends HTMLElement {
           },
         });
       }
-      if (room.entity && !room.lights) {
+      if (
+        room.entity &&
+        !room.lights &&
+        this.config.placements?.[room.entity]?.door !== "garage"
+      ) {
         rules.push({
           entity: room.entity,
           element: `status-${room.id}`,
