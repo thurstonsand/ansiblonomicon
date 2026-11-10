@@ -67,14 +67,20 @@ function titleFor(cwd: string): string {
 }
 
 export default function sessionTitle(pi: ExtensionAPI): void {
+  let deferredTitle: NodeJS.Timeout | undefined;
+
   const resetTitle = (ctx: ExtensionContext, defer = false): void => {
     const title = titleFor(ctx.cwd);
     ctx.ui.setTitle(title);
-    if (defer) setTimeout(() => ctx.ui.setTitle(title), 0);
+    if (defer) deferredTitle = setTimeout(() => ctx.ui.setTitle(title), 0);
   };
 
   pi.on("session_start", (_event, ctx) => {
     resetTitle(ctx, true);
+  });
+
+  pi.on("session_shutdown", () => {
+    clearTimeout(deferredTitle);
   });
 
   pi.on("session_info_changed", (_event, ctx) => {

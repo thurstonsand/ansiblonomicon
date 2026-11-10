@@ -29,7 +29,7 @@ Verification:
 ```sh
 mise run check             # every non-mutating check
 mise run fix               # every formatter and autofixer
-mise run python:lint       # or nvim:fmt:check, workers:typecheck, pi:check
+mise run python:lint       # or nvim:fmt:check, workers:typecheck, pi:check, pi:test
 mise tasks                 # the full list; --all adds the Go subproject
 ```
 

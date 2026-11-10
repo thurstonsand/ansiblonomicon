@@ -1131,6 +1131,7 @@ depends = [
   "nvim:fmt:check",
   "workers:typecheck",
   "pi:check",
+  "pi:test",
   "sudoers:check",
   "browser:test",
   "//bootstrap/capabilities/software/sources/...:check",
@@ -1218,6 +1219,10 @@ run = "wrangler deploy --dry-run"
 [tasks."browser:test"]
 description = "Test the Lucky browser extension's query routing and destination choice"
 run = "node --test bootstrap/capabilities/browser/"
+
+[tasks."pi:test"]
+description = "Test the pi extensions"
+run = "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/*.test.ts"
 
 [tasks."pi:check"]
 description = "Lint and type-check the pi extensions"
