@@ -2,6 +2,8 @@
 
 Status: the dedicated Worker, origin DNS/Access application, tunnel route, HSTS entries and pod042 daemon were deployed on 2026-09-19. The `pi-doppelclaude` repository owns the daemon-only Dockerfile and GitHub Actions build, test and publication workflow. Stable releases publish a multi-architecture `ghcr.io/thurstonsand/http-doppelclaude:latest` image. Ansiblonomicon consumes that tag, always pulls it during reconciliation and configures the service; it does not build or promote images.
 
+The Amp integration was retired on 2026-11-10 in favor of Amp's native Claude subscription routing. The Docker service, durable state, credentials and public endpoint remain in place for OpenCode; retiring the Amp connection does not retire this infrastructure.
+
 ## Route and authentication
 
 `https://doppelclaude.thurstons.house/v1/messages`, `/v1/models` and `/v1/sdk-models` terminate at the dedicated Worker. The Worker accepts `Authorization: Bearer` or `x-api-key`, using the existing `CLI_PROXY_API_KEY` for all three routes.
@@ -14,9 +16,11 @@ Unlike `aig`, this Worker does not route through AI Gateway. It does not read, r
 
 ## Amp model routing
 
-The Amp custom-URL connection maps `anthropic/*`. It sends every Claude model call from Amp's own modes through the daemon, whether main agent, Oracle or subagent, so those roles keep Amp's prompt, tools and Oracle while billing to the Claude subscription through the Agent SDK instead of Amp credits. The connection must sit above any other connection that maps the same models. Removing `anthropic/*` or deactivating the connection returns them to Amp credits.
+Amp's native [Claude subscription routing](https://ampcode.com/docs/the-dial#use-your-claude-subscription) now serves Claude models in its regular modes, including Task and Read Thread subagents, through the Claude Agent SDK on Amp's servers. Supported Claude model usage counts against the linked plan instead of Amp token credits; orbs, non-Claude models and extras such as Painter are not covered by the Claude plan. The separate Claude Code mode is not required.
 
-Amp's native Claude Code mode, released 2026-10-10, also uses the Agent SDK with a linked Claude Pro/Max plan, but it replaces Amp's agent with Claude Code's and excludes the Oracle and Librarian. It does not replace this route.
+The personal native Claude subscription connection `59a839da-99ea-4308-bced-619dd986ee6c` remains active at priority 0. The former `Doppelclaude` custom-URL connection `03c857f2-bc2f-4f8c-a0cc-d2b29042c71e`, with mapping `anthropic/*`, was deactivated on 2026-11-10; its settings are retained but it no longer participates in Amp routing. The custom `doppelclaude-opus` and `doppelclaude-fable` modes and their plugin were already retired on 2026-10-25. ChatGPT routing is unchanged. Models not served by an active connection use Amp credits, so keep the native Claude subscription active and check Model Routing when changing models or connections.
+
+Verification on 2026-11-10: a [Claude Opus 5.5 conversation](https://ampcode.com/threads/T-01a1c713-8c33-750b-81f8-7d23fece9cd2) completed on pod042 after the custom connection was disabled. `amp threads usage T-01a1c713-8c33-750b-81f8-7d23fece9cd2 --details` reported both its Agent request and a separate model-provider inference probe as routed via Claude Subscription, each with $0.00 Amp cost. The probe identified connection type `model_provider_claude_sub` and the native connection ID above. The container remained healthy without a restart, and authenticated public model discovery returned HTTP 200 with four models. This verifies native subscription inference and the retained public endpoint, not an OpenCode conversation or every Claude model.
 
 ## Host and subscription credentials
 
@@ -26,7 +30,7 @@ The host already has unattended 1Password access through its retained service-ac
 
 The capability selects only `CLI_PROXY_API_KEY` and `CLAUDE_CODE_OAUTH_TOKEN`. Native mise renders a root-owned mode-0600 Compose environment file, mapping the former to `DOPPELCLAUDE_HTTP_API_KEY`; the mutually exclusive `_FILE` setting is not used. The Worker receives the proxy key and Access credentials only, never Claude's subscription token. Rotating its key also requires reconciling the daemon and clients.
 
-The personal plugin's Show models command reads `CLI_PROXY_API_KEY` from its environment; the same existing key is stored as an Amp personal secret. Existing orbs need their secret environment refreshed. An independent local CLI needs supported Amp personal environment injection (`--amp-env` for runners) or secret-manager injection; arbitrary running local processes do not inherit the Amp secret automatically. Never store the value in git or artifacts. `GET /v1/sdk-models` exposes the startup SDK version, capture timestamp, model values/resolved IDs/display names and bridge aliases without inference. Deploy a verified endpoint-capable image before activating the Worker route.
+Clients such as OpenCode still need the existing `CLI_PROXY_API_KEY` for the public endpoint. Amp's native subscription routing does not use that key, the daemon's `CLAUDE_CODE_OAUTH_TOKEN`, or the retired plugin's Show models command. Retain the daemon and Worker credentials for their remaining consumers. Never store credential values in git or artifacts. `GET /v1/sdk-models` exposes the startup SDK version, capture timestamp, model values/resolved IDs/display names and bridge aliases without inference. Deploy a verified endpoint-capable image before activating the Worker route.
 
 The requester selects the model through `body.model`, using a stable Claude ID, bare or provider-qualified. The server operator does not set a model or default. `/v1/models` advertises the SDK's startup `supportedModels` result for discovery, not as an allowlist.
 
@@ -48,6 +52,10 @@ Return `Content-Type: text/event-stream`, flush headers immediately, and send SS
 6. Deploy the public endpoint with `mise run edge:deploy:doppelclaude`. Its script reads only the named fnox secrets, deploys the Worker, then reconciles secrets through Wrangler stdin. Missing bindings return 503, not unauthenticated access. This task is intentionally excluded from aggregate `edge:deploy` to keep deployment focused.
 7. Check public requests without/wrong keys return 401; origin requests without service credentials are denied; valid `/v1/models` returns the expected models; missing/invalid thread markers are rejected by the daemon; valid SSE delivers incremental events and 15-second heartbeats through several minutes of silence; cancellation stops upstream work. Repeat after restart to verify durable state and subscription credential handling. Never print credentials or persist full prompts in smoke-test output.
 
+## Historical commissioning
+
+The records below describe the former Amp integration and its deployments, not current Amp routing or mode availability.
+
 Read-only checks on 2026-09-19 confirmed pod042 reports `x86_64`, Debian `amd64`, Docker 29.8.1, the mounted `black-box/docker` filesystem and existing `ingress` network. UID/GID 3456 were available. Compose explicitly selects `linux/amd64`.
 
 Edge commissioning applied a reviewed saved plan with two additions, two updates and no destruction; the subsequent full plan reported no changes. Public HTTPS returned 401 for missing/wrong keys, and Access denied origin requests without its service token with 403. Valid credentials reached the absent daemon and returned 502. Python's default user agent hit the zone's existing browser-integrity filter (1010); curl passed. No security exemptions were added. These initial readiness checks alone did not prove streaming or the real Amp path.
@@ -58,7 +66,7 @@ The existing personal Amp custom-URL connection `03c857f2-bc2f-4f8c-a0cc-d2b2904
 
 The commissioning scope here is: commit/push the reviewed infrastructure and published runtime digest; run only `mise pod042 doppelclaude --check` and `mise pod042 doppelclaude`; apply the new origin DNS/Access application, additive home-tunnel ingress and HSTS host entries; deploy the dedicated Worker/custom domain and its existing secret bindings. Reject unrelated Cloudflare drift. Full pod042 reconciliation, changes to `aig`, restarting existing stacks and image/npm publication are outside this scope.
 
-## Live Amp commissioning passed
+## Historical live Amp commissioning
 
 On 2026-09-19, two actual Amp conversations used the deployed route, a high-style custom agent with full tools, and `doppelclaude/claude-opus-4-6`. The [application commissioning thread](https://ampcode.com/threads/T-01a0b1cd-a31d-7519-b0f1-06e4c0375e39) verified Amp model metadata, usage reporting `claude-opus-4-6`, and 43,884 warm second-turn cache-read tokens. Its evidence is `.amp/in/artifacts/deployed-amp-conversations.json` in that thread's workspace.
 
@@ -73,9 +81,9 @@ A separate [automatic compaction conversation](https://ampcode.com/threads/T-01a
 
 This verifies real Amp tools, independent conversation history, warm cache reads, automatic compaction and continuation after both a graceful dedicated-container restart and idle SIGKILL with explicit start. The user waived UI fork testing as a release criterion because no fork action is exposed; it remains unverified, not passed, and direct branch-import tests do not substitute for it. Automatic restart-policy behavior, an in-flight crash, multi-minute silent-stream heartbeats and disconnect cancellation were not independently tested through this deployed route. The deployed service and Amp route remain in place; no debug logging was enabled.
 
-## Both permanent personal modes are ready
+## Historical personal modes
 
-On 2026-10-25 both modes were retired in favor of Amp's built-in modes, which reach the daemon through the `anthropic/*` mapping above: `doppelclaude.ts` was removed from the user-plugins repo and the connection's `doppelclaude/*` mapping was dropped. The rest of this section is history.
+On 2026-10-25 both modes were retired in favor of Amp's built-in modes, which then reached the daemon through an `anthropic/*` mapping: `doppelclaude.ts` was removed from the user-plugins repo and the connection's `doppelclaude/*` mapping was dropped. That connection was subsequently deactivated on 2026-11-10 as described above. The rest of this section is history.
 
 The budgeted-thinking compatibility image comes from [workflow 35493792893](https://github.com/thurstonsand/pi-doppelclaude/actions/runs/35493792893), [application revision](https://github.com/thurstonsand/pi-doppelclaude/commit/31bd3af39999f9fecb9b0e5e0d5b7c6bb94d8208), with 364 application checks passing. The preceding diagnostic image identified Amp's alias-specific `thinking.budget_tokens` at `/thinking` as the rejected field. This release accepts enabled thinking with a budget of at least 1,024 tokens and preserves the exact SDK budget; the application owner verified both aliases against the real SDK with a 2,048-token budget. Real permanent-mode commissioning follows deployment. This addresses the reproduced schema failure, not the unrelated lost-payload Fable SSE error. Diagnostic rollback image: `ghcr.io/thurstonsand/http-doppelclaude@sha256:9cf4365d1654b548d690c87301dc691e5b0ef42954ce65e8b6b1cad7ce641076`; earlier alias rollback image: `ghcr.io/thurstonsand/http-doppelclaude@sha256:09aca9d5e3ceed01b53a30999670723fdd24cfdaa06d2854911931c3ccde57b1`. No request-value logging was added.
 
