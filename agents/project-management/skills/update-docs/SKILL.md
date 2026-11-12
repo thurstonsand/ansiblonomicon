@@ -35,7 +35,7 @@ For older design docs, status is the only normal update:
 
 ### Agent docs
 
-Agent docs describe how future agents should operate in the repo. This includes files like `CLAUDE.md`, `AGENTS.md`, skill files, local agent instructions, and similar guidance.
+Agent docs describe how future agents should operate in the repo. This includes skill files, on-demand agent references, and similar guidance.
 
 Update them when the staged change affects:
 
@@ -45,6 +45,10 @@ Update them when the staged change affects:
 - known hazards, required skills, or operational procedures
 
 Keep these docs directive and practical.
+
+### Always-loaded guidance
+
+`AGENTS.md`, `CLAUDE.md`, and every file they pull in with `@path` load into every session. Never edit them in this pass, and never propose additions to them. When the staged change leaves something in them wrong or outdated, propose the correction to the user and wait for their answer before the commit. Apply only what they approve, in the same commit.
 
 ### User docs
 
@@ -94,7 +98,7 @@ Usually update docs for:
 - new or changed commands, flags, APIs, configuration, workflows, or deployment steps
 - removed or renamed behavior that docs still mention
 - examples that no longer work
-- agent instructions that would cause future agents to do the wrong thing
+- agent instructions that would cause future agents to do the wrong thing, except always-loaded guidance, where you propose the correction instead
 - active first-pass design docs whose intended decisions changed during implementation
 - older design docs only when their status should become `Rejected` or `Superseded by ...`
 
@@ -126,6 +130,7 @@ After updating docs:
 1. Review the doc diff against the staged code diff.
 2. Confirm the documentation change is related to the staged work.
 3. Note unrelated stale docs separately, if found.
-4. Stage only the documentation updates that belong with this change.
+4. Propose your corrections to always-loaded guidance, if any, and apply the ones the user approves.
+5. Stage only the documentation updates that belong with this change.
 
 The end state: related docs are current, historical docs stay historical, and the commit remains focused.
