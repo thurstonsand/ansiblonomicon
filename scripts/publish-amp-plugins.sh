@@ -10,9 +10,12 @@ elif (( $# > 0 )); then
 fi
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-source_dir="$repo_root/bootstrap/capabilities/agent-harness/amp-plugins"
+source_dir="$(mktemp -d)"
 checkout_dir="$(mktemp -d)"
-trap 'rm -rf "$checkout_dir"' EXIT
+trap 'rm -rf "$source_dir" "$checkout_dir"' EXIT
+
+uv run --project "$repo_root" --no-sync python \
+  "$repo_root/bootstrap/capabilities/agent-harness/render_amp_plugins.py" --output "$source_dir"
 
 repository="$(amp plugins repositories --json | jq -ce '.[] | select(.scope == "user" and .viewerCanWrite)')"
 clone_url="$(jq -r '.cloneURL' <<<"$repository")"

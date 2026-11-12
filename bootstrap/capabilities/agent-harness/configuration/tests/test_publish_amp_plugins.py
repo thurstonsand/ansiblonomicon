@@ -5,8 +5,11 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tempfile
 import unittest
+
+import yaml
 
 PUBLISHER = Path(__file__).resolve().parents[5] / "scripts/publish-amp-plugins.sh"
 
@@ -48,6 +51,57 @@ class PublishPluginsTest(unittest.TestCase):
             (plugins / "one.ts").write_text("current file plugin\n")
             (source / "scripts").mkdir()
             shutil.copy2(PUBLISHER, source / "scripts/publish-amp-plugins.sh")
+            capability = plugins.parent
+            original = PUBLISHER.parent.parent / "bootstrap/capabilities/agent-harness"
+            for name in (
+                "render_amp_plugins.py",
+                "amp_modes.py",
+                "catalogue.py",
+                "harness_filters.py",
+            ):
+                shutil.copy2(original / name, capability / name)
+            shutil.copy2(PUBLISHER.parent.parent / "pyproject.toml", source)
+            (source / ".venv").symlink_to(sys.prefix, target_is_directory=True)
+            upstream = root / "upstream.ts"
+            upstream.write_text(
+                "const MODEL = 'upstream/default'\n"
+                'const REASONING_EFFORT = "medium";\n'
+                "const instructions = `Original prompt.`\n"
+            )
+            (capability / "models.yml").write_text(
+                yaml.safe_dump(
+                    {
+                        "models": {
+                            "provider": {
+                                "review": {
+                                    "agent_harness": {
+                                        "aliases": {"amp": "vendor/reviewer"}
+                                    }
+                                },
+                                "search": {
+                                    "agent_harness": {
+                                        "aliases": {"amp": "vendor/searcher"}
+                                    }
+                                },
+                            }
+                        },
+                        "amp": {
+                            "plugins": {
+                                "oracle": {
+                                    "source": upstream.as_uri(),
+                                    "model": "provider.review",
+                                    "effort": "xhigh",
+                                },
+                                "finder": {
+                                    "source": upstream.as_uri(),
+                                    "model": "provider.search",
+                                    "effort": "low",
+                                },
+                            }
+                        },
+                    }
+                )
+            )
             run("git", "add", ".")
             run("git", "commit", "-m", "Declare plugins")
 
@@ -89,6 +143,18 @@ class PublishPluginsTest(unittest.TestCase):
                 ("unrelated.ts", "keep me"),
                 ("one.ts", "current file plugin"),
                 ("owned/index.ts", "current directory plugin"),
+                (
+                    "oracle.ts",
+                    'const MODEL = "vendor/reviewer"\n'
+                    'const REASONING_EFFORT = "xhigh"\n'
+                    "const instructions = `Original prompt.`",
+                ),
+                (
+                    "finder.ts",
+                    'const MODEL = "vendor/searcher"\n'
+                    'const REASONING_EFFORT = "low"\n'
+                    "const instructions = `Original prompt.`",
+                ),
             ):
                 self.assertEqual(
                     run("git", "--git-dir", str(remote), "show", f"main:{name}"),
@@ -110,3 +176,30 @@ class PublishPluginsTest(unittest.TestCase):
             self.assertEqual(
                 run("git", "--git-dir", str(remote), "rev-parse", "main"), published
             )
+            upstream.write_text(
+                "const MODEL = 'upstream/new-model'\n"
+                "const REASONING_EFFORT = 'high'\n"
+                "const instructions = `Updated upstream prompt.`\n"
+            )
+            publish()
+            self.assertEqual(
+                run("git", "--git-dir", str(remote), "show", "main:oracle.ts"),
+                'const MODEL = "vendor/reviewer"\n'
+                'const REASONING_EFFORT = "xhigh"\n'
+                "const instructions = `Updated upstream prompt.`",
+            )
+            published = run("git", "--git-dir", str(remote), "rev-parse", "main")
+            for invalid in (
+                "const MODEL = chooseModel()\nconst REASONING_EFFORT = 'low'\n",
+                "const MODEL = 'a'\nconst MODEL = 'b'\nconst REASONING_EFFORT = 'low'\n",
+                "const MODEL = 'a'\nconst REASONING_EFFORT = chooseEffort()\n",
+            ):
+                with self.subTest(invalid=invalid):
+                    upstream.write_text(invalid)
+                    with self.assertRaises(subprocess.CalledProcessError) as failure:
+                        publish()
+                    self.assertIn("expected one", failure.exception.stderr)
+                    self.assertEqual(
+                        run("git", "--git-dir", str(remote), "rev-parse", "main"),
+                        published,
+                    )

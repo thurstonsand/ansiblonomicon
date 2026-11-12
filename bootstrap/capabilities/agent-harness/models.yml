@@ -214,6 +214,19 @@ models:
 # its `agent_harness.aliases.amp`. An omitted mode keeps Amp's automatic
 # routing. Apply by hand through `mise run amp:modes`.
 amp:
+  plugins:
+    oracle:
+      source: "https://ampcode.com/@amp/plugins/oracle.ts"
+      model: anthropic.fable
+      effort: xhigh
+    librarian:
+      source: "https://ampcode.com/@amp/plugins/librarian.ts"
+      model: openai.gpt_sol
+      effort: low
+    finder:
+      source: "https://ampcode.com/@amp/plugins/finder.ts"
+      model: openai.gpt_sol
+      effort: low
   tune_modes:
     low:
       main: {model: openai.gpt_luna, effort: max}
