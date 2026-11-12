@@ -13,6 +13,7 @@ export default function (amp: PluginAPI) {
 		model: MODEL,
 		reasoningEffort: REASONING_EFFORT,
 		instructions: INSTRUCTIONS,
+		// Direct specialist calls hit Amp's retired subagent dispatcher; keep code-mode enabled.
 		tools: {
 			include: [
 				'shell_command',
@@ -20,10 +21,9 @@ export default function (amp: PluginAPI) {
 				'read_web_page',
 				'read_thread',
 				'find_thread',
-				'finder',
-				'librarian',
+				'plugin__finder__finder',
+				'plugin__librarian__librarian',
 			],
-			exclude: ['tool_search', 'code_exec'],
 		},
 		display: { label: 'Code review', color: '#2563eb' },
 	})
