@@ -66,7 +66,6 @@ class PublishPluginsTest(unittest.TestCase):
             original = PUBLISHER.parent.parent / "bootstrap/capabilities/agent-harness"
             for name in (
                 "render_amp_plugins.py",
-                "amp_modes.py",
                 "catalogue.py",
                 "harness_filters.py",
             ):

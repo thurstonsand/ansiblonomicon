@@ -9,11 +9,18 @@ import shutil
 import sys
 import urllib.request
 
-from amp_modes import EFFORTS, text
 from catalogue import mapping
 import yaml
 
 CAPABILITY = Path(__file__).resolve().parent
+EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
+
+
+def text(entry: dict[str, object], field: str) -> str:
+    value = entry[field]
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"Expected {field} to be a non-empty string")
+    return value
 
 
 def render(capability: Path, output: Path) -> None:
