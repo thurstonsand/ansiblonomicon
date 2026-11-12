@@ -6,6 +6,11 @@
       "id": "863c7088-4f81-4d86-826f-f1b47e098e93",
       "sounds_like": "py",
       "word": "pi"
+    },
+    {
+      "id": "82dade09-efb8-4c0b-a686-5760f0b05660",
+      "sounds_like": "storage",
+      "word": "storj"
     }
   ],
   "replacements": [],
@@ -14,6 +19,9 @@
     "ansiblonomicon",
     "pi",
     "omarchy",
-    "shoutrrr"
+    "shoutrrr",
+    "claude",
+    "codex",
+    "storj"
   ]
 }

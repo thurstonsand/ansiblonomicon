@@ -3,7 +3,7 @@
   "idle": {
     "screensaver": 300,
     "lock": 600,
-    "suspend": 129600
+    "suspend": 1800
   },
   "bar": {
     "position": "right",
