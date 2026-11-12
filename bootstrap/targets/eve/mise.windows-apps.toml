@@ -26,6 +26,7 @@ if ! MSYS_NO_PATHCONV=1 reg query 'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\C
     'exit (Start-Process $env:INSTALLER -ArgumentList "/VERYSILENT /SUPPRESSMSGBOXES /NORESTART /SP-" -Wait -PassThru).ExitCode'
   rm -r "$(dirname "$installer")"
 fi
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File windows-apps/amp.ps1
 powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File windows-apps/magic-trackpad.ps1
 '''
 
