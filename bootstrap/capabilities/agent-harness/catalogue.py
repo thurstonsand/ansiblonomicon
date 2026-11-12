@@ -207,6 +207,8 @@ def load_model_tiers(repo: Path, hostname: str) -> dict[str, dict[str, str]]:
         aliases.pop("pi", None)
     for tier, fields in mapping(work_models).items():
         tiers.setdefault(tier, {})["pi"] = str(mapping(fields)["pi_alias"])
+    # Keep the work review model aligned with Codex and the handoff roster.
+    tiers["gpt_astra"]["pi"] = tiers["gpt_sol"]["pi"]
     return tiers
 
 

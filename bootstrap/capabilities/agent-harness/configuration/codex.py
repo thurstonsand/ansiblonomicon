@@ -150,10 +150,19 @@ def render(
         if hostname == WORK_HOST
         else models["openai"]["gpt_astra"]["version"]
     )
+    reviewer = tomlkit.parse(
+        (repo / "agents/project-management/agents/code-review.toml").read_text()
+    )
+    reviewer["model"] = (
+        data["work_models"]["gpt_sol"]["version"]
+        if hostname == WORK_HOST
+        else models["openai"]["gpt_astra"]["version"]
+    )
     cli = _librarian_cli(home, hostname)
     return {
         ".codex/config.toml": tomlkit.dumps(merged),
         ".codex/agents/oracle.toml": tomlkit.dumps(oracle),
+        ".codex/agents/code-review.toml": tomlkit.dumps(reviewer),
         **_librarian_role(
             home,
             cli,

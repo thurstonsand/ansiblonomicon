@@ -138,7 +138,7 @@ If you're reaching for a subagent, consider the following:
 - taste: ability to create a well-considered UI; a nicely balanced abstraction; prose that's pleasant to read
 - cost is at most a tie-breaker; weight these in order of importance: intelligence > taste > cost
 
-Try to pick the right agent for the job. If it's not in the list, don't consider it. Also on the table: adversarial cross-lab reviews of your plans and implementations: OpenAI models reviewing Anthropic plans/implementations and vice versa.
+For subagents without a named profile, try to pick the right agent for the job. If it's not in the list, don't consider it. Also on the table: adversarial cross-lab reviews of your plans and implementations: OpenAI models reviewing Anthropic plans/implementations and vice versa.
 {% endif -%}
 {% if local is file %}
 @~/.agents/local.md

@@ -7,6 +7,8 @@ from pathlib import Path
 import re
 from typing import Any, TypedDict, cast
 
+import yaml
+
 
 class PluginEntry(TypedDict, total=False):
     """A plugin as declared in the config, before profile resolution."""
@@ -1081,7 +1083,9 @@ def agent_harness_transform_skill_content(
     frontmatter = re.match(r"---\n.*?\n---\n", content, flags=re.DOTALL)
     model_match = re.search(r"^model:\s*(.+)$", content, flags=re.MULTILINE)
     if frontmatter and model_match and model_match.end() < frontmatter.end():
-        model_value = model_match.group(1).strip()
+        model_value = cast(str | dict[str, str], yaml.safe_load(model_match.group(1)))
+        if isinstance(model_value, dict):
+            model_value = model_value[target_agent]
         replacement = model_tiers.get(model_value, {}).get(target_agent)
         if replacement is None:
             msg = (
@@ -1089,7 +1093,7 @@ def agent_harness_transform_skill_content(
                 f"with a {target_agent} alias"
             )
             raise ValueError(msg)
-        if replacement != model_value:
+        if replacement != model_match.group(1).strip():
             start, end = model_match.span(1)
             content = content[:start] + replacement + content[end:]
             modified = True

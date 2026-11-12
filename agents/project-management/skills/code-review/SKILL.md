@@ -10,7 +10,7 @@ Two-axis review of a change:
 - **Standards**: does the code conform to this repo's documented standards?
 - **Spec**: does the code faithfully implement the agreed plan or design?
 
-Both axes run as **separate reviewers** so they don't pollute each other's context, then this skill aggregates their findings. Each reviewer is the Oracle where your harness has one, otherwise a subagent. Start every reviewer with a fresh context window.
+Both axes run as **separate reviewers** so they don't pollute each other's context, then this skill aggregates their findings. Each reviewer is the code-review agent where your harness has one, otherwise a subagent using GPT-6 Astra where model selection is supported. Start every reviewer with a fresh context window.
 
 ## Process
 

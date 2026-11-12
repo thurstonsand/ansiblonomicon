@@ -12,16 +12,16 @@ models:
   # ===========================================================================
   anthropic:
     fable:
-      version: "claude-fable-5-1[1m]"
-      display_name: "Claude Fable 5.1"
+      version: "claude-fable-5-2[1m]"
+      display_name: "Claude Fable 5.2"
       max_input: 1000000
       max_output: 64000
       vision: true
       agent_harness:
         aliases:
           claude: "fable[1m]"
-          amp: "anthropic/claude-fable-5-1"
-          pi: "doppelclaude/claude-fable-5-1"
+          amp: "anthropic/claude-fable-5-2"
+          pi: "doppelclaude/claude-fable-5-2"
       vscode:
         include: true
         thinking: true
