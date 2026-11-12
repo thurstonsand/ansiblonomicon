@@ -1,12 +1,14 @@
-"""Hands agents a message's image as a short-lived URL, since Executor's tools return JSON only.
+"""Hands agents a message's image, shrunk for vision models.
 
-POST /beeper/images {"chat", "message", "index"} reads that attachment through Beeper Desktop's API
-with the caller's own Beeper token, shrinks it for vision models, and answers with an unguessable
-/img/<token>.jpg URL that serves it to anyone for ten minutes. The tunnel keeps the POST behind
-Cloudflare Access and leaves /img/ open, like a presigned URL.
+POST /beeper/images {"chat", "message", "index", "inline"} reads that attachment through Beeper
+Desktop's API with the caller's own Beeper token and shrinks it. With inline true it answers with
+the JPEG as an MCP image block, which Executor delivers to the agent as an image. Without it, it
+answers with an unguessable /img/<token>.jpg URL that serves the image to anyone for ten minutes,
+like a presigned URL. The tunnel keeps the POST behind Cloudflare Access and leaves /img/ open.
 """
 
 import argparse
+import base64
 from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
@@ -111,10 +113,11 @@ class Handler(BaseHTTPRequestHandler):
             return self.send_error(HTTPStatus.NOT_FOUND)
         try:
             body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-            chat, message, index = (
+            chat, message, index, inline = (
                 str(body["chat"]),
                 str(body["message"]),
                 int(body["index"]),
+                body.get("inline") is True,
             )
             authorization = self.headers["Authorization"]
             if not authorization:
@@ -152,6 +155,23 @@ class Handler(BaseHTTPRequestHandler):
                 f"/v1/assets/serve?{urllib.parse.urlencode({'url': source})}",
                 authorization,
             )
+            if inline:
+                with tempfile.TemporaryDirectory() as scratch:
+                    out = Path(scratch, "image.jpg")
+                    width, height = shrink(original, out)
+                    data = out.read_bytes()
+                return self.answer(
+                    HTTPStatus.OK,
+                    {
+                        "image": {
+                            "type": "image",
+                            "mimeType": "image/jpeg",
+                            "data": base64.b64encode(data).decode(),
+                        },
+                        "width": width,
+                        "height": height,
+                    },
+                )
             self.sweep()
             token = secrets.token_urlsafe(24)
             width, height = shrink(original, self.cache / f"{token}.jpg")
