@@ -34,7 +34,7 @@ run_at_load = true
 
 [bootstrap.macos.launchd.agents."house.thurstons.beeper-images"]
 program = "/Library/Frameworks/Python.framework/Versions/Current/bin/python3"
-args = ["-I", "/Users/thurstonsand/Develop/ansiblonomicon/bootstrap/targets/pod153/server/beeper_images.py", "--port", "7364", "--cache", "/Users/thurstonsand/Library/Caches/beeper-images", "--public-url", "https://pod153-mcp.thurstons.house/img/"]
+args = ["-I", "/Users/thurstonsand/Develop/ansiblonomicon/bootstrap/targets/pod153/server/beeper_images.py", "--port", "7364"]
 run_at_load = true
 keep_alive = true
 stdout_path = "~/Library/Logs/beeper-images.log"

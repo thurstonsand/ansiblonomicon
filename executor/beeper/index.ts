@@ -433,7 +433,7 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
           width: number(),
           height: number(),
         }),
-        { method: "POST", body: { chat: input.chat, message: input.message, index: input.index ?? 0, inline: true } },
+        { method: "POST", body: { chat: input.chat, message: input.message, index: input.index ?? 0 } },
       ),
   );
 

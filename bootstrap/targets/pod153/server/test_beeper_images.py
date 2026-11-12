@@ -88,44 +88,28 @@ class BeeperImagesTest(unittest.TestCase):
         self.addCleanup(beeper.server_close)
         self.addCleanup(beeper.shutdown)
         beeper_images.BEEPER = f"http://127.0.0.1:{beeper.server_port}"
-        self.cache = Path(tempfile.mkdtemp())
-        QuietHandler.cache = self.cache
-        QuietHandler.public = "https://example.test/img/"
         server = serve(QuietHandler)
         self.addCleanup(server.server_close)
         self.addCleanup(server.shutdown)
         self.base = f"http://127.0.0.1:{server.server_port}"
 
-    def post(self, **extra: object) -> dict[str, object]:
+    def post(self) -> dict[str, object]:
         request = urllib.request.Request(
             f"{self.base}/beeper/images",
-            data=json.dumps(
-                {"chat": CHAT, "message": MESSAGE, "index": 0, **extra}
-            ).encode(),
+            data=json.dumps({"chat": CHAT, "message": MESSAGE, "index": 0}).encode(),
             headers={"Authorization": TOKEN, "Content-Type": "application/json"},
         )
         with urllib.request.urlopen(request) as response:
             return json.load(response)
 
-    def test_inline_answers_an_mcp_image_block_and_keeps_no_copy(self) -> None:
-        answer = self.post(inline=True)
+    def test_answers_the_shrunk_image_as_an_mcp_image_block(self) -> None:
+        answer = self.post()
         image = cast(dict[str, object], answer["image"])
         self.assertEqual((image["type"], image["mimeType"]), ("image", "image/jpeg"))
         data = base64.b64decode(str(image["data"]), validate=True)
         self.assertEqual(data[:3], b"\xff\xd8\xff")
         self.assertEqual(jpeg_size(data), (1568, 784))
         self.assertEqual((answer["width"], answer["height"]), (1568, 784))
-        self.assertNotIn("url", answer)
-        self.assertEqual(list(self.cache.iterdir()), [])
-
-    def test_without_inline_answers_a_url_that_serves_the_image(self) -> None:
-        answer = self.post()
-        url = str(answer["url"])
-        self.assertTrue(url.startswith("https://example.test/img/"))
-        name = url.removeprefix("https://example.test/img/")
-        with urllib.request.urlopen(f"{self.base}/img/{name}") as response:
-            self.assertEqual(response.headers["Content-Type"], "image/jpeg")
-            self.assertEqual(jpeg_size(response.read()), (1568, 784))
 
 
 if __name__ == "__main__":

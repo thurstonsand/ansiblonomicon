@@ -1,10 +1,8 @@
 """Hands agents a message's image, shrunk for vision models.
 
-POST /beeper/images {"chat", "message", "index", "inline"} reads that attachment through Beeper
-Desktop's API with the caller's own Beeper token and shrinks it. With inline true it answers with
-the JPEG as an MCP image block, which Executor delivers to the agent as an image. Without it, it
-answers with an unguessable /img/<token>.jpg URL that serves the image to anyone for ten minutes,
-like a presigned URL. The tunnel keeps the POST behind Cloudflare Access and leaves /img/ open.
+POST /beeper/images {"chat", "message", "index"} reads that attachment through Beeper Desktop's API
+with the caller's own Beeper token, shrinks it, and answers with the JPEG as an MCP image block,
+which Executor delivers to the agent as an image. The tunnel keeps it behind Cloudflare Access.
 """
 
 import argparse
@@ -13,17 +11,14 @@ from http import HTTPStatus
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 from pathlib import Path
-import secrets
 import subprocess
 import tempfile
-import time
 from typing import Required, TypedDict
 import urllib.error
 import urllib.parse
 import urllib.request
 
 BEEPER = "http://127.0.0.1:23373"
-LIFETIME = 600
 # Anthropic's guidance: images beyond 1568 px on the long edge are scaled down before the model sees them.
 LONG_EDGE = 1568
 
@@ -87,8 +82,8 @@ def shrink(original: bytes, out: Path) -> tuple[int, int]:
         try:
             # -Z scales up as readily as down, so only a large image gets it.
             fit = ["-Z", str(LONG_EDGE)] if max(size(source)) > LONG_EDGE else []
-            # By way of a bitmap, which holds no EXIF, so the public copy keeps no location or
-            # camera details, and its orientation is applied to the pixels.
+            # By way of a bitmap, which holds no EXIF, so the copy an agent sees keeps no location
+            # or camera details, and its orientation is applied to the pixels.
             for args in (
                 ["-s", "format", "bmp", *fit, str(source), "--out", str(flat)],
                 ["-s", "format", "jpeg", str(flat), "--out", str(out)],
@@ -105,19 +100,15 @@ def shrink(original: bytes, out: Path) -> tuple[int, int]:
 
 
 class Handler(BaseHTTPRequestHandler):
-    cache: Path
-    public: str
-
     def do_POST(self) -> None:
         if self.path != "/beeper/images":
             return self.send_error(HTTPStatus.NOT_FOUND)
         try:
             body = json.loads(self.rfile.read(int(self.headers["Content-Length"])))
-            chat, message, index, inline = (
+            chat, message, index = (
                 str(body["chat"]),
                 str(body["message"]),
                 int(body["index"]),
-                body.get("inline") is True,
             )
             authorization = self.headers["Authorization"]
             if not authorization:
@@ -145,7 +136,7 @@ class Handler(BaseHTTPRequestHandler):
                     HTTPStatus.UNPROCESSABLE_ENTITY,
                     f"attachment {index} is {attachment['type']} with no image",
                 )
-            # Beeper also serves file:// URLs, which would publish whatever local file a sender named.
+            # Beeper also serves file:// URLs, which would hand an agent whatever local file a sender named.
             if not source.startswith(("mxc://", "localmxc://")):
                 raise Failure(
                     HTTPStatus.UNPROCESSABLE_ENTITY,
@@ -155,66 +146,24 @@ class Handler(BaseHTTPRequestHandler):
                 f"/v1/assets/serve?{urllib.parse.urlencode({'url': source})}",
                 authorization,
             )
-            if inline:
-                with tempfile.TemporaryDirectory() as scratch:
-                    out = Path(scratch, "image.jpg")
-                    width, height = shrink(original, out)
-                    data = out.read_bytes()
-                return self.answer(
-                    HTTPStatus.OK,
-                    {
-                        "image": {
-                            "type": "image",
-                            "mimeType": "image/jpeg",
-                            "data": base64.b64encode(data).decode(),
-                        },
-                        "width": width,
-                        "height": height,
-                    },
-                )
-            self.sweep()
-            token = secrets.token_urlsafe(24)
-            width, height = shrink(original, self.cache / f"{token}.jpg")
+            with tempfile.TemporaryDirectory() as scratch:
+                out = Path(scratch, "image.jpg")
+                width, height = shrink(original, out)
+                data = out.read_bytes()
         except Failure as failure:
             return self.answer(failure.status, {"error": str(failure)})
         self.answer(
             HTTPStatus.OK,
             {
-                "url": f"{self.public}{token}.jpg",
+                "image": {
+                    "type": "image",
+                    "mimeType": "image/jpeg",
+                    "data": base64.b64encode(data).decode(),
+                },
                 "width": width,
                 "height": height,
-                "expires_at": time.strftime(
-                    "%Y-%m-%dT%H:%M:%SZ", time.gmtime(time.time() + LIFETIME)
-                ),
             },
         )
-
-    def do_GET(self) -> None:
-        name = self.path.removeprefix("/img/")
-        path = self.cache / name
-        # Tokens are URL-safe base64, so a name with a slash or dot-dot never names a cached image.
-        if (
-            name == self.path
-            or "/" in name
-            or not name.endswith(".jpg")
-            or not self.fresh(path)
-        ):
-            return self.send_error(HTTPStatus.NOT_FOUND)
-        data = path.read_bytes()
-        self.send_response(HTTPStatus.OK)
-        self.send_header("Content-Type", "image/jpeg")
-        self.send_header("Content-Length", str(len(data)))
-        self.send_header("Cache-Control", "private, no-store")
-        self.end_headers()
-        self.wfile.write(data)
-
-    def fresh(self, path: Path) -> bool:
-        return path.is_file() and time.time() - path.stat().st_mtime < LIFETIME
-
-    def sweep(self) -> None:
-        for path in self.cache.glob("*.jpg"):
-            if not self.fresh(path):
-                path.unlink(missing_ok=True)
 
     def answer(self, status: int, payload: dict[str, object]) -> None:
         data = json.dumps(payload).encode()
@@ -228,12 +177,7 @@ class Handler(BaseHTTPRequestHandler):
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", type=int, required=True)
-    parser.add_argument("--cache", type=Path, required=True)
-    parser.add_argument("--public-url", required=True)
     args = parser.parse_args()
-    args.cache.mkdir(parents=True, exist_ok=True)
-    Handler.cache = args.cache
-    Handler.public = args.public_url
     ThreadingHTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
 
 
