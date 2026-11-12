@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch upstream Amp plugins and override their model and effort from models.yml."""
+"""Prepare Amp plugins with the models and prompts declared in models.yml."""
 
 import argparse
 import json
@@ -38,24 +38,43 @@ def render(capability: Path, output: Path) -> None:
         if effort not in EFFORTS:
             raise ValueError(f"Unknown effort {effort!r} for {name}")
         destination = output / f"{name}.ts"
-        if destination.exists():
-            raise ValueError(f"Upstream plugin conflicts with {destination}")
-        url = text(plugin, "source")
-        with urllib.request.urlopen(url, timeout=30) as response:
-            content = response.read().decode("utf-8")
-        for constant, replacement in (("MODEL", alias), ("REASONING_EFFORT", effort)):
-            content, count = re.subn(
-                rf"^const {constant} = (?:'[^'\n]+'|\"[^\"\n]+\");?$",
-                f"const {constant} = {json.dumps(replacement)}",
-                content,
-                flags=re.MULTILINE,
-            )
-            if count != 1:
-                raise ValueError(
-                    f"{url}: expected one {constant} declaration, got {count}"
+        if "source" in plugin:
+            if destination.exists():
+                raise ValueError(f"Upstream plugin conflicts with {destination}")
+            source = text(plugin, "source")
+            with urllib.request.urlopen(source, timeout=30) as response:
+                content = response.read().decode("utf-8")
+        else:
+            source = str(capability / "amp-plugins" / destination.name)
+            content = destination.read_text()
+        replacements = {"MODEL": alias, "REASONING_EFFORT": effort}
+        if "instructions" in plugin:
+            prompt = capability / text(plugin, "instructions")
+            markdown = prompt.read_text()
+            frontmatter = re.match(r"\A---\n.*?\n---\n", markdown, flags=re.DOTALL)
+            if not frontmatter:
+                raise ValueError(f"{prompt}: expected agent frontmatter")
+            replacements["INSTRUCTIONS"] = markdown[frontmatter.end() :].strip()
+        for constant, replacement in replacements.items():
+            declarations = list(
+                re.finditer(
+                    rf"^const {constant} = (?:'[^'\n]*'|\"[^\"\n]*\");?$",
+                    content,
+                    flags=re.MULTILINE,
                 )
+            )
+            if len(declarations) != 1:
+                raise ValueError(
+                    f"{source}: expected one {constant} declaration, got {len(declarations)}"
+                )
+            start, end = declarations[0].span()
+            content = (
+                content[:start]
+                + f"const {constant} = {json.dumps(replacement)}"
+                + content[end:]
+            )
         destination.write_text(content)
-        print(f"{name}: {alias} ({effort}), from {url}")
+        print(f"{name}: {alias} ({effort}), from {source}")
 
 
 def main() -> None:

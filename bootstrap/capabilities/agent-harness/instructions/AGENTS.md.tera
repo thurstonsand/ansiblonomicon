@@ -114,9 +114,15 @@ Just use soft wrap, my editor knows how to handle long lines.
 My messages on every network (iMessage, WhatsApp, Signal and the rest, through Beeper) and my Apple Reminders are Executor apps. When a task touches either, start with Executor's `skills({})`.
 
 {% endif -%}
-{% if not amp -%}
 ### Delegation and model selection
 
+{% if amp -%}
+When delegating, use the tools below:
+
+- `code_review`: reviewing code changes.
+- `oracle`: engineering advice, planning, and difficult debugging.
+- `Task`: for implementation, finding, researching, or otherwise for general use
+{% else -%}
 If you're reaching for a subagent, consider the following:
 {% if vars.host_profile == "work" %}
 | model               | role                               | thinking level | cost | intelligence | taste | notes                                                                            |

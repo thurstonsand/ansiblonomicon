@@ -49,9 +49,20 @@ class PublishPluginsTest(unittest.TestCase):
             (plugins / "owned").mkdir(parents=True)
             (plugins / "owned/index.ts").write_text("current directory plugin\n")
             (plugins / "one.ts").write_text("current file plugin\n")
+            (plugins / "reviewer.ts").write_text(
+                "const MODEL = 'local/default'\n"
+                "const REASONING_EFFORT = 'low'\n"
+                "const INSTRUCTIONS = ''\n"
+            )
             (source / "scripts").mkdir()
             shutil.copy2(PUBLISHER, source / "scripts/publish-amp-plugins.sh")
             capability = plugins.parent
+            prompt = capability / "reviewer.md"
+            prompt.write_text(
+                "---\nname: reviewer\n---\n\n"
+                'Review `src/handler.ts`, "quotes", \\paths, and ${templates}.\n'
+                "Keep both lines.\n"
+            )
             original = PUBLISHER.parent.parent / "bootstrap/capabilities/agent-harness"
             for name in (
                 "render_amp_plugins.py",
@@ -96,6 +107,11 @@ class PublishPluginsTest(unittest.TestCase):
                                     "source": upstream.as_uri(),
                                     "model": "provider.search",
                                     "effort": "low",
+                                },
+                                "reviewer": {
+                                    "instructions": "reviewer.md",
+                                    "model": "provider.review",
+                                    "effort": "high",
                                 },
                             }
                         },
@@ -155,6 +171,13 @@ class PublishPluginsTest(unittest.TestCase):
                     'const REASONING_EFFORT = "low"\n'
                     "const instructions = `Original prompt.`",
                 ),
+                (
+                    "reviewer.ts",
+                    'const MODEL = "vendor/reviewer"\n'
+                    'const REASONING_EFFORT = "high"\n'
+                    'const INSTRUCTIONS = "Review `src/handler.ts`, \\"quotes\\", '
+                    '\\\\paths, and ${templates}.\\nKeep both lines."',
+                ),
             ):
                 self.assertEqual(
                     run("git", "--git-dir", str(remote), "show", f"main:{name}"),
@@ -181,6 +204,7 @@ class PublishPluginsTest(unittest.TestCase):
                 "const REASONING_EFFORT = 'high'\n"
                 "const instructions = `Updated upstream prompt.`\n"
             )
+            prompt.write_text("---\nname: reviewer\n---\n\nUpdated local prompt.\n")
             publish()
             self.assertEqual(
                 run("git", "--git-dir", str(remote), "show", "main:oracle.ts"),
@@ -188,7 +212,21 @@ class PublishPluginsTest(unittest.TestCase):
                 'const REASONING_EFFORT = "xhigh"\n'
                 "const instructions = `Updated upstream prompt.`",
             )
+            self.assertEqual(
+                run("git", "--git-dir", str(remote), "show", "main:reviewer.ts"),
+                'const MODEL = "vendor/reviewer"\n'
+                'const REASONING_EFFORT = "high"\n'
+                'const INSTRUCTIONS = "Updated local prompt."',
+            )
             published = run("git", "--git-dir", str(remote), "rev-parse", "main")
+            prompt.write_text("Missing frontmatter.\n")
+            with self.assertRaises(subprocess.CalledProcessError) as failure:
+                publish()
+            self.assertIn("expected agent frontmatter", failure.exception.stderr)
+            self.assertEqual(
+                run("git", "--git-dir", str(remote), "rev-parse", "main"), published
+            )
+            prompt.write_text("---\nname: reviewer\n---\n\nUpdated local prompt.\n")
             for invalid in (
                 "const MODEL = chooseModel()\nconst REASONING_EFFORT = 'low'\n",
                 "const MODEL = 'a'\nconst MODEL = 'b'\nconst REASONING_EFFORT = 'low'\n",

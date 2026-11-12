@@ -215,6 +215,10 @@ models:
 # routing. Apply by hand through `mise run amp:modes`.
 amp:
   plugins:
+    code-review:
+      instructions: ../../../agents/project-management/agents/code-review.md
+      model: openai.gpt_astra
+      effort: high
     oracle:
       source: "https://ampcode.com/@amp/plugins/oracle.ts"
       model: anthropic.fable

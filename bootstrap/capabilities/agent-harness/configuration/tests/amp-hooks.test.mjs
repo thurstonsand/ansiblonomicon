@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import codeReview from '../../amp-plugins/code-review.ts'
 import timing from '../../amp-plugins/command-timing.ts'
 import comments from '../../amp-plugins/no-chat-comments.ts'
 
@@ -139,4 +140,79 @@ test('Amp rejects new chat-history comments in patches and edits, not context or
 		).action,
 		'allow',
 	)
+})
+
+function registerReview(thread) {
+	let tool
+	codeReview({
+		createAgent: () => ({
+			createThread: async (options) => {
+				thread.options = options
+				return thread
+			},
+		}),
+		registerTool: (definition) => {
+			tool = definition
+		},
+	})
+	return tool
+}
+
+test('Amp review forwards scope and parent context and returns only report text', async () => {
+	const messages = []
+	let cancelled = false
+	const thread = {
+		appendUserMessage: async (message) => messages.push(message),
+		waitForResponse: async () => ({
+			content: [
+				{ type: 'text', text: 'One blocker: ' },
+				{ type: 'image', url: 'ignored' },
+				{ type: 'text', text: 'a stale cache.' },
+			],
+		}),
+		cancel: async () => {
+			cancelled = true
+		},
+	}
+	const tool = registerReview(thread)
+	const controller = new AbortController()
+	const ctx = { thread: { id: 'parent-review' }, signal: controller.signal }
+	assert.equal(
+		await tool.execute({ task: '  Review only src/cache.ts.  ' }, ctx),
+		'One blocker: a stale cache.',
+	)
+	assert.deepEqual(thread.options, { parentThreadID: 'parent-review' })
+	assert.deepEqual(messages, [
+		{
+			type: 'user-message',
+			content: 'Review only src/cache.ts.\n\nParent thread: parent-review',
+		},
+	])
+	controller.abort()
+	assert.equal(cancelled, false)
+	await assert.rejects(
+		tool.execute({ task: '   ' }, ctx),
+		/Missing code review task/,
+	)
+})
+
+test('Amp review cancels an in-flight child and propagates its error', async () => {
+	const waiting = Promise.withResolvers()
+	const report = Promise.withResolvers()
+	const tool = registerReview({
+		appendUserMessage: async () => {},
+		waitForResponse: () => {
+			waiting.resolve()
+			return report.promise
+		},
+		cancel: async () => report.reject(new Error('Child cancelled')),
+	})
+	const controller = new AbortController()
+	const execution = tool.execute(
+		{ task: 'Review src/cache.ts.' },
+		{ thread: { id: 'parent-review' }, signal: controller.signal },
+	)
+	await waiting.promise
+	controller.abort()
+	await assert.rejects(execution, /Child cancelled/)
 })
