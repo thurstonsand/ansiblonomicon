@@ -8,17 +8,19 @@ See @CONTEXT.md for project vocabulary.
 
 ## Ethos
 
-I used to be a heavy user of nix, home-manager, and NixOS, but I found the strictness of adherence to the config to be stifling (many files deployed as read-only) and I found the language esoteric (tho this is largely solved by agents today). I thought there ought to be a way to achieve the same, but through a different, more lenient means, and stumbled on mise. I really liked the ability to write configuration once, and have it deployed and working across all my machines in a consistent way, and that I can start afresh with an almost-fully-configured system with relative ease.
+I came here from nix, home-manager, and NixOS. I loved writing configuration once and having it work the same on every machine, and starting afresh with an almost fully configured system. I left because the strictness was stifling: deployed files were read-only, and the language was esoteric. This repo is my way of getting the same outcome by more lenient means, through mise.
 
-To the extent possible, I want to manage all developer-focused state within the repo. For applications, where relevant we can capture it here, but for many they store their own settings via cloud sync, or simply in a means that's not easily accessible as a file (plists...), so it's acceptable to forego those.
+- i want developer-focused state in the repo wherever it's practical. Applications that sync their own settings, or keep them somewhere awkward like plists, can stay out; don't contort the repo to chase them
+- lean first on platform-native behavior, whether at the OS, harness, or vendor level, and fall back to managing our own machinery where not sufficient
+- i ride the latest version and fix breakage when it comes; a pin needs a reason
+- keep it lean: remove what I don't use, including dead hosts and config, and keep what I do.
 
-I also wanted to capture the various AI agent harnesses in a unified and flexible way, since I found each system different enough to make it worth implementing a layer on top of them. The goal is to let me transition between agents as seamlessly as possible to make it easy to try out the next hot thing.
-
-## Core principles
+## Ground rules
 
 - reconciliation over execution: I want to declare my desired state and have the system align with it; this means minimize one-way operations and make reruns idempotent
 - capabilities for clean abstractions: group native mise resources by the system they own; extend the existing owner before adding another
-- on the terminal, I use `cmd` to represent ghostty actions, `ctrl` for shell interactions, and `alt` for whatever is holding the alt-screen. This may not always be universally possible, but is a general rule of thumb
+- everything lives in one place and takes one path: one shared file with branches over per-host copies, settings in one system or none, one way to update
+- write it once, above any single tool. That holds for machines and for agent harnesses alike: the harness layer exists so I can move to the next hot thing without rebuilding my setup
 
 ## Development Guidelines
 

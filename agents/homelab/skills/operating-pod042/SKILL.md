@@ -13,7 +13,7 @@ Treat this repository as pod042's desired state. Diagnose live state freely; mak
 - Tailscale: `pod042-ts`; forced Cloudflare path: `pod042-remote`.
 - Recovery console: `pod042-kvm` locally or `pod042-kvm-ts` remotely, operated through `uv run scripts/kvm.py pod042 --insecure <command>` when host SSH is unavailable. The same client selects `pod153` for the Mac's separate KVM and password item.
 - Desired state: `bootstrap/targets/pod042/`.
-- Reconciliation: `mise pod042 [capability] [--check]`, run on pod042 itself. It applies the current working tree, dirty or not.
+- Reconciliation: `mise pod042 [capability] [--check]`, run on pod042 itself. It applies the current working tree, dirty or not. The `dev.mise.reconcile-daily.timer` user timer, declared by `remote-development`, runs `scripts/reconcile-or-fix` at 05:30, an hour after pod153's, so the two never push to main at once. The script commits and pushes the `lazy-lock.json` that the plugin sync rewrites. Other agents share the checkout, so the pull autostashes their uncommitted work and the reconcile deploys it along with main; only incoming commits that conflict with that work stop the run before the rebase. A failure goes to an agent, which sets unfinished work that caused it aside, reconciles main, and puts the work back in progress.
 
 Capabilities are registered in `scripts/pod042_reconcile.py`. Keep resource ownership disjoint. Read the capability's README and nearby ticket before changing storage, network, backup, or identity.
 

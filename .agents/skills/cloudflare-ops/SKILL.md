@@ -34,3 +34,15 @@ Guidance for how to use the Cloudflare MCP for this project.
 - Want edge/runtime logs? → **Workers Observability**
 - Want counters/latency/tokens/custom metrics? → **Analytics Engine**
 - Want live output right now? → **tail**
+
+## Repo ownership
+
+Split by tool, not by resource. Terraform owns anything with lifecycle — DNS, tunnels, Zero Trust, R2, rulesets, zone settings — at `terraform/cloudflare/`, applied with OpenTofu. Wrangler owns deployable code: Workers at `wrangler/{aig,hooks}/` and Pages sites at `cloudflare-pages/`.
+
+```sh
+mise run edge:plan         # plan; edge:init and edge:apply for init and apply
+mise run edge:deploy       # both Workers; edge:deploy:aig and :hooks individually
+mise run edge:deploy:tesla
+```
+
+Worker deploys manage their own secrets through the deploy scripts; pass `--force-secret` to overwrite existing ones.

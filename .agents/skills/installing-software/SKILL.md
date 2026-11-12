@@ -9,7 +9,7 @@ Manage host software through this repo's desired state. Use the host's existing 
 
 ## macOS
 
-- Homebrew and Mac App Store apps: `bootstrap/capabilities/mac-apps/Brewfile`, with `Brewfile.work` for work; reconcile through `mise mac-apps`. Work's private additions go in an ignored `Brewfile.work.*` beside it.
+- Homebrew and Mac App Store apps: `bootstrap/capabilities/mac-apps/Brewfile.pod153`, with `Brewfile.work` for work; `Brewfile` keeps the desktop loadout pod153 ran before it became a server. Reconcile through `mise mac-apps`. Work's private additions go in an ignored `Brewfile.work.*` beside it.
 - Runtimes and global CLIs: pod153's global mise config, `bootstrap/targets/pod153/mise-global.toml`; work's in the inventories under `bootstrap/capabilities/language-tools/`, with its private additions in its native target. Packages that only a language package manager can install also go in those inventories. Reconcile through `mise language-tools`.
 - Reconciliation: `mise laptop` runs every registered native capability. Work's private files belong to the `work-local` capability.
 - Claude Code, shp, and uvc-util: `bootstrap/capabilities/software/`, registered under the Mac targets. Go and UVC overlay sources live in its `sources/` directory. Use the matching root task with `--check` before applying; UVC reconciliation builds but never runs camera settings.
@@ -25,6 +25,14 @@ Use native mise at `bootstrap/targets/pod042/`; its target resources are the dep
 - Deploy through `mise pod042 [capability] [--check]` on pod042 itself. It uses the current checkout, so an intentional working change can be tested before commit.
 - Read `bootstrap/targets/pod042/datasets/README.md` before changing storage layout or its migration state; full reconciliation refuses pending migrations.
 - Use native `state = "absent"` for retired managed paths. After it converges away everywhere relevant, remove the temporary declaration and source. A source deletion alone does not remove deployed state.
+
+## no9-type-s
+
+Packages, themes, and plugins belong in `bootstrap/targets/no9-type-s/loadout.toml`, reconciled natively by the `omarchy-loadout` capability; read `bootstrap/targets/no9-type-s/README.md` first. Software missing from Omarchy's repositories uses its vendor's installer instead of the AUR.
+
+## eve
+
+`windows-apps` declares winget packages in `[bootstrap.packages]`; reconcile through `mise windows`.
 
 ## UDMP
 
