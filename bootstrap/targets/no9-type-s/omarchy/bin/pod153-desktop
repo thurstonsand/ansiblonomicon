@@ -33,4 +33,5 @@ SWIFT
 
 ssh -T -f -o ExitOnForwardFailure=yes -o StreamLocalBindUnlink=yes -L "$socket:localhost:5900" pod153 \
   'exec sleep 10'
-VNC_USERNAME=thurstonsand VNC_PASSWORD="$password" exec vncviewer -FullScreen=0 -Shared -SecurityTypes DH "$socket"
+# Keep a local pointer when Screen Sharing provides no visible cursor.
+VNC_USERNAME=thurstonsand VNC_PASSWORD="$password" exec vncviewer -FullScreen=0 -Shared -SecurityTypes DH -AlwaysCursor=1 -CursorType=System "$socket"
