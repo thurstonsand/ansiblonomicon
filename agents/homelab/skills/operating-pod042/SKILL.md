@@ -15,7 +15,7 @@ Treat this repository as pod042's desired state. Diagnose live state freely; mak
 - Desired state: `bootstrap/targets/pod042/`.
 - Reconciliation: `mise pod042 [capability] [--check]`, run on pod042 itself. It applies the current working tree, dirty or not.
 
-Capabilities are registered in `scripts/pod042_reconcile.py` and `bootstrap/mise.toml`. Keep resource ownership disjoint. Read the capability's README and nearby ticket before changing storage, network, backup, or identity.
+Capabilities are registered in `scripts/pod042_reconcile.py`. Keep resource ownership disjoint. Read the capability's README and nearby ticket before changing storage, network, backup, or identity.
 
 The network capability installs Tailscale but cannot enroll a new machine unattended. Its first reconcile intentionally fails the final network check until an operator runs `sudo tailscale up --hostname=pod042 --accept-dns=false --accept-routes=false --advertise-tags=tag:pod042 --ssh=true`, authorizes the printed URL, and reruns reconciliation. The declaration then enforces the direct, tagged Tailscale SSH posture without DNS, route acceptance, advertised routes, or an exit node. A fresh installation receives a new stable Tailscale address; update the network check and shared SSH template together.
 
