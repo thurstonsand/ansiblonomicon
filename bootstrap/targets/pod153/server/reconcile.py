@@ -3,11 +3,13 @@
 
 import argparse
 from datetime import UTC, datetime, timedelta
+import json
 import os
 from pathlib import Path
 import plistlib
 import re
 import subprocess
+import time
 
 # pod153 lives on AC power; disablesleep keeps it awake with the lid closed on either source.
 AC_POWER = {
@@ -39,6 +41,8 @@ TIME_MACHINE_SKIPPED = [
 ]
 # Backups run hourly; the daily reconcile failing is what tells someone they stopped.
 TIME_MACHINE_STALE = timedelta(days=1)
+CUA_DRIVER = "/Applications/CuaDriver.app/Contents/MacOS/cua-driver"
+CUA_DRIVER_JOB = f"gui/{os.getuid()}/dev.mise.house.thurstons.cua-driver"
 SYSTEM_DAEMONS = {
     "Remote Login": ("com.openssh.sshd", "/System/Library/LaunchDaemons/ssh.plist"),
     "Tailscale": (
@@ -114,6 +118,32 @@ def replaced_since_start(job: str, plist: Path) -> bool:
         file.is_file() and datetime.fromtimestamp(file.stat().st_ctime) > started
         for file in files
     )
+
+
+def cua_driver_missing_grants() -> list[str]:
+    """The TCC grants the running Cua Driver daemon lacks.
+
+    `call` asks the daemon itself, so the answer is its own identity's grants, not this
+    process's. A daemon launchd just started needs a moment to open its socket.
+    """
+    command = [CUA_DRIVER, "call", "check_permissions", '{"prompt": false}']
+    result = subprocess.run(command, text=True, capture_output=True)
+    for _ in range(50):
+        if result.returncode == 0:
+            break
+        time.sleep(0.2)
+        result = subprocess.run(command, text=True, capture_output=True)
+    else:
+        raise SystemExit(f"server: Cua Driver did not answer: {result.stderr.strip()}")
+    status = json.loads(result.stdout)
+    return [
+        name
+        for name, key in (
+            ("Accessibility", "accessibility"),
+            ("Screen Recording", "screen_recording"),
+        )
+        if not status[key]
+    ]
 
 
 def login_password() -> str:
@@ -347,6 +377,18 @@ def main() -> None:
             else:
                 subprocess.run(command, check=True)
         print(f"server: set {name}")
+    # A daemon restarted under a reconcile can come up without grants TCC still
+    # holds for it; starting it again picks them up.
+    if missing := cua_driver_missing_grants():
+        if args.check:
+            print(f"server: would restart Cua Driver, which lacks {missing}")
+        else:
+            subprocess.run(["launchctl", "kickstart", "-k", CUA_DRIVER_JOB], check=True)
+            if missing := cua_driver_missing_grants():
+                raise SystemExit(
+                    f"server: Cua Driver lacks {', '.join(missing)}; grant it in System Settings > Privacy & Security"
+                )
+            print("server: set Cua Driver on its grants")
     if stale_backup:
         raise SystemExit(stale_backup)
 
