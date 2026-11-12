@@ -419,8 +419,8 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
   const getImage = query(
     {
       description:
-        "Get an image from a message as a URL, scaled to at most 1568 px and stripped of metadata, valid for ten minutes. " +
-        "Open the URL with an image viewing tool to see it. For a video, returns its preview frame when the network sent one. " +
+        "See an image from a message: returns it as an image, scaled to at most 1568 px and stripped of metadata. " +
+        "For a video, returns its preview frame when the network sent one. " +
         `${CHAT_ID} message is its id; index picks one of the message's attachments (default 0).`,
       input: object({ chat: string(), message: string(), index: number().optional() }),
     },
@@ -428,8 +428,12 @@ export default defineApp({ app: { accounts: { beeper } } }, async ({ app }) => {
       api(
         call,
         "/beeper/images",
-        object({ url: string(), width: number(), height: number(), expires_at: string() }),
-        { method: "POST", body: { chat: input.chat, message: input.message, index: input.index ?? 0 } },
+        object({
+          image: object({ type: string(), mimeType: string(), data: string() }),
+          width: number(),
+          height: number(),
+        }),
+        { method: "POST", body: { chat: input.chat, message: input.message, index: input.index ?? 0, inline: true } },
       ),
   );
 
