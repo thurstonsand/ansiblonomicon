@@ -40,7 +40,7 @@ jobs:
       - name: Tofu Apply (targeted)
         run: |
           tofu apply -auto-approve \
-            -target=cloudflare_dns_record.storj \
+            -target=cloudflare_dns_record.home_ip \
             -target=cloudflare_zero_trust_access_policy.home_network_bypass \
             -target=cloudflare_dns_record.tunnel_ssh_app
         env:

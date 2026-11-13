@@ -7,7 +7,7 @@ locals {
 
   tunnel_cname_target = "${cloudflare_zero_trust_tunnel_cloudflared.home.id}.cfargotunnel.com"
 
-  home_ip = sensitive(cloudflare_dns_record.storj.content)
+  home_ip = sensitive(cloudflare_dns_record.home_ip.content)
 
   # Once a tunnel rule sets any origin_request field, the API stores every other one at its
   # default and provider v5 plans to null them, so rules merge their overrides onto these.

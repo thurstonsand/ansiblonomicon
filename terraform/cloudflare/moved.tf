@@ -2,7 +2,7 @@
 
 moved {
   from = cloudflare_record.storj
-  to   = cloudflare_dns_record.storj
+  to   = cloudflare_dns_record.home_ip
 }
 
 moved {

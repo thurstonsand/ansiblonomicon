@@ -1,8 +1,8 @@
 # Static DNS records (not managed via tunnel_apps inventory)
 
-resource "cloudflare_dns_record" "storj" {
+resource "cloudflare_dns_record" "home_ip" {
   zone_id = local.zone_id
-  name    = "storj"
+  name    = "home-ip"
   type    = "A"
   content = "0.0.0.0" # placeholder; ddclient owns the actual IP
   proxied = false

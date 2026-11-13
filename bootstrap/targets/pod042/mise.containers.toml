@@ -449,7 +449,7 @@ protocol=cloudflare, \
 zone=thurstons.house, \
 login=token, \
 password={{ secret(name="cloudflare_api_token") }} \
-storj.thurstons.house
+home-ip.thurstons.house
 '''
 template = true
 owner = "thurstonsand"
