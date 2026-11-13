@@ -14,11 +14,6 @@ resource "cloudflare_ai_gateway" "llms" {
   retry_backoff              = "exponential"
 }
 
-import {
-  to = cloudflare_ai_gateway.llms
-  id = "${local.account_id}/llms"
-}
-
 # =============================================================================
 # CUSTOM PROVIDER (via API; the provider has no resource for it)
 # =============================================================================

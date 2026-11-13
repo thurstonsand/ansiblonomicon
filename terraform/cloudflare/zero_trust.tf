@@ -153,7 +153,3 @@ resource "cloudflare_zero_trust_device_custom_profile" "thurstons_house_reroute"
   ]
 }
 
-import {
-  to = cloudflare_zero_trust_device_custom_profile.thurstons_house_reroute
-  id = "${local.account_id}/0c44e984-7b42-4e71-b416-2637915fc7c8"
-}

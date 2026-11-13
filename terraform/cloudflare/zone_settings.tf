@@ -64,8 +64,3 @@ resource "cloudflare_zone_setting" "this" {
   }
 }
 
-import {
-  for_each = local.zone_settings
-  to       = cloudflare_zone_setting.this[each.key]
-  id       = "${local.zone_id}/${each.key}"
-}
