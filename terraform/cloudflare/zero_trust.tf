@@ -1,18 +1,15 @@
 resource "cloudflare_zero_trust_access_application" "truenas_app" {
   account_id                 = local.account_id
   name                       = "TrueNAS App"
-  domain                     = "cli-proxy-api.${local.zone_name}"
   type                       = "self_hosted"
   http_only_cookie_attribute = true
   session_duration           = "730h"
   auto_redirect_to_identity  = true
   skip_interstitial          = true
   allowed_idps               = [cloudflare_zero_trust_access_identity_provider.google.id]
-  # TODO: migrate to `destinations` block when upgrading to provider v5
-  # Sticking with v4.x for now as Cloudflare recommends waiting until March 2025 for v5 to stabilize
-  self_hosted_domains = [
-    "cli-proxy-api.${local.zone_name}",
-    "anypod.${local.zone_name}/admin/*",
+  destinations = [
+    { type = "public", uri = "cli-proxy-api.${local.zone_name}" },
+    { type = "public", uri = "anypod.${local.zone_name}/admin/*" },
   ]
   policies = [
     { id = cloudflare_zero_trust_access_policy.home_network_bypass.id, precedence = 1 },
@@ -105,7 +102,7 @@ resource "cloudflare_zero_trust_access_application" "ssh_access" {
   session_duration           = "24h"
   auto_redirect_to_identity  = true
   allowed_idps               = [cloudflare_zero_trust_access_identity_provider.google.id]
-  self_hosted_domains        = [for app in local.ssh_tunnel_apps : "${app.host}.${local.zone_name}"]
+  destinations               = [for app in local.ssh_tunnel_apps : { type = "public", uri = "${app.host}.${local.zone_name}" }]
   policies = [
     { id = cloudflare_zero_trust_access_policy.admin_access.id, precedence = 1 },
   ]
@@ -119,7 +116,7 @@ resource "cloudflare_zero_trust_access_application" "recovery_ssh_access" {
   session_duration           = "24h"
   auto_redirect_to_identity  = true
   allowed_idps               = [cloudflare_zero_trust_access_identity_provider.google.id]
-  self_hosted_domains        = [for app in local.recovery_ssh_tunnel_apps : "${app.host}.${local.zone_name}"]
+  destinations               = [for app in local.recovery_ssh_tunnel_apps : { type = "public", uri = "${app.host}.${local.zone_name}" }]
   policies = [
     { id = cloudflare_zero_trust_access_policy.service_auth.id, precedence = 1 },
     { id = cloudflare_zero_trust_access_policy.admin_access.id, precedence = 2 },
@@ -134,7 +131,7 @@ resource "cloudflare_zero_trust_access_application" "internal_access" {
   session_duration           = "24h"
   auto_redirect_to_identity  = true
   allowed_idps               = [cloudflare_zero_trust_access_identity_provider.google.id]
-  self_hosted_domains        = [for app in local.internal_tunnel_apps : "${app.host}.${local.zone_name}"]
+  destinations               = [for app in local.internal_tunnel_apps : { type = "public", uri = "${app.host}.${local.zone_name}" }]
   policies = [
     { id = cloudflare_zero_trust_access_policy.service_auth.id, precedence = 1 },
     { id = cloudflare_zero_trust_access_policy.admin_access.id, precedence = 2 },
