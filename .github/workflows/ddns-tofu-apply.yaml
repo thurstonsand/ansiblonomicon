@@ -40,9 +40,9 @@ jobs:
       - name: Tofu Apply (targeted)
         run: |
           tofu apply -auto-approve \
-            -target=cloudflare_record.storj \
+            -target=cloudflare_dns_record.storj \
             -target=cloudflare_zero_trust_access_policy.home_network_bypass \
-            -target=cloudflare_record.tunnel_ssh_app
+            -target=cloudflare_dns_record.tunnel_ssh_app
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}

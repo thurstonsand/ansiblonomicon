@@ -4,14 +4,8 @@ resource "cloudflare_list" "pocket_casts" {
   kind        = "ip"
   name        = "pocket_casts"
 
-  item {
-    value {
-      ip = "3.219.254.95"
-    }
-  }
-  item {
-    value {
-      ip = "35.169.190.168"
-    }
-  }
+  items = [
+    { ip = "3.219.254.95" },
+    { ip = "35.169.190.168" },
+  ]
 }

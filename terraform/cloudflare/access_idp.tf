@@ -2,6 +2,7 @@ resource "cloudflare_zero_trust_access_identity_provider" "onetimepin" {
   account_id = local.account_id
   name       = "One-Time PIN"
   type       = "onetimepin"
+  config     = {}
 }
 
 resource "cloudflare_zero_trust_access_identity_provider" "google" {
@@ -9,7 +10,7 @@ resource "cloudflare_zero_trust_access_identity_provider" "google" {
   name       = "Google SSO"
   type       = "google"
 
-  config {
+  config = {
     client_id     = "placeholder"
     client_secret = "placeholder"
   }
@@ -22,4 +23,5 @@ resource "cloudflare_zero_trust_access_identity_provider" "google" {
 resource "cloudflare_zero_trust_access_service_token" "onepassword" {
   account_id = local.account_id
   name       = "1Password"
+  duration   = "forever"
 }

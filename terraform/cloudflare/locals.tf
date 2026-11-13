@@ -5,9 +5,27 @@ locals {
   zone_name = "thurstons.house"
   team_name = "thurstonshouse"
 
-  tunnel_cname_target = "${cloudflare_tunnel.home.id}.cfargotunnel.com"
+  tunnel_cname_target = "${cloudflare_zero_trust_tunnel_cloudflared.home.id}.cfargotunnel.com"
 
-  home_ip = sensitive(cloudflare_record.storj.content)
+  home_ip = sensitive(cloudflare_dns_record.storj.content)
+
+  # Once a tunnel rule sets any origin_request field, the API stores every other one at its
+  # default and provider v5 plans to null them, so rules merge their overrides onto these.
+  tunnel_origin_request_defaults = {
+    ca_pool                  = ""
+    connect_timeout          = 30
+    disable_chunked_encoding = false
+    http2_origin             = false
+    http_host_header         = ""
+    keep_alive_connections   = 100
+    keep_alive_timeout       = 90
+    no_happy_eyeballs        = false
+    no_tls_verify            = false
+    origin_server_name       = ""
+    proxy_type               = ""
+    tcp_keep_alive           = 30
+    tls_timeout              = 10
+  }
 
   # Apps exposed via Cloudflare Tunnel - single source of truth for DNS + tunnel ingress
   tunnel_apps = [

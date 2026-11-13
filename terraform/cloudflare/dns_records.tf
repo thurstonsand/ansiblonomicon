@@ -1,6 +1,6 @@
 # Static DNS records (not managed via tunnel_apps inventory)
 
-resource "cloudflare_record" "storj" {
+resource "cloudflare_dns_record" "storj" {
   zone_id = local.zone_id
   name    = "storj"
   type    = "A"
@@ -13,7 +13,7 @@ resource "cloudflare_record" "storj" {
   }
 }
 
-resource "cloudflare_record" "acme_challenge_ha" {
+resource "cloudflare_dns_record" "acme_challenge_ha" {
   zone_id = local.zone_id
   name    = "_acme-challenge.ha"
   type    = "CNAME"
@@ -23,7 +23,7 @@ resource "cloudflare_record" "acme_challenge_ha" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "ha" {
+resource "cloudflare_dns_record" "ha" {
   zone_id = local.zone_id
   name    = "ha"
   type    = "CNAME"
@@ -33,7 +33,7 @@ resource "cloudflare_record" "ha" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "screenshot" {
+resource "cloudflare_dns_record" "screenshot" {
   zone_id = local.zone_id
   name    = "screenshot"
   type    = "CNAME"
@@ -42,7 +42,7 @@ resource "cloudflare_record" "screenshot" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "sig1_domainkey" {
+resource "cloudflare_dns_record" "sig1_domainkey" {
   zone_id = local.zone_id
   name    = "sig1._domainkey"
   type    = "CNAME"
@@ -51,7 +51,7 @@ resource "cloudflare_record" "sig1_domainkey" {
   ttl     = 3600
 }
 
-resource "cloudflare_record" "root" {
+resource "cloudflare_dns_record" "root" {
   zone_id = local.zone_id
   name    = local.zone_name
   type    = "CNAME"
@@ -60,7 +60,7 @@ resource "cloudflare_record" "root" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "amp_subdomain" {
+resource "cloudflare_dns_record" "amp_subdomain" {
   zone_id = local.zone_id
   name    = "amp.${local.zone_name}"
   type    = "A"
@@ -70,7 +70,7 @@ resource "cloudflare_record" "amp_subdomain" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "amp_subdomain_wildcard" {
+resource "cloudflare_dns_record" "amp_subdomain_wildcard" {
   zone_id = local.zone_id
   name    = "*.amp.${local.zone_name}"
   type    = "A"
@@ -80,7 +80,7 @@ resource "cloudflare_record" "amp_subdomain_wildcard" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "amp_subdomain_certificate" {
+resource "cloudflare_dns_record" "amp_subdomain_certificate" {
   zone_id = local.zone_id
   name    = "_acme-challenge_g7k2v6l6lx7vbw24.amp.${local.zone_name}"
   type    = "CNAME"
@@ -90,7 +90,7 @@ resource "cloudflare_record" "amp_subdomain_certificate" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "www" {
+resource "cloudflare_dns_record" "www" {
   zone_id = local.zone_id
   name    = "www"
   type    = "CNAME"
@@ -99,7 +99,7 @@ resource "cloudflare_record" "www" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "overseerr_redirect" {
+resource "cloudflare_dns_record" "overseerr_redirect" {
   zone_id = local.zone_id
   name    = "overseerr"
   type    = "CNAME"
@@ -109,7 +109,7 @@ resource "cloudflare_record" "overseerr_redirect" {
 }
 
 # MX records
-resource "cloudflare_record" "mx1" {
+resource "cloudflare_dns_record" "mx1" {
   zone_id  = local.zone_id
   name     = local.zone_name
   type     = "MX"
@@ -119,7 +119,7 @@ resource "cloudflare_record" "mx1" {
   ttl      = 3600
 }
 
-resource "cloudflare_record" "mx2" {
+resource "cloudflare_dns_record" "mx2" {
   zone_id  = local.zone_id
   name     = local.zone_name
   type     = "MX"
@@ -130,7 +130,7 @@ resource "cloudflare_record" "mx2" {
 }
 
 # TXT records
-resource "cloudflare_record" "atproto_its" {
+resource "cloudflare_dns_record" "atproto_its" {
   zone_id = local.zone_id
   name    = "_atproto.its"
   type    = "TXT"
@@ -140,7 +140,7 @@ resource "cloudflare_record" "atproto_its" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "amp_subdomain_verification" {
+resource "cloudflare_dns_record" "amp_subdomain_verification" {
   zone_id = local.zone_id
   name    = "_amp-challenge.amp.${local.zone_name}"
   type    = "TXT"
@@ -149,7 +149,7 @@ resource "cloudflare_record" "amp_subdomain_verification" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "dmarc" {
+resource "cloudflare_dns_record" "dmarc" {
   zone_id = local.zone_id
   name    = "_dmarc"
   type    = "TXT"
@@ -158,7 +158,7 @@ resource "cloudflare_record" "dmarc" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "spf" {
+resource "cloudflare_dns_record" "spf" {
   zone_id = local.zone_id
   name    = local.zone_name
   type    = "TXT"
@@ -167,7 +167,7 @@ resource "cloudflare_record" "spf" {
   ttl     = 3600
 }
 
-resource "cloudflare_record" "apple_domain" {
+resource "cloudflare_dns_record" "apple_domain" {
   zone_id = local.zone_id
   name    = local.zone_name
   type    = "TXT"
@@ -176,7 +176,7 @@ resource "cloudflare_record" "apple_domain" {
   ttl     = 3600
 }
 
-resource "cloudflare_record" "google_site_verification" {
+resource "cloudflare_dns_record" "google_site_verification" {
   zone_id = local.zone_id
   name    = local.zone_name
   type    = "TXT"
@@ -186,7 +186,7 @@ resource "cloudflare_record" "google_site_verification" {
 }
 
 # GitLab Pages - https://gitlab.com/thurstons.house/snippethost
-resource "cloudflare_record" "snippethost" {
+resource "cloudflare_dns_record" "snippethost" {
   zone_id = local.zone_id
   name    = "snippethost"
   type    = "CNAME"
@@ -196,7 +196,7 @@ resource "cloudflare_record" "snippethost" {
   ttl     = 1
 }
 
-resource "cloudflare_record" "snippethost_gitlab_verification" {
+resource "cloudflare_dns_record" "snippethost_gitlab_verification" {
   zone_id = local.zone_id
   name    = "_gitlab-pages-verification-code.snippethost"
   type    = "TXT"

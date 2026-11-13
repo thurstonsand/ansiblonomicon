@@ -1,9 +1,8 @@
 resource "cloudflare_zone" "thurstons_house" {
-  account_id = local.account_id
-  paused     = false
-  plan       = "free"
-  type       = "full"
-  zone       = local.zone_name
+  account = { id = local.account_id }
+  name    = local.zone_name
+  paused  = false
+  type    = "full"
 
   lifecycle {
     prevent_destroy = true
