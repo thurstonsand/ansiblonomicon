@@ -82,12 +82,6 @@
       "groupSlug": "hk"
     },
     {
-      "description": "The Cloudflare provider's v5 is a rewrite rather than a release: resource names and schemas moved, and the migration is written up in terraform/cloudflare/UPGRADE_TO_V5.md but not done. Until that lands, a v5 PR is a plan that destroys and recreates most of the zone.",
-      "matchManagers": ["terraform"],
-      "matchPackageNames": ["cloudflare/cloudflare"],
-      "allowedVersions": "<5"
-    },
-    {
       "description": "The UniFi provider is my fork, served from a filesystem mirror rather than a registry, so there is nothing for Renovate to look up. A bump also has to carry the release's archive digests in provider.toml and a regenerated lockfile, which only install_unifi_provider.py can produce.",
       "matchManagers": ["terraform"],
       "matchPackageNames": ["thurstonsand/unifi"],
