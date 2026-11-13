@@ -1,23 +1,26 @@
+# Requests need cf-aig-authorization with the token in 1Password "Cloudflare/ai gateway/api token".
+resource "cloudflare_ai_gateway" "llms" {
+  account_id                 = local.account_id
+  id                         = "llms"
+  authentication             = true
+  collect_logs               = true
+  cache_ttl                  = 0
+  cache_invalidate_on_update = false
+  rate_limiting_interval     = 0
+  rate_limiting_limit        = 0
+  rate_limiting_technique    = "fixed"
+  retry_max_attempts         = 3
+  retry_delay                = 1000
+  retry_backoff              = "exponential"
+}
+
+import {
+  to = cloudflare_ai_gateway.llms
+  id = "${local.account_id}/llms"
+}
+
 # =============================================================================
-# Cloudflare AI Gateway Configuration (Manual Setup - Not Terraform Managed)
-# =============================================================================
-#
-# AI Gateway is not yet available as a Terraform resource as of provider v5.15.
-# This file documents the manual configuration for future migration.
-#
-# When `cloudflare_ai_gateway` becomes available, uncomment and adapt below.
-#
-# =============================================================================
-# GATEWAY SETUP (via Dashboard: AI > AI Gateway)
-# =============================================================================
-#
-# Gateway Name: llms
-# Gateway ID: llms
-# Authentication: ENABLED (cf-aig-authorization header required)
-# Auth Token: Stored in 1Password at "Cloudflare/ai gateway/api token"
-#
-# =============================================================================
-# CUSTOM PROVIDER (via API)
+# CUSTOM PROVIDER (via API; the provider has no resource for it)
 # =============================================================================
 #
 # Provider Name: CLI Proxy API
