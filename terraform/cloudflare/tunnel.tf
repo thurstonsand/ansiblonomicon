@@ -1,11 +1,15 @@
+resource "random_password" "home_tunnel_secret" {
+  length  = 64
+  special = false
+}
+
 resource "cloudflare_zero_trust_tunnel_cloudflared" "home" {
   account_id    = local.account_id
   name          = "home"
-  tunnel_secret = "placeholder"
+  tunnel_secret = base64encode(random_password.home_tunnel_secret.result)
 
   lifecycle {
     prevent_destroy = true
-    ignore_changes  = [tunnel_secret]
   }
 }
 
