@@ -138,14 +138,22 @@ resource "cloudflare_zero_trust_access_application" "internal_access" {
   ]
 }
 
-# TODO: Add device profile with split tunnel in Include mode when upgrading to provider v5
-# This will route only thurstons.house through WARP, everything else direct
-# Resource: cloudflare_zero_trust_device_custom_profile
-# For now, configure manually in Cloudflare dashboard:
-# Settings → WARP Client → Device profiles → Create profile
-# - Name: "Thurstons House Only"
-# - Match: identity.email != ""
-# - Split Tunnels: Include mode with:
-#   - thurstons.house
-#   - *.thurstons.house
-#   - thurstonshouse.cloudflareaccess.com
+resource "cloudflare_zero_trust_device_custom_profile" "thurstons_house_reroute" {
+  account_id        = local.account_id
+  name              = "thurstons.house reroute"
+  description       = "Send specific traffic to thurstons.house through warp ONLY"
+  enabled           = true
+  precedence        = 1000
+  lan_allow_minutes = 0
+  match             = "identity.email in {\"thurstonsand@gmail.com\"}"
+
+  service_mode_v2 = { mode = "warp" }
+  include = [
+    { host = "cli-proxy-api.${local.zone_name}" },
+  ]
+}
+
+import {
+  to = cloudflare_zero_trust_device_custom_profile.thurstons_house_reroute
+  id = "${local.account_id}/0c44e984-7b42-4e71-b416-2637915fc7c8"
+}
