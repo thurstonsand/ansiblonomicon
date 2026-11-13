@@ -19,7 +19,7 @@ services:
     networks: [telemetry]
 
   alloy:
-    image: grafana/alloy:v1.21.2
+    image: grafana/alloy:v1.21.3
     # The bridge's rotating records are private to UID 3456.
     user: "3456:3456"
     command: ["run", "--disable-reporting", "--storage.path=/var/lib/alloy", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
@@ -122,7 +122,7 @@ services:
     networks: [telemetry, ingress]
 
   grafana:
-    image: grafana/grafana:13.3.0
+    image: grafana/grafana:13.3.1
     user: "3456:3456"
     restart: unless-stopped
     read_only: true
