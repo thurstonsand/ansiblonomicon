@@ -9,8 +9,8 @@
 }
 
 thurstons.house, www.thurstons.house, http://thurstons.house, http://www.thurstons.house {
+	root * /etc/caddy/site
 	file_server
-	root * /srv
 }
 
 anypod.thurstons.house, http://anypod.thurstons.house {

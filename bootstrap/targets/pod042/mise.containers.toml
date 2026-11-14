@@ -144,6 +144,15 @@ owner = "root"
 group = "docker"
 mode = "0750"
 
+[bootstrap.directories."/etc/ansiblonomicon/containers/ingress/caddy/site"]
+owner = "root"
+group = "docker"
+mode = "0750"
+
+[bootstrap.directories."/mnt/black-box/docker/caddy/srv"]
+state = "absent"
+recursive = true
+
 [bootstrap.directories."/mnt/black-box/docker/arr-apps/bazarr/config"]
 owner = "thurstonsand"
 group = "media"
@@ -424,6 +433,18 @@ mode = "0600"
 
 [bootstrap.files."/etc/ansiblonomicon/containers/ingress/caddy/Caddyfile"]
 source = "containers/stacks/ingress/Caddyfile"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ingress/caddy/site/index.html"]
+source = "containers/stacks/ingress/site/index.html"
+owner = "root"
+group = "root"
+mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ingress/caddy/site/attendant.mp3.b64"]
+source = "containers/stacks/ingress/site/attendant.mp3.b64"
 owner = "root"
 group = "root"
 mode = "0600"

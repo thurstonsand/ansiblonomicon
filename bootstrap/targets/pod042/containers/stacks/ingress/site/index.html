@@ -1,0 +1,221 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Thank you for calling thurstons.house</title>
+<meta name="description" content="Thurston's House. Your visit is important to us.">
+<style>
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;min-height:100dvh;padding:18px 12px 26px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:16px;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;
+  background:
+    radial-gradient(circle,#ffd966 0 15%,transparent 16%) 0 0/76px 76px,
+    radial-gradient(circle,transparent 0 27%,#c9481a 28% 40%,transparent 41%) 0 0/76px 76px,
+    radial-gradient(circle,#7a3413 0 12%,transparent 13%) 38px 38px/76px 76px,
+    #ee9433}
+.cc{width:min(340px,92vw);min-height:6.6em;padding:10px 14px;display:flex;flex-direction:column;justify-content:center;
+  background:rgba(0,0,0,.86);color:#fff;border-radius:6px;font:bold 16px/1.4 "Courier New",Courier,monospace}
+.cc small{display:block;margin-bottom:4px;color:#ffd966;font-size:11px;letter-spacing:.12em}
+.phone{position:relative;width:min(340px,92vw);padding:18px 22px 26px;border-radius:34px;
+  background:linear-gradient(160deg,#a9b85a,#7d8f33 55%,#66762a);
+  box-shadow:inset 0 3px 0 #ffffff59,inset 0 -8px 0 #0000002e,0 18px 30px #0000005c}
+.phone::after{content:"";position:absolute;left:50%;top:100%;width:14px;height:62px;margin-left:-7px;
+  background:repeating-linear-gradient(#7d8f33 0 5px,#4c5a1c 5px 8px)}
+.grille{width:46%;height:34px;margin:2px auto 12px;border-radius:8px;
+  background:radial-gradient(circle,#2f3812 0 2.2px,transparent 2.6px) 0 0/11px 11px}
+.plate{margin:0 auto 16px;padding:7px 10px;background:#f4eeda;border:1px solid #0003;border-radius:4px;
+  text-align:center;color:#333;font:bold 12px/1.3 "Courier New",Courier,monospace;letter-spacing:.08em}
+.plate b{display:block;font-size:17px;letter-spacing:.14em}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.key{position:relative;appearance:none;border:0;margin:0;padding:6px 0 7px;height:62px;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;border-radius:12px;background:linear-gradient(#fbf6e6,#e6dec4);
+  color:#2b2b22;text-decoration:none;cursor:pointer;font:bold 27px/1 "Helvetica Neue",Helvetica,Arial,sans-serif;
+  box-shadow:0 5px 0 #4c5a1c,0 7px 8px #0005;transition:transform .06s,box-shadow .06s;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation}
+.key small{min-height:10px;margin-top:4px;font-size:10px;letter-spacing:.12em;color:#6b6b55}
+.key:active,.key.down{transform:translateY(4px);box-shadow:0 1px 0 #4c5a1c,0 2px 3px #0005}
+.key:focus-visible{outline:3px solid #2b2b22;outline-offset:2px}
+a.key small{color:#c9481a}
+a.key::after{content:"";position:absolute;inset:-3px;border-radius:14px;border:3px solid #ffd966;
+  box-shadow:0 0 12px 2px #ffd966;opacity:0;pointer-events:none;animation:ring 2.6s infinite}
+a.key:nth-child(2)::after{animation-delay:.25s}
+a.key:nth-child(3)::after{animation-delay:.5s}
+@keyframes ring{0%,45%,100%{opacity:0}15%{opacity:1}}
+.speaker{margin-top:44px;padding:10px 16px;border:0;border-radius:8px;background:#2b2118;color:#ffd966;cursor:pointer;
+  font:bold 13px "Courier New",Courier,monospace;letter-spacing:.1em;box-shadow:0 4px 0 #0006}
+.speaker[aria-pressed=true]{background:#c9481a;color:#fff}
+@media (prefers-reduced-motion:reduce){a.key::after{animation:none}}
+</style>
+</head>
+<body>
+<div class="cc"><small>[CC] AUTOMATED ATTENDANT</small><span id="cc" aria-live="polite"></span></div>
+
+<main class="phone">
+  <div class="grille" aria-hidden="true"></div>
+  <h1 class="plate"><b>THURSTON’S HOUSE</b>KL5-0404 · PLEASE HOLD</h1>
+  <div class="pad">
+    <a class="key" data-k="1" href="https://blog.thurstons.house" aria-label="Press 1 for the blog">1<small>BLOG</small></a>
+    <a class="key" data-k="2" href="https://seerr.thurstons.house" aria-label="Press 2 to request a movie or show">2<small>MOVIES</small></a>
+    <a class="key" data-k="3" href="https://ha.thurstons.house" aria-label="Press 3 for Home Assistant, sign-in required">3<small>HOUSE</small></a>
+    <button type="button" class="key" data-k="4">4<small>GHI</small></button>
+    <button type="button" class="key" data-k="5">5<small>JKL</small></button>
+    <button type="button" class="key" data-k="6">6<small>MNO</small></button>
+    <button type="button" class="key" data-k="7">7<small>PQRS</small></button>
+    <button type="button" class="key" data-k="8">8<small>TUV</small></button>
+    <button type="button" class="key" data-k="9">9<small>WXYZ</small></button>
+    <button type="button" class="key" data-k="*" aria-label="Star">*<small></small></button>
+    <button type="button" class="key" data-k="0">0<small>OPER</small></button>
+    <button type="button" class="key" data-k="#" aria-label="Pound">#<small></small></button>
+  </div>
+</main>
+
+<button type="button" class="speaker" id="speaker" aria-pressed="false">🔈 SPEAKER: OFF</button>
+
+<script>
+const cc=document.getElementById('cc'),speaker=document.getElementById('speaker');
+const LINES={
+  m0:'Thank you for calling Thurston’s House. Your visit is important to us.',
+  m1:'Please listen carefully, as our menu options have never changed.',
+  m2:'For the blog — thoughts, stories and ideas — press 1.',
+  m3:'To request a movie or show for the family Plex, press 2.',
+  m4:'To operate the actual house, press 3. Please have your sign-in ready.',
+  m5:'To hear these options again, do nothing. It’s what we would do.',
+  m6:'Please hold.',
+  h0:'Your call is important to us. Please continue to hold.',
+  h1:'Your call remains important to us. Please continue to hold.',
+  h2:'Your call is… [sighs] important to us. Please continue to hold.',
+  k4:'You pressed 4. There is no 4. There has never been a 4.',
+  k5:'For billing, please hang up. Nobody here is paying for anything.',
+  k6:'To speak to a human, shout up the stairs.',
+  k7:'Estimated wait time: zero minutes. You are the only caller. You are always the only caller.',
+  k8:'To report an outage, first ask yourself: was it DNS? It was DNS.',
+  k9:'This call may be recorded for quality assurance, and family blackmail.',
+  kstar:'Para español, oprima… [laughs] no. Lo siento. We barely have English.',
+  k0:'Operator. [sighs] Hi. Still me. Press 1, 2 or 3.',
+  khash:'Pound. Hash. Octothorpe. We honour all three. Press 1, 2 or 3.',
+  t1:'Transferring you to the blog. Please hold…',
+  t2:'Transferring you to the film desk. Please hold…',
+  t3:'Transferring you to the house itself. Please hold, and be polite.'};
+// [offset, duration] in seconds of each line inside attendant.mp3.
+const SPRITE={"m0":[0.000,4.480],"m1":[4.730,4.160],"m2":[9.140,4.320],"m3":[13.710,3.920],"m4":[17.880,4.960],"m5":[23.090,5.200],"m6":[28.540,0.960],"h0":[29.750,4.000],"h1":[34.000,4.320],"h2":[38.570,5.120],"k4":[43.940,5.680],"k5":[49.870,4.560],"k6":[54.680,2.960],"k7":[57.890,7.360],"k8":[65.500,7.040],"k9":[72.790,4.720],"kstar":[77.760,6.080],"k0":[84.090,6.160],"khash":[90.500,7.200],"t1":[97.950,2.720],"t2":[100.920,2.960],"t3":[104.130,4.560]};
+const TIMELINE=['m0','m1','m2','m3','m4','m5','m6','music','h0','music','h1','music','h2'];
+const MENU=TIMELINE.indexOf('m2');
+const MUSIC_CAPTION='♪ Gymnopédie No. 1 (Erik Satie, 1888), from the top ♪';
+
+let ac=null,buffer=null,on=false,live=[],run=0,at=0;
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const sound=()=>on&&buffer!==null;
+
+function caption(text){cc.textContent=text;cc.animate([{opacity:.15},{opacity:1}],220)}
+function track(node){live.push(node);node.onended=()=>{live=live.filter(n=>n!==node)}}
+function hush(){for(const n of live)n.stop();live=[]}
+
+function speak(id,delay=0){
+  const [offset,duration]=SPRITE[id],s=ac.createBufferSource();
+  s.buffer=buffer;s.connect(ac.destination);s.start(ac.currentTime+delay,offset,duration);track(s);
+  return duration;
+}
+
+// Real touch-tone pairs: one row frequency plus one column frequency per key.
+const ORDER='123456789*0#',ROWS=[697,770,852,941],COLS=[1209,1336,1477];
+function dtmf(k){
+  const n=ORDER.indexOf(k),t=ac.currentTime,g=ac.createGain();
+  g.gain.setValueAtTime(.12,t);g.gain.setValueAtTime(.12,t+.16);g.gain.linearRampToValueAtTime(0,t+.22);
+  g.connect(ac.destination);
+  for(const f of [ROWS[Math.floor(n/3)],COLS[n%3]]){const o=ac.createOscillator();o.frequency.value=f;o.connect(g);o.start(t);o.stop(t+.22)}
+}
+
+// The opening of Gymnopédie No. 1 on a tired electric piano, cut off as the second phrase begins.
+const BEAT=.72,CUT=38.6;
+const HZ={D2:73.42,G2:98,A3:220,B3:246.94,Cs4:277.18,D4:293.66,Fs4:369.99,A4:440,B4:493.88,Cs5:554.37,D5:587.33,Fs5:739.99,G5:783.99,A5:880};
+const MELODY=[[13,'Fs5',1],[14,'A5',1],[15,'G5',1],[16,'Fs5',1],[17,'Cs5',1],[18,'B4',1],[19,'Cs5',1],[20,'D5',1],[21,'A4',3],[24,'Fs4',12],[37,'Fs5',1],[38,'A5',1]];
+function gymnopedie(){
+  const t0=ac.currentTime+.05,end=t0+CUT*BEAT;
+  const out=ac.createGain(),hp=ac.createBiquadFilter(),lp=ac.createBiquadFilter();
+  out.gain.setValueAtTime(1,end-.03);out.gain.linearRampToValueAtTime(0,end);
+  hp.type='highpass';hp.frequency.value=300;lp.type='lowpass';lp.frequency.value=3400;
+  out.connect(hp).connect(lp).connect(ac.destination);
+  const wobble=ac.createOscillator(),depth=ac.createGain();
+  wobble.frequency.value=.55;depth.gain.value=14;wobble.connect(depth);wobble.start(t0);wobble.stop(end);track(wobble);
+  const note=(beat,hz,beats,vol)=>{
+    const t=t0+beat*BEAT,release=t+beats*BEAT,g=ac.createGain();
+    g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.012);
+    g.gain.setTargetAtTime(0,t+.02,Math.min(1.6,.35+beats*BEAT*.35));g.gain.setTargetAtTime(0,release,.25);
+    g.connect(out);
+    for(const [mult,level] of [[1,1],[2,.22],[3,.06]]){
+      const o=ac.createOscillator(),lg=ac.createGain();
+      o.frequency.value=hz*mult;o.detune.value=-18;depth.connect(o.detune);lg.gain.value=level;
+      o.connect(lg).connect(g);o.start(t);o.stop(Math.min(end,release+1.5));track(o);
+    }
+  };
+  for(let bar=0;bar<=12;bar++){
+    const b=bar*3,g=bar%2===0;
+    note(b,g?HZ.G2:HZ.D2,3,.16);
+    for(const hz of g?[HZ.B3,HZ.D4,HZ.Fs4]:[HZ.A3,HZ.Cs4,HZ.Fs4])note(b+1,hz,2,.05);
+  }
+  for(const [beat,name,beats] of MELODY)note(beat,HZ[name],beats,.17);
+  return end-ac.currentTime;
+}
+
+function step(id){
+  if(id==='music'){caption(MUSIC_CAPTION);return sleep(sound()?gymnopedie()*1000+400:5000)}
+  caption(LINES[id]);
+  return sleep(sound()?speak(id)*1000+700:Math.max(3200,LINES[id].length*55));
+}
+async function attendant(from){
+  const me=++run;hush();
+  for(at=from;;at=(at+1)%TIMELINE.length){
+    await step(TIMELINE[at]);
+    if(me!==run)return;
+  }
+}
+
+async function press(el,e){
+  const k=el.dataset.k;
+  el.classList.add('down');setTimeout(()=>el.classList.remove('down'),160);
+  if(el.href&&(e.metaKey||e.ctrlKey||e.shiftKey||e.altKey))return; // modified clicks stay plain links
+  e.preventDefault();
+  const me=++run;hush();
+  const id=el.href?'t'+k:({'*':'kstar','#':'khash'})[k]??'k'+k;
+  caption(LINES[id]);
+  let ms=el.href?650:6500;
+  if(sound()){dtmf(k);ms=(speak(id,.3)+.3)*1000}
+  await sleep(ms);
+  if(me!==run)return;
+  if(el.href)location.href=el.href;
+  else attendant(MENU);
+}
+const keys=new Map();
+document.querySelectorAll('.key').forEach(el=>{keys.set(el.dataset.k,el);el.addEventListener('click',e=>press(el,e))});
+addEventListener('keydown',e=>{
+  if(e.metaKey||e.ctrlKey||e.altKey||e.repeat)return;
+  keys.get(e.key)?.click();
+});
+
+speaker.addEventListener('click',async()=>{
+  on=!on;
+  speaker.setAttribute('aria-pressed',String(on));
+  speaker.textContent=on?'🔊 SPEAKER: ON':'🔈 SPEAKER: OFF';
+  ++run;hush();
+  if(!on)return attendant(at);
+  ac=ac||new AudioContext();
+  if(!buffer){
+    caption('Connecting you…');
+    // The sprite ships as base64 text so the host's text-only file reconciler can install it.
+    const text=await (await fetch('attendant.mp3.b64')).text();
+    buffer=await ac.decodeAudioData(Uint8Array.from(atob(text),c=>c.charCodeAt(0)).buffer);
+  }
+  await ac.resume();
+  attendant(0);
+});
+
+document.addEventListener('visibilitychange',()=>{
+  if(!sound())return;
+  if(document.hidden){++run;hush()}else attendant(at);
+});
+addEventListener('pageshow',e=>{if(e.persisted)attendant(MENU)});
+attendant(0);
+</script>
+</body>
+</html>

@@ -24,7 +24,6 @@ services:
       - ./caddy:/etc/caddy:ro
       - /mnt/black-box/docker/caddy/caddy/data:/data
       - /mnt/black-box/docker/caddy/caddy/config:/config
-      - /mnt/black-box/docker/caddy/srv:/srv:ro
 
   cloudflared:
     image: cloudflare/cloudflared:latest
