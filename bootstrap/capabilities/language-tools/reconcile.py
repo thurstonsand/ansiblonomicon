@@ -472,10 +472,19 @@ def main() -> None:
     if packages:
         run(npm_exec, cwd=home)
     if retired:
-        npm_root = Path(run([npm, "root", "-g"], cwd=home, capture=True))
-        installed = [name for name in retired if (npm_root / name).exists()]
-        if installed:
-            run([npm, "uninstall", "-g", *installed], cwd=home)
+        # Every installed Node keeps its own globals, and mise shims expose them all.
+        nodes = json.loads(
+            run([mise, "ls", "--installed", "--json", "node"], cwd=home, capture=True)
+        )
+        uninstalled = False
+        for node in nodes:
+            node_npm = [mise, "exec", f"node@{node['version']}", "--", "npm"]
+            npm_root = Path(run([*node_npm, "root", "-g"], cwd=home, capture=True))
+            installed = [name for name in retired if (npm_root / name).exists()]
+            if installed:
+                run([*node_npm, "uninstall", "-g", *installed], cwd=home)
+                uninstalled = True
+        if uninstalled:
             run([mise, "reshim"], cwd=home)
     restore_npm_extras(pending, npm, home)
     link_npm_globals(inventory.npm_links, npm, home)
