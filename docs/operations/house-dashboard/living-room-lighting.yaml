@@ -1,0 +1,87 @@
+script:
+  living_room_lighting:
+    alias: Living Room — Automatic lighting
+    description: >-
+      Daylight turns both lighting groups off. After sunset until 21:00,
+      a sleeping Apple TV selects Evening Lights; an awake TV selects Tokyo.
+      From 21:00 until sunrise, select Tokyo regardless of TV power.
+      An unavailable TV leaves evening lighting unchanged.
+    mode: restart
+    sequence:
+      - choose:
+          - conditions:
+              - condition: sun.is_up
+            sequence:
+              - action: light.turn_off
+                target:
+                  entity_id:
+                    - light.living_room_ambient_light
+                    - light.living_room_floor_lamps
+          - conditions:
+              - condition: sun.is_set
+              - condition: time
+                after: "12:00:00"
+                before: "21:00:00"
+              - condition: state
+                entity_id: media_player.living_room_living_room
+                state: "off"
+            sequence:
+              - action: script.living_room_evening_lights
+          - conditions:
+              - condition: sun.is_set
+              - condition: or
+                conditions:
+                  - condition: time
+                    after: "21:00:00"
+                    before: "12:00:00"
+                  - condition: state
+                    entity_id: media_player.living_room_living_room
+                    state:
+                      - "on"
+                      - idle
+                      - playing
+                      - paused
+                      - buffering
+            sequence:
+              - action: script.living_room_tokyo
+
+automation:
+  - id: living_room_automatic_lighting
+    alias: Living Room — Automatic lighting
+    description: >-
+      Apply the shared lighting policy when Apple TV power changes or daylight
+      starts. At sunset and 21:00, update only an already-lit room. Do not
+      react to playback, light adjustments, or integration recovery, so manual
+      choices persist until the next power or scheduled transition.
+    mode: restart
+    triggers:
+      - trigger: media_player.turned_on
+        target:
+          entity_id: media_player.living_room_living_room
+        id: tv
+      - trigger: media_player.turned_off
+        target:
+          entity_id: media_player.living_room_living_room
+        id: tv
+      - trigger: sun.sunrise
+        id: daylight
+      - trigger: sun.sunset
+        id: clock
+      - trigger: time
+        at: "21:00:00"
+        id: clock
+    conditions:
+      - condition: or
+        conditions:
+          - condition: trigger
+            id:
+              - tv
+              - daylight
+          - condition: state
+            entity_id: light.living_room_ambient_light
+            state: "on"
+          - condition: state
+            entity_id: light.living_room_floor_lamps
+            state: "on"
+    actions:
+      - action: script.living_room_lighting

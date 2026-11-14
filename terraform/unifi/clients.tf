@@ -28,6 +28,13 @@ resource "unifi_client" "homepod_mini" {
   allow_existing = true
 }
 
+resource "unifi_client" "living_room_apple_tv" {
+  mac            = "64:c0:45:08:a9:bc"
+  name           = "Apple TV - Living Room"
+  fixed_ip       = "10.10.40.116"
+  allow_existing = true
+}
+
 resource "unifi_client" "google_nest_hub" {
   mac            = "1c:f2:9a:51:d5:b1"
   name           = "Google Nest Hub"

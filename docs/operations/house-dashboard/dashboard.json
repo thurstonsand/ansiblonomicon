@@ -470,15 +470,7 @@
                     "scenes": [
                       {
                         "from": "00:00",
-                        "entity": "script.living_room_tokyo"
-                      },
-                      {
-                        "from": "06:00",
-                        "entity": "script.living_room_evening_lights"
-                      },
-                      {
-                        "from": "21:00",
-                        "entity": "script.living_room_late_night"
+                        "entity": "script.living_room_lighting"
                       }
                     ]
                   }

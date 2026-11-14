@@ -121,12 +121,8 @@ export async function checkMapControls(card, hass) {
     assert(
       roomOn[0] === "script" &&
         roomOn[1] === "turn_on" &&
-        [
-          "script.living_room_tokyo",
-          "script.living_room_evening_lights",
-          "script.living_room_late_night",
-        ].includes(roomOn[2].entity_id),
-      "An unlit room activates its usual scene instead of raw bulb power",
+        roomOn[2].entity_id === "script.living_room_lighting",
+      "An unlit Living Room delegates daylight, time, and TV decisions to HA",
     );
     fixture.states[livingLights[0]].state = "on";
     card.hass = { ...fixture };

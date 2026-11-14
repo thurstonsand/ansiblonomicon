@@ -241,6 +241,13 @@ resource "unifi_device" "pro_max_24_poe" {
   }
 
   port_override {
+    index           = 6
+    name            = "Apple TV - Living Room"
+    poe_mode        = "off"
+    port_profile_id = unifi_port_profile.scanners_access.id
+  }
+
+  port_override {
     index           = 7
     name            = "pod153-kvm"
     poe_mode        = "auto"

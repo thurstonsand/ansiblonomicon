@@ -243,6 +243,28 @@ resource "unifi_firewall_policy" "lunar_tear_to_scanners" {
   }
 }
 
+resource "unifi_firewall_policy" "apple_tv_to_plex" {
+  name                 = "Living Room Apple TV to Plex"
+  action               = "ALLOW"
+  protocol             = "tcp"
+  ip_version           = "IPV4"
+  create_allow_respond = true
+
+  source = {
+    zone_id         = unifi_firewall_zone.scanners.id
+    matching_target = "IP"
+    ips             = [unifi_client.living_room_apple_tv.fixed_ip]
+  }
+
+  destination = {
+    zone_id            = unifi_firewall_zone.bunker.id
+    matching_target    = "IP"
+    ips                = [unifi_client.pod042.fixed_ip]
+    port               = "32400"
+    port_matching_type = "SPECIFIC"
+  }
+}
+
 resource "unifi_firewall_policy" "lunar_tear_to_pod042_services" {
   name                 = "Lunar Tear to pod042 services"
   action               = "ALLOW"
