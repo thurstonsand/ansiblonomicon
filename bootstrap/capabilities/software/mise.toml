@@ -1,6 +1,26 @@
 [settings.task]
 source_freshness_hash_contents = true
 
+[tasks.codex]
+run = '''
+set -eu
+codex="$HOME/.local/bin/codex"
+if [ -n "${SOFTWARE_CHECK:-}" ]; then
+  if [ -x "$codex" ]; then
+    "$codex" --version
+    echo "codex would be reconciled to the latest stable release" >&2
+  else
+    echo "codex would be installed: $codex" >&2
+  fi
+  exit 0
+fi
+installer=$(mktemp)
+trap 'rm -f "$installer"' EXIT
+curl -fsSL --connect-timeout 20 --max-time 300 --retry 3 --retry-delay 10 -o "$installer" https://chatgpt.com/codex/install.sh
+CODEX_NON_INTERACTIVE=1 sh "$installer"
+test -x "$codex"
+'''
+
 [tasks.claude-code]
 run = '''
 set -eu

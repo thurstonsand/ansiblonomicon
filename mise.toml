@@ -243,7 +243,7 @@ flag "-c --check"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host:$usage_capability" in
-  pod153:claude-code|pod153:cua-driver|pod153:t3|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
+  pod153:codex|pod153:claude-code|pod153:cua-driver|pod153:t3|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
   ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono|ML-DFC6YK6VJQ:docker-credentials) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
@@ -254,6 +254,9 @@ set -- "$usage_capability" "$MISE_PROJECT_ROOT/bootstrap/targets/$host" "$mode"
 exec bootstrap/capabilities/software/reconcile "$@"
 '''
 
+[tasks.codex]
+run = "mise run //:software:dispatch codex ${usage_check:+--check}"
+usage = 'flag "-c --check"'
 [tasks.claude-code]
 run = "mise run //:software:dispatch claude-code ${usage_check:+--check}"
 usage = 'flag "-c --check"'
@@ -878,7 +881,7 @@ config_capabilities="sysconfig terminal-theme vcs shell terminal-tools user-tool
 sysconfig_sections="dock finder nsglobaldomain menubar desktop-services hotkeys permissions"
 case "$profile" in
   server)
-    software_capabilities="$software_capabilities claude-code cua-driver t3 shp uvc-util docker-context amp-cli"
+    software_capabilities="$software_capabilities codex claude-code cua-driver t3 shp uvc-util docker-context amp-cli"
     config_capabilities="$config_capabilities ssh-client server cupertino"
     sysconfig_sections="$sysconfig_sections hostname"
     ;;
