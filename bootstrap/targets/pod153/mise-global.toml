@@ -5,6 +5,8 @@ fnox = "latest"
 go = "latest"
 gofumpt = "latest"
 golangci-lint = "latest"
+# T3 Code's device hub lists Android virtual devices with avdmanager, which needs a JVM on the service's PATH.
+java = "latest"
 # First-party release: skip mise's default 24h supply-chain cooling.
 "github:thurstonsand/agent-switchboard" = { version = "latest", minimum_release_age = "0s" }
 node = "lts"

@@ -146,6 +146,14 @@ def cua_driver_missing_grants() -> list[str]:
     ]
 
 
+def ios_simulator_runtime() -> bool:
+    runtimes = json.loads(output("xcrun", "simctl", "list", "runtimes", "--json"))
+    return any(
+        runtime["platform"] == "iOS" and runtime["isAvailable"]
+        for runtime in runtimes["runtimes"]
+    )
+
+
 def login_password() -> str:
     return output(os.environ["SUDO_ASKPASS"]).strip()
 
@@ -389,6 +397,24 @@ def main() -> None:
                     f"server: Cua Driver lacks {', '.join(missing)}; grant it in System Settings > Privacy & Security"
                 )
             print("server: set Cua Driver on its grants")
+    # An App Store update leaves Xcode's system packages behind. Until they are
+    # installed every simctl call blocks on an installer that needs root, so the
+    # simulator runtime can only be asked about afterwards.
+    first_launch_pending = (
+        subprocess.run(["xcodebuild", "-checkFirstLaunchStatus"]).returncode != 0
+    )
+    if first_launch_pending and args.check:
+        print("server: would set Xcode first-launch packages")
+    else:
+        if first_launch_pending:
+            subprocess.run(["sudo", "-n", "xcodebuild", "-runFirstLaunch"], check=True)
+            print("server: set Xcode first-launch packages")
+        if not ios_simulator_runtime():
+            if args.check:
+                print("server: would set iOS Simulator runtime")
+            else:
+                subprocess.run(["xcodebuild", "-downloadPlatform", "iOS"], check=True)
+                print("server: set iOS Simulator runtime")
     if stale_backup:
         raise SystemExit(stale_backup)
 
