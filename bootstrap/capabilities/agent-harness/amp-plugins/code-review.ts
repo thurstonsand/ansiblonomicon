@@ -59,9 +59,15 @@ export default function (amp: PluginAPI) {
 				const reply = await thread.waitForResponse({
 					timeoutMs: 30 * 60 * 1000,
 				})
-				return reply.content
+				const report = reply.content
 					.flatMap((block) => (block.type === 'text' ? [block.text] : []))
 					.join('')
+				return `${report}\n\nAgent thread: https://ampcode.com/threads/${thread.id}`
+			} catch (error) {
+				throw new Error(
+					`${String(error)}\n\nAgent thread: https://ampcode.com/threads/${thread.id}`,
+					{ cause: error },
+				)
 			} finally {
 				ctx.signal.removeEventListener('abort', cancel)
 			}

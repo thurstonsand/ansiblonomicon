@@ -14,6 +14,23 @@ import yaml
 
 CAPABILITY = Path(__file__).resolve().parent
 EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
+UPSTREAM_SUBAGENT = """async function runSubagent(
+	agent: Agent,
+	message: string,
+	ctx: PluginToolContext,
+	timeoutMs: number,
+): Promise<string> {
+	const thread = await agent.createThread({ parentThreadID: ctx.thread.id })
+	const cancel = (): void => void thread.cancel()
+	ctx.signal.addEventListener('abort', cancel, { once: true })
+	try {
+		await thread.appendUserMessage({ type: 'user-message', content: message })
+		const reply = await thread.waitForResponse({ timeoutMs })
+		return reply.content.flatMap((block) => (block.type === 'text' ? [block.text] : [])).join('')
+	} finally {
+		ctx.signal.removeEventListener('abort', cancel)
+	}
+}"""
 
 
 def text(entry: dict[str, object], field: str) -> str:
@@ -80,6 +97,23 @@ def render(capability: Path, output: Path) -> None:
                 + f"const {constant} = {json.dumps(replacement)}"
                 + content[end:]
             )
+        if "source" in plugin:
+            matches = content.count(UPSTREAM_SUBAGENT)
+            references = content.count("runSubagent(")
+            if matches != 1 or references != 2:
+                raise ValueError(
+                    f"{source}: expected one upstream subagent lifecycle and one call, got {matches} lifecycles and {references} references; review the thread-link patch"
+                )
+            linked = UPSTREAM_SUBAGENT.replace(
+                "\t\treturn reply.content", "\t\tconst report = reply.content"
+            ).replace(
+                "\n\t} finally {",
+                "\n\t\treturn `${report}\\n\\nAgent thread: https://ampcode.com/threads/${thread.id}`"
+                "\n\t} catch (error) {"
+                "\n\t\tthrow new Error(`${String(error)}\\n\\nAgent thread: https://ampcode.com/threads/${thread.id}`, { cause: error })"
+                "\n\t} finally {",
+            )
+            content = content.replace(UPSTREAM_SUBAGENT, linked)
         destination.write_text(content)
         print(f"{name}: {alias} ({effort}), from {source}")
 

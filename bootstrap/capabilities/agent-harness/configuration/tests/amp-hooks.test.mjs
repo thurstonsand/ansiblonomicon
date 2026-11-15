@@ -158,10 +158,11 @@ function registerReview(thread) {
 	return tool
 }
 
-test('Amp review forwards scope and parent context and returns only report text', async () => {
+test('Amp review forwards scope and parent context and identifies its child thread', async () => {
 	const messages = []
 	let cancelled = false
 	const thread = {
+		id: 'T-review-child',
 		appendUserMessage: async (message) => messages.push(message),
 		waitForResponse: async () => ({
 			content: [
@@ -179,7 +180,7 @@ test('Amp review forwards scope and parent context and returns only report text'
 	const ctx = { thread: { id: 'parent-review' }, signal: controller.signal }
 	assert.equal(
 		await tool.execute({ task: '  Review only src/cache.ts.  ' }, ctx),
-		'One blocker: a stale cache.',
+		'One blocker: a stale cache.\n\nAgent thread: https://ampcode.com/threads/T-review-child',
 	)
 	assert.deepEqual(thread.options, { parentThreadID: 'parent-review' })
 	assert.deepEqual(messages, [
@@ -200,6 +201,7 @@ test('Amp review cancels an in-flight child and propagates its error', async () 
 	const waiting = Promise.withResolvers()
 	const report = Promise.withResolvers()
 	const tool = registerReview({
+		id: 'T-cancelled-child',
 		appendUserMessage: async () => {},
 		waitForResponse: () => {
 			waiting.resolve()
@@ -214,5 +216,13 @@ test('Amp review cancels an in-flight child and propagates its error', async () 
 	)
 	await waiting.promise
 	controller.abort()
-	await assert.rejects(execution, /Child cancelled/)
+	await assert.rejects(execution, (error) => {
+		assert.match(error.message, /Child cancelled/)
+		assert.match(
+			error.message,
+			/Agent thread: https:\/\/ampcode\.com\/threads\/T-cancelled-child/,
+		)
+		assert.equal(error.cause.message, 'Child cancelled')
+		return true
+	})
 })

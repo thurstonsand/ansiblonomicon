@@ -73,10 +73,37 @@ class PublishPluginsTest(unittest.TestCase):
             shutil.copy2(PUBLISHER.parent.parent / "pyproject.toml", source)
             (source / ".venv").symlink_to(sys.prefix, target_is_directory=True)
             upstream = root / "upstream.ts"
+            lifecycle = """async function runSubagent(
+	agent: Agent,
+	message: string,
+	ctx: PluginToolContext,
+	timeoutMs: number,
+): Promise<string> {
+	const thread = await agent.createThread({ parentThreadID: ctx.thread.id })
+	const cancel = (): void => void thread.cancel()
+	ctx.signal.addEventListener('abort', cancel, { once: true })
+	try {
+		await thread.appendUserMessage({ type: 'user-message', content: message })
+		const reply = await thread.waitForResponse({ timeoutMs })
+		return reply.content.flatMap((block) => (block.type === 'text' ? [block.text] : [])).join('')
+	} finally {
+		ctx.signal.removeEventListener('abort', cancel)
+	}
+}
+"""
+            registration = """
+export default function (amp) {
+	const agent = amp.createAgent({ model: MODEL, reasoningEffort: REASONING_EFFORT, instructions })
+	amp.registerTool({
+		name: 'research',
+		execute: (input, ctx) => runSubagent(agent, input.task, ctx, 60000),
+	})
+}
+"""
             upstream.write_text(
                 "const MODEL = 'upstream/default'\n"
                 'const REASONING_EFFORT = "medium";\n'
-                "const instructions = `Original prompt.`\n"
+                "const instructions = `Original prompt.`\n\n" + lifecycle + registration
             )
             (capability / "models.yml").write_text(
                 yaml.safe_dump(
@@ -178,10 +205,59 @@ class PublishPluginsTest(unittest.TestCase):
                     '\\\\paths, and ${templates}.\\nKeep both lines."',
                 ),
             ):
-                self.assertEqual(
-                    run("git", "--git-dir", str(remote), "show", f"main:{name}"),
-                    expected,
+                actual = run("git", "--git-dir", str(remote), "show", f"main:{name}")
+                if name in {"oracle.ts", "finder.ts"}:
+                    actual = actual.split("\n\n", 1)[0]
+                self.assertEqual(actual, expected)
+            rendered = root / "rendered.ts"
+            rendered.write_text(
+                run("git", "--git-dir", str(remote), "show", "main:oracle.ts")
+            )
+            result = json.loads(
+                run(
+                    "node",
+                    "--input-type=module",
+                    "-e",
+                    """
+const { default: plugin } = await import(process.argv[1])
+let tool
+let failure = false
+plugin({
+    createAgent: () => ({ createThread: async () => ({
+        id: 'T-research-child',
+        appendUserMessage: async () => {},
+        waitForResponse: async () => {
+            if (failure) throw new Error('Inspection failed')
+            return { content: [
+                { type: 'text', text: 'Found ' },
+                { type: 'image', url: 'ignored' },
+                { type: 'text', text: 'src/cache.ts.' },
+            ] }
+        },
+        cancel: async () => {},
+    }) }),
+    registerTool: (definition) => { tool = definition },
+})
+const ctx = { thread: { id: 'T-parent' }, signal: new AbortController().signal }
+const report = await tool.execute({ task: 'Inspect the cache.' }, ctx)
+failure = true
+let error
+let cause
+try { await tool.execute({ task: 'Inspect the cache.' }, ctx) }
+catch (caught) { error = caught.message; cause = caught.cause?.message }
+console.log(JSON.stringify({ report, error, cause }))
+""",
+                    str(rendered),
                 )
+            )
+            self.assertEqual(
+                result,
+                {
+                    "report": "Found src/cache.ts.\n\nAgent thread: https://ampcode.com/threads/T-research-child",
+                    "error": "Error: Inspection failed\n\nAgent thread: https://ampcode.com/threads/T-research-child",
+                    "cause": "Inspection failed",
+                },
+            )
             self.assertEqual(
                 run(
                     "git",
@@ -201,12 +277,16 @@ class PublishPluginsTest(unittest.TestCase):
             upstream.write_text(
                 "const MODEL = 'upstream/new-model'\n"
                 "const REASONING_EFFORT = 'high'\n"
-                "const instructions = `Updated upstream prompt.`\n"
+                "const instructions = `Updated upstream prompt.`\n\n"
+                + lifecycle
+                + registration
             )
             prompt.write_text("---\nname: reviewer\n---\n\nUpdated local prompt.\n")
             publish()
             self.assertEqual(
-                run("git", "--git-dir", str(remote), "show", "main:oracle.ts"),
+                run("git", "--git-dir", str(remote), "show", "main:oracle.ts").split(
+                    "\n\n", 1
+                )[0],
                 'const MODEL = "vendor/reviewer"\n'
                 'const REASONING_EFFORT = "xhigh"\n'
                 "const instructions = `Updated upstream prompt.`",
@@ -226,16 +306,56 @@ class PublishPluginsTest(unittest.TestCase):
                 run("git", "--git-dir", str(remote), "rev-parse", "main"), published
             )
             prompt.write_text("---\nname: reviewer\n---\n\nUpdated local prompt.\n")
-            for invalid in (
-                "const MODEL = chooseModel()\nconst REASONING_EFFORT = 'low'\n",
-                "const MODEL = 'a'\nconst MODEL = 'b'\nconst REASONING_EFFORT = 'low'\n",
-                "const MODEL = 'a'\nconst REASONING_EFFORT = chooseEffort()\n",
+            for invalid, diagnostic in (
+                (
+                    "const MODEL = chooseModel()\nconst REASONING_EFFORT = 'low'\n",
+                    "expected one MODEL declaration, got 0",
+                ),
+                (
+                    "const MODEL = 'a'\nconst MODEL = 'b'\nconst REASONING_EFFORT = 'low'\n",
+                    "expected one MODEL declaration, got 2",
+                ),
+                (
+                    "const MODEL = 'a'\nconst REASONING_EFFORT = chooseEffort()\n",
+                    "expected one REASONING_EFFORT declaration, got 0",
+                ),
             ):
                 with self.subTest(invalid=invalid):
-                    upstream.write_text(invalid)
+                    upstream.write_text(
+                        invalid
+                        + "const instructions = `Valid prompt.`\n\n"
+                        + lifecycle
+                        + registration
+                    )
                     with self.assertRaises(subprocess.CalledProcessError) as failure:
                         publish()
-                    self.assertIn("expected one", failure.exception.stderr)
+                    self.assertIn(diagnostic, failure.exception.stderr)
+                    self.assertEqual(
+                        run("git", "--git-dir", str(remote), "rev-parse", "main"),
+                        published,
+                    )
+            source_body = lifecycle + registration
+            for changed in (
+                registration,
+                lifecycle + source_body,
+                source_body.replace(
+                    "parentThreadID: ctx.thread.id", "parentThreadID: undefined"
+                ),
+                source_body.replace("return reply.content", "return reply.blocks"),
+                source_body.replace("=> runSubagent(", "=> runResearch("),
+            ):
+                with self.subTest(lifecycle=changed):
+                    upstream.write_text(
+                        "const MODEL = 'upstream/default'\n"
+                        "const REASONING_EFFORT = 'low'\n"
+                        "const instructions = `Prompt remains valid.`\n\n" + changed
+                    )
+                    with self.assertRaises(subprocess.CalledProcessError) as failure:
+                        publish()
+                    self.assertIn(
+                        "expected one upstream subagent lifecycle",
+                        failure.exception.stderr,
+                    )
                     self.assertEqual(
                         run("git", "--git-dir", str(remote), "rev-parse", "main"),
                         published,
