@@ -92,9 +92,11 @@ def busy_threads(runner: int) -> list[str]:
                     continue
                 if event["message"] == "[observer] onAgentState":
                     states[event["threadId"]] = event["subtype"]
+                # A new thread client logs session states before onThreadId assigns it a thread.
                 elif (
                     event["message"] == "[observer] onSessionState"
                     and event["data"]["state"] == "disconnected"
+                    and "threadId" in event
                 ):
                     states[event["threadId"]] = "disconnected"
     return sorted(
