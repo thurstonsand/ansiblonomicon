@@ -1136,6 +1136,7 @@ depends = [
   "pi:check",
   "pi:test",
   "sudoers:check",
+  "capabilities:check",
   "browser:test",
   "//bootstrap/capabilities/software/sources/...:check",
 ]
@@ -1251,6 +1252,10 @@ length=$(wc -m < "$guidance")
 [ "$length" -le 8000 ] || { echo "Amp guidance is $length characters; the limit is 8000" >&2; exit 1; }
 cat "$guidance"
 '''
+
+[tasks."capabilities:check"]
+description = "Fail when capabilities in one bootstrap target silently override each other"
+run = "python3 scripts/check_capabilities.py"
 
 [tasks."sudoers:check"]
 description = "Validate sudoers drop-ins, which mise installs unchecked"

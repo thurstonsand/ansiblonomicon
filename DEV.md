@@ -35,9 +35,6 @@ mise tasks     # the full list; --all adds the Go subproject
 
 A capability is a `mise.<capability>.toml` under `bootstrap/targets/<host>/`, selected through `MISE_ENV` in the order its host's reconcile driver lists. The target's `mise.toml` holds settings and resources shared by several capabilities.
 
-- Keep resource ownership disjoint: mise merges the selected environments and gives a collision to the last one.
-- Any subset of capabilities can be selected, so hooks must not branch on `MISE_ENV`.
-- Don't name a capability after an operating system; mise selects those environments on its own.
 - Prefer `[dotfiles]` for home configuration: symlink in-repo sources so application edits reach the repo, copy external Git sources, and render templates; accept source-derived permissions for ordinary files, and reserve `[bootstrap.files]` for secrets requiring private permissions, system files, explicit removals, or consumer-required permissions and ownership.
 - Deleting a file from the repo does not remove it from a host. Declare a `state = "absent"` resource in the capability that owns the path, apply it on every affected host, then delete the declaration.
 
