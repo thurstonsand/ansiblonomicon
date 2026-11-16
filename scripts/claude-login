@@ -1,0 +1,75 @@
+#!/usr/bin/env bash
+# Renews the full-scope claude.ai login that Claude Remote Control runs on, on pod042 or pod153.
+#
+#   claude-login start        start the login and print the authorize URL to open in the browser
+#   claude-login finish       read the browser's code on stdin, finish the login, restart the server
+#   claude-login cancel       stop a started login without changing the current one
+#
+# The login reads its code from a file that `tail -f` feeds it, so the code never reaches argv or output.
+set -euo pipefail
+umask 077
+
+state="${XDG_STATE_HOME:-$HOME/.local/state}/claude-login"
+code="$state/code"
+log="$state/login.log"
+pidfile="$state/pid"
+
+stop() {
+  [[ -f $pidfile ]] || return 0
+  local pid
+  pid=$(cat "$pidfile")
+  pkill -P "$pid" 2>/dev/null || true
+  kill "$pid" 2>/dev/null || true
+  rm -f "$pidfile" "$code"
+}
+
+case "${1:-}" in
+  start)
+    stop
+    mkdir -p "$state"
+    : >"$code"
+    # shellcheck disable=SC2016
+    nohup bash -c 'tail -f "$1" | env -u CLAUDE_CODE_OAUTH_TOKEN BROWSER=true claude auth login --claudeai' \
+      _ "$code" >"$log" 2>&1 </dev/null &
+    echo $! >"$pidfile"
+    for _ in $(seq 60); do
+      url=$(grep -Eo 'https://claude\.(ai|com)/[^[:space:]]+' "$log" | head -1 || true)
+      if [[ -n $url ]]; then
+        echo "$url"
+        exit 0
+      fi
+      sleep 0.5
+    done
+    stop
+    echo "claude-login: no authorize URL after 30 s; see $log" >&2
+    exit 1
+    ;;
+  finish)
+    [[ -f $pidfile ]] || { echo "claude-login: nothing started; run claude-login start" >&2; exit 1; }
+    cat >>"$code"
+    echo >>"$code"
+    for _ in $(seq 120); do
+      if grep -q 'Login successful' "$log"; then
+        stop
+        case "$(uname -s)" in
+          Darwin) launchctl kickstart -k "gui/$(id -u)/dev.mise.house.thurstons.claude-remote-control" ;;
+          *) systemctl --user restart dev.mise.claude-remote-control.service ;;
+        esac
+        env -u CLAUDE_CODE_OAUTH_TOKEN claude auth status
+        exit 0
+      fi
+      pgrep -P "$(cat "$pidfile")" -x claude >/dev/null || break
+      sleep 0.5
+    done
+    stop
+    echo "claude-login: the login did not succeed; see $log" >&2
+    exit 1
+    ;;
+  cancel)
+    stop
+    ;;
+  *)
+    sed -n '2,8p' "$0" | sed 's/^# \{0,1\}//' >&2
+    exit 64
+    ;;
+esac

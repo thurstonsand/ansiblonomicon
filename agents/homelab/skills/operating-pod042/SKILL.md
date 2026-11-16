@@ -60,10 +60,9 @@ The retained pod042 service-account token provides unattended Agent-vault access
 
 `dev.mise.claude-remote-control.service` needs the full-scope claude.ai login in `~/.claude/.credentials.json`, which lapses after about 28 days; `setup-token` credentials cannot run it. `env -u CLAUDE_CODE_OAUTH_TOKEN claude auth status` shows which login is in use, and `jq '.claudeAiOauth.refreshTokenExpiresAt / 1000 | todate' ~/.claude/.credentials.json` shows when it lapses. To renew it, follow `using-pod042-desktop` for the browser:
 
-1. Start `tail -f FILE | env -u CLAUDE_CODE_OAUTH_TOKEN BROWSER=true claude auth login --claudeai` in the background, with output to a log, and open the printed authorize URL in a named Browse session in the desktop Chromium.
+1. `scripts/claude-login start` prints the authorize URL. Open it in a named Browse session in the desktop Chromium.
 2. Press "Continue with Google", choose `thurstonsand@gmail.com`, press "Continue", then "Authorize".
-3. Read the code under "Paste this into Claude Code:" from the page snapshot and append it to FILE. Never print it. The log reports "Login successful".
-4. Kill the `tail` by its PID (a `pkill -f` pattern matches your own shell), then `systemctl --user restart dev.mise.claude-remote-control.service` so the server stops refreshing the replaced token.
+3. Pipe the code under "Paste this into Claude Code:" into `scripts/claude-login finish` without printing it. It finishes the login and restarts the server so it stops refreshing the replaced token. `scripts/claude-login cancel` abandons a started login.
 
 On 2026-10-25 the desktop profile had no claude.ai session, and "Continue with Google" raised an hCaptcha challenge. Agents do not solve CAPTCHAs: hand the Desktop tab to the user at that point, then finish steps 2 to 4.
 

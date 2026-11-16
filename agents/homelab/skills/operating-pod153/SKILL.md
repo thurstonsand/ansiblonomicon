@@ -102,10 +102,9 @@ macOS can verify a passkey with the Mac account password when Touch ID is unavai
 
 Claude Remote Control needs the full-scope login in the keychain, which lapses after about 28 days; `setup-token` credentials cannot run it. `env -u CLAUDE_CODE_OAUTH_TOKEN claude auth status` shows which login is in use. To renew it with nobody present:
 
-1. Start `tail -f FILE | env -u CLAUDE_CODE_OAUTH_TOKEN BROWSER=true claude auth login --claudeai` in the background, with output to a log, and open the printed authorize URL with `open -a "Google Chrome"`. Chrome holds the Google session; the default browser does not.
+1. `scripts/claude-login start` prints the authorize URL. Open it with `open -a "Google Chrome"`; Chrome holds the Google session, the default browser does not.
 2. With Cua, press "Continue with Google", choose `thurstonsand@gmail.com`, press "Continue", then "Authorize".
-3. Read the code under "Paste this into Claude Code:" from the page's accessibility tree and append it to FILE. Never print it. The log reports "Login successful".
-4. Kill the `tail`, then `launchctl kickstart -k gui/$(id -u)/dev.mise.house.thurstons.claude-remote-control` so the server stops refreshing the replaced token.
+3. Pipe the code under "Paste this into Claude Code:" into `scripts/claude-login finish` without printing it. It finishes the login and restarts the server so it stops refreshing the replaced token. `scripts/claude-login cancel` abandons a started login.
 
 ## Services
 
