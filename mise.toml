@@ -1091,6 +1091,10 @@ run = '"{{config_root}}/scripts/fnox-host" exec --secret UNIFI_USERNAME --secret
 description = "Power-cycle one UniFi-managed PDU outlet or PoE port"
 run = '"{{config_root}}/scripts/fnox-host" exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD -- uv run python "{{config_root}}/agents/homelab/skills/surveying-the-network/scripts/power_cycle.py"'
 
+[tasks."outage:report"]
+description = "Collect pod042's journal, pon-monitor, and the controller's logs for an outage window"
+run = "./scripts/fnox-host exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD -- uv run scripts/outage_report.py"
+
 [tasks."unifi:smoke"]
 description = "Read-only smoke checks for the WAS-110 WAN path"
 run = "./scripts/fnox-host exec --secret UNIFI_USERNAME --secret UNIFI_PASSWORD -- uv run scripts/unifi_smoke.py"
