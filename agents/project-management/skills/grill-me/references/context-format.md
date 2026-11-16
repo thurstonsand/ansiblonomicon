@@ -76,7 +76,7 @@ The skill infers which structure applies:
 
 - If `CONTEXT-MAP.md` exists, read it to find contexts.
 - If only a root `CONTEXT.md` exists, use the root context.
-- If neither exists, create a root `CONTEXT.md` lazily when the first useful term is resolved.
+- If neither exists, create a root `CONTEXT.md` lazily when the user approves the first entry.
 - If nested `CONTEXT.md` files already exist, read the relevant one for work in that area.
 
 Do not create nested context files unless the existing structure or the user clearly warrants it. If unclear, ask.

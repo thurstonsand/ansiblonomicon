@@ -80,13 +80,13 @@ When the user states how something works, check whether the code agrees. If you 
 
 > Your code cancels entire Orders, but you just said partial cancellation is possible. Which is right?
 
-### Update CONTEXT.md inline
+### Propose CONTEXT.md entries inline
 
-When a term is resolved, update `CONTEXT.md` right there. Don't batch these up: capture terms as they happen. Use the format in [context-format.md](./references/context-format.md).
+When a term is resolved, propose its `CONTEXT.md` entry right there: the exact text to add or change. Don't batch these up: propose terms as they happen. Write an entry only after the user approves it, in the format in [context-format.md](./references/context-format.md).
 
 Don't couple `CONTEXT.md` to implementation details. Only include terms that are meaningful to domain experts.
 
-Create context files lazily, only when you have something to write. If no `CONTEXT.md` exists, create one when the first term is resolved. If `CONTEXT-MAP.md` exists, use it to find the relevant context. When multiple contexts exist, infer which one the current topic relates to; if unclear, ask.
+Create context files lazily, only when the user has approved something to write. If no `CONTEXT.md` exists, create one when the first entry is approved. If `CONTEXT-MAP.md` exists, use it to find the relevant context. When multiple contexts exist, infer which one the current topic relates to; if unclear, ask.
 
 ### Question format
 
