@@ -8,6 +8,7 @@ import socket
 import subprocess
 import sys
 import time
+from typing import TextIO
 
 REPO = Path(__file__).resolve().parents[1]
 LOG = Path.home() / ".local/state/ansiblonomicon/reconcile.log"
@@ -18,7 +19,7 @@ TIMEOUT_MINUTES = 30
 PROMPT = """The scheduled reconcile on {host} failed with exit status {status} at {when}.
 The full log is {log}; its last lines are below.
 
-Other agents share this checkout, so it may hold another thread's unfinished, uncommitted work, and the reconcile deployed that work along with main. The script pulls by fetching, trial-merging the uncommitted work with upstream through `git stash create` and `git merge-tree`, failing on a conflict, and otherwise running `git rebase --autostash`; pull the same way, because a conflicting autostash exits 0 and leaves conflict markers in that work. If a rebase stopped partway, `git rebase --abort` first; it restores the autostashed work.
+Other agents share this checkout, so it may hold another thread's unfinished, uncommitted work, and the reconcile deployed that work along with main. Pull with `scripts/reconcile-or-fix pull`, never plain `git pull`: it fails on incoming commits that conflict with that work instead of leaving conflict markers in it. If a rebase stopped partway, `git rebase --abort` first; it restores the autostashed work.
 
 Before anything else, check whether that work is the cause, including a pull that stopped because incoming commits conflict with it. Find its thread with find_thread by what the changes do; the pull's autostash resets their modification times. Finishing it is not your job: `git stash push --include-untracked` it, pull and reconcile main cleanly, then `git stash pop` it back so it stays in progress, uncommitted, and tell its thread what broke with send_thread_message. If the pop conflicts, git keeps the stash entry, so check that it is still listed, return the conflicted files to main's version, and tell Thurston. An uncommitted {lock} is a leftover from an earlier reconcile, not another thread's work: commit it as below, or discard it when main already has it. Never commit or discard any other changes you did not make.
 
@@ -37,53 +38,54 @@ Send Thurston one push notification with notify_user only when he must act or de
 """
 
 
+def run(log: TextIO, *command: str) -> int:
+    log.write(f"$ {' '.join(command)}\n")
+    log.flush()
+    process = subprocess.Popen(
+        command,
+        cwd=REPO,
+        stdin=subprocess.DEVNULL,
+        stdout=log,
+        stderr=subprocess.STDOUT,
+        start_new_session=True,
+    )
+    try:
+        return process.wait(timeout=TIMEOUT_MINUTES * 60)
+    except subprocess.TimeoutExpired:
+        os.killpg(process.pid, signal.SIGKILL)
+        process.wait()
+        log.write(f"timed out after {TIMEOUT_MINUTES} minutes; killed\n")
+        return 124
+
+
+# Other agents leave unfinished work in this checkout. The autostash carries it over
+# the rebase, but a conflicting autostash still exits 0 and leaves conflict markers
+# behind, so a trial merge of that work with upstream fails the pull before anything moves.
+def pull(log: TextIO) -> int:
+    if status := run(log, "git", "fetch"):
+        return status
+    stash = subprocess.run(
+        ["git", "stash", "create"],
+        cwd=REPO,
+        stdout=subprocess.PIPE,
+        stderr=log,
+        text=True,
+    )
+    if stash.returncode:
+        return stash.returncode
+    work = stash.stdout.strip() or "HEAD"
+    if status := run(
+        log, "git", "merge-tree", "--write-tree", "--name-only", work, "@{upstream}"
+    ):
+        log.write("incoming commits conflict with uncommitted changes\n")
+        return status
+    return run(log, "git", "rebase", "--autostash")
+
+
 def run_reconcile() -> int:
     LOG.parent.mkdir(parents=True, exist_ok=True)
     with LOG.open("w") as log:
-
-        def run(*command: str) -> int:
-            log.write(f"$ {' '.join(command)}\n")
-            log.flush()
-            process = subprocess.Popen(
-                command,
-                cwd=REPO,
-                stdin=subprocess.DEVNULL,
-                stdout=log,
-                stderr=subprocess.STDOUT,
-                start_new_session=True,
-            )
-            try:
-                return process.wait(timeout=TIMEOUT_MINUTES * 60)
-            except subprocess.TimeoutExpired:
-                os.killpg(process.pid, signal.SIGKILL)
-                process.wait()
-                log.write(f"timed out after {TIMEOUT_MINUTES} minutes; killed\n")
-                return 124
-
-        # Other agents leave unfinished work in this checkout. The autostash carries it over
-        # the rebase, but a conflicting autostash still exits 0 and leaves conflict markers
-        # behind, so a trial merge of that work with upstream fails the pull before anything moves.
-        def pull() -> int:
-            if status := run("git", "fetch"):
-                return status
-            stash = subprocess.run(
-                ["git", "stash", "create"],
-                cwd=REPO,
-                stdout=subprocess.PIPE,
-                stderr=log,
-                text=True,
-            )
-            if stash.returncode:
-                return stash.returncode
-            work = stash.stdout.strip() or "HEAD"
-            if status := run(
-                "git", "merge-tree", "--write-tree", "--name-only", work, "@{upstream}"
-            ):
-                log.write("incoming commits conflict with uncommitted changes\n")
-                return status
-            return run("git", "rebase", "--autostash")
-
-        status = pull() or run("mise", "run", "reconcile")
+        status = pull(log) or run(log, "mise", "run", "reconcile")
         if (
             status
             or not subprocess.run(
@@ -92,13 +94,23 @@ def run_reconcile() -> int:
         ):
             return status
         return (
-            run("git", "commit", "-m", "chore(neovim): update lazy-lock", "--", LOCK)
-            or pull()
-            or run("git", "push")
+            run(
+                log,
+                "git",
+                "commit",
+                "-m",
+                "chore(neovim): update lazy-lock",
+                "--",
+                LOCK,
+            )
+            or pull(log)
+            or run(log, "git", "push")
         )
 
 
 def main() -> int:
+    if sys.argv[1:] == ["pull"]:
+        return pull(sys.stdout)
     host = socket.gethostname().split(".", 1)[0]
     when = time.strftime("%Y-%m-%d %H:%M %Z")
     status = run_reconcile()
