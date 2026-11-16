@@ -31,6 +31,18 @@ UPSTREAM_SUBAGENT = """async function runSubagent(
 		ctx.signal.removeEventListener('abort', cancel)
 	}
 }"""
+UPSTREAM_ORACLE_TOOLS = """		tools: {
+			include: [
+				'shell_command',
+				'web_search',
+				'read_web_page',
+				'read_thread',
+				'find_thread',
+				'finder',
+				'librarian',
+			],
+			exclude: ['tool_search', 'code_exec'],
+		},"""
 
 
 def text(entry: dict[str, object], field: str) -> str:
@@ -114,6 +126,20 @@ def render(capability: Path, output: Path) -> None:
                 "\n\t} finally {",
             )
             content = content.replace(UPSTREAM_SUBAGENT, linked)
+            if name == "oracle":
+                matches = content.count(UPSTREAM_ORACLE_TOOLS)
+                if matches != 1:
+                    raise ValueError(
+                        f"{source}: expected one upstream Oracle tools block, got {matches}; review the plugin-routing patch"
+                    )
+                content = content.replace(
+                    UPSTREAM_ORACLE_TOOLS,
+                    UPSTREAM_ORACLE_TOOLS.replace(
+                        "'finder'", "'plugin__finder__finder'"
+                    )
+                    .replace("'librarian'", "'plugin__librarian__librarian'")
+                    .replace("\n\t\t\texclude: ['tool_search', 'code_exec'],", ""),
+                )
         destination.write_text(content)
         print(f"{name}: {alias} ({effort}), from {source}")
 

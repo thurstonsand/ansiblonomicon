@@ -91,15 +91,34 @@ class PublishPluginsTest(unittest.TestCase):
 	}
 }
 """
-            registration = """
+            upstream_tools = """		tools: {
+			include: [
+				'shell_command',
+				'web_search',
+				'read_web_page',
+				'read_thread',
+				'find_thread',
+				'finder',
+				'librarian',
+			],
+			exclude: ['tool_search', 'code_exec'],
+		},"""
+            registration = (
+                """
 export default function (amp) {
-	const agent = amp.createAgent({ model: MODEL, reasoningEffort: REASONING_EFFORT, instructions })
+	const agent = amp.createAgent({
+		model: MODEL, reasoningEffort: REASONING_EFFORT, instructions,
+"""
+                + upstream_tools
+                + """
+	})
 	amp.registerTool({
 		name: 'research',
 		execute: (input, ctx) => runSubagent(agent, input.task, ctx, 60000),
 	})
 }
 """
+            )
             upstream.write_text(
                 "const MODEL = 'upstream/default'\n"
                 'const REASONING_EFFORT = "medium";\n'
@@ -209,6 +228,10 @@ export default function (amp) {
                 if name in {"oracle.ts", "finder.ts"}:
                     actual = actual.split("\n\n", 1)[0]
                 self.assertEqual(actual, expected)
+            self.assertIn(
+                upstream_tools,
+                run("git", "--git-dir", str(remote), "show", "main:finder.ts"),
+            )
             rendered = root / "rendered.ts"
             rendered.write_text(
                 run("git", "--git-dir", str(remote), "show", "main:oracle.ts")
@@ -221,21 +244,25 @@ export default function (amp) {
                     """
 const { default: plugin } = await import(process.argv[1])
 let tool
+let tools
 let failure = false
 plugin({
-    createAgent: () => ({ createThread: async () => ({
-        id: 'T-research-child',
-        appendUserMessage: async () => {},
-        waitForResponse: async () => {
-            if (failure) throw new Error('Inspection failed')
-            return { content: [
-                { type: 'text', text: 'Found ' },
-                { type: 'image', url: 'ignored' },
-                { type: 'text', text: 'src/cache.ts.' },
-            ] }
-        },
-        cancel: async () => {},
-    }) }),
+    createAgent: (options) => {
+        tools = options.tools
+        return { createThread: async () => ({
+            id: 'T-research-child',
+            appendUserMessage: async () => {},
+            waitForResponse: async () => {
+                if (failure) throw new Error('Inspection failed')
+                return { content: [
+                    { type: 'text', text: 'Found ' },
+                    { type: 'image', url: 'ignored' },
+                    { type: 'text', text: 'src/cache.ts.' },
+                ] }
+            },
+            cancel: async () => {},
+        }) }
+    },
     registerTool: (definition) => { tool = definition },
 })
 const ctx = { thread: { id: 'T-parent' }, signal: new AbortController().signal }
@@ -245,7 +272,7 @@ let error
 let cause
 try { await tool.execute({ task: 'Inspect the cache.' }, ctx) }
 catch (caught) { error = caught.message; cause = caught.cause?.message }
-console.log(JSON.stringify({ report, error, cause }))
+console.log(JSON.stringify({ report, error, cause, tools }))
 """,
                     str(rendered),
                 )
@@ -256,6 +283,17 @@ console.log(JSON.stringify({ report, error, cause }))
                     "report": "Found src/cache.ts.\n\nAgent thread: https://ampcode.com/threads/T-research-child",
                     "error": "Error: Inspection failed\n\nAgent thread: https://ampcode.com/threads/T-research-child",
                     "cause": "Inspection failed",
+                    "tools": {
+                        "include": [
+                            "shell_command",
+                            "web_search",
+                            "read_web_page",
+                            "read_thread",
+                            "find_thread",
+                            "plugin__finder__finder",
+                            "plugin__librarian__librarian",
+                        ],
+                    },
                 },
             )
             self.assertEqual(
@@ -335,6 +373,29 @@ console.log(JSON.stringify({ report, error, cause }))
                         published,
                     )
             source_body = lifecycle + registration
+            for changed_tools in (
+                "",
+                upstream_tools + upstream_tools,
+                upstream_tools.replace("'finder'", "'searcher'"),
+                upstream_tools.replace("['tool_search', 'code_exec']", "['code_exec']"),
+            ):
+                with self.subTest(tools=changed_tools):
+                    upstream.write_text(
+                        "const MODEL = 'upstream/default'\n"
+                        "const REASONING_EFFORT = 'low'\n"
+                        "const instructions = `Prompt remains valid.`\n\n"
+                        + source_body.replace(upstream_tools, changed_tools)
+                    )
+                    with self.assertRaises(subprocess.CalledProcessError) as failure:
+                        publish()
+                    self.assertIn(
+                        "expected one upstream Oracle tools block",
+                        failure.exception.stderr,
+                    )
+                    self.assertEqual(
+                        run("git", "--git-dir", str(remote), "rev-parse", "main"),
+                        published,
+                    )
             for changed in (
                 registration,
                 lifecycle + source_body,
