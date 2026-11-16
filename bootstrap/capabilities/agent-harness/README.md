@@ -69,7 +69,7 @@ pod042, pod153, no9-type-s, and eve declare `npm:@opencode/browse` in their glob
 
 Each browser profile needs the official [Browse extension](https://chromewebstore.google.com/detail/mfnicocicmmlkpjnaffgihfjhdgjkdjg) and a one-time local pairing. pod042's Chromium policy installs it alongside ChatGPT and 1Password; reload `chrome://policy` after applying that policy. Other personal Chrome profiles use the Web Store and Chrome Sync. Browser profiles and pairing credentials stay out of the repo.
 
-For CLI-only pairing, run `browse pair`, open the extension's Options, enter the displayed code under **Pairing code**, and connect to `localhost:19988`. Finish with `browse doctor` and a named-session navigation. Avoid `browse install`: it autodetects the calling harness and writes MCP configuration that this repo already owns. Even `browse install --help` runs the installer in 0.0.10. The CLI is sufficient for Pi and the other harnesses; no MCP registration is needed.
+For CLI-only pairing, run `browse pair`, open the extension's Options, enter the displayed code under **Pairing code**, and connect to `localhost:19988`. Finish with `browse status` and a named-session navigation. Avoid `browse install`: it autodetects the calling harness and writes MCP configuration that this repo already owns. Even `browse install --help` runs the installer in 0.0.10. The CLI is sufficient for Pi and the other harnesses; no MCP registration is needed.
 
 Browse cannot operate 1Password's extension UI. Existing website sessions remain useful, but a new passkey login requires a user handoff or separately authorized native desktop interaction outside a Browse-controlled tab. On shared browsers, delete only the task's session rather than running Browse's global tab cleanup.
 

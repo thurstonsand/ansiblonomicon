@@ -29,7 +29,7 @@ The server attaches to Thurston's running Chrome, so its pages share his profile
 
 Choose by where the browser runs, not by which agent harness is calling it:
 
-- **Personal hosts:** use the Browse CLI. Run `browse skill` and follow that installed version's guide before the first browser command. `browse doctor` diagnoses an unavailable relay or extension. Mise owns CLI installation and upgrades (`mise upgrade npm:@opencode/browse`); the browser owns extension updates. Use CLI-only setup rather than adding MCP servers to harness-managed configuration.
+- **Personal hosts:** use the Browse CLI. Run `browse --help` and follow its AGENT GUIDE, which matches the installed version, before the first browser command. `browse status` diagnoses an unavailable relay or extension. Mise owns CLI installation and upgrades (`mise upgrade npm:@opencode/browse`); the browser owns extension updates. Use CLI-only setup rather than adding MCP servers to harness-managed configuration.
 - **Amp orbs:** use their preinstalled agent-browser. Run `agent-browser skills get core` before the first browser command, then load specialized guides with `agent-browser skills get <name>` when needed. No Browse extension or personal browser pairing is required in an orb.
 
 Browse requires a running Chromium-family browser with its extension installed and paired. If setup is incomplete, report that boundary rather than silently switching tools. On pod042, load `using-pod042-desktop` for the shared browser and native desktop controls.
@@ -41,7 +41,7 @@ Browse cannot drive browser chrome or other extensions, including 1Password's pa
 
 ## Browsing on no9-type-s
 
-Use these window-placement instructions when the browser runs on no9-type-s. Continue to run `browse skill` for the installed version's page-automation guide; this host supplement changes window placement and tab selection, not the upstream guide or its security boundaries.
+Use these window-placement instructions when the browser runs on no9-type-s. Continue to follow `browse --help` for the installed version's page-automation guide; this host supplement changes window placement and tab selection, not the upstream guide or its security boundaries.
 
 ### One task, one window, one special workspace
 
