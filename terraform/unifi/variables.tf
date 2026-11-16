@@ -1,9 +1,4 @@
-variable "unifi_username" {
-  type      = string
-  sensitive = true
-}
-
-variable "unifi_password" {
+variable "unifi_api_key" {
   type      = string
   sensitive = true
 }

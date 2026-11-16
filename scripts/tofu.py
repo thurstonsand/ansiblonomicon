@@ -19,8 +19,7 @@ ALIASES = {
         "TF_VAR_nextdns_profile_id": "NEXTDNS_PROFILE_ID",
     },
     "unifi": {
-        "TF_VAR_unifi_username": "UNIFI_USERNAME",
-        "TF_VAR_unifi_password": "UNIFI_PASSWORD",
+        "TF_VAR_unifi_api_key": "UNIFI_API_KEY",
         "TF_VAR_unifi_wan_mac_override": "UNIFI_WAN_MAC_OVERRIDE",
         "TF_VAR_yorha_passphrase": "YORHA_PASSPHRASE",
         "TF_VAR_lunar_tear_passphrase": "LUNAR_TEAR_PASSPHRASE",

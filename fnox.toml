@@ -24,6 +24,7 @@ AWS_ACCESS_KEY_ID = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtb
 AWS_SECRET_ACCESS_KEY = { provider = "agent", value = "op://agent/oo24dck3jc6kff4dtby4mtsjkq/secret access key" }
 UNIFI_USERNAME = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/local admin/user" }
 UNIFI_PASSWORD = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/local admin/password" }
+UNIFI_API_KEY = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/api_key" }
 UNIFI_WAN_MAC_OVERRIDE = { provider = "agent", value = "op://agent/3osbsexomwdft5wv4zvfwe372m/wan/mac clone" }
 YORHA_PASSPHRASE = { provider = "agent", value = "op://agent/skmsezufiiwrbsna7tihtxo4fe/wireless network password" }
 LUNAR_TEAR_PASSPHRASE = { provider = "agent", value = "op://agent/p6kdhsa7nr7yxqf4gixob52qru/wireless network password" }
