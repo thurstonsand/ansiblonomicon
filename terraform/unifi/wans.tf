@@ -17,7 +17,7 @@ resource "unifi_wan" "internet_1" {
   name         = "Internet 1"
   networkgroup = "WAN"
   type         = "dhcp"
-  enabled      = false
+  enabled      = true
 
   mac_override_enabled = false
 

@@ -31,7 +31,7 @@ resource "unifi_dns_record" "pod042_service" {
   record_type = "A"
   value       = unifi_client.pod042.fixed_ip
   enabled     = true
-  ttl         = "5m"
+  ttl         = "5m0s"
 }
 
 resource "unifi_dns_record" "printer" {
@@ -39,7 +39,7 @@ resource "unifi_dns_record" "printer" {
   record_type = "A"
   value       = unifi_client.canon_printer.fixed_ip
   enabled     = true
-  ttl         = "5m"
+  ttl         = "5m0s"
 }
 
 resource "unifi_dns_record" "kvm" {
@@ -47,5 +47,5 @@ resource "unifi_dns_record" "kvm" {
   record_type = "A"
   value       = unifi_client.pod042_kvm.fixed_ip
   enabled     = true
-  ttl         = "5m"
+  ttl         = "5m0s"
 }

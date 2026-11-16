@@ -1,6 +1,6 @@
 # UniFi OpenTofu
 
-This directory owns the stable Network application configuration on the UDM Pro. It adopts a manually bootstrapped controller rather than pretending OpenTofu can create the credential or management path it needs.
+This directory owns the stable Network application configuration and selected Protect sensor settings on the UDM Pro. It adopts a manually bootstrapped controller rather than pretending OpenTofu can create the credential or management path it needs.
 
 ## Ownership boundary
 
@@ -16,11 +16,12 @@ OpenTofu owns:
 - name-only stable client records for every device of Thurston's on any network; other people's Lunar Tear devices are deliberately unnamed
 - reusable Bunker, YoRHa, Scanners, and The Village access profiles plus the infrastructure trunk profile
 - stable device port assignments after physical adoption
-- the disabled Internet 1 backup and primary WAS-110 DHCP WAN, including priority, failover mode, and the sensitive cloned MAC
+- the enabled Internet 1 failover and primary WAS-110 DHCP WAN, including priority, failover mode, and the sensitive cloned MAC
 - the `192.168.11.0/24` WAS-110 LCT interface route
 - the Plex TCP `32400` WAN port forward to pod042
 - Gateway mDNS Proxy Custom mode for YoRHa, Lunar Tear, Scanners, and The Village, restricted to Apple AirPlay, HomeKit, and the `_ipp._tcp.local`, `_ipps._tcp.local`, `_uscan._tcp.local`, `_uscans._tcp.local`, `_hue._tcp.local`, and `_hap._tcp.local` custom services
 - Network-device automatic update policy
+- Protect sensor names and the Main Closet Motion Sensor's motion enablement and sensitivity
 
 Manual state remains manual because the provider cannot represent or safely round-trip it:
 
@@ -29,6 +30,9 @@ Manual state remains manual because the provider cannot represent or safely roun
 - physical reset and adoption of switches, power devices, and APs
 - Power Distribution Pro outlet control and outlet names; OpenTofu observes the device and its outlet state, but the provider excludes every `outlet_*` field from device updates. Rename outlets in the controller UI. A `postcondition` on the device fails the plan if outlets 5 and 7 stop reporting `relay_state = true`, and the `pdu_outlet_names` check warns when an expected name goes missing
 - the initial WAS-110 profile and service identity
+- Protect sensor adoption, and every smoke/CO setting and status; this module neither manages nor observes smoke/CO safety state
+
+Destroying a `unifi_protect_sensor` removes it only from OpenTofu state. It never unadopts the device or resets its settings. Omitted sensor attributes are unmanaged; the smoke detectors' motion settings remain outside this module.
 
 The live secret values and controller object IDs belong in 1Password and remote state, never HCL or this README.
 
@@ -55,12 +59,14 @@ The full physical cutover and rollback gates live in [`docs/wayfinding/new-house
 
 ## Provider constraints
 
-The provider is pinned exactly to `github.com/thurstonsand/unifi` 0.57.0-ansiblonomicon.1, built from the `release` branch of the permanent [`terraform-provider-unifi`](https://github.com/thurstonsand/terraform-provider-unifi) fork. `provider.toml` records the checksums for macOS ARM64, Linux AMD64, and Linux ARM64. `mise run unifi:provider:install` verifies the matching GitHub Release archive and installs only its binary into OpenTofu's implied filesystem mirror; extra archive files change OpenTofu's directory hash. The fork is not published to a provider registry.
+The provider is pinned exactly to `github.com/thurstonsand/unifi` 0.57.0-ansiblonomicon.2, built from the `release` branch of the permanent [`terraform-provider-unifi`](https://github.com/thurstonsand/terraform-provider-unifi) fork. `provider.toml` records the checksums for macOS ARM64, Linux AMD64, and Linux ARM64. `mise run unifi:provider:install` verifies the matching GitHub Release archive and installs only its binary into OpenTofu's implied filesystem mirror; extra archive files change OpenTofu's directory hash. The fork is not published to a provider registry.
 
 Shared R2 state moved from `registry.opentofu.org/ubiquiti-community/unifi` to the fork source once with `tofu state replace-provider`. Do not repeat that migration. The backend uses OpenTofu's native S3 lockfile; R2 rejects a competing conditional lock write. The encrypted pre-migration snapshot lives outside Git under `~/Documents/Network Backups/`.
 
 Known sharp edges:
 
+- Network 11 uses UUID object IDs. If an upgrade makes existing zones, policies or DNS records appear deleted, reconcile state against the live UUIDs instead of applying recreations. Duplicate zones can take over network membership.
+- DNS TTLs use canonical Go duration strings such as `5m0s`. A shorter spelling such as `5m` has the same value but plans an unnecessary update when importing a record.
 - YoRHa enables Proxy ARP to work around failed broadcast address resolution toward clients on the U7 Pro Max running 8.7.11. Unicast probes worked while broadcast probes missed clients; enabling Proxy ARP restored ordinary address resolution and LocalSend HTTPS access. Recheck broadcast delivery before removing the workaround after a firmware update.
 - The provider exposes both `unifi_network.firewall_zone_id` and `unifi_firewall_zone.network_ids`, which fight when both own membership. This module deliberately leaves `firewall_zone_id` unset; zones alone own membership here.
 - mDNS membership is owned solely by `unifi_setting.site`'s `enabled_for_network_ids`. The controller writes it through a v2 endpoint and recomputes `unifi_network.multicast_dns` from it, so that attribute is computed-only as of 0.56.0-ansiblonomicon.7 and setting it is a plan error. Add a network to the list here, never to the network resource.

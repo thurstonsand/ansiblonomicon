@@ -22,7 +22,7 @@ terraform {
   required_providers {
     unifi = {
       source  = "github.com/thurstonsand/unifi"
-      version = "0.57.0-ansiblonomicon.1"
+      version = "0.57.0-ansiblonomicon.2"
     }
   }
 }
