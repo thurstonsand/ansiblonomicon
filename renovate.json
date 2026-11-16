@@ -136,6 +136,11 @@
       "description": "The executor.sh app SDK ships as `apps` under the `beta` dist-tag only. The package's `latest` tag still points at 0.8.3, a 2014 app.json manifest library published under the same name, which Renovate would otherwise offer as an upgrade.",
       "matchPackageNames": ["apps"],
       "followTag": "beta"
+    },
+    {
+      "description": "biome.json's $schema names the exact Biome release, kept current by customManagers:biomeVersions, so Biome is pinned exactly as its install guide does (npm i -E) and the package, the schema, and any mise pin move in one PR. Last, so it overrides the per-manager groups.",
+      "matchPackageNames": ["@biomejs/biome", "biomejs/biome"],
+      "groupName": "Biome"
     }
   ]
 }
