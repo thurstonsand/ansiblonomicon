@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Pull and reconcile this host; on failure, hand the log to an Amp agent to fix or escalate."""
 
+import contextlib
 import os
 from pathlib import Path
 import signal
@@ -38,6 +39,19 @@ Send Thurston one push notification with notify_user only when he must act or de
 """
 
 
+def descendants(root: int) -> list[int]:
+    children: dict[int, list[int]] = {}
+    for line in subprocess.run(
+        ["ps", "-A", "-o", "pid=,ppid="], check=True, text=True, capture_output=True
+    ).stdout.splitlines():
+        pid, ppid = map(int, line.split())
+        children.setdefault(ppid, []).append(pid)
+    tree = children.get(root, [])
+    for pid in tree:
+        tree.extend(children.get(pid, []))
+    return tree
+
+
 def run(log: TextIO, *command: str) -> int:
     log.write(f"$ {' '.join(command)}\n")
     log.flush()
@@ -52,7 +66,11 @@ def run(log: TextIO, *command: str) -> int:
     try:
         return process.wait(timeout=TIMEOUT_MINUTES * 60)
     except subprocess.TimeoutExpired:
-        os.killpg(process.pid, signal.SIGKILL)
+        # mise starts each task in its own process group, so killing the session's group
+        # alone leaves the hung step running.
+        for pid in [process.pid, *descendants(process.pid)]:
+            with contextlib.suppress(ProcessLookupError):
+                os.kill(pid, signal.SIGKILL)
         process.wait()
         log.write(f"timed out after {TIMEOUT_MINUTES} minutes; killed\n")
         return 124
