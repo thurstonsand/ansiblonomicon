@@ -17,6 +17,7 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "pod153" {
   depends_on = [
     cloudflare_zero_trust_access_application.pod153_mcp,
     cloudflare_zero_trust_access_application.pod153_nurb,
+    cloudflare_zero_trust_access_application.pod153_evidence,
   ]
 
   config = {
@@ -56,6 +57,12 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "pod153" {
       {
         hostname = "nurb.${local.zone_name}"
         service  = "http://10.10.10.53:7373"
+      },
+      # HearingTestAI's evidence index, its pictures and recordings, through the Caddy front that
+      # serves the folder and withholds raw exports.
+      {
+        hostname = "evidence.${local.zone_name}"
+        service  = "http://127.0.0.1:8766"
       },
       { service = "http_status:404" },
     ]
@@ -144,5 +151,49 @@ resource "cloudflare_zero_trust_access_application" "pod153_nurb" {
   policies = [
     { id = cloudflare_zero_trust_access_policy.amp_service_auth.id, precedence = 1 },
     { id = cloudflare_zero_trust_access_policy.admin_access.id, precedence = 2 },
+  ]
+}
+
+resource "cloudflare_dns_record" "evidence" {
+  zone_id = local.zone_id
+  name    = "evidence"
+  type    = "CNAME"
+  content = "${cloudflare_zero_trust_tunnel_cloudflared.pod153.id}.cfargotunnel.com"
+  proxied = true
+  ttl     = 1
+}
+
+# The evidence shows a real patient's hearing tests, symptoms and medications, so Access admits
+# only Thurston and Mike, whose records they are and who wrote the app the rewrite replaces.
+resource "cloudflare_zero_trust_access_policy" "evidence_viewers" {
+  account_id       = local.account_id
+  name             = "HearingTestAI Evidence Viewers"
+  decision         = "allow"
+  session_duration = "24h"
+
+  include = [{ email = { email = "mikebaden@bellsouth.net" } }]
+
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# Mike signs in with Google if his address is a Google account and by one-time PIN if it is not,
+# so the login page offers both instead of redirecting to one.
+resource "cloudflare_zero_trust_access_application" "pod153_evidence" {
+  account_id                 = local.account_id
+  name                       = "HearingTestAI evidence"
+  domain                     = "evidence.${local.zone_name}"
+  type                       = "self_hosted"
+  http_only_cookie_attribute = true
+  session_duration           = "24h"
+  auto_redirect_to_identity  = false
+  allowed_idps = [
+    cloudflare_zero_trust_access_identity_provider.google.id,
+    cloudflare_zero_trust_access_identity_provider.onetimepin.id,
+  ]
+  policies = [
+    { id = cloudflare_zero_trust_access_policy.admin_access.id, precedence = 1 },
+    { id = cloudflare_zero_trust_access_policy.evidence_viewers.id, precedence = 2 },
   ]
 }

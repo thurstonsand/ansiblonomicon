@@ -70,5 +70,6 @@ locals {
     "doppelclaude.${local.zone_name}",
     "pod153-mcp.${local.zone_name}",
     "nurb.${local.zone_name}",
+    "evidence.${local.zone_name}",
   ]
 }

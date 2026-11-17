@@ -13,3 +13,14 @@ http://100.97.62.24:7373, http://10.10.10.53:7373, http://nurb.thurstons.house:7
 		header_up Origin ^(http://(100\.97\.62\.24|10\.10\.10\.53):7373|https://nurb\.thurstons\.house)$ http://127.0.0.1:7373
 	}
 }
+
+# HearingTestAI's evidence index with its pictures and recordings, for pod153's tunnel, which puts
+# Access in front of evidence.thurstons.house. The folder also holds raw exports of a real patient's
+# records; those stay out, since the page shows pictures of them and needs none of the files.
+http://:8766 {
+	bind 127.0.0.1
+	root * /Users/thurstonsand/Develop/HearingTestAI/evidence
+	@raw path *.json *.csv
+	respond @raw 404
+	file_server
+}
