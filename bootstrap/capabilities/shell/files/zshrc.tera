@@ -121,7 +121,6 @@ alias vim='nvim'
 claude() {
   command claude \
     --plugin-dir ~/code/claude-code-plugin-auto-title \
-    --plugin-dir ~/code/claude-code-plugin-sourcegraph \
     "$@"
 }
 {% else %}
