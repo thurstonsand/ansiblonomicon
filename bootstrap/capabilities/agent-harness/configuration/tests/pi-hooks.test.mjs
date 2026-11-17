@@ -6,47 +6,42 @@ import { test } from "node:test";
 import timing from "../assets/pi/extensions/command-timing.ts";
 import comments from "../assets/pi/extensions/no-chat-comments.ts";
 
-function register(extension) {
+function register(extension, sent = []) {
   const handlers = {};
   extension({
     on: (name, handler) => {
       handlers[name] = handler;
     },
+    sendMessage: (message, options) => sent.push({ message, options }),
   });
   return handlers;
 }
 
-test("Pi timing preserves tool content and structured output at both warning boundaries", (t) => {
-  let now = 0;
-  t.mock.method(performance, "now", () => now);
-  const hooks = register(timing);
-  for (const [milliseconds, severity] of [
-    [60000, "none"],
-    [60001, "slow"],
-    [300000, "slow"],
-    [300001, "very slow"],
+test("Pi timing steers the agent privately only when execution time crosses a warning boundary", () => {
+  for (const [seconds, severity] of [
+    [60, "none"],
+    [60.1, "slow"],
+    [300, "slow"],
+    [300.1, "very slow"],
   ]) {
-    now = 0;
-    hooks.tool_call({ toolName: "bash", toolCallId: "call" });
-    now = milliseconds;
+    const sent = [];
+    const hooks = register(timing, sent);
     const result = hooks.tool_result({
       toolName: "bash",
       toolCallId: "call",
       content: [{ type: "text", text: "failure output" }],
-      structuredContent: { exitCode: 7 },
+      structuredContent: { exit_code: 7, wall_time_seconds: seconds },
       isError: true,
     });
-    assert.deepEqual(result.content[0], { type: "text", text: "failure output" });
-    assert.deepEqual(result.structuredContent, { exitCode: 7 });
-    assert.equal(result.isError, undefined);
-    const feedback = result.content[1].text;
-    assert.equal(feedback.includes("Slow feedback loop:"), severity === "slow");
-    assert.equal(feedback.includes("Very slow feedback loop:"), severity === "very slow");
-    assert.equal(hooks.tool_result({ toolName: "bash", toolCallId: "call" }), undefined);
+    assert.equal(result, undefined);
+    assert.equal(sent.length, severity === "none" ? 0 : 1);
+    if (severity === "none") continue;
+    const { message, options } = sent[0];
+    assert.equal(message.display, false);
+    assert.equal(options.deliverAs, "steer");
+    assert.equal(message.content.includes("Slow feedback loop:"), severity === "slow");
+    assert.equal(message.content.includes("Very slow feedback loop:"), severity === "very slow");
   }
-  hooks.tool_call({ toolName: "bash", toolCallId: "abandoned" });
-  hooks.session_start();
-  assert.equal(hooks.tool_result({ toolName: "bash", toolCallId: "abandoned" }), undefined);
 });
 
 test("Pi edit batches and writes reject new chat comments but retain unrelated content", async () => {
