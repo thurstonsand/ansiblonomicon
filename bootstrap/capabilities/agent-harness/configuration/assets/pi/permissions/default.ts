@@ -9,32 +9,23 @@ import {
   type SimpleCommand,
 } from "@thurstonsand/pi-permissions";
 
-const GIT_MUTATION_SUBCOMMANDS = [
-  "stash",
-  "add",
-  // `git stage` is an alias for add, and `update-index --add/--skip-worktree`
-  // reaches the index without either. Omitting them left a way around this hook
-  // that reads as innocuous plumbing.
-  "stage",
-  "update-index",
+const GIT_GATED_SUBCOMMANDS = [
   "commit",
-  "push",
-  "pull",
-  "checkout",
-  "switch",
-  "restore",
-  "reset",
-  "clean",
-  "rebase",
   "merge",
+  "rebase",
   "cherry-pick",
   "revert",
+  "am",
+  // Plumbing that writes commits or moves refs without going through `commit`.
+  "commit-tree",
+  "update-ref",
+  "push",
+  "reset",
+  "clean",
+  "restore",
+  "checkout",
+  "switch",
   "rm",
-  "mv",
-  "branch",
-  "tag",
-  "worktree",
-  "submodule",
 ] as const;
 const SQL_DATA_MUTATION_PATTERN =
   /\b(?:insert|update|delete|merge|truncate|vacuum|reindex|cluster)\b/i;
@@ -54,14 +45,14 @@ const WORK_WEB_SEARCH_TOOL = "mcp__web_search__web_search";
 export default function permissions(api: PermissionsAPI): void {
   api.onToolUse({
     name: "Git interference",
-    description: "tampering with repository state or history",
+    description: "committing history, modifying remotes, or discarding uncommitted work",
     handler: ({ tool }) =>
       matchTool(tool, {
         bash: matchCommand({
           program: "git",
-          subcommands: GIT_MUTATION_SUBCOMMANDS,
+          subcommands: GIT_GATED_SUBCOMMANDS,
           valueFlags: gitValueFlags,
-          where: allowReadOnly(isReadOnlyAction, isReadOnlyListing, isReadOnlyClean),
+          where: isGatedGitCommand,
           onMatch: ({ commands }) => {
             if (isSubagent()) {
               return undefined;
@@ -111,100 +102,34 @@ export default function permissions(api: PermissionsAPI): void {
   });
 }
 
-interface ReadOnlyActionRule {
-  actions: ReadonlySet<string>;
-  allowBare?: boolean;
+type GitGatedSubcommand = (typeof GIT_GATED_SUBCOMMANDS)[number];
+
+const DISCARDS_UNCOMMITTED_WORK: Partial<
+  Record<GitGatedSubcommand, (command: SimpleCommand) => boolean>
+> = {
+  reset: (command) => command.hasFlag("--hard"),
+  clean: (command) => !command.hasFlag("-n", "--dry-run"),
+  restore: (command) => !command.hasFlag("-S", "--staged") || command.hasFlag("-W", "--worktree"),
+  checkout: (command) => command.hasFlag("-f", "--force") || checksOutPaths(command),
+  switch: (command) => command.hasFlag("-f", "--force", "--discard-changes"),
+  rm: (command) => command.hasFlag("-f", "--force"),
+};
+
+function isGatedGitCommand(command: SimpleCommand): boolean {
+  const subcommand = gitPositionals(command)[0] as GitGatedSubcommand;
+  const discardsWork = DISCARDS_UNCOMMITTED_WORK[subcommand];
+  return discardsWork ? discardsWork(command) : true;
 }
 
-const READ_ONLY_ACTION_SUBCOMMANDS: Record<string, ReadOnlyActionRule> = {
-  stash: { actions: new Set(["list", "show"]) },
-  worktree: { actions: new Set(["list"]) },
-  submodule: { actions: new Set(["status", "summary"]), allowBare: true },
-};
-
-const LISTING_MUTATING_FLAGS: Record<string, readonly string[]> = {
-  branch: [
-    "-d",
-    "-D",
-    "--delete",
-    "-m",
-    "-M",
-    "--move",
-    "-c",
-    "-C",
-    "--copy",
-    "-f",
-    "--force",
-    "-u",
-    "--set-upstream-to",
-    "--unset-upstream",
-    "--edit-description",
-  ],
-  tag: [
-    "-d",
-    "--delete",
-    "-f",
-    "--force",
-    "-a",
-    "--annotate",
-    "-s",
-    "--sign",
-    "-m",
-    "--message",
-    "-F",
-    "--file",
-  ],
-};
-
-const LIST_MODE_FLAGS: Record<string, readonly string[]> = {
-  branch: ["-l", "--list", "--contains", "--no-contains", "--merged", "--no-merged", "--points-at"],
-  tag: [
-    "-l",
-    "--list",
-    "-n",
-    "--contains",
-    "--no-contains",
-    "--merged",
-    "--no-merged",
-    "--points-at",
-  ],
-};
-
-function allowReadOnly(
-  ...predicates: readonly ((command: SimpleCommand) => boolean)[]
-): (command: SimpleCommand) => boolean {
-  return (command) => !predicates.some((predicate) => predicate(command));
+function checksOutPaths(command: SimpleCommand): boolean {
+  return (
+    command.args.some((token) => token.text === "--") ||
+    gitPositionals(command).slice(1).includes(".")
+  );
 }
 
 function gitPositionals(command: SimpleCommand): readonly string[] {
   return command.positionals({ valueFlags: gitValueFlags }).map((token) => token.text);
-}
-
-function isReadOnlyAction(command: SimpleCommand): boolean {
-  const [subcommand, action] = gitPositionals(command);
-  if (subcommand === undefined) return false;
-
-  const rule = READ_ONLY_ACTION_SUBCOMMANDS[subcommand];
-  if (!rule) return false;
-
-  return action === undefined ? rule.allowBare === true : rule.actions.has(action);
-}
-
-function isReadOnlyListing(command: SimpleCommand): boolean {
-  const positionals = gitPositionals(command);
-  const subcommand = positionals[0];
-  if (subcommand === undefined) return false;
-
-  const mutatingFlags = LISTING_MUTATING_FLAGS[subcommand];
-  const listModeFlags = LIST_MODE_FLAGS[subcommand];
-  if (!mutatingFlags || !listModeFlags) return false;
-
-  const listing = positionals.length === 1 || command.hasFlag(...listModeFlags);
-  return listing && !command.hasFlag(...mutatingFlags);
-}
-
-function isReadOnlyClean(command: SimpleCommand): boolean {
-  return gitPositionals(command)[0] === "clean" && command.hasFlag("-n", "--dry-run");
 }
 
 let subagentDetected: boolean | undefined;
