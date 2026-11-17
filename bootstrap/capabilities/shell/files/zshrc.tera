@@ -123,6 +123,13 @@ claude() {
     --plugin-dir ~/code/claude-code-plugin-auto-title \
     "$@"
 }
+# The managed sandbox profile denies the librarian's cache and state writes, and only --add-dir widens it.
+codex() {
+  command codex \
+    --add-dir ~/.cache/agents/librarian \
+    --add-dir ~/.local/state/agents/librarian \
+    "$@"
+}
 {% else %}
 claude() {
   command claude --dangerously-skip-permissions "$@"
