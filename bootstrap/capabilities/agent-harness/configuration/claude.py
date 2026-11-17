@@ -146,15 +146,14 @@ def _base_settings(
                     "source": "github",
                     "repo": "anthropics/claude-plugins-official",
                 }
-            }
+            },
+            "pi-librarian": {
+                "source": {"source": "github", "repo": "thurstonsand/pi-librarian"},
+                "autoUpdate": True,
+            },
         },
+        "enabledPlugins": {"librarian@pi-librarian": True},
     }
-    if hostname != "ML-DFC6YK6VJQ":
-        settings["extraKnownMarketplaces"]["pi-librarian"] = {
-            "source": {"source": "github", "repo": "thurstonsand/pi-librarian"},
-            "autoUpdate": True,
-        }
-        settings["enabledPlugins"] = {"librarian@pi-librarian": True}
     return settings
 
 

@@ -67,6 +67,7 @@ The shared startup files are owned by the native mise shell capability. They sou
 
 ## Claude Code
 
+- The librarian plugin's agent tracks pi-librarian's `main`, but the command it runs is Pi's copy of the `downgrade` branch, which pins dependencies the mirror serves. Rebuild `downgrade` on `main` before relying on a new CLI capability here.
 - `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/claude-settings-overlay.json`
   supplies the work-only settings overlay.
 - `bootstrap/capabilities/agent-harness/local/ML-DFC6YK6VJQ/assets.toml`

@@ -9,6 +9,7 @@ import subprocess
 import tempfile
 from typing import Any, cast
 
+import librarian
 import tomlkit
 from tomlkit.items import Table
 
@@ -158,14 +159,13 @@ def render(
         if hostname == WORK_HOST
         else models["openai"]["gpt_astra"]["version"]
     )
-    cli = _librarian_cli(home, hostname)
     return {
         ".codex/config.toml": tomlkit.dumps(merged),
         ".codex/agents/oracle.toml": tomlkit.dumps(oracle),
         ".codex/agents/code-review.toml": tomlkit.dumps(reviewer),
         **_librarian_role(
             home,
-            cli,
+            librarian.cli(home, hostname),
             None
             if hostname == WORK_HOST
             else {
@@ -173,47 +173,7 @@ def render(
                 "reasoningEffort": "low",
             },
         ),
-        ".local/bin/librarian": _librarian_executable(home, cli),
     }
-
-
-# Pi only installs a missing package and never updates one on its own, so the reconcile keeps
-# the copy Codex runs on the librarian's latest release.
-def update_librarian(home: Path, hostname: str) -> None:
-    source = (
-        "git:github.com/thurstonsand/pi-librarian@downgrade"
-        if hostname == WORK_HOST
-        else "npm:@thurstonsand/pi-librarian"
-    )
-    subprocess.run(
-        [
-            "mise",
-            "-C",
-            str(home),
-            "exec",
-            "--",
-            "pi",
-            "update",
-            "--extension",
-            source,
-            "--no-approve",
-        ],
-        check=True,
-    )
-
-
-# Pi installs the librarian package, so Codex runs that same copy rather than a second install
-# that the work mirror may not serve.
-def _librarian_cli(home: Path, hostname: str) -> Path:
-    package = (
-        home / ".pi/agent/git/github.com/thurstonsand/pi-librarian"
-        if hostname == WORK_HOST
-        else home / ".pi/agent/npm/node_modules/@thurstonsand/pi-librarian"
-    )
-    cli = package / "dist/cli/librarian.js"
-    if not cli.is_file():
-        raise ValueError(f"{cli} is missing; start pi once so it installs pi-librarian")
-    return cli
 
 
 # The librarian writes its own role and rule, so they track its releases. It runs in an empty
@@ -254,10 +214,3 @@ def _librarian_role(
                 ".codex/rules/librarian.rules",
             )
         }
-
-
-def _librarian_executable(home: Path, cli: Path) -> str:
-    return f'''#!/usr/bin/env bash
-set -euo pipefail
-exec "$(mise which -C "{home}" node)" "{cli}" "$@"
-'''
