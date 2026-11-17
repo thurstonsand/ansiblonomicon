@@ -15,8 +15,9 @@ models:
       version: "claude-fable-5-2[1m]"
       display_name: "Claude Fable 5.2"
       max_input: 1000000
-      max_output: 64000
+      max_output: 128000
       vision: true
+      supports_temperature: false
       agent_harness:
         aliases:
           claude: "fable[1m]"
