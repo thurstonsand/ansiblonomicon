@@ -4,7 +4,7 @@ import codeReview from '../../amp-plugins/code-review.ts'
 import timing from '../../amp-plugins/command-timing.ts'
 import comments from '../../amp-plugins/no-chat-comments.ts'
 
-function register(extension) {
+function register(extension, states = {}) {
 	const handlers = {}
 	extension({
 		on: (event, handler) => {
@@ -16,11 +16,20 @@ function register(extension) {
 					? { command: event.input.command }
 					: null,
 		},
+		threads: {
+			get: (id) => ({
+				state: {
+					subscribe: (onNext) => {
+						states[id] = onNext
+					},
+				},
+			}),
+		},
 	})
 	return handlers
 }
 
-test('Amp times foreground commands, preserves failures, and separates overlapping threads', (t) => {
+test('Amp warns only past each boundary, preserves failures, and separates overlapping threads', (t) => {
 	let now = 0
 	t.mock.method(performance, 'now', () => now)
 	const hooks = register(timing)
@@ -47,6 +56,10 @@ test('Amp times foreground commands, preserves failures, and separates overlappi
 			error: 'failed',
 			output: { output: 'original', exitCode: 7 },
 		})
+		if (severity === 'none') {
+			assert.equal(result, undefined)
+			continue
+		}
 		assert.equal(result.status, 'error')
 		assert.equal(result.error, 'failed')
 		assert.equal(result.output.output, 'original')
@@ -63,6 +76,39 @@ test('Amp times foreground commands, preserves failures, and separates overlappi
 	}
 })
 
+test('Amp excludes time spent awaiting approval from execution time', (t) => {
+	let now = 0
+	t.mock.method(performance, 'now', () => now)
+	const states = {}
+	const hooks = register(timing, states)
+	const call = {
+		thread: { id: 'one' },
+		toolUseID: 'approved',
+		tool: 'shell_command',
+		input: { command: 'make test' },
+	}
+	hooks['tool.call'](call)
+	states.one('awaiting-approval')
+	now = 600000
+	states.one('running')
+	now = 630000
+	assert.equal(
+		hooks['tool.result']({ ...call, status: 'done', output: { output: '' } }),
+		undefined,
+	)
+	hooks['tool.call']({ ...call, toolUseID: 'slow' })
+	now = 700000
+	assert.match(
+		hooks['tool.result']({
+			...call,
+			toolUseID: 'slow',
+			status: 'done',
+			output: { output: '' },
+		}).output.commandTiming,
+		/Shell execution: 70.0s/,
+	)
+})
+
 test('Amp follows a background process through polls without timing each poll as a command', (t) => {
 	let now = 0
 	t.mock.method(performance, 'now', () => now)
@@ -75,12 +121,14 @@ test('Amp follows a background process through polls without timing each poll as
 	}
 	hooks['tool.call'](call)
 	now = 1000
-	const running = hooks['tool.result']({
-		...call,
-		status: 'done',
-		output: { running: true, pid: 123, output: '' },
-	})
-	assert.match(running.output.commandTiming, /elapsed so far: 1.0s/)
+	assert.equal(
+		hooks['tool.result']({
+			...call,
+			status: 'done',
+			output: { running: true, pid: 123, output: '' },
+		}),
+		undefined,
+	)
 	const poll = {
 		thread: call.thread,
 		toolUseID: 'poll',
@@ -92,14 +140,14 @@ test('Amp follows a background process through polls without timing each poll as
 	assert.match(
 		hooks['tool.result']({ ...poll, output: { running: true, pid: 123 } })
 			.output.commandTiming,
-		/elapsed so far: 61.0s/,
+		/execution so far: 61.0s/,
 	)
 	now = 125000
 	const finished = hooks['tool.result']({
 		...poll,
 		output: { running: false, output: 'finished', exitCode: 0 },
 	})
-	assert.match(finished.output.commandTiming, /Shell elapsed: 125.0s/)
+	assert.match(finished.output.commandTiming, /Shell execution: 125.0s/)
 	assert.equal(finished.output.output, 'finished')
 	assert.equal(
 		hooks['tool.result']({ ...poll, output: { running: false } }),
