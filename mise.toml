@@ -1311,12 +1311,14 @@ if [ "$(hostname -s 2>/dev/null || hostname)" != "ML-DFC6YK6VJQ" ]; then
 fi
 
 locks="uv.lock bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/package-lock.json bootstrap/capabilities/agent-harness/configuration/assets/pi/permissions/package-lock.json"
-pyproject_bak=$(mktemp)
-cp pyproject.toml "$pyproject_bak"
-trap 'cp -f "$pyproject_bak" pyproject.toml; rm -f "$pyproject_bak"; git update-index --skip-worktree $locks' EXIT
+trap 'git update-index --skip-worktree $locks' EXIT
 git update-index --no-skip-worktree $locks
 git checkout -- $locks
 git pull --rebase
+# Snapshot after the pull, so restoring it cannot revert an incoming pyproject change.
+pyproject_bak=$(mktemp)
+cp pyproject.toml "$pyproject_bak"
+trap 'cp -f "$pyproject_bak" pyproject.toml; rm -f "$pyproject_bak"; git update-index --skip-worktree $locks' EXIT
 # Re-resolve the masked lock against Artifactory wheel-only, backing off any
 # release the mirror lacks a macOS-arm64 wheel for. See README.work.md.
 uv run --no-project --with tomlkit python scripts/work_lock_environment.py pyproject.toml
