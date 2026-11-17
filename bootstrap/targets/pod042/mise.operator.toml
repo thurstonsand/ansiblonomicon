@@ -106,7 +106,7 @@ fi
 fetch -o "$installer" https://chatgpt.com/codex/install.sh
 CODEX_NON_INTERACTIVE=1 sh "$installer"
 release=$(fetch -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
-if [ "$(readlink "$HOME/.local/bin/t3" || true)" != "$HOME/.t3/runtime/versions/${release##*/v}/t3" ]; then
+if [ "$("$HOME/.local/bin/t3" --version 2>/dev/null || true)" != "t3 v${release##*/v}" ]; then
   fetch -o "$installer" https://t3.codes/install.sh
   T3CODE_VERSION="${release##*/v}" sh "$installer"
   systemctl --user try-restart dev.mise.t3code-maggie.service
