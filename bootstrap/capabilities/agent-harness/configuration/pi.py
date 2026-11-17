@@ -373,7 +373,11 @@ def _librarian(
         "thinkingLevel": "low",
     }
     if hostname == WORK_HOST:
-        return {"sources": data["piLibrarianSources"], "pi": pi}
+        return {
+            "sources": data["piLibrarianSources"],
+            "tools": {"disabled": ["search_code_grepapp"]},
+            "pi": pi,
+        }
     return {
         "web": {
             "parallel": {
