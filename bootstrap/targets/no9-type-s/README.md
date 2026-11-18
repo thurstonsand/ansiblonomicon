@@ -6,6 +6,8 @@ Optional theme or plugin extras, such as `theme-set` hooks or files an author as
 
 Software missing from Omarchy's repositories uses its vendor's installer instead of the AUR.
 
+Amp Desktop comes from the `amp-desktop-bin` package. Enable its runner in App Settings and accept the CLI installation prompt if needed; Desktop owns CLI installation and the `amp-desktop-runner.service` user service. The CLI updates itself in `~/.amp/bin/amp`. The global mise config disables Omarchy's inherited `amp` tool so it cannot shadow that installation. Reconcile does not install the CLI or manage the runner. Desktop package updates still come through Omarchy; use **Relaunch to Update** after an upgrade.
+
 `omarchy-config` declares the NetworkManager Wi-Fi profiles as templated keyfiles with fnox passphrases, so a reconcile reverts changes made through `nmcli` or the network panel.
 
 Closing the undocked lid starts suspend-then-hibernate: hibernate after 36 hours asleep, or earlier when systemd detects a low battery. Docked lid closure keeps logind's default of staying awake. The shell's separate `idle.suspend` timeout controls when an open, idle laptop suspends; it is not the hibernation delay. `sleep-diagnostics.conf` enables kernel suspend/wake and xHCI port-event logging at boot; inspect `journalctl -b -k` (or `-b -1` after a reboot) when sleep fails.

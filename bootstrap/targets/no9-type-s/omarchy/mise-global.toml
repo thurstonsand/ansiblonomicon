@@ -1,3 +1,7 @@
+[settings]
+# Amp Desktop installs the runner CLI; let that CLI update itself.
+disable_tools = ["amp"]
+
 [tools]
 bun = "latest"
 fnox = "latest"

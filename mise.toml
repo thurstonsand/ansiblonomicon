@@ -671,12 +671,12 @@ exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret OMARCHY_SUDO_PASSWORD 
 '''
 
 [tasks."amp-cli"]
-description = "Install Amp and reconcile its runner on no9-type-s, eve, and pod153"
+description = "Install Amp and reconcile its runner on eve and pod153"
 usage = 'flag "-c --check" help="Show Amp CLI and runner reconciliation changes"'
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  no9-type-s|eve|pod153) ;;
+  eve|pod153) ;;
   *) echo "amp-cli is not registered on $host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
@@ -705,7 +705,7 @@ export MISE_TRUSTED_CONFIG_PATHS="$target"
 # Omarchy's commands, and the package builds they start, expect the system's Python ahead of this repo's tools.
 export PATH="/usr/bin:$PATH"
 tags="${usage_tags:-}"
-supported=" all omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli browser agent-harness agent-config "
+supported=" all omarchy-loadout mise omarchy-config shell terminal-tools tmux editor-config vcs ssh-client user-tools neovim berkeley-mono browser agent-harness agent-config "
 unsupported=
 for tag in $(printf '%s' "$tags" | tr ',' ' '); do
   case "$supported" in
@@ -751,7 +751,7 @@ fi
 if selected mise; then
   mise -C "$HOME" bootstrap --only tools "$mode" || exit "$?"
 fi
-for native_capability in shell terminal-tools editor-config vcs ssh-client user-tools neovim berkeley-mono amp-cli browser; do
+for native_capability in shell terminal-tools editor-config vcs ssh-client user-tools neovim berkeley-mono browser; do
   if selected "$native_capability" || { [ "$native_capability" = terminal-tools ] && selected tmux; }; then
     mise run "//:$native_capability" ${usage_check:+--check} || exit "$?"
   fi
