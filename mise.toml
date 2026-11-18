@@ -952,7 +952,16 @@ usage = '''
 flag "-c --check" help="Dry-run mode (no changes made)"
 flag "--update-mise" help="Install this machine's mise version on cupertino"
 '''
-run = "./scripts/fnox-host exec --secret IMSGBUS_AS_TOKEN --secret IMSGBUS_HS_TOKEN --secret IMSGBUS_PROVISIONING_SECRET --secret IMSGBUS_PUBLIC_MEDIA_SIGNING_KEY --secret IMSGBUS_DIRECT_MEDIA_SERVER_KEY --secret IMSGBUS_DOUBLE_PUPPET_SECRET --secret IMSGBUS_MCP_TOKEN -- mise -C bootstrap bootstrap remote cupertino --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/Users/admin/.local/bin/mise}"
+run = '''
+# The server capability restarts the VM when Tart updates, and it needs a minute to boot.
+tries=0
+until ssh -o BatchMode=yes -o ConnectTimeout=5 cupertino true 2>/dev/null; do
+  tries=$((tries + 1))
+  [ "$tries" -lt 24 ] || break
+  sleep 5
+done
+./scripts/fnox-host exec --secret IMSGBUS_AS_TOKEN --secret IMSGBUS_HS_TOKEN --secret IMSGBUS_PROVISIONING_SECRET --secret IMSGBUS_PUBLIC_MEDIA_SIGNING_KEY --secret IMSGBUS_DIRECT_MEDIA_SERVER_KEY --secret IMSGBUS_DOUBLE_PUPPET_SECRET --secret IMSGBUS_MCP_TOKEN -- mise -C bootstrap bootstrap remote cupertino --yes ${usage_check:+--dry-run} ${usage_update_mise:+--install-mise=/Users/admin/.local/bin/mise}
+'''
 
 [tasks."reconcile:udmp"]
 description = "Reconcile the UDM Pro router"
