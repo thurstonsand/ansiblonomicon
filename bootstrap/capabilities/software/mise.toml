@@ -86,11 +86,18 @@ else
     "$HOME/.local/bin/t3" service restart
   fi
 fi
+# A freshly started server spends several seconds migrating its database, and the
+# CLI refuses to read the database until it finishes.
 # t3 reports its errors on stdout, where they would reach the JSON parser unseen.
-if ! status=$("$HOME/.local/bin/t3" connect status --json); then
-  printf '%s\n' "$status" >&2
-  exit 1
-fi
+tries=0
+until status=$("$HOME/.local/bin/t3" connect status --json); do
+  tries=$((tries + 1))
+  if [ "$tries" -ge 12 ]; then
+    printf '%s\n' "$status" >&2
+    exit 1
+  fi
+  sleep 5
+done
 if ! printf '%s' "$status" | python3 -c 'import json, sys; d = json.load(sys.stdin); sys.exit(not (d["desired"] and d["authenticated"]))'; then
   echo "T3 enrollment missing. Run t3 connect link --headless first." >&2
   exit 1
