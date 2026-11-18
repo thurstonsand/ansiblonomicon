@@ -1,0 +1,22 @@
+# Brewfile.work owns the CLI. The app-server daemon runs its own copy of the package, which
+# only the standalone updater refreshes, and that updater can't reach its download here.
+[tasks.codex]
+run = '''
+set -eu
+codex=/opt/homebrew/bin/codex
+manifest="$HOME/.codex/packages/app-server-daemon/current/codex-package.json"
+# Codex seeds the daemon from the CLI on first use, so there is nothing to sync before then.
+[ -f "$manifest" ] || exit 0
+cli=$("$codex" --version | cut -d' ' -f2)
+daemon=$(jq -r .version "$manifest")
+[ "$cli" != "$daemon" ] || exit 0
+if [ -n "${SOFTWARE_CHECK:-}" ]; then
+  echo "codex daemon would be updated from the CLI: $daemon -> $cli" >&2
+  exit 0
+fi
+running=false
+"$codex" app-server daemon version >/dev/null 2>&1 && running=true
+"$codex" app-server daemon update --from-cli --yes
+# The update has been seen to leave a running daemon stopped; start is a no-op when it is up.
+[ "$running" = false ] || "$codex" app-server daemon start
+'''

@@ -9,6 +9,7 @@ export MISE_CEILING_PATHS="${MISE_PROJECT_ROOT}/bootstrap/targets"
 export MISE_TRUSTED_CONFIG_PATHS="$target"
 export MISE_ENV=software
 case "$capability" in
+  codex) export MISE_ENV=software,software-codex ;;
   pi|docker-credentials) export MISE_ENV=software,$capability ;;
 esac
 

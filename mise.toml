@@ -244,7 +244,7 @@ run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host:$usage_capability" in
   pod153:codex|pod153:claude-code|pod153:cua-driver|pod153:t3|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
-  ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono|ML-DFC6YK6VJQ:docker-credentials) ;;
+  ML-DFC6YK6VJQ:codex|ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono|ML-DFC6YK6VJQ:docker-credentials) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
 mode=apply
@@ -886,7 +886,7 @@ case "$profile" in
     sysconfig_sections="$sysconfig_sections hostname"
     ;;
   work)
-    software_capabilities="$software_capabilities pi uvc-util docker-credentials"
+    software_capabilities="$software_capabilities codex pi uvc-util docker-credentials"
     config_capabilities="$config_capabilities python-index work-local"
     ;;
 esac
