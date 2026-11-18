@@ -48,6 +48,16 @@ mode = "0755"
 [dotfiles]
 "/home/thurstonsand/.config/mise/config.toml" = { source = "operator/mise.toml", mode = "symlink" }
 
+# Browse's own updater npm-installs a copy mise doesn't manage. Its stored mode, unlike the
+# env override, holds in agent shells, which inherit PATH but not mise's environment.
+[bootstrap.files."/home/thurstonsand/.local/state/browse/auto-update.json"]
+content = '''
+{"mode": "off"}
+'''
+owner = "thurstonsand"
+group = "thurstonsand"
+mode = "0600"
+
 [bootstrap.hooks.final]
 run = '''
 sudo -u thurstonsand env -i \

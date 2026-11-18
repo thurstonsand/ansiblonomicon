@@ -12,3 +12,11 @@ jj_signing_program = "C:/Users/thurs/AppData/Local/Microsoft/WindowsApps/op-ssh-
 
 [dotfiles]
 "~/.config/mise/config.toml" = { source = "mise-global.toml", mode = "symlink" }
+
+# Browse's own updater npm-installs a copy mise doesn't manage. Its stored mode, unlike the
+# env override, holds in agent shells, which inherit PATH but not mise's environment.
+[bootstrap.files."~/.local/state/browse/auto-update.json"]
+content = '''
+{"mode": "off"}
+'''
+mode = "0600"

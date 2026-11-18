@@ -34,7 +34,3 @@ herdr = "latest"
 "pipx:vncdotool" = "latest"
 # First-party release: skip mise's default 24h supply-chain cooling.
 "github:thurstonsand/agent-switchboard" = { version = "latest", minimum_release_age = "0s" }
-
-[env]
-# mise owns upgrades; Browse's npm updater would install outside its tool directory.
-OPENCODE_BROWSER_AUTO_UPDATE = "off"

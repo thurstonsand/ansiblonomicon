@@ -13,3 +13,11 @@ editor_font_size = "13"
 [dotfiles]
 "~/.config/mise/config.toml" = { source = "omarchy/mise-global.toml", mode = "symlink" }
 "~/.cargo/config.toml" = { source = "omarchy/cargo-config.toml", mode = "symlink" }
+
+# Browse's own updater npm-installs a copy mise doesn't manage. Its stored mode, unlike the
+# env override, holds in agent shells, which inherit PATH but not mise's environment.
+[bootstrap.files."~/.local/state/browse/auto-update.json"]
+content = '''
+{"mode": "off"}
+'''
+mode = "0600"
