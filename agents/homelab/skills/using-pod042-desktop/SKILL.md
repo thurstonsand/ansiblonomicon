@@ -5,17 +5,21 @@ description: Drives pod042's shared Desktop tab with browser automation, Wayland
 
 # Using pod042's desktop
 
-Run on pod042 as `thurstonsand`. Each Amp thread's Desktop tab streams the runner's labwc Wayland session: the windows you drive are the windows the user watches. Control it with Browse for pages, and `wlrctl`, `wtype`, `wl-clipboard`, and `grim` for everything else. For service changes, use `operating-pod042` and read `bootstrap/targets/pod042/remote-development/README.md` in ansiblonomicon. The ChatGPT app on Xvfb `:42` and 1Password on `:43` are separate persistent apps holding login state; touch them only when the task names them.
+Run on pod042 as `thurstonsand`. Amp's Desktop tab and the laptop's `pod042-desktop` viewer share one persistent labwc session, owned by `dev.mise.desktop-session.service` independently of Amp. The windows you drive are the windows the user watches. Control it with Browse for pages, and `wlrctl`, `wtype`, `wl-clipboard`, and `grim` for everything else. For service changes, use `operating-pod042` and read `bootstrap/targets/pod042/remote-development/README.md` in ansiblonomicon. ChatGPT and 1Password are ordinary windows on this desktop holding login state; interact with them only when the task names them.
 
-Runner restarts, including Amp's self-updates, recreate the Desktop tab's compositor: Chromium reopens its tabs and every other app on it closes.
+Amp restarts reconnect the stream without restarting this compositor or its apps. Restarting `dev.mise.desktop-session.service` does restart the apps and locks 1Password. Use `labwc --reconfigure` for configuration changes that do not need a restart. Switch windows with Alt-Tab, Ctrl-Alt-Space's window menu, or `wlrctl toplevel focus`.
 
 ## Wayland environment
 
-Source the runner's environment in the same shell as every GUI command, and again after a runner restart:
+Source the persistent desktop's environment in the same shell as every GUI command:
 
 ```sh
-. "$HOME/.cache/amp/runner-desktop/pod042/environment"
+set -a
+. "/run/user/$(id -u)/pod042-desktop/environment"
+set +a
 ```
+
+The gateway also republishes these values in Amp's generated environment file for tools that use that path. Amp's unused compositor is not the desktop to control.
 
 ## Windows
 
@@ -89,4 +93,4 @@ Browse removes password-manager overlays from controlled pages and cannot operat
 
 Close only your task's tabs with `browse session delete my-task`; leave other sessions and the user's tabs alone. Do not run global tab cleanup on this shared browser.
 
-If Browse reports no browser, run `browse status` and check `pgrep -af 'chromium.*chromium-desktop'`. With no browser running, start `setsid ~/.local/bin/desktop-chromium >/dev/null 2>&1 </dev/null &` and check status again. A running browser may need its extension paired or reconnected; leave its process and profile locks alone. A missing environment file or Wayland socket is a runner fault: diagnose it through `operating-pod042`. Restarting `dev.mise.amp-remote.service` interrupts every runner thread.
+If Browse reports no browser, run `browse status` and check `systemctl --user status dev.mise.desktop-browser.service`. With no browser running, start that unit and check status again. A running browser may need its extension paired or reconnected; leave its process and profile locks alone. A missing environment file or Wayland socket is a persistent-session fault: diagnose `dev.mise.desktop-session.service` through `operating-pod042`. Restarting `dev.mise.amp-remote.service` interrupts every runner thread but leaves the desktop apps running.

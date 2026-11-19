@@ -1,6 +1,6 @@
 #!/bin/sh
 # A dedicated profile, because Chromium refuses remote debugging on its default one.
-# The runner tears the compositor down on every restart, so reopen the last tabs without asking.
+# Restore tabs after a desktop restart; Amp restarts leave this process alone.
 exec chromium \
   --restore-last-session \
   --hide-crash-restore-bubble \

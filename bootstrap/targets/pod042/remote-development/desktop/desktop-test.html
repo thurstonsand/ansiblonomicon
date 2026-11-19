@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <meta charset="utf-8" />
+  <title>Remote desktop check</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; background: #101719; color: #e9eeee; font: 18px system-ui, sans-serif; }
+    header { position: fixed; inset: 0 0 auto; z-index: 1; padding: 20px; background: #101719; }
+    h1 { margin: 0 0 12px; font-size: 28px; }
+    button { margin-right: 12px; padding: 10px 16px; font: inherit; cursor: pointer; }
+    p { margin: 12px 0; }
+    #bits { display: flex; flex-wrap: wrap; height: 48px; width: min(512px, 100%); margin: 12px 0; }
+    #bits span { width: 6.25%; height: 24px; background: #000; }
+    #scene { position: fixed; inset: 280px 0 0; overflow: hidden; }
+    #text { position: absolute; inset: 0 24px auto; line-height: 40px; font: 24px monospace; white-space: pre; }
+    .muted { color: #adbfc4; font-size: 16px; }
+  </style>
+  <header>
+    <h1>Remote desktop check</h1>
+    <button id="motion">Start motion</button>
+    <button id="audio">Play stereo tones</button>
+    <span id="status">Static — leave this visible for the idle sample.</span>
+    <div id="bits" aria-label="16-bit source frame number, least significant bit on the left"></div>
+    <p id="counter">Source frame 0</p>
+    <p class="muted">Audio: three ascending tones in the left channel, then three in the right. VNC has no audio transport.</p>
+  </header>
+  <div id="scene"><div id="text"></div></div>
+  <script>
+    const bits = document.querySelector('#bits');
+    for (let i = 0; i < 32; i++) bits.appendChild(document.createElement('span'));
+    const text = document.querySelector('#text');
+    text.textContent = Array.from({length: 160}, (_, i) =>
+      `${String(i).padStart(3, '0')}  The quick brown fox jumps over the lazy dog.  0123456789  █▓▒░  remote desktop`
+    ).join('\n');
+    let moving = false;
+    let start = 0;
+    let previous = -1;
+    function draw(now) {
+      if (!moving) return;
+      const frame = Math.floor((now - start) * 60 / 1000) & 65535;
+      if (frame !== previous) {
+        for (let i = 0; i < 32; i++) {
+          const on = Boolean(frame & (1 << (i % 16))) !== (i >= 16);
+          bits.children[i].style.background = on ? '#fff' : '#000';
+        }
+        text.style.transform = `translateY(-${(frame * 4) % 1600}px)`;
+        document.querySelector('#counter').textContent = `Source frame ${frame} — target 60 changes/s, not measured viewer FPS`;
+        previous = frame;
+      }
+      requestAnimationFrame(draw);
+    }
+    document.querySelector('#motion').onclick = () => {
+      moving = !moving;
+      document.querySelector('#motion').textContent = moving ? 'Stop motion' : 'Start motion';
+      document.querySelector('#status').textContent = moving ? 'Scrolling at 240 CSS pixels/s.' : 'Static — leave this visible for the idle sample.';
+      if (moving) { start = performance.now(); previous = -1; requestAnimationFrame(draw); }
+    };
+    document.querySelector('#audio').onclick = async () => {
+      const button = document.querySelector('#audio');
+      button.disabled = true;
+      const context = new AudioContext({sampleRate: 48000});
+      await context.resume();
+      const merger = context.createChannelMerger(2);
+      merger.connect(context.destination);
+      const begin = context.currentTime + 0.25;
+      for (let channel = 0; channel < 2; channel++) {
+        for (let note = 0; note < 3; note++) {
+          const oscillator = context.createOscillator();
+          const gain = context.createGain();
+          const at = begin + channel * 2.5 + note * 0.7;
+          oscillator.frequency.value = [440, 660, 880][note];
+          gain.gain.setValueAtTime(0, at);
+          gain.gain.linearRampToValueAtTime(0.15, at + 0.02);
+          gain.gain.setValueAtTime(0.15, at + 0.45);
+          gain.gain.linearRampToValueAtTime(0, at + 0.5);
+          oscillator.connect(gain);
+          gain.connect(merger, 0, channel);
+          oscillator.start(at);
+          oscillator.stop(at + 0.55);
+        }
+      }
+      document.querySelector('#status').textContent = 'Playing: left 440/660/880 Hz, then right 440/660/880 Hz.';
+      setTimeout(async () => {
+        await context.close();
+        button.disabled = false;
+        document.querySelector('#status').textContent = 'Audio sequence complete. Verify the received recording or listen in the viewer.';
+      }, 5200);
+    };
+    if (new URLSearchParams(location.search).get('motion') === '1') document.querySelector('#motion').click();
+  </script>
+</html>

@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+set -euo pipefail
+patch_file="$(realpath "$(dirname "$0")/wayvnc-refresh.patch")"
+cache="$HOME/.cache/ansiblonomicon/wayvnc"
+build=$(mktemp -d "$cache/build.XXXXXX")
+trap 'rm -rf "$build"' EXIT
+git -C "$cache/upstream" archive HEAD | tar -xf - -C "$build"
+mkdir -p "$build/subprojects/aml" "$build/subprojects/neatvnc"
+git -C "$cache/aml" archive HEAD | tar -xf - -C "$build/subprojects/aml"
+git -C "$cache/neatvnc" archive HEAD | tar -xf - -C "$build/subprojects/neatvnc"
+cd "$build"
+git apply "$patch_file"
+# Keep only the pinned VNC libraries static; use the host's FFmpeg and libc.
+# Authentication and TLS are unnecessary on the SSH-only Unix listener.
+meson setup build --buildtype=debugoptimized --wrap-mode=nofallback \
+  -Ddefault_library=static -Dtests=true -Dpam=disabled -Dman-pages=disabled \
+  -Dscreencopy-dmabuf=enabled -Dneatvnc:tests=true \
+  -Dneatvnc:jpeg=enabled -Dneatvnc:gbm=enabled -Dneatvnc:h264=enabled \
+  -Dneatvnc:tls=disabled -Dneatvnc:nettle=disabled
+meson compile -C build
+meson test -C build --print-errorlogs
+destination="$HOME/.local/libexec/wayvnc"
+mkdir -p "$destination"
+install -m 0755 build/wayvnc "$destination/wayvnc.next"
+mv "$destination/wayvnc.next" "$destination/wayvnc"

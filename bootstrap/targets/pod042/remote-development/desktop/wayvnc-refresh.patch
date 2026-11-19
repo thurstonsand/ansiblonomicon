@@ -1,0 +1,56 @@
+Preserve the compositor's current output refresh rate when resizing a headless
+output. A zero custom-mode refresh lets wlroots choose its default (60 Hz).
+wl_output.mode and set_custom_mode both express refresh in millihertz.
+
+Map a single-screen layout to the sole server display. TigerVNC assigns a new
+screen ID when returning to fullscreen after a windowed resize.
+
+diff --git a/include/output.h b/include/output.h
+--- a/include/output.h
++++ b/include/output.h
+@@ -56,6 +56,7 @@ struct output {
+ 	struct wl_list link;
+ 
+ 	uint32_t id;
++	int32_t refresh; /* Current wl_output mode refresh in millihertz. */
+ 
+ 	struct output_state state;
+ 	struct output_state pending;
+diff --git a/src/output.c b/src/output.c
+--- a/src/output.c
++++ b/src/output.c
+@@ -61,6 +61,8 @@ static void output_handle_mode(void* data, struct wl_output* wl_output,
+ 	struct output* output = data;
+ 	output->pending.buffer_width = width;
+ 	output->pending.buffer_height = height;
++	if (flags & WL_OUTPUT_MODE_CURRENT)
++		output->refresh = refresh;
+ }
+ 
+ static void output_handle_done(void* data, struct wl_output* wl_output)
+diff --git a/src/output-management.c b/src/output-management.c
+--- a/src/output-management.c
++++ b/src/output-management.c
+@@ -394,8 +394,7 @@ bool wlr_output_manager_configure_output(
+ 		struct output* output, uint16_t width, uint16_t height,
+ 		uint16_t x, uint16_t y)
+ {
+-	// TODO: This could be synced to --max-fps
+-	int refresh_rate = 0;
++	int refresh_rate = output->refresh;
+ 
+ 	if (!output_is_headless(output)) {
+ 		nvnc_log(NVNC_LOG_INFO,
+diff --git a/subprojects/neatvnc/src/server.c b/subprojects/neatvnc/src/server.c
+--- a/subprojects/neatvnc/src/server.c
++++ b/subprojects/neatvnc/src/server.c
+@@ -1925,6 +1925,9 @@ static enum rfb_resize_status check_desktop_layout(struct nvnc_client* client,
+ 		struct nvnc_display_layout* d = &layout->display_layouts[i];
+ 
+ 		d->display = nvnc__find_display_by_id(server, d->id);
++		if (!d->display && server->n_displays == 1 &&
++				layout->n_display_layouts == 1)
++			d->display = server->displays[0];
+ 		if (!d->display) {
+ 			nvnc_log(NVNC_LOG_ERROR, "Unknown display id: %"PRIu32,
+ 					d->id);

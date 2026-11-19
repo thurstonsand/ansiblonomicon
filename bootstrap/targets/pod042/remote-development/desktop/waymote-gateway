@@ -4,6 +4,12 @@ gateway="$HOME/.local/libexec/waymote/waymote-gateway"
 case "${1:-}" in
   -version|--version|-h|-help|--help) exec "$gateway" "$@" ;;
 esac
-wlr-randr --output HEADLESS-1 --custom-mode 2560x1440@120Hz --scale 2
+set -a
+. "/run/user/$(id -u)/pod042-desktop/environment"
+set +a
+# Keep Amp's GUI-tool environment pointed at the desktop its gateway actually streams.
+environment="$HOME/.cache/amp/runner-desktop/pod042/environment"
+sed 's/^/export /' "$XDG_RUNTIME_DIR/pod042-desktop/environment" >"$environment.next"
+mv "$environment.next" "$environment"
 # Override Amp's 4 Mbps/30 fps arguments; 120 Hz supplies enough capture opportunities for 60 fps.
-exec "$gateway" "$@" -bitrate 12000 -frame-rate 60
+exec "$gateway" "$@" -bitrate 12000 -frame-rate 60 -audio-source pod042-desktop.monitor

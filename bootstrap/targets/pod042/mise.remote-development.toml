@@ -22,21 +22,49 @@
 "apt:fonts-dejavu-core" = "latest"
 "apt:pulseaudio" = "latest"
 "apt:pulseaudio-utils" = "latest"
+"apt:pipewire-pulse" = "latest"
+"apt:wireplumber" = "latest"
 "apt:x11vnc" = "latest"
 "apt:tigervnc-viewer" = "latest"
 "apt:xdotool" = "latest"
 "apt:wayvnc" = "latest"
+"apt:meson" = "latest"
+"apt:ninja-build" = "latest"
+"apt:libpixman-1-dev" = "latest"
+"apt:libgbm-dev" = "latest"
+"apt:libdrm-dev" = "latest"
+"apt:libjansson-dev" = "latest"
+"apt:libturbojpeg0-dev" = "latest"
+"apt:zlib1g-dev" = "latest"
+"apt:libavcodec-dev" = "latest"
+"apt:libavfilter-dev" = "latest"
+"apt:libavutil-dev" = "latest"
 
 [bootstrap.repos]
 "/home/thurstonsand/.cache/ansiblonomicon/waymote/upstream" = { url = "https://github.com/rockorager/waymote.git", ref = "d7cb1199227478ef4e4b5b86916c12a339f2e17a" }
+"/home/thurstonsand/.cache/ansiblonomicon/wayvnc/upstream" = { url = "https://github.com/any1/wayvnc.git", ref = "ae53f076a83ad1ecd0d2adcaa063674a632bfe0f" }
+"/home/thurstonsand/.cache/ansiblonomicon/wayvnc/neatvnc" = { url = "https://github.com/any1/neatvnc.git", ref = "4d6d09b544d84b836cf1906735354b4e694a0c1c" }
+"/home/thurstonsand/.cache/ansiblonomicon/wayvnc/aml" = { url = "https://github.com/any1/aml.git", ref = "685035c9830aa89df02a43df89b644690bd885f5" }
 
 [bootstrap.hooks.post-repos]
-run = ["mise install zig@0.16.0 go@1.26.5", "mise -E remote-development run remote-development:waymote"]
+run = ["mise install zig@0.16.0 go@1.26.5", "mise -E remote-development run remote-development:waymote", "mise -E remote-development run remote-development:wayvnc"]
 
 [bootstrap.files."/etc/chromium/policies/managed/chatgpt.json"]
 state = "absent"
 
 [bootstrap.files."/home/thurstonsand/.local/share/applications/1password.desktop"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.local/share/applications/com.onepassword.OnePassword.desktop"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.local/bin/1password-window"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.local/bin/1password-prompt"]
+state = "absent"
+
+[bootstrap.files."/home/thurstonsand/.local/bin/1password-browser-support"]
 state = "absent"
 
 [bootstrap.files."/etc/chromium/policies/managed/extensions.json"]
@@ -68,6 +96,9 @@ mode = "0755"
 # Every unit retries every 30 seconds: an internet outage fails every start of the networked services.
 [bootstrap.linux.systemd.units.amp-remote]
 description = "Amp outbound remote development for pod042"
+after = ["dev.mise.desktop-session.service"]
+requires = ["dev.mise.desktop-session.service"]
+part_of = ["dev.mise.desktop-session.service"]
 exec_start_pre = ["/usr/bin/test -f %h/.local/share/amp/secrets.json"]
 exec_start = "~/.amp/bin/amp --no-tui --remote-control-terminal --remote-control-portals --discover-dirs --desktop --runner-id pod042"
 working_directory = "~/code"
@@ -95,10 +126,48 @@ environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bi
 restart = "always"
 restart_sec = "30"
 
+[bootstrap.linux.systemd.units.desktop-session]
+description = "Persistent pod042 desktop, independent of Amp"
+after = ["pipewire-pulse.service"]
+requires = ["pipewire-pulse.service"]
+wants = ["dev.mise.desktop-browser.service", "dev.mise.desktop-vnc.service", "dev.mise.chatgpt.service", "dev.mise.1password.service"]
+exec_start = "~/.local/bin/desktop-session start"
+exec_start_post = ["~/.local/bin/desktop-session wait"]
+working_directory = "~"
+environment = { PATH = "/home/thurstonsand/.local/bin:/usr/local/bin:/usr/bin:/bin" }
+restart = "always"
+restart_sec = "30"
+
+[bootstrap.linux.systemd.units.desktop-browser]
+description = "Chromium on the persistent pod042 desktop"
+after = ["dev.mise.desktop-session.service"]
+requires = ["dev.mise.desktop-session.service"]
+part_of = ["dev.mise.desktop-session.service"]
+environment_file = ["%t/pod042-desktop/environment"]
+exec_start = "~/.local/bin/desktop-chromium"
+working_directory = "~"
+restart = "always"
+restart_sec = "30"
+
+[bootstrap.linux.systemd.units.desktop-vnc]
+description = "SSH-only VNC for the persistent pod042 desktop"
+after = ["dev.mise.desktop-session.service"]
+requires = ["dev.mise.desktop-session.service"]
+part_of = ["dev.mise.desktop-session.service"]
+environment_file = ["%t/pod042-desktop/environment"]
+exec_start_pre = ["/usr/bin/rm -f %t/pod042-desktop/wayvnc.sock"]
+exec_start = "%h/.local/libexec/wayvnc/wayvnc -g --max-fps 120 --render-cursor --unix-socket %t/pod042-desktop/wayvnc.sock"
+restart = "always"
+restart_sec = "30"
+
 [bootstrap.linux.systemd.units.chatgpt]
-description = "ChatGPT desktop app on a virtual display, serving pod042 as 2B's computer"
+description = "ChatGPT on the persistent desktop, serving pod042 as 2B's computer"
+after = ["dev.mise.desktop-session.service"]
+requires = ["dev.mise.desktop-session.service"]
+part_of = ["dev.mise.desktop-session.service"]
+environment_file = ["%t/pod042-desktop/environment"]
 exec_start_pre = ["/usr/bin/test -f %h/.codex/auth.json"]
-exec_start = '/usr/bin/xvfb-run --server-num=42 --server-args="-screen 0 1440x900x24 -nolisten tcp" /usr/bin/chatgpt'
+exec_start = "/usr/bin/chatgpt --ozone-platform=x11"
 working_directory = "~"
 environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin", CODEX_CHROMIUM_USER_DATA_DIR = "/home/thurstonsand/.config/chromium-desktop", CODEX_CHROMIUM_NATIVE_HOST_MANIFEST_PATH = "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.openai.codexextension.json" }
 standard_output = "null"
@@ -132,18 +201,20 @@ description = "Daily pull and reconcile of pod042"
 unit = "dev.mise.reconcile.service"
 on_calendar = "*-*-* 05:30:00"
 
-# The runner's compositor restarts with every self-update; Xvfb keeps the app, and its unlock, alive across them.
 [bootstrap.linux.systemd.units.1password]
-description = "1Password desktop app on a virtual display, unlocking the desktop Chromium's extension"
-exec_start = '/usr/bin/xvfb-run --server-num=43 --auth-file=%h/.cache/1password-xvfb/Xauthority --server-args="-screen 0 1280x800x24 -nolisten tcp" /usr/bin/1password'
+description = "1Password on the persistent desktop, unlocking Chromium's extension"
+after = ["dev.mise.desktop-session.service"]
+requires = ["dev.mise.desktop-session.service"]
+part_of = ["dev.mise.desktop-session.service"]
+environment_file = ["%t/pod042-desktop/environment"]
+exec_start = "/usr/bin/1password --ozone-platform=x11"
 working_directory = "~"
 restart = "always"
 restart_sec = "30"
 
 [bootstrap.directories."/home/thurstonsand/.cache/1password-xvfb"]
-owner = "thurstonsand"
-group = "thurstonsand"
-mode = "0700"
+state = "absent"
+recursive = true
 
 [bootstrap.directories."/home/thurstonsand/.config/labwc"]
 owner = "thurstonsand"
@@ -196,12 +267,9 @@ mode = "0755"
 "/home/thurstonsand/.local/bin/waymote-gateway" = { source = "remote-development/desktop/waymote-gateway", mode = "symlink" }
 "/home/thurstonsand/.local/bin/waymote-streamd" = { source = "/home/thurstonsand/.local/libexec/waymote/waymote-streamd", mode = "symlink" }
 "/home/thurstonsand/.local/bin/desktop-chromium" = { source = "remote-development/desktop/desktop-chromium", mode = "symlink" }
+"/home/thurstonsand/.local/bin/desktop-session" = { source = "remote-development/desktop/desktop-session", mode = "symlink" }
 "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.openai.codexextension.json" = { source = "/home/thurstonsand/.config/chromium/NativeMessagingHosts/com.openai.codexextension.json", mode = "symlink" }
 "/home/thurstonsand/.config/chromium-desktop/NativeMessagingHosts/com.1password.1password.json" = { source = "remote-development/desktop/1password-native-messaging.json", mode = "symlink" }
-"/home/thurstonsand/.local/bin/1password-window" = { source = "remote-development/desktop/1password-window", mode = "symlink" }
-"/home/thurstonsand/.local/bin/1password-prompt" = { source = "remote-development/desktop/1password-prompt", mode = "symlink" }
-"/home/thurstonsand/.local/share/applications/com.onepassword.OnePassword.desktop" = { source = "remote-development/desktop/com.onepassword.OnePassword.desktop", mode = "symlink" }
-"/home/thurstonsand/.local/bin/1password-browser-support" = { source = "remote-development/desktop/1password-browser-support", mode = "symlink" }
 # User services must remain runnable while this checkout is unavailable.
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.path" = { source = "remote-development/chatgpt-upgrade.path", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.service" = { source = "remote-development/chatgpt-upgrade.service", mode = "copy" }
@@ -247,3 +315,9 @@ tools = { zig = "0.16.0", go = "1.26.5" }
 sources = ["mise.remote-development.toml", "remote-development/desktop/build-waymote", "remote-development/desktop/waymote-refresh.patch", "/home/thurstonsand/.cache/ansiblonomicon/waymote/upstream/.git/HEAD"]
 outputs = ["/home/thurstonsand/.local/libexec/waymote/waymote-gateway", "/home/thurstonsand/.local/libexec/waymote/waymote-streamd"]
 run = "bash remote-development/desktop/build-waymote"
+
+[tasks."remote-development:wayvnc"]
+description = "Build pinned VNC releases with refresh-preserving headless resizes"
+sources = ["mise.remote-development.toml", "remote-development/desktop/build-wayvnc", "remote-development/desktop/wayvnc-refresh.patch", "/home/thurstonsand/.cache/ansiblonomicon/wayvnc/upstream/.git/HEAD", "/home/thurstonsand/.cache/ansiblonomicon/wayvnc/neatvnc/.git/HEAD", "/home/thurstonsand/.cache/ansiblonomicon/wayvnc/aml/.git/HEAD"]
+outputs = ["/home/thurstonsand/.local/libexec/wayvnc/wayvnc"]
+run = "bash remote-development/desktop/build-wayvnc"

@@ -1,13 +1,56 @@
 #!/bin/bash
-# Opens pod042's runner desktop full screen through SSH. wayvnc serves it on a socket in the runner's private runtime directory, so nothing listens on a port.
+# Opens pod042's persistent desktop through SSH; audio exists only while the viewer is open.
 set -euo pipefail
 
-runner=/home/thurstonsand/.cache/amp/runner-desktop/pod042
+audio=1
+focus=
+for argument in "$@"; do
+  case "$argument" in
+    --no-audio) audio=0 ;;
+    chatgpt) focus='wlrctl toplevel focus app_id:Chatgpt;' ;;
+    1password) focus='wlrctl toplevel focus app_id:com.onepassword.OnePassword;' ;;
+    browser) focus='wlrctl toplevel focus app_id:chromium;' ;;
+    *) echo 'Usage: pod042-desktop [--no-audio] [chatgpt|1password|browser]' >&2; exit 2 ;;
+  esac
+done
+desktop=/run/user/1000/pod042-desktop
 socket="$XDG_RUNTIME_DIR/pod042-desktop.sock"
 read -r width height scale < <(hyprctl monitors -j | jq -r '.[] | select(.focused) | "\(.width) \(.height) \(.scale)"')
 
-# Waymote leaves the output at the size and scale of whichever Amp tab connected last, and the viewer asks for a resize only
-# when its window changes size, so size the output to this panel first.
-ssh -T -f -o ExitOnForwardFailure=yes -o StreamLocalBindUnlink=yes -L "$socket:$runner/runtime/wayvnc.sock" pod042 \
-  ". $runner/environment && wlr-randr --output HEADLESS-1 --custom-mode ${width}x${height} --scale $scale && exec sleep 10"
-exec vncviewer -FullScreen "$socket"
+# The last client controls the shared output size. Preserve the 120 Hz capture cadence.
+ssh -T -f -o ExitOnForwardFailure=yes -o StreamLocalBindUnlink=yes -L "$socket:$desktop/wayvnc.sock" pod042 \
+  "set -a; . $desktop/environment; $focus wlr-randr --output HEADLESS-1 --custom-mode ${width}x${height}@120Hz --scale $scale && exec sleep 10"
+
+audio_ssh=
+audio_player=
+audio_dir=
+viewer=
+cleanup() {
+  for child in $(jobs -pr); do kill "$child" 2>/dev/null || true; done
+  wait || true
+  [ -z "$audio_dir" ] || rm -rf "$audio_dir"
+}
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
+if [ "$audio" = 1 ]; then
+  audio_dir=$(mktemp -d "$XDG_RUNTIME_DIR/pod042-audio.XXXXXX")
+  mkfifo "$audio_dir/pcm"
+  ssh -T pod042 "set -a; . $desktop/environment; exec parec --raw --device=pod042-desktop.monitor --format=s16le --rate=48000 --channels=2 --latency-msec=50" >"$audio_dir/pcm" &
+  audio_ssh=$!
+  paplay --raw --format=s16le --rate=48000 --channels=2 --latency-msec=50 --client-name=pod042-desktop <"$audio_dir/pcm" &
+  audio_player=$!
+fi
+vncviewer -FullScreen -AutoSelect=0 -PreferredEncoding=H.264 "$socket" &
+viewer=$!
+if [ "$audio" = 1 ]; then
+  status=0
+  wait -n -p finished "$viewer" "$audio_ssh" "$audio_player" || status=$?
+  if [ "$finished" != "$viewer" ]; then
+    echo 'Desktop audio stopped. Retry with --no-audio for a silent connection.' >&2
+    exit 1
+  fi
+  exit "$status"
+fi
+wait "$viewer"

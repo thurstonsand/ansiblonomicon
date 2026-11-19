@@ -10,6 +10,9 @@
     <item label="Applications">
       <action name="Execute" command="fuzzel" />
     </item>
+    <item label="Display and sound test">
+      <action name="Execute" command="desktop-chromium --new-window file:///home/thurstonsand/code/ansiblonomicon/bootstrap/targets/pod042/remote-development/desktop/desktop-test.html" />
+    </item>
     <separator />
     <menu id="client-list-combined-menu" />
     <item label="Reconfigure">

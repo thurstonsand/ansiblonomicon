@@ -1,6 +1,15 @@
+#!/usr/bin/env bash
+set -euo pipefail
+# Amp still starts its own compositor; only the persistent session owns windows.
+[ "${POD042_DESKTOP:-}" = 1 ] || exit 0
+
+wlr-randr --output HEADLESS-1 --custom-mode 2560x1440@120Hz --scale 2
+if ! pactl list short sinks | awk '{print $2}' | grep -Fxq pod042-desktop; then
+  pactl load-module module-null-sink sink_name=pod042-desktop rate=48000 channels=2 channel_map=front-left,front-right
+fi
+state="$XDG_RUNTIME_DIR/pod042-desktop"
+printf 'XDG_RUNTIME_DIR=%s\nWAYLAND_DISPLAY=%s\nDISPLAY=%s\nLABWC_PID=%s\nPULSE_SERVER=%s\nPULSE_SINK=%s\n' \
+  "$XDG_RUNTIME_DIR" "$WAYLAND_DISPLAY" "$DISPLAY" "$LABWC_PID" "$PULSE_SERVER" "$PULSE_SINK" >"$state/environment.next"
+mv "$state/environment.next" "$state/environment"
 swaybg --color '#0b0d0b' >/dev/null 2>&1 &
 xsettingsd >/dev/null 2>&1 &
-desktop-chromium >/dev/null 2>&1 &
-1password-prompt >/dev/null 2>&1 &
-rm -f "$XDG_RUNTIME_DIR/wayvnc.sock"
-wayvnc --render-cursor --unix-socket "$XDG_RUNTIME_DIR/wayvnc.sock" >"$XDG_RUNTIME_DIR/wayvnc.log" 2>&1 &

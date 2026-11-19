@@ -12,9 +12,11 @@
 
 [bootstrap.groups.thurstonsand]
 
+[bootstrap.groups.render]
+
 [bootstrap.users.thurstonsand]
 group = "thurstonsand"
-groups = ["sudo"]
+groups = ["sudo", "render"]
 home = "/home/thurstonsand"
 shell = "/usr/bin/zsh"
 create_home = true
