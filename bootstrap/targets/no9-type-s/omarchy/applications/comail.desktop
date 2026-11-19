@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Comail
+Comment=Email client
+Keywords=email;
+Exec=comail %U
+Terminal=false
+Type=Application
+Icon=comail
+StartupWMClass=comail
+MimeType=x-scheme-handler/mailto;
+Categories=Network;Email;

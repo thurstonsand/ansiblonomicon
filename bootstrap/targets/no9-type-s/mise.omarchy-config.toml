@@ -286,6 +286,8 @@ unit = "claude-auth-refresh"
 "~/.config/Sidra/config.json/omarchy" = { source = "omarchy/sidra/config.json", merge = true }
 "~/.local/share/applications/dodosend.desktop" = { source = "omarchy/applications/dodosend.desktop", mode = "symlink" }
 "~/.local/share/icons/hicolor/256x256/apps/dodosend.png" = { source = "omarchy/icons/dodosend.png", mode = "symlink" }
+"~/.local/share/applications/comail.desktop" = { source = "omarchy/applications/comail.desktop", mode = "symlink" }
+"~/.local/share/icons/hicolor/256x256/apps/comail.png" = { source = "omarchy/icons/comail.png", mode = "symlink" }
 "~/.config/mimeapps.list/mail" = { source = "omarchy/mimeapps.list", merge = true, format = "ini" }
 "~/.local/share/applications/pod042 Desktop.desktop" = { source = "omarchy/applications/pod042 Desktop.desktop", mode = "symlink" }
 "~/.local/bin/pod042-desktop" = { source = "omarchy/bin/pod042-desktop", mode = "symlink" }

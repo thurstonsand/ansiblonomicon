@@ -9,6 +9,7 @@ go = "latest"
 gofumpt = "latest"
 golangci-lint = "latest"
 "github:Dygmalab/Bazecor" = { version = "latest", asset_pattern = "Bazecor-*-x64.AppImage", bin = "bazecor" }
+"github:NextOSP/comail" = { version = "latest", asset_pattern = "Comail_*_amd64.deb", bin = "comail", postinstall = 'cd "$MISE_TOOL_INSTALL_PATH" && mv comail comail.deb && bsdtar -xOf comail.deb "data.tar.*" | bsdtar -xf - --strip-components 2 usr/bin/comail && rm comail.deb' }
 "github:steipete/CodexBar" = { version = "latest", asset_pattern = "CodexBarCLI-*-linux-x86_64.tar.gz" }
 # First-party release: skip mise's default 24h supply-chain cooling.
 "github:thurstonsand/agent-switchboard" = { version = "latest", minimum_release_age = "0s" }
