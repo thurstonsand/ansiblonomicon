@@ -82,49 +82,49 @@ models:
   # ===========================================================================
   openai:
     gpt_astra:
-      version: "gpt-6-astra"
-      display_name: "GPT 6 Astra"
+      version: "gpt-6.2-astra"
+      display_name: "GPT 6.2 Astra"
       max_input: 272000
       max_output: 128000
       vision: true
       agent_harness:
         aliases:
-          pi: "openai/gpt-6-astra"
-          amp: "openai/gpt-6-astra"
+          pi: "openai/gpt-6.2-astra"
+          amp: "openai/gpt-6.2-astra"
       vscode:
         include: true
         thinking: true
       zed: true
 
     gpt_sol:
-      version: "gpt-6.1-sol"
-      display_name: "GPT 6.1 Sol"
+      version: "gpt-6.2-sol"
+      display_name: "GPT 6.2 Sol"
       # Check current subscription-backed limits with:
-      # codex debug models | jq -r '.models[] | select(.slug=="gpt-6.1-sol") | {slug, context_window, max_context_window, effective_context_window_percent}'
-      max_input: 272000
+      # codex debug models | jq -r '.models[] | select(.slug=="gpt-6.2-sol") | {slug, context_window, max_context_window, effective_context_window_percent}'
+      max_input: 500000
       max_output: 128000
       vision: true
       agent_harness:
         aliases:
-          pi: "openai/gpt-6.1-sol"
-          amp: "openai/gpt-6.1-sol"
+          pi: "openai/gpt-6.2-sol"
+          amp: "openai/gpt-6.2-sol"
       vscode:
         include: true
         thinking: true
       zed: true
       variants:
         medium:
-          id: "gpt-6.1-sol(medium)"
-          display_name: "GPT 6.1 Sol Medium"
+          id: "gpt-6.2-sol(medium)"
+          display_name: "GPT 6.2 Sol Medium"
           vscode: true
         high:
-          id: "gpt-6.1-sol(high)"
-          display_name: "GPT 6.1 Sol High"
+          id: "gpt-6.2-sol(high)"
+          display_name: "GPT 6.2 Sol High"
           vscode: true
           zed: true
         xhigh:
-          id: "gpt-6.1-sol(xhigh)"
-          display_name: "GPT 6.1 Sol XHigh"
+          id: "gpt-6.2-sol(xhigh)"
+          display_name: "GPT 6.2 Sol XHigh"
           vscode: true
 
     gpt_terra:
