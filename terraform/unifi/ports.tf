@@ -213,6 +213,17 @@ resource "unifi_device" "u7_pro_max_central" {
   }
 }
 
+resource "unifi_device" "flex_2_5g_8_poe" {
+  mac               = "94:2a:6f:9a:9d:8f"
+  name              = "USW Flex 2.5G 8 PoE"
+  allow_adoption    = true
+  forget_on_destroy = false
+
+  lifecycle {
+    prevent_destroy = true
+  }
+}
+
 resource "unifi_device" "pro_max_24_poe" {
   mac               = "f4:e2:c6:ab:91:02"
   name              = "USW Pro Max 24 PoE"
@@ -259,6 +270,13 @@ resource "unifi_device" "pro_max_24_poe" {
     name            = "pod153"
     poe_mode        = "off"
     port_profile_id = unifi_port_profile.bunker_access.id
+  }
+
+  port_override {
+    index           = 19
+    name            = "USW Flex 2.5G 8 PoE"
+    poe_mode        = "auto"
+    port_profile_id = unifi_port_profile.infrastructure_trunk.id
   }
 
   port_override {
