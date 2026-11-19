@@ -28,12 +28,6 @@ resource "unifi_setting" "site" {
         name    = "AirPrint"
         address = "_ipp._tcp.local"
       },
-      # iOS browses _ipp._tcp,_universal rather than plain _ipp._tcp, so the printer's
-      # AirPrint record is invisible to a phone unless the subtype crosses too.
-      {
-        name    = "AirPrint Universal"
-        address = "_universal._sub._ipp._tcp.local"
-      },
       {
         name    = "AirPrint Secure"
         address = "_ipps._tcp.local"

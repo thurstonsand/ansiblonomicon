@@ -76,6 +76,14 @@ Retest procedure:
 
 If it passes, retire the beacon with `state = "absent"` rather than deleting it: the compose stack at `bootstrap/targets/pod042/containers/stacks/mdns-beacon/`, its directory, file and compose entries in `mise.containers.toml`, and `unifi_client.pod042_mdns_beacon`. Note that the beacon's namespace is currently the only way onto Scanners from pod042, and both [ticket 50](50-pod042-network-observability.md) and the `operating-the-printer` skill rely on it, so a service-less probe identity has to replace it before it goes.
 
+## 2026-11-16: the beacon stays, wired or not
+
+The Ethernet retest above no longer decides the beacon's fate. On 2026-10-08 the printer turned out to ignore multicast whenever it sleeps, which it does ten minutes after every job, and Ethernet does not change that. The beacon has since become its sleep proxy: it caches the printer's records and answers for it while it still answers ping. Retiring it would bring back the red-dot failure from that investigation even on a cable, so the retirement steps above are void. Ethernet would still cut the miss rate while awake, but it is no longer a prerequisite for closing this ticket.
+
+The undeclared `printer-mcast-watch` container, a one-off watcher left from the 09-18 diagnosis, was removed.
+
+The `_universal._sub._ipp._tcp.local` custom mDNS service was removed from `settings.tf`, as the avahi reading above predicted. With it gone, a `_universal._sub._ipp._tcp` browse from YoRHa still returned `Canon MF650C Series._ipp._tcp.local`. The same type stays in the beacon's list: iOS browses only that subtype, and the sleep proxy caches only the types it asks the printer for. Dropping it there left the subtype unanswered on Scanners while the printer slept.
+
 Also open, unrelated to discovery: the printer has Auto IP enabled, so a DHCP failure would park it on a 169.254 address with no symptom beyond disappearing. The Remote UI cannot change it; it is at Menu > Preferences > Network > TCP/IP Settings > IPv4 Settings on the panel.
 
 ## Completion

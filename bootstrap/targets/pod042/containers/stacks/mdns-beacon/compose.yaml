@@ -21,6 +21,7 @@ services:
       - _hue._tcp.local
       - _ipp._tcp.local
       - _ipps._tcp.local
+      # iOS browses only this subtype, and the sleep proxy caches only what it asks.
       - _universal._sub._ipp._tcp.local
       - _uscan._tcp.local
       - _uscans._tcp.local
