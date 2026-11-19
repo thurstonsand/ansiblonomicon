@@ -3,8 +3,7 @@ Include ~/.ssh/1Password/config
 {% endif %}
 Include ~/.ssh/config.d/*.conf
 
-# SSH via Cloudflare Tunnel (hostname-based access)
-# Uses ssh-smart-proxy: tries local connection first, falls back to cloudflared access ssh
+# OpenSSH owns LAN sockets; Cloudflare is only the unreachable-LAN fallback.
 
 Host pod042-kvm
   HostName 10.10.10.34
@@ -29,11 +28,16 @@ Host pod153-kvm pod153-kvm-ts
 {% endif %}
   IdentitiesOnly yes
 
+Match originalhost haos !exec "~/.local/libexec/ssh-lan-reachable 192.168.1.89 22222"
+  HostName haos-ssh.thurstons.house
+  ProxyCommand cloudflared access ssh --hostname %h
+
 Host haos
+  HostName 192.168.1.89
+  Port 22222
   ForwardAgent yes
   User root
   HostKeyAlias haos
-  ProxyCommand ~/.local/libexec/ssh-smart-proxy haos 192.168.1.89 22222 haos-ssh.thurstons.house
 
 {% if vars.ssh_client_host == "pod042" or vars.ssh_client_host == "pod153" %}
 Host github.com
@@ -43,12 +47,16 @@ Host github.com
 {% endif %}
 {% if vars.ssh_client_host == "pod153" %}
 
+Match originalhost pod042 !exec "~/.local/libexec/ssh-lan-reachable 10.10.10.42 22"
+  HostName pod042-ssh.thurstons.house
+  ProxyCommand cloudflared access ssh --hostname %h
+
 Host pod042
+  HostName 10.10.10.42
   User thurstonsand
   HostKeyAlias pod042
   IdentityFile ~/.ssh/id_ed25519_git
   IdentitiesOnly yes
-  ProxyCommand ~/.local/libexec/ssh-smart-proxy pod042 10.10.10.42 22 pod042-ssh.thurstons.house
   RequestTTY yes
 
 Host pod042-ts
@@ -98,13 +106,17 @@ Host pod153-ts
   HostKeyAlias pod153
   UserKnownHostsFile ~/.ssh/known_hosts ~/.ssh/pod153.known_hosts
 
+Match originalhost pod042 !exec "~/.local/libexec/ssh-lan-reachable 10.10.10.42 22"
+  HostName pod042-ssh.thurstons.house
+  ProxyCommand cloudflared access ssh --hostname %h
+
 Host pod042
+  HostName 10.10.10.42
   User thurstonsand
   ForwardAgent yes
   HostKeyAlias pod042
   IdentityFile ~/.ssh/1Password/SHA256_xQTTgUrxzVzEf6EIQNWj_5RpVmoVzSa4kfqSLz4RcfQ.pub
   IdentitiesOnly yes
-  ProxyCommand ~/.local/libexec/ssh-smart-proxy pod042 10.10.10.42 22 pod042-ssh.thurstons.house
   RequestTTY yes
 
 Host pod042-remote

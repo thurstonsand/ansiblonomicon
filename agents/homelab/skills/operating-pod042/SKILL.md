@@ -9,7 +9,7 @@ Treat this repository as pod042's desired state. Diagnose live state freely; mak
 
 ## Entry points
 
-- SSH host: `pod042` (`10.10.10.42` on the LAN, falling back to Cloudflare Access through `ssh-smart-proxy`).
+- SSH host: `pod042` (`10.10.10.42` directly on the LAN, falling back to Cloudflare Access when `ssh-lan-reachable` fails).
 - Tailscale: `pod042-ts`; forced Cloudflare path: `pod042-remote`.
 - Recovery console: `pod042-kvm` locally or `pod042-kvm-ts` remotely, operated through `uv run scripts/kvm.py pod042 --insecure <command>` when host SSH is unavailable. The same client selects `pod153` for the Mac's separate KVM and password item.
 - Desired state: `bootstrap/targets/pod042/`.
