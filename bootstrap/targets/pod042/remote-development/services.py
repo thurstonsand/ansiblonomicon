@@ -7,13 +7,13 @@ from pathlib import Path
 import pwd
 import socket
 import subprocess
+import sys
 
 HOME = Path("/home/thurstonsand")
 SHIMS = HOME / ".local/share/mise/shims"
 HERDR = SHIMS / "herdr"
 HERDR_UNIT = "dev.mise.herdr.service"
 UNITS = (
-    "t3code.service",
     "dev.mise.amp-remote.service",
     "dev.mise.claude-remote-control.service",
     HERDR_UNIT,
@@ -21,7 +21,7 @@ UNITS = (
     "chatgpt-upgrade.path",
     "dev.mise.1password.service",
 )
-T3 = HOME / ".local/bin/t3"
+T3_READY = Path(__file__).resolve().parents[1] / "t3/t3.py"
 
 
 def run(*command: str) -> None:
@@ -33,11 +33,7 @@ def output(*command: str) -> str:
 
 
 def require_t3() -> None:
-    status = json.loads(output(str(T3), "connect", "status", "--json"))
-    if not all(status[key] is True for key in ("desired", "authenticated")):
-        raise SystemExit(
-            "T3 enrollment missing. Run t3 connect --headless as thurstonsand first."
-        )
+    run(sys.executable, str(T3_READY), "ready")
 
 
 def require_amp() -> None:
@@ -101,7 +97,6 @@ def main() -> None:
             "Remote development requires pod042's normal thurstonsand user, never root."
         )
     os.environ["HOME"] = str(HOME)
-    os.environ["NPM_CONFIG_USERCONFIG"] = str(HOME / ".config/t3code/npmrc")
     os.environ["PATH"] = (
         f"{HOME}/.local/bin:{HOME}/.amp/bin:{SHIMS}:/usr/local/bin:/usr/bin:/bin"
     )
@@ -114,7 +109,6 @@ def main() -> None:
     require_chatgpt()
     require_herdr()
     if action == "plan":
-        run(str(T3), "service", "status")
         for unit in UNITS:
             run(
                 "systemctl",
@@ -127,8 +121,8 @@ def main() -> None:
         # would surface after everything the loop above wrote.
         print(json.dumps(asdict(herdr_server())), flush=True)
         print(
-            "Apply: enable operator linger if absent; vendor-idempotent t3 service install; "
-            "start T3 and the ChatGPT upgrade watch, restarting on unit changes; stop any "
+            "Apply: enable operator linger if absent; start the ChatGPT upgrade watch, "
+            "restarting it on unit changes; stop any "
             "Herdr server systemd does not own, losing its panes, and restart Herdr on a "
             "stale binary. Mise applies the Amp, Claude, Herdr, ChatGPT, and 1Password units."
         )
@@ -145,31 +139,23 @@ def main() -> None:
             != "yes"
         ):
             run("sudo", "-n", "loginctl", "enable-linger", "thurstonsand")
-        changed = {
-            unit: output(
+        changed = (
+            output(
                 "systemctl",
                 "--user",
                 "show",
-                unit,
+                "chatgpt-upgrade.path",
                 "--property=NeedDaemonReload",
                 "--value",
             ).strip()
             == "yes"
-            for unit in ("t3code.service", "chatgpt-upgrade.path")
-        }
-        run("systemctl", "--user", "daemon-reload")
-        run(str(T3), "service", "install")
-        run(
-            "systemctl",
-            "--user",
-            "restart" if changed["t3code.service"] else "start",
-            "t3code.service",
         )
+        run("systemctl", "--user", "daemon-reload")
         run("systemctl", "--user", "enable", "chatgpt-upgrade.path")
         run(
             "systemctl",
             "--user",
-            "restart" if changed["chatgpt-upgrade.path"] else "start",
+            "restart" if changed else "start",
             "chatgpt-upgrade.path",
         )
         run("systemctl", "--user", "start", "chatgpt-upgrade.service")
@@ -187,7 +173,6 @@ def main() -> None:
             "restart" if herdr.binary_stale else "start",
             HERDR_UNIT,
         )
-    run(str(T3), "service", "status")
     if (
         output(
             "loginctl",

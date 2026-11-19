@@ -1,0 +1,12 @@
+# T3 Code on every host that serves it. Each target declares its servers in its t3-instances overlay;
+# the t3-systemd or t3-launchd overlay carries what they share on that platform.
+
+[bootstrap.files."~/.t3/service.env"]
+state = "absent"
+
+# The servers need the binary, and the vendor service holds their database and port.
+[bootstrap.hooks.post-dotfiles]
+run = "python3 t3/t3.py prepare"
+
+[bootstrap.hooks.final]
+run = "python3 t3/t3.py apply"

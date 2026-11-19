@@ -52,58 +52,6 @@ fi
 "$cua" skills uninstall
 '''
 
-[tasks.t3]
-run = '''
-set -eu
-release=$(curl -fsSL --connect-timeout 20 --max-time 300 --retry 3 --retry-delay 10 -o /dev/null -w '%{url_effective}' https://github.com/pingdotgg/t3code/releases/latest)
-version=${release##*/v}
-if [ "$("$HOME/.local/bin/t3" --version 2>/dev/null || true)" != "t3 v$version" ]; then
-  if [ -n "${SOFTWARE_CHECK:-}" ]; then
-    echo "t3 would be installed: $version" >&2
-    exit 0
-  fi
-  installer=$(mktemp)
-  trap 'rm -f "$installer"' EXIT
-  curl -fsSL --connect-timeout 20 --max-time 300 --retry 3 --retry-delay 10 -o "$installer" https://t3.codes/install.sh
-  T3CODE_VERSION="$version" sh "$installer"
-fi
-service_env="T3CODE_HOST=0.0.0.0"
-if [ "$(cat "$HOME/.t3/service.env" 2>/dev/null || true)" != "$service_env" ]; then
-  if [ -n "${SOFTWARE_CHECK:-}" ]; then
-    echo "t3 service.env would be written: $service_env" >&2
-  else
-    printf '%s\n' "$service_env" > "$HOME/.t3/service.env"
-    restart=1
-  fi
-fi
-if [ -n "${SOFTWARE_CHECK:-}" ]; then
-  "$HOME/.local/bin/t3" service status
-else
-  # A new CLI refuses to migrate a database its older running server still owns,
-  # so the service moves to the new version before any other t3 command runs.
-  "$HOME/.local/bin/t3" service install
-  if [ -n "${restart:-}" ]; then
-    "$HOME/.local/bin/t3" service restart
-  fi
-fi
-# A freshly started server spends several seconds migrating its database, and the
-# CLI refuses to read the database until it finishes.
-# t3 reports its errors on stdout, where they would reach the JSON parser unseen.
-tries=0
-until status=$("$HOME/.local/bin/t3" connect status --json); do
-  tries=$((tries + 1))
-  if [ "$tries" -ge 12 ]; then
-    printf '%s\n' "$status" >&2
-    exit 1
-  fi
-  sleep 5
-done
-if ! printf '%s' "$status" | python3 -c 'import json, sys; d = json.load(sys.stdin); sys.exit(not (d["desired"] and d["authenticated"]))'; then
-  echo "T3 enrollment missing. Run t3 connect link --headless first." >&2
-  exit 1
-fi
-'''
-
 [tasks.berkeley-mono]
 run = 'python3 software/berkeley_mono.py ${SOFTWARE_CHECK:+--check}'
 

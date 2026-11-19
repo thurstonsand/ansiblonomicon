@@ -55,17 +55,7 @@ owner = "root"
 group = "root"
 mode = "0755"
 
-[bootstrap.directories."/home/thurstonsand/.config/t3code"]
-owner = "thurstonsand"
-group = "thurstonsand"
-mode = "0755"
-
 [bootstrap.directories."/home/thurstonsand/.config/systemd/user"]
-owner = "thurstonsand"
-group = "thurstonsand"
-mode = "0755"
-
-[bootstrap.directories."/home/thurstonsand/.config/systemd/user/t3code.service.d"]
 owner = "thurstonsand"
 group = "thurstonsand"
 mode = "0755"
@@ -93,16 +83,6 @@ working_directory = "~/code"
 environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin" }
 # Its status screen redraws to stdout forever; only stderr is worth keeping.
 standard_output = "null"
-restart = "always"
-restart_sec = "30"
-
-# `t3 service install` owns the single t3code.service, so Maggie's instance is its own unit. She reaches it
-# through her own T3 Connect account, linked with `t3 connect link --headless --base-dir ~/.t3-maggie`.
-[bootstrap.linux.systemd.units.t3code-maggie]
-description = "T3 Code server for Maggie, rooted at ~/code/maggie"
-exec_start = "~/.local/bin/t3 serve --base-dir %h/.t3-maggie --host 127.0.0.1 --port 3774"
-working_directory = "~/code/maggie"
-environment = { PATH = "/home/thurstonsand/.local/bin:/home/thurstonsand/.amp/bin:/home/thurstonsand/.local/share/mise/shims:/usr/local/bin:/usr/bin:/bin", NPM_CONFIG_USERCONFIG = "/home/thurstonsand/.config/t3code/npmrc" }
 restart = "always"
 restart_sec = "30"
 
@@ -201,7 +181,6 @@ group = "thurstonsand"
 mode = "0755"
 
 [dotfiles]
-"/home/thurstonsand/.config/t3code/npmrc" = { source = "remote-development/t3.npmrc", mode = "symlink" }
 "/home/thurstonsand/.config/herdr/config.toml" = { source = "remote-development/herdr.toml", mode = "symlink" }
 "/home/thurstonsand/.config/labwc/autostart" = { source = "remote-development/desktop/labwc/autostart", mode = "symlink" }
 "/home/thurstonsand/.config/labwc/environment" = { source = "remote-development/desktop/labwc/environment", mode = "symlink" }
@@ -227,7 +206,6 @@ mode = "0755"
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.path" = { source = "remote-development/chatgpt-upgrade.path", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/chatgpt-upgrade.service" = { source = "remote-development/chatgpt-upgrade.service", mode = "copy" }
 "/home/thurstonsand/.local/bin/chatgpt-upgrade" = { source = "remote-development/chatgpt-upgrade", mode = "copy" }
-"/home/thurstonsand/.config/systemd/user/t3code.service.d/operator.conf" = { source = "remote-development/t3-operator.conf", mode = "copy" }
 "/home/thurstonsand/.config/systemd/user/xdg-desktop-portal-gtk.service.d/runner-desktop.conf" = { source = "remote-development/xdg-desktop-portal-gtk-runner.conf", mode = "copy" }
 
 [bootstrap.hooks.final]

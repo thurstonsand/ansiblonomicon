@@ -1,0 +1,14 @@
+# Each T3 Code server is a t3code-<person> agent logging to ~/Library/Logs/t3code-<person>.log; the t3
+# capability installs T3, waits for every agent, and bounds those logs. launchd keys are per agent, so
+# each repeats the vendor service's keep-alive, throttle, and process type. mise has no ExitTimeOut key.
+[bootstrap.macos.launchd.agents.t3code-thurston]
+program = "~/.local/bin/t3"
+args = ["serve", "--host", "0.0.0.0", "--port", "3773"]
+working_directory = "~"
+environment = { T3CODE_HOME = "/Users/thurstonsand/.t3", PATH = "/Users/thurstonsand/.local/bin:/Users/thurstonsand/.amp/bin:/Library/Frameworks/Python.framework/Versions/Current/bin:/Users/thurstonsand/.local/share/mise/shims:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" }
+stdout_path = "~/Library/Logs/t3code-thurston.log"
+stderr_path = "~/Library/Logs/t3code-thurston.log"
+run_at_load = true
+keep_alive = true
+throttle_interval = 5
+process_type = "Interactive"

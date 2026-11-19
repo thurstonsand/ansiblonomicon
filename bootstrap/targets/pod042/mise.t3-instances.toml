@@ -1,0 +1,14 @@
+# Each T3 Code server is a t3code-<person> unit; the t3 capability supplies everything else.
+[bootstrap.linux.systemd.units.t3code-thurston]
+description = "T3 Code server for Thurston"
+exec_start = "~/.local/bin/t3 serve --host 0.0.0.0 --port 3773"
+working_directory = "~"
+environment = { T3CODE_HOME = "/home/thurstonsand/.t3" }
+
+# Maggie reaches hers through her own T3 Connect account, linked with
+# `t3 connect link --headless --base-dir ~/.t3-maggie`.
+[bootstrap.linux.systemd.units.t3code-maggie]
+description = "T3 Code server for Maggie, rooted at ~/code/maggie"
+exec_start = "~/.local/bin/t3 serve --host 127.0.0.1 --port 3774"
+working_directory = "~/code/maggie"
+environment = { T3CODE_HOME = "/home/thurstonsand/.t3-maggie" }

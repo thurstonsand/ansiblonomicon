@@ -1,0 +1,15 @@
+# A prefix drop-in: systemd applies it to every dev.mise.t3code-*.service.
+[bootstrap.directories."~/.config/systemd/user/dev.mise.t3code-.service.d"]
+mode = "0755"
+
+[bootstrap.directories."~/.config/t3code"]
+mode = "0755"
+
+[bootstrap.directories."~/.config/systemd/user/t3code.service.d"]
+state = "absent"
+recursive = true
+
+[dotfiles]
+# User services must remain runnable while this checkout is unavailable.
+"~/.config/systemd/user/dev.mise.t3code-.service.d/server.conf" = { source = "t3/systemd.conf", mode = "copy" }
+"~/.config/t3code/npmrc" = { source = "t3/npmrc", mode = "symlink" }

@@ -67,6 +67,7 @@ CAPABILITIES = (
     "snapshots",
     "terminal-tools",
     "operator",
+    "t3",
     "vcs",
     "ssh-client",
     "agent-harness",
@@ -87,6 +88,8 @@ FULL_CAPABILITIES = (
     "terminal-theme-personal",
     "ssh-client-pod042",
     "agent-instructions",
+    "t3-systemd",
+    "t3-instances",
 )
 
 
@@ -133,11 +136,16 @@ def capabilities_for(capability: str | None) -> tuple[str, ...]:
         return ("ssh-client", "ssh-client-pod042")
     if capability == "agent-harness":
         return ("base", "operator", "agent-harness")
+    if capability == "t3":
+        return ("t3", "t3-systemd", "t3-instances")
     if capability == "remote-development":
         return (
             "repositories",
             "base",
             "operator",
+            "t3",
+            "t3-systemd",
+            "t3-instances",
             "agent-harness",
             "remote-development",
         )

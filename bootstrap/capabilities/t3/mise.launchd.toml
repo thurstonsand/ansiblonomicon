@@ -1,0 +1,11 @@
+# launchd writes each server's output to ~/Library/Logs/t3code-<person>.log and holds it open for
+# appending, so a rename would not bound it. Like T3's own launcher, copy it aside and empty it in place.
+[bootstrap.macos.launchd.agents.t3-logs]
+program = "/bin/sh"
+args = ["-c", '''for log in "$HOME"/Library/Logs/t3code-*.log; do
+  [ -f "$log" ] && [ "$(/usr/bin/stat -f %z "$log")" -gt 10485760 ] || continue
+  /bin/cp "$log" "$log.1" && : > "$log"
+done''']
+run_at_load = true
+start_interval = 600
+process_type = "Background"

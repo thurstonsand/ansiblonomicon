@@ -243,7 +243,7 @@ flag "-c --check"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host:$usage_capability" in
-  pod153:codex|pod153:claude-code|pod153:cua-driver|pod153:t3|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
+  pod153:codex|pod153:claude-code|pod153:cua-driver|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
   ML-DFC6YK6VJQ:codex|ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono|ML-DFC6YK6VJQ:docker-credentials) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
@@ -264,8 +264,21 @@ usage = 'flag "-c --check"'
 run = "mise run //:software:dispatch cua-driver ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks.t3]
-run = "mise run //:software:dispatch t3 ${usage_check:+--check}"
+description = "Install T3 Code and reconcile pod153's servers; pod042 reconciles them with `mise pod042 t3`"
 usage = 'flag "-c --check"'
+run = '''
+set -e
+host=$(hostname -s 2>/dev/null || hostname)
+[ "$host" = pod153 ] || { echo "t3 is registered here only on pod153" >&2; exit 1; }
+target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
+export MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=t3,t3-launchd,t3-instances
+if [ -n "${usage_check:-}" ]; then
+  mise -C "$target" bootstrap --only files,dotfiles,macos-launchd-agents --dry-run
+  python3 "$target/t3/t3.py" prepare --check
+  exec python3 "$target/t3/t3.py" apply --check
+fi
+exec mise -C "$target" bootstrap --only files,dotfiles,macos-launchd-agents,final-hook --yes
+'''
 [tasks.pi]
 run = "mise run //:software:dispatch pi ${usage_check:+--check}"
 usage = 'flag "-c --check"'
