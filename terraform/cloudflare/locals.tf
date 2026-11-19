@@ -33,7 +33,6 @@ locals {
     { host = "anypod", service = "http://caddy:80" },
     { host = "blog", service = "http://caddy:80" },
     { host = "cli-proxy-api", service = "http://caddy:80" },
-    { host = "inbox", service = "http://caddy:80" },
     { host = "nest-events", service = "http://caddy:80" },
     { host = "doppelclaude-origin", service = "http://doppelclaude:3456" },
   ]
@@ -64,7 +63,6 @@ locals {
     "seerr.${local.zone_name}",
     "anypod.${local.zone_name}",
     "cli-proxy-api.${local.zone_name}",
-    "inbox.${local.zone_name}",
     "aig.${local.zone_name}",
     "doppelclaude-origin.${local.zone_name}",
     "doppelclaude.${local.zone_name}",

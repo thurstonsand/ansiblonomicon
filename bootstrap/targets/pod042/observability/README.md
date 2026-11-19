@@ -32,9 +32,7 @@ Both sources use `usage.input` (uncached), `usage.cache_read`, `usage.cache_crea
 
 The bridge source is the HTTP daemon's existing content-free record log, **not every Pi/Claude process on the host**. It includes failures/disconnects, but these often lack final token usage. Nested SDK results overlap response usage; never add the two. This collector preserves the current evidence, not a complete upstream-attempt ledger. Independent late SDK events, Pi-local events, quota sampling, API-price estimates, parent inference, and historical rotated-file backfill are not implemented here.
 
-CPA client-key hashes distinguish applications only if they use different keys. Inbox Zero uses the dedicated `INBOX_ZERO_CLI_PROXY_API_KEY` secret; historical traffic on the shared key remains unattributed. CPA exports a normalized session identifier; it need not be the original Amp thread ID. Preserve unknown attribution rather than guessing from timing.
-
-The dedicated key lives in the Agent vault's Inbox Zero item, field `cli proxy api key`. The containers capability supplies it as Inbox Zero's `ANTHROPIC_API_KEY`. CPA's application-managed access list must also contain it: read `/v8/management/config/access/api-keys`, then PUT the existing list plus the dedicated key with the returned ETag in `If-Match`. This preserves other clients and reloads CPA without restarting it. Recreating only Inbox Zero's application container picks up a changed key. Do not reuse this key in other applications or introduce a per-user key override in Inbox Zero if its traffic should remain attributable here.
+CPA client-key hashes distinguish applications only if they use different keys. Inbox Zero, now retired, used a dedicated key that has since been revoked; its recorded traffic stays attributed by that key's fingerprint, and traffic on the shared key remains unattributed. CPA exports a normalized session identifier; it need not be the original Amp thread ID. Preserve unknown attribution rather than guessing from timing.
 
 ## Deployment and access
 
@@ -58,7 +56,7 @@ Each request has one cause: a changed configuration fingerprint first, then the 
 
 Bridge records carry the daemon's release `version` from the first release after 0.14.15; earlier records have none. Each release is a marker on the timeline, and clicking it compares that release with the one before it. The `amp-titles` user timer sends every Amp thread title from `amp threads list` to `POST /api/titles` every 15 minutes, because only the signed-in CLI can list them. OpenCode titles stay on the machine that ran OpenCode, and derived conversations have none.
 
-The indexer validates records at ingestion and exits on anything it cannot classify, such as a new bridge reason or request kind; Compose restarts it into the same error until the classification is added here. Except for notes and titles, the index is derived from Loki. Bump `SCHEMA_VERSION` when a change alters what it derives; the next start drops the derived tables and rebuilds them from `--since`, which takes seconds, and keeps notes and titles. Inbox Zero is attributed by the key fingerprint in `compose.yaml`; on rotation, add the new fingerprint as another `--inbox-zero-key-hash` and keep the old one.
+The indexer validates records at ingestion and exits on anything it cannot classify, such as a new bridge reason or request kind; Compose restarts it into the same error until the classification is added here. Except for notes and titles, the index is derived from Loki. Bump `SCHEMA_VERSION` when a change alters what it derives; the next start drops the derived tables and rebuilds them from `--since`, which takes seconds, and keeps notes and titles. Inbox Zero's historical traffic is attributed by the `--inbox-zero-key-hash` fingerprint in `compose.yaml`; keep it while that history is in range.
 
 ## Reading cache behavior
 
@@ -81,14 +79,14 @@ CPA execution events, including failed executions and incomplete accounting:
 {service_name="cli-proxy-api"} | json | event="usage"
 ```
 
-Inbox Zero executions on its dedicated key:
+Historical Inbox Zero executions on its revoked dedicated key:
 
 ```logql
 {service_name="cli-proxy-api"} | json | event="usage"
   | client_key_hash="81d13a717ce9067b297422704526f6c3daf0cd566f4626fc84e43716a1f22729"
 ```
 
-This is the key's SHA-256 fingerprint, not the credential. On rotation, preserve the old fingerprint for historical queries and add the new one; do not relabel older shared-key traffic as Inbox Zero.
+This is the key's SHA-256 fingerprint, not the credential. Do not relabel shared-key traffic as Inbox Zero.
 
 For CPA numeric totals, additionally filter `accounting_quality="complete"`. Always show incomplete/error counts alongside totals. To investigate collection coverage:
 

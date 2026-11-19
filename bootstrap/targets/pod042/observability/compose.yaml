@@ -92,7 +92,7 @@ services:
       - --listen=0.0.0.0:8080
       - --since=2026-10-01
       - --timezone=America/New_York
-      # SHA-256 of Inbox Zero's dedicated CLIProxyAPI key; on rotation, add the new one.
+      # SHA-256 of retired Inbox Zero's revoked CLIProxyAPI key, keeping its history attributed.
       - --inbox-zero-key-hash=81d13a717ce9067b297422704526f6c3daf0cd566f4626fc84e43716a1f22729
     restart: unless-stopped
     read_only: true

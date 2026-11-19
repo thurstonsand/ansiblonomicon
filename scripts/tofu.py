@@ -11,7 +11,6 @@ ALIASES = {
     },
     "google": {
         "TF_VAR_nest_events_token": "NEST_EVENTS_TOKEN",
-        "TF_VAR_inbox_zero_pubsub_verification_token": "INBOX_ZERO_PUBSUB_VERIFICATION_TOKEN",
     },
     "tailscale": {
         "TAILSCALE_OAUTH_CLIENT_ID": "TAILSCALE_ADMIN_OAUTH_CLIENT_ID",
