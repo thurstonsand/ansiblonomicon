@@ -82,6 +82,10 @@ def run(log: TextIO, *command: str) -> int:
 def pull(log: TextIO) -> int:
     if status := run(log, "git", "fetch"):
         return status
+    # Even an up-to-date rebase autostashes, which resets the index under an agent's commit in progress.
+    if not run(log, "git", "merge-base", "--is-ancestor", "@{upstream}", "HEAD"):
+        log.write("already up to date with upstream\n")
+        return 0
     stash = subprocess.run(
         ["git", "stash", "create"],
         cwd=REPO,
