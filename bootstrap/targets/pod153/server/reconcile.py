@@ -86,6 +86,19 @@ def screen_lock_on() -> bool:
     return "screenLock delay is" in status.stderr
 
 
+def spawn_failed(job: str) -> bool:
+    """Whether launchd is failing to start a job it keeps alive.
+
+    When Homebrew replaces the executable of a job that then exits, launchd's stored code
+    requirement no longer matches ("Unable to get updated LWCR") and every respawn fails until
+    the job is loaded again. Such a job has no pid, so replaced_since_start can't see it.
+    """
+    listing = subprocess.run(
+        ["launchctl", "print", job], text=True, capture_output=True
+    ).stdout
+    return "\tjob state = spawn failed\n" in listing
+
+
 def replaced_since_start(job: str, plist: Path) -> bool:
     """Whether a running launchd job's executable, or a file its arguments name, changed after it started.
 
@@ -281,7 +294,17 @@ def main() -> None:
         (Path.home() / "Library/LaunchAgents").glob("dev.mise.*.plist")
     ):
         job = f"gui/{os.getuid()}/{plist.stem}"
-        if replaced_since_start(job, plist):
+        if spawn_failed(job):
+            changes.append(
+                (
+                    f"{plist.stem} after its failed spawn",
+                    [
+                        ["launchctl", "bootout", job],
+                        ["launchctl", "bootstrap", f"gui/{os.getuid()}", str(plist)],
+                    ],
+                )
+            )
+        elif replaced_since_start(job, plist):
             changes.append(
                 (
                     f"{plist.stem} on its updated code",
