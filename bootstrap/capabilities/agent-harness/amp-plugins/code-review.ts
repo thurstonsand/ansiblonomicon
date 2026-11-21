@@ -30,9 +30,10 @@ export default function (amp: PluginAPI) {
 
 	amp.registerTool({
 		name: 'code_review',
+		defer: false,
 		title: 'Code review',
 		description:
-			'Review code changes with a read-only expert advisor. Include the diff or commit scope, intended behavior, relevant file paths, settled constraints, and what to ignore. Returns findings and recommended fixes; does not implement them. Use oracle for planning and other engineering advice.',
+			'Review code changes with a read-only expert advisor. Include the diff or commit scope, intended behavior, relevant file paths, settled constraints, and what to ignore. Returns findings and recommended fixes; does not implement them. Use consult_oracle for planning and other engineering advice.',
 		inputSchema: {
 			type: 'object',
 			properties: {

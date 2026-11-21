@@ -103,8 +103,14 @@ class PublishPluginsTest(unittest.TestCase):
 			],
 			exclude: ['tool_search', 'code_exec'],
 		},"""
+            registration_header = """	amp.registerTool({
+		name: 'oracle',
+		title: 'Oracle',
+		description: toolDescription,
+		inputSchema: {"""
             registration = (
                 """
+const toolDescription = 'Research'
 export default function (amp) {
 	const agent = amp.createAgent({
 		model: MODEL, reasoningEffort: REASONING_EFFORT, instructions,
@@ -112,8 +118,9 @@ export default function (amp) {
                 + upstream_tools
                 + """
 	})
-	amp.registerTool({
-		name: 'research',
+"""
+                + registration_header
+                + """},
 		execute: (input, ctx) => runSubagent(agent, input.task, ctx, 60000),
 	})
 }
@@ -373,6 +380,31 @@ console.log(JSON.stringify({ report, error, cause, tools }))
                         published,
                     )
             source_body = lifecycle + registration
+            for changed_registration in (
+                "",
+                registration_header + registration_header,
+                registration_header.replace("'oracle'", "'advisor'"),
+                registration_header.replace(
+                    "\n\t\ttitle:", "\n\t\tdefer: true,\n\t\ttitle:"
+                ),
+            ):
+                with self.subTest(registration=changed_registration):
+                    upstream.write_text(
+                        "const MODEL = 'upstream/default'\n"
+                        "const REASONING_EFFORT = 'low'\n"
+                        "const instructions = `Prompt remains valid.`\n\n"
+                        + source_body.replace(registration_header, changed_registration)
+                    )
+                    with self.assertRaises(subprocess.CalledProcessError) as failure:
+                        publish()
+                    self.assertIn(
+                        "expected one upstream Oracle registration",
+                        failure.exception.stderr,
+                    )
+                    self.assertEqual(
+                        run("git", "--git-dir", str(remote), "rev-parse", "main"),
+                        published,
+                    )
             for changed_tools in (
                 "",
                 upstream_tools + upstream_tools,

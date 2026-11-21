@@ -43,6 +43,11 @@ UPSTREAM_ORACLE_TOOLS = """		tools: {
 			],
 			exclude: ['tool_search', 'code_exec'],
 		},"""
+UPSTREAM_ORACLE_REGISTRATION = """	amp.registerTool({
+		name: 'oracle',
+		title: 'Oracle',
+		description: toolDescription,
+		inputSchema: {"""
 
 
 def text(entry: dict[str, object], field: str) -> str:
@@ -139,6 +144,18 @@ def render(capability: Path, output: Path) -> None:
                     )
                     .replace("'librarian'", "'plugin__librarian__librarian'")
                     .replace("\n\t\t\texclude: ['tool_search', 'code_exec'],", ""),
+                )
+                matches = content.count(UPSTREAM_ORACLE_REGISTRATION)
+                if matches != 1:
+                    raise ValueError(
+                        f"{source}: expected one upstream Oracle registration, got {matches}; review the direct-tool patch"
+                    )
+                content = content.replace(
+                    UPSTREAM_ORACLE_REGISTRATION,
+                    UPSTREAM_ORACLE_REGISTRATION.replace(
+                        "name: 'oracle',",
+                        "name: 'consult_oracle',\n\t\tdefer: false,",
+                    ),
                 )
         destination.write_text(content)
         print(f"{name}: {alias} ({effort}), from {source}")

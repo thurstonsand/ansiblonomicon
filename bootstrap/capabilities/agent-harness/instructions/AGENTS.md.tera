@@ -90,10 +90,11 @@ My messages on every network (iMessage, WhatsApp, Signal and the rest, through B
 When delegating, use the tools below:
 
 - `code_review`: reviewing code changes.
-- `oracle`: engineering advice, planning, and difficult debugging.
+- `consult_oracle`: engineering advice, planning, and difficult debugging.
 - `Task`: for implementation, finding, researching, or otherwise for general use
 
-- After each `oracle` or `code_review` call, consume the result and collect its linked agent thread and descendants using `find_thread` (`parent:<thread ID>`, all pages, recursively). Check live status, then archive finished threads needing no follow-up with `update_thread`, including Finder and Librarian descendants. Leave active, blocked, or unknown-state threads alone and report pending cleanup. This authorizes archiving these invocation threads, not deleting them or their worktrees.
+- Call `consult_oracle` and `code_review` directly from the main agent, not through `Task` or `code_exec`. Let them finish without an artificial time budget; Task's `code_exec` cuts off after 120 seconds and cancels the child investigation.
+- After each `consult_oracle` or `code_review` call, consume the result and collect its linked agent thread and descendants using `find_thread` (`parent:<thread ID>`, all pages, recursively). Check live status, then archive finished threads needing no follow-up with `update_thread`, including Finder and Librarian descendants. Leave active, blocked, or unknown-state threads alone and report pending cleanup. This authorizes archiving these invocation threads, not deleting them or their worktrees.
 {% else -%}
 If you're reaching for a subagent, consider the following:
 {% if vars.host_profile == "work" %}
