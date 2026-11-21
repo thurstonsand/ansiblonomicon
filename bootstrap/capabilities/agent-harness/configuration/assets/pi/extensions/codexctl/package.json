@@ -8,12 +8,17 @@
     ]
   },
   "devDependencies": {
-    "@biomejs/biome": "2.6.7",
-    "@earendil-works/pi-ai": "^1.5.2",
-    "@earendil-works/pi-coding-agent": "^1.5.2",
-    "@earendil-works/pi-tui": "^1.5.2",
+    "@biomejs/biome": "2.6.8",
+    "@earendil-works/pi-ai": "^1.6.0",
+    "@earendil-works/pi-coding-agent": "^1.6.0",
+    "@earendil-works/pi-tui": "^1.6.0",
     "@types/node": "^26.6.6",
     "typescript": "^7.0.2"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-ai": "*",
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*"
   },
   "description": "Codex integration controls for Pi"
 }
