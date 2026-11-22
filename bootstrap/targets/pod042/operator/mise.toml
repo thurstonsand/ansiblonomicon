@@ -14,6 +14,9 @@ npm = "latest"
 # Pi is exempt from the supply-chain cooling. `latest` keeps whichever version is installed, so a launch upgrades it once
 # every 4h, as Omarchy declares its agent CLIs; `pi update` upgrades it through mise too.
 pi = { version = "latest", minimum_release_age = "0s", auto_update = "4h" }
+# T3 Code lists this host's Android virtual devices with avdmanager over non-interactive SSH,
+# where no project sets a Java version and the shim alone fails.
+java = "latest"
 python = "3.15"
 uv = "latest"
 bun = "latest"

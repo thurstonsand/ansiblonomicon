@@ -14,9 +14,13 @@
 
 [bootstrap.groups.render]
 
+# Hardware acceleration for Android emulators, which HearingTestAI test passes run here
+# so they stop competing with iPhone simulators for pod153.
+[bootstrap.groups.kvm]
+
 [bootstrap.users.thurstonsand]
 group = "thurstonsand"
-groups = ["sudo", "render"]
+groups = ["sudo", "render", "kvm"]
 home = "/home/thurstonsand"
 shell = "/usr/bin/zsh"
 create_home = true
