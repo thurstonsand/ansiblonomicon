@@ -285,3 +285,24 @@ resource "unifi_firewall_policy" "lunar_tear_to_pod042_services" {
     port_matching_type = "SPECIFIC"
   }
 }
+
+# Wireless debugging picks new ports each time it is turned on, so pod153's adb may reach the test phone on any TCP port.
+resource "unifi_firewall_policy" "pod153_to_android_test_phone" {
+  name                 = "pod153 to Android test phone"
+  action               = "ALLOW"
+  protocol             = "tcp"
+  ip_version           = "IPV4"
+  create_allow_respond = true
+
+  source = {
+    zone_id         = unifi_firewall_zone.bunker.id
+    matching_target = "IP"
+    ips             = [unifi_client.pod153.fixed_ip]
+  }
+
+  destination = {
+    zone_id         = unifi_firewall_zone.lunar_tear.id
+    matching_target = "IP"
+    ips             = [unifi_client.android_test_phone.fixed_ip]
+  }
+}

@@ -283,3 +283,11 @@ resource "unifi_client" "home_assistant" {
   local_dns_record = "home-assistant"
   allow_existing   = true
 }
+
+# The Android phone HearingTestAI's dev build is tested on, reserved at its address so pod153 can reach it.
+resource "unifi_client" "android_test_phone" {
+  mac            = "fe:c6:24:05:cd:2c"
+  name           = "Android test phone"
+  fixed_ip       = "10.10.30.198"
+  allow_existing = true
+}
