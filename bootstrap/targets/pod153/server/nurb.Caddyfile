@@ -22,5 +22,8 @@ http://:8766 {
 	root * /Users/thurstonsand/Develop/HearingTestAI/evidence
 	@raw path *.json *.csv
 	respond @raw 404
+	# App builds are replaced in place; Cloudflare caches .apk by default and handed out a stale build.
+	@app path /app/*
+	header @app Cache-Control "no-store"
 	file_server
 }
