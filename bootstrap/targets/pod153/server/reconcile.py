@@ -28,12 +28,18 @@ TIME_MACHINE = "smb://thurstonsand@pod042.thurstons.house/timemachine"
 # Time Machine copies a changed file whole, so a running Tart VM's disk image
 # would go over every hour. Beeper's and Photos' databases change as often and
 # both download again from their services; the rest are regenerable caches.
+# Simulator and emulator disks are rewritten by every UI test pass, and backupd
+# copying them took more CPU than a simulator while a pass ran.
 TIME_MACHINE_SKIPPED = [
     str(Path.home() / name)
     for name in (
         ".tart",
         ".cache",
         ".npm",
+        ".gradle/caches",
+        ".android/avd",
+        "Library/Developer/CoreSimulator",
+        "Library/Developer/Xcode/DerivedData",
         "Library/Application Support/BeeperTexts",
         "Pictures/Photos Library.photoslibrary",
         "Library/Photos/Libraries/Syndication.photoslibrary",
