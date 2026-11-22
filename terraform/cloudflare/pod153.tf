@@ -171,7 +171,10 @@ resource "cloudflare_zero_trust_access_policy" "evidence_viewers" {
   decision         = "allow"
   session_duration = "24h"
 
-  include = [{ email = { email = "mikebaden@bellsouth.net" } }]
+  include = [
+    { email = { email = "mikebaden@bellsouth.net" } },
+    { email = { email = "radarwaveforms@gmail.com" } },
+  ]
 
   lifecycle {
     create_before_destroy = true
