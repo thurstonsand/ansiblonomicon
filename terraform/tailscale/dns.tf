@@ -1,6 +1,6 @@
 # Tailscale stores a NextDNS profile as its anycast IPv6 address and upgrades it to DoH on clients.
 resource "tailscale_dns_configuration" "tailnet" {
-  magic_dns          = false
+  magic_dns          = true
   override_local_dns = true
 
   nameservers {

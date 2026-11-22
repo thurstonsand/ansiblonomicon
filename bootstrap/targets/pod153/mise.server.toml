@@ -196,6 +196,9 @@ if [ "$state" != Running ]; then
 fi
 sudo -n /opt/homebrew/bin/tailscale up --reset --hostname=pod153 --accept-dns=false --accept-routes=false --advertise-tags=tag:pod153 --advertise-routes= --advertise-exit-node=false --exit-node= --exit-node-allow-lan-access=false --report-posture=false --ssh=true
 sudo -n /opt/homebrew/bin/tailscale wait --timeout=15s
+# App builds a phone on the tailnet installs from a link, which iOS follows only over trusted HTTPS.
+mkdir -p "$HOME/.local/share/ota"
+sudo -n /opt/homebrew/bin/tailscale serve --bg --yes --https=443 --set-path=/ota "$HOME/.local/share/ota" >/dev/null
 '''
 
 # Retired for imsgbus in cupertino; server/mac_mcp.py boots the job out. Delete once pod153 converges.
