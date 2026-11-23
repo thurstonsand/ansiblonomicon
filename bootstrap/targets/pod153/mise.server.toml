@@ -177,6 +177,11 @@ owner = "root"
 group = "wheel"
 mode = "0644"
 
+# Xcode's compilation cache otherwise keeps up to half the free disk, and agents
+# building every worktree filled it to 22 GB. Xcode and xcodebuild both read this.
+[bootstrap.macos.defaults."org.swift.swift-build"]
+CompilationCachingDiskSizeLimit = "15G"
+
 [tasks.server]
 usage = 'flag "-c --check"'
 run = '''
@@ -184,7 +189,7 @@ set -eu
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
 python3 server/mac_mcp.py ${usage_check:+--check}
-mise bootstrap --only files,macos-launchd-agents "$mode"
+mise bootstrap --only files,macos-defaults,macos-launchd-agents "$mode"
 python3 server/reconcile.py ${usage_check:+--check}
 [ -z "${usage_check:-}" ] || exit 0
 # A tailscaled that server/reconcile.py just restarted onto a new binary is still starting up.
