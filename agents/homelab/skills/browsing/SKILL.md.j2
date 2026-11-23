@@ -14,16 +14,15 @@ description: Automates browsers with Browse on personal hosts and agent-browser 
 # Browsing
 {% if hostname == "ML-DFC6YK6VJQ" %}
 
-Use the Chrome DevTools MCP server `plugin_chrome-devtools_shim`, the PRODSEC-approved shim from CrowdStrike's ai-plugin-marketplace. Its tools are {% if harness == "claude" %}`mcp__plugin_chrome-devtools_shim__*`{% elif harness == "pi" %}`mcp__plugin_chrome_devtools_shim__*`, reached through codemode{% else %}`mcp__plugin_chrome_devtools_shim.*`{% endif %}. A session started before the server was configured does not see them; start a new one.
+Use the Chrome DevTools MCP server from the chrome-devtools plugin in the internal plugin marketplace. Its tools are {% if harness == "claude" %}`mcp__plugin_chrome-devtools_shim__*`{% elif harness == "pi" %}`mcp__plugin_chrome_devtools_shim__*`, reached through codemode{% else %}`mcp__shim.*`{% endif %}. A session started before the server was configured does not see them; start a new one.
 
-The server attaches to Thurston's running Chrome, so its pages share his profile: cookies, logins, and extensions. Chrome asks him to allow each new connection. If Chrome is not running or he declines, report it rather than reaching for another browser.
+The server launches its own Chrome with a persistent profile dedicated to it, separate from Thurston's browser. Logins made there persist across sessions, but his own cookies, logins, and extensions are not available. When a page needs a login the profile lacks, ask him to sign in through that window.
 
-- **Your own work goes in background tabs.** Open every page with `new_page` and `background: true`, never bring a page to the front, and close the pages you opened when the task is done. His tabs are his: do not select, navigate, or close them unless he asks.
-- **Helping with his tab.** When he asks for help with something he has open, find it with `list_pages` and work in that page.
-- **Clean-slate tests.** For a logged-out or cookie-free test, pass `isolatedContext` to `new_page`. Pages in that context share nothing with his profile.
+- **Clean up after yourself.** Open your pages with `new_page` and close them when the task is done. Other agents may share the same browser, so leave pages you did not open alone.
+- **Clean-slate tests.** For a logged-out or cookie-free test, pass `isolatedContext` to `new_page`. Pages in that context share nothing with the persistent profile.
 - **File paths.** Screenshots and other files land only inside the client's MCP roots, so pass an absolute path {% if harness == "claude" %}inside the working directory{% else %}inside `$TMPDIR`, not `/tmp`{% endif %}.
 {% if harness != "claude" %}
-- **Other skills' tool names.** Raven's `validating-in-browser` skill spells the tools as Claude Code does, `mcp__plugin_chrome-devtools_shim__*`; use this harness's names instead.
+- **Other skills' tool names.** Some installed skills, such as `validating-in-browser`, spell the tools as Claude Code does, `mcp__plugin_chrome-devtools_shim__*`; use this harness's names instead.
 {% endif %}
 {% else %}
 

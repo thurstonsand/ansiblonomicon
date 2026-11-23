@@ -17,6 +17,15 @@ command = "/Users/thurstonsand/.local/bin/cua-driver"
 args = ["mcp"]
 harnesses = ["claude"]
 
+[marketplaces.claude-plugins-official]
+github = "anthropics/claude-plugins-official"
+
+[marketplaces.pi-librarian]
+github = "thurstonsand/pi-librarian"
+
+[plugins."librarian@pi-librarian"]
+harnesses = ["claude"]
+
 [fonts]
 mono = "BerkeleyMono Nerd Font Mono"
 propo = "BerkeleyMono Nerd Font Mono"

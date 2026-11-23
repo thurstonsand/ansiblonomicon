@@ -10,6 +10,7 @@ import tempfile
 from typing import Any, cast
 
 import librarian
+import marketplace_plugins
 import tomlkit
 from tomlkit.items import Table
 
@@ -116,6 +117,9 @@ def render(
     )
     if chrome_path is not None:
         _merge(overlay, cast(Container, tomlkit.parse(chrome_path.read_text())))
+    plugins = marketplace_plugins.declared(data, "codex")
+    if plugins:
+        overlay["plugins"] = {plugin_id: {"enabled": True} for plugin_id in plugins}
     target = home / ".codex/config.toml"
     if target.exists():
         merged = cast(Container, tomlkit.parse(target.read_text()))

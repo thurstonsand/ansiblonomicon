@@ -141,6 +141,7 @@ def load_data(repo: Path, hostname: str) -> dict[str, Any]:
         raise ValueError("models and fonts must be mappings")
     if not isinstance(data.get("mcp_servers", []), list):
         raise ValueError("mcp_servers must be a list")
+    _load_module(Path(__file__).parent, "marketplace_plugins").conform(data)
     if hostname == WORK_HOST:
         for key in ("work_gateway", "work_models"):
             if not isinstance(data.get(key), dict):
@@ -661,6 +662,9 @@ def reconcile(
     harnesses = target_harnesses(repo, hostname)
     if not check:
         _load_module(Path(__file__).parent, "librarian").update(home, hostname)
+    plugins_changed = _load_module(
+        Path(__file__).parent, "marketplace_plugins"
+    ).reconcile(home=home, data=data, harnesses=harnesses, check=check)
     outputs = render_all(repo, home, hostname, data, secrets, harnesses)
     state_dir = home / ".cache/ansiblonomicon-harness/configuration"
     mcp_ownership = state_dir / "mcp-owned.json"
@@ -808,7 +812,7 @@ def reconcile(
                 stale,
             )
             _apply_native(root, root / "state", root / "home", True)
-        return int(changed)
+        return int(changed or plugins_changed)
 
     _private_dir(state_dir, home / ".cache")
     backup = state_dir / "backups"

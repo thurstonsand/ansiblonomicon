@@ -7,6 +7,8 @@ from pathlib import Path
 import re
 from typing import Any, cast
 
+import marketplace_plugins
+
 OMARCHY_HOST = "no9-type-s"
 
 
@@ -141,18 +143,19 @@ def _base_settings(
         "showClearContextOnPlanAccept": True,
         "feedbackDrafts": "off",
         "extraKnownMarketplaces": {
-            "claude-plugins-official": {
-                "source": {
-                    "source": "github",
-                    "repo": "anthropics/claude-plugins-official",
-                }
-            },
-            "pi-librarian": {
-                "source": {"source": "github", "repo": "thurstonsand/pi-librarian"},
+            name: {
+                "source": (
+                    {"source": "github", "repo": source["github"]}
+                    if "github" in source
+                    else {"source": "git", "url": source["git"]}
+                ),
                 "autoUpdate": True,
-            },
+            }
+            for name, source in data["marketplaces"].items()
         },
-        "enabledPlugins": {"librarian@pi-librarian": True},
+        "enabledPlugins": dict.fromkeys(
+            marketplace_plugins.declared(data, "claude"), True
+        ),
     }
     return settings
 
