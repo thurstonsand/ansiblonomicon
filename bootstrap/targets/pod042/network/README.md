@@ -11,3 +11,9 @@
 The gate is bounded at 120 seconds and fails rather than hanging boot. A failed `Wants=` dependency does not block `network-online.target`, so the host still boots, and the failed unit shows up in Netdata's systemd-units alarms instead of in a container's DNS six hours later.
 
 Containers do not test this from here. `containers/check.py` asserts that every running container actually resolves an external name, which is the consequence rather than the ordering.
+
+## UDP receive buffers
+
+The network sysctl file sets `net.core.rmem_default` to 4 MiB. Android Emulator's `netsimd` inherits the default for its NAT sockets; the stock 208 KiB limit dropped 782–814 packets from a 1,000-packet, 1,200-byte UDP burst in repeated end-to-end replays. A 4 MiB receive buffer delivered every packet in the same replay without host drops. This increases the queue allowance, not memory reserved per socket, and leaves the explicit `SO_RCVBUF` request ceiling (`rmem_max`), TCP's separate autotuning settings and Netdata thresholds unchanged.
+
+The default affects newly created sockets, including sockets opened by an already-running emulator. Existing sockets retain their old limit until they close. Apply through network reconciliation; no reboot or interface restart is needed for these sysctls.
