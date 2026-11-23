@@ -16,7 +16,11 @@ import tempfile
 import time
 
 HOME = Path.home()
-T3 = HOME / ".local/bin/t3"
+# Each channel's launcher; an instance follows the channel whose launcher it runs.
+CHANNELS = {
+    "nightly": HOME / ".local/bin/t3",
+    "stable": HOME / ".local/share/t3/stable/t3",
+}
 MACOS = sys.platform == "darwin"
 PREFIX = "dev.mise.t3code-"
 VENDOR_UNIT = (
@@ -44,6 +48,7 @@ CURL = (
 class Instance:
     name: str
     home: Path
+    t3: Path
 
 
 def run(*command: str) -> None:
@@ -59,22 +64,19 @@ def domain() -> str:
 
 
 def instances() -> list[Instance]:
-    """Every T3 server mise declares, named t3code-<person>, with the T3CODE_HOME it serves."""
-    if MACOS:
-        return [
-            Instance(
-                plist.stem,
-                Path(
-                    plistlib.loads(plist.read_bytes())["EnvironmentVariables"][
-                        "T3CODE_HOME"
-                    ]
-                ),
-            )
-            for plist in sorted(
-                (HOME / "Library/LaunchAgents").glob(f"{PREFIX}*.plist")
-            )
-        ]
+    """Every T3 server mise declares, named t3code-<person>, with the T3CODE_HOME it serves and the t3 it runs."""
     found: list[Instance] = []
+    if MACOS:
+        for plist in sorted((HOME / "Library/LaunchAgents").glob(f"{PREFIX}*.plist")):
+            agent = plistlib.loads(plist.read_bytes())
+            found.append(
+                Instance(
+                    plist.stem,
+                    Path(agent["EnvironmentVariables"]["T3CODE_HOME"]),
+                    Path(agent["ProgramArguments"][0]),
+                )
+            )
+        return found
     for unit in sorted((HOME / ".config/systemd/user").glob(f"{PREFIX}*.service")):
         environment = output(
             "systemctl",
@@ -85,7 +87,13 @@ def instances() -> list[Instance]:
             "--value",
         )
         home = dict(entry.split("=", 1) for entry in environment.split())["T3CODE_HOME"]
-        found.append(Instance(unit.stem, Path(home)))
+        exec_start = output(
+            "systemctl", "--user", "show", unit.name, "--property=ExecStart", "--value"
+        )
+        program = re.search(r"\bpath=(\S+)", exec_start)
+        if program is None:
+            raise SystemExit(f"{unit.name} has no ExecStart path: {exec_start!r}")
+        found.append(Instance(unit.stem, Path(home), Path(program.group(1))))
     return found
 
 
@@ -124,22 +132,34 @@ def serving(instance: Instance) -> dict[str, object] | None:
     return state if pid != 0 and state["pid"] == pid else None
 
 
-def installed_version() -> str | None:
-    if not T3.exists():
+def installed_version(t3: Path) -> str | None:
+    if not t3.exists():
         return None
-    return output(str(T3), "--version").strip().removeprefix("t3 v")
+    return output(str(t3), "--version").strip().removeprefix("t3 v")
 
 
-def latest_version() -> str:
-    release = output(
-        *CURL,
-        "-o",
-        "/dev/null",
-        "-w",
-        "%{url_effective}",
-        "https://github.com/pingdotgg/t3code/releases/latest",
+def latest_version(channel: str) -> str:
+    if channel == "stable":
+        release = output(
+            *CURL,
+            "-o",
+            "/dev/null",
+            "-w",
+            "%{url_effective}",
+            "https://github.com/pingdotgg/t3code/releases/latest",
+        )
+        return release.rsplit("/v", 1)[1]
+    # Nightlies ship several times a day, so the newest one is always on the first page.
+    releases = json.loads(
+        output(
+            *CURL, "https://api.github.com/repos/pingdotgg/t3code/releases?per_page=100"
+        )
     )
-    return release.rsplit("/v", 1)[1]
+    return next(
+        release["tag_name"].removeprefix("v")
+        for release in releases
+        if f"-{channel}." in release["tag_name"]
+    )
 
 
 def restart(instance: Instance) -> None:
@@ -186,7 +206,14 @@ def wait(instance: Instance) -> None:
 def require_enrollment(instance: Instance) -> None:
     # t3 prints its errors on stdout, where the JSON parser would swallow them.
     result = subprocess.run(
-        (str(T3), "connect", "status", "--json", "--base-dir", str(instance.home)),
+        (
+            str(instance.t3),
+            "connect",
+            "status",
+            "--json",
+            "--base-dir",
+            str(instance.home),
+        ),
         capture_output=True,
         text=True,
     )
@@ -197,36 +224,44 @@ def require_enrollment(instance: Instance) -> None:
     if not (status["desired"] is True and status["authenticated"] is True):
         raise SystemExit(
             f"T3 enrollment missing for {instance.home}. "
-            f"Run t3 connect link --headless --base-dir {instance.home} first."
+            f"Run {instance.t3} connect link --headless --base-dir {instance.home} first."
         )
 
 
 def prepare(check: bool) -> None:
-    """Runs before mise starts the instances: they need the binary, and the vendor service holds the port."""
-    current, latest = installed_version(), latest_version()
-    if current != latest:
+    """Runs before mise starts the instances: they need their binaries, and the vendor service holds the port.
+
+    The units mise is about to write are not on disk yet, so every channel is installed, not only the ones they run.
+    """
+    for channel, t3 in CHANNELS.items():
+        current, latest = installed_version(t3), latest_version(channel)
+        if current == latest:
+            continue
         if check:
-            print(f"t3 would be installed: {current} -> {latest}")
-        else:
-            with tempfile.NamedTemporaryFile(suffix=".sh") as installer:
-                run(*CURL, "-o", installer.name, "https://t3.codes/install.sh")
-                subprocess.run(
-                    ("sh", installer.name),
-                    check=True,
-                    env={**os.environ, "T3CODE_VERSION": latest},
-                )
+            print(f"t3 {channel} would be installed: {current} -> {latest}")
+            continue
+        with tempfile.NamedTemporaryFile(suffix=".sh") as installer:
+            run(*CURL, "-o", installer.name, "https://t3.codes/install.sh")
+            subprocess.run(
+                ("sh", installer.name),
+                check=True,
+                env={
+                    **os.environ,
+                    "T3CODE_VERSION": latest,
+                    "T3CODE_INSTALL_BIN_DIR": str(t3.parent),
+                },
+            )
     if VENDOR_UNIT.exists():
         if check:
             print(f"t3's vendor service would be uninstalled: {VENDOR_UNIT}")
         else:
-            run(str(T3), "service", "uninstall")
+            run(str(CHANNELS["stable"]), "service", "uninstall")
             if VENDOR_UNIT.exists():
                 raise SystemExit(f"t3 service uninstall left {VENDOR_UNIT} in place.")
 
 
 def apply(check: bool) -> None:
-    """Moves every instance onto the installed release and its current unit, then waits for all of them."""
-    version = installed_version()
+    """Moves every instance onto its channel's installed release and its current unit, then waits for all of them."""
     reload = not MACOS and any(
         output(
             "systemctl",
@@ -243,6 +278,7 @@ def apply(check: bool) -> None:
         run("systemctl", "--user", "daemon-reload")
     for instance in instances():
         state = serving(instance)
+        version = installed_version(instance.t3)
         if reload or (state is not None and state["serverVersion"] != version):
             if check:
                 print(f"{instance.name} would restart onto t3 {version}")

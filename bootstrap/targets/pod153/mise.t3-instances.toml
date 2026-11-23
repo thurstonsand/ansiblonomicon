@@ -13,8 +13,10 @@ keep_alive = true
 throttle_interval = 5
 process_type = "Interactive"
 
+# Mike reaches his through his own T3 Connect account, linked with
+# `~/.local/share/t3/stable/t3 connect link --headless --base-dir ~/.t3-mike`.
 [bootstrap.macos.launchd.agents.t3code-mike]
-program = "~/.local/bin/t3"
+program = "~/.local/share/t3/stable/t3"
 args = ["serve", "--host", "127.0.0.1", "--port", "3774"]
 working_directory = "~/Develop/HearingTestAI"
 environment = { T3CODE_HOME = "/Users/thurstonsand/.t3-mike", PATH = "/Users/thurstonsand/.local/bin:/Users/thurstonsand/.amp/bin:/Library/Frameworks/Python.framework/Versions/Current/bin:/Users/thurstonsand/.local/share/mise/shims:/opt/homebrew/bin:/usr/bin:/bin:/usr/sbin:/sbin" }

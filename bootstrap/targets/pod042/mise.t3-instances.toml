@@ -6,9 +6,9 @@ working_directory = "~"
 environment = { T3CODE_HOME = "/home/thurstonsand/.t3" }
 
 # Maggie reaches hers through her own T3 Connect account, linked with
-# `t3 connect link --headless --base-dir ~/.t3-maggie`.
+# `~/.local/share/t3/stable/t3 connect link --headless --base-dir ~/.t3-maggie`.
 [bootstrap.linux.systemd.units.t3code-maggie]
 description = "T3 Code server for Maggie, rooted at ~/code/maggie"
-exec_start = "~/.local/bin/t3 serve --host 127.0.0.1 --port 3774"
+exec_start = "~/.local/share/t3/stable/t3 serve --host 127.0.0.1 --port 3774"
 working_directory = "~/code/maggie"
 environment = { T3CODE_HOME = "/home/thurstonsand/.t3-maggie" }

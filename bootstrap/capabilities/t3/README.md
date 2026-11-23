@@ -9,7 +9,7 @@ Each target lists its servers in `mise.t3-instances.toml`. A server is named `t3
 ```toml
 [bootstrap.linux.systemd.units.t3code-maggie]
 description = "T3 Code server for Maggie, rooted at ~/code/maggie"
-exec_start = "~/.local/bin/t3 serve --host 127.0.0.1 --port 3774"
+exec_start = "~/.local/share/t3/stable/t3 serve --host 127.0.0.1 --port 3774"
 working_directory = "~/code/maggie"
 environment = { T3CODE_HOME = "/home/thurstonsand/.t3-maggie" }
 ```
@@ -18,15 +18,17 @@ On pod042 the `t3-systemd` overlay installs a prefix drop-in, `dev.mise.t3code-.
 
 The drop-in's `NPM_CONFIG_USERCONFIG` selects `~/.config/t3code/npmrc` for T3 alone. Its `allow-scripts=node-pty` lets npm 12 build the native terminal module when T3 installs provider runtimes; project-scoped npm installs reject the equivalent CLI or environment allowlist, and other npm consumers keep their own policy.
 
-Enroll a new server once with `t3 connect link --headless --base-dir <T3CODE_HOME>`; until then the reconcile fails and names that command.
+A server follows the release channel of the launcher it runs: `~/.local/bin/t3`, the one on PATH, is nightly and `~/.local/share/t3/stable/t3` is stable. Both launchers share the versions under `~/.t3/runtime/versions`. Every check and restart uses the server's own launcher, because an older CLI may refuse a database a newer server has migrated. Moving a server from nightly back to stable has the same problem, so do it only on a fresh `T3CODE_HOME`.
+
+Enroll a new server once with `<launcher> connect link --headless --base-dir <T3CODE_HOME>`; until then the reconcile fails and names that command.
 
 ## How a reconcile runs
 
 `t3.py` does the work:
 
-1. `prepare`, the post-dotfiles hook, installs the latest GitHub release with T3's installer when the linked one differs, and uninstalls the vendor service if its unit is still there. It runs before mise starts the servers, which need the binary and the port.
+1. `prepare`, the post-dotfiles hook, installs each channel's latest GitHub release with T3's installer when its launcher's differs, and uninstalls the vendor service if its unit is still there. It runs before mise starts the servers, which need the binary and the port.
 2. mise writes the units or agents and starts any that changed.
-3. `apply`, the final hook, reloads systemd if a unit changed, restarts every server whose recorded version differs from the installed one, then runs `ready`.
+3. `apply`, the final hook, reloads systemd if a unit changed, restarts every server whose recorded version differs from its launcher's, then runs `ready`.
 
 `ready` is the one wait every later `t3` command sits behind. A new server migrates its database before it serves, and the CLI refuses that database meanwhile. Once it serves, the server writes `userdata/server-runtime.json` with its pid; it removes the file on a clean stop, and a crash leaves it stale. `ready` therefore waits until the file names the pid that systemd or launchd tracks. It fails with the server's last log lines as soon as that pid changes, which means the server exited, or after 10 minutes. Then it checks enrollment with `t3 connect status --json` for each server's `T3CODE_HOME`. pod042's `remote-development/services.py` calls `ready` too.
 
