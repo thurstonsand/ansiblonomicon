@@ -2,7 +2,7 @@
 Name=Comail
 Comment=Email client
 Keywords=email;
-Exec=comail %U
+Exec=fnox-host exec --secret COMAIL_GOOGLE_CLIENT_ID --secret COMAIL_GOOGLE_CLIENT_SECRET -- comail %U
 Terminal=false
 Type=Application
 Icon=comail
