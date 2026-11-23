@@ -51,7 +51,6 @@ brew "tailscale"
 
 # It updates itself, so only a greedy upgrade installs the Python formula its cask switches to.
 cask "gcloud-cli", greedy: true
-cask "orbstack"
 
 # Editors/Terminals
 brew "neovim"
