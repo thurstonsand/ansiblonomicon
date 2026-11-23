@@ -28,6 +28,7 @@ if ! MSYS_NO_PATHCONV=1 reg query 'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\C
 fi
 powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File windows-apps/amp.ps1
 powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File windows-apps/magic-trackpad.ps1
+powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File windows-apps/t3.ps1
 '''
 
 [dotfiles]

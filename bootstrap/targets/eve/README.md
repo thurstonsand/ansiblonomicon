@@ -4,6 +4,8 @@
 
 `windows-apps` also installs the latest stable Microsoft-signed MagicTrackpad2ForWindows driver through its post-packages hook, verifying the release checksum and catalog signature before requesting UAC for an install or upgrade. The hook downloads the release to inspect its version on each apply, but skips installation when that version is already in the driver store, even with the trackpad disconnected. SteelSeries GG is a normal winget package. Keyboard repeat and trackpad preferences belong to [windows-system](../../capabilities/windows-system/README.md).
 
+T3 Code's desktop app uses the Nightly channel. The `windows-apps` post-packages hook installs the latest nightly x64 desktop release from `pingdotgg/t3code`, verifies its GitHub SHA256 digest, and silently installs it for the current user. Once the nightly executable is present, reconciliation skips installation and T3's own updater follows nightly releases; nightly builds default to that channel unless explicitly changed in the app. The stable winget package and the standalone CLI are not installed.
+
 A fresh Windows host needs Git for Windows and Developer Mode first, because the repo and its dotfiles are symlinks. Then:
 
 ```powershell
