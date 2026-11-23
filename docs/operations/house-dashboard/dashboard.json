@@ -9,6 +9,38 @@
         {
           "type": "custom:house-atlas-card",
           "override": "input_boolean.door_automations_override",
+          "matics": {
+            "vacuum.main_floor_matic": {
+              "floor": "main",
+              "dock": ["living_room", 246, 212],
+              "rooms": {
+                "living room": ["living_room", 273.8, 156.3],
+                "kitchen": ["kitchen", 352.3, 262.1],
+                "laundry": ["laundry", 291, 258.5],
+                "main closet": ["main_floor_w_i_c", 116.1, 284.4],
+                "main bedroom": ["main_bedroom", 112.7, 155],
+                "main bathroom": ["main_bath", 56.3, 278.8],
+                "powder bathroom": ["main_floor_hall_bath", 281.4, 376.3],
+                "foyer": ["foyer", 211.4, 457.5]
+              }
+            },
+            "vacuum.second_floor_matic": {
+              "floor": "second",
+              "dock": ["landing", 221, 230.2],
+              "rooms": {
+                "landing": ["landing", 200.3, 269.6],
+                "guest bathroom": ["guest_bath", 351.2, 155.2],
+                "guest bedroom": ["guest_bedroom", 309.2, 230.1],
+                "second floor bathroom": [
+                  "second_floor_hall_bath",
+                  122.9,
+                  266.1
+                ],
+                "thurston office": ["thurston_office", 55.3, 240.7],
+                "yanie office": ["yanie_office", 96.8, 124.4]
+              }
+            }
+          },
           "placements": {
             "climate.foyer_main_floor_thermostat": {
               "floor": "main",
@@ -432,7 +464,7 @@
                   "name": "Living Room",
                   "path": "M180 80h170v140h-170Z",
                   "label": [265.0, 144.0],
-                  "power": [265, 176],
+                  "power": [220, 163],
                   "lines": ["Living Room"],
                   "lights": [
                     "light.living_room_floor_light_left",

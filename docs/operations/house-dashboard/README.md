@@ -127,6 +127,12 @@ The sensor uses YAML because the Template Helper config flow cannot define custo
 
 Browser checks should cover both streams, each stream alone, hidden/unavailable states, and a sensor first appearing after the map loads. Inject preview states only into the browser card's `hass` object, never into the live provider entities.
 
+## Matic robots
+
+Each vacuum in `matics` has a dock position and one position per reported room. Docked uses the dock; otherwise the map matches the vacuum’s `current_area` without case or a leading “the”. These points indicate rooms, not exact physical positions. Cleaning adds a dashed ring. An unavailable robot or an unrecognized room gets a floor control rather than a guessed map position.
+
+Tap the robot for status, battery and the selected plan. **Start clean** calls `matic_robot.intelligent_clean` for that vacuum without the away automation’s presence or cooldown gates. **Stop clean & dock** appears when the integration’s stop-plan button is available and follows the plan’s finish-current-room policy. The sink summon is disabled: the integration does not expose that command. No map gesture dispatches a robot command directly.
+
 ## Maintenance
 
 Before editing, read the live dashboard, resources, and theme through HA-MCP and compare them with these copies so newer live changes are not overwritten. Use `ha_config_get_dashboard`, `ha_config_list_dashboard_resources`, and `ha_config_get_yaml` for theme key `House Atlas` in `themes/house_atlas.yaml`; read the card itself with `sudo incus exec home-assistant -- cat /mnt/data/supervisor/homeassistant/www/house-atlas.js`.

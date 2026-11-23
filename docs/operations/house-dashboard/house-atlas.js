@@ -255,11 +255,18 @@ class HouseAtlas extends HTMLElement {
     }
     // Floorplan binds rules only for entities present when the map is created.
     if (
+      Object.entries(this.config.matics || {}).some(
+        ([id, robot]) =>
+          robot.floor === this.floorId &&
+          this.maticPoint(id, previous) !== this.maticPoint(id, hass),
+      ) ||
       this.mapEntities(this.floor).some(
         (id) => !previous?.states[id] && hass.states[id],
       )
     ) {
-      this.renderMap();
+      this.shadowRoot.querySelector(".local-zoom[open]")?.close();
+      if (this.room && !this.hasDevices(this.room)) this.selectRoom(null);
+      else this.renderMap();
     }
     if (this.map) this.map.hass = hass;
     for (const card of [...this.cards, ...this.lampCards]) card.hass = hass;
@@ -277,8 +284,39 @@ class HouseAtlas extends HTMLElement {
     return this.floor.rooms.find((room) => room.id === this.roomId);
   }
 
+  get placements() {
+    const result = {
+      ...this.config.placements,
+    };
+    for (const [id, robot] of Object.entries(this.config.matics || {})) {
+      const point = this.maticPoint(id, this._hass);
+      if (point)
+        result[id] = {
+          floor: robot.floor,
+          room: point[0],
+          x: point[1],
+          y: point[2],
+        };
+    }
+    return result;
+  }
+
+  maticPoint(id, hass) {
+    const state = hass?.states[id];
+    if (!state || ["unknown", "unavailable"].includes(state.state)) return;
+    const robot = this.config.matics[id];
+    return state.state === "docked"
+      ? robot.dock
+      : robot.rooms[
+          state.attributes.current_area
+            ?.trim()
+            .toLowerCase()
+            .replace(/^the /, "")
+        ];
+  }
+
   get roomPlacements() {
-    return Object.entries(this.config.placements || {}).filter(
+    return Object.entries(this.placements).filter(
       ([, point]) => point.floor === this.floorId && point.room === this.roomId,
     );
   }
@@ -294,14 +332,12 @@ class HouseAtlas extends HTMLElement {
       room.lights?.length ||
       room.entity ||
       room.appliances?.length ||
-      Object.values(this.config.placements || {}).some(
-        (p) => p.room === room.id,
-      )
+      Object.values(this.placements).some((p) => p.room === room.id)
     );
   }
 
   get visiblePlacements() {
-    return Object.entries(this.config.placements || {}).filter(
+    return Object.entries(this.placements).filter(
       ([, point]) =>
         point.floor === this.floorId &&
         (!this.roomFocus || point.room === this.roomId),
@@ -859,6 +895,11 @@ class HouseAtlas extends HTMLElement {
 
   summary(room) {
     const ids = room.lights || (room.entity ? [room.entity] : []);
+    const robot = Object.keys(this.config.matics || {}).find(
+      (id) => this.maticPoint(id, this._hass)?.[0] === room.id,
+    );
+    if (!ids.length && robot)
+      return `${this.deviceName(robot)} · ${this._hass.states[robot].state}`;
     if (!ids.length) return room.note || "No connected devices";
     const states = ids.map(
       (id) => this._hass?.states[id]?.state || "unavailable",
@@ -1139,6 +1180,7 @@ class HouseAtlas extends HTMLElement {
           </div>
         </section>
         <nav class="floors" aria-label="Floors">${this.config.floors.map((floor) => `<button data-floor="${escapeXml(floor.id)}" aria-current="${floor.id === this.floorId}">${escapeXml(floor.name)}</button>`).join("")}</nav>
+        <button class="mode matic-missing" hidden></button>
         <div class="layout"><section class="map-panel" aria-label="Floor map"><div class="map-wrap"></div><div class="room-list" hidden></div><div class="stamp" hidden>Auto-lock paused<small><span class="since"></span><span class="let-go">let go to resume</span></small></div></section><div class="detail-host"></div></div>
         <p class="error" role="alert"></p>
       </main>`;
@@ -1281,6 +1323,7 @@ class HouseAtlas extends HTMLElement {
     root.querySelector(".layout").hidden = this.controlRoom;
     root.querySelector(".map-wrap").hidden = this.listMode;
     root.querySelector(".room-list").hidden = !this.listMode;
+    this.updateMaticControls();
     this.updateList();
     this.updateControlRoom();
   }
@@ -1530,8 +1573,13 @@ class HouseAtlas extends HTMLElement {
   }
 
   fixtureIcon(entity) {
+    if (this.config.matics?.[entity]) {
+      const state = this._hass.states[entity];
+      const cleaning = state.state === "cleaning";
+      return `<svg viewBox="0 0 36 36" aria-hidden="true" style="width:34px;height:34px;color:var(--atlas-${state.attributes.problem ? "error" : cleaning ? "accent" : "fg"})"><g fill="none" stroke="currentColor" stroke-width="2">${cleaning ? '<circle cx="18" cy="18" r="16" stroke-dasharray="5 3"/>' : state.state === "docked" ? '<path d="M4 23v6h28v-6"/>' : ""}<rect x="7" y="10" width="22" height="16" rx="5" fill="var(--atlas-bg)"/><path d="M12 15h12"/></g>${state.attributes.problem ? '<text x="27" y="12" fill="currentColor" font-size="15" font-weight="bold">!</text>' : ""}</svg>`;
+    }
     const icon =
-      this.config.placements[entity].icon ||
+      this.placements[entity].icon ||
       {
         lock: "mdi:lock-outline",
         cover: "mdi:garage",
@@ -1550,7 +1598,7 @@ class HouseAtlas extends HTMLElement {
     button.className = "fixture";
     button.dataset.device = entity;
     button.innerHTML = this.fixtureIcon(entity);
-    const door = this.config.placements[entity].door;
+    const door = this.placements[entity].door;
     if (door && !choose) {
       button.classList.add("door", door);
       button.innerHTML =
@@ -1633,12 +1681,13 @@ class HouseAtlas extends HTMLElement {
   }
 
   activateFixture(entity, anchor, adjust) {
+    if (this.config.matics?.[entity]) return this.openMatic(entity, anchor);
     const domain = entity.split(".")[0];
     const state = this._hass.states[entity]?.state;
     if (
       adjust ||
       !["light", "switch", "lock", "cover"].includes(domain) ||
-      (domain === "lock" && this.config.placements[entity].door !== "front")
+      (domain === "lock" && this.placements[entity].door !== "front")
     ) {
       this.openDevice(entity, anchor);
     } else if (![undefined, "unknown", "unavailable"].includes(state)) {
@@ -1705,7 +1754,7 @@ class HouseAtlas extends HTMLElement {
   openLocalZoom(candidates, anchor, adjust) {
     const entries = candidates.map((button) => [
       button.dataset.device,
-      this.config.placements[button.dataset.device],
+      this.placements[button.dataset.device],
     ]);
     const rooms = this.rooms.filter((room) =>
       entries.some(([, point]) => point.room === room.id),
@@ -1939,6 +1988,7 @@ class HouseAtlas extends HTMLElement {
   }
 
   updateRoomDevices() {
+    this.updateMaticControls();
     const stage = this.shadowRoot.querySelector(".room-stage, .floor-stage");
     if (!stage) return;
     this.visiblePlacements.forEach(([entity, point]) => {
@@ -1985,6 +2035,13 @@ class HouseAtlas extends HTMLElement {
         button.setAttribute("aria-label", `${label} · ${status}`);
         button.title = `${label} · ${status}${domain === "light" ? " · Hold for controls" : ""}`;
         button.style.setProperty("--fixture-color", color);
+        if (
+          this.config.matics?.[entity] &&
+          button.dataset.robotState !== `${status}:${state.attributes.problem}`
+        ) {
+          button.querySelector("svg").outerHTML = this.fixtureIcon(entity);
+          button.dataset.robotState = `${status}:${state.attributes.problem}`;
+        }
         const panel = button.querySelector(".garage-panel");
         if (panel) {
           const width = this.garageWidth(entity);
@@ -2053,6 +2110,87 @@ class HouseAtlas extends HTMLElement {
     this.updateDeviceDialog();
   }
 
+  updateMaticControls() {
+    const missing = this.shadowRoot.querySelector(".matic-missing");
+    const id = Object.keys(this.config?.matics || {}).find(
+      (id) =>
+        this.config.matics[id].floor === this.floorId &&
+        !this.maticPoint(id, this._hass),
+    );
+    if (missing) {
+      missing.hidden = !id || this.controlRoom;
+      if (id && this._hass) {
+        missing.textContent = `${this.deviceName(id)} · ${this._hass?.states[id]?.state || "unavailable"} · Location unknown`;
+        missing.onclick = () => this.openMatic(id, missing);
+      }
+    }
+    const dialog = this.shadowRoot.querySelector("[data-matic][open]");
+    if (!dialog) return;
+    const entity = dialog.dataset.matic,
+      key = entity.split(".")[1],
+      states = this._hass.states;
+    const state = states[entity],
+      point = this.maticPoint(entity, this._hass);
+    const room = this.rooms.find((r) => r.id === point?.[0]);
+    const status = state ? this._hass.formatEntityState(state) : "Unavailable";
+    dialog.querySelector("[data-status]").textContent =
+      `${status} · ${room?.name || "Location unknown"}${state?.attributes.problem ? " · Needs attention" : ""}`;
+    const battery = states[`sensor.${key}_battery`]?.state;
+    const plan = states[`select.${key}_saved_cleaning_plan`]?.state;
+    const valid = (value) =>
+      value && !["unknown", "unavailable"].includes(value);
+    dialog.querySelector("small").textContent =
+      `${valid(battery) ? `Battery ${battery}%` : "Battery unknown"} · ${valid(plan) ? plan : "No selected plan"}`;
+    const stop = states[`button.${key}_stop_intelligent_cleaning`];
+    const managed = !!stop && stop.state !== "unavailable";
+    const start = dialog.querySelector("[data-start]"),
+      end = dialog.querySelector("[data-stop]");
+    start.hidden = managed;
+    start.disabled =
+      managed ||
+      dialog.pending ||
+      state?.state !== "docked" ||
+      !!state.attributes.problem ||
+      !!state.attributes.low_charge ||
+      !!state.attributes.recharge_and_resume ||
+      !valid(plan);
+    end.hidden = !managed;
+    end.disabled = !managed || dialog.pending || !valid(state?.state);
+  }
+
+  openMatic(entity, anchor) {
+    const dialog = this.openDialog(this.deviceName(entity), anchor);
+    dialog.dataset.matic = entity;
+    dialog.querySelector(".dialog-body").innerHTML =
+      '<b data-status></b><small></small><button class="scene" data-start>Start clean</button><button class="scene" data-stop>Stop clean &amp; dock</button><button class="scene" disabled>Summon to sink</button><small>Sink summon isn’t supported by the installed integration.</small>';
+    for (const [selector, service] of [
+      ["[data-start]", "intelligent_clean"],
+      ["[data-stop]", "stop_intelligent_cleaning"],
+    ]) {
+      const button = dialog.querySelector(selector);
+      button.onclick = async () => {
+        this.updateMaticControls();
+        if (button.disabled || button.hidden) return;
+        dialog.pending = true;
+        this.updateMaticControls();
+        try {
+          await this._hass.callService("matic_robot", service, {
+            entity_id: entity,
+          });
+          dialog.close();
+        } catch (error) {
+          dialog.querySelector(".error").textContent =
+            error.message || String(error);
+          dialog.pending = false;
+          this.updateMaticControls();
+        }
+      };
+    }
+    this.updateMaticControls();
+    if (!this.mobile && anchor)
+      dialog.style.top = `${Math.max(12, Math.min(innerHeight - dialog.offsetHeight - 12, anchor.getBoundingClientRect().top))}px`;
+  }
+
   openDialog(title, anchor) {
     this.shadowRoot.querySelector(".atlas-dialog[open]")?.close();
     const dialog = document.createElement("dialog");
@@ -2076,6 +2214,17 @@ class HouseAtlas extends HTMLElement {
       this.updateRoomDevices();
       if (anchor?.isConnected && !this.shadowRoot.querySelector("dialog[open]"))
         anchor.focus({ preventScroll: true });
+      else if (
+        dialog.dataset.matic &&
+        !this.shadowRoot.querySelector("dialog[open]")
+      )
+        (
+          this.shadowRoot.querySelector(
+            `[data-device="${dialog.dataset.matic}"]`,
+          ) ||
+          this.shadowRoot.querySelector(".matic-missing:not([hidden])") ||
+          this.shadowRoot.querySelector('[data-floor][aria-current="true"]')
+        )?.focus({ preventScroll: true });
     };
     dialog.showModal();
     if (!this.keyboardNavigation) dialog.focus({ preventScroll: true });
@@ -2268,6 +2417,7 @@ class HouseAtlas extends HTMLElement {
       const room = this.floor.rooms.find(
         (room) => room.id === button.dataset.id,
       );
+      button.disabled = !this.hasDevices(room);
       button.setAttribute("aria-pressed", String(this.roomId === room.id));
       button.querySelector("small").textContent = this.summary(room);
     }
@@ -2559,10 +2709,9 @@ class HouseAtlas extends HTMLElement {
       })
       .map((entity) => ({
         entity: entity.entity_id,
-        name: this._hass.formatEntityName(
-          this._hass.states[entity.entity_id],
-          { type: "entity" },
-        ),
+        name: this._hass.formatEntityName(this._hass.states[entity.entity_id], {
+          type: "entity",
+        }),
         unavailable:
           this._hass.states[entity.entity_id].state === "unavailable",
       }))
