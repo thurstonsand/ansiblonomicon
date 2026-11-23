@@ -37,6 +37,7 @@ TIME_MACHINE_SKIPPED = [
     for name in (
         ".tart",
         ".t3/worktrees",
+        ".t3-mike/worktrees",
         ".cache",
         ".npm",
         ".gradle/caches",
