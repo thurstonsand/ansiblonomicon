@@ -144,9 +144,16 @@ if ! LC_ALL=C lpstat -v | grep -qxF 'device for Canon_MF650C: ipp://printer.thur
   sudo -n lpadmin -p Canon_MF650C -E -v ipp://printer.thurstons.house/ipp/print -m everywhere \
     -D 'Canon MF650C Series' -o printer-is-shared=false
 fi
-# Omarchy installs the self-updating AppImage and theme before removing the old T3 Code packages.
-if [ ! -x ~/.local/share/t3code/T3-Code.AppImage ] || omarchy pkg present t3code-bin || omarchy pkg present t3code-nightly-bin; then
-  omarchy install ai t3-code stable --no-launch
+# Both channels share one AppImage path. Inspect its embedded version, not the launcher name, which self-updates leave unchanged.
+if [ ! -x ~/.local/share/t3code/T3-Code.AppImage ] || ! (
+  set -e
+  work=$(mktemp -d)
+  trap 'rm -rf "$work"' EXIT
+  cd "$work"
+  ~/.local/share/t3code/T3-Code.AppImage --appimage-extract t3code.desktop >/dev/null
+  grep -q '^X-AppImage-Version=.*-nightly\.' squashfs-root/t3code.desktop
+) || omarchy pkg present t3code-bin || omarchy pkg present t3code-nightly-bin; then
+  omarchy install ai t3-code nightly --no-launch
 fi
 # The packaged setup adopts an existing vendor install, preserving its settings, models, and integrations.
 if ! omarchy pkg present superwhisper-bin || [ "$(readlink ~/.local/share/superwhisper/app/current)" != /opt/superwhisper ] || [ "$(omarchy default dictation 2>/dev/null)" != superwhisper ]; then
