@@ -1,6 +1,6 @@
 $ErrorActionPreference = 'Stop'
 $release = Invoke-RestMethod 'https://api.github.com/repos/vitoplantamura/MagicTrackpad2ForWindows/releases/latest'
-$assets = @($release.assets | Where-Object { $_.name -match '^MT2FW11-\d+-MSSigned\.zip$' })
+$assets = @($release.assets | Where-Object { $_.name -match '^MT2FW11-amd64-\d+-MSSigned\.zip$' })
 if ($assets.Count -ne 1 -or $assets[0].digest -notmatch '^sha256:[a-f0-9]{64}$') {
     throw 'Expected one Microsoft-signed Windows 11 archive with a SHA256 digest in the latest release'
 }
