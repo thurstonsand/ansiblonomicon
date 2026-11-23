@@ -1,0 +1,13 @@
+# Profile 1 is the Crowdstrike profile. Work policy blocks Tab Flick Lite, so Popup Tab Switcher stands in.
+preferences = "~/Library/Application Support/Google/Chrome/Profile 1/Preferences"
+guide = "work-mac"
+
+[[shortcuts]]
+key = "mac:Ctrl+Tab"
+extension = "cehdjppppegalmaffcdffkkpmoflfhkc" # Popup Tab Switcher
+command = "next"
+
+[[shortcuts]]
+key = "mac:Ctrl+Shift+Tab"
+extension = "cehdjppppegalmaffcdffkkpmoflfhkc"
+command = "previous"

@@ -1,8 +1,8 @@
 # Browser
 
-Owns Lucky, a Chrome extension that turns address-bar searches into an AI "I'm Feeling Lucky": the query goes to Kagi's Search API, OpenAI's Decisions API picks the result you most likely meant, and the tab goes straight there.
+Owns Lucky, a Chrome extension that turns address-bar searches into an AI "I'm Feeling Lucky": the query goes to Kagi's Search API, OpenAI's Decisions API picks the result you most likely meant, and the tab goes straight there. It also owns `check_chrome_shortcuts.py`, which checks a host's saved Chrome extension shortcuts against its `chrome-shortcuts.toml`; [docs/chrome.md](../../../docs/chrome.md) covers applying them.
 
-Run `mise browser`, or `mise omarchy -t browser` on no9-type-s. It renders `files/lucky/config.json` with mode `0600`; Git ignores it. The file holds `KAGI_API_KEY`, `OPENAI_API_KEY`, and the OpenAI models from `agent-harness/models.yml`: `gpt_luna` makes the decision and `gpt_sol` writes notes. Chrome loads the extension unpacked from the checkout, so a reconcile only needs to render the config. pod042 registers the task for its desktop Chromium, outside its full reconcile.
+Run `mise browser`, or `mise omarchy -t browser` on no9-type-s. It renders Lucky's config on hosts that link `mise.browser.toml`, and checks shortcuts on hosts that declare `chrome-shortcuts.toml`. Lucky's render writes `files/lucky/config.json` with mode `0600`; Git ignores it. The file holds `KAGI_API_KEY`, `OPENAI_API_KEY`, and the OpenAI models from `agent-harness/models.yml`: `gpt_luna` makes the decision and `gpt_sol` writes notes. Chrome loads the extension unpacked from the checkout, so a reconcile only needs to render the config. pod042 registers the task for its desktop Chromium, outside its full reconcile.
 
 ## Install in a Chrome profile
 

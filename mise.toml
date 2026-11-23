@@ -403,23 +403,30 @@ exec sh -c "$run_ssh_client" ssh-client "$MISE_PROJECT_ROOT" "$target" "$environ
 '''
 
 [tasks.browser]
-description = "Reconcile the Lucky browser extension's config on this registered host"
+description = "Reconcile Lucky's config and check saved Chrome extension shortcuts on this registered host"
 usage = '''
 flag "-c --check" help="Show changes without writing"
 '''
 run = '''
+set -e
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host" in
-  no9-type-s|pod042) ;;
+  no9-type-s|pod042|ML-DFC6YK6VJQ) ;;
   *) echo "Unregistered browser host" >&2; exit 1 ;;
 esac
 target="$MISE_PROJECT_ROOT/bootstrap/targets/$host"
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
-exec "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret KAGI_API_KEY --secret OPENAI_API_KEY -- \
-  env MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=browser \
-  LUCKY_PYTHON="$MISE_PROJECT_ROOT/.venv/bin/python" LUCKY_MODELS="$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/models.yml" \
-  mise -C "$target" bootstrap --only dotfiles "$mode"
+if [ -e "$target/mise.browser.toml" ]; then
+  "$MISE_PROJECT_ROOT/scripts/fnox-host" exec --secret KAGI_API_KEY --secret OPENAI_API_KEY -- \
+    env MISE_CEILING_PATHS="$MISE_PROJECT_ROOT/bootstrap/targets" MISE_TRUSTED_CONFIG_PATHS="$target" MISE_ENV=browser \
+    LUCKY_PYTHON="$MISE_PROJECT_ROOT/.venv/bin/python" LUCKY_MODELS="$MISE_PROJECT_ROOT/bootstrap/capabilities/agent-harness/models.yml" \
+    mise -C "$target" bootstrap --only dotfiles "$mode"
+fi
+if [ -e "$target/chrome-shortcuts.toml" ]; then
+  "$MISE_PROJECT_ROOT/.venv/bin/python" "$MISE_PROJECT_ROOT/bootstrap/capabilities/browser/check_chrome_shortcuts.py" \
+    --declarations "$target/chrome-shortcuts.toml"
+fi
 '''
 
 [tasks.neovim]
@@ -900,7 +907,7 @@ case "$profile" in
     ;;
   work)
     software_capabilities="$software_capabilities codex pi uvc-util docker-credentials"
-    config_capabilities="$config_capabilities python-index work-local"
+    config_capabilities="$config_capabilities python-index work-local browser"
     ;;
 esac
 normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^homebrew$/mac-apps/; s/^mas$/mac-apps/; s/^tmux$/terminal-tools/; s/^nvim-deps$/neovim/' | awk '!seen[$0]++' | paste -sd, -)

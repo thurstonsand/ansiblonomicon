@@ -1,0 +1,17 @@
+preferences = "~/.config/google-chrome/Default/Preferences"
+guide = "omarchy"
+
+[[shortcuts]]
+key = "linux:Ctrl+Shift+C"
+extension = "bgpiichlckmfanooecilcjemknkcpngb" # Omarchy's Copy URL
+command = "copy-url"
+
+[[shortcuts]]
+key = "linux:Ctrl+Tab"
+extension = "kdddoanokjocdkbkmgnkkcemjepknlgm" # Tab Flick Lite
+command = "next-tab"
+
+[[shortcuts]]
+key = "linux:Ctrl+Shift+Tab"
+extension = "kdddoanokjocdkbkmgnkkcemjepknlgm"
+command = "prev-tab"

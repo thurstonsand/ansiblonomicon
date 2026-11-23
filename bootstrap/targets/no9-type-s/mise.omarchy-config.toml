@@ -1,11 +1,10 @@
 [tasks.omarchy-config]
-usage = 'flag "-c --check" help="Show configuration changes and check saved Chrome shortcuts without applying changes"'
+usage = 'flag "-c --check" help="Show configuration changes without applying them"'
 run = '''
 set -e
 mode=--yes
 [ -z "${usage_check:-}" ] || mode=--dry-run
 mise bootstrap --only files,services,repos,dotfiles --force-dotfiles "$mode"
-bash "{{config_root}}/omarchy/libexec/check-chrome-shortcuts"
 '''
 
 [bootstrap.files."/etc/illuminanced.toml"]
