@@ -3,6 +3,8 @@
 disable_tools = ["amp"]
 
 [tools]
+# Antigravity CLI. The vendor installer appends PATH lines to every shell profile; this does not.
+agy = "latest"
 bun = "latest"
 fnox = "latest"
 go = "latest"
