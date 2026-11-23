@@ -68,7 +68,7 @@ def _profile(
         wm = data["work_models"]
         gateway = data["work_gateway"]
         sol, opus = wm["gpt_sol"]["pi_alias"], wm["opus"]["pi_alias"]
-        fable = wm["fable"]["pi_alias"]
+        fable, astra = wm["fable"]["pi_alias"], wm["gpt_astra"]["pi_alias"]
         return {
             "provider": gateway["anthropic_provider"],
             "model": str(wm["opus"]["version"]).removesuffix("[1m]"),
@@ -76,12 +76,17 @@ def _profile(
             "auto_title": wm["sonnet"]["pi_alias"],
             "handoff": sol,
             "vibe": wm["gpt_luna"]["pi_alias"],
-            "enabled": [f"{opus}:high", f"{fable}:high", f"{sol}:medium"],
+            "enabled": [
+                f"{opus}:high",
+                f"{fable}:high",
+                f"{astra}:medium",
+                f"{sol}:medium",
+            ],
             "roster": [
                 f"{opus}:high",
                 f"{fable}:xhigh",
+                f"{astra}:high",
                 f"{sol}:low",
-                f"{sol}:high",
             ],
             "packages": [*data.get("piWorkPackages", []), *WORK_PACKAGES],
         }
@@ -176,7 +181,10 @@ def _work_models(data: Mapping[str, Any], token: str) -> dict[str, Any]:
                     "supportsStrictMode": True,
                     "supportsOpenAIGrammarTools": True,
                 },
-                "models": [model(n, anthropic=False) for n in ("gpt_sol", "gpt_luna")],
+                "models": [
+                    model(n, anthropic=False)
+                    for n in ("gpt_astra", "gpt_sol", "gpt_luna")
+                ],
             },
         }
     }

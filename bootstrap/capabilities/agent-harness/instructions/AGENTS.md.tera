@@ -112,16 +112,14 @@ When delegating, use the tools below:
 {% else -%}
 If you're reaching for a subagent, consider the following:
 {% if vars.host_profile == "work" %}
-| model               | role                               | thinking level | cost | intelligence | taste | notes                                                                            |
-| ------------------- | ---------------------------------- | -------------- | ---- | ------------ | ----- | -------------------------------------------------------------------------------- |
-| claude-5-5-opus     | default workhorse, implementer     | high           | 6    | 9            | 7     | also great for prose and thinking through problems                               |
-| bedrock.gpt-6.1-sol | reviewer, bug-finder               | high           | 6    | 7            | 5     | cross-lab adversarial review; root-causing stubborn bugs                         |
-| bedrock.gpt-6.1-sol | exploration subagent               | low            | 7    | 6            | 5     | digging for answers/explanations                                                 |
+| model                 | role                               | thinking level | cost | intelligence | taste | notes                                                                            |
+| --------------------- | ---------------------------------- | -------------- | ---- | ------------ | ----- | -------------------------------------------------------------------------------- |
+| claude-5-5-opus       | default workhorse, implementer     | high           | 6    | 9            | 7     | also great for prose and thinking through problems                               |
+| bedrock.gpt-6.2-sol   | exploration subagent               | low            | 7    | 6            | 5     | digging for answers/explanations                                                 |
 {% else %}
 | model            | role                               | thinking level | cost | intelligence | taste | notes                                                                            |
 | ---------------- | ---------------------------------- | -------------- | ---- | ------------ | ----- | -------------------------------------------------------------------------------- |
 | claude-opus-5-5  | default workhorse, implementer     | high           | 8    | 9            | 7     | also great for prose and thinking through problems                               |
-| gpt-6.2-astra    | reviewer, bug-finder               | high           | 2    | 7            | 6     | cross-lab adversarial review; root-causing stubborn bugs                         |
 | gpt-6.2-sol      | exploration subagent               | low            | 7    | 6            | 5     | digging for answers/explanations                                                 |
 {% endif %}
 (1-10, higher is better across all axes)
@@ -131,7 +129,7 @@ If you're reaching for a subagent, consider the following:
 - taste: ability to create a well-considered UI; a nicely balanced abstraction; prose that's pleasant to read
 - cost is at most a tie-breaker; weight these in order of importance: intelligence > taste > cost
 
-For subagents without a named profile, try to pick the right agent for the job. If it's not in the list, don't consider it. Also on the table: adversarial cross-lab reviews of your plans and implementations: OpenAI models reviewing Anthropic plans/implementations and vice versa.
+For subagents without a named profile, try to pick the right agent for the job. If it's not in the list, don't consider it.
 {% endif -%}
 {% if local is file %}
 @~/.agents/local.md

@@ -151,7 +151,7 @@ def render(
         (repo / "agents/project-management/agents/oracle.toml").read_text()
     )
     oracle["model"] = (
-        data["work_models"]["gpt_sol"]["version"]
+        data["work_models"]["gpt_astra"]["version"]
         if hostname == WORK_HOST
         else models["openai"]["gpt_astra"]["version"]
     )
@@ -159,7 +159,7 @@ def render(
         (repo / "agents/project-management/agents/code-review.toml").read_text()
     )
     reviewer["model"] = (
-        data["work_models"]["gpt_sol"]["version"]
+        data["work_models"]["gpt_astra"]["version"]
         if hostname == WORK_HOST
         else models["openai"]["gpt_astra"]["version"]
     )

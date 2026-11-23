@@ -9,9 +9,6 @@ WORK_HOST = "ML-DFC6YK6VJQ"
 WORKHORSE = (
     "Default workhorse, implementer; also great for prose and thinking through problems"
 )
-REVIEWER = (
-    "Reviewer, bug-finder; cross-lab adversarial review; root-causing stubborn bugs"
-)
 EXPLORER = "Exploration subagent; digging for answers/explanations"
 
 
@@ -25,23 +22,17 @@ def _profile(hostname: str, data: dict[str, Any]) -> dict[str, str]:
         return {
             # The local Claude overlay points the bare alias at the gateway's Opus.
             "claude_opus": "opus",
-            "codex_reviewer": wm["gpt_sol"]["version"],
             "codex_explorer": wm["gpt_sol"]["version"],
             "pi_opus": wm["opus"]["pi_alias"],
-            "pi_reviewer": wm["gpt_sol"]["pi_alias"],
             "workhorse": _scores(9, 7, 6),
-            "reviewer": _scores(7, 5, 6),
             "explorer": _scores(6, 5, 7),
         }
     anthropic, openai = data["models"]["anthropic"], data["models"]["openai"]
     return {
         "claude_opus": anthropic["opus"]["agent_harness"]["aliases"]["claude"],
-        "codex_reviewer": openai["gpt_astra"]["version"],
         "codex_explorer": openai["gpt_sol"]["version"],
         "pi_opus": anthropic["opus"]["agent_harness"]["aliases"]["pi"],
-        "pi_reviewer": openai["gpt_astra"]["agent_harness"]["aliases"]["pi"],
         "workhorse": _scores(9, 7, 8),
-        "reviewer": _scores(7, 6, 2),
         "explorer": _scores(6, 5, 7),
     }
 
@@ -68,18 +59,11 @@ def _presets(profile: dict[str, str]) -> list[dict[str, Any]]:
         },
         {
             "harness": "codex",
-            "model": profile["codex_reviewer"],
-            "effort": "high",
-            "use": f"{REVIEWER} ({profile['reviewer']})",
-        },
-        {
-            "harness": "codex",
             "model": profile["codex_explorer"],
             "effort": "low",
             "use": f"{EXPLORER} ({profile['explorer']})",
         },
         _pi(profile["pi_opus"], "high"),
-        _pi(profile["pi_reviewer"], "high"),
     ]
 
 
