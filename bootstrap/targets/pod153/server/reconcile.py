@@ -29,11 +29,14 @@ TIME_MACHINE = "smb://thurstonsand@pod042.thurstons.house/timemachine"
 # would go over every hour. Beeper's and Photos' databases change as often and
 # both download again from their services; the rest are regenerable caches.
 # Simulator and emulator disks are rewritten by every UI test pass, and backupd
-# copying them took more CPU than a simulator while a pass ran.
+# copying them took more CPU than a simulator while a pass ran. T3 checkpoints
+# each worktree, untracked files included, into refs/t3/ in the project's own
+# backed-up .git, so its worktrees hold nothing else worth copying hourly.
 TIME_MACHINE_SKIPPED = [
     str(Path.home() / name)
     for name in (
         ".tart",
+        ".t3/worktrees",
         ".cache",
         ".npm",
         ".gradle/caches",
