@@ -3,10 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import MutableMapping
-import json
 from pathlib import Path
-import subprocess
-import tempfile
 from typing import Any, cast
 
 import librarian
@@ -167,7 +164,7 @@ def render(
         ".codex/config.toml": tomlkit.dumps(merged),
         ".codex/agents/oracle.toml": tomlkit.dumps(oracle),
         ".codex/agents/code-review.toml": tomlkit.dumps(reviewer),
-        **_librarian_role(
+        **librarian.codex_setup(
             home,
             librarian.cli(home, hostname),
             None
@@ -178,43 +175,3 @@ def render(
             },
         ),
     }
-
-
-# The librarian writes its own role and rule, so they track its releases. It runs in an empty
-# home: the codex settings arrive in a throwaway settings file, and the empty pi directory keeps
-# its migration from moving the real pi settings.
-def _librarian_role(
-    home: Path, cli: Path, codex: dict[str, str] | None
-) -> dict[str, str]:
-    node = subprocess.run(
-        ["mise", "which", "-C", str(home), "node"],
-        check=True,
-        capture_output=True,
-        text=True,
-    ).stdout.strip()
-    with tempfile.TemporaryDirectory(prefix="librarian-role-") as temporary:
-        root = Path(temporary)
-        settings = root / "config/agents/librarian/config.json"
-        settings.parent.mkdir(parents=True)
-        settings.write_text(json.dumps({"codex": codex} if codex else {}))
-        subprocess.run(
-            [node, str(cli), "codex", "setup"],
-            check=True,
-            capture_output=True,
-            env={
-                "HOME": str(root),
-                "PATH": "",
-                "CODEX_HOME": str(root / "codex"),
-                "XDG_CONFIG_HOME": str(root / "config"),
-                "XDG_CACHE_HOME": str(root / "cache"),
-                "XDG_STATE_HOME": str(root / "state"),
-                "PI_CODING_AGENT_DIR": str(root / "pi"),
-            },
-        )
-        return {
-            relative: (root / "codex" / relative.removeprefix(".codex/")).read_text()
-            for relative in (
-                ".codex/agents/librarian.toml",
-                ".codex/rules/librarian.rules",
-            )
-        }

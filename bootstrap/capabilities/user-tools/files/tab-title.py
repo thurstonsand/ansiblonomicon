@@ -9,6 +9,7 @@ import json
 import os
 import subprocess
 import sys
+from typing import cast
 
 MAINLINE_BRANCHES = {"main", "master"}
 
@@ -67,6 +68,11 @@ def main() -> None:
         action="store_true",
         help="read SessionStart JSON on stdin, emit hook JSON",
     )
+    mode.add_argument(
+        "--agy",
+        action="store_true",
+        help="read Antigravity title JSON on stdin, print plain tab title to stdout",
+    )
     mode.add_argument("--nvim", action="store_true", help="print nvim title to stdout")
     parser.add_argument(
         "cwd", nargs="?", default=os.getcwd(), help="working directory (default: $PWD)"
@@ -78,6 +84,22 @@ def main() -> None:
         hook = json.load(sys.stdin)
         title = compute_title("claude", hook["cwd"])
         json.dump({"terminalSequence": f"\033]2;{title}\007"}, sys.stdout)
+    elif args.agy:
+        state = cast(dict[str, object], json.load(sys.stdin))
+        raw_workspace = state.get("workspace")
+        current_dir = (
+            cast(dict[str, object], raw_workspace).get("current_dir")
+            if isinstance(raw_workspace, dict)
+            else None
+        )
+        cwd = (
+            current_dir
+            if isinstance(current_dir, str) and current_dir
+            else state.get("cwd")
+            if isinstance(state.get("cwd"), str) and state.get("cwd")
+            else str(args.cwd)
+        )
+        print(compute_title("agy", str(cwd)))
     else:
         print(compute_title("nvim", args.cwd))
 

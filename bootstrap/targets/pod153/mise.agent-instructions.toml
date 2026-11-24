@@ -2,3 +2,4 @@
 "~/.claude/CLAUDE.md" = { source = "agent-instructions/AGENTS.md.tera", mode = "template" }
 "~/.codex/AGENTS.md" = { source = "agent-instructions/AGENTS.md.tera", mode = "template" }
 "~/.pi/agent/AGENTS.md" = { source = "agent-instructions/AGENTS.md.tera", mode = "template" }
+"~/.gemini/config/AGENTS.md" = { source = "agent-instructions/AGENTS.md.tera", mode = "template" }

@@ -1,5 +1,5 @@
 [profiles.pod153]
-target_agents = ["claude", "amp", "codex", "pi"]
+target_agents = ["claude", "amp", "codex", "pi", "agy"]
 explicit_only = ["amp"]
 
 [profiles.work]
@@ -7,11 +7,11 @@ target_agents = ["claude", "codex", "pi"]
 explicit_only = []
 
 [profiles.pod042]
-target_agents = ["claude", "amp", "codex", "pi"]
+target_agents = ["claude", "amp", "codex", "pi", "agy"]
 explicit_only = ["amp"]
 
 [profiles.omarchy]
-target_agents = ["claude", "amp", "codex", "pi"]
+target_agents = ["claude", "amp", "codex", "pi", "agy"]
 explicit_only = ["amp"]
 
 [profiles.amp_publish]

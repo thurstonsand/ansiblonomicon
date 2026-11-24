@@ -284,15 +284,15 @@ fi
 
 mapfile -t _jq_fields < <(
   echo "$input" | jq -r '
-        .session_id,
+        (.session_id // ""),
         (.model.id // ""),
-        .model.display_name,
-        .workspace.current_dir,
+        (.model.display_name // ""),
+        (.workspace.current_dir // .cwd // ""),
         (.output_style.name // ""),
         (.worktree.branch // ""),
         ((.context_window.used_percentage // "") | tostring),
-        (.context_window.context_window_size | tostring),
-        (.effort.level // "")
+        ((.context_window.context_window_size // 0) | tostring),
+        (.effort.level // .model.effort // "")
     '
 )
 session_id="${_jq_fields[0]}"
@@ -310,6 +310,9 @@ for var in session_id model_id model_display current_dir output_style worktree_b
 done
 
 model_display=$(enrich_model_display "$model_id" "$model_display")
+if [[ -n "$effort_level" && "$model_display" =~ ^(.*)[[:space:]]\((Low|Medium|High|XHigh|Extra|Max)\)$ ]]; then
+  model_display="${BASH_REMATCH[1]}"
+fi
 
 case "$effort_level" in
   low)    model_display="${model_display}⁻¹" ;;

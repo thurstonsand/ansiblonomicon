@@ -8,7 +8,7 @@
 - **Capability**: A unit of native host configuration, shared under `bootstrap/capabilities/` or owned by one target. It is a thing that can be installed or configured, not a machine.
 - **Docker stack**: A Compose project reconciled by native mise Compose resources. General applications live under `bootstrap/targets/pod042/containers/stacks/`; the `observability` capability keeps its stack beside its collectors and parsers.
 - **UniFi provider fork**: `thurstonsand/terraform-provider-unifi`, which supplies controller fields absent upstream. Its `release` branch stays rebased on upstream; `terraform/unifi/README.md` covers how it reaches OpenTofu.
-- **Agent harness**: A coding agent runtime — Pi, Claude Code, Amp, Codex. The native `agent-harness` capability reconciles their plugin catalogue; `agent-config` renders settings, instructions, and source assets for each runtime.
+- **Agent harness**: A coding agent runtime — Pi, Claude Code, Amp, Codex, Antigravity (`agy`). The native `agent-harness` capability reconciles their plugin catalogue; `agent-config` renders settings, instructions, and source assets for each runtime.
 - **Agent plugin**: A directory under `agents/` holding a themed set of skills, installable by any harness configured in this repo.
 - **Home Assistant**: An appliance managed outside the scope of this repo, aside from management of the VM itself via Incus on pod042. All other management is done through the `home-assistant` mcp.
 

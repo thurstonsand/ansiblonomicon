@@ -160,6 +160,19 @@ models:
   # GOOGLE
   # ===========================================================================
   google:
+    gemini_neon:
+      version: "gemini-4-neon-high"
+      display_name: "Gemini 4 Neon (High)"
+      max_input: 524288
+      max_output: 65536
+      vision: true
+      agent_harness:
+        aliases:
+          # AGY subagent frontmatter only accepts coarse tiers (inherit|flash|pro),
+          # and `pro` currently routes to Hydrogen xhigh, so `inherit` keeps Neon
+          # sessions on Neon.
+          agy: "inherit"
+
     # Confirm the current generation with:
     # curl -s "https://generativelanguage.googleapis.com/v1beta/models?key=$GEMINI_API_KEY&pageSize=200" | jq -r '.models[] | "\(.name) \(.inputTokenLimit)"'
     gemini_pro:

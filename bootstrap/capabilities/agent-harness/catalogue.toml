@@ -34,7 +34,7 @@ included_on = ["pod153"]
 [[sources.plugins]]
 name = "cua-driver"
 skills = { "cua-driver" = "cua-driver" }
-target_agents = ["claude", "amp", "pi"]
+target_agents = ["claude", "amp", "pi", "agy"]
 
 [[sources]]
 local = "agents/pi"
@@ -50,7 +50,7 @@ target_agents = ["pi"]
 exclude_skills = { "work" = ["grill-me", "tui-screenshot"], "*" = ["grill-me"] }
 [[sources.plugins]]
 name = "project-management"
-target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex"] }
+target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex", "agy"] }
 exclude_skills = { "work" = ["tui-screenshot"], "amp_publish" = ["notify"] }
 
 [[sources]]
@@ -78,7 +78,7 @@ local = "agents/homelab"
 [[sources.plugins]]
 name = "homelab"
 excluded_on = ["work"]
-target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex", "pi"] }
+target_agents = { "amp_publish" = ["amp"], "*" = ["claude", "codex", "pi", "agy"] }
 exclude_data = ["__pycache__", "*.pyc"]
 [[sources.plugins]]
 name = "homelab"

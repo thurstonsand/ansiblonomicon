@@ -19,7 +19,47 @@ REASON = (
 )
 
 
+def _added_lines_from_file(path: Path, content: str) -> list[str]:
+    previous: list[str] = path.read_text().splitlines() if path.exists() else []
+    return [line for line in content.splitlines() if line not in previous]
+
+
 def violates(event: dict[str, Any]) -> bool:
+    if "toolCall" in event:
+        tool = event["toolCall"].get("name")
+        args = event["toolCall"].get("args", {})
+        cwd = Path(event.get("cwd", "."))
+        if tool == "edit_file":
+            old = str(args.get("Target", "")).splitlines()
+            lines = [
+                line
+                for line in str(args.get("Replacement", "")).splitlines()
+                if line not in old
+            ]
+        elif tool == "replace_file_content":
+            old = str(args.get("TargetContent", "")).splitlines()
+            lines = [
+                line
+                for line in str(args.get("ReplacementContent", "")).splitlines()
+                if line not in old
+            ]
+        elif tool == "multi_replace_file_content":
+            lines = [
+                line
+                for chunk in args.get("ReplacementChunks", [])
+                for line in str(chunk.get("ReplacementContent", "")).splitlines()
+                if line not in str(chunk.get("TargetContent", "")).splitlines()
+            ]
+        elif tool == "write_file":
+            path = cwd / str(args["Path"])
+            lines = _added_lines_from_file(path, str(args.get("Content", "")))
+        elif tool == "write_to_file":
+            path = cwd / str(args["TargetFile"])
+            lines = _added_lines_from_file(path, str(args.get("CodeContent", "")))
+        else:
+            return False
+        return any(PATTERN.search(line) for line in lines)
+
     tool = event["tool_name"]
     args = event["tool_input"]
     if tool == "apply_patch":
@@ -36,14 +76,21 @@ def violates(event: dict[str, Any]) -> bool:
         ]
     elif tool == "Write":
         path = Path(event["cwd"]) / args["file_path"]
-        previous: list[str] = path.read_text().splitlines() if path.exists() else []
-        lines = [line for line in args["content"].splitlines() if line not in previous]
+        lines = _added_lines_from_file(path, args["content"])
     else:
         return False
     return any(PATTERN.search(line) for line in lines)
 
 
 if __name__ == "__main__":
-    if violates(json.load(sys.stdin)):
+    harness = sys.argv[1] if len(sys.argv) > 1 else ""
+    payload = json.load(sys.stdin)
+    blocked = violates(payload)
+    if harness == "agy":
+        if blocked:
+            print(json.dumps({"decision": "deny", "reason": REASON}))
+        else:
+            print(json.dumps({"decision": "allow"}))
+    elif blocked:
         print(REASON, file=sys.stderr)
         sys.exit(2)

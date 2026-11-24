@@ -31,6 +31,7 @@ HOST_CONFIGS = {
 }
 WORK_HOST = "ML-DFC6YK6VJQ"
 RENDERERS = {
+    "agy": "agy",
     "amp": "amp",
     "claude": "claude",
     "codex": "codex",
@@ -47,10 +48,13 @@ SECRET_KEYS = {
 PRIVATE = {
     ".claude/hooks/_config.py",
     ".config/amp/settings.json",
+    ".gemini/antigravity-cli/keybindings.json",
+    ".gemini/antigravity-cli/settings.json",
     ".pi/agent/auth.json",
     ".pi/agent/models.json",
     ".codex/config.toml",
 }
+APP_OWNED_MCP = {".claude.json", ".gemini/config/mcp_config.json"}
 EXECUTABLE = {".local/bin/pi", ".local/bin/librarian"}
 MCP_FIELDS = {
     "name",
@@ -323,6 +327,60 @@ def _pi_mcp_output(data: dict[str, Any]) -> str | None:
     if not servers:
         return None
     return json.dumps({"mcpServers": servers}, indent=2, ensure_ascii=False) + "\n"
+
+
+def _agy_mcp_output(
+    home: Path, data: dict[str, Any], previously_owned: set[str] | None = None
+) -> tuple[str, str] | None:
+    declared = _declared_mcp(data, "agy")
+    previously_owned = previously_owned or set()
+    if not declared and not previously_owned:
+        return None
+    desired: dict[str, Any] = {}
+    for item in declared:
+        transport = item.get("transport", "stdio")
+        if transport == "sse":
+            raise ValueError(
+                f"Antigravity does not support SSE MCP server {item['name']}"
+            )
+        if transport == "stdio":
+            server: dict[str, Any] = {
+                key: item[key] for key in ("command", "args", "env") if key in item
+            }
+        else:
+            server = {"serverUrl": item["url"]}
+            headers = _headers(item)
+            if headers:
+                server["headers"] = headers
+            if "oauth" in item:
+                server["oauth"] = {"clientId": item["oauth"]["client_id"]}
+        if "tool_timeout_sec" in item:
+            server["timeoutSeconds"] = item["tool_timeout_sec"]
+        desired[item["name"]] = server
+    relative = ".gemini/config/mcp_config.json"
+    target = _safe_target(home, relative)
+    if target.is_symlink():
+        raise ValueError(f"refusing rendered destination symlink: {target}")
+    existing: dict[str, Any] = {}
+    if target.exists():
+        raw = target.read_text(encoding="utf-8")
+        if raw.strip():
+            try:
+                value = json.loads(raw)
+            except json.JSONDecodeError as error:
+                raise ValueError(
+                    f"{target}: invalid JSON; refusing MCP update"
+                ) from error
+            if not isinstance(value, dict):
+                raise ValueError(f"{target}: expected JSON object")
+            existing = value
+    servers = existing.setdefault("mcpServers", {})
+    if not isinstance(servers, dict):
+        raise ValueError(f"{target}: mcpServers must be an object")
+    for name in previously_owned - desired.keys():
+        servers.pop(name, None)
+    servers.update(desired)
+    return relative, json.dumps(existing, indent=2, ensure_ascii=False) + "\n"
 
 
 def _claude_mcp_output(
@@ -673,6 +731,10 @@ def reconcile(
         pi_mcp = _pi_mcp_output(data)
         if pi_mcp:
             outputs[".pi/agent/mcp.json"] = pi_mcp
+    if "agy" in harnesses:
+        agy_mcp = _agy_mcp_output(home, data, previously_owned_mcp)
+        if agy_mcp:
+            outputs[agy_mcp[0]] = agy_mcp[1]
     if "claude" in harnesses:
         mcp = _claude_mcp_output(home, data, previously_owned_mcp)
         if mcp:
@@ -742,8 +804,9 @@ def reconcile(
 
     ownership = state_dir / "owned.json"
     previous = _read_inventory(ownership)
-    # .claude.json is app-owned and only its declared MCP names are managed.
-    previous.pop(".claude.json", None)
+    # App-owned MCP configs keep unmanaged servers; only declared names are managed.
+    for relative in APP_OWNED_MCP:
+        previous.pop(relative, None)
     previous_targets = {relative: _safe_target(home, relative) for relative in previous}
     absent_targets = {_safe_target(home, relative) for relative in absent}
     desired_fingerprints = {
@@ -847,7 +910,7 @@ def reconcile(
     current = {
         relative: _fingerprint(target)
         for relative, target in targets.items()
-        if relative != ".claude.json"
+        if relative not in APP_OWNED_MCP
     }
     inventory = {
         relative: proof for relative, proof in current.items() if proof is not None

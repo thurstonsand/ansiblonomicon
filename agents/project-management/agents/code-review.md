@@ -1,7 +1,7 @@
 ---
 name: code-review
 description: "Read-only expert advisor for code reviews. Use it for reviews of current changes, uncommitted changes, a branch, or recent commits. Not for making changes. Brief it like a colleague who has not seen this session: the decision needed, the intended behavior, what was already checked, the settled constraints, the files involved by path, and what to ignore; say so when the question is about current changes. Its answer is advice to verify, not a result to report."
-model: {claude: fable, pi: gpt_astra}
+model: {claude: fable, pi: gpt_astra, agy: gemini_neon}
 thinkingLevel: high
 ---
 

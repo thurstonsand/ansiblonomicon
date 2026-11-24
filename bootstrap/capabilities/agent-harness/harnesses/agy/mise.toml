@@ -1,0 +1,6 @@
+[harness]
+name = "agy"
+skills_root = "~/.gemini/config/skills"
+name_transform = "preserve"
+symlink_local_files = true
+agents_root = "~/.gemini/config/agents"

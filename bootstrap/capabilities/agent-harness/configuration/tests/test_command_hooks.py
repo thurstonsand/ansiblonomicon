@@ -137,6 +137,155 @@ class CommandHooksTest(unittest.TestCase):
             )
             self.assertEqual(result.returncode, 0, result.stderr)
 
+    def test_agy_comment_guard_emits_pre_tool_use_decisions(self) -> None:
+        for text, blocked in (
+            ("# As requested, use a cache", True),
+            ("// Used to be synchronous; now async", True),
+            ("# Explain the invariant directly.", False),
+        ):
+            for tool, args in (
+                ("edit_file", {"Path": "f.py", "Target": "x = 1", "Replacement": text}),
+                (
+                    "replace_file_content",
+                    {
+                        "TargetFile": "f.py",
+                        "TargetContent": "x = 1",
+                        "ReplacementContent": text,
+                    },
+                ),
+                (
+                    "multi_replace_file_content",
+                    {
+                        "TargetFile": "f.py",
+                        "ReplacementChunks": [
+                            {"TargetContent": "x = 1", "ReplacementContent": text}
+                        ],
+                    },
+                ),
+                ("write_file", {"Path": "fresh.py", "Content": text}),
+                ("write_to_file", {"TargetFile": "fresh.py", "CodeContent": text}),
+            ):
+                with self.subTest(text=text, tool=tool):
+                    result = self.invoke(
+                        "no-chat-comments.py",
+                        {
+                            "hookEventName": "PreToolUse",
+                            "cwd": self.temp.name,
+                            "toolCall": {"id": "c1", "name": tool, "args": args},
+                        },
+                        "agy",
+                    )
+                    self.assertEqual(result.returncode, 0, result.stderr)
+                    output = json.loads(result.stdout)
+                    self.assertEqual(output["decision"], "deny" if blocked else "allow")
+                    if blocked:
+                        self.assertIn("Write comments for the code", output["reason"])
+
+        Path(self.temp.name, "kept.py").write_text("# as requested\nx = 1\n")
+        kept = self.invoke(
+            "no-chat-comments.py",
+            {
+                "hookEventName": "PreToolUse",
+                "cwd": self.temp.name,
+                "toolCall": {
+                    "id": "c2",
+                    "name": "write_file",
+                    "args": {"Path": "kept.py", "Content": "# as requested\nx = 2\n"},
+                },
+            },
+            "agy",
+        )
+        self.assertEqual(json.loads(kept.stdout)["decision"], "allow")
+
+    def test_agy_timing_queues_slow_commands_for_pre_invocation(self) -> None:
+        import importlib.util
+
+        spec = importlib.util.spec_from_file_location(
+            "command_timing", ASSETS / "command-timing.py"
+        )
+        assert spec is not None and spec.loader is not None
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        db = Path(self.temp.name, "agy.sqlite3")
+
+        # Fast command (<= 60s) produces no PreInvocation injection.
+        self.assertEqual(
+            mod.agy_response(
+                {
+                    "hookEventName": "PreToolUse",
+                    "conversationId": "c1",
+                    "toolCall": {"id": "t1", "name": "run_command"},
+                },
+                db,
+                now=1000.0,
+            ),
+            {"decision": "allow"},
+        )
+        self.assertEqual(
+            mod.agy_response(
+                {
+                    "hookEventName": "PostToolUse",
+                    "conversationId": "c1",
+                    "toolCall": {"id": "t1", "name": "run_command"},
+                },
+                db,
+                now=1060.0,
+            ),
+            {},
+        )
+        self.assertEqual(
+            mod.agy_response(
+                {"hookEventName": "PreInvocation", "conversationId": "c1"},
+                db,
+                now=1061.0,
+            ),
+            {},
+        )
+
+        # Slow command (> 60s) queues for the matching conversation only and drains once.
+        mod.agy_response(
+            {
+                "hookEventName": "PreToolUse",
+                "conversationId": "c1",
+                "toolCall": {"id": "t2", "name": "run_command"},
+            },
+            db,
+            now=2000.0,
+        )
+        mod.agy_response(
+            {
+                "hookEventName": "PostToolUse",
+                "conversationId": "c1",
+                "toolCall": {"id": "t2", "name": "run_command"},
+            },
+            db,
+            now=2075.5,
+        )
+        self.assertEqual(
+            mod.agy_response(
+                {"hookEventName": "PreInvocation", "conversationId": "c2"},
+                db,
+                now=2076.0,
+            ),
+            {},
+        )
+        injected = mod.agy_response(
+            {"hookEventName": "PreInvocation", "conversationId": "c1"},
+            db,
+            now=2076.0,
+        )
+        text = injected["injectSteps"][0]["systemMessage"]["systemMessage"]
+        self.assertIn("75.5s", text)
+        self.assertIn("Slow feedback loop:", text)
+        self.assertEqual(
+            mod.agy_response(
+                {"hookEventName": "PreInvocation", "conversationId": "c1"},
+                db,
+                now=2077.0,
+            ),
+            {},
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

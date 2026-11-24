@@ -71,6 +71,12 @@ harness = 'codex'
 mode = 'symlink'
 
 [[files]]
+source = 'assets/command-timing.py'
+destination = '.gemini/config/hooks/command-timing.py'
+harness = 'agy'
+mode = 'symlink'
+
+[[files]]
 source = 'assets/pi/extensions/command-timing.ts'
 destination = '.pi/agent/extensions/command-timing.ts'
 harness = 'pi'
@@ -86,6 +92,12 @@ mode = 'symlink'
 source = 'assets/no-chat-comments.py'
 destination = '.codex/hooks/no-chat-comments.py'
 harness = 'codex'
+mode = 'symlink'
+
+[[files]]
+source = 'assets/no-chat-comments.py'
+destination = '.gemini/config/hooks/no-chat-comments.py'
+harness = 'agy'
 mode = 'symlink'
 
 [[files]]
@@ -132,6 +144,12 @@ mode = 'symlink'
 source = 'assets/claude/scripts/statusline.sh'
 destination = '.claude/scripts/statusline.sh'
 harness = 'claude'
+mode = 'symlink'
+
+[[files]]
+source = 'assets/claude/scripts/statusline.sh'
+destination = '.gemini/antigravity-cli/statusline.sh'
+harness = 'agy'
 mode = 'symlink'
 
 [[files]]
