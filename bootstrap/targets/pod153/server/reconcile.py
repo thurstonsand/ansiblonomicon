@@ -32,16 +32,44 @@ TIME_MACHINE = "smb://thurstonsand@pod042.thurstons.house/timemachine"
 # copying them took more CPU than a simulator while a pass ran. T3 checkpoints
 # each worktree, untracked files included, into refs/t3/ in the project's own
 # backed-up .git, so its worktrees hold nothing else worth copying hourly.
+# T3 rewrites its 2 GB state database every hour, and it holds only agent
+# session history. Toolchains, package stores, and editor plugins reinstall
+# from their managers.
 TIME_MACHINE_SKIPPED = [
     str(Path.home() / name)
     for name in (
         ".tart",
         ".t3/worktrees",
         ".t3-mike/worktrees",
+        ".t3/userdata/statev2.sqlite",
+        ".t3/userdata/statev2.sqlite-wal",
+        ".t3/userdata/statev2.sqlite-shm",
+        ".t3/runtime/versions",
+        ".t3/tools",
+        ".t3/caches",
+        ".t3-mike/tools",
+        ".t3-mike/caches",
         ".cache",
         ".npm",
+        ".bun/install",
+        "Library/pnpm/store",
+        ".local/share/aube/store",
+        ".pi/agent/npm/node_modules",
+        "go/pkg/mod",
+        ".rustup/toolchains",
+        ".terraform.d/plugins",
+        ".local/share/mise/installs",
+        ".local/share/uv/python",
+        ".local/share/nurb",
+        ".local/share/claude",
+        ".local/share/cursor-agent",
+        ".codex/packages",
+        ".local/share/nvim/lazy",
+        ".local/share/nvim/mason",
         ".gradle/caches",
+        ".gradle/wrapper",
         ".android/avd",
+        "Library/Android/sdk",
         "Library/Developer/CoreSimulator",
         "Library/Developer/Xcode/DerivedData",
         "Library/Application Support/BeeperTexts",
