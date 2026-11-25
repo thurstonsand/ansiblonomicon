@@ -27,6 +27,14 @@ excluded_on = ["work"]
 name = "tuistory"
 skills = { "tuistory" = "skills/tuistory" }
 
+[[sources]]
+repo = "google-gemini/demolab"
+excluded_on = ["work", "amp_publish"]
+[[sources.plugins]]
+name = "demolab"
+target_agents = ["agy"]
+include_skills = ["gemini-frontend-design"]
+
 # The driver fetches the skill pack matching its installed version; Codex keeps its own computer use.
 [[sources]]
 local = "/Users/thurstonsand/.cua-driver/skills"
