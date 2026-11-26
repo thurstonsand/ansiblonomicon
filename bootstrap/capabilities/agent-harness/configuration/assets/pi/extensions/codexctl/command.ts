@@ -1,5 +1,6 @@
-import type { ExtensionCommandContext } from "@earendil-works/pi-coding-agent";
+import type { ExtensionCommandContext, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { AutocompleteItem } from "@earendil-works/pi-tui";
+import { promptCodexSettings } from "./dialog.js";
 import { showCodexPanel } from "./panel.js";
 import {
   type CodexSettings,
@@ -77,13 +78,17 @@ export async function handleCodexCommand(
   }
 
   if (parsed.kind === "open-panel") {
-    await showCodexPanel(ctx);
+    // RPC hosts resolve ui.custom() without showing anything.
+    await (ctx.mode === "tui" ? showCodexPanel(ctx) : promptCodexSettings(ctx));
     return;
   }
 
-  const next = applyCodexCommand(loadCodexSettingsState().settings, parsed);
-  saveCodexSettings(next);
-  ctx.ui.notify(formatCodexSettings(next), "info");
+  saveAndAnnounce(ctx, applyCodexCommand(loadCodexSettingsState().settings, parsed));
+}
+
+export function saveAndAnnounce(ctx: ExtensionContext, settings: CodexSettings): void {
+  saveCodexSettings(settings);
+  ctx.ui.notify(formatCodexSettings(settings), "info");
 }
 
 type CodexCommandInvocation =
@@ -132,7 +137,7 @@ export function parseCodexCommand(args: string, hasUI: boolean): CodexCommandPar
   return { kind: "error", message: CODEX_USAGE };
 }
 
-function applyCodexCommand(
+export function applyCodexCommand(
   settings: CodexSettings,
   invocation: Exclude<CodexCommandInvocation, { kind: "open-panel" }>,
 ): CodexSettings {

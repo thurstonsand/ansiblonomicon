@@ -1255,7 +1255,10 @@ run = "node --test bootstrap/capabilities/browser/"
 
 [tasks."pi:test"]
 description = "Test the pi extensions"
-run = "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --test bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions/*.test.ts"
+depends = ["bootstrap:agent-deps"]
+dir = "bootstrap/capabilities/agent-harness/configuration/assets/pi/extensions"
+# jiti resolves the packages' NodeNext `.js` imports to their `.ts` sources, as Pi's loader does.
+run = "node --import jiti/register --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --disable-warning=DEP0205 --test '**/*.test.ts'"
 
 [tasks."pi:check"]
 description = "Lint and type-check the pi extensions"

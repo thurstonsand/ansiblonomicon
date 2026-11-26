@@ -227,6 +227,12 @@ harness = 'pi'
 mode = 'symlink'
 
 [[files]]
+source = 'assets/pi/extensions/codexctl/dialog.ts'
+destination = '.pi/agent/extensions/codexctl/dialog.ts'
+harness = 'pi'
+mode = 'symlink'
+
+[[files]]
 source = 'assets/pi/extensions/codexctl/index.ts'
 destination = '.pi/agent/extensions/codexctl/index.ts'
 harness = 'pi'

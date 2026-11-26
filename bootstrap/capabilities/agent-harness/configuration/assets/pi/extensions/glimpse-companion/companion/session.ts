@@ -75,6 +75,8 @@ export class CompanionSession {
         "info",
       );
     }
+    // The glyph is a footer marker; an RPC host would print it as a bare "G ·".
+    if (ctx.mode !== "tui") return;
     const theme = ctx.ui.theme;
     ctx.ui.setStatus("companion", theme.fg("accent", "G") + theme.fg("dim", " ·"));
   }
