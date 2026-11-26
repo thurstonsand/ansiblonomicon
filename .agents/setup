@@ -14,7 +14,7 @@ sudo apt-get install -y -qq zsh docker-compose-plugin ruby
 
 step "Install mise"
 if ! command -v mise >/dev/null 2>&1; then
-  curl -fsSL https://mise.run | sh
+  curl -fsSL https://mise.run | MISE_SELF_UPDATE_MINIMUM_RELEASE_AGE=3d sh
 fi
 
 export PATH="$HOME/.local/bin:$HOME/.local/share/mise/shims:$PATH"
