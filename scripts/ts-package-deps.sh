@@ -101,17 +101,20 @@ NODE
 )
 
     AUX_DEPS=()
-    for dep in typescript @biomejs/biome; do
-      if package_has_dependency "$dep"; then
-        AUX_DEPS+=("$dep@latest")
-      fi
-    done
+    if package_has_dependency typescript; then
+      AUX_DEPS+=("typescript@latest")
+    fi
     if package_has_dependency @types/node; then
       AUX_DEPS+=("@types/node@${NODE_TYPES_VERSION}")
     fi
 
     if [[ ${#HARNESS_DEPS[@]} -gt 0 || ${#AUX_DEPS[@]} -gt 0 ]]; then
       npm install --save-dev "${HARNESS_DEPS[@]}" "${AUX_DEPS[@]}"
+    fi
+
+    # Biome's config schema names an exact release; keep the manifest in sync.
+    if package_has_dependency @biomejs/biome; then
+      npm install --save-dev --save-exact "@biomejs/biome@latest"
     fi
 
     # Separate from the batch above because this one must land without a caret;
