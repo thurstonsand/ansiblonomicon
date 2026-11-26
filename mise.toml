@@ -243,7 +243,7 @@ flag "-c --check"
 run = '''
 host=$(hostname -s 2>/dev/null || hostname)
 case "$host:$usage_capability" in
-  pod153:codex|pod153:claude-code|pod153:cua-driver|pod153:shp|pod153:uvc-util|pod153:berkeley-mono|pod153:docker-context) ;;
+  pod153:codex|pod153:claude-code|pod153:cua-driver|pod153:shp|pod153:uvc-util|pod153:berkeley-mono) ;;
   ML-DFC6YK6VJQ:codex|ML-DFC6YK6VJQ:pi|ML-DFC6YK6VJQ:uvc-util|ML-DFC6YK6VJQ:berkeley-mono|ML-DFC6YK6VJQ:docker-credentials) ;;
   *) echo "$usage_capability is not registered on $host" >&2; exit 1 ;;
 esac
@@ -300,9 +300,6 @@ else
   mise run //:software:dispatch berkeley-mono ${usage_check:+--check}
 fi
 '''
-usage = 'flag "-c --check"'
-[tasks."docker-context"]
-run = "mise run //:software:dispatch docker-context ${usage_check:+--check}"
 usage = 'flag "-c --check"'
 [tasks."docker-credentials"]
 run = '''
@@ -901,7 +898,7 @@ config_capabilities="sysconfig terminal-theme vcs shell terminal-tools user-tool
 sysconfig_sections="dock finder nsglobaldomain menubar desktop-services hotkeys permissions"
 case "$profile" in
   server)
-    software_capabilities="$software_capabilities codex claude-code cua-driver t3 shp uvc-util docker-context amp-cli"
+    software_capabilities="$software_capabilities codex claude-code cua-driver t3 shp uvc-util amp-cli"
     config_capabilities="$config_capabilities ssh-client server cupertino"
     sysconfig_sections="$sysconfig_sections hostname"
     ;;
@@ -914,7 +911,6 @@ normalized_tags=$(printf '%s' "${usage_tags:-}" | tr ',' '\n' | sed 's/^homebrew
 if [ "$profile" = work ]; then
   case ",$normalized_tags," in
     *,ssh-client,*) echo "ssh-client is intentionally unavailable on the work host" >&2; exit 1 ;;
-    *,docker-context,*) echo "docker-context is intentionally unavailable on the work host" >&2; exit 1 ;;
     *,hostname,*) echo "hostname is intentionally unmanaged on the work host" >&2; exit 1 ;;
   esac
 fi

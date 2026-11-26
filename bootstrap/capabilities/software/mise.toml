@@ -55,9 +55,6 @@ fi
 [tasks.berkeley-mono]
 run = 'python3 software/berkeley_mono.py ${SOFTWARE_CHECK:+--check}'
 
-[tasks.docker-context]
-run = 'python3 software/docker_context.py ${SOFTWARE_CHECK:+--check}'
-
 [tasks."shp:deps"]
 run = 'python3 software/deps-maintenance.py "{{config_root}}/../../capabilities/software/sources/shp" "$HOME/.cache/ansiblonomicon/shp/upgrade.stamp" ${SOFTWARE_CHECK:+--check}'
 

@@ -50,7 +50,7 @@ if [ "$mode" = check ]; then
       fi
       exit 0
       ;;
-    codex|claude-code|cua-driver|berkeley-mono|docker-context|docker-credentials)
+    codex|claude-code|cua-driver|berkeley-mono|docker-credentials)
       export SOFTWARE_CHECK=true
       mise -C "$target" run "$capability"
       ;;
