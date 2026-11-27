@@ -165,6 +165,9 @@ if [ "$(systemctl --user show superwhisper -p NeedDaemonReload --value)" = yes ]
   systemctl --user daemon-reload
   systemctl --user try-restart superwhisper
 fi
+if [ "$(systemctl --user show amp-desktop-runner -p NeedDaemonReload --value)" = yes ]; then
+  systemctl --user daemon-reload
+fi
 # Flea owns the folder handler, Show in folder service, shortcuts, and file chooser routing.
 flea --default
 # Amp, WhatsApp, and the other Omarchy web apps follow the default browser. Profile-local extension setup is in docs/chrome.md.
@@ -271,6 +274,10 @@ unit = "claude-auth-refresh"
 "~/.config/environment.d/90-superwhisper-accessibility.conf" = { source = "omarchy/superwhisper-accessibility/environment.conf", mode = "copy" }
 # Superwhisper has no GPU setting and otherwise loads its models onto the eGPU whenever it starts with one attached.
 "~/.config/systemd/user/superwhisper.service.d/integrated-gpu.conf" = { content = "[Service]\nEnvironment=VK_DRIVER_FILES=/usr/share/vulkan/icd.d/intel_icd.json\n" }
+# Offline, the runner reports its token refresh as an expired session and exits, which exhausts the start limit before Wi-Fi
+# connects. User units cannot order after network-online.target, so it waits on NetworkManager directly; a day-long wait that
+# times out is retried by Restart=on-failure.
+"~/.config/systemd/user/amp-desktop-runner.service.d/wait-online.conf" = { content = "[Service]\nExecStartPre=/usr/bin/nm-online -q -t 86400\nTimeoutStartSec=infinity\n" }
 "~/.config/wireplumber/wireplumber.conf.d/mic-no-suspend.conf" = { source = "omarchy/wireplumber/mic-no-suspend.conf", mode = "symlink" }
 "~/.config/wireplumber/wireplumber.conf.d/mic-priority.conf" = { source = "omarchy/wireplumber/mic-priority.conf", mode = "symlink" }
 "~/.local/share/wireplumber/scripts/rank-sources-by-priority.lua" = { source = "omarchy/wireplumber/rank-sources-by-priority.lua", mode = "symlink" }

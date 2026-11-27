@@ -6,7 +6,7 @@ Optional theme or plugin extras, such as `theme-set` hooks or files an author as
 
 Software missing from Omarchy's repositories uses its vendor's installer instead of the AUR.
 
-Amp Desktop comes from the `amp-desktop-bin` package. Enable its runner in App Settings and accept the CLI installation prompt if needed; Desktop owns CLI installation and the `amp-desktop-runner.service` user service. The CLI updates itself in `~/.amp/bin/amp`. The global mise config disables Omarchy's inherited `amp` tool so it cannot shadow that installation. Reconcile does not install the CLI or manage the runner. Desktop package updates still come through Omarchy; use **Relaunch to Update** after an upgrade.
+Amp Desktop comes from the `amp-desktop-bin` package. Enable its runner in App Settings and accept the CLI installation prompt if needed; Desktop owns CLI installation and the `amp-desktop-runner.service` user service. The CLI updates itself in `~/.amp/bin/amp`. The global mise config disables Omarchy's inherited `amp` tool so it cannot shadow that installation. Reconcile does not install the CLI or manage the runner, apart from a drop-in that holds each runner start until NetworkManager reports a connection. Desktop package updates still come through Omarchy; use **Relaunch to Update** after an upgrade.
 
 T3 Code uses Omarchy's self-updating Nightly AppImage at `~/.local/share/t3code/T3-Code.AppImage`. The `omarchy-config` post-dotfiles hook checks its embedded version and replaces a Stable install in place, preserving `~/.t3`. Nightly follows its own update channel unless explicitly overridden in T3's settings.
 
