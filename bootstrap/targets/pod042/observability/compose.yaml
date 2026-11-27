@@ -1,6 +1,6 @@
 services:
   loki:
-    image: grafana/loki:3.7.9
+    image: grafana/loki:3.7.10
     user: "3456:3456"
     command: ["-config.file=/etc/loki/config.yaml"]
     restart: unless-stopped
@@ -19,7 +19,7 @@ services:
     networks: [telemetry]
 
   alloy:
-    image: grafana/alloy:v1.21.2
+    image: grafana/alloy:v1.22.0
     # The bridge's rotating records are private to UID 3456.
     user: "3456:3456"
     command: ["run", "--disable-reporting", "--storage.path=/var/lib/alloy", "--server.http.listen-addr=0.0.0.0:12345", "/etc/alloy/config.alloy"]
@@ -52,7 +52,7 @@ services:
     networks: [telemetry, ingress]
 
   cpa-collector:
-    image: python:3.13-alpine
+    image: python:3.15-alpine
     user: "3456:3456"
     init: true
     command: ["python", "-B", "/app/cpa_collector.py", "--url", "${CPA_USAGE_URL:-http://cli-proxy-api:8317/v8/management/observability/usage/queue?count=1000}", "--key-file", "/run/secrets/cpa-management-key", "--output", "/var/lib/cpa/records.jsonl"]
@@ -78,7 +78,7 @@ services:
     networks: [ingress]
 
   usage-index:
-    image: python:3.13-alpine
+    image: python:3.15-alpine
     user: "3456:3456"
     init: true
     command:
@@ -122,7 +122,7 @@ services:
     networks: [telemetry, ingress]
 
   grafana:
-    image: grafana/grafana:13.3.0
+    image: grafana/grafana:13.3.2
     user: "3456:3456"
     restart: unless-stopped
     read_only: true
