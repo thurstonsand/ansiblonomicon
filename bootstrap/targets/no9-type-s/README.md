@@ -12,6 +12,8 @@ T3 Code uses Omarchy's self-updating Nightly AppImage at `~/.local/share/t3code/
 
 `omarchy-config` declares the NetworkManager Wi-Fi profiles as templated keyfiles with fnox passphrases, so a reconcile reverts changes made through `nmcli` or the network panel.
 
+Hold **Caps Lock** and press **V** to open Omarchy's clipboard history. Tap **Caps Lock** on its own to start a Compose sequence.
+
 Closing the undocked lid starts suspend-then-hibernate: hibernate after 36 hours asleep, or earlier when systemd detects a low battery. Docked lid closure keeps logind's default of staying awake. The shell's separate `idle.suspend` timeout controls when an open, idle laptop suspends; it is not the hibernation delay. `sleep-diagnostics.conf` enables kernel suspend/wake and xHCI port-event logging at boot; inspect `journalctl -b -k` (or `-b -1` after a reboot) when sleep fails.
 
 USB wake is opt-in through `omarchy/udev/90-usb-wake.rules`: external hubs, the Dygma Defy, and the Apple Magic Keyboard with Touch ID. Root hubs stay disabled because their connect/disconnect wake catches the internal webcam's suspend transition and immediately wakes the laptop. Keyboard wake through an attached dock still works; attaching a dock to a sleeping laptop is not guaranteed to wake it. Add another keyboard by its USB vendor/product IDs rather than enabling every device.

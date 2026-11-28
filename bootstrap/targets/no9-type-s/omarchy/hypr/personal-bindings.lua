@@ -59,6 +59,20 @@ local function send_key(mods, key, delay)
 	end, { timeout = delay, type = "oneshot" })
 end
 
+-- Replay a tap through the input method. send_key_state bypasses Fcitx, and
+-- forwarding the original press leaves Compose pending after the chord.
+o.bind_hold("code:66", nil, hl.dsp.submap("caps-compose"), nil, function()
+	if hl.get_current_submap() == "caps-compose" then
+		hl.dispatch(hl.dsp.submap("reset"))
+		hl.exec_cmd("wtype -P Multi_key -s 30 -p Multi_key")
+	end
+end)
+hl.unbind("SUPER + CTRL + V")
+hl.define_submap("caps-compose", "reset", function()
+	o.bind("V", "Clipboard manager (hold Caps Lock)", { panel = "omarchy.clipboard" })
+	hl.bind("catchall", hl.dsp.no_op(), { non_consuming = true, ignore_mods = true })
+end)
+
 local function active_window_is_terminal()
 	local window = hl.get_active_window()
 	for _, tag in ipairs(window and window.tags or {}) do
