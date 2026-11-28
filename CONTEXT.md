@@ -17,7 +17,7 @@
 - **pod153**: The MacBook Pro, retired from desktop use into an always-on headless server beside pod042. Reconciled by `mise laptop`.
 - **Work machine**: The corporate laptop, also reconciled by `mise laptop`. Same repo, constrained by an Artifactory mirror that carries only a certain set of dependencies and versions.
 - **pod042**: The NAS — plain Debian 13 server. Reconciled by `mise pod042`.
-- **cupertino**: pod153's Tart VM signed in to Messages, where imsgbus serves iMessage to Beeper and to agents. Reconciled from pod153 by `mise cupertino`; see `bootstrap/targets/cupertino/README.md`.
+- **cupertino**: pod153's Tart VM signed in to Messages, where imsgbus bridges iMessage to Beeper. Reconciled from pod153 by `mise cupertino`; see `bootstrap/targets/cupertino/README.md`.
 - **no9-type-s**: The Framework laptop's Omarchy side, the personal Omarchy laptop, dual-booting with eve. Reconciled by `mise omarchy`; read `bootstrap/targets/no9-type-s/README.md` before customizing it.
 - **eve**: The Framework laptop's Windows side, dual-booting with Omarchy. Reconciled by `mise windows`; see `bootstrap/targets/eve/README.md`.
 - **UDMP**: The home router. `mise udmp [--check|--update-mise]` reconciles its OS services from the remote inventory in `bootstrap/mise.toml`; its Network application resources are OpenTofu in `terraform/unifi/`.

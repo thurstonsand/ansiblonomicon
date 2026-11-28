@@ -29,11 +29,11 @@ resource "cloudflare_zero_trust_tunnel_cloudflared_config" "pod153" {
         service        = "http://127.0.0.1:7362"
         origin_request = merge(local.tunnel_origin_request_defaults, { http_host_header = "127.0.0.1:7362" })
       },
-      # imsgbus in cupertino, the Messages VM that only pod153 reaches.
       {
-        hostname = "pod153-mcp.${local.zone_name}"
-        path     = "^/imessage$"
-        service  = "http://cupertino.local:7380"
+        hostname       = "pod153-mcp.${local.zone_name}"
+        path           = "^/photos$"
+        service        = "http://127.0.0.1:7366"
+        origin_request = merge(local.tunnel_origin_request_defaults, { http_host_header = "127.0.0.1:7366" })
       },
       # Beeper Desktop's API for its chats, messages and accounts; not its setup or file routes.
       {

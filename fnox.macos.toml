@@ -18,5 +18,4 @@ IMSGBUS_PROVISIONING_SECRET = { provider = "agent", value = "op://agent/esbfggkw
 IMSGBUS_PUBLIC_MEDIA_SIGNING_KEY = { provider = "agent", value = "op://agent/esbfggkwtx3msntsbhbbwr7jva/public_media_signing_key" }
 IMSGBUS_DIRECT_MEDIA_SERVER_KEY = { provider = "agent", value = "op://agent/esbfggkwtx3msntsbhbbwr7jva/direct_media_server_key" }
 IMSGBUS_DOUBLE_PUPPET_SECRET = { provider = "agent", value = "op://agent/esbfggkwtx3msntsbhbbwr7jva/double_puppet_secret" }
-IMSGBUS_MCP_TOKEN = { provider = "agent", value = "op://agent/esbfggkwtx3msntsbhbbwr7jva/mcp_token" }
 PARALLEL_API_KEY = { provider = "agent", value = "op://agent/ujvwlvzywxv4z654bro2wjkaqq/credential" }

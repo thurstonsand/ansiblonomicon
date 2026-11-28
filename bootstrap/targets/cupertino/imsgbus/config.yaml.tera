@@ -89,8 +89,7 @@ encryption:
     require: true
 network:
     mcp:
-        listen: 0.0.0.0:7380
-        token: "{{ secret(name="mcp_token") | trim }}"
+        enabled: false
     imsg_path: /Users/admin/.local/share/mise/shims/imsg
 logging:
     min_level: debug

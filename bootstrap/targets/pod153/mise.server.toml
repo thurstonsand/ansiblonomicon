@@ -49,6 +49,15 @@ keep_alive = true
 stdout_path = "~/Library/Logs/remctl-mcp.log"
 stderr_path = "~/Library/Logs/remctl-mcp.log"
 
+# PhotoCTL uses loopback port 7366; its default 7364 belongs to beeper-images.
+[bootstrap.macos.launchd.agents."house.thurstons.photoctl-mcp"]
+program = "~/bin/photoctl"
+args = ["mcp", "serve", "--http"]
+run_at_load = true
+keep_alive = true
+stdout_path = "~/Library/Logs/photoctl-mcp.log"
+stderr_path = "~/Library/Logs/photoctl-mcp.log"
+
 # nurb's engine serves its MCP endpoint, workbench, and API on loopback only; Caddy carries
 # them onto the tailnet and Bunker, and the tunnel carries Caddy's front to the internet.
 [bootstrap.macos.launchd.agents."house.thurstons.nurb"]
@@ -208,6 +217,16 @@ sudo -n /opt/homebrew/bin/tailscale serve --bg --yes --https=443 --set-path=/ota
 
 # Retired for imsgbus in cupertino; server/mac_mcp.py boots the job out. Delete once pod153 converges.
 [bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/dev.mise.house.thurstons.messages-mcp.plist"]
+state = "absent"
+
+# MailCTL and NotesCTL are paused; keep their installs and private configurations.
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/dev.mise.house.thurstons.notesctl-mcp.plist"]
+state = "absent"
+
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/dev.mise.house.thurstons.mailctl-mcp.plist"]
+state = "absent"
+
+[bootstrap.files."/Users/thurstonsand/Library/LaunchAgents/dev.mise.house.thurstons.mail.plist"]
 state = "absent"
 
 # Retiring the desktop apps' background jobs; delete these once pod153 converges.

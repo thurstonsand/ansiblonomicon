@@ -5,7 +5,6 @@ provisioning_secret = "IMSGBUS_PROVISIONING_SECRET"
 public_media_signing_key = "IMSGBUS_PUBLIC_MEDIA_SIGNING_KEY"
 direct_media_server_key = "IMSGBUS_DIRECT_MEDIA_SERVER_KEY"
 double_puppet_secret = "IMSGBUS_DOUBLE_PUPPET_SECRET"
-mcp_token = "IMSGBUS_MCP_TOKEN"
 
 # The bridge's database, search index and logs live beside its config.
 [bootstrap.directories."~/imsgbus"]
