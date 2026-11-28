@@ -1,0 +1,114 @@
+#!/usr/bin/env bash
+set -euo pipefail
+export LC_ALL=C
+
+base=https://thurstons.house/f
+host_script=/etc/ansiblonomicon/containers/ingress/public-file.py
+
+fail() {
+	printf '%s\n' "$*" >&2
+	exit 1
+}
+
+on_pod042() {
+	if [[ $(hostname -s) == pod042 ]]; then
+		"$@"
+		return
+	fi
+
+	local command repo_root
+	printf -v command '%q ' "$@"
+	if ssh -G -T pod042 </dev/null | awk '
+		$1 == "hostname" && $2 != "pod042" || $1 == "proxycommand" && $2 != "none" { configured = 1 }
+		END { exit !configured }
+	'; then
+		ssh -T -o BatchMode=yes -o ConnectTimeout=8 pod042 "$command"
+		return
+	fi
+
+	repo_root=$(git -C "$(dirname "${BASH_SOURCE[0]}")" rev-parse --show-toplevel)
+	(
+		cd "$repo_root"
+		agents/homelab/skills/operating-pod042/scripts/with-pod042-access ssh -- "$command" >&2
+	)
+}
+
+host_file() {
+	on_pod042 sudo -n /usr/bin/python3 "$host_script" "$@"
+}
+
+public_curl() {
+	curl -q --noproxy '*' --doh-url https://cloudflare-dns.com/dns-query --connect-timeout 10 "$@"
+}
+
+usage="Usage: ${0##*/} add [--ttl DURATION | --forever] FILE [NAME]
+       ${0##*/} arm URL DURATION
+       ${0##*/} disarm URL
+       ${0##*/} remove URL"
+if [[ ${1-} == --help ]]; then
+	printf '%s\n' "$usage"
+	exit 0
+fi
+
+case ${1-} in
+add)
+	shift
+	args=(add)
+	case ${1-} in
+	--ttl)
+		[[ $# -ge 2 ]] || fail "$usage"
+		args+=(--ttl "$2")
+		shift 2
+		;;
+	--forever)
+		args+=(--forever)
+		shift
+		;;
+	esac
+	[[ $# == 1 || $# == 2 ]] || fail "$usage"
+	file=$1
+	[[ -f $file && -r $file ]] || fail "Not a readable file: $file"
+	if [[ $# == 2 ]]; then
+		name=$2
+	else
+		name=${file##*/}
+		name=${name//[^a-zA-Z0-9._-]/-}
+		name=$(openssl rand -hex 12)-${name:0:230}
+	fi
+	url=$base/$name
+	size=$(wc -c <"$file")
+	host_file "${args[@]}" --size "$size" -- "$name" <"$file"
+	download=$(mktemp)
+	trap 'rm -f -- "$download"' EXIT
+	if ! status=$(public_curl -sS -o "$download" -w '%{http_code}' "$url") ||
+		[[ $status != 200 ]] || ! cmp -s -- "$file" "$download"; then
+		fail "Published but could not verify the download: $url"
+	fi
+	printf '%s\n' "$url"
+	;;
+arm | disarm | remove)
+	action=$1
+	if [[ $action == arm ]]; then
+		[[ $# == 3 ]] || fail "$usage"
+	else
+		[[ $# == 2 ]] || fail "$usage"
+	fi
+	[[ $2 == "$base/"* ]] || fail "Not a public-file share URL: $2"
+	url=$2
+	name=${2#"$base/"}
+	host_file "$action" -- "$name" "${@:3}" </dev/null
+	case $action in
+	arm) printf 'Armed for %s: %s\n' "$3" "$url" ;;
+	disarm) printf 'Disarmed: %s\n' "$url" ;;
+	remove)
+		status=$(public_curl -sS --head --max-time 20 -o /dev/null -w '%{http_code}' "$url") || fail "Removed from the origin, but could not check the public URL: $url"
+		case $status in
+		404) printf 'Removed: %s\n' "$url" ;;
+		200) printf 'Removed from the origin; Cloudflare still serves a cached copy: %s\n' "$url" ;;
+		*) fail "Removed from the origin, but the public URL returned HTTP $status instead of 404: $url" ;;
+		esac
+		;;
+	esac
+	;;
+*) fail "$usage" ;;
+esac

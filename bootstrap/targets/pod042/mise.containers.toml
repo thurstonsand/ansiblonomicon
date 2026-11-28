@@ -132,6 +132,11 @@ owner = "root"
 group = "docker"
 mode = "0750"
 
+[bootstrap.directories."/etc/ansiblonomicon/containers/ingress/caddy/site/f"]
+owner = "root"
+group = "docker"
+mode = "0755"
+
 [bootstrap.directories."/mnt/black-box/docker/arr-apps/bazarr/config"]
 owner = "thurstonsand"
 group = "media"
@@ -400,6 +405,30 @@ source = "containers/stacks/ingress/site/attendant.mp3.b64"
 owner = "root"
 group = "root"
 mode = "0600"
+
+[bootstrap.files."/etc/ansiblonomicon/containers/ingress/public-file.py"]
+source = "containers/stacks/ingress/public-file.py"
+owner = "root"
+group = "root"
+mode = "0644"
+
+[bootstrap.files."/etc/systemd/system/ansiblonomicon-public-file-expiry.service"]
+source = "containers/stacks/ingress/ansiblonomicon-public-file-expiry.service"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["ansiblonomicon-public-file-expiry.timer"]
+
+[bootstrap.files."/etc/systemd/system/ansiblonomicon-public-file-expiry.timer"]
+source = "containers/stacks/ingress/ansiblonomicon-public-file-expiry.timer"
+owner = "root"
+group = "root"
+mode = "0644"
+notify = ["ansiblonomicon-public-file-expiry.timer"]
+
+[bootstrap.services."ansiblonomicon-public-file-expiry.timer"]
+enabled = true
+on_change = "restart"
 
 [bootstrap.files."/etc/ansiblonomicon/containers/ingress/trigger-tofu-apply.sh"]
 source = "containers/stacks/ingress/trigger-tofu-apply.sh"

@@ -1,0 +1,6 @@
+[Unit]
+Description=Remove expired public file shares
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /etc/ansiblonomicon/containers/ingress/public-file.py expire
