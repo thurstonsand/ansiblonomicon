@@ -26,12 +26,16 @@ find_pi_package_json() {
 const fs = require("fs");
 const path = require("path");
 const realBin = fs.realpathSync(process.argv[2]);
-const packageJson = path.join(path.dirname(realBin), "package.json");
-if (!fs.existsSync(packageJson) || require(packageJson).name !== "@earendil-works/pi-coding-agent") {
-  console.error(`Expected pi-coding-agent's package.json beside ${realBin}, found nothing there.`);
-  process.exit(1);
+for (let dir = path.dirname(realBin); ; dir = path.dirname(dir)) {
+  const packageJson = path.join(dir, "package.json");
+  if (fs.existsSync(packageJson) && require(packageJson).name === "@earendil-works/pi-coding-agent") {
+    process.stdout.write(packageJson);
+    process.exit(0);
+  }
+  if (path.dirname(dir) === dir) break;
 }
-process.stdout.write(packageJson);
+console.error(`Could not find pi-coding-agent's package.json above ${realBin}.`);
+process.exit(1);
 NODE
 }
 

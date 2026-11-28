@@ -107,13 +107,13 @@
       "enabled": false
     },
     {
-      "description": "Pi, Claude Code and its Agent SDK, and Codex ship fixes the agent harnesses need the day they land, so they skip the three-day release age every other update waits out.",
+      "description": "Pi, Claude Code and its Agent SDK, Codex, and the first-party Pi permissions package skip the three-day release age.",
       "matchPackageNames": [
         "@earendil-works/**",
-        "@anthropic-ai/claude-code",
-        "@anthropic-ai/claude-agent-sdk",
-        "@openai/codex",
-        "@openai/codex-sdk"
+        "@anthropic-ai/claude-code*",
+        "@anthropic-ai/claude-agent-sdk*",
+        "@openai/codex*",
+        "@thurstonsand/pi-permissions"
       ],
       "minimumReleaseAge": null
     },
