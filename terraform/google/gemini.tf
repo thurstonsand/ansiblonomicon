@@ -18,6 +18,11 @@ resource "google_project_service" "gemini_code_assist" {
   service = "cloudaicompanion.googleapis.com"
 }
 
+resource "google_project_service" "gemini_colab" {
+  project = google_project.gemini.project_id
+  service = "colaboratory.googleapis.com"
+}
+
 resource "google_service_account" "gemini_api_key" {
   project      = google_project.gemini.project_id
   account_id   = "gemini-api-key"
