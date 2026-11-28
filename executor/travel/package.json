@@ -4,6 +4,6 @@
   "type": "module",
   "dependencies": {
     "apps": "0.0.1-beta.121",
-    "@modelcontextprotocol/sdk": "1.32.1"
+    "@modelcontextprotocol/sdk": "1.32.2"
   }
 }
