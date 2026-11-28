@@ -10,13 +10,6 @@ dofile((os.getenv("OMARCHY_PATH") or "/usr/share/omarchy") .. "/default/hypr/boo
 -- keeping core window-manager bindings:
 -- omarchy_preinstalled_bindings = false
 
--- Load Superwhisper's guarded hook before Omarchy's backend loader, without `o`: its Right Alt edge reporting would
--- otherwise stop the custom double-tap latch on release. Other bindings still need Omarchy's helpers.
-local omarchy = o
-o = nil
-dofile(os.getenv("HOME") .. "/.config/superwhisper/shortcuts.lua")
-o = omarchy
-
 -- Load Omarchy defaults.
 require("default.hypr.omarchy")
 

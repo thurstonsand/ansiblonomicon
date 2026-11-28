@@ -7,7 +7,7 @@
     "alsa_input.usb-Shure_Inc_Shure_MV7-00.mono-fallback": 1
   },
   "errorLoggingEnabled": false,
-  "launchAtLogin": true,
+  "launchAtLogin": false,
   "linux": {
     "asrBackend": "auto",
     "cleanupGpuLayers": 99,

@@ -14,6 +14,8 @@ T3 Code uses Omarchy's self-updating Nightly AppImage at `~/.local/share/t3code/
 
 Hold **Caps Lock** and press **V** to open Omarchy's clipboard history. Tap **Caps Lock** on its own to start a Compose sequence.
 
+On a fresh login setup, open Hex and enable its own **Launch at Login** setting if you want dictation available automatically. Hold **Right Alt** to dictate, or double-tap it to latch recording until the next press. Hold **Caps Lock** and press **Right Alt** for Hex Annotate. Hex saves preferences through a symlink to [`omarchy/hex/settings.json`](omarchy/hex/settings.json); keep routing credentials out of that file and set `OPENCODE_API_KEY` in the environment if needed.
+
 Closing the undocked lid starts suspend-then-hibernate: hibernate after 36 hours asleep, or earlier when systemd detects a low battery. Docked lid closure keeps logind's default of staying awake. The shell's separate `idle.suspend` timeout controls when an open, idle laptop suspends; it is not the hibernation delay. `sleep-diagnostics.conf` enables kernel suspend/wake and xHCI port-event logging at boot; inspect `journalctl -b -k` (or `-b -1` after a reboot) when sleep fails.
 
 USB wake is opt-in through `omarchy/udev/90-usb-wake.rules`: external hubs, the Dygma Defy, and the Apple Magic Keyboard with Touch ID. Root hubs stay disabled because their connect/disconnect wake catches the internal webcam's suspend transition and immediately wakes the laptop. Keyboard wake through an attached dock still works; attaching a dock to a sleeping laptop is not guaranteed to wake it. Add another keyboard by its USB vendor/product IDs rather than enabling every device.

@@ -18,6 +18,11 @@ mode = "0644"
 enabled = true
 on_change = "restart"
 
+[bootstrap.services.superwhisper]
+scope = "user"
+state = "stopped"
+enabled = false
+
 [bootstrap.files."/etc/sudoers.d/ansiblonomicon"]
 source = "omarchy/sudoers.d/ansiblonomicon"
 owner = "root"
@@ -154,17 +159,6 @@ if [ ! -x ~/.local/share/t3code/T3-Code.AppImage ] || ! (
 ) || omarchy pkg present t3code-bin || omarchy pkg present t3code-nightly-bin; then
   omarchy install ai t3-code nightly --no-launch
 fi
-# The packaged setup adopts an existing vendor install, preserving its settings, models, and integrations.
-if ! omarchy pkg present superwhisper-bin || [ "$(readlink ~/.local/share/superwhisper/app/current)" != /opt/superwhisper ] || [ "$(omarchy default dictation 2>/dev/null)" != superwhisper ]; then
-  omarchy install dictation superwhisper --background
-fi
-# Hyprland loads Superwhisper's generated shortcuts.lua, which stays out of git and so is missing on a fresh checkout.
-[ -f ~/.config/superwhisper/shortcuts.lua ] || ~/.local/bin/superwhisper shortcuts apply >/dev/null
-# Superwhisper's workers pick their GPU at start, so a changed drop-in needs the daemon restarted, not only reloaded.
-if [ "$(systemctl --user show superwhisper -p NeedDaemonReload --value)" = yes ]; then
-  systemctl --user daemon-reload
-  systemctl --user try-restart superwhisper
-fi
 if [ "$(systemctl --user show amp-desktop-runner -p NeedDaemonReload --value)" = yes ]; then
   systemctl --user daemon-reload
 fi
@@ -267,6 +261,8 @@ unit = "claude-auth-refresh"
 # LocalSend's own Autostart toggle reads and writes this path.
 "~/.config/autostart/localsend_app.desktop" = { source = "omarchy/autostart/localsend_app.desktop", mode = "symlink" }
 "~/.config/omarchy/defaults/agent" = { source = "omarchy/default-agent", mode = "symlink" }
+# Hex saves through the file symlink. Use OPENCODE_API_KEY for Jev routing, not the saved key field.
+"~/.local/share/hex/settings.json" = { source = "omarchy/hex/settings.json", mode = "symlink" }
 # Superwhisper replaces its files on save, which would break a file symlink; linking the directory keeps the replacement in the repo.
 "~/.config/superwhisper" = { source = "omarchy/superwhisper", mode = "symlink" }
 # Superwhisper's auto-learned vocabulary watches corrections over AT-SPI, and turning it on wrote this file, which it rewrites when the
