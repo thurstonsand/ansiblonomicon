@@ -12,7 +12,9 @@
     "**/node_modules/**",
     "docs/wayfinding/**/prototypes/**"
   ],
-  "dependencyDashboard": true,
+  "dependencyDashboard": {
+    "enabled": true
+  },
   "timezone": "America/New_York",
   "labels": ["dependencies"],
   "minimumReleaseAge": "3 days",
